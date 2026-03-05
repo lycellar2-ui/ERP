@@ -1,5 +1,5 @@
 # 🔍 Wine ERP — Audit Hợp Nhất (Cuối Cùng)
-**Ngày:** 05/03/2026 22:20 | **Phiên bản:** Wine ERP v4.1  
+**Ngày:** 05/03/2026 22:50 | **Phiên bản:** Wine ERP v4.2  
 **Phương pháp:** Gộp 2 audit trước (audit-v1 + audit-05-03) + scan lại toàn bộ mã nguồn thực tế  
 **Phạm vi:** So sánh 19 file đặc tả với codebase tại `wine-erp/src/`
 
@@ -19,8 +19,8 @@
 | Reporting & BI | `RPT` | **80%** 🟢 | ▲▲▲ | 15 Reports (R01-R15) + Excel Export + Report Builder |
 | Product Costing | `CST` | **80%** 🟢 | ▲▲ | Landed Cost Campaign + Proration + Price Suggestion |
 | Tax & Market Price | `TAX` | **78%** 🟢 | ▲ | CRUD + Tax Engine + Market Price Tracking |
-| CRM | `CRM` | **72%** 🟢 | ▲ | 360° + Pipeline + Transaction History + Tier |
-| Transportation | `TRS` | **72%** 🟢 | ▲▲ | Routes + E-POD + COD→AR + Reverse Logistics |
+| CRM | `CRM` | **78%** 🟢 | ▲▲ | 360° + Pipeline + Tx History + Tier + Multi-Contact + Tags |
+| Transportation | `TRS` | **78%** 🟢 | ▲▲▲ | Routes + E-POD (signature+photo) + COD→AR + Shipper Mobile View |
 | Contract Management | `CNT` | **72%** 🟢 | ▲▲ | CRUD + Utilization + Amendment + Expiry Alert |
 | Stamps | `STM` | **70%** 🟢 | ▲ | Purchase + Usage + Link Shipment/Lot + Report Excel |
 | KPI Targets | `KPI` | **68%** 🟡 | ▲▲ | Setup UI + DB targets + Forecast + Copy year |
@@ -30,9 +30,9 @@
 | POS Showroom | `POS` | **75%** 🟢 | 🆕 | Product grid + Cart + Payment + FIFO + Barcode + VAT |
 | QR Code & Barcode | `QRC` | **70%** 🟢 | 🆕 | Auto-gen after GR + Dashboard + Verify page + Anti-counterfeit |
 | Market Price | `MKT` | **75%** 🟢 | 🆕 | Comparison table + Margin Gap + Below-cost alert |
-| AI Features | `AI` | **55%** 🟡 | ▲▲▲ | Key Vault + OCR + Forecast + Pricing + Anomaly + Smart Search |
+| AI Features | `AI` | **65%** 🟡 | ▲▲▲ | Key Vault + OCR Upload UI + Forecast + Pricing + Anomaly + Smart Search |
 
-> **Tổng hoàn thiện ước tính: ~96%** trọng tâm core. Tất cả P1 features hoàn thành (15/15).
+> **Tổng hoàn thiện ước tính: ~97%** trọng tâm core. Tất cả P1 features hoàn thành (15/15).
 
 ---
 
