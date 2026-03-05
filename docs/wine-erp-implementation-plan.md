@@ -1,6 +1,6 @@
 # Wine ERP — Kế Hoạch Triển Khai Toàn Bộ
 > Từ 45% → 100% đặc tả. Dựa trên Audit ngày 05/03/2026.
-> **Last Updated:** 05/03/2026 19:00 — **P1-P8 ~95% ✅** | **Session 05/03: 14 tasks completed across P4-P8**
+> **Last Updated:** 05/03/2026 22:00 — **P1-P8 ~96% ✅** | **Session 05/03 (tối): Approval Workflow Engine, COD→AR Sync, PO Variance Report, Contract Amendment, Customer Address CRUD, Supplier soft-delete**
 
 ## Mục Tiêu
 Hoàn thiện toàn bộ tính năng còn thiếu của Wine ERP theo đúng 19 file đặc tả, chia thành 8 Phase thực thi tuần tự. Mỗi Phase có output rõ ràng, có thể verify ngay.

@@ -19,16 +19,36 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
   - Luôn đảm bảo Typescript Build Không Lỗi (`npm run type-check` hay kiểm tra IDE errors).
 
 ## 3. PHÂN BỔ MODULES (APP ROUTER)
-- **System/Admin**: `src/app/dashboard/settings`, `src/app/login`
-- **Master Data**: `src/app/dashboard/products`, `src/app/dashboard/customers`, `src/app/dashboard/suppliers`
-- **Warehouse**: `src/app/dashboard/warehouse`
-- **Sales & Allocation**: `src/app/dashboard/sales`, `src/app/dashboard/quotations`, `src/app/dashboard/price-list`, `src/app/dashboard/allocation`
+- **System/Admin**: `src/app/dashboard/settings` (User/Role/Permission CRUD + **Approval Workflow Engine**), `src/app/login`
+- **Master Data**: `src/app/dashboard/products`, `src/app/dashboard/customers` (**Address CRUD**, soft-delete), `src/app/dashboard/suppliers` (soft-delete)
+- **Warehouse**: `src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats)
+- **Sales & Allocation**: `src/app/dashboard/sales`, `src/app/dashboard/quotations`, `src/app/dashboard/price-list`, `src/app/dashboard/allocation`, `src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `src/app/dashboard/crm`, `src/app/dashboard/pipeline`
-- **Finance & Tem**: `src/app/dashboard/finance`, `src/app/dashboard/declarations`, `src/app/dashboard/stamps`
-- **Procurement & Operations**: `src/app/dashboard/procurement`, `src/app/dashboard/contracts`, `src/app/dashboard/agency`
+- **Finance & Tem**: `src/app/dashboard/finance` (P&L, Expenses, Period Close, COD→AR), `src/app/dashboard/declarations` (e-Sign, Doc Upload), `src/app/dashboard/stamps`
+- **Procurement & Operations**: `src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**), `src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `src/app/dashboard/agency`
 - **Tax & Market Data**: `src/app/dashboard/tax`, `src/app/dashboard/costing`, `src/app/dashboard/market-price`
-- **Logistics**: `src/app/dashboard/delivery`, `src/app/dashboard/consignment`, `src/app/dashboard/transfers`, `src/app/dashboard/returns`, `src/app/dashboard/stock-count`
+- **Logistics**: `src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `src/app/dashboard/consignment`, `src/app/dashboard/transfers`, `src/app/dashboard/returns`, `src/app/dashboard/stock-count`
 - **CEO Board**: `src/app/dashboard`, `src/app/dashboard/kpi`, `src/app/dashboard/reports`
-- **AI & Features**: `src/app/dashboard/ai`
+- **AI & Features**: `src/app/dashboard/ai` (Demand Forecast, Smart Pricing)
 - **POS & QR**: `src/app/dashboard/pos` (Barcode scan, VAT Invoice), `src/app/dashboard/qr-codes` (Anti-counterfeit)
-- **Market**: `src/app/dashboard/market-price`
+
+## 4. CROSS-CUTTING ENGINES (Shared Libraries)
+| Engine | Path | Mô tả |
+|--------|------|-------|
+| **Auth** | `src/lib/session.ts` | `getCurrentUser()`, `hasPermission()`, `hasRole()` |
+| **RBAC Middleware** | `src/middleware.ts` | Route → Permission mapping, redirect unauthenticated |
+| **Approval Workflow** | `settings/actions.ts` | Template CRUD → Submit → Multi-step Approve/Reject → Audit trail |
+| **Notification** | `src/lib/notifications.ts` | 4 email templates via Resend (SO Approval, Invoice Overdue, Shipment, Low Stock) |
+| **Excel Export** | `src/lib/excel.ts` | Generic engine + 4 pre-built templates (AR Aging, Stock, Sales, Costing) |
+| **File Upload** | `src/lib/storage.ts` | Supabase Storage: uploadFile, deleteFile, listFiles |
+| **Tax Engine** | `tax/actions.ts` | CIF → NK → TTĐB → VAT auto-calc by HS Code + Country |
+| **SignaturePad** | `src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
+| **AI Service** | `src/lib/ai-service.ts` | Gemini API integration (OCR, Forecast, Anomaly) |
+| **Encryption** | `src/lib/encryption.ts` | AES-256 key vault for API keys |
+
+## 5. LƯU Ý QUAN TRỌNG
+- **Soft Delete Pattern**: Product, Customer, Supplier sử dụng `deletedAt` + `status: INACTIVE`. Kiểm tra active PO/SO trước khi xoá.
+- **COD → AR Sync**: Khi giao hàng thu tiền COD (`delivery/actions.ts:syncCODToAR`), tự động tạo `ARPayment` và cập nhật `ARInvoice.status = PAID` nếu đủ.
+- **Contract Amendment**: Mỗi sửa đổi hợp đồng tạo `ContractAmendment` record với `amendNo` tự tăng, không sửa trực tiếp contract history.
+- **Approval Flow**: Documents (PO, SO, Expense...) phải submit qua `submitForApproval()` → approver dùng `processApproval()` → role-based verification mỗi bước.
+

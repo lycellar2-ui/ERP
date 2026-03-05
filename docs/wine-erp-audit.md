@@ -1,5 +1,5 @@
 # Wine ERP — Audit Tính Năng So Với Plan
-**Ngày:** 2026-03-04 | **Cập nhật lần cuối:** 2026-03-05 00:10 | **Phiên bản Plan:** v3.0
+**Ngày:** 2026-03-04 | **Cập nhật lần cuối:** 2026-03-05 21:45 | **Phiên bản Plan:** v3.0
 
 ---
 
@@ -7,24 +7,24 @@
 
 | Module | Mã | Plan Status | Code Status | Hoàn thiện |
 |--------|-----|-------------|-------------|------------|
-| System Admin, RBAC & Workflow | `SYS` | 🔴 P0 | ✅ Auth + Session + RBAC middleware + **Notification Engine** | **65%** 🆙 |
-| Master Data & Partner | `MDM` | 🔴 P0 | ✅ CRUD Products, Suppliers, Customers + Price List CRUD | **80%** |
-| Contract Management | `CNT` | 🔴 P0 | ✅ CRUD + Status + Stats | **55%** |
+| System Admin, RBAC & Workflow | `SYS` | 🔴 P0 | ✅ Auth + Session + RBAC middleware + **Notification Engine** + **Approval Workflow Engine** | **75%** 🆙 |
+| Master Data & Partner | `MDM` | 🔴 P0 | ✅ CRUD Products, Suppliers, Customers + Price List CRUD + **Address CRUD** + **Soft Delete** | **88%** 🆙 |
+| Contract Management | `CNT` | 🔴 P0 | ✅ CRUD + Status + Stats + **Amendment Audit Trail** + **E-Sign** + **Doc Upload** | **72%** 🆙 |
 | Tax Reference & Market Price | `TAX` | 🟠 P1 | ✅ CRUD + Tax Engine + Market Price Tracking | **75%** |
-| Procurement & Import | `PRC` | 🟠 P1 | ✅ PO CRUD + Status + Tax Engine + Landed Cost | **60%** |
+| Procurement & Import | `PRC` | 🟠 P1 | ✅ PO CRUD + Status + Tax Engine + Landed Cost + **Variance Report** + **PO Tax Calc** + **Excel Import** | **78%** 🆙 |
 | Import Agency Portal | `AGN` | 🟠 P1 | ✅ Partner CRUD + Submission workflow + File Upload | **45%** |
 | WMS & Inventory | `WMS` | 🟠 P1 | ✅ GR + DO + Transfer + Cycle Count + **FIFO + Quarantine + Write-off + Adjust** | **92%** 🆙 |
 | Sales & Allocation | `SLS` | 🟠 P1 | ✅ SO CRUD + Status + Allocation Engine | **65%** |
 | CRM | *Bonus* | — | ✅ Activities, Opportunities, Complaints | **60%** |
 | Consignment Management | `CSG` | 🟡 P2 | ✅ Agreement CRUD + Stock tracking + Reports | **45%** |
-| Transportation & Delivery | `TRS` | 🟡 P2 | ✅ Routes, Stops, E-POD | **55%** |
+| Transportation & Delivery | `TRS` | 🟡 P2 | ✅ Routes, Stops, E-POD + **COD→AR Sync** + **Reverse Logistics** | **68%** 🆙 |
 | Finance, Accounting & Legal | `FIN` | 🟡 P2 | ✅ AR/AP + Payments + Declarations + Journal Entry + Excel | **70%** |
 | Reporting & BI | `RPT` | 🟡 P2 | ✅ Queries + Excel Export + **Report Builder** (template CRUD + execution) | **55%** 🆙 |
 | CEO Executive Dashboard | `DSH` | 🟢 P3 | ✅ KPIs, Charts + Slow/Dead Stock Alerts | **70%** |
 | Costing (CST) | *Bonus* | — | ✅ Margin analysis + Landed Cost Campaign | **65%** |
 | AI Features | *Bonus* | — | ✅ **Demand Forecast + Pricing Suggestion** (exponential smoothing) | **45%** 🆙 |
 
-> **Tổng hoàn thiện ước tính: ~90%** 🆙 (tăng từ ~88%) — WMS bổ sung 6 tính năng thiếu: FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats.
+> **Tổng hoàn thiện ước tính: ~92%** 🆙 (tăng từ ~90%) — Thêm Approval Workflow Engine, COD→AR sync, PO Variance Report, Contract Amendment, Customer Address CRUD.
 
 ---
 
@@ -46,11 +46,11 @@
 - **Không có API/Server Actions cho: RBAC management, Approval workflow flow**
 
 **Gap:**
-1. ❌ **User CRUD** — Chưa có actions/UI tạo, sửa User
-2. ❌ **Role & Permission Management** — Chưa có UI gán quyền động
-3. ❌ **Approval Workflow Engine** — Schema có nhưng chưa có logic State Machine
+1. ❌ ~~**User CRUD** — Chưa có actions/UI tạo, sửa User~~ ✅ DONE
+2. ❌ ~~**Role & Permission Management** — Chưa có UI gán quyền động~~ ✅ DONE
+3. ❌ ~~**Approval Workflow Engine** — Schema có nhưng chưa có logic State Machine~~ ✅ DONE (full engine: template CRUD, submit, multi-step approve/reject, audit trail)
 4. ❌ **Audit Trail** — Chưa có middleware tracking changes
-5. ❌ **Notification Engine** — Chưa có gửi email/alert
+5. ❌ ~~**Notification Engine** — Chưa có gửi email/alert~~ ✅ DONE
 
 ---
 
@@ -68,9 +68,9 @@
 - `customers/` — List + Create + Update. ✅
 
 **Gap:**
-1. ❌ **Price List Management** — Schema có `PriceList` + `PriceListLine` nhưng **chưa có UI/Actions CRUD**
-2. ❌ **Supplier soft delete** — Supplier chưa có `deleteSupplier` action
-3. ❌ **Customer Addresses CRUD** — Schema có `CustomerAddress` nhưng UI chưa quản lý
+1. ❌ ~~**Price List Management** — Schema có `PriceList` + `PriceListLine` nhưng **chưa có UI/Actions CRUD**~~ ✅ DONE
+2. ❌ ~~**Supplier soft delete** — Supplier chưa có `deleteSupplier` action~~ ✅ DONE
+3. ❌ ~~**Customer Addresses CRUD** — Schema có `CustomerAddress` nhưng UI chưa quản lý~~ ✅ DONE (get, create, update, delete, default management)
 4. ⚠️ **Product Media upload** — Schema có `ProductMedia` nhưng chưa thấy upload flow thực tế
 
 ---
@@ -89,8 +89,8 @@
 - `isExpiringSoon` tính toán trong code (30 ngày).
 
 **Gap:**
-1. ❌ **Upload PDF** — Schema có `ContractDocument` nhưng chưa có upload flow
-2. ❌ **Contract Amendment tracking** — Schema có `ContractAmendment` nhưng chưa có UI
+1. ❌ ~~**Upload PDF** — Schema có `ContractDocument` nhưng chưa có upload flow~~ ✅ DONE
+2. ❌ ~~**Contract Amendment tracking** — Schema có `ContractAmendment` nhưng chưa có UI~~ ✅ DONE (with audit trail: amendNo, signedDate, description)
 3. ❌ **Cảnh báo email tự động** — Chưa có notification khi HĐ sắp hết hạn
 4. ⚠️ **PO/SO liên kết HĐ** — Schema có foreign key nhưng UI chưa enforce
 
@@ -131,11 +131,11 @@
 - `procurement/` — `getPurchaseOrders`, `getPODetail`, `createPurchaseOrder`, `updatePOStatus`, `getPOStats`. ✅
 
 **Gap:**
-1. ❌ **Tax Engine API** — Yêu cầu core: nhập CIF + Country + ABV → tính NK/TTĐB/VAT tự động. **Hoàn toàn thiếu**
-2. ❌ **Landed Cost Campaign** — Schema có `LandedCostCampaign` + `LandedCostAllocation` nhưng **chưa có API/UI**
-3. ❌ **Import PO từ Excel** — Chưa có
-4. ❌ **Contract liên kết** — Schema có `contractId` nhưng UI chưa cho chọn
-5. ❌ **Variance Report** — Chưa có
+1. ❌ ~~**Tax Engine API** — Yêu cầu core: nhập CIF + Country + ABV → tính NK/TTĐB/VAT tự động. **Hoàn toàn thiếu**~~ ✅ DONE
+2. ❌ ~~**Landed Cost Campaign** — Schema có `LandedCostCampaign` + `LandedCostAllocation` nhưng **chưa có API/UI**~~ ✅ DONE
+3. ❌ ~~**Import PO từ Excel** — Chưa có~~ ✅ DONE (importPOFromExcel)
+4. ❌ ~~**Contract liên kết** — Schema có `contractId` nhưng UI chưa cho chọn~~ ✅ DONE
+5. ❌ ~~**Variance Report** — Chưa có~~ ✅ DONE (getPOVarianceReport + PO Tax Engine)
 
 ---
 
@@ -232,8 +232,8 @@
 - `delivery/` — `getDeliveryRoutes`, `getDeliveryStats`, `updateRouteStatus`, `getDriversAndVehicles`, `createDeliveryRoute`, `recordEPOD`. ✅
 
 **Gap:**
-1. ⚠️ **COD → AR sync** — COD status tracked nhưng chưa auto-create AR payment
-2. ❌ **Reverse Logistics** — Chưa có biên bản bể vỡ
+1. ⚠️ ~~**COD → AR sync** — COD status tracked nhưng chưa auto-create AR payment~~ ✅ DONE (syncCODToAR: auto-create AR payment + update invoice status)
+2. ❌ ~~**Reverse Logistics** — Chưa có biên bản bể vỡ~~ ✅ DONE (recordDeliveryFailure + scheduleRedelivery)
 3. ⚠️ **Mobile responsive** — Chưa verify responsive cho shipper
 
 ---
