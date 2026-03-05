@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 
 import { getPurchaseOrders, getPOStats } from './actions'
 import { ProcurementClient } from './ProcurementClient'

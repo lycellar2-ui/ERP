@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 
 import { getStockCountList, getCountStats } from './actions'
 import { StockCountClient } from './StockCountClient'

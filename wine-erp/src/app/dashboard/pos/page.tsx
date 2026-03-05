@@ -1,6 +1,6 @@
-import POSClient from './POSClient'
+﻿import POSClient from './POSClient'
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = { title: 'POS — Bán Hàng Tại Quầy' }

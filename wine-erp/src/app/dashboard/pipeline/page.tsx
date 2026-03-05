@@ -1,7 +1,7 @@
-import { getOpportunities, getPipelineStats } from './actions'
+﻿import { getOpportunities, getPipelineStats } from './actions'
 import { PipelineClient } from './PipelineClient'
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = { title: 'Sales Pipeline | Wine ERP' }

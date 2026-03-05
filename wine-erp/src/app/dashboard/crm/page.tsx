@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 
 import { getCRMCustomers, getCRMStats } from './actions'
 import { CRMClient } from './CRMClient'

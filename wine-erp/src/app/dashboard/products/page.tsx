@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { getProducts } from './actions'
 import { ProductsClient } from './ProductsClient'
 
-export const metadata = { title: 'Danh Mục Sản Phẩm | Wine ERP' }
+export const metadata = { title: 'Danh M?c S?n Ph?m | Wine ERP' }
 
 export default async function ProductsPage() {
     // Server-side initial fetch

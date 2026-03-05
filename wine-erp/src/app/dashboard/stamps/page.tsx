@@ -1,7 +1,7 @@
-import { getStampPurchases, getStampSummary } from './actions'
+﻿import { getStampPurchases, getStampSummary } from './actions'
 import StampsClient from './StampsClient'
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = {

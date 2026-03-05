@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 
 import { getTransferOrders, getTransferStats } from './actions'
 import { TransfersClient } from './TransfersClient'

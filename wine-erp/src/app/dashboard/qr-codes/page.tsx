@@ -1,7 +1,7 @@
-import { QRCodeClient } from './QRCodeClient'
+﻿import { QRCodeClient } from './QRCodeClient'
 import { getQRCodes, getQRStats } from './actions'
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic'
 
 
 export default async function QRCodePage() {

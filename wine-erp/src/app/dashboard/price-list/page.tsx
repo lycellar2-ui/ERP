@@ -1,7 +1,7 @@
-import { getPriceLists } from './actions'
+﻿import { getPriceLists } from './actions'
 import { PriceListClient } from './PriceListClient'
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = {
