@@ -13,6 +13,8 @@ dotenv.config({ path: '.env.local' })
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL!.replace('?sslmode=require', ''),
     ssl: { rejectUnauthorized: false },
+    max: 3,
+    allowExitOnIdle: true,
 })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })

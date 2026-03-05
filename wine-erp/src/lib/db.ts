@@ -14,14 +14,14 @@ function createPrismaClient() {
         throw new Error('DATABASE_URL environment variable is not set')
     }
 
-    // Supabase pooler (port 6543) uses self-signed certs — must disable strict TLS
-    // This is safe because we're connecting to Supabase's managed infrastructure
+    // Session Pooler (port 5432) — max pool low to avoid Supabase free tier limits (~15 total)
     const pool = new pg.Pool({
         connectionString,
         ssl: { rejectUnauthorized: false },
-        max: 10,
-        idleTimeoutMillis: 30000,
+        max: 3,
+        idleTimeoutMillis: 15000,
         connectionTimeoutMillis: 10000,
+        allowExitOnIdle: true,
     })
 
     pool.on('error', (err) => {
