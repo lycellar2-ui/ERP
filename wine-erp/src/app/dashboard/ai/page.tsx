@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { Brain } from 'lucide-react'
 import { AnomalyWidget, DemandForecastWidget, PricingWidget } from './AIWidgets'
+import { OCRUploadWidget } from './OCRWidget'
 import { ApiKeyVault, PromptLibrary, AiUsageCard } from './VaultUI'
 import { getApiKeys, getPromptTemplates, getAiUsageStats } from './vault-actions'
 
@@ -103,6 +104,9 @@ export default async function AIPage() {
                     </div>
                 ))}
             </div>
+
+            {/* OCR Upload */}
+            <OCRUploadWidget />
 
             {/* Interactive AI Widgets */}
             <AnomalyWidget />
