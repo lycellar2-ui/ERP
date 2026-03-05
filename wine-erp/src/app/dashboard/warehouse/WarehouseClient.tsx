@@ -4,15 +4,17 @@ import { useState } from 'react'
 import {
     Warehouse, Package, BarChart3, Plus, Search, MapPin,
     Thermometer, Box, X, Save, Loader2, AlertCircle, CheckCircle2,
-    ChevronRight, Layers, PackagePlus, Truck
+    ChevronRight, Layers, PackagePlus, Truck, ShieldAlert, Trash2
 } from 'lucide-react'
 import {
     WarehouseRow, StockLotRow, LocationRow,
-    createWarehouse, createLocation, getStockInventory, getLocations
+    createWarehouse, createLocation, getStockInventory, getLocations,
+    getQuarantinedLots, moveToQuarantine, releaseFromQuarantine, writeOffStock
 } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { GoodsReceiptTab } from './GoodsReceiptTab'
 import { DeliveryOrderTab } from './DeliveryOrderTab'
+import { LocationManager } from './LocationManager'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
@@ -254,8 +256,93 @@ function StockTable({ lots }: { lots: StockLotRow[] }) {
     )
 }
 
+// ── Quarantine & Write-Off Panel ──────────────────
+function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: boolean; onRefresh: () => void }) {
+    const [processing, setProcessing] = useState<string | null>(null)
+    const [loaded, setLoaded] = useState(false)
+
+    const handleLoad = () => { setLoaded(true); onRefresh() }
+
+    const handleRelease = async (lotId: string, action: 'RESTORE' | 'WRITE_OFF') => {
+        setProcessing(lotId)
+        await releaseFromQuarantine(lotId, action)
+        onRefresh()
+        setProcessing(null)
+    }
+
+    if (!loaded) {
+        return (
+            <div className="flex flex-col items-center py-16 gap-3 rounded-xl" style={{ border: '1px dashed #2A4355' }}>
+                <ShieldAlert size={32} style={{ color: '#2A4355' }} />
+                <p className="text-sm" style={{ color: '#4A6A7A' }}>Quản lý hàng cách ly và ghi nhận hao hụt</p>
+                <button onClick={handleLoad} className="text-xs px-4 py-2 rounded-lg font-semibold"
+                    style={{ background: '#87CBB9', color: '#0A1926' }}>Tải Danh Sách Cách Ly</button>
+            </div>
+        )
+    }
+
+    if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                    <ShieldAlert size={14} className="inline mr-1.5" />Hàng Đang Cách Ly
+                </h3>
+                <button onClick={onRefresh} className="text-xs px-3 py-1.5 rounded" style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                    Làm Mới
+                </button>
+            </div>
+
+            {lots.length === 0 ? (
+                <div className="flex flex-col items-center py-12 gap-2 rounded-xl" style={{ border: '1px dashed #2A4355' }}>
+                    <CheckCircle2 size={28} style={{ color: '#5BA88A' }} />
+                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có hàng nào đang cách ly</p>
+                </div>
+            ) : (
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                    <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                {['Lô Hàng', 'Sản Phẩm', 'SL', 'Vị Trí', 'Ngày Nhập', ''].map(h => (
+                                    <th key={h} className="px-4 py-3 font-semibold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>{h}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {lots.map((lot: any) => (
+                                <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                    <td className="px-4 py-3 font-mono font-bold" style={{ color: '#D4A853' }}>{lot.lotNo}</td>
+                                    <td className="px-4 py-3" style={{ color: '#E8F1F2' }}>{lot.productName || lot.productId}</td>
+                                    <td className="px-4 py-3 font-mono" style={{ color: '#8AAEBB' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
+                                    <td className="px-4 py-3 font-mono" style={{ color: '#4A6A7A' }}>{lot.locationCode || '—'}</td>
+                                    <td className="px-4 py-3" style={{ color: '#4A6A7A' }}>{new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex gap-2 justify-end">
+                                            <button onClick={() => handleRelease(lot.id, 'RESTORE')} disabled={processing === lot.id}
+                                                className="px-2.5 py-1 rounded text-xs font-semibold"
+                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                {processing === lot.id ? '...' : 'Khôi Phục'}
+                                            </button>
+                                            <button onClick={() => handleRelease(lot.id, 'WRITE_OFF')} disabled={processing === lot.id}
+                                                className="px-2.5 py-1 rounded text-xs font-semibold"
+                                                style={{ background: 'rgba(139,26,46,0.12)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)' }}>
+                                                <Trash2 size={10} className="inline mr-0.5" />Hủy
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ── Main ──────────────────────────────────────────
-type WMSTab = 'inventory' | 'gr' | 'do'
+type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine'
 
 interface Props {
     initialWarehouses: WarehouseRow[]
@@ -267,6 +354,9 @@ export function WarehouseClient({ initialWarehouses, stats }: Props) {
     const [selectedWH, setSelectedWH] = useState<string | null>(null)
     const [lots, setLots] = useState<StockLotRow[]>([])
     const [lotsLoading, setLotsLoading] = useState(false)
+    const [selectedLocations, setSelectedLocations] = useState<LocationRow[]>([])
+    const [quarantineLots, setQuarantineLots] = useState<any[]>([])
+    const [qLoading, setQLoading] = useState(false)
     const [search, setSearch] = useState('')
     const [wineFilter, setWineFilter] = useState('')
     const [createWHOpen, setCreateWHOpen] = useState(false)
@@ -276,17 +366,23 @@ export function WarehouseClient({ initialWarehouses, stats }: Props) {
 
     const wmsTabs: { key: WMSTab; label: string; icon: any }[] = [
         { key: 'inventory', label: 'Tồn Kho', icon: Package },
+        { key: 'locations', label: 'Vị Trí Kho', icon: MapPin },
         { key: 'gr', label: 'Nhập Kho (GR)', icon: PackagePlus },
         { key: 'do', label: 'Xuất Kho (DO)', icon: Truck },
+        { key: 'quarantine', label: 'Cách Ly & Hủy', icon: ShieldAlert },
     ]
 
     const selectWarehouse = async (id: string) => {
-        if (selectedWH === id) { setSelectedWH(null); setLots([]); return }
+        if (selectedWH === id) { setSelectedWH(null); setLots([]); setSelectedLocations([]); return }
         setSelectedWH(id)
         setLotsLoading(true)
         try {
-            const data = await getStockInventory({ warehouseId: id })
+            const [data, locs] = await Promise.all([
+                getStockInventory({ warehouseId: id }),
+                getLocations(id),
+            ])
             setLots(data)
+            setSelectedLocations(locs)
         } finally {
             setLotsLoading(false)
         }
@@ -366,6 +462,48 @@ export function WarehouseClient({ initialWarehouses, stats }: Props) {
 
             {/* DO Tab */}
             {activeTab === 'do' && <DeliveryOrderTab warehouses={warehouseList} />}
+
+            {/* Quarantine & Write-Off Tab */}
+            {activeTab === 'quarantine' && (
+                <QuarantinePanel lots={quarantineLots} loading={qLoading} onRefresh={async () => {
+                    setQLoading(true)
+                    setQuarantineLots(await getQuarantinedLots())
+                    setQLoading(false)
+                }} />
+            )}
+
+            {/* Locations Tab */}
+            {activeTab === 'locations' && (
+                <div className="grid grid-cols-12 gap-5">
+                    {/* Left: warehouse list */}
+                    <div className="col-span-12 lg:col-span-4 space-y-3">
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>Chọn Kho</p>
+                        {warehouses.map(w => (
+                            <WarehouseCard key={w.id} warehouse={w} isSelected={selectedWH === w.id}
+                                onClick={() => selectWarehouse(w.id)} />
+                        ))}
+                    </div>
+                    {/* Right: location manager */}
+                    <div className="col-span-12 lg:col-span-8">
+                        {selectedWH ? (
+                            <LocationManager
+                                key={selectedWH}
+                                warehouseId={selectedWH}
+                                warehouseName={warehouses.find(w => w.id === selectedWH)?.name ?? ''}
+                                initialLocations={selectedLocations}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center py-20 gap-3 rounded-xl"
+                                style={{ border: '1px dashed #2A4355' }}>
+                                <MapPin size={36} style={{ color: '#2A4355' }} />
+                                <p className="text-sm" style={{ color: '#4A6A7A' }}>
+                                    Chọn một kho bên trái để thiết lập Zone / Rack / Bin Location
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Inventory Tab — Warehouse grid + Stock view */}
             {activeTab === 'inventory' && (

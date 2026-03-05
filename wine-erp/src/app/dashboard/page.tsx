@@ -2,12 +2,13 @@
 
 import {
     getDashboardStats, getMonthlyRevenue, approveSO, rejectSO,
-    getPLSummary, getCashPosition, getARAgingChart, getPendingApprovalDetails
+    getPLSummary, getCashPosition, getARAgingChart, getPendingApprovalDetails,
+    exportDashboardExcel
 } from './actions'
 import { getKpiSummary } from './kpi/actions'
 import {
     TrendingUp, TrendingDown, AlertCircle, Ship, Package, CheckCircle2,
-    ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck
+    ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck, Download
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
 
@@ -77,6 +78,15 @@ export default async function DashboardPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <form action={async () => {
+                        'use server'
+                        await exportDashboardExcel()
+                    }}>
+                        <button type="submit" className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md"
+                            style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.25)' }}>
+                            <Download size={14} /> Xuất Excel
+                        </button>
+                    </form>
                     {['Tháng này', 'Quý này', 'Năm này'].map((opt, i) => (
                         <div key={opt} className="px-4 py-2 text-sm font-medium"
                             style={{

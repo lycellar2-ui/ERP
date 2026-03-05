@@ -3,11 +3,13 @@
 import { useState, useCallback } from 'react'
 import {
     Shield, Users, Settings, Bell, Plus, X, Save, Loader2,
-    User, ChevronDown, CheckCircle2, AlertCircle, Search, Eye
+    User, ChevronDown, CheckCircle2, AlertCircle, Search, Eye,
+    ClipboardCheck, Check, XCircle
 } from 'lucide-react'
 import {
     UserRow, RoleRow, createUser, updateUser, updateUserRoles,
-    createRole, updateRolePermissions, getUsers, getRoles
+    createRole, updateRolePermissions, getUsers, getRoles,
+    getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate
 } from './actions'
 import { getAuditLogs } from '@/lib/audit'
 
@@ -29,7 +31,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
     SUSPENDED: { label: 'Khoá', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
 }
 
-type Tab = 'users' | 'roles' | 'audit'
+type Tab = 'users' | 'roles' | 'approvals' | 'audit'
 
 type PermissionRow = { id: string; code: string; module: string; action: string }
 
@@ -245,6 +247,10 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
     const [search, setSearch] = useState('')
     const [auditLogs, setAuditLogs] = useState<any[]>([])
     const [auditLoaded, setAuditLoaded] = useState(false)
+    const [approvalTemplates, setApprovalTemplates] = useState<any[]>([])
+    const [pendingApprovals, setPendingApprovals] = useState<any[]>([])
+    const [approvalsLoaded, setApprovalsLoaded] = useState(false)
+    const [processingId, setProcessingId] = useState<string | null>(null)
 
     const reload = useCallback(async () => {
         const [u, r] = await Promise.all([getUsers(), getRoles()])
@@ -257,6 +263,23 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
         setAuditLogs(logs)
         setAuditLoaded(true)
     }, [])
+
+    const loadApprovals = useCallback(async () => {
+        const [templates, pending] = await Promise.all([
+            getApprovalTemplates(),
+            getPendingApprovals('system'),
+        ])
+        setApprovalTemplates(templates)
+        setPendingApprovals(pending)
+        setApprovalsLoaded(true)
+    }, [])
+
+    const handleApproval = async (requestId: string, action: 'APPROVE' | 'REJECT') => {
+        setProcessingId(requestId)
+        await processApproval({ requestId, action, approverId: 'system' })
+        await loadApprovals()
+        setProcessingId(null)
+    }
 
     async function handleStatusChange(userId: string, newStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') {
         await updateUser(userId, { status: newStatus })
@@ -277,6 +300,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
     const tabs: { key: Tab; label: string; icon: React.FC<any> }[] = [
         { key: 'users', label: 'Người Dùng', icon: Users },
         { key: 'roles', label: 'Vai Trò & Phân Quyền', icon: Shield },
+        { key: 'approvals', label: 'Quy Trình Duyệt', icon: ClipboardCheck },
         { key: 'audit', label: 'Nhật Ký Hệ Thống', icon: Eye },
     ]
 
@@ -317,7 +341,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
                     const active = tab === t.key
                     return (
                         <button key={t.key}
-                            onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit() }}
+                            onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit(); if (t.key === 'approvals' && !approvalsLoaded) loadApprovals() }}
                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded transition-all"
                             style={{
                                 background: active ? '#1B2E3D' : 'transparent',
@@ -462,6 +486,84 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
                                 </p>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Approvals Tab ─────────────────────── */}
+            {tab === 'approvals' && (
+                <div className="space-y-6">
+                    {/* Pending Approvals */}
+                    <div>
+                        <h3 className="text-sm font-bold mb-3" style={{ color: '#E8F1F2' }}>Yêu Cầu Đang Chờ Duyệt</h3>
+                        {!approvalsLoaded ? (
+                            <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+                        ) : pendingApprovals.length === 0 ? (
+                            <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #2A4355' }}>
+                                <CheckCircle2 size={24} style={{ color: '#5BA88A' }} />
+                                <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có yêu cầu nào chờ duyệt</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {pendingApprovals.map((req: any) => (
+                                    <div key={req.id} className="flex items-center justify-between p-4 rounded-md" style={card}>
+                                        <div className="flex items-center gap-3">
+                                            <ClipboardCheck size={16} style={{ color: '#D4A853' }} />
+                                            <div>
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{req.templateName || req.docType}</p>
+                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Bước {req.currentStep} • Bởi {req.requestedByName || req.requestedBy}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{req.docType}</span>
+                                            <button onClick={() => handleApproval(req.id, 'APPROVE')} disabled={processingId === req.id}
+                                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded transition-all"
+                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                {processingId === req.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Duyệt
+                                            </button>
+                                            <button onClick={() => handleApproval(req.id, 'REJECT')} disabled={processingId === req.id}
+                                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded transition-all"
+                                                style={{ background: 'rgba(139,26,46,0.12)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)' }}>
+                                                <XCircle size={12} /> Từ Chối
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Approval Templates */}
+                    <div>
+                        <h3 className="text-sm font-bold mb-3" style={{ color: '#E8F1F2' }}>Mẫu Quy Trình Duyệt</h3>
+                        {approvalTemplates.length === 0 ? (
+                            <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #2A4355' }}>
+                                <ClipboardCheck size={24} style={{ color: '#2A4355' }} />
+                                <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có mẫu quy trình. Chạy seed để tạo templates.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                                {approvalTemplates.map((tpl: any) => (
+                                    <div key={tpl.id} className="p-4 rounded-md" style={card}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{tpl.name}</h4>
+                                            <span className="text-xs px-2 py-0.5 rounded font-bold"
+                                                style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>{tpl.docType}</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            {(tpl.steps || []).map((step: any, i: number) => (
+                                                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: '#8AAEBB' }}>
+                                                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                                                        style={{ background: '#142433', color: '#87CBB9' }}>{i + 1}</span>
+                                                    {step.approverRole}
+                                                    {step.threshold && <span style={{ color: '#4A6A7A' }}>(≥{(step.threshold / 1e6).toFixed(0)}M)</span>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

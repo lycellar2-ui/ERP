@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Truck, MapPin, Package, CheckCircle2, Clock, Plus, X, Save, Loader2, AlertCircle, ChevronDown, Camera, Image as ImageIcon } from 'lucide-react'
+import { Truck, MapPin, Package, CheckCircle2, Clock, Plus, X, Save, Loader2, AlertCircle, ChevronDown, Camera, Image as ImageIcon, AlertTriangle, RotateCcw } from 'lucide-react'
 import {
     DeliveryRouteRow, DriverOption, VehicleOption, RouteStopRow,
     getDeliveryRoutes, updateRouteStatus, createDeliveryRoute, getDriversAndVehicles,
-    getRouteStops, recordEPOD, uploadPODPhoto
+    getRouteStops, recordEPOD, uploadPODPhoto,
+    getFailedDeliveries, FailedDeliveryRow
 } from './actions'
 import { SignaturePad } from '@/components/SignaturePad'
 import { formatVND, formatDate } from '@/lib/utils'
@@ -473,6 +474,9 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [epodRouteId, setEpodRouteId] = useState<string | null>(null)
+    const [failedDeliveries, setFailedDeliveries] = useState<FailedDeliveryRow[]>([])
+    const [failedLoaded, setFailedLoaded] = useState(false)
+    const [failedLoading, setFailedLoading] = useState(false)
 
     const reload = async (s?: string) => {
         setLoading(true)
@@ -486,6 +490,13 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
         await updateRouteStatus(routeId, nextStatus as any)
         await reload()
         setUpdatingId(null)
+    }
+
+    const loadFailed = async () => {
+        setFailedLoading(true)
+        setFailedDeliveries(await getFailedDeliveries())
+        setFailedLoading(false)
+        setFailedLoaded(true)
     }
 
     return (
@@ -633,6 +644,67 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                 routeId={epodRouteId}
                 onClose={() => { setEpodRouteId(null); reload() }}
             />
+
+            {/* Failed Deliveries Section */}
+            <div className="rounded-md p-5" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle size={16} style={{ color: '#D4A853' }} />
+                        <h3 className="font-semibold text-sm" style={{ color: '#E8F1F2' }}>Giao Hàng Thất Bại</h3>
+                        {failedLoaded && <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                            style={{ background: failedDeliveries.length > 0 ? 'rgba(224,82,82,0.12)' : 'rgba(91,168,138,0.12)', color: failedDeliveries.length > 0 ? '#E05252' : '#5BA88A' }}>
+                            {failedDeliveries.length}
+                        </span>}
+                    </div>
+                    <button onClick={loadFailed} className="text-xs px-3 py-1.5 rounded font-semibold"
+                        style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                        {failedLoading ? 'Đang tải...' : failedLoaded ? 'Làm Mới' : 'Tải Danh Sách'}
+                    </button>
+                </div>
+
+                {!failedLoaded ? (
+                    <p className="text-xs text-center py-6" style={{ color: '#4A6A7A' }}>Nhấn "Tải Danh Sách" để xem các đơn giao thất bại</p>
+                ) : failedDeliveries.length === 0 ? (
+                    <div className="flex flex-col items-center py-8 gap-2">
+                        <CheckCircle2 size={24} style={{ color: '#5BA88A' }} />
+                        <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có đơn giao thất bại nào</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {failedDeliveries.map(fd => (
+                            <div key={fd.stopId} className="flex items-center justify-between p-3 rounded-md"
+                                style={{ background: '#142433', border: '1px solid rgba(224,82,82,0.15)' }}>
+                                <div className="flex items-center gap-3">
+                                    <AlertTriangle size={14} style={{ color: '#E05252' }} />
+                                    <div>
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{fd.customerName}</p>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                            SO: {fd.soNo} • Tài xế: {fd.driverName} • {new Date(fd.failedAt).toLocaleDateString('vi-VN')}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ background: 'rgba(224,82,82,0.12)', color: '#E05252' }}>
+                                        {fd.failureReason === 'CUSTOMER_ABSENT' ? 'Vắng Nhà' :
+                                            fd.failureReason === 'WRONG_ADDRESS' ? 'Sai Địa Chỉ' :
+                                                fd.failureReason === 'REFUSED' ? 'Từ Chối Nhận' :
+                                                    fd.failureReason === 'DAMAGED' ? 'Hàng Hỏng' : fd.failureReason}
+                                    </span>
+                                    {fd.codAmount > 0 && (
+                                        <span className="text-xs font-mono font-bold" style={{ color: '#D4A853' }}>
+                                            COD: {formatVND(fd.codAmount)}
+                                        </span>
+                                    )}
+                                    <button className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded"
+                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                        <RotateCcw size={10} /> Giao Lại
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

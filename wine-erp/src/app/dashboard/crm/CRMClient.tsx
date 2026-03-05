@@ -4,9 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import {
     Users, Search, Phone, Mail, Handshake, Wine,
     Package, AlertCircle, TrendingUp, ChevronRight, MessageSquarePlus,
-    ShoppingCart, Clock, CheckCircle2
+    ShoppingCart, Clock, CheckCircle2, Loader2, Crown
 } from 'lucide-react'
-import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions } from './actions'
+import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions, recalcAllCustomerTiers } from './actions'
 import { ContactsPanel, TagsPanel } from './ContactsTagsPanel'
 import { formatVND, formatDate } from '@/lib/utils'
 
@@ -158,6 +158,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     const [profileLoading, setProfileLoading] = useState(false)
     const [txHistory, setTxHistory] = useState<Awaited<ReturnType<typeof getCustomerTransactions>> | null>(null)
     const [txOpen, setTxOpen] = useState(false)
+    const [tierRecalcing, setTierRecalcing] = useState(false)
+    const [tierResult, setTierResult] = useState<string | null>(null)
 
     const reload = useCallback(async (s?: string, t?: string) => {
         setLoading(true)
@@ -199,6 +201,18 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         360° Customer View – Lịch sử, tương tác, cơ hội bán hàng
                     </p>
                 </div>
+                <button onClick={async () => {
+                    setTierRecalcing(true); setTierResult(null)
+                    const res = await recalcAllCustomerTiers()
+                    setTierResult(res.success ? `✅ Đã cập nhật ${res.updated} khách hàng` : 'Lỗi')
+                    setTierRecalcing(false)
+                    setTimeout(() => setTierResult(null), 3000)
+                }} disabled={tierRecalcing}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-all"
+                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                    {tierRecalcing ? <Loader2 size={12} className="animate-spin" /> : <Crown size={12} />}
+                    {tierRecalcing ? 'Đang tính...' : tierResult || 'Recalc Tiers'}
+                </button>
             </div>
 
             {/* Stats */}
