@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { cached, revalidateCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
 import { generateSoNo } from '@/lib/utils'
 import { logAudit } from '@/lib/audit'
@@ -115,11 +116,13 @@ export async function getSalesOrderDetail(id: string) {
 
 // ── Customers for dropdown ───────────────────────
 export async function getCustomersForSO() {
-    return prisma.customer.findMany({
-        where: { status: 'ACTIVE', deletedAt: null },
-        select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true },
-        orderBy: { name: 'asc' },
-    })
+    return cached('sales:customers', async () => {
+        return prisma.customer.findMany({
+            where: { status: 'ACTIVE', deletedAt: null },
+            select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true },
+            orderBy: { name: 'asc' },
+        })
+    }, 60_000)
 }
 
 // ── Products with stock for SO lines ─────────────
@@ -200,11 +203,13 @@ export async function getCustomerARBalance(customerId: string): Promise<number> 
 
 // ── Users (sales reps) ───────────────────────────
 export async function getSalesReps() {
-    return prisma.user.findMany({
-        where: { status: 'ACTIVE' },
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-    })
+    return cached('sales:reps', async () => {
+        return prisma.user.findMany({
+            where: { status: 'ACTIVE' },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' },
+        })
+    }, 120_000)
 }
 
 // ── Create Sales Order ───────────────────────────
@@ -292,6 +297,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
 
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/allocation')
+        revalidateCache('sales')
         return { success: true, soId: so.id, soNo: so.soNo }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -327,6 +333,8 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
             }
             revalidatePath('/dashboard/sales')
             revalidatePath('/dashboard')
+            revalidateCache('sales')
+            revalidateCache('dashboard')
             return { success: true, needsApproval: true }
         }
 
@@ -334,6 +342,8 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
         await prisma.salesOrder.update({ where: { id }, data: { status: 'CONFIRMED' } })
         await logAudit({ userId: so.salesRepId, action: 'CONFIRM', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CONFIRMED' } }).catch(() => { })
         revalidatePath('/dashboard/sales')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -357,6 +367,8 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
         }
         await prisma.salesOrder.update({ where: { id }, data: { status: toStatus } })
         revalidatePath('/dashboard/sales')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -400,6 +412,8 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
 
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/allocation')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -408,26 +422,28 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
 
 // ── Sales stats ─────────────────────────────────
 export async function getSalesStats() {
-    const [totals, byStatus] = await Promise.all([
-        prisma.salesOrder.aggregate({
-            where: {
-                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-                createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
-            },
-            _sum: { totalAmount: true },
-            _count: true,
-        }),
-        prisma.salesOrder.groupBy({ by: ['status'], _count: true }),
-    ])
+    return cached('sales:stats', async () => {
+        const [totals, byStatus] = await Promise.all([
+            prisma.salesOrder.aggregate({
+                where: {
+                    status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                    createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+                },
+                _sum: { totalAmount: true },
+                _count: true,
+            }),
+            prisma.salesOrder.groupBy({ by: ['status'], _count: true }),
+        ])
 
-    const statusMap = Object.fromEntries(byStatus.map((s) => [s.status, s._count]))
-    return {
-        monthRevenue: Number(totals._sum.totalAmount ?? 0),
-        monthOrders: totals._count,
-        pendingApproval: statusMap['PENDING_APPROVAL'] ?? 0,
-        draft: statusMap['DRAFT'] ?? 0,
-        confirmed: statusMap['CONFIRMED'] ?? 0,
-    }
+        const statusMap = Object.fromEntries(byStatus.map((s) => [s.status, s._count]))
+        return {
+            monthRevenue: Number(totals._sum.totalAmount ?? 0),
+            monthOrders: totals._count,
+            pendingApproval: statusMap['PENDING_APPROVAL'] ?? 0,
+            draft: statusMap['DRAFT'] ?? 0,
+            confirmed: statusMap['CONFIRMED'] ?? 0,
+        }
+    }, 30_000)
 }
 
 // ── SO Margin analysis (per line COGS vs selling price)
