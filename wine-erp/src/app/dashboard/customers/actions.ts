@@ -87,3 +87,113 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
     revalidatePath('/dashboard/customers')
     return { success: true }
 }
+
+// ── Soft delete customer ──────────────────────────
+export async function deleteCustomer(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const activeSOs = await prisma.salesOrder.count({
+            where: { customerId: id, status: { notIn: ['PAID', 'CANCELLED'] } },
+        })
+        if (activeSOs > 0) {
+            return { success: false, error: `Không thể xoá. KH đang có ${activeSOs} đơn hàng chưa hoàn tất.` }
+        }
+
+        await prisma.customer.update({
+            where: { id },
+            data: { deletedAt: new Date(), status: 'INACTIVE' },
+        })
+        revalidatePath('/dashboard/customers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// CUSTOMER ADDRESS CRUD
+// ═══════════════════════════════════════════════════
+
+export async function getCustomerAddresses(customerId: string) {
+    return prisma.customerAddress.findMany({
+        where: { customerId },
+        orderBy: [{ isDefault: 'desc' }],
+    })
+}
+
+export async function createCustomerAddress(input: {
+    customerId: string
+    label: string
+    address: string
+    ward?: string
+    district?: string
+    city?: string
+    isBilling?: boolean
+    isDefault?: boolean
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        if (input.isDefault) {
+            await prisma.customerAddress.updateMany({
+                where: { customerId: input.customerId, isDefault: true },
+                data: { isDefault: false },
+            })
+        }
+
+        await prisma.customerAddress.create({
+            data: {
+                customerId: input.customerId,
+                label: input.label,
+                address: input.address,
+                ward: input.ward ?? null,
+                district: input.district ?? null,
+                city: input.city ?? null,
+                isBilling: input.isBilling ?? false,
+                isDefault: input.isDefault ?? false,
+            },
+        })
+        revalidatePath('/dashboard/customers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function updateCustomerAddress(
+    id: string,
+    input: {
+        label?: string
+        address?: string
+        ward?: string | null
+        district?: string | null
+        city?: string | null
+        isBilling?: boolean
+        isDefault?: boolean
+    }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        if (input.isDefault) {
+            const addr = await prisma.customerAddress.findUnique({ where: { id } })
+            if (addr) {
+                await prisma.customerAddress.updateMany({
+                    where: { customerId: addr.customerId, isDefault: true },
+                    data: { isDefault: false },
+                })
+            }
+        }
+
+        await prisma.customerAddress.update({ where: { id }, data: input as any })
+        revalidatePath('/dashboard/customers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function deleteCustomerAddress(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.customerAddress.delete({ where: { id } })
+        revalidatePath('/dashboard/customers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}

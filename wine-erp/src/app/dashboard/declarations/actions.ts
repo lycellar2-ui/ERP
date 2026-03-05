@@ -11,6 +11,8 @@ export type DeclarationRow = {
     periodMonth: number | null
     status: string
     fileUrl: string | null
+    signatureUrl?: string | null
+    documents?: { id: string; name: string; fileUrl: string; uploadedAt: Date }[]
     submittedAt: Date | null
     createdAt: Date
 }
@@ -29,6 +31,7 @@ export async function getDeclarations(filters: {
     const [rows, total] = await Promise.all([
         prisma.taxDeclaration.findMany({
             where,
+            include: { documents: { orderBy: { uploadedAt: 'desc' } } },
             orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
             take: 50,
         }),
@@ -43,6 +46,8 @@ export async function getDeclarations(filters: {
             periodMonth: r.periodMonth,
             status: r.status,
             fileUrl: r.fileUrl,
+            signatureUrl: r.signatureUrl,
+            documents: r.documents,
             submittedAt: r.submittedAt,
             createdAt: r.createdAt,
         })),
@@ -317,4 +322,45 @@ export async function getDeclarationCalendar() {
             daysUntilDeadline: Math.ceil((e.deadline.getTime() - now.getTime()) / 86400000),
         }
     })
+}
+
+// ─── Document & Signature ─────────────────────────
+import { uploadFile } from '@/lib/storage'
+
+export async function uploadTaxDocument(taxId: string, formData: FormData) {
+    try {
+        const file = formData.get('file') as File
+        if (!file) return { success: false, error: 'Chưa chọn file tờ khai' }
+
+        const uploadRes = await uploadFile(formData, 'tax')
+        if (!uploadRes.success || !uploadRes.url) {
+            return { success: false, error: uploadRes.error ?? 'Upload failed' }
+        }
+
+        const doc = await prisma.taxDocument.create({
+            data: {
+                taxId,
+                name: file.name,
+                fileUrl: uploadRes.url,
+            }
+        })
+
+        revalidatePath('/dashboard/declarations')
+        return { success: true, document: doc }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function signTaxDeclaration(taxId: string, signatureUrl: string) {
+    try {
+        await prisma.taxDeclaration.update({
+            where: { id: taxId },
+            data: { signatureUrl, status: 'APPROVED' },
+        })
+        revalidatePath('/dashboard/declarations')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }

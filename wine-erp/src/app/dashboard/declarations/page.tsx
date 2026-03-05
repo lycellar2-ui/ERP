@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Download, Plus, X, Clock, CheckCircle2, Send, Filter, ChevronRight } from 'lucide-react'
+import { FileText, Download, Plus, X, Clock, CheckCircle2, Send, Filter, ChevronRight, UploadCloud, Save, Loader2 } from 'lucide-react'
 import {
     getDeclarations, getDeclarationStats, createDeclaration,
     getDeclarationData, updateDeclarationStatus,
+    uploadTaxDocument, signTaxDeclaration,
     type DeclarationRow,
 } from './actions'
+import { SignaturePad } from '@/components/SignaturePad'
+import { formatDate } from '@/lib/utils'
 
 const TYPE_MAP: Record<string, { label: string; color: string; icon: string }> = {
     IMPORT_CUSTOMS: { label: 'Tờ Khai NK', color: '#87CBB9', icon: '📋' },
@@ -30,6 +33,11 @@ export default function DeclarationsPage() {
     const [detailRow, setDetailRow] = useState<DeclarationRow | null>(null)
     const [detailData, setDetailData] = useState<any>(null)
     const [filterType, setFilterType] = useState('')
+
+    // Upload & Sign states
+    const [uploadingDoc, setUploadingDoc] = useState(false)
+    const [savingSignature, setSavingSignature] = useState(false)
+    const [signatureUrl, setSignatureUrl] = useState('')
 
     const reload = async () => {
         const [d, s] = await Promise.all([
@@ -59,6 +67,37 @@ export default function DeclarationsPage() {
         const res = await updateDeclarationStatus(id, status)
         if (res.success) { reload(); setDetailRow(null) }
         else alert(res.error)
+    }
+
+    const handleUpload = async (taxId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setUploadingDoc(true)
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await uploadTaxDocument(taxId, formData)
+        setUploadingDoc(false)
+        if (res.success && res.document) {
+            reload()
+            // reload detail row to show newly added doc
+            setDetailRow(prev => prev ? { ...prev, documents: [...(prev.documents || []), res.document as any] } : prev)
+        } else {
+            alert(`Lỗi upload: ${res.error}`)
+        }
+    }
+
+    const handleSign = async (taxId: string) => {
+        if (!signatureUrl) return
+        setSavingSignature(true)
+        const res = await signTaxDeclaration(taxId, signatureUrl)
+        setSavingSignature(false)
+        if (res.success) {
+            reload()
+            setDetailRow(null)
+            setDetailData(null)
+        } else {
+            alert(`Lỗi ký duyệt: ${res.error}`)
+        }
     }
 
     const statCards = [
@@ -282,6 +321,64 @@ export default function DeclarationsPage() {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {/* Documents & Signature (Shared for all declaration types) */}
+                            {detailData && (
+                                <div className="space-y-6 pt-6 border-t border-[#2A4355]">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#8AAEBB' }}>Tài Liệu Tờ Khai</p>
+                                            <label className="flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer font-bold"
+                                                style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                                {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                Upload PDF
+                                                <input type="file" className="hidden" accept=".pdf,.png,.jpg" onChange={e => handleUpload(detailRow.id, e)} disabled={uploadingDoc} />
+                                            </label>
+                                        </div>
+                                        {detailRow.documents && detailRow.documents.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {detailRow.documents.map((d: any) => (
+                                                    <a key={d.id} href={d.fileUrl} target="_blank" rel="noreferrer"
+                                                        className="flex items-center gap-2 p-2 rounded bg-[#1B2E3D] text-xs hover:bg-[#2A4355]" style={{ border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                                        <FileText size={14} style={{ color: '#8AAEBB' }} />
+                                                        <span className="truncate flex-1">{d.name}</span>
+                                                        <span style={{ color: '#4A6A7A', fontSize: 10 }}>{formatDate(d.uploadedAt)}</span>
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa upload tờ khai.</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8AAEBB' }}>Ký Điện Tử Phê Duyệt</p>
+                                        {detailRow.signatureUrl ? (
+                                            <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
+                                                <img src={detailRow.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {detailRow.status === 'DRAFT' ? (
+                                                    <>
+                                                        <SignaturePad onEnd={setSignatureUrl} />
+                                                        <div className="flex justify-end">
+                                                            <button onClick={() => handleSign(detailRow.id)} disabled={!signatureUrl || savingSignature}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50"
+                                                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                                                Lưu Chữ Ký & Duyệt
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Không yêu cầu ký điện tử.</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 

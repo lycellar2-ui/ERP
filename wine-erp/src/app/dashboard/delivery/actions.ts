@@ -129,6 +129,7 @@ export async function recordEPOD(data: {
     stopId: string
     confirmedBy: string
     notes?: string
+    signatureUrl?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.$transaction([
@@ -138,11 +139,13 @@ export async function recordEPOD(data: {
                     stopId: data.stopId,
                     confirmedBy: data.confirmedBy,
                     notes: data.notes,
+                    signatureUrl: data.signatureUrl,
                     confirmedAt: new Date(),
                 },
                 update: {
                     confirmedBy: data.confirmedBy,
                     notes: data.notes,
+                    signatureUrl: data.signatureUrl,
                     confirmedAt: new Date(),
                 },
             }),
@@ -169,6 +172,7 @@ export interface RouteStopRow {
     codAmount: number
     podSignedAt: Date | null
     notes: string | null
+    signatureUrl?: string | null
     itemCount: number
 }
 
@@ -187,7 +191,7 @@ export async function getRouteStops(routeId: string): Promise<RouteStopRow[]> {
                     },
                 },
             },
-            pod: { select: { confirmedBy: true, confirmedAt: true, notes: true } },
+            pod: { select: { confirmedBy: true, confirmedAt: true, notes: true, signatureUrl: true } },
         },
         orderBy: { sequence: 'asc' },
     })
@@ -202,6 +206,7 @@ export async function getRouteStops(routeId: string): Promise<RouteStopRow[]> {
         codAmount: Number(s.codAmount),
         podSignedAt: s.podSignedAt,
         notes: s.pod?.notes ?? null,
+        signatureUrl: s.pod?.signatureUrl ?? null,
         itemCount: s.do.so.lines.length,
     }))
 }
@@ -348,6 +353,80 @@ export async function scheduleRedelivery(input: {
 
         revalidatePath('/dashboard/delivery')
         return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── COD → AR Payment Sync ─────────────────────────
+// When driver collects COD, auto-create AR payment record
+export async function syncCODToAR(input: {
+    stopId: string
+    codAmount: number
+    collectedBy: string
+    notes?: string
+}): Promise<{ success: boolean; paymentId?: string; error?: string }> {
+    try {
+        const stop = await prisma.deliveryStop.findUnique({
+            where: { id: input.stopId },
+            include: {
+                do: {
+                    select: {
+                        id: true, doNo: true, soId: true,
+                        so: {
+                            select: {
+                                id: true, soNo: true, customerId: true,
+                                arInvoices: { where: { status: { not: 'PAID' } }, take: 1, orderBy: { createdAt: 'desc' } },
+                            },
+                        },
+                    },
+                },
+            },
+        })
+        if (!stop) return { success: false, error: 'Delivery stop not found' }
+        if (!stop.do?.so) return { success: false, error: 'No SO linked to this delivery' }
+
+        const invoice = stop.do.so.arInvoices[0]
+        if (!invoice) return { success: false, error: 'No outstanding AR invoice for this SO' }
+
+        // Create AR Payment
+        const paymentCount = await prisma.aRPayment.count()
+        const paymentNo = `COD-${String(paymentCount + 1).padStart(6, '0')}`
+
+        const payment = await prisma.aRPayment.create({
+            data: {
+                paymentNo,
+                invoiceId: invoice.id,
+                amount: input.codAmount,
+                paymentDate: new Date(),
+                method: 'COD',
+                reference: `COD from stop ${stop.sequence} | Driver: ${input.collectedBy}`,
+                notes: input.notes ?? `Auto-created from COD delivery ${stop.id}`,
+            },
+        })
+
+        // Update stop COD status
+        await prisma.deliveryStop.update({
+            where: { id: input.stopId },
+            data: { codCollected: true, codStatus: 'COLLECTED_CASH' },
+        })
+
+        // Check if invoice is fully paid
+        const totalPaid = await prisma.aRPayment.aggregate({
+            where: { invoiceId: invoice.id },
+            _sum: { amount: true },
+        })
+        const paid = Number(totalPaid._sum.amount ?? 0)
+        if (paid >= Number(invoice.amount)) {
+            await prisma.aRInvoice.update({
+                where: { id: invoice.id },
+                data: { status: 'PAID' },
+            })
+        }
+
+        revalidatePath('/dashboard/delivery')
+        revalidatePath('/dashboard/finance')
+        return { success: true, paymentId: payment.id }
     } catch (err: any) {
         return { success: false, error: err.message }
     }

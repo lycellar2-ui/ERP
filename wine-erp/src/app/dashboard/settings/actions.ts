@@ -203,3 +203,233 @@ export async function getSettingsStats() {
     ])
     return { users, roles, activeUsers, pendingApprovals }
 }
+
+// ═══════════════════════════════════════════════════
+// APPROVAL WORKFLOW ENGINE
+// ═══════════════════════════════════════════════════
+
+// ── Get approval templates ────────────────────────
+export async function getApprovalTemplates() {
+    return prisma.approvalTemplate.findMany({
+        include: {
+            steps: { orderBy: { stepOrder: 'asc' } },
+            _count: { select: { requests: true } },
+        },
+        orderBy: { name: 'asc' },
+    })
+}
+
+// ── Create approval template with steps ───────────
+export async function createApprovalTemplate(input: {
+    name: string
+    docType: 'PURCHASE_ORDER' | 'SALES_ORDER' | 'WRITE_OFF' | 'DISCOUNT_OVERRIDE' | 'TAX_DECLARATION' | 'CONSIGNMENT'
+    steps: { approverRole: string; threshold?: number }[]
+}): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+        const template = await prisma.approvalTemplate.create({
+            data: {
+                name: input.name,
+                docType: input.docType,
+                steps: {
+                    create: input.steps.map((s, i) => ({
+                        stepOrder: i + 1,
+                        approverRole: s.approverRole,
+                        threshold: s.threshold ?? null,
+                    })),
+                },
+            },
+        })
+        revalidatePath('/dashboard/settings')
+        return { success: true, id: template.id }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Submit document for approval ──────────────────
+export async function submitForApproval(input: {
+    docType: 'PURCHASE_ORDER' | 'SALES_ORDER' | 'WRITE_OFF' | 'DISCOUNT_OVERRIDE' | 'TAX_DECLARATION' | 'CONSIGNMENT'
+    docId: string
+    requestedBy: string
+    docValue?: number // Optional: for threshold-based routing
+}): Promise<{ success: boolean; requestId?: string; error?: string }> {
+    try {
+        // Find matching template
+        const template = await prisma.approvalTemplate.findFirst({
+            where: { docType: input.docType },
+            include: { steps: { orderBy: { stepOrder: 'asc' } } },
+        })
+        if (!template) return { success: false, error: 'Không tìm thấy template phê duyệt cho loại tài liệu này' }
+
+        // Filter steps by threshold (only steps where threshold <= docValue, or no threshold)
+        const applicableSteps = template.steps.filter(s =>
+            !s.threshold || (input.docValue && input.docValue >= Number(s.threshold))
+        )
+        if (applicableSteps.length === 0) {
+            return { success: false, error: 'Không có bước phê duyệt phù hợp' }
+        }
+
+        const request = await prisma.approvalRequest.create({
+            data: {
+                templateId: template.id,
+                docType: input.docType,
+                docId: input.docId,
+                currentStep: 1,
+                status: 'PENDING',
+                requestedBy: input.requestedBy,
+            },
+        })
+
+        revalidatePath('/dashboard/settings')
+        return { success: true, requestId: request.id }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Approve a pending request ─────────────────────
+export async function processApproval(input: {
+    requestId: string
+    action: 'APPROVE' | 'REJECT'
+    approverId: string
+    comment?: string
+}): Promise<{ success: boolean; finalStatus?: string; error?: string }> {
+    try {
+        const request = await prisma.approvalRequest.findUnique({
+            where: { id: input.requestId },
+            include: {
+                template: { include: { steps: { orderBy: { stepOrder: 'asc' } } } },
+            },
+        })
+        if (!request) return { success: false, error: 'Yêu cầu phê duyệt không tồn tại' }
+        if (request.status !== 'PENDING') return { success: false, error: 'Yêu cầu đã được xử lý' }
+
+        // Verify approver has the correct role for this step
+        const currentStepDef = request.template.steps.find(s => s.stepOrder === request.currentStep)
+        if (!currentStepDef) return { success: false, error: 'Bước phê duyệt không tồn tại' }
+
+        const approverRoles = await prisma.userRole.findMany({
+            where: { userId: input.approverId },
+            include: { role: true },
+        })
+        const hasRole = approverRoles.some(ur => ur.role.name === currentStepDef.approverRole)
+        if (!hasRole) return { success: false, error: `Bạn không có quyền phê duyệt bước này (cần vai trò: ${currentStepDef.approverRole})` }
+
+        // Log the action
+        await prisma.approvalLog.create({
+            data: {
+                requestId: input.requestId,
+                step: request.currentStep,
+                action: input.action,
+                approvedBy: input.approverId,
+                comment: input.comment ?? null,
+            },
+        })
+
+        if (input.action === 'REJECT') {
+            await prisma.approvalRequest.update({
+                where: { id: input.requestId },
+                data: { status: 'REJECTED' },
+            })
+            revalidatePath('/dashboard/settings')
+            return { success: true, finalStatus: 'REJECTED' }
+        }
+
+        // APPROVE: check if there are more steps
+        const totalSteps = request.template.steps.length
+        const nextStep = request.currentStep + 1
+
+        if (nextStep > totalSteps) {
+            // Final approval
+            await prisma.approvalRequest.update({
+                where: { id: input.requestId },
+                data: { status: 'APPROVED', currentStep: request.currentStep },
+            })
+            revalidatePath('/dashboard/settings')
+            return { success: true, finalStatus: 'APPROVED' }
+        } else {
+            // Move to next step
+            await prisma.approvalRequest.update({
+                where: { id: input.requestId },
+                data: { currentStep: nextStep },
+            })
+            revalidatePath('/dashboard/settings')
+            return { success: true, finalStatus: 'PENDING' }
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Get pending approvals for a user ──────────────
+export async function getPendingApprovals(userId: string) {
+    // Get user's roles
+    const userRoles = await prisma.userRole.findMany({
+        where: { userId },
+        include: { role: true },
+    })
+    const roleNames = userRoles.map(ur => ur.role.name)
+
+    // Find pending requests where current step matches user's role
+    const pending = await prisma.approvalRequest.findMany({
+        where: { status: 'PENDING' },
+        include: {
+            template: { include: { steps: true } },
+            requester: { select: { name: true, email: true } },
+            logs: { orderBy: { createdAt: 'desc' }, take: 5 },
+        },
+        orderBy: { createdAt: 'desc' },
+    })
+
+    // Filter: only items where currentStep's approverRole matches user's roles
+    return pending.filter(req => {
+        const step = req.template.steps.find(s => s.stepOrder === req.currentStep)
+        return step && roleNames.includes(step.approverRole)
+    }).map(req => ({
+        id: req.id,
+        docType: req.docType,
+        docId: req.docId,
+        templateName: req.template.name,
+        currentStep: req.currentStep,
+        totalSteps: req.template.steps.length,
+        requesterName: req.requester.name ?? req.requester.email,
+        createdAt: req.createdAt,
+        logs: req.logs.map(l => ({
+            step: l.step,
+            action: l.action,
+            comment: l.comment,
+            createdAt: l.createdAt,
+        })),
+    }))
+}
+
+// ── Audit trail for a document ────────────────────
+export async function getApprovalHistory(docType: string, docId: string) {
+    const requests = await prisma.approvalRequest.findMany({
+        where: { docType: docType as any, docId },
+        include: {
+            template: { select: { name: true } },
+            requester: { select: { name: true, email: true } },
+            logs: {
+                orderBy: { createdAt: 'asc' },
+                include: { approver: { select: { name: true, email: true } } },
+            },
+        },
+        orderBy: { createdAt: 'desc' },
+    })
+
+    return requests.map(req => ({
+        id: req.id,
+        templateName: req.template.name,
+        status: req.status,
+        requesterName: req.requester.name ?? req.requester.email,
+        createdAt: req.createdAt,
+        logs: req.logs.map(l => ({
+            step: l.step,
+            action: l.action,
+            approverName: l.approver.name ?? l.approver.email,
+            comment: l.comment,
+            createdAt: l.createdAt,
+        })),
+    }))
+}

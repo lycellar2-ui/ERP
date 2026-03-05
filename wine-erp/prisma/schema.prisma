@@ -464,6 +464,7 @@ model Contract {
   startDate      DateTime
   endDate        DateTime
   status         ContractStatus         @default(DRAFT)
+  signatureUrl   String?
   amendments     ContractAmendment[]
   documents      ContractDocument[]
   purchaseOrders PurchaseOrder[]
@@ -552,14 +553,30 @@ model PurchaseOrder {
   status        POStatus            @default(DRAFT)
   createdBy     String
   creator       User                @relation(fields: [createdBy], references: [id])
+  signatureUrl  String?
+
   lines         PurchaseOrderLine[]
   shipments     Shipment[]
   apInvoices    APInvoice[]
   goodsReceipts GoodsReceipt[]
+  documents     PODocument[]
+
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
   @@map("purchase_orders")
+}
+
+model PODocument {
+  id         String   @id @default(cuid())
+  poId       String
+  po         PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  name       String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+
+  @@index([poId])
+  @@map("po_documents")
 }
 
 model PurchaseOrderLine {
@@ -1085,6 +1102,7 @@ model DeliveryStop {
   status      StopStatus       @default(PENDING)
   codAmount   Decimal          @default(0)
   codStatus   CODStatus        @default(PENDING)
+  codCollected Boolean          @default(false)
   podSignedAt DateTime?
   pod         ProofOfDelivery?
 
@@ -1212,13 +1230,16 @@ model ARInvoice {
 }
 
 model ARPayment {
-  id        String        @id @default(cuid())
-  invoiceId String
-  invoice   ARInvoice     @relation(fields: [invoiceId], references: [id])
-  amount    Decimal
-  method    PaymentMethod
-  reference String?
-  paidAt    DateTime      @default(now())
+  id          String        @id @default(cuid())
+  paymentNo   String?       @unique
+  invoiceId   String
+  invoice     ARInvoice     @relation(fields: [invoiceId], references: [id])
+  amount      Decimal
+  method      PaymentMethod
+  reference   String?
+  notes       String?
+  paymentDate DateTime?
+  paidAt      DateTime      @default(now())
 
   @@map("ar_payments")
 }
@@ -1260,11 +1281,25 @@ model TaxDeclaration {
   periodMonth Int?
   status      DeclarationStatus @default(DRAFT)
   fileUrl     String? // Exported Excel/XML
+  signatureUrl String?
   submittedAt DateTime?
   createdBy   String
   createdAt   DateTime          @default(now())
+  documents   TaxDocument[]
 
   @@map("tax_declarations")
+}
+
+model TaxDocument {
+  id         String   @id @default(cuid())
+  taxId      String
+  tax        TaxDeclaration @relation(fields: [taxId], references: [id], onDelete: Cascade)
+  name       String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+
+  @@index([taxId])
+  @@map("tax_documents")
 }
 
 // =============================================================
@@ -1737,6 +1772,7 @@ enum PaymentMethod {
   BANK_TRANSFER
   LC
   TT_ADVANCE
+  COD
 }
 
 enum DeclarationType {

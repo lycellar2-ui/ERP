@@ -169,6 +169,7 @@ export async function getContractUtilization(contractId: string) {
                 },
             },
             salesOrders: { select: { totalAmount: true } },
+            documents: { orderBy: { uploadedAt: 'desc' } },
         },
     })
     if (!contract) return null
@@ -189,6 +190,12 @@ export async function getContractUtilization(contractId: string) {
         poTotal,
         soTotal,
         remaining: contractValue - utilizedValue,
+        documents: contract.documents.map(d => ({
+            id: d.id,
+            name: d.name,
+            fileUrl: d.fileUrl,
+            uploadedAt: d.uploadedAt
+        }))
     }
 }
 
@@ -284,23 +291,98 @@ export async function createContractAmendment(input: {
     newEndDate?: string
     newValue?: number
     reason: string
+    fileUrl?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        const contract = await prisma.contract.findUnique({ where: { id: input.contractId } })
+        const contract = await prisma.contract.findUnique({
+            where: { id: input.contractId },
+            include: { amendments: { select: { amendNo: true }, orderBy: { amendNo: 'desc' }, take: 1 } }
+        })
         if (!contract) return { success: false, error: 'Hợp đồng không tồn tại' }
 
+        const nextAmendNo = (contract.amendments[0]?.amendNo ?? 0) + 1
         const updateData: any = {}
         if (input.newEndDate) updateData.endDate = new Date(input.newEndDate)
         if (input.newValue != null) updateData.value = input.newValue
 
-        await prisma.contract.update({
-            where: { id: input.contractId },
-            data: {
-                ...updateData,
-                status: 'ACTIVE', // Re-activate if was expired
-            },
+        await prisma.$transaction(async (tx) => {
+            // 1. Create amendment record
+            await tx.contractAmendment.create({
+                data: {
+                    contractId: input.contractId,
+                    amendNo: nextAmendNo,
+                    description: input.reason,
+                    signedDate: new Date(),
+                    fileUrl: input.fileUrl ?? null,
+                },
+            })
+
+            // 2. Update the contract itself
+            await tx.contract.update({
+                where: { id: input.contractId },
+                data: {
+                    ...updateData,
+                    status: 'ACTIVE', // Re-activate if was expired
+                },
+            })
         })
 
+        revalidatePath('/dashboard/contracts')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── List Contract Amendments ──────────────────────
+export async function getContractAmendments(contractId: string) {
+    return prisma.contractAmendment.findMany({
+        where: { contractId },
+        orderBy: { amendNo: 'desc' },
+    })
+}
+
+// ── Upload/Get Contract Documents ─────────────────
+import { uploadFile } from '@/lib/storage'
+
+export async function uploadContractDocument(contractId: string, formData: FormData) {
+    try {
+        const file = formData.get('file') as File
+        if (!file) return { success: false, error: 'Chưa chọn file hợp đồng' }
+
+        const uploadRes = await uploadFile(formData, 'contracts')
+        if (!uploadRes.success || !uploadRes.url) {
+            return { success: false, error: uploadRes.error ?? 'Upload failed' }
+        }
+
+        const doc = await prisma.contractDocument.create({
+            data: {
+                contractId,
+                name: file.name,
+                fileUrl: uploadRes.url,
+            }
+        })
+
+        revalidatePath('/dashboard/contracts')
+        return { success: true, document: doc }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getContractDocuments(contractId: string) {
+    return prisma.contractDocument.findMany({
+        where: { contractId },
+        orderBy: { uploadedAt: 'desc' }
+    })
+}
+
+export async function signContract(contractId: string, signatureUrl: string) {
+    try {
+        await prisma.contract.update({
+            where: { id: contractId },
+            data: { signatureUrl, status: 'ACTIVE' },
+        })
         revalidatePath('/dashboard/contracts')
         return { success: true }
     } catch (err: any) {

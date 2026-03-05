@@ -1,13 +1,14 @@
 ﻿'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Search, Plus, ShoppingCart, Truck, CheckCircle2, Clock,
     FileText, ChevronDown, X, Trash2, Loader2, Save, AlertCircle,
-    Package, Globe, ArrowRight
+    Package, Globe, ArrowRight, Eye, UploadCloud
 } from 'lucide-react'
-import { PORow, CreatePOInput, createPurchaseOrder, updatePOStatus, getPurchaseOrders } from './actions'
+import { PORow, PODetail, CreatePOInput, createPurchaseOrder, updatePOStatus, getPurchaseOrders, getPODetail, uploadPODocument, signPO } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
+import { SignaturePad } from '@/components/SignaturePad'
 import { getSuppliers } from '@/app/dashboard/suppliers/actions'
 import { getProducts } from '@/app/dashboard/products/actions'
 
@@ -296,6 +297,54 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
     const [loading, setLoading] = useState(false)
     const [successMsg, setSuccessMsg] = useState('')
 
+    // Expand details
+    const [selectedId, setSelectedId] = useState<string | null>(null)
+    const [poDetail, setPoDetail] = useState<PODetail | null>(null)
+    const [detailLoading, setDetailLoading] = useState(false)
+    const [uploadingDoc, setUploadingDoc] = useState(false)
+    const [savingSignature, setSavingSignature] = useState(false)
+    const [signatureUrl, setSignatureUrl] = useState('')
+
+    const showDetail = async (id: string, force = false) => {
+        if (selectedId === id && !force) { setSelectedId(null); return }
+        setSelectedId(id)
+        setDetailLoading(true)
+        setSignatureUrl('')
+        const data = await getPODetail(id)
+        setPoDetail(data)
+        setDetailLoading(false)
+    }
+
+    const handleUpload = async (poId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setUploadingDoc(true)
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await uploadPODocument(poId, formData)
+        setUploadingDoc(false)
+        if (res.success) {
+            setSuccessMsg('Upload thành công!')
+            if (selectedId === poId) showDetail(poId, true)
+        } else {
+            alert(`Upload lỗi: ${res.error}`)
+        }
+    }
+
+    const handleSign = async (poId: string) => {
+        if (!signatureUrl) return
+        setSavingSignature(true)
+        const res = await signPO(poId, signatureUrl)
+        setSavingSignature(false)
+        if (res.success) {
+            setSuccessMsg('Ký duyệt thành công!')
+            refresh()
+            if (selectedId === poId) showDetail(poId, true)
+        } else {
+            alert(`Lỗi ký duyệt: ${res.error}`)
+        }
+    }
+
     const refresh = async () => {
         setLoading(true)
         try {
@@ -419,49 +468,138 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 </div>
                             </td></tr>
                         ) : filtered.map(row => (
-                            <tr key={row.id} className="group transition-colors duration-100"
-                                style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                <td className="px-4 py-3">
-                                    <span className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
-                                        {row.poNo}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.supplierName}</p>
-                                </td>
-                                <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>
-                                    {formatDate(row.createdAt)}
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                    <span className="text-sm font-bold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                        {row.lineCount} SKU
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                    <span className="text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                        {row.totalQty.toLocaleString()} chai
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    <span className="text-sm font-semibold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>
-                                        {row.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency}
-                                    </span>
-                                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
-                                        ≈ {formatVND(row.totalAmount * row.exchangeRate)}
-                                    </p>
-                                </td>
-                                <td className="px-4 py-3 text-center text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
-                                    {row.exchangeRate.toLocaleString()}
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap">
-                                    <POStatusBadge status={row.status} />
-                                </td>
-                                <td className="px-4 py-3">
-                                    <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} />
-                                </td>
-                            </tr>
+                            <React.Fragment key={row.id}>
+                                <tr className="group transition-colors duration-100"
+                                    style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                    <td className="px-4 py-3">
+                                        <span className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                                            {row.poNo}
+                                        </span>
+                                        <button onClick={() => showDetail(row.id)} className="ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold"
+                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>Xem chi tiết</button>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.supplierName}</p>
+                                    </td>
+                                    <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>
+                                        {formatDate(row.createdAt)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-sm font-bold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                            {row.lineCount} SKU
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                            {row.totalQty.toLocaleString()} chai
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                        <span className="text-sm font-semibold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>
+                                            {row.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency}
+                                        </span>
+                                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+                                            ≈ {formatVND(row.totalAmount * row.exchangeRate)}
+                                        </p>
+                                    </td>
+                                    <td className="px-4 py-3 text-center text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                                        {row.exchangeRate.toLocaleString()}
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                        <POStatusBadge status={row.status} />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} />
+                                    </td>
+                                </tr>
+                                {selectedId === row.id && (
+                                    <tr style={{ background: '#0A1926' }}>
+                                        <td colSpan={9} className="p-4 border-b border-[#2A4355] border-opacity-50">
+                                            {detailLoading ? (
+                                                <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6A7A' }}><Loader2 size={12} className="animate-spin" /> Đang tải...</div>
+                                            ) : poDetail ? (
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div>
+                                                        <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8AAEBB' }}>Chi tiết Sản Phẩm</p>
+                                                        <div className="space-y-2">
+                                                            {poDetail.lines.map((l: any) => (
+                                                                <div key={l.id} className="flex justify-between items-center bg-[#1B2E3D] p-2 rounded" style={{ border: '1px solid #2A4355' }}>
+                                                                    <div>
+                                                                        <p className="text-sm text-[#E8F1F2]">{l.productName}</p>
+                                                                        <p className="text-[10px] text-[#4A6A7A]">{l.skuCode}</p>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className="text-sm text-[#87CBB9] font-bold" style={{ fontFamily: '"DM Mono"' }}>{l.qtyOrdered} {l.uom}</p>
+                                                                        <p className="text-[10px] text-[#4A6A7A]">{l.unitPrice} {row.currency} / {l.uom}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-6">
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#8AAEBB' }}>Upload Bản Gốc (PDF/Scan)</p>
+                                                                <label className="flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer font-bold"
+                                                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                                                    {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                                    Upload
+                                                                    <input type="file" className="hidden" accept=".pdf,.png,.jpg" onChange={e => handleUpload(row.id, e)} disabled={uploadingDoc} />
+                                                                </label>
+                                                            </div>
+                                                            {poDetail.documents && poDetail.documents.length > 0 ? (
+                                                                <div className="space-y-2">
+                                                                    {poDetail.documents.map((d: any) => (
+                                                                        <a key={d.id} href={d.fileUrl} target="_blank" rel="noreferrer"
+                                                                            className="flex items-center gap-2 p-2 rounded bg-[#1B2E3D] text-xs hover:bg-[#2A4355]" style={{ border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                                                            <FileText size={14} style={{ color: '#8AAEBB' }} />
+                                                                            <span className="truncate flex-1">{d.name}</span>
+                                                                            <span style={{ color: '#4A6A7A', fontSize: 10 }}>{formatDate(d.uploadedAt)}</span>
+                                                                        </a>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa có tài liệu nào.</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8AAEBB' }}>Ký Điện Tử Khê Duyệt Nhanh</p>
+                                                            {poDetail.signatureUrl ? (
+                                                                <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                                    <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
+                                                                    <img src={poDetail.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="space-y-3">
+                                                                    {poDetail.status === 'PENDING_APPROVAL' || poDetail.status === 'DRAFT' ? (
+                                                                        <>
+                                                                            <SignaturePad onEnd={setSignatureUrl} />
+                                                                            <div className="flex justify-end">
+                                                                                <button onClick={() => handleSign(row.id)} disabled={!signatureUrl || savingSignature}
+                                                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50"
+                                                                                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                                    {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                                                                    Lưu Chữ Ký & Duyệt
+                                                                                </button>
+                                                                            </div>
+                                                                        </>
+                                                                    ) : (
+                                                                        <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Đơn hàng không ở trạng thái chờ ký.</p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Không tìm thấy chi tiết đơn vị</p>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
                         ))}
                     </tbody>
                 </table>

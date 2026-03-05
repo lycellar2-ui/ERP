@@ -100,3 +100,25 @@ export async function updateSupplier(id: string, input: Partial<SupplierInput>) 
     revalidatePath('/dashboard/suppliers')
     return { success: true }
 }
+
+// ── Soft delete supplier ──────────────────────────
+export async function deleteSupplier(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Check for active POs
+        const activePOs = await prisma.purchaseOrder.count({
+            where: { supplierId: id, status: { notIn: ['RECEIVED', 'CANCELLED'] } },
+        })
+        if (activePOs > 0) {
+            return { success: false, error: `Không thể xoá. NCC đang có ${activePOs} đơn hàng chưa hoàn tất.` }
+        }
+
+        await prisma.supplier.update({
+            where: { id },
+            data: { deletedAt: new Date(), status: 'INACTIVE' },
+        })
+        revalidatePath('/dashboard/suppliers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}

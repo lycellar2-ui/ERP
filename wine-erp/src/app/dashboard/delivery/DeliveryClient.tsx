@@ -7,6 +7,7 @@ import {
     getDeliveryRoutes, updateRouteStatus, createDeliveryRoute, getDriversAndVehicles,
     getRouteStops, recordEPOD
 } from './actions'
+import { SignaturePad } from '@/components/SignaturePad'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -38,6 +39,7 @@ function EPODDrawer({ open, routeId, onClose }: {
     const [confirmingId, setConfirmingId] = useState<string | null>(null)
     const [confirmName, setConfirmName] = useState('')
     const [confirmNotes, setConfirmNotes] = useState('')
+    const [signatureUrl, setSignatureUrl] = useState('')
     const [activeStopId, setActiveStopId] = useState<string | null>(null)
     const [successId, setSuccessId] = useState<string | null>(null)
 
@@ -59,12 +61,14 @@ function EPODDrawer({ open, routeId, onClose }: {
             stopId,
             confirmedBy: confirmName.trim(),
             notes: confirmNotes.trim() || undefined,
+            signatureUrl: signatureUrl || undefined,
         })
         if (result.success) {
             setSuccessId(stopId)
             setActiveStopId(null)
             setConfirmName('')
             setConfirmNotes('')
+            setSignatureUrl('')
             await loadStops()
             setTimeout(() => setSuccessId(null), 2000)
         }
@@ -167,7 +171,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                                 )}
 
                                 {!isDelivered && !isActive && (
-                                    <button onClick={() => { setActiveStopId(stop.id); setConfirmName(''); setConfirmNotes('') }}
+                                    <button onClick={() => { setActiveStopId(stop.id); setConfirmName(''); setConfirmNotes(''); setSignatureUrl('') }}
                                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded mt-1 transition-all"
                                         style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}
                                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.2)'}
@@ -203,12 +207,18 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                 onFocus={e => e.currentTarget.style.borderColor = '#87CBB9'}
                                                 onBlur={e => e.currentTarget.style.borderColor = '#2A4355'} />
                                         </div>
+                                        <div>
+                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>
+                                                Chữ Ký Điện Tử <span style={{ color: '#8B1A2E' }}>*</span>
+                                            </label>
+                                            <SignaturePad onEnd={url => setSignatureUrl(url)} />
+                                        </div>
                                         <div className="flex gap-2 justify-end">
                                             <button onClick={() => setActiveStopId(null)}
                                                 className="px-3 py-1.5 text-xs rounded"
                                                 style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Huỷ</button>
                                             <button onClick={() => handleConfirm(stop.id)}
-                                                disabled={!confirmName.trim() || !!confirmingId}
+                                                disabled={!confirmName.trim() || !signatureUrl || !!confirmingId}
                                                 className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
                                                 style={{ background: '#5BA88A', color: '#fff' }}>
                                                 {confirmingId === stop.id

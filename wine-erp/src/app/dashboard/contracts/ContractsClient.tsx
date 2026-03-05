@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { FileSignature, AlertCircle, CheckCircle2, Clock, Search, Plus, X, Save, Loader2 } from 'lucide-react'
-import { ContractRow, getContracts, createContract, getCounterparties, getContractUtilization } from './actions'
+import { FileSignature, AlertCircle, CheckCircle2, Clock, Search, Plus, X, Save, Loader2, UploadCloud, FileText } from 'lucide-react'
+import { ContractRow, getContracts, createContract, getCounterparties, getContractUtilization, uploadContractDocument, signContract } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
+import { SignaturePad } from '@/components/SignaturePad'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)' },
@@ -232,6 +233,44 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [utilization, setUtilization] = useState<any>(null)
     const [utilLoading, setUtilLoading] = useState(false)
+    const [uploadingDoc, setUploadingDoc] = useState(false)
+
+    // Signature
+    const [savingSignature, setSavingSignature] = useState(false)
+    const [currentSignatureUrl, setCurrentSignatureUrl] = useState('')
+
+    const handleSign = async (contractId: string) => {
+        if (!currentSignatureUrl) return
+        setSavingSignature(true)
+        const res = await signContract(contractId, currentSignatureUrl)
+        setSavingSignature(false)
+        if (res.success) {
+            alert('Ký duyệt hợp đồng thành công!')
+            if (selectedId === contractId) showUtilization(contractId, true)
+            reload()
+        } else {
+            alert(`Lỗi ký duyệt: ${res.error}`)
+        }
+    }
+
+    const handleUpload = async (contractId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setUploadingDoc(true)
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await uploadContractDocument(contractId, formData)
+        setUploadingDoc(false)
+        if (res.success) {
+            alert('Tải file lên thành công!')
+            if (selectedId === contractId) {
+                showUtilization(contractId, true)
+            }
+        } else {
+            alert(`Lỗi tải file: ${res.error}`)
+        }
+    }
 
     const reload = useCallback(async (s?: string, st?: string) => {
         setLoading(true)
@@ -244,9 +283,10 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
         setLoading(false)
     }, [search, statusFilter])
 
-    const showUtilization = async (id: string) => {
-        if (selectedId === id) { setSelectedId(null); return }
+    const showUtilization = async (id: string, forceReload = false) => {
+        if (selectedId === id && !forceReload) { setSelectedId(null); return }
         setSelectedId(id); setUtilLoading(true)
+        setCurrentSignatureUrl('')
         const data = await getContractUtilization(id)
         setUtilization(data); setUtilLoading(false)
     }
@@ -413,6 +453,70 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <span>PO: {utilization.poCount} ({formatVND(utilization.poTotal)})</span>
                                                                 <span>SO: {utilization.soCount} ({formatVND(utilization.soTotal)})</span>
                                                             </div>
+
+                                                            {/* Documents Section */}
+                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                                <div className="flex items-center justify-between mb-3">
+                                                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#87CBB9' }}>Tài liệu đính kèm ({utilization.documents?.length || 0})</p>
+                                                                    <label className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
+                                                                        style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                                                        {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                                        {uploadingDoc ? 'Đang tải...' : 'Upload PDF'}
+                                                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.png"
+                                                                            onChange={(e) => handleUpload(row.id, e)} disabled={uploadingDoc} />
+                                                                    </label>
+                                                                </div>
+
+                                                                {utilization.documents?.length > 0 ? (
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                        {utilization.documents.map((doc: any) => (
+                                                                            <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
+                                                                                className="flex items-center gap-3 p-3 rounded bg-[#1B2E3D] hover:bg-[#2A4355] transition-colors"
+                                                                                style={{ border: '1px solid #2A4355' }}>
+                                                                                <FileText size={20} style={{ color: '#8AAEBB' }} />
+                                                                                <div className="overflow-hidden">
+                                                                                    <p className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>{doc.name}</p>
+                                                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{formatDate(doc.uploadedAt)}</p>
+                                                                                </div>
+                                                                            </a>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa có file đính kèm nào.</p>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Signature Section */}
+                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#87CBB9' }}>
+                                                                    Ký Điện Tử Khê Duyệt Nhanh
+                                                                </p>
+                                                                {utilization.signatureUrl ? (
+                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                                        <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
+                                                                        <img src={utilization.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="space-y-3">
+                                                                        {row.status === 'DRAFT' ? (
+                                                                            <>
+                                                                                <SignaturePad onEnd={setCurrentSignatureUrl} />
+                                                                                <div className="flex justify-end">
+                                                                                    <button onClick={() => handleSign(row.id)} disabled={!currentSignatureUrl || savingSignature}
+                                                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50 transition-colors"
+                                                                                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                                        {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                                                                        Lưu Chữ Ký & Hiệu Lực Hoá Hợp Đồng
+                                                                                    </button>
+                                                                                </div>
+                                                                            </>
+                                                                        ) : (
+                                                                            <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chỉ hợp đồng nháp mới cần ký.</p>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
                                                         </div>
                                                     ) : (
                                                         <p className="text-xs" style={{ color: '#4A6A7A' }}>Không tìm thấy dữ liệu</p>
