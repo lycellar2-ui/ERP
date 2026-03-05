@@ -45,6 +45,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **SignaturePad** | `src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
 | **AI Service** | `src/lib/ai-service.ts` | Gemini API integration (OCR, Forecast, Anomaly) |
 | **Encryption** | `src/lib/encryption.ts` | AES-256 key vault for API keys |
+| **Server Cache** | `src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
 
 ## 5. LƯU Ý QUAN TRỌNG
 - **Soft Delete Pattern**: Product, Customer, Supplier sử dụng `deletedAt` + `status: INACTIVE`. Kiểm tra active PO/SO trước khi xoá.
@@ -52,3 +53,23 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Contract Amendment**: Mỗi sửa đổi hợp đồng tạo `ContractAmendment` record với `amendNo` tự tăng, không sửa trực tiếp contract history.
 - **Approval Flow**: Documents (PO, SO, Expense...) phải submit qua `submitForApproval()` → approver dùng `processApproval()` → role-based verification mỗi bước.
 
+## 6. 🐛 BUG FIX & PERFORMANCE RULES
+
+> 🔴 **BẮT BUỘC**: Mỗi khi fix bug, PHẢI bổ sung vào `docs/bug-fix-lessons.md`.
+> Đọc file đó TRƯỚC khi debug để tra cứu lỗi đã gặp.
+
+### DB Connection (Supabase Free Tier)
+- `pg.Pool({ max: 3 })` — KHÔNG tăng lên 5+ khi dev local
+- KHÔNG chạy đồng thời dev server + seed script + prisma CLI
+- Check zombie processes bằng `Get-Process -Name "node"` trước khi debug connection errors
+
+### Performance
+- Mọi `/dashboard/*` **PHẢI** có `loading.tsx` (skeleton)
+- Mọi READ function nên wrap trong `cached()` từ `@/lib/cache` — pattern: `return cached('prefix:key', fn, TTL_MS)`
+- Mutations **PHẢI** gọi `revalidateCache('prefix')` để invalidate
+- `staleTimes` trong `next.config.ts` là **BẮT BUỘC** (client-side router cache)
+- KHÔNG dùng `export const revalidate = N` trên dashboard pages (trigger prerender → exhaust DB pool)
+
+### Encoding
+- KHÔNG dùng PowerShell `Set-Content` cho file code (phá UTF-8)
+- Dùng `[System.IO.File]::WriteAllText($path, $content, [System.Text.Encoding]::UTF8)` hoặc tool `replace_file_content`

@@ -91,8 +91,29 @@ wine-erp/
 
 - `docs/wine-erp-implementation-plan.md` — Master implementation plan (~95% complete)
 - `docs/wine-erp-audit-05-03.md` — Feature audit vs specifications
+- `docs/bug-fix-lessons.md` — 🐛 **Bug fix journal & lessons learned** (BẮT BUỘC cập nhật khi fix bug)
 - `docs/architecture/` — Module dependencies, data flow constraints
 - `CODEBASE.md` — Agent instructions & coding rules
+
+## ⚠️ Development Rules
+
+> **BẮT BUỘC:** Mỗi khi fix bug, PHẢI bổ sung vào `docs/bug-fix-lessons.md`.
+> Xem file đó để tra cứu lỗi đã gặp trước khi debug.
+
+### Quy tắc quan trọng nhất
+
+| # | Rule | Loại |
+|---|------|------|
+| 1 | Không chạy đồng thời dev + seed + prisma CLI | DB Connection |
+| 2 | `pg.Pool({ max: 3 })` cho Supabase Free Tier | DB Connection |
+| 3 | Mọi `/dashboard/*` PHẢI có `loading.tsx` | Performance |
+| 4 | READ functions → `cached()` từ `@/lib/cache` | Performance |
+| 5 | `staleTimes` trong next.config.ts là bắt buộc | Performance |
+| 6 | Không dùng `Set-Content` cho file code (dùng `WriteAllText` UTF-8) | Encoding |
+| 7 | Không dùng `revalidate = N` trên dashboard pages (build fail) | Build |
+| 8 | Test `npx next build` sau thay đổi page config | Build |
+
+> 📖 Chi tiết đầy đủ: [`docs/bug-fix-lessons.md`](docs/bug-fix-lessons.md)
 
 ## Progress
 
