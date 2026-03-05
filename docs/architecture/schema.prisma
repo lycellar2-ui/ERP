@@ -1,0 +1,1242 @@
+// =============================================================
+// WINE ERP — Prisma Schema
+// Version: 1.0 | Date: 2026-03-04
+// 14 Modules / ~55 Tables
+// =============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================
+// SYS — System Admin, RBAC & Approval Workflow
+// =============================================================
+
+model Department {
+  id        String       @id @default(cuid())
+  name      String
+  parentId  String?
+  parent    Department?  @relation("DeptParent", fields: [parentId], references: [id])
+  children  Department[] @relation("DeptParent")
+  users     User[]
+  roles     Role[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("departments")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String
+  deptId      String?
+  dept        Department?      @relation(fields: [deptId], references: [id])
+  users       UserRole[]
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("roles")
+}
+
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  name         String
+  passwordHash String
+  deptId       String?
+  dept         Department?       @relation(fields: [deptId], references: [id])
+  status       UserStatus        @default(ACTIVE)
+  roles        UserRole[]
+  // Relations to other modules
+  customers    Customer[]        @relation("CustomerSalesRep")
+  activities   CustomerActivity[] @relation("ActivityPerformedBy")
+  opportunities SalesOpportunity[] @relation("OppAssignedTo")
+  salesOrders  SalesOrder[]      @relation("SOSalesRep")
+  approvals    ApprovalRequest[] @relation("ApprovalRequester")
+  approvalLogs ApprovalLog[]
+  marketPrices MarketPrice[]
+  journalEntries JournalEntry[]
+  periodClosings AccountingPeriod[] @relation("PeriodClosedBy")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@map("users")
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id      String           @id @default(cuid())
+  code    String           @unique // e.g. "wms.goods_receipt.create"
+  module  String
+  action  String
+  roles   RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model ApprovalTemplate {
+  id       String         @id @default(cuid())
+  name     String
+  docType  ApprovalDocType
+  steps    ApprovalStep[]
+  requests ApprovalRequest[]
+
+  @@map("approval_templates")
+}
+
+model ApprovalStep {
+  id           String          @id @default(cuid())
+  templateId   String
+  template     ApprovalTemplate @relation(fields: [templateId], references: [id])
+  stepOrder    Int
+  approverRole String          // Role that can approve
+  threshold    Decimal?        // Giá trị ngưỡng kích hoạt bước này
+
+  @@map("approval_steps")
+}
+
+model ApprovalRequest {
+  id           String          @id @default(cuid())
+  templateId   String
+  template     ApprovalTemplate @relation(fields: [templateId], references: [id])
+  docType      ApprovalDocType
+  docId        String          // ID của PO / SO / etc.
+  currentStep  Int             @default(1)
+  status       ApprovalStatus  @default(PENDING)
+  requestedBy  String
+  requester    User            @relation("ApprovalRequester", fields: [requestedBy], references: [id])
+  logs         ApprovalLog[]
+  createdAt    DateTime        @default(now())
+
+  @@map("approval_requests")
+}
+
+model ApprovalLog {
+  id          String          @id @default(cuid())
+  requestId   String
+  request     ApprovalRequest @relation(fields: [requestId], references: [id])
+  step        Int
+  action      ApprovalAction
+  approvedBy  String
+  approver    User            @relation(fields: [approvedBy], references: [id])
+  comment     String?
+  createdAt   DateTime        @default(now())
+
+  @@map("approval_logs")
+}
+
+// =============================================================
+// MDM — Master Data Management
+// =============================================================
+
+model WineRegion {
+  id          String       @id @default(cuid())
+  name        String
+  country     String
+  appellations Appellation[]
+
+  @@map("wine_regions")
+}
+
+model Appellation {
+  id       String     @id @default(cuid())
+  name     String
+  regionId String
+  region   WineRegion @relation(fields: [regionId], references: [id])
+  products Product[]
+
+  @@map("appellations")
+}
+
+model Producer {
+  id       String    @id @default(cuid())
+  name     String
+  country  String
+  website  String?
+  logoUrl  String?
+  products Product[]
+
+  @@map("producers")
+}
+
+model GrapeVariety {
+  id   String @id @default(cuid())
+  name String @unique
+
+  @@map("grape_varieties")
+}
+
+model Product {
+  id                String              @id @default(cuid())
+  skuCode           String              @unique
+  productName       String
+  producerId        String
+  producer          Producer            @relation(fields: [producerId], references: [id])
+  vintage           Int?
+  appellationId     String?
+  appellation       Appellation?        @relation(fields: [appellationId], references: [id])
+  country           String
+  abvPercent        Decimal
+  volumeMl          Int
+  format            WineFormat
+  packagingType     PackagingType
+  unitsPerCase      Int
+  hsCode            String
+  barcodeEan        String?
+  wineType          WineType
+  storageTempMin    Decimal?
+  storageTempMax    Decimal?
+  isAllocationEligible Boolean         @default(false)
+  classification    String?
+  tastingNotes      String?
+  status            ProductStatus       @default(ACTIVE)
+  media             ProductMedia[]
+  awards            ProductAward[]
+  priceLines        PriceListLine[]
+  poLines           PurchaseOrderLine[]
+  lotAllocations    LandedCostAllocation[]
+  stockLots         StockLot[]
+  grLines           GoodsReceiptLine[]
+  doLines           DeliveryOrderLine[]
+  soLines           SalesOrderLine[]
+  allocationCampaigns AllocationCampaign[]
+  consignmentStocks ConsignmentStock[]
+  marketPrices      MarketPrice[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+
+  @@map("products")
+}
+
+model ProductMedia {
+  id          String      @id @default(cuid())
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id])
+  mediaType   MediaType
+  url         String
+  thumbnailUrl String?
+  mediumUrl   String?
+  isPrimary   Boolean     @default(false)
+  tags        String[]
+  uploadedAt  DateTime    @default(now())
+
+  @@map("product_media")
+}
+
+model ProductAward {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  vintage     Int?
+  source      String    // "Robert Parker", "Wine Spectator", "Decanter"
+  score       Decimal?
+  medal       AwardMedal?
+  awardedYear Int?
+
+  @@map("product_awards")
+}
+
+model PriceList {
+  id            String        @id @default(cuid())
+  name          String
+  channel       SalesChannel
+  effectiveDate DateTime
+  expiryDate    DateTime?
+  lines         PriceListLine[]
+  createdAt     DateTime      @default(now())
+
+  @@map("price_lists")
+}
+
+model PriceListLine {
+  id          String    @id @default(cuid())
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id])
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  unitPrice   Decimal
+  currency    String    @default("VND")
+
+  @@unique([priceListId, productId])
+  @@map("price_list_lines")
+}
+
+model Supplier {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  name            String
+  type            SupplierType
+  country         String
+  taxId           String?
+  tradeAgreement  String?           // EVFTA, MFN, AANZFTA...
+  coFormType      String?           // EUR.1, Form AANZ...
+  paymentTerm     String?
+  defaultCurrency String           @default("USD")
+  incoterms       String?
+  leadTimeDays    Int              @default(45)
+  status          SupplierStatus   @default(ACTIVE)
+  purchaseOrders  PurchaseOrder[]
+  contracts       Contract[]
+  apInvoices      APInvoice[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@map("suppliers")
+}
+
+model Customer {
+  id              String            @id @default(cuid())
+  code            String            @unique
+  name            String
+  taxId           String?
+  customerType    CustomerType
+  channel         SalesChannel?
+  paymentTerm     String            @default("NET30")
+  creditLimit     Decimal           @default(0)
+  salesRepId      String?
+  salesRep        User?             @relation("CustomerSalesRep", fields: [salesRepId], references: [id])
+  status          CustomerStatus    @default(ACTIVE)
+  addresses       CustomerAddress[]
+  activities      CustomerActivity[]
+  opportunities   SalesOpportunity[]
+  complaints      ComplaintTicket[]
+  salesOrders     SalesOrder[]
+  consignments    ConsignmentAgreement[]
+  arInvoices      ARInvoice[]
+  contracts       Contract[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+
+  @@map("customers")
+}
+
+model CustomerAddress {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  label       String    // "Kho Hà Nội", "Nhà hàng Park Hyatt"
+  address     String
+  ward        String?
+  district    String?
+  city        String?
+  isBilling   Boolean   @default(false)
+  isDefault   Boolean   @default(false)
+  salesOrders SalesOrder[] @relation("ShippingAddress")
+
+  @@map("customer_addresses")
+}
+
+// =============================================================
+// CRM — Customer Relationship Management
+// =============================================================
+
+model CustomerActivity {
+  id          String       @id @default(cuid())
+  customerId  String
+  customer    Customer     @relation(fields: [customerId], references: [id])
+  type        ActivityType
+  description String
+  performedBy String
+  performer   User         @relation("ActivityPerformedBy", fields: [performedBy], references: [id])
+  occurredAt  DateTime     @default(now())
+
+  @@map("customer_activities")
+}
+
+model SalesOpportunity {
+  id             String          @id @default(cuid())
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  name           String
+  expectedValue  Decimal
+  stage          OpportunityStage
+  probability    Int             @default(50)
+  assignedTo     String
+  assignee       User            @relation("OppAssignedTo", fields: [assignedTo], references: [id])
+  closeDate      DateTime?
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@map("sales_opportunities")
+}
+
+model TastingEvent {
+  id          String                 @id @default(cuid())
+  name        String
+  eventDate   DateTime
+  location    String?
+  description String?
+  attendees   TastingEventAttendee[]
+  createdAt   DateTime               @default(now())
+
+  @@map("tasting_events")
+}
+
+model TastingEventAttendee {
+  id          String       @id @default(cuid())
+  eventId     String
+  event       TastingEvent @relation(fields: [eventId], references: [id])
+  customerId  String
+  rsvpStatus  RsvpStatus   @default(PENDING)
+  attended    Boolean      @default(false)
+  feedback    String?
+
+  @@unique([eventId, customerId])
+  @@map("tasting_event_attendees")
+}
+
+model ComplaintTicket {
+  id          String           @id @default(cuid())
+  customerId  String
+  customer    Customer         @relation(fields: [customerId], references: [id])
+  soId        String?
+  so          SalesOrder?      @relation(fields: [soId], references: [id])
+  type        ComplaintType
+  severity    ComplaintSeverity
+  status      TicketStatus     @default(OPEN)
+  resolution  String?
+  slaDeadline DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("complaint_tickets")
+}
+
+// =============================================================
+// CNT — Contract Management
+// =============================================================
+
+model Contract {
+  id            String              @id @default(cuid())
+  contractNo    String              @unique
+  type          ContractType
+  supplierId    String?
+  supplier      Supplier?           @relation(fields: [supplierId], references: [id])
+  customerId    String?
+  customer      Customer?           @relation(fields: [customerId], references: [id])
+  value         Decimal
+  currency      String              @default("USD")
+  paymentTerm   String?
+  incoterms     String?
+  startDate     DateTime
+  endDate       DateTime
+  status        ContractStatus      @default(DRAFT)
+  amendments    ContractAmendment[]
+  documents     ContractDocument[]
+  purchaseOrders PurchaseOrder[]
+  salesOrders   SalesOrder[]
+  consignments  ConsignmentAgreement[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@map("contracts")
+}
+
+model ContractAmendment {
+  id          String   @id @default(cuid())
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id])
+  amendNo     Int
+  description String
+  signedDate  DateTime
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+
+  @@map("contract_amendments")
+}
+
+model ContractDocument {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  name       String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+
+  @@map("contract_documents")
+}
+
+// =============================================================
+// TAX — Tax Reference & Market Price
+// =============================================================
+
+model TaxRate {
+  id                String   @id @default(cuid())
+  hsCode            String
+  countryOfOrigin   String
+  tradeAgreement    String   // EVFTA, MFN, AANZFTA, VCFTA, VKFTA
+  importTaxRate     Decimal
+  sctRate           Decimal
+  vatRate           Decimal  @default(10)
+  effectiveDate     DateTime
+  expiryDate        DateTime?
+  requiresCo        Boolean  @default(false)
+  coFormType        String?
+  notes             String?
+
+  @@index([hsCode, countryOfOrigin, effectiveDate])
+  @@map("tax_rates")
+}
+
+model MarketPrice {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  price       Decimal
+  currency    String   @default("VND")
+  source      String   // "Competitor", "Wine-Searcher", "Manual"
+  priceDate   DateTime
+  enteredBy   String
+  enteredByUser User   @relation(fields: [enteredBy], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@map("market_prices")
+}
+
+// =============================================================
+// PRC — Procurement & Import / Landed Cost
+// =============================================================
+
+model PurchaseOrder {
+  id             String              @id @default(cuid())
+  poNo           String              @unique
+  supplierId     String
+  supplier       Supplier            @relation(fields: [supplierId], references: [id])
+  contractId     String?
+  contract       Contract?           @relation(fields: [contractId], references: [id])
+  currency       String              @default("USD")
+  exchangeRate   Decimal             @default(1)
+  status         POStatus            @default(DRAFT)
+  createdBy      String
+  creator        User                @relation(fields: [createdBy], references: [id])
+  lines          PurchaseOrderLine[]
+  shipments      Shipment[]
+  apInvoices     APInvoice[]
+  goodsReceipts  GoodsReceipt[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id         String        @id @default(cuid())
+  poId       String
+  po         PurchaseOrder @relation(fields: [poId], references: [id])
+  productId  String
+  product    Product       @relation(fields: [productId], references: [id])
+  qtyOrdered Decimal
+  unitPrice  Decimal
+  uom        String        @default("BOTTLE")
+
+  @@map("purchase_order_lines")
+}
+
+model Shipment {
+  id                String               @id @default(cuid())
+  billOfLading      String
+  poId              String
+  po                PurchaseOrder        @relation(fields: [poId], references: [id])
+  vesselName        String?
+  portOfLoading     String?
+  portOfDischarge   String?
+  eta               DateTime?
+  cifAmount         Decimal
+  cifCurrency       String               @default("USD")
+  status            ShipmentStatus       @default(IN_TRANSIT)
+  agencySubmissions AgencySubmission[]
+  landedCost        LandedCostCampaign?
+  goodsReceipts     GoodsReceipt[]
+  stockLots         StockLot[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@map("shipments")
+}
+
+model LandedCostCampaign {
+  id              String                 @id @default(cuid())
+  shipmentId      String                 @unique
+  shipment        Shipment               @relation(fields: [shipmentId], references: [id])
+  totalImportTax  Decimal                @default(0)
+  totalSct        Decimal                @default(0)
+  totalVat        Decimal                @default(0)
+  totalOtherCost  Decimal                @default(0)
+  status          LandedCostStatus       @default(DRAFT)
+  allocations     LandedCostAllocation[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@map("landed_cost_campaigns")
+}
+
+model LandedCostAllocation {
+  id              String             @id @default(cuid())
+  campaignId      String
+  campaign        LandedCostCampaign @relation(fields: [campaignId], references: [id])
+  productId       String
+  product         Product            @relation(fields: [productId], references: [id])
+  qty             Decimal
+  unitLandedCost  Decimal
+
+  @@map("landed_cost_allocations")
+}
+
+// =============================================================
+// AGN — Import Agency Portal
+// =============================================================
+
+model ExternalPartner {
+  id          String             @id @default(cuid())
+  code        String             @unique
+  name        String
+  type        ExternalPartnerType
+  email       String             @unique
+  passwordHash String
+  status      UserStatus         @default(ACTIVE)
+  accesses    PartnerShipmentAccess[]
+  submissions AgencySubmission[]
+  createdAt   DateTime           @default(now())
+
+  @@map("external_partners")
+}
+
+model PartnerShipmentAccess {
+  partnerId  String
+  shipmentId String
+  partner    ExternalPartner @relation(fields: [partnerId], references: [id])
+  createdAt  DateTime        @default(now())
+
+  @@id([partnerId, shipmentId])
+  @@map("partner_shipment_access")
+}
+
+model AgencySubmission {
+  id              String             @id @default(cuid())
+  shipmentId      String
+  shipment        Shipment           @relation(fields: [shipmentId], references: [id])
+  partnerId       String
+  partner         ExternalPartner    @relation(fields: [partnerId], references: [id])
+  declarationNo   String?
+  eta             DateTime?
+  customsClearedAt DateTime?
+  additionalCosts Decimal?
+  notes           String?
+  status          SubmissionStatus   @default(PENDING_REVIEW)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  documents       AgencyDocument[]
+  submittedAt     DateTime           @default(now())
+
+  @@map("agency_submissions")
+}
+
+model AgencyDocument {
+  id           String           @id @default(cuid())
+  submissionId String
+  submission   AgencySubmission @relation(fields: [submissionId], references: [id])
+  type         AgencyDocType
+  fileUrl      String
+  uploadedAt   DateTime         @default(now())
+
+  @@map("agency_documents")
+}
+
+// =============================================================
+// WMS — Warehouse Management System
+// =============================================================
+
+model Warehouse {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  name          String
+  address       String?
+  locations     Location[]
+  goodsReceipts GoodsReceipt[]
+  deliveryOrders DeliveryOrder[]
+  createdAt     DateTime      @default(now())
+
+  @@map("warehouses")
+}
+
+model Location {
+  id             String         @id @default(cuid())
+  warehouseId    String
+  warehouse      Warehouse      @relation(fields: [warehouseId], references: [id])
+  zone           String
+  rack           String?
+  bin            String?
+  locationCode   String         // Auto-generated: "A-01-03"
+  type           LocationType   @default(STORAGE)
+  capacityCases  Int?
+  tempControlled Boolean        @default(false)
+  stockLots      StockLot[]
+  doLines        DeliveryOrderLine[]
+
+  @@unique([warehouseId, locationCode])
+  @@map("locations")
+}
+
+model StockLot {
+  id              String      @id @default(cuid())
+  lotNo           String      @unique
+  productId       String
+  product         Product     @relation(fields: [productId], references: [id])
+  shipmentId      String?
+  shipment        Shipment?   @relation(fields: [shipmentId], references: [id])
+  locationId      String
+  location        Location    @relation(fields: [locationId], references: [id])
+  qtyReceived     Decimal
+  qtyAvailable    Decimal
+  unitLandedCost  Decimal     @default(0)
+  receivedDate    DateTime
+  status          LotStatus   @default(AVAILABLE)
+  grLines         GoodsReceiptLine[]
+  doLines         DeliveryOrderLine[]
+
+  @@index([productId, status])
+  @@map("stock_lots")
+}
+
+model GoodsReceipt {
+  id           String             @id @default(cuid())
+  grNo         String             @unique
+  poId         String
+  po           PurchaseOrder      @relation(fields: [poId], references: [id])
+  shipmentId   String?
+  shipment     Shipment?          @relation(fields: [shipmentId], references: [id])
+  warehouseId  String
+  warehouse    Warehouse          @relation(fields: [warehouseId], references: [id])
+  status       GRStatus           @default(DRAFT)
+  confirmedBy  String?
+  confirmer    User?              @relation(fields: [confirmedBy], references: [id])
+  confirmedAt  DateTime?
+  lines        GoodsReceiptLine[]
+  createdAt    DateTime           @default(now())
+
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptLine {
+  id          String       @id @default(cuid())
+  grId        String
+  gr          GoodsReceipt @relation(fields: [grId], references: [id])
+  productId   String
+  product     Product      @relation(fields: [productId], references: [id])
+  lotId       String?
+  lot         StockLot?    @relation(fields: [lotId], references: [id])
+  qtyExpected Decimal
+  qtyReceived Decimal
+  variance    Decimal      @default(0)
+
+  @@map("goods_receipt_lines")
+}
+
+model DeliveryOrder {
+  id           String              @id @default(cuid())
+  doNo         String              @unique
+  soId         String
+  so           SalesOrder          @relation(fields: [soId], references: [id])
+  warehouseId  String
+  warehouse    Warehouse           @relation(fields: [warehouseId], references: [id])
+  status       DOStatus            @default(DRAFT)
+  lines        DeliveryOrderLine[]
+  stops        DeliveryStop[]
+  createdAt    DateTime            @default(now())
+
+  @@map("delivery_orders")
+}
+
+model DeliveryOrderLine {
+  id          String        @id @default(cuid())
+  doId        String
+  do          DeliveryOrder @relation(fields: [doId], references: [id])
+  productId   String
+  product     Product       @relation(fields: [productId], references: [id])
+  lotId       String
+  lot         StockLot      @relation(fields: [lotId], references: [id])
+  locationId  String
+  location    Location      @relation(fields: [locationId], references: [id])
+  qtyPicked   Decimal       @default(0)
+  qtyShipped  Decimal       @default(0)
+
+  @@map("delivery_order_lines")
+}
+
+model StockCountSession {
+  id          String           @id @default(cuid())
+  warehouseId String
+  zone        String?
+  type        CountType
+  status      CountStatus      @default(DRAFT)
+  startedAt   DateTime?
+  completedAt DateTime?
+  lines       StockCountLine[]
+  createdAt   DateTime         @default(now())
+
+  @@map("stock_count_sessions")
+}
+
+model StockCountLine {
+  id          String             @id @default(cuid())
+  sessionId   String
+  session     StockCountSession  @relation(fields: [sessionId], references: [id])
+  productId   String
+  locationCode String
+  qtySystem   Decimal
+  qtyActual   Decimal?
+  variance    Decimal?
+
+  @@map("stock_count_lines")
+}
+
+// =============================================================
+// SLS — Sales & Allocation
+// =============================================================
+
+model SalesOrder {
+  id                String            @id @default(cuid())
+  soNo              String            @unique
+  customerId        String
+  customer          Customer          @relation(fields: [customerId], references: [id])
+  contractId        String?
+  contract          Contract?         @relation(fields: [contractId], references: [id])
+  salesRepId        String
+  salesRep          User              @relation("SOSalesRep", fields: [salesRepId], references: [id])
+  channel           SalesChannel
+  shippingAddressId String?
+  shippingAddress   CustomerAddress?  @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  paymentTerm       String
+  totalAmount       Decimal           @default(0)
+  orderDiscount     Decimal           @default(0)
+  status            SOStatus          @default(DRAFT)
+  lines             SalesOrderLine[]
+  deliveryOrders    DeliveryOrder[]
+  arInvoices        ARInvoice[]
+  complaints        ComplaintTicket[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@map("sales_orders")
+}
+
+model SalesOrderLine {
+  id                   String              @id @default(cuid())
+  soId                 String
+  so                   SalesOrder          @relation(fields: [soId], references: [id])
+  productId            String
+  product              Product             @relation(fields: [productId], references: [id])
+  qtyOrdered           Decimal
+  unitPrice            Decimal
+  lineDiscountPct      Decimal             @default(0)
+  allocationCampaignId String?
+  allocationCampaign   AllocationCampaign? @relation(fields: [allocationCampaignId], references: [id])
+  allocationLogs       AllocationLog[]
+
+  @@map("sales_order_lines")
+}
+
+model AllocationCampaign {
+  id        String           @id @default(cuid())
+  name      String
+  productId String
+  product   Product          @relation(fields: [productId], references: [id])
+  totalQty  Decimal
+  unit      AllocationUnit   @default(CASE)
+  startDate DateTime
+  endDate   DateTime
+  status    CampaignStatus   @default(ACTIVE)
+  quotas    AllocationQuota[]
+  soLines   SalesOrderLine[]
+  createdAt DateTime         @default(now())
+
+  @@map("allocation_campaigns")
+}
+
+model AllocationQuota {
+  id           String           @id @default(cuid())
+  campaignId   String
+  campaign     AllocationCampaign @relation(fields: [campaignId], references: [id])
+  targetType   QuotaTargetType
+  targetId     String            // userId, customerId, or channel enum
+  qtyAllocated Decimal
+  qtySold      Decimal           @default(0)
+  logs         AllocationLog[]
+
+  @@unique([campaignId, targetType, targetId])
+  @@map("allocation_quotas")
+}
+
+model AllocationLog {
+  id        String          @id @default(cuid())
+  quotaId   String
+  quota     AllocationQuota @relation(fields: [quotaId], references: [id])
+  soLineId  String
+  soLine    SalesOrderLine  @relation(fields: [soLineId], references: [id])
+  qtyUsed   Decimal
+  action    AllocationAction
+  createdAt DateTime        @default(now())
+
+  @@map("allocation_logs")
+}
+
+// =============================================================
+// CSG — Consignment Management
+// =============================================================
+
+model ConsignmentAgreement {
+  id              String               @id @default(cuid())
+  customerId      String
+  customer        Customer             @relation(fields: [customerId], references: [id])
+  contractId      String?
+  contract        Contract?            @relation(fields: [contractId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  reportFrequency ReportFrequency
+  status          AgreementStatus      @default(ACTIVE)
+  stocks          ConsignmentStock[]
+  reports         ConsignmentReport[]
+  createdAt       DateTime             @default(now())
+
+  @@map("consignment_agreements")
+}
+
+model ConsignmentStock {
+  id           String               @id @default(cuid())
+  agreementId  String
+  agreement    ConsignmentAgreement @relation(fields: [agreementId], references: [id])
+  productId    String
+  product      Product              @relation(fields: [productId], references: [id])
+  qtyConsigned Decimal              @default(0)
+  qtySold      Decimal              @default(0)
+  qtyRemaining Decimal              @default(0)
+  updatedAt    DateTime             @updatedAt
+
+  @@unique([agreementId, productId])
+  @@map("consignment_stocks")
+}
+
+model ConsignmentReport {
+  id          String               @id @default(cuid())
+  agreementId String
+  agreement   ConsignmentAgreement @relation(fields: [agreementId], references: [id])
+  periodStart DateTime
+  periodEnd   DateTime
+  status      ReportStatus         @default(PENDING)
+  confirmedAt DateTime?
+  arInvoiceId String?
+  submittedAt DateTime             @default(now())
+
+  @@map("consignment_reports")
+}
+
+// =============================================================
+// TRS — Transportation & Delivery
+// =============================================================
+
+model Driver {
+  id      String          @id @default(cuid())
+  name    String
+  phone   String
+  license String?
+  status  UserStatus      @default(ACTIVE)
+  routes  DeliveryRoute[]
+
+  @@map("drivers")
+}
+
+model Vehicle {
+  id             String          @id @default(cuid())
+  plateNo        String          @unique
+  type           VehicleType
+  capacityCases  Int
+  tempControlled Boolean         @default(false)
+  status         UserStatus      @default(ACTIVE)
+  routes         DeliveryRoute[]
+
+  @@map("vehicles")
+}
+
+model DeliveryRoute {
+  id         String         @id @default(cuid())
+  routeDate  DateTime
+  driverId   String
+  driver     Driver         @relation(fields: [driverId], references: [id])
+  vehicleId  String
+  vehicle    Vehicle        @relation(fields: [vehicleId], references: [id])
+  status     RouteStatus    @default(PLANNED)
+  stops      DeliveryStop[]
+  createdAt  DateTime       @default(now())
+
+  @@map("delivery_routes")
+}
+
+model DeliveryStop {
+  id           String            @id @default(cuid())
+  routeId      String
+  route        DeliveryRoute     @relation(fields: [routeId], references: [id])
+  doId         String
+  do           DeliveryOrder     @relation(fields: [doId], references: [id])
+  sequence     Int
+  address      String
+  status       StopStatus        @default(PENDING)
+  codAmount    Decimal           @default(0)
+  codStatus    CODStatus         @default(PENDING)
+  podSignedAt  DateTime?
+  pod          ProofOfDelivery?
+
+  @@map("delivery_stops")
+}
+
+model ProofOfDelivery {
+  id           String       @id @default(cuid())
+  stopId       String       @unique
+  stop         DeliveryStop @relation(fields: [stopId], references: [id])
+  signatureUrl String?
+  photoUrl     String?
+  confirmedBy  String
+  confirmedAt  DateTime     @default(now())
+  notes        String?
+
+  @@map("proofs_of_delivery")
+}
+
+// =============================================================
+// FIN — Finance, Accounting & Legal
+// =============================================================
+
+model AccountingPeriod {
+  id        String         @id @default(cuid())
+  year      Int
+  month     Int
+  isClosed  Boolean        @default(false)
+  closedBy  String?
+  closedByUser User?       @relation("PeriodClosedBy", fields: [closedBy], references: [id])
+  closedAt  DateTime?
+  entries   JournalEntry[]
+
+  @@unique([year, month])
+  @@map("accounting_periods")
+}
+
+model JournalEntry {
+  id          String          @id @default(cuid())
+  entryNo     String          @unique
+  docType     JournalDocType
+  docId       String
+  periodId    String
+  period      AccountingPeriod @relation(fields: [periodId], references: [id])
+  description String?
+  postedAt    DateTime        @default(now())
+  createdBy   String
+  creator     User            @relation(fields: [createdBy], references: [id])
+  lines       JournalLine[]
+
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id          String       @id @default(cuid())
+  entryId     String
+  entry       JournalEntry @relation(fields: [entryId], references: [id])
+  account     String       // Account code (e.g. "156 - Inventory", "331 - AP")
+  description String?
+  debit       Decimal      @default(0)
+  credit      Decimal      @default(0)
+
+  @@map("journal_lines")
+}
+
+model ARInvoice {
+  id             String      @id @default(cuid())
+  invoiceNo      String      @unique
+  soId           String
+  so             SalesOrder  @relation(fields: [soId], references: [id])
+  customerId     String
+  customer       Customer    @relation(fields: [customerId], references: [id])
+  amount         Decimal
+  vatAmount      Decimal     @default(0)
+  totalAmount    Decimal
+  dueDate        DateTime
+  status         InvoiceStatus @default(UNPAID)
+  payments       ARPayment[]
+  createdAt      DateTime    @default(now())
+
+  @@map("ar_invoices")
+}
+
+model ARPayment {
+  id         String    @id @default(cuid())
+  invoiceId  String
+  invoice    ARInvoice @relation(fields: [invoiceId], references: [id])
+  amount     Decimal
+  method     PaymentMethod
+  reference  String?
+  paidAt     DateTime  @default(now())
+
+  @@map("ar_payments")
+}
+
+model APInvoice {
+  id          String       @id @default(cuid())
+  invoiceNo   String
+  poId        String
+  po          PurchaseOrder @relation(fields: [poId], references: [id])
+  supplierId  String
+  supplier    Supplier     @relation(fields: [supplierId], references: [id])
+  amount      Decimal
+  currency    String       @default("USD")
+  exchangeRate Decimal     @default(1)
+  dueDate     DateTime
+  status      InvoiceStatus @default(UNPAID)
+  payments    APPayment[]
+  createdAt   DateTime     @default(now())
+
+  @@map("ap_invoices")
+}
+
+model APPayment {
+  id         String    @id @default(cuid())
+  invoiceId  String
+  invoice    APInvoice @relation(fields: [invoiceId], references: [id])
+  amount     Decimal
+  method     PaymentMethod
+  reference  String?
+  paidAt     DateTime  @default(now())
+
+  @@map("ap_payments")
+}
+
+model TaxDeclaration {
+  id          String            @id @default(cuid())
+  type        DeclarationType
+  periodYear  Int
+  periodMonth Int?
+  status      DeclarationStatus @default(DRAFT)
+  fileUrl     String?           // Exported Excel/XML
+  submittedAt DateTime?
+  createdBy   String
+  createdAt   DateTime          @default(now())
+
+  @@map("tax_declarations")
+}
+
+// =============================================================
+// RPT — Reporting & BI
+// =============================================================
+
+model ReportTemplate {
+  id           String          @id @default(cuid())
+  name         String
+  sourceModule String
+  dimensions   String[]
+  metrics      String[]
+  filters      Json?
+  chartType    String?
+  isShared     Boolean         @default(false)
+  createdBy    String
+  schedules    ReportSchedule[]
+  createdAt    DateTime        @default(now())
+
+  @@map("report_templates")
+}
+
+model ReportSchedule {
+  id          String         @id @default(cuid())
+  templateId  String
+  template    ReportTemplate @relation(fields: [templateId], references: [id])
+  frequency   ScheduleFrequency
+  runAt       String         // Cron expression: "0 8 * * 1" = 8am Monday
+  recipients  String[]       // Email list
+  lastRunAt   DateTime?
+  status      UserStatus     @default(ACTIVE)
+
+  @@map("report_schedules")
+}
+
+// =============================================================
+// ENUMS
+// =============================================================
+
+enum UserStatus { ACTIVE INACTIVE SUSPENDED }
+enum ApprovalDocType { PURCHASE_ORDER SALES_ORDER WRITE_OFF DISCOUNT_OVERRIDE TAX_DECLARATION CONSIGNMENT }
+enum ApprovalStatus { PENDING APPROVED REJECTED CANCELLED }
+enum ApprovalAction { APPROVE REJECT DELEGATE }
+enum WineType { RED WHITE ROSE SPARKLING FORTIFIED DESSERT }
+enum WineFormat { STANDARD MAGNUM JEROBOAM METHUSELAH }
+enum PackagingType { OWC CARTON }
+enum ProductStatus { ACTIVE DISCONTINUED ALLOCATION_ONLY }
+enum MediaType { PRODUCT_MAIN LABEL_FRONT LABEL_BACK LIFESTYLE BOTTLE_GROUP CASE_OWC AWARD_CERTIFICATE PRODUCER_WINERY }
+enum AwardMedal { GOLD SILVER BRONZE DOUBLE_GOLD }
+enum SalesChannel { HORECA WHOLESALE_DISTRIBUTOR VIP_RETAIL DIRECT_INDIVIDUAL }
+enum SupplierType { WINERY NEGOCIANT DISTRIBUTOR LOGISTICS FORWARDER CUSTOMS_BROKER }
+enum SupplierStatus { ACTIVE INACTIVE BLACKLISTED }
+enum CustomerType { HORECA WHOLESALE_DISTRIBUTOR VIP_RETAIL INDIVIDUAL }
+enum CustomerStatus { ACTIVE CREDIT_HOLD INACTIVE }
+enum ActivityType { CALL EMAIL MEETING TASTING DELIVERY COMPLAINT OTHER }
+enum OpportunityStage { LEAD QUALIFIED PROPOSAL NEGOTIATION WON LOST }
+enum RsvpStatus { PENDING ACCEPTED DECLINED }
+enum ComplaintType { BREAKAGE WRONG_SKU_SHORT_SHIPPED QUALITY SERVICE OTHER }
+enum ComplaintSeverity { LOW MEDIUM HIGH CRITICAL }
+enum TicketStatus { OPEN IN_PROGRESS RESOLVED CLOSED }
+enum ContractType { PURCHASE SALES CONSIGNMENT LOGISTICS WAREHOUSE_RENTAL }
+enum ContractStatus { DRAFT PENDING_SIGN ACTIVE EXPIRED TERMINATED }
+enum POStatus { DRAFT PENDING_APPROVAL APPROVED IN_TRANSIT PARTIALLY_RECEIVED RECEIVED CANCELLED }
+enum ShipmentStatus { BOOKED ON_VESSEL ARRIVED_PORT CUSTOMS_CLEARED DELIVERED_TO_WAREHOUSE }
+enum LandedCostStatus { DRAFT CONFIRMED ALLOCATED }
+enum ExternalPartnerType { CUSTOMS_BROKER FORWARDER SURVEYOR }
+enum SubmissionStatus { PENDING_REVIEW APPROVED REJECTED }
+enum AgencyDocType { CUSTOMS_DECLARATION LOGISTICS_INVOICE INSPECTION_CERT OTHER }
+enum LocationType { STORAGE RECEIVING SHIPPING QUARANTINE VIRTUAL }
+enum LotStatus { AVAILABLE RESERVED QUARANTINE CONSUMED }
+enum GRStatus { DRAFT CONFIRMED CANCELLED }
+enum DOStatus { DRAFT PICKING PACKED SHIPPED DELIVERED CANCELLED }
+enum CountType { FULL_PHYSICAL CYCLE }
+enum CountStatus { DRAFT IN_PROGRESS COMPLETED APPROVED }
+enum SOStatus { DRAFT PENDING_APPROVAL CONFIRMED PARTIALLY_DELIVERED DELIVERED INVOICED PAID CANCELLED }
+enum AllocationUnit { BOTTLE CASE }
+enum CampaignStatus { ACTIVE COMPLETED CANCELLED }
+enum QuotaTargetType { SALES_REP CUSTOMER CHANNEL }
+enum AllocationAction { USE RELEASE }
+enum ReportFrequency { WEEKLY MONTHLY QUARTERLY AS_NEEDED }
+enum AgreementStatus { ACTIVE EXPIRED TERMINATED }
+enum ReportStatus { PENDING CONFIRMED }
+enum VehicleType { MOTORCYCLE VAN TRUCK_1T TRUCK_2T REFRIGERATED }
+enum RouteStatus { PLANNED IN_PROGRESS COMPLETED CANCELLED }
+enum StopStatus { PENDING IN_TRANSIT DELIVERED FAILED }
+enum CODStatus { PENDING COLLECTED_CASH COLLECTED_TRANSFER NOT_APPLICABLE }
+enum JournalDocType { GOODS_RECEIPT GOODS_ISSUE SALES_INVOICE PURCHASE_INVOICE PAYMENT_IN PAYMENT_OUT ADJUSTMENT OPENING_STOCK }
+enum InvoiceStatus { UNPAID PARTIALLY_PAID PAID OVERDUE CANCELLED }
+enum PaymentMethod { CASH BANK_TRANSFER LC TT_ADVANCE }
+enum DeclarationType { IMPORT_CUSTOMS SCT_MONTHLY SCT_QUARTERLY VAT_MONTHLY VAT_QUARTERLY }
+enum DeclarationStatus { DRAFT APPROVED SUBMITTED }
+enum ScheduleFrequency { DAILY WEEKLY MONTHLY CUSTOM }

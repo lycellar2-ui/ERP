@@ -1,0 +1,82 @@
+# Contract Management (Quản Lý Hợp Đồng)
+
+Phân hệ Quản Lý Hợp Đồng là "xương sống pháp lý" của toàn bộ quan hệ mua-bán. Mọi giao dịch đều bắt nguồn từ 1 bản hợp đồng ký kết. Hệ thống sẽ liên kết chặt Hợp Đồng → PO/SO → Hóa Đơn → Thanh Toán, tạo ra chuỗi truy vết hoàn chỉnh từ đầu đến cuối.
+
+---
+
+## 1. Loại Hợp Đồng Cần Quản Lý
+
+| Loại | Đối tượng | Mô tả |
+|---|---|---|
+| **Hợp Đồng Mua Hàng (Purchase Agreement)** | Nhà Cung Cấp (Supplier) | Điều khoản mua hàng dài hạn khung, PO sẽ reference đến HĐ này |
+| **Hợp Đồng Bán Hàng (Sales Agreement)** | Khách Hàng / Đại Lý | Cam kết mua hàng theo kỳ, giá ưu đãi đặc biệt |
+| **Hợp Đồng Ký Gửi (Consignment Agreement)** | HORECA | Xem chi tiết tại `consignment.md` |
+| **Hợp Đồng Logistics / Agency** | Forwarder, Customs Broker | Điều khoản dịch vụ, biểu phí |
+| **Hợp Đồng Thuê Kho** | Đơn vị cho thuê kho | Diện tích, giá thuê, điều khoản nhiệt độ |
+
+---
+
+## 2. Thông Tin Căn Bản Của Một Hợp Đồng
+
+- Số hợp đồng (Contract No.) — Tự sinh hoặc nhập tay theo quy ước
+- Loại hợp đồng (Contract Type)
+- Đối tác liên quan (Linked Supplier / Customer)
+- Ngày ký, Ngày hiệu lực, Ngày hết hạn
+- Giá trị hợp đồng (Contract Value) và Đồng tiền
+- Điều khoản thanh toán (Payment Terms): Đặt cọc bao nhiêu %, cách nào (L/C, T/T), trong bao nhiêu ngày
+- Điều khoản giao hàng (Incoterms): FOB / CIF / EXW / DDP...
+- Trạng thái (Status): DRAFT → PENDING_SIGN → ACTIVE → EXPIRED / TERMINATED
+- File đính kèm (Upload PDF bản scan hợp đồng gốc)
+
+---
+
+## 3. Tính Năng Cốt Lõi
+
+### A. Cảnh Báo Hết Hạn (Expiry Alert)
+- Hệ thống tự động gửi thông báo **30 ngày, 7 ngày trước khi hết hạn** cho nhân viên quản lý hợp đồng và CEO
+- Dashboard hiển thị danh sách "Hợp Đồng Sắp Hết Hạn" để chủ động gia hạn
+
+### B. Liên Kết Với PO / SO
+- Khi tạo PO, nhân viên Thu mua **bắt buộc** chọn liên kết với Hợp Đồng Mua Hàng tương ứng
+- Hệ thống kiểm tra PO có vượt giá trị còn lại của HĐ khung không? Nếu vượt → Cảnh báo, yêu cầu duyệt CEO
+- Theo dõi **Giá trị Thực Hiện (Utilized Value)** so với Giá trị Hợp đồng
+
+### C. Quản Lý Phụ Lục Sửa Đổi (Amendments / Addendum)
+- Khi hai bên thỏa thuận thay đổi điều khoản (giá, hạn mức, điều khoản thanh toán), hệ thống cho phép tạo **Phụ lục (Amendment)** gắn vào hợp đồng gốc thay vì tạo HĐ mới
+- Ghi rõ Amendment No., Ngày ký, Nội dung thay đổi
+
+### D. Digital Signature (Ký Điện Tử Nội Bộ)
+- CEO hoặc người được ủy quyền có thể **ký điện tử** bản nháp HĐ ngay trong hệ thống trước khi gửi cho đối tác
+- Lưu lại timestamp ký, chữ ký số để làm bằng chứng nội bộ
+
+### E. Thống Kê Hợp Đồng
+- Báo cáo: Tổng giá trị HĐ đang active / đã expired
+- Tỷ lệ thực hiện HĐ mua hàng theo từng Nhà Cung Cấp (Committed vs Actual PO)
+- Phân tích điều khoản thanh toán hiện tại của tất cả NCC (Vẽ được bức tranh dòng tiền tổng thể)
+
+---
+
+## 4. Liên Kết Với Các Module Khác
+
+```
+Contract (HĐ Mua Hàng)
+    └─→ PurchaseOrder (Nhiều PO có thể dưới 1 HĐ)
+            └─→ Shipment / LandedCost
+                    └─→ GoodsReceipt (WMS)
+                            └─→ AccountsPayable (FIN)
+
+Contract (HĐ Bán Hàng)
+    └─→ SalesOrder (Nhiều SO có thể dưới 1 HĐ Đại lý)
+            └─→ DeliveryOrder (WMS/TRS)
+                    └─→ Invoice → AccountsReceivable (FIN)
+```
+
+---
+
+## 5. Database Design
+
+- `Contract`: Entity chính lưu thông tin hợp đồng
+- `ContractAmendment`: Phụ lục sửa đổi
+- `ContractDocument`: File đính kèm (PDF scan, file nháp)
+- `ContractAlert`: Cấu hình cảnh báo hết hạn
+- `ContractUtilization`: Theo dõi tổng giá trị PO/SO đã tạo dưới HĐ

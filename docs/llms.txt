@@ -1,0 +1,39 @@
+# Wine ERP Project
+> Hệ thống ERP tối ưu cho nghiệp vụ Nhập khẩu và Phân phối Rượu Vang.
+> **Phase 4 — Implementation đang triển khai** (05/03/2026) — P1 Progress: 11/15 (73%)
+
+## Core Files & Context
+- [docs/wine-erp-plan.md]: Master Plan v3.0 và Task Breakdown (Phase 4 đang triển khai).
+- [docs/wine-erp-implementation-plan.md]: Kế hoạch triển khai chi tiết 8 Phase — tracking progress.
+- [docs/wine-erp-audit-05-03.md]: Audit đặc tả vs code thực tế — **~65% hoàn thành**.
+- [docs/README.md]: Mục lục hệ thống tài liệu.
+- [docs/architecture/]: Các file thiết kế kiến trúc và mô hình Database.
+- [docs/modules/]: Đặc tả nghiệp vụ (Business Requirements) — 20 modules.
+
+## Implementation Progress (05/03/2026 13:45)
+- **SLS (Sales): 80%** — SO, Allocation, Credit Check, SO Margin Analysis, Quotation Module, Price List
+- **FIN (Finance): 75%** — AR/AP, Journal Entries, COGS, P&L, Expense Management, Period Close
+- **DSH (Dashboard): 80%** — KPI Cards, Revenue Chart, P&L Summary, Cash Position, AR Aging
+- **WMS (Warehouse): 70%** — Inventory, GR, DO, FIFO, Quarantine, Write-off auto journal
+- **PRC (Procurement): 70%** — PO, Shipment, Tax Engine
+- **TAX: 65%** — Tax Rate CRUD, Multi-FTA, Tax Engine
+- **SYS (Settings): 60%** — RBAC, User Mgmt, Roles & Permissions, Audit Log
+- **MDM: 60%** — Products, Customers, Suppliers CRUD
+- **CRM: 55%** — Customer 360°, Activity Log, Sales Pipeline (Kanban)
+- **CST (Costing): 60%** — SKU view, Landed Cost Campaign
+
+## New Modules (Session 05/03)
+- **Quotation (QTN)**: `/dashboard/quotations` — CRUD, DRAFT→SENT→ACCEPTED→CONVERTED, Convert to SO
+- **Sales Pipeline (PPL)**: `/dashboard/pipeline` — Kanban 6 cột, move stage, stats, create opp
+- **Price List (PRC-L)**: `/dashboard/price-list` — 4 channel cards, CRUD, add product + price
+
+## Key Concepts (Wine ERP Specifics)
+- **Allocation**: Cơ chế phân bổ số lượng bán tối đa cho từng Sales Rep hoặc Khách hàng VIP với các loại rượu Grand Cru hiếm.
+- **Landed Cost**: Chi phí cập cảng (Giá nguyên bản + cước vận chuyển + bảo hiểm + Thuế nhập khẩu + Thuế TTĐB + Phí nội tệ...) -> Quyết định giá vốn (COGS) thực tế.
+- **WMS Lô/Date**: Rượu vang được theo dõi theo Vintage, nhiệt độ kho/cellar và quy cách đóng gói hộp đơn/thùng gỗ (OWC/Carton).
+- **Master Data**: Phải hỗ trợ Phân hạng (Appellation), Vùng trồng (Region), Giống nho (Grape), Nồng độ cồn (ABV%).
+- **Expense Management**: Chi phí hoạt động theo danh mục kế toán VN (641/642/635/811), approval >5M VND, auto journal entry.
+- **Period Close**: Đóng kỳ kế toán tháng — pre-closing checklist 5 mục (AR/AP/GR/DO/Expense), lock chứng từ.
+- **SO Margin**: Phân tích biên lợi nhuận per dòng SO, alert khi biên âm, dùng weighted avg landed cost.
+- **Quotation**: Báo giá → Gửi khách → Chấp nhận → 1-click chuyển thành Sales Order.
+
