@@ -1,0 +1,15 @@
+﻿export const dynamic = 'force-dynamic'
+
+import { getDeliveryRoutes, getDeliveryStats } from './actions'
+import { DeliveryClient } from './DeliveryClient'
+
+export const metadata = { title: 'Váº­n Chuyá»ƒn | Wine ERP' }
+
+export default async function DeliveryPage() {
+    const [{ rows, total }, stats] = await Promise.all([
+        getDeliveryRoutes({ pageSize: 20 }),
+        getDeliveryStats(),
+    ])
+    return <DeliveryClient initialRows={rows} initialTotal={total} stats={stats} />
+}
+

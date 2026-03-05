@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── LY's Cellars — Oceanic Cellar Design Tokens ── */
+
+  /* Core Backgrounds */
+  --color-lys-bg: #0A1926;
+  /* Deep Sea Navy */
+  --color-lys-surface: #142433;
+  /* Midnight Teal */
+  --color-lys-card: #1B2E3D;
+  /* Steel Blue */
+  --color-lys-border: #2A4355;
+  /* Deep Ocean */
+
+  /* Brand Accents */
+  --color-lys-teal: #87CBB9;
+  /* Logo Teal — Linh hồn */
+  --color-lys-teal-light: #A5DED0;
+  /* Mint Light — Hover */
+  --color-lys-navy: #1A4363;
+  /* Showroom Door Navy */
+  --color-lys-wine: #8B1A2E;
+  /* Burgundy Red — Error/Alert */
+  --color-lys-amber: #D4A853;
+  /* Amber Warm — Warning */
+
+  /* Text Scale */
+  --color-lys-ivory: #E8F1F2;
+  /* Cool White — primary text */
+  --color-lys-muted: #8AAEBB;
+  /* Steel Muted — labels */
+  --color-lys-dim: #4A6A7A;
+  /* Deep Muted — placeholders */
+
+  /* Semantic */
+  --color-success: #5BA88A;
+  --color-warning: #D4A853;
+  --color-error: #8B1A2E;
+  --color-info: #4A8FAB;
+
+  /* Typography — next/font injects these as CSS vars on <html class="...">.
+     Define fallbacks here; the actual font name comes from next/font at runtime. */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", Menlo, ui-monospace, monospace;
+
+  /* Border radius — Sharp/Luxury */
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+}
+
+/* ── Base Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-lys-bg);
+  color: var(--color-lys-ivory);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* ── Font utility classes (use these instead of inline fontFamily) ── */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* ── Scrollbar — Oceanic thin ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-lys-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-lys-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(135, 203, 185, 0.5);
+}
+
+/* ── Focus ring — Teal ── */
+:focus-visible {
+  outline: 2px solid var(--color-lys-teal);
+  outline-offset: 2px;
+}
+
+/* ── Selection — Teal ── */
+::selection {
+  background-color: rgba(135, 203, 185, 0.25);
+  color: var(--color-lys-ivory);
+}
+
+/* ── Number/mono figures ── */
+[class*="font-mono"],
+[style*="DM Mono"],
+[style*="font-mono"] {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* ── Input/select reset ── */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+/* ── Smooth transition for interactive elements ── */
+button,
+a,
+[role="button"] {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
