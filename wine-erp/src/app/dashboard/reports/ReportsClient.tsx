@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { BarChart3, TrendingUp, Package, Wine, Download, Loader2, FileSpreadsheet, CheckCircle2 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
-import { exportReportExcel, REPORT_CATALOG, type ReportKey } from './actions'
+import { exportReportExcel } from './actions'
+import { REPORT_CATALOG, type ReportKey } from './constants'
 
 const CHANNEL_LABEL: Record<string, string> = {
     HORECA: 'HORECA',

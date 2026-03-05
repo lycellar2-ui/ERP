@@ -1,6 +1,9 @@
 import { getQuotations, getQuotationStats } from './actions'
 import { QuotationClient } from './QuotationClient'
 
+export const dynamic = "force-dynamic"
+
+
 export const metadata = { title: 'Báo Giá | Wine ERP' }
 
 export default async function QuotationsPage() {

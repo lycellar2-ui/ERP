@@ -217,8 +217,12 @@ export async function recordDeliveryFailure(input: {
             where: { id: input.stopId },
             data: {
                 status: 'FAILED',
-                failureReason: input.reason,
-                notes: input.notes ?? null,
+                pod: {
+                    upsert: {
+                        create: { confirmedBy: 'SYSTEM', notes: `[Lý do: ${input.reason}] ${input.notes ?? ''}`.trim() },
+                        update: { notes: `[Lý do: ${input.reason}] ${input.notes ?? ''}`.trim() }
+                    }
+                }
             },
         })
 
@@ -271,8 +275,9 @@ export async function getFailedDeliveries(): Promise<FailedDeliveryRow[]> {
                     so: { select: { soNo: true, customer: { select: { name: true } } } },
                 },
             },
+            pod: { select: { notes: true, confirmedAt: true } },
         },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { id: 'desc' },
         take: 50,
     })
 
@@ -283,9 +288,9 @@ export async function getFailedDeliveries(): Promise<FailedDeliveryRow[]> {
         customerName: s.do.so.customer.name,
         soNo: s.do.so.soNo,
         codAmount: Number(s.codAmount),
-        failureReason: s.failureReason ?? 'UNKNOWN',
-        notes: s.notes,
-        failedAt: s.updatedAt,
+        failureReason: s.pod?.notes?.includes('[Lý do: ') ? (s.pod.notes.split(']')[0].replace('[Lý do: ', '') || 'UNKNOWN') : 'UNKNOWN',
+        notes: s.pod?.notes || null,
+        failedAt: s.pod?.confirmedAt ?? s.route.routeDate,
     }))
 }
 
@@ -319,14 +324,26 @@ export async function scheduleRedelivery(input: {
                 sequence: (maxSeq._max.sequence ?? 0) + 1,
                 codAmount: failedStop.codAmount,
                 status: 'PENDING',
-                notes: `Giao lại từ ${input.failedStopId.slice(-6).toUpperCase()}`,
+                pod: {
+                    create: {
+                        confirmedBy: 'SYSTEM',
+                        notes: `Giao lại từ ${input.failedStopId.slice(-6).toUpperCase()}`,
+                    }
+                }
             },
         })
 
         // Mark original as rescheduled
         await prisma.deliveryStop.update({
             where: { id: input.failedStopId },
-            data: { status: 'RESCHEDULED' },
+            data: {
+                pod: {
+                    upsert: {
+                        create: { confirmedBy: 'SYSTEM', notes: `Đã lên lịch lại ở chuyến: ${input.newRouteId}` },
+                        update: { notes: `Đã lên lịch lại ở chuyến: ${input.newRouteId}` }
+                    }
+                }
+            },
         })
 
         revalidatePath('/dashboard/delivery')

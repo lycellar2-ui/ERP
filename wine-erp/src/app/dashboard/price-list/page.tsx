@@ -1,6 +1,9 @@
 import { getPriceLists } from './actions'
 import { PriceListClient } from './PriceListClient'
 
+export const dynamic = "force-dynamic"
+
+
 export const metadata = {
     title: 'Bảng Giá | Wine ERP',
 }

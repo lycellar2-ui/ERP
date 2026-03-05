@@ -188,7 +188,7 @@ export async function getImportCustomsData(input: { year: number; month?: number
     // Get POs with lines and tax rates
     const pos = await prisma.purchaseOrder.findMany({
         where: {
-            status: { in: ['RECEIVED', 'PARTIALLY_RECEIVED', 'CLOSED'] },
+            status: { in: ['RECEIVED', 'PARTIALLY_RECEIVED'] },
             createdAt: { gte: startDate, lte: endDate },
         },
         include: {

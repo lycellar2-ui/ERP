@@ -515,7 +515,7 @@ export async function generateCEOSummary() {
             select: { qtyAvailable: true, unitLandedCost: true },
         }),
         prisma.aRInvoice.count({ where: { status: 'OVERDUE' } }),
-        prisma.expense.count({ where: { status: 'PENDING' } }),
+        prisma.expense.count({ where: { status: 'PENDING_APPROVAL' } }),
     ])
 
     const alerts: string[] = []

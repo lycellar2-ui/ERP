@@ -118,6 +118,8 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
                 },
             })
 
+            const qrtLocation = await tx.location.findFirst({ where: { type: 'QUARANTINE' } })
+
             // 3. WMS: Create QUARANTINE stock lots for returned items
             for (const line of ro.lines) {
                 // Find original lot for this product to get warehouse/location/cost info
@@ -132,7 +134,7 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
                     data: {
                         lotNo: `QRT-RET-${String(lotCount + 1).padStart(6, '0')}`,
                         productId: line.productId,
-                        locationId: originalLot?.locationId ?? null,
+                        locationId: originalLot?.locationId ?? qrtLocation?.id ?? 'UNKNOWN_LOC',
                         shipmentId: originalLot?.shipmentId ?? null,
                         qtyReceived: line.qtyReturned,
                         qtyAvailable: line.qtyReturned,

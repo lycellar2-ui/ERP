@@ -1,6 +1,9 @@
 import { QRCodeClient } from './QRCodeClient'
 import { getQRCodes, getQRStats } from './actions'
 
+export const dynamic = "force-dynamic"
+
+
 export default async function QRCodePage() {
     let data = { rows: [] as any[], total: 0 }
     let stats = { total: 0, scanned: 0, unscanned: 0 }

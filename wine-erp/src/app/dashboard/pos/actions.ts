@@ -280,7 +280,6 @@ export async function lookupByBarcode(barcode: string): Promise<POSProduct | nul
         where: {
             OR: [
                 { skuCode: barcode },
-                { barcode },
             ],
             status: 'ACTIVE',
             deletedAt: null,
