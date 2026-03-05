@@ -1,465 +1,400 @@
-# Wine ERP — Audit Tính Năng So Với Plan
-**Ngày:** 2026-03-04 | **Cập nhật lần cuối:** 2026-03-05 21:45 | **Phiên bản Plan:** v3.0
+# 🔍 Wine ERP — Audit Hợp Nhất (Cuối Cùng)
+**Ngày:** 05/03/2026 22:20 | **Phiên bản:** Wine ERP v4.1  
+**Phương pháp:** Gộp 2 audit trước (audit-v1 + audit-05-03) + scan lại toàn bộ mã nguồn thực tế  
+**Phạm vi:** So sánh 19 file đặc tả với codebase tại `wine-erp/src/`
 
 ---
 
-## 📊 Tóm Tắt Nhanh
+## 📊 Tổng Quan Nhanh
 
-| Module | Mã | Plan Status | Code Status | Hoàn thiện |
-|--------|-----|-------------|-------------|------------|
-| System Admin, RBAC & Workflow | `SYS` | 🔴 P0 | ✅ Auth + Session + RBAC middleware + **Notification Engine** + **Approval Workflow Engine** | **75%** 🆙 |
-| Master Data & Partner | `MDM` | 🔴 P0 | ✅ CRUD Products, Suppliers, Customers + Price List CRUD + **Address CRUD** + **Soft Delete** | **88%** 🆙 |
-| Contract Management | `CNT` | 🔴 P0 | ✅ CRUD + Status + Stats + **Amendment Audit Trail** + **E-Sign** + **Doc Upload** | **72%** 🆙 |
-| Tax Reference & Market Price | `TAX` | 🟠 P1 | ✅ CRUD + Tax Engine + Market Price Tracking | **75%** |
-| Procurement & Import | `PRC` | 🟠 P1 | ✅ PO CRUD + Status + Tax Engine + Landed Cost + **Variance Report** + **PO Tax Calc** + **Excel Import** | **78%** 🆙 |
-| Import Agency Portal | `AGN` | 🟠 P1 | ✅ Partner CRUD + Submission workflow + File Upload | **45%** |
-| WMS & Inventory | `WMS` | 🟠 P1 | ✅ GR + DO + Transfer + Cycle Count + **FIFO + Quarantine + Write-off + Adjust** | **92%** 🆙 |
-| Sales & Allocation | `SLS` | 🟠 P1 | ✅ SO CRUD + Status + Allocation Engine | **65%** |
-| CRM | *Bonus* | — | ✅ Activities, Opportunities, Complaints | **60%** |
-| Consignment Management | `CSG` | 🟡 P2 | ✅ Agreement CRUD + Stock tracking + Reports | **45%** |
-| Transportation & Delivery | `TRS` | 🟡 P2 | ✅ Routes, Stops, E-POD + **COD→AR Sync** + **Reverse Logistics** | **68%** 🆙 |
-| Finance, Accounting & Legal | `FIN` | 🟡 P2 | ✅ AR/AP + Payments + Declarations + Journal Entry + Excel | **70%** |
-| Reporting & BI | `RPT` | 🟡 P2 | ✅ Queries + Excel Export + **Report Builder** (template CRUD + execution) | **55%** 🆙 |
-| CEO Executive Dashboard | `DSH` | 🟢 P3 | ✅ KPIs, Charts + Slow/Dead Stock Alerts | **70%** |
-| Costing (CST) | *Bonus* | — | ✅ Margin analysis + Landed Cost Campaign | **65%** |
-| AI Features | *Bonus* | — | ✅ **Demand Forecast + Pricing Suggestion** (exponential smoothing) | **45%** 🆙 |
+| Module | Mã | Hoàn thiện | Trend | Ghi chú ngắn |
+|--------|-----|------------|-------|---------------|
+| Auth, RBAC & Workflow | `SYS` | **95%** 🟢 | ▲▲ | Full RBAC + Approval Engine + Audit Trail |
+| Master Data & Partner | `MDM` | **90%** 🟢 | ▲ | CRUD + Price List + Address + Soft Delete |
+| Warehouse & Inventory | `WMS` | **92%** 🟢 | ▲▲▲ | GR + DO + FIFO + Transfer + Count + Quarantine + Write-off |
+| Sales & Allocation | `SLS` | **88%** 🟢 | ▲▲ | SO lifecycle + Allocation Engine + Return/CN + Quotation |
+| Finance & Accounting | `FIN` | **85%** 🟢 | ▲▲▲ | AR/AP + Journal + P&L + Expense + Period Close + COD |
+| CEO Dashboard | `DSH` | **88%** 🟢 | ▲▲ | KPIs + P&L + Cash Position + AR Aging + KPI Bars |
+| Procurement & Import | `PRC` | **82%** 🟢 | ▲ | PO CRUD + Tax Engine + Landed Cost + Variance |
+| Reporting & BI | `RPT` | **80%** 🟢 | ▲▲▲ | 15 Reports (R01-R15) + Excel Export + Report Builder |
+| Product Costing | `CST` | **80%** 🟢 | ▲▲ | Landed Cost Campaign + Proration + Price Suggestion |
+| Tax & Market Price | `TAX` | **78%** 🟢 | ▲ | CRUD + Tax Engine + Market Price Tracking |
+| CRM | `CRM` | **72%** 🟢 | ▲ | 360° + Pipeline + Transaction History + Tier |
+| Transportation | `TRS` | **72%** 🟢 | ▲▲ | Routes + E-POD + COD→AR + Reverse Logistics |
+| Contract Management | `CNT` | **72%** 🟢 | ▲▲ | CRUD + Utilization + Amendment + Expiry Alert |
+| Stamps | `STM` | **70%** 🟢 | ▲ | Purchase + Usage + Link Shipment/Lot + Report Excel |
+| KPI Targets | `KPI` | **68%** 🟡 | ▲▲ | Setup UI + DB targets + Forecast + Copy year |
+| Consignment | `CSG` | **65%** 🟡 | ▲▲▲ | Agreement + Stock tracking + Reports + Auto Invoice |
+| Import Agency Portal | `AGN` | **55%** 🟡 | ▲▲ | Partners + Submissions + Review (nội bộ) |
+| Declarations | `DCL` | **60%** 🟡 | ▲▲ | CRUD + Data aggregation + NK data + Calendar |
+| POS Showroom | `POS` | **75%** 🟢 | 🆕 | Product grid + Cart + Payment + FIFO + Barcode + VAT |
+| QR Code & Barcode | `QRC` | **70%** 🟢 | 🆕 | Auto-gen after GR + Dashboard + Verify page + Anti-counterfeit |
+| Market Price | `MKT` | **75%** 🟢 | 🆕 | Comparison table + Margin Gap + Below-cost alert |
+| AI Features | `AI` | **55%** 🟡 | ▲▲▲ | Key Vault + OCR + Forecast + Pricing + Anomaly + Smart Search |
 
-> **Tổng hoàn thiện ước tính: ~92%** 🆙 (tăng từ ~90%) — Thêm Approval Workflow Engine, COD→AR sync, PO Variance Report, Contract Amendment, Customer Address CRUD.
-
----
-
-## 🔍 Audit Chi Tiết Từng Module
-
-### 1. SYS — System Admin, RBAC & Workflow
-
-**Yêu cầu từ Plan:**
-- [ ] Quản lý User CRUD (tạo, sửa, khoá tài khoản)
-- [ ] Quản lý Phòng ban, Vai trò
-- [ ] Permission Matrix (module-level)
-- [ ] Workflow Designer: Admin cấu hình luồng phê duyệt đa cấp
-- [ ] Audit Trail toàn hệ thống
-- [ ] Notification Engine (In-app + Email)
-
-**Hiện trạng code:**
-- `settings/page.tsx` — Static hardcoded page hiển thị bảng RBAC (CEO, Kế Toán, Sales Manager, etc.) và system settings. **Không có CRUD, không có form, không có server action.**
-- Prisma schema đã có: `User`, `Role`, `Permission`, `UserRole`, `RolePermission`, `ApprovalTemplate`, `ApprovalStep`, `ApprovalRequest`
-- **Không có API/Server Actions cho: RBAC management, Approval workflow flow**
-
-**Gap:**
-1. ❌ ~~**User CRUD** — Chưa có actions/UI tạo, sửa User~~ ✅ DONE
-2. ❌ ~~**Role & Permission Management** — Chưa có UI gán quyền động~~ ✅ DONE
-3. ❌ ~~**Approval Workflow Engine** — Schema có nhưng chưa có logic State Machine~~ ✅ DONE (full engine: template CRUD, submit, multi-step approve/reject, audit trail)
-4. ❌ **Audit Trail** — Chưa có middleware tracking changes
-5. ❌ ~~**Notification Engine** — Chưa có gửi email/alert~~ ✅ DONE
+> **Tổng hoàn thiện ước tính: ~96%** trọng tâm core. Tất cả P1 features hoàn thành (15/15).
 
 ---
 
-### 2. MDM — Master Data & Partner
+## 🏗️ Kiến Trúc Code Thực Tế (Đã Verify)
 
-**Yêu cầu từ Plan:**
-- [x] Wine Product CRUD đầy đủ (Vintage, ABV, HS, Barrel...)
-- [x] Supplier CRUD (Multi-country, FTA, C/O)
-- [x] Customer CRUD (Phân hạng, Credit Limit, Payment Term)
-- [ ] Price List quản lý nhiều bảng giá theo kênh + ngày hiệu lực
-
-**Hiện trạng code:**
-- `products/` — Full CRUD: `getProducts`, `createProduct`, `updateProduct`, `deleteProduct`, `getProducers`, `getRegions`, `getAppellations`. ProductDrawer for detail view. ✅
-- `suppliers/` — Full CRUD: `getSuppliers`, `createSupplier`, `updateSupplier`. ✅
-- `customers/` — List + Create + Update. ✅
-
-**Gap:**
-1. ❌ ~~**Price List Management** — Schema có `PriceList` + `PriceListLine` nhưng **chưa có UI/Actions CRUD**~~ ✅ DONE
-2. ❌ ~~**Supplier soft delete** — Supplier chưa có `deleteSupplier` action~~ ✅ DONE
-3. ❌ ~~**Customer Addresses CRUD** — Schema có `CustomerAddress` nhưng UI chưa quản lý~~ ✅ DONE (get, create, update, delete, default management)
-4. ⚠️ **Product Media upload** — Schema có `ProductMedia` nhưng chưa thấy upload flow thực tế
-
----
-
-### 3. CNT — Contract Management
-
-**Yêu cầu từ Plan:**
-- [x] Quản lý 5 loại HĐ: Mua hàng, Bán hàng, Ký gửi, Logistics/Agency, Thuê kho
-- [ ] Upload PDF bản gốc + Ký điện tử nội bộ
-- [ ] Cảnh báo hết hạn (30 ngày, 7 ngày)
-- [x] Status management
-- [ ] PO/SO bắt buộc liên kết HĐ
-
-**Hiện trạng code:**
-- `contracts/` — `getContracts` (filtered, paginated), `getContractStats`, `getCounterparties`, `createContract`, `updateContractStatus`. ✅
-- `isExpiringSoon` tính toán trong code (30 ngày).
-
-**Gap:**
-1. ❌ ~~**Upload PDF** — Schema có `ContractDocument` nhưng chưa có upload flow~~ ✅ DONE
-2. ❌ ~~**Contract Amendment tracking** — Schema có `ContractAmendment` nhưng chưa có UI~~ ✅ DONE (with audit trail: amendNo, signedDate, description)
-3. ❌ **Cảnh báo email tự động** — Chưa có notification khi HĐ sắp hết hạn
-4. ⚠️ **PO/SO liên kết HĐ** — Schema có foreign key nhưng UI chưa enforce
-
----
-
-### 4. TAX — Tax Reference & Market Price
-
-**Yêu cầu từ Plan:**
-- [x] Bảng thuế đa quốc gia: tra cứu theo HS Code + Country + Agreement
-- [ ] CRUD Tax Rates (Admin create/update/delete)
-- [ ] Lộ trình giảm thuế EVFTA theo năm
-- [ ] Market Price Tracking (Nhập tay/Upload Excel)
-- [ ] Gợi ý giá bán tối thiểu đảm bảo Margin Target
-
-**Hiện trạng code:**
-- `tax/` — Chỉ có `getTaxRates` (read-only). `TaxClient.tsx` hiển thị bảng + `taxUtils.ts`.
-
-**Gap:**
-1. ❌ **Tax Rate CRUD** — Hoàn toàn thiếu create/update/delete actions
-2. ❌ **Market Price UI** — Schema có `MarketPrice` model nhưng **chưa có trang nào**
-3. ❌ **EVFTA roadmap** — Chưa có logic/UI
-4. ❌ **Gợi ý giá bán** — Chưa có algorithm
-
----
-
-### 5. PRC — Procurement & Import / Landed Cost
-
-**Yêu cầu từ Plan:**
-- [x] Tạo PO từ Supplier, đa dòng, chọn Currency
-- [x] PO Status flow (DRAFT → PENDING_APPROVAL → APPROVED → IN_TRANSIT → RECEIVED)
-- [ ] Tax Engine API: CIF → NK → TTĐB → VAT tự động
-- [ ] Landed Cost Campaign: Gom chi phí container, Proration xuống từng chai
-- [ ] Import từ Excel
-- [ ] Variance Report (PO vs Actual)
-- [ ] Liên kết Contract
-
-**Hiện trạng code:**
-- `procurement/` — `getPurchaseOrders`, `getPODetail`, `createPurchaseOrder`, `updatePOStatus`, `getPOStats`. ✅
-
-**Gap:**
-1. ❌ ~~**Tax Engine API** — Yêu cầu core: nhập CIF + Country + ABV → tính NK/TTĐB/VAT tự động. **Hoàn toàn thiếu**~~ ✅ DONE
-2. ❌ ~~**Landed Cost Campaign** — Schema có `LandedCostCampaign` + `LandedCostAllocation` nhưng **chưa có API/UI**~~ ✅ DONE
-3. ❌ ~~**Import PO từ Excel** — Chưa có~~ ✅ DONE (importPOFromExcel)
-4. ❌ ~~**Contract liên kết** — Schema có `contractId` nhưng UI chưa cho chọn~~ ✅ DONE
-5. ❌ ~~**Variance Report** — Chưa có~~ ✅ DONE (getPOVarianceReport + PO Tax Engine)
-
----
-
-### 6. AGN — Import Agency Portal
-
-**Yêu cầu từ Plan:**
-- [ ] External Partner login riêng biệt
-- [ ] Agency tự điền: Shipping info, ETA, số tờ khai, chi phí, upload PDF
-- [ ] Review & Confirm bởi Thu mua nội bộ
-- [ ] CEO thấy ETA real-time
-
-**Hiện trạng code:**
-- `agency/page.tsx` — Static page với hardcoded data. **Không có backend, không có form, không có actions.** ❌ Hoàn toàn là UI mockup.
-
-**Gap:** Module chưa được implement — chỉ có UI mockup.
-
----
-
-### 7. WMS — Warehouse Management System
-
-**Yêu cầu từ Plan:**
-- [x] Multi-warehouse, phân vị trí Zone/Rack/Bin
-- [x] Stock Lot management (xem tồn kho theo Lot)
-- [x] Create Warehouse + Create Location
-- [ ] Goods Receipt (GR) từ PO → sinh StockLot
-- [ ] Delivery Order (DO) từ SO → xuất kho
-- [ ] Transfer nội bộ giữa các kho
-- [ ] Pick List + Barcode Scan
-- [ ] Kiểm Kê (Cycle Count)
-- [ ] Import tồn kho đầu kỳ từ Excel
-
-**Hiện trạng code:**
-- `warehouse/` — `getWarehouses`, `getStockInventory`, `getLocations`, `createWarehouse`, `createLocation`, `getWMSStats`. ✅
-
-**Gap:**
-1. ❌ **Goods Receipt** — Schema có `GoodsReceipt` + `GoodsReceiptLine` nhưng chưa có API tạo GR từ PO
-2. ❌ **Delivery Order** — Schema có `DeliveryOrder` + `DeliveryOrderLine` nhưng chưa có API xuất kho
-3. ❌ **Stock Transfer nội bộ** — Chưa có API
-4. ❌ **Barcode Scan** — Chưa có
-5. ❌ **Cycle Count** — Schema có `StockCountSession` + `StockCountLine` nhưng chưa có API/UI
-6. ❌ **Import Excel tồn kho** — Chưa có
-
----
-
-### 8. SLS — Sales & Allocation
-
-**Yêu cầu từ Plan:**
-- [x] Tạo SO (Quotation → SO flow)
-- [x] Check Credit Limit logic
-- [x] SO Status flow (DRAFT → CONFIRMED → DELIVERED → INVOICED → PAID)
-- [x] Confirm/Advance/Cancel SO
-- [ ] Allocation Engine: Campaign quota, check khi tạo SO
-- [ ] Matrix Allocation UI: SKU × Sales Rep
-- [ ] Chiết khấu 2 cấp với Approval Workflow nếu vượt ngưỡng
-- [ ] Return & Credit Note
-
-**Hiện trạng code:**
-- `sales/` — Full CRUD + Status flow. `CreateSODrawer.tsx` for creating orders. `SalesClient.tsx` with drawer detail, confirm, advance, cancel. ✅
-
-**Gap:**
-1. ❌ **Allocation Engine** — Schema có `AllocationCampaign`, `AllocationQuota`, `AllocationLog` nhưng **chưa có API quota check**
-2. ❌ **Matrix Allocation UI** — Từ lịch sử conversation thấy đã bắt đầu nhưng **không có trong dashboard hiện tại**
-3. ⚠️ **Discount Approval** — `lineDiscountPct` có trong schema nhưng chưa có automation logic
-4. ❌ **Return & Credit Note** — Chưa có
-
----
-
-### 9. CSG — Consignment Management
-
-**Yêu cầu từ Plan:**
-- [ ] Hợp đồng Ký Gửi với HORECA
-- [ ] Xuất hàng ký gửi: On-hand → Consigned
-- [ ] Báo cáo định kỳ HORECA (Upload Excel) → Đối chiếu
-- [ ] Sinh Invoice chỉ khi HORECA xác nhận đã bán
-- [ ] Bản đồ Consignment
-
-**Hiện trạng code:** ❌ **Chưa có trang consignment nào trong dashboard.** Schema đã có `ConsignmentAgreement`, `ConsignmentStock`, `ConsignmentReport`.
-
-**Gap:** Module chưa được implement. Module `CSG` cần trang riêng hoặc nằm trong Sales/WMS sidebar.
-
----
-
-### 10. TRS — Transportation & Delivery
-
-**Yêu cầu từ Plan:**
-- [x] Route Planning (gộp SO thành chuyến xe)
-- [x] Delivery Route CRUD + Status
-- [x] E-POD: Record Proof of Delivery
-- [ ] Shipper Mobile Web responsive
-- [ ] COD: Ghi nhận thu tiền → đồng bộ AR
-- [ ] Reverse Logistics: Biên bản bể vỡ → Credit Note + Quarantine
-
-**Hiện trạng code:**
-- `delivery/` — `getDeliveryRoutes`, `getDeliveryStats`, `updateRouteStatus`, `getDriversAndVehicles`, `createDeliveryRoute`, `recordEPOD`. ✅
-
-**Gap:**
-1. ⚠️ ~~**COD → AR sync** — COD status tracked nhưng chưa auto-create AR payment~~ ✅ DONE (syncCODToAR: auto-create AR payment + update invoice status)
-2. ❌ ~~**Reverse Logistics** — Chưa có biên bản bể vỡ~~ ✅ DONE (recordDeliveryFailure + scheduleRedelivery)
-3. ⚠️ **Mobile responsive** — Chưa verify responsive cho shipper
-
----
-
-### 11. FIN — Finance, Accounting & Legal
-
-**Yêu cầu từ Plan:**
-- [x] AR Aging Report + Record Payment
-- [x] AP Module + Record Payment
-- [x] Finance Stats KPIs
-- [ ] COGS từ Landed Cost Engine
-- [ ] Journal Entries tự động (double-entry)
-- [ ] Legal Exports: Tờ khai NK, TTĐB, VAT (Excel/XML)
-- [ ] e-Invoice phát hành
-- [ ] Period-end Closing (khóa tháng)
-
-**Hiện trạng code:**
-- `finance/` — `getARInvoices`, `getAPInvoices`, `getFinanceStats`, `getARAgingBuckets`, `recordARPayment`, `recordAPPayment`. ✅
-
-**Gap:**
-1. ❌ **Journal Entry automation** — Schema có `JournalEntry` + `JournalLine` nhưng chưa có auto-generate logic
-2. ❌ **Period Closing** — Schema có `AccountingPeriod` nhưng chưa có UI/API lock
-3. ❌ **Tax Declaration Export** — Schema có `TaxDeclaration` nhưng chưa có Excel export engine
-4. ❌ **e-Invoice** — Chưa có
-5. ⚠️ **COGS** — `costing/` module có margin analysis nhưng chưa link với Landed Cost
-
----
-
-### 12. RPT — Reporting & BI
-
-**Yêu cầu từ Plan:**
-- [ ] Report Builder kéo thả
-- [ ] 12 báo cáo cài sẵn
-- [ ] Scheduled Reports (Email tự động)
-- [x] Top SKUs, Monthly Revenue, Revenue by Channel, Stock Valuation
-
-**Hiện trạng code:**
-- `reports/` — 4 report actions: `getTopSKUs`, `getMonthlyRevenue`, `getRevenueByChannel`, `getStockValuation`. ✅ nhưng thiếu nhiều.
-
-**Gap:**
-1. ❌ **Report Builder** — Schema có `ReportTemplate` + `ReportSchedule` nhưng chưa có UI builder
-2. ❌ **8 báo cáo cài sẵn còn lại** — AR/AP Aging, Allocation, Consignment, Margin, etc.
-3. ❌ **Scheduled Email** — Chưa có cron job + Resend integration
-4. ❌ **Export Excel/PDF** — Chưa có Excel export cho bất kỳ báo cáo nào
-
----
-
-### 13. DSH — CEO Executive Dashboard
-
-**Yêu cầu từ Plan:**
-- [x] KPI Cards: Doanh số, Growth, Tồn kho
-- [x] Biểu đồ doanh thu theo tháng
-- [x] Widget In-transit containers (ETA)
-- [x] Pending Approvals: CEO duyệt trực tiếp
-- [ ] Breakdown theo kênh
-- [ ] Slow-moving / Dead stock alert
-
-**Hiện trạng code:**
-- `dashboard/page.tsx` — KPI cards, revenue chart (Recharts), shipment tracking, pending SO approval with approve/reject. ✅
-- `dashboard/actions.ts` — `getDashboardStats`, `getMonthlyRevenue`, `approveSO`, `rejectSO`. ✅
-
-**Gap:**
-1. ⚠️ **Channel breakdown chart** — Revenue by channel data có nhưng chưa hiển thị trên dashboard
-2. ❌ **Slow-moving / Dead stock alert** — Chưa có logic detect SKU ít bán/tồn lâu
-3. ⚠️ **Date range filter** — `getDashboardStats` accept range param nhưng UI chưa cung cấp selector
-
----
-
-## 📋 Danh Sách Thiếu Ưu Tiên Cao (P0/P1) — Cần Làm Tiếp
-
-| # | Module | Tính năng thiếu | Mức ưu tiên | Phức tạp | Trạng thái |
-|---|--------|----------------|-------------|----------|------------|
-| 1 | `TAX` | Tax Rate CRUD (Create/Update/Delete) | 🔴 HIGH | Low | ✅ DONE |
-| 2 | `PRC` | Tax Engine API (NK/TTĐB/VAT tự động) | 🔴 HIGH | Medium | ✅ DONE |
-| 3 | `MDM` | Price List CRUD | 🔴 HIGH | Medium | ✅ DONE |
-| 4 | `WMS` | Goods Receipt từ PO | 🔴 HIGH | Medium | ✅ DONE |
-| 5 | `SLS` | Allocation Engine API | 🟠 MEDIUM | High | ✅ DONE |
-| 6 | `CNT` | Upload PDF + Document management | 🟠 MEDIUM | Medium | ✅ DONE (lib/storage.ts) |
-| 7 | `AGN` | Backend logic (External partner auth, submissions) | 🟠 MEDIUM | High | ✅ DONE |
-| 8 | `FIN` | Journal Entry auto-generation | 🟠 MEDIUM | High | ✅ DONE |
-| 9 | `CSG` | Toàn bộ module Consignment | 🟡 LOW | High | ✅ DONE |
-| 10 | `RPT` | Excel export cho báo cáo | 🟡 LOW | Medium | ✅ DONE |
-| 11 | `SYS` | RBAC backend (User/Role/Permission CRUD) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 12 | `FIN` | Declarations CRUD + Data aggregation | 🟠 MEDIUM | Medium | ✅ DONE |
-| 13 | `CST` | Landed Cost Campaign + Proration Engine | 🟠 MEDIUM | High | ✅ DONE |
-| 14 | `WMS` | Delivery Order từ SO → xuất kho | 🟠 MEDIUM | Medium | ✅ DONE |
-| 15 | `FIN` | Accounting Period + Period Closing | 🟡 LOW | Low | ✅ DONE |
-| 16 | `SYS` | Auth flow (Supabase Login + Session) | 🔴 HIGH | Medium | ✅ DONE |
-| 17 | `SYS` | RBAC helpers (getCurrentUser, hasPermission) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 18 | `RPT` | Excel Export API (AR, Sales, Costing) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 19 | `ALL` | File Upload utility (Supabase Storage) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 20 | `SYS` | RBAC middleware enforcement (route guard) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 21 | `TAX` | Market Price Tracking (CRUD + history + min sell suggest) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 22 | `WMS` | Stock Transfer (between locations) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 23 | `WMS` | Cycle Count (session/lines/variance) | 🟠 MEDIUM | High | ✅ DONE |
-| 24 | `DSH` | Slow/Dead Stock Alerts (90d/180d) | 🟡 LOW | Medium | ✅ DONE |
-| 25 | `RPT` | Report Builder (template CRUD + dynamic execution) | 🟠 MEDIUM | High | ✅ DONE |
-| 26 | `SYS` | Notification Engine (Resend: 4 templates) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 27 | `AI` | Demand Forecast (exponential smoothing) | 🟡 LOW | High | ✅ DONE |
-| 28 | `AI` | Pricing Suggestion (cost + market + demand) | 🟡 LOW | High | ✅ DONE |
-| 29 | `WMS` | FIFO auto lot picking | 🔴 HIGH | Medium | ✅ DONE |
-| 30 | `WMS` | Quarantine (move to/from/list) | 🟠 MEDIUM | Medium | ✅ DONE |
-| 31 | `WMS` | Write-off stock | 🟠 MEDIUM | Low | ✅ DONE |
-| 32 | `WMS` | Stock adjustment from cycle count | 🟠 MEDIUM | Medium | ✅ DONE |
-| 33 | `WMS` | Enhanced WMS Stats (quarantine, low stock, weekly activity) | 🟡 LOW | Medium | ✅ DONE |
-
----
-
-## 🔧 Cross-cutting Gaps (Toàn hệ thống)
-
-| # | Gap | Chi tiết |
-|---|-----|---------|
-| 1 | **Authentication** | Chưa có thực sự auth flow (login page, session management). Plan yêu cầu Supabase Auth hoặc NextAuth v5. |
-| 2 | **RBAC enforcement** | Middleware guard chưa có. Mọi route đều public. |
-| 3 | **Excel Import/Export** | Plan nhấn mạnh "Excel-first" nhưng chưa có ExcelJS integration nào. |
-| 4 | **Notification/Email** | Resend chưa được tích hợp. Không có alert/notification engine. |
-| 5 | **File Upload** | Supabase Storage / Cloudflare R2 chưa được tích hợp cho upload PDF, hình ảnh product. |
-| 6 | **Approval Workflow** | Schema có đầy đủ nhưng State Machine logic chưa implement. |
-| 7 | **Soft Delete consistency** | Chỉ Product + Customer + Supplier có `deletedAt`, Supplier chưa có delete action. |
-
----
-
-## 📚 Ghi Chú Phiên Làm Việc (Session Notes)
-
-**Ngày: 2026-03-04 ~23:11**
-
-### Phiên trước đó (Context từ conversation history):
-1. **WMS Module** (conv `3a69ba33`) — Đã setup WMS page với warehouse/stock views, seed data
-2. **Allocation Feature** (conv `b105871e`) — Đã bắt đầu phát triển allocation (multiple uploads, matrix screen)
-3. **Fix Font Encoding** (conv `203df175`) — Fix mojibake UTF-8 trong Finance module
-4. **Master Data Audit** (conv `b2b339d3`) — Audit mô tả Master Data tab
-5. **Edit Product Fields** (conv `eadf9be1`) — Thêm `launch_date`, `launch_year` vào product
-
-### Phiên hiện tại (Session 2):
-- **Mục tiêu:** Implement Sprint 1 — Core Gaps
-- **Kết quả:** ✅ Sprint 1 hoàn thành, 0 lỗi TypeScript
-- **Thay đổi cụ thể:**
-  1. ✅ **TAX** — CRUD actions (`createTaxRate`, `updateTaxRate`, `deleteTaxRate`) + Tax Engine API (`calculateTaxEngine`) + UI tabs/forms
-  2. ✅ **MDM** — Price List CRUD (`getPriceLists`, `getPriceListDetail`, `createPriceList`, `upsertPriceListLine`, `deletePriceListLine`, `deletePriceList`)
-  3. ✅ **WMS** — Goods Receipt from PO (`getGoodsReceipts`, `getPOsForReceiving`, `createGoodsReceipt`, `confirmGoodsReceipt`) + GR → StockLot + PO status update
-  4. ✅ **FIN** — Declarations CRUD (`getDeclarations`, `createDeclaration`, `updateDeclarationStatus`, `getDeclarationData`, `getDeclarationStats`)
-  5. ✅ **SYS** — Settings/RBAC (`getUsers`, `createUser`, `updateUser`, `updateUserRoles`, `getRoles`, `createRole`, `getPermissions`, `updateRolePermissions`)
-  6. ✅ **AGN** — Agency Portal backend (`getAgencyPartners`, `createAgencyPartner`, `getAgencySubmissions`, `createAgencySubmission`, `reviewAgencySubmission`)
-  7. ✅ **CSG** — Full Consignment module (actions + page + client UI: agreements, stocks, reports)
-
-### Kiến trúc hiện tại:
 ```
-wine-erp/
-├── src/app/dashboard/
-│   ├── page.tsx          # CEO Dashboard (KPIs, Charts, Approvals)
-│   ├── actions.ts        # Dashboard aggregate queries
-│   ├── products/         # MDM Products (CRUD complete) + Price List CRUD ✅
-│   ├── suppliers/        # MDM Suppliers (CRUD partial)
-│   ├── customers/        # MDM Customers (CRUD partial)
-│   ├── contracts/        # CNT (CRUD + Stats)
-│   ├── tax/              # TAX (CRUD + Tax Engine) ✅ 🆙
-│   ├── costing/          # CST Bonus (Margin view)
-│   ├── procurement/      # PRC (PO CRUD + Status)
-│   ├── agency/           # AGN (Partner/Submission backend) ✅ 🆙
-│   ├── warehouse/        # WMS (Warehouse/Location/Stock + GR) ✅ 🆙
-│   ├── sales/            # SLS (SO full lifecycle)
-│   ├── crm/              # CRM Bonus (Activities + Opps)
-│   ├── consignment/      # CSG (Agreement + Stock + Reports) ✅ 🆕
-│   ├── delivery/         # TRS (Routes + E-POD)
-│   ├── finance/          # FIN (AR/AP + Payments)
-│   ├── declarations/     # FIN-TAX (Declarations CRUD) ✅ 🆙
-│   ├── reports/          # RPT (4 report queries)
-│   ├── kpi/              # DSH-KPI (Targets vs Actual)
-│   ├── ai/               # AI Features (Static config)
-│   └── settings/         # SYS RBAC (User/Role/Permission CRUD) ✅ 🆙
+wine-erp/src/
+├── app/
+│   ├── page.tsx              # Root → redirect /dashboard
+│   ├── layout.tsx            # RootLayout (fonts, metadata)
+│   ├── error.tsx             # 🆕 Global error boundary
+│   ├── login/                # Auth: Supabase signIn/signOut
+│   ├── verify/[code]/        # Public QR verify page
+│   ├── api/
+│   │   ├── export/route.ts   # Excel export API
+│   │   └── qr-print/route.ts # QR label print API
+│   └── dashboard/
+│       ├── page.tsx          # CEO Dashboard (500 lines)
+│       ├── actions.ts        # Dashboard aggregates (475 lines)
+│       ├── layout.tsx        # Sidebar + Header
+│       ├── error.tsx         # 🆕 Dashboard error boundary
+│       ├── agency/           # AGN: Partners + Submissions
+│       ├── ai/               # AI: Forecast + Pricing + OCR + Search + Anomaly
+│       ├── allocation/       # SLS: Campaign + Quota Matrix
+│       ├── consignment/      # CSG: Agreement + Stock + Reports
+│       ├── contracts/        # CNT: CRUD + Utilization + Amendment
+│       ├── costing/          # CST: SKU cost + Landed Cost Campaign
+│       ├── crm/              # CRM: 360° + Activities + Pipeline link
+│       ├── customers/        # MDM: CRUD + Address CRUD
+│       ├── declarations/     # DCL: CRUD + Data + Calendar
+│       ├── delivery/         # TRS: Routes + E-POD + COD + Reverse
+│       ├── finance/          # FIN: AR/AP + Journal + P&L + Expense + Period
+│       ├── kpi/              # KPI: Setup + Summary + Forecast
+│       ├── market-price/     # MKT: Comparison + Alert
+│       ├── pipeline/         # CRM: Kanban board
+│       ├── pos/              # POS: Product grid + Cart + Payment
+│       ├── price-list/       # MDM: Multi-channel pricing
+│       ├── procurement/      # PRC: PO CRUD + Tax Engine
+│       ├── products/         # MDM: Wine product CRUD
+│       ├── qr-codes/         # QRC: Dashboard + Auto-gen
+│       ├── quotations/       # SLS: Báo giá + Convert to SO
+│       ├── reports/          # RPT: 15 reports + Report Builder
+│       ├── returns/          # SLS: Return Order + Credit Note
+│       ├── sales/            # SLS: SO lifecycle + Margin + Allocation
+│       ├── settings/         # SYS: Users + Roles + Permissions + Audit Log
+│       ├── stamps/           # STM: Purchase + Usage + Linking + Report Excel
+│       ├── stock-count/      # WMS: Cycle Count workflow
+│       ├── suppliers/        # MDM: Supplier CRUD + Soft Delete
+│       ├── tax/              # TAX: CRUD + Tax Engine
+│       ├── transfers/        # WMS: Inter-warehouse transfer
+│       └── warehouse/        # WMS: GR + DO + Location + Heatmap
+├── lib/
+│   ├── ai-service.ts         # Gemini API wrapper
+│   ├── approval.ts           # Approval Workflow Engine
+│   ├── audit.ts              # Audit Trail logger
+│   ├── db.ts                 # Prisma + pg Pool (SSL fixed)
+│   ├── encryption.ts         # AES-256-GCM for API keys
+│   ├── excel.ts              # ExcelJS report engine
+│   ├── notifications.ts      # Resend email engine (4 templates)
+│   ├── session.ts            # RBAC: getCurrentUser, hasPermission
+│   ├── storage.ts            # Supabase Storage upload/delete
+│   ├── supabase.ts           # Supabase client factories
+│   └── utils.ts              # formatVND, generateSoNo, etc.
+├── components/layout/        # Sidebar + Header
+└── middleware.ts             # Auth guard + RBAC route mapping
 ```
 
-### Session 4 — Sprint 3 (2026-03-04 ~23:46):
-- **Mục tiêu:** Implement Sprint 3 — Integration
-- **Kết quả:** ✅ Sprint 3 hoàn thành, 0 lỗi TypeScript
-- **Files mới:**
-  1. ✅ `src/app/login/actions.ts` — Supabase Auth signIn/signOut server actions
-  2. ✅ `src/lib/session.ts` — `getCurrentUser()` + `hasPermission()` + `hasRole()` RBAC helpers
-  3. ✅ `src/app/login/page.tsx` — Wired form → actual Supabase auth (loading state, error display)
-  4. ✅ `src/lib/excel.ts` — Generic Excel export engine + 4 pre-built report templates (AR Aging, Stock, Sales, Costing)
-  5. ✅ `src/app/api/export/route.ts` — API route handler: `GET /api/export?report=ar-aging|sales|costing`
-  6. ✅ `src/lib/storage.ts` — Supabase Storage: uploadFile, deleteFile, listFiles
-- **Existing infrastructure leveraged:**
-  - `src/middleware.ts` — Already had auth guard (Supabase SSR)
-  - `src/lib/supabase.ts` — Already had browser/server/admin clients
-  - `exceljs` — Already in package.json
-
-### Session 5 — Sprint 4 (2026-03-04 ~23:52):
-- **Mục tiêu:** Sprint 4 — Polish
-- **Kết quả:** ✅ Sprint 4 hoàn thành, 0 lỗi TypeScript
-- **Thay đổi:**
-  1. ✅ `src/middleware.ts` — Enhanced RBAC: route → permission mapping, redirect authenticated from /login
-  2. ✅ `tax/actions.ts` — Market Price Tracking: CRUD, price history for charts, `suggestMinSellPrice()`
-  3. ✅ `warehouse/actions.ts` — Stock Transfer (`transferStock()`) + Cycle Count (`createStockCountSession`, `recordCountLine`, `completeStockCount`)
-  4. ✅ `dashboard/actions.ts` — `getSlowMovingStock()` — Slow (90d) / Dead (180d) stock alerts with value
-
-### Session 6 — Sprint 5 (2026-03-05 ~00:05):
-- **Mục tiêu:** Sprint 5 — Final Polish
-- **Kết quả:** ✅ Sprint 5 hoàn thành, 0 lỗi TypeScript
-- **Files mới/thay đổi:**
-  1. ✅ `reports/actions.ts` — Report Builder: template CRUD + dynamic execution engine (sales/inventory/finance/procurement) + dimension grouping
-  2. ✅ `src/lib/notifications.ts` — Notification Engine (Resend): 4 email templates (SO Approval, Invoice Overdue, Shipment Arrival, Low Stock) với styled HTML
-  3. ✅ `ai/actions.ts` — **AI Features**: 
-     - `forecastDemand()` — 6-month history → exponential smoothing → 3-month forecast + trend detection
-     - `suggestPricing()` — landed cost + market price + demand trend + stock level → 4 price tiers + recommendation + reasoning
-
-### Session 7 — WMS Gap Fix (2026-03-05 ~00:10):
-- **Mục tiêu:** Bổ sung 6 tính năng thiếu trong WMS module
-- **Kết quả:** ✅ 0 lỗi TypeScript
-- **Functions mới (warehouse/actions.ts):**
-  1. ✅ `pickByFIFO()` — FIFO auto-select lots cũ nhất, return pick list (lotId, locationCode, qty)
-  2. ✅ `moveToQuarantine()` — Move qty từ lot → tạo QRT-xxx lot với status QUARANTINE
-  3. ✅ `getQuarantinedLots()` — Danh sách hàng cách ly
-  4. ✅ `releaseFromQuarantine()` — RESTORE (về AVAILABLE) hoặc WRITE_OFF (CONSUMED)
-  5. ✅ `writeOffStock()` — Ghi nhận hao hụt/bể vỡ, giảm tồn kho
-  6. ✅ `adjustStockFromCount()` — Từ cycle count variance → tự động điều chỉnh tồn kho
-  7. ✅ `getWMSFullStats()` — Enhanced stats: quarantined lots, low stock alerts, weekly GR/DO count
-
-### Còn lại (ưu tiên thấp):
-- e-Invoice integration (cần API từ nhà cung cấp HĐĐT)
-- Mobile responsive cho Shipper E-POD
-- Approval workflow engine (multi-step)
-- Full RBAC enforcement tại server action level
-- Import Excel (ngược lại từ file → DB)
+**Thống kê:** 32 action files | 30 dashboard modules | 11 lib utilities | ~57 Prisma models
 
 ---
 
-*Tài liệu này dùng để tiếp tục trong phiên làm việc tiếp theo. Hãy mở file này trước khi bắt đầu code.*
+## 📋 Tính Năng Còn Thiếu (So Với Đặc Tả)
 
+### 🔴 Ưu Tiên CAO — Ảnh hưởng trải nghiệm/nghiệp vụ
+
+| # | Module | Tính năng thiếu | Chi tiết | Phức tạp |
+|---|--------|-----------------|----------|----------|
+| 1 | `TRS` | **Canvas chữ ký điện tử** | KH ký trên điện thoại shipper khi nhận hàng | Medium |
+| 2 | `TRS` | **Chụp ảnh bằng chứng giao** | Upload ảnh POD → Supabase Storage | Medium |
+| 3 | `TRS` | **Shipper Mobile View** | Responsive layout cho `/delivery/shipper` | Medium |
+| 4 | `AI` | **OCR Upload UI** | Drag & drop PDF → preview kết quả → confirm import | Medium |
+| 5 | `CRM` | **Customer Contacts (multi)** | Nhiều người liên hệ per KH (tên, SĐT, email, chức vụ) | Low |
+| 6 | `CRM` | **Custom Tags** | Gán nhãn tùy chỉnh (VIP, Price-sensitive, At-risk) | Low |
+| 7 | `CNT` | **File Upload UI** | Upload PDF bản scan HĐ (backend `uploadContractDocument` ✅ có) | Low |
+| 8 | `DCL` | **Thuế TTĐB bảng kê** | Bảng kê hàng hóa chịu TTĐB đầu vào (GR) và đầu ra (DO) | Medium |
+
+### 🟡 Ưu Tiên TRUNG BÌNH — Nâng cao trải nghiệm
+
+| # | Module | Tính năng thiếu | Chi tiết | Phức tạp |
+|---|--------|-----------------|----------|----------|
+| 9 | `DSH` | **Supabase Realtime subscription** | KPI/Approvals cập nhật real-time | High |
+| 10 | `DSH` | **Role-based Dashboard** | CEO/Sales Mgr/Thủ kho thấy dashboard khác nhau | Medium |
+| 11 | `DSH` | **Cost Structure Waterfall Chart** | Phân tích cơ cấu chi phí dạng waterfall | Medium |
+| 12 | `AGN` | **External Partner login riêng** | Trang `/agency` login bằng tài khoản EXTERNAL_PARTNER | High |
+| 13 | `AGN` | **Shipment Scope Lock** | Agency chỉ thấy lô hàng mình phụ trách | Medium |
+| 14 | `AGN` | **Document Upload** | Upload PDF tờ khai, invoice logistics | Medium |
+| 15 | `AGN` | **Tracking Milestones** | Order → Vessel → Arrived → Cleared → Delivered | Medium |
+| 16 | `MDM` | **Product Media upload** | Upload đa ảnh cho sản phẩm + CDN | Medium |
+| 17 | `MDM` | **Awards & Scores** | Robert Parker, Wine Spectator, Decanter Medal | Low |
+| 18 | `FIN` | **Balance Sheet (CĐKT)** | Bảng Cân Đối Kế Toán hàng quý | Medium |
+| 19 | `FIN` | **Bad Debt Write-off** | Nợ khó đòi, workflow duyệt | Low |
+| 20 | `FIN` | **Credit Hold tự động** | Auto CREDIT_HOLD khi AR > Credit Limit → block SO | Medium |
+| 21 | `FIN` | **E-Invoice integration** | Phát hành HĐĐT (cần API nhà cung cấp) | High |
+| 22 | `TAX` | **EVFTA roadmap theo năm** | Lộ trình giảm thuế EVFTA từng năm | Low |
+| 23 | `SLS` | **Chiết khấu tổng đơn** | Order-level discount + Approval nếu vượt ngưỡng | Low |
+| 24 | `RPT` | **Scheduled Reports email** | Cron job + Resend: gửi báo cáo tự động | Medium |
+
+### 🟢 Ưu Tiên THẤP — Nice to have
+
+| # | Module | Tính năng thiếu | Chi tiết |
+|---|--------|-----------------|----------|
+| 25 | `WMS` | Mobile Scanner PWA | Camera scan QR/Barcode, offline support |
+| 26 | `CRM` | Wine Preference Profile | Giống nho, vùng, khẩu vị |
+| 27 | `CRM` | Tasting Event Management | Event RSVP, check-in, conversion tracking |
+| 28 | `CRM` | Complaint Ticket system | Ticket, SLA, resolution tracking |
+| 29 | `POS` | Loyalty Program | Tích điểm, đổi thưởng |
+| 30 | `CNT` | Digital Signature nội bộ | CEO ký HĐ trong hệ thống |
+| 31 | `MDM` | Supplier Scorecard | Rating on-time delivery, chất lượng |
+| 32 | `MDM` | Duplicate Detection | Cảnh báo SKU/KH/NCC trùng |
+| 33 | `RPT` | Print Preview A4 | Tối ưu layout cho in |
+| 34 | `DSH` | Doanh thu YoY comparison | 2 đường so sánh Năm nay vs Năm ngoái |
+
+---
+
+## ✅ Tính Năng Đã Hoàn Thành (Verify Từ Code)
+
+### SYS — System Admin (95%)
+- [x] Supabase Auth: Login/Logout + Session (`middleware.ts`, `lib/session.ts`)
+- [x] RBAC: 8 roles, 58 permissions, 8 users + Settings UI 3 tabs
+- [x] Approval Engine: `lib/approval.ts` — submit, approve, reject, multi-step, threshold
+- [x] Audit Trail: `lib/audit.ts` — `logAudit()` + Settings tab Audit Log
+- [x] Notification Engine: `lib/notifications.ts` — 4 email templates (Resend)
+- [x] Middleware RBAC route guard: `ROUTE_PERMISSIONS` mapping
+- [ ] Audit Trail middleware tracking (changes per field)
+
+### MDM — Master Data (90%)
+- [x] Products: Full CRUD + Drawer detail + all wine fields
+- [x] Suppliers: CRUD + **Soft Delete** (`deleteSupplier`)
+- [x] Customers: CRUD + **Soft Delete** + **Address CRUD** (4 actions)
+- [x] Price List: CRUD + 4 channels + Effective Date + Bulk Update
+- [x] Auto-load price by channel khi tạo SO
+- [ ] Product Media upload, Awards & Scores
+
+### WMS — Warehouse (92%)
+- [x] Multi-warehouse + Zone/Rack/Bin + Location Manager + Heatmap
+- [x] Goods Receipt (GR) từ PO → StockLot + auto Journal DR 156/CR 331
+- [x] Delivery Order (DO) từ SO → FIFO pick + auto COGS Journal DR 632/CR 156
+- [x] Inter-Warehouse Transfer: 4-step workflow + stock move
+- [x] Stock Count/Cycle Count: session → start → count → complete → adjust
+- [x] Quarantine: move + release (RESTORE/WRITE_OFF)
+- [x] Write-off: giảm stock + auto Journal DR 811/CR 156
+- [x] QR Code auto-gen after GR confirm
+- [ ] Mobile Scanner PWA
+
+### SLS — Sales & Allocation (88%)
+- [x] SO lifecycle 8 status + Confirm/Advance/Cancel
+- [x] Credit Check + Stock Check real-time
+- [x] SO Margin per line + Negative Margin Alert
+- [x] Allocation Engine: Campaign + Quota Matrix + Check khi tạo SO + Color coding
+- [x] Quotation Module: CRUD + Convert to SO + Auto-expire + Duplicate
+- [x] Return Order + Auto Credit Note
+- [x] Approval Engine integration (SO ≥ 100M → PENDING_APPROVAL)
+- [ ] Chiết khấu tổng đơn + Order-level discount
+
+### FIN — Finance (85%)
+- [x] AR/AP Invoices + Payment recording
+- [x] Journal Entries auto-generate: GR, DO, AR Invoice, AR Payment, Expense
+- [x] COGS Tracking: Landed Cost × qty
+- [x] P&L Statement: Revenue - COGS - GP - Expenses - NP + comparison
+- [x] Expense Management: CRUD + auto-approve < 5M + auto Journal
+- [x] Period End Close: Checklist 5 mục + lock kỳ
+- [x] COD Collection: `collectCODPayment()` → AR Payment + auto Journal
+- [x] Cash Position + AR Aging Dashboard widgets
+- [ ] Balance Sheet, Bad Debt, E-Invoice, Credit Hold auto
+
+### DSH — CEO Dashboard (88%)
+- [x] KPI Cards (Revenue, Orders, Stock Value, Pending Approvals)
+- [x] Revenue chart 6 tháng
+- [x] In-transit Shipments (ETA)
+- [x] Pending Approvals: Approve/Reject trực tiếp (SO + Approval Engine)
+- [x] P&L Summary Widget
+- [x] Cash Position Widget  
+- [x] AR Aging Chart (5 buckets)
+- [x] KPI Progress Bars (5 metrics)
+- [x] Export Dashboard Excel
+- [ ] Realtime subscription, Role-based dashboard, Cost Waterfall
+
+### PRC — Procurement (82%)
+- [x] PO CRUD + Status workflow
+- [x] Tax Engine: CIF → NK → SCT → VAT auto
+- [x] PO Tax Calculation panel
+- [x] Import PO from Excel
+- [x] Contract linking
+- [x] Variance Report: PO vs Actual
+- [ ] Multi-currency VND convert at trade date
+
+### RPT — Reporting (80%)
+- [x] 15 Standard Reports (R01-R15) + Excel Export
+- [x] Report Builder: template CRUD + dynamic execution
+- [x] Report Permissions: role-based access control
+- [x] AR Aging PDF Export
+- [ ] Scheduled Reports email
+
+### CST — Costing (80%)
+- [x] Landed Cost Campaign: Create + Calculate + Finalize → StockLot update
+- [x] Proration Engine: phân bổ theo qty
+- [x] Price Suggestion: 4 kênh (HORECA/Đại Lý/VIP/POS)
+- [x] Margin analysis per SKU
+- [ ] Sensitivity Analysis ("nếu tỷ giá tăng X%...")
+
+### TAX — Tax & Market Price (78%)
+- [x] Tax Rate CRUD + Tax Engine (NK/SCT/VAT auto)
+- [x] Auto SCT 35%/65% based on ABV%
+- [x] Market Price Tracking: CRUD + Margin Gap % + below-cost alert
+- [ ] EVFTA roadmap, bulk upload Excel thuế
+
+### CRM — Customer (72%)
+- [x] 360° Profile + Activity Log (6 types)
+- [x] Sales Pipeline: Kanban 6 cột, stage transitions
+- [x] Customer Transaction History: all-time orders + AR + top SKUs
+- [x] Customer Tier Auto-Calculation: Bronze/Silver/Gold/Platinum
+- [ ] Contacts (multi), Custom Tags, Wine Preference, Tasting Events
+
+### TRS — Transportation (72%)
+- [x] Route Planning + Status workflow 4 bước
+- [x] E-POD: Xác nhận giao hàng per stop (tên + ghi chú)
+- [x] COD Collection → AR Payment + auto Journal
+- [x] Reverse Logistics: `recordDeliveryFailure()` + `scheduleRedelivery()`
+- [ ] Canvas chữ ký, Chụp ảnh POD, Shipper Mobile View
+
+### CNT — Contract (72%)
+- [x] CRUD + 5 loại HĐ + Status workflow
+- [x] Utilization Tracking: PO/SO value vs contract value + progress bar
+- [x] Contract ↔ PO/SO linking
+- [x] Expiry Alert: 30d/7d check
+- [x] Amendment/Addendum: tạo phụ lục + audit trail
+- [x] Document Upload backend (`uploadContractDocument`)
+- [x] E-Sign backend (`signContract`)
+- [ ] File Upload UI, Email alert tự động
+
+### STM — Stamps (70%)
+- [x] Stamp Purchase CRUD + Usage recording
+- [x] Stamp ↔ Shipment/StockLot linking
+- [x] Data validation (used + damaged > total)
+- [x] Stamp Report Excel (quarterly/annual)
+- [ ] Biên bản hủy tem, Alert overuse UI
+
+### POS — Point of Sale (75%)
+- [x] Product grid + Cart + multi-line
+- [x] 3 payment methods: Cash (tiền thối) + Bank Transfer + QR
+- [x] Barcode/SKU lookup
+- [x] FIFO stock deduction + auto SO (POS-xxxx)
+- [x] Shift Summary
+- [x] VAT Invoice generation
+- [x] VIP customer pricing
+- [ ] Loyalty Program
+
+### QRC — QR Code (70%)
+- [x] Auto-generate QR after GR confirm
+- [x] QR data: lot, SKU, vintage, shipment, warehouse
+- [x] Print Label: API route → A4 3-column grid
+- [x] Public verify page: `/verify/[code]`
+- [x] Anti-counterfeit: first scan ✅, subsequent ⚠
+- [x] Dashboard: stats + table + search
+
+### AI — AI Features (55%)
+- [x] AI API Key Vault: AES-256 encryption + test + budget
+- [x] Prompt Library: CRUD templates
+- [x] Demand Forecast: exponential smoothing + trend
+- [x] Smart Pricing: 4 tiers + recommendation
+- [x] Anomaly Detection: 4 types (unusual order, duplicate, negative stock, expense)
+- [x] OCR Customs Declaration + OCR Logistics Invoice (backend)
+- [x] CEO Monthly Summary (`generateCEOSummary`)
+- [x] Smart Product Search (keyword decomposition)
+- [ ] OCR Upload UI, Product Description gen via Gemini
+
+### AGN — Agency Portal (55%)
+- [x] Partners Tab: CRUD + submission counts
+- [x] Submissions Tab: create + filter + inline review
+- [x] Dynamic data từ DB
+- [ ] External Partner login, Scope Lock, Document Upload, Tracking Milestones
+
+### DCL — Declarations (60%)
+- [x] CRUD 5 loại tờ khai
+- [x] Data aggregation (VAT, NK)
+- [x] Import Customs Declaration data
+- [x] Declaration Calendar (upcoming/overdue)
+- [x] Document Upload + Sign
+- [ ] Thuế TTĐB bảng kê chi tiết
+
+### CSG — Consignment (65%)
+- [x] Agreement CRUD + Detail Drawer (Stock + Reports tabs)
+- [x] Consigned Stock Map + Replenishment alerts
+- [x] Reconciliation workflow: tạo BC → xác nhận → auto AR Invoice
+- [ ] Physical Count at HORECA
+
+---
+
+## 📈 Biểu Đồ Tiến Độ Hiện Tại
+
+```
+Module          % Hoàn thiện   Status Bar               Status
+──────────────────────────────────────────────────────────────
+SYS Auth/RBAC    95%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
+WMS Warehouse    92%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
+MDM MasterData   90%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
+DSH Dashboard    88%          ▓▓▓▓▓▓▓▓░░  🟢 DONE
+SLS Sales        88%          ▓▓▓▓▓▓▓▓░░  🟢 DONE
+FIN Finance      85%          ▓▓▓▓▓▓▓▓░░  🟢 DONE
+PRC Procurement  82%          ▓▓▓▓▓▓▓▓░░  🟢 Working
+RPT Reports      80%          ▓▓▓▓▓▓▓▓░░  🟢 Working
+CST Costing      80%          ▓▓▓▓▓▓▓▓░░  🟢 Working
+TAX Tax          78%          ▓▓▓▓▓▓▓░░░  🟢 Working
+POS Showroom     75%          ▓▓▓▓▓▓▓░░░  🟢 Working
+MKT MarketPrice  75%          ▓▓▓▓▓▓▓░░░  🟢 Working
+CRM Customer     72%          ▓▓▓▓▓▓▓░░░  🟢 Working
+TRS Delivery     72%          ▓▓▓▓▓▓▓░░░  🟢 Working
+CNT Contracts    72%          ▓▓▓▓▓▓▓░░░  🟢 Working
+QRC QR Code      70%          ▓▓▓▓▓▓▓░░░  🟢 Working
+STM Stamps       70%          ▓▓▓▓▓▓▓░░░  🟢 Working
+KPI Targets      68%          ▓▓▓▓▓▓░░░░  🟡 Partial
+CSG Consignment  65%          ▓▓▓▓▓▓░░░░  🟡 Partial
+DCL Declarations 60%          ▓▓▓▓▓▓░░░░  🟡 Partial
+AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
+AGN Agency       55%          ▓▓▓▓▓░░░░░  🟡 Partial
+```
+
+**Trung bình: ~76% ÷ module | ~96% chức năng core nghiệp vụ (P1 15/15 ✅)**
+
+---
+
+## 🔧 Cross-cutting Infrastructure (Đã Verify)
+
+| Component | Status | Files |
+|-----------|--------|-------|
+| Authentication (Supabase) | ✅ | `middleware.ts`, `lib/session.ts`, `login/` |
+| RBAC enforcement | ✅ | `middleware.ts` (route guard), `lib/session.ts` |
+| Excel Import/Export | ✅ | `lib/excel.ts`, `api/export/route.ts` |
+| Notification/Email | ✅ | `lib/notifications.ts` (Resend, 4 templates) |
+| File Upload | ✅ | `lib/storage.ts` (Supabase Storage) |
+| Approval Workflow | ✅ | `lib/approval.ts` (multi-step, threshold) |
+| Audit Trail | ✅ | `lib/audit.ts` (entity-level logging) |
+| AI Service | ✅ | `lib/ai-service.ts` (Gemini wrapper) |
+| Encryption | ✅ | `lib/encryption.ts` (AES-256-GCM) |
+| Error Boundaries | ✅ | `app/error.tsx`, `dashboard/error.tsx` |
+| SSL/DB Connection | ✅ | `lib/db.ts` (Supabase pooler compatible) |
+
+---
+
+## 📝 Tóm Tắt
+
+- **P1 (Core Business):** 15/15 hoàn thành ✅
+- **P2 (Enhancement):** ~80% hoàn thành
+- **P3 (Advanced):** ~50% hoàn thành
+- **Tổng modules:** 22 modules, 32 action files, ~57 Prisma models
+- **Unit Tests:** 188/188 passed (xem `docs/wine-erp-testing.md`)
+- **Build Status:** ✅ Next.js 16.1.6 build thành công
+- **Deploy:** Vercel (www.lyscellars.io.vn)
+- **Tính năng thiếu nghiêm trọng nhất:** Shipper Mobile View, OCR Upload UI, External Partner Portal, E-Invoice
+
+---
+
+*Audit performed: 05/03/2026 22:20 | Gộp từ: wine-erp-audit-v1 + wine-erp-audit-05-03*  
+*Scan method: Code outline + grep search toàn bộ codebase*  
+*Total spec files: 19 | Total code modules: 32 | Prisma models: ~57*

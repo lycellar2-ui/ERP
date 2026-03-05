@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { uploadFile } from '@/lib/storage'
 
 export interface DeliveryRouteRow {
     id: string
@@ -130,6 +131,7 @@ export async function recordEPOD(data: {
     confirmedBy: string
     notes?: string
     signatureUrl?: string
+    photoUrl?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.$transaction([
@@ -140,12 +142,14 @@ export async function recordEPOD(data: {
                     confirmedBy: data.confirmedBy,
                     notes: data.notes,
                     signatureUrl: data.signatureUrl,
+                    photoUrl: data.photoUrl,
                     confirmedAt: new Date(),
                 },
                 update: {
                     confirmedBy: data.confirmedBy,
                     notes: data.notes,
                     signatureUrl: data.signatureUrl,
+                    photoUrl: data.photoUrl,
                     confirmedAt: new Date(),
                 },
             }),
@@ -191,7 +195,7 @@ export async function getRouteStops(routeId: string): Promise<RouteStopRow[]> {
                     },
                 },
             },
-            pod: { select: { confirmedBy: true, confirmedAt: true, notes: true, signatureUrl: true } },
+            pod: { select: { confirmedBy: true, confirmedAt: true, notes: true, signatureUrl: true, photoUrl: true } },
         },
         orderBy: { sequence: 'asc' },
     })
@@ -432,3 +436,136 @@ export async function syncCODToAR(input: {
     }
 }
 
+// ── Upload POD Photo ──────────────────────────────
+export async function uploadPODPhoto(
+    stopId: string,
+    formData: FormData
+): Promise<{ success: boolean; photoUrl?: string; error?: string }> {
+    try {
+        const result = await uploadFile(formData, 'pod-photos')
+        if (!result.success || !result.url) {
+            return { success: false, error: result.error ?? 'Upload thất bại' }
+        }
+
+        await prisma.proofOfDelivery.upsert({
+            where: { stopId },
+            create: { stopId, confirmedBy: 'DRIVER', photoUrl: result.url },
+            update: { photoUrl: result.url },
+        })
+
+        revalidatePath('/dashboard/delivery')
+        return { success: true, photoUrl: result.url }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Shipper Manifest — Today's route + stops for driver ──
+export type ShipperManifestStop = {
+    id: string
+    sequence: number
+    customerName: string
+    address: string
+    soNo: string
+    itemCount: number
+    codAmount: number
+    status: string
+    podSignedAt: Date | null
+    signatureUrl: string | null
+    photoUrl: string | null
+    notes: string | null
+}
+
+export type ShipperManifest = {
+    routeId: string
+    routeDate: Date
+    driverName: string
+    vehiclePlate: string
+    vehicleType: string
+    status: string
+    stops: ShipperManifestStop[]
+    totalStops: number
+    deliveredStops: number
+    totalCod: number
+    collectedCod: number
+}
+
+export async function getShipperManifest(
+    driverId: string,
+    date?: string
+): Promise<ShipperManifest | null> {
+    const targetDate = date ? new Date(date) : new Date()
+    targetDate.setHours(0, 0, 0, 0)
+    const nextDay = new Date(targetDate)
+    nextDay.setDate(nextDay.getDate() + 1)
+
+    const route = await prisma.deliveryRoute.findFirst({
+        where: {
+            driverId,
+            routeDate: { gte: targetDate, lt: nextDay },
+            status: { not: 'CANCELLED' },
+        },
+        include: {
+            driver: { select: { name: true } },
+            vehicle: { select: { plateNo: true, type: true } },
+            stops: {
+                include: {
+                    do: {
+                        include: {
+                            so: {
+                                select: {
+                                    soNo: true,
+                                    customer: { select: { name: true } },
+                                    lines: { select: { id: true } },
+                                },
+                            },
+                        },
+                    },
+                    pod: { select: { signatureUrl: true, photoUrl: true, notes: true } },
+                },
+                orderBy: { sequence: 'asc' },
+            },
+        },
+        orderBy: { createdAt: 'desc' },
+    })
+
+    if (!route) return null
+
+    const stops: ShipperManifestStop[] = route.stops.map((s, i) => ({
+        id: s.id,
+        sequence: s.sequence ?? i + 1,
+        customerName: s.do.so.customer.name,
+        address: s.address,
+        soNo: s.do.so.soNo,
+        itemCount: s.do.so.lines.length,
+        codAmount: Number(s.codAmount),
+        status: s.status,
+        podSignedAt: s.podSignedAt,
+        signatureUrl: s.pod?.signatureUrl ?? null,
+        photoUrl: s.pod?.photoUrl ?? null,
+        notes: s.pod?.notes ?? null,
+    }))
+
+    return {
+        routeId: route.id,
+        routeDate: route.routeDate,
+        driverName: route.driver.name,
+        vehiclePlate: route.vehicle.plateNo,
+        vehicleType: route.vehicle.type,
+        status: route.status,
+        stops,
+        totalStops: stops.length,
+        deliveredStops: stops.filter(s => s.status === 'DELIVERED').length,
+        totalCod: stops.reduce((sum, s) => sum + s.codAmount, 0),
+        collectedCod: stops.filter(s => s.status === 'DELIVERED').reduce((sum, s) => sum + s.codAmount, 0),
+    }
+}
+
+// ── Get All Drivers (for shipper select) ──────────
+export async function getActiveDrivers(): Promise<{ id: string; name: string; phone: string }[]> {
+    return prisma.driver.findMany({
+        where: { status: 'ACTIVE' },
+        select: { id: true, name: true, phone: true },
+        orderBy: { name: 'asc' },
+    })
+}

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Truck, MapPin, Package, CheckCircle2, Clock, Plus, X, Save, Loader2, AlertCircle, ChevronDown } from 'lucide-react'
+import { useState, useCallback, useRef } from 'react'
+import { Truck, MapPin, Package, CheckCircle2, Clock, Plus, X, Save, Loader2, AlertCircle, ChevronDown, Camera, Image as ImageIcon } from 'lucide-react'
 import {
     DeliveryRouteRow, DriverOption, VehicleOption, RouteStopRow,
     getDeliveryRoutes, updateRouteStatus, createDeliveryRoute, getDriversAndVehicles,
-    getRouteStops, recordEPOD
+    getRouteStops, recordEPOD, uploadPODPhoto
 } from './actions'
 import { SignaturePad } from '@/components/SignaturePad'
 import { formatVND, formatDate } from '@/lib/utils'
@@ -40,6 +40,10 @@ function EPODDrawer({ open, routeId, onClose }: {
     const [confirmName, setConfirmName] = useState('')
     const [confirmNotes, setConfirmNotes] = useState('')
     const [signatureUrl, setSignatureUrl] = useState('')
+    const [photoFile, setPhotoFile] = useState<File | null>(null)
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+    const [uploadingPhoto, setUploadingPhoto] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const [activeStopId, setActiveStopId] = useState<string | null>(null)
     const [successId, setSuccessId] = useState<string | null>(null)
 
@@ -57,11 +61,24 @@ function EPODDrawer({ open, routeId, onClose }: {
     const handleConfirm = async (stopId: string) => {
         if (!confirmName.trim()) return
         setConfirmingId(stopId)
+
+        // Upload photo if selected
+        let photoUrl: string | undefined
+        if (photoFile) {
+            setUploadingPhoto(true)
+            const formData = new FormData()
+            formData.set('file', photoFile)
+            const uploadResult = await uploadPODPhoto(stopId, formData)
+            setUploadingPhoto(false)
+            if (uploadResult.success) photoUrl = uploadResult.photoUrl
+        }
+
         const result = await recordEPOD({
             stopId,
             confirmedBy: confirmName.trim(),
             notes: confirmNotes.trim() || undefined,
             signatureUrl: signatureUrl || undefined,
+            photoUrl,
         })
         if (result.success) {
             setSuccessId(stopId)
@@ -69,6 +86,8 @@ function EPODDrawer({ open, routeId, onClose }: {
             setConfirmName('')
             setConfirmNotes('')
             setSignatureUrl('')
+            setPhotoFile(null)
+            setPhotoPreview(null)
             await loadStops()
             setTimeout(() => setSuccessId(null), 2000)
         }
@@ -161,17 +180,37 @@ function EPODDrawer({ open, routeId, onClose }: {
                                 </div>
 
                                 {isDelivered && stop.podSignedAt && (
-                                    <div className="flex items-center gap-2 p-2 rounded" style={{ background: 'rgba(91,168,138,0.06)' }}>
-                                        <CheckCircle2 size={12} style={{ color: '#5BA88A' }} />
-                                        <span className="text-xs" style={{ color: '#5BA88A' }}>
-                                            Đã xác nhận lúc {new Date(stop.podSignedAt).toLocaleString('vi-VN')}
-                                            {stop.notes && ` — ${stop.notes}`}
-                                        </span>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 p-2 rounded" style={{ background: 'rgba(91,168,138,0.06)' }}>
+                                            <CheckCircle2 size={12} style={{ color: '#5BA88A' }} />
+                                            <span className="text-xs" style={{ color: '#5BA88A' }}>
+                                                Đã xác nhận lúc {new Date(stop.podSignedAt).toLocaleString('vi-VN')}
+                                                {stop.notes && ` — ${stop.notes}`}
+                                            </span>
+                                        </div>
+                                        {/* Show POD photo & signature */}
+                                        {((stop as any).photoUrl || stop.signatureUrl) && (
+                                            <div className="flex gap-2 flex-wrap">
+                                                {(stop as any).photoUrl && (
+                                                    <div className="relative rounded overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                                        <img src={(stop as any).photoUrl} alt="POD" className="w-20 h-20 object-cover" />
+                                                        <div className="absolute bottom-0 left-0 right-0 text-center py-0.5 text-[9px]" style={{ background: 'rgba(0,0,0,0.6)', color: '#87CBB9' }}>
+                                                            <Camera size={8} className="inline mr-0.5" /> Ảnh GH
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {stop.signatureUrl && (
+                                                    <div className="rounded overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                                        <img src={stop.signatureUrl} alt="Chữ ký" className="w-24 h-20 object-contain" style={{ background: '#0D1E2B' }} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
                                 {!isDelivered && !isActive && (
-                                    <button onClick={() => { setActiveStopId(stop.id); setConfirmName(''); setConfirmNotes(''); setSignatureUrl('') }}
+                                    <button onClick={() => { setActiveStopId(stop.id); setConfirmName(''); setConfirmNotes(''); setSignatureUrl(''); setPhotoFile(null); setPhotoPreview(null) }}
                                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded mt-1 transition-all"
                                         style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}
                                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.2)'}
@@ -213,16 +252,57 @@ function EPODDrawer({ open, routeId, onClose }: {
                                             </label>
                                             <SignaturePad onEnd={url => setSignatureUrl(url)} />
                                         </div>
+                                        {/* Photo upload */}
+                                        <div>
+                                            <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>
+                                                Ảnh Bằng Chứng Giao Hàng
+                                            </label>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                className="hidden"
+                                                onChange={e => {
+                                                    const file = e.target.files?.[0]
+                                                    if (file) {
+                                                        setPhotoFile(file)
+                                                        const reader = new FileReader()
+                                                        reader.onload = () => setPhotoPreview(reader.result as string)
+                                                        reader.readAsDataURL(file)
+                                                    }
+                                                }}
+                                            />
+                                            {photoPreview ? (
+                                                <div className="relative rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                                    <img src={photoPreview} alt="Preview" className="w-full h-32 object-cover" />
+                                                    <button
+                                                        onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
+                                                        className="absolute top-1 right-1 p-1 rounded-full"
+                                                        style={{ background: 'rgba(0,0,0,0.6)' }}>
+                                                        <X size={12} style={{ color: '#E8F1F2' }} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="flex items-center gap-2 w-full px-3 py-3 rounded-md text-sm"
+                                                    style={{ background: '#1B2E3D', border: '1px dashed #2A4355', color: '#4A6A7A' }}>
+                                                    <Camera size={16} /> Chụp ảnh / Chọn từ thư viện
+                                                </button>
+                                            )}
+                                        </div>
                                         <div className="flex gap-2 justify-end">
                                             <button onClick={() => setActiveStopId(null)}
                                                 className="px-3 py-1.5 text-xs rounded"
                                                 style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Huỷ</button>
                                             <button onClick={() => handleConfirm(stop.id)}
-                                                disabled={!confirmName.trim() || !signatureUrl || !!confirmingId}
+                                                disabled={!confirmName.trim() || !signatureUrl || !!confirmingId || uploadingPhoto}
                                                 className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
                                                 style={{ background: '#5BA88A', color: '#fff' }}>
-                                                {confirmingId === stop.id
-                                                    ? <><Loader2 size={12} className="animate-spin" /> Đang lưu...</>
+                                                {confirmingId === stop.id || uploadingPhoto
+                                                    ? <><Loader2 size={12} className="animate-spin" /> {uploadingPhoto ? 'Đang tải ảnh...' : 'Đang lưu...'}</>
                                                     : <><CheckCircle2 size={12} /> Xác Nhận</>}
                                             </button>
                                         </div>
