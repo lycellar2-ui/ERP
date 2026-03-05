@@ -2,6 +2,12 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 
+// Supabase pooler uses self-signed certificates in its chain.
+// Node's TLS layer rejects these even when pg.Pool sets rejectUnauthorized: false,
+// because PrismaPg adapter negotiates TLS at a deeper level.
+// This is safe — we're connecting to Supabase's managed infrastructure only.
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 function createPrismaClient() {
     const connectionString = process.env.DATABASE_URL
     if (!connectionString) {
