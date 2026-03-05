@@ -114,7 +114,7 @@ export async function getDashboardStats(range: DateRange = 'month') {
             id: so.id,
             soNo: so.soNo,
             amount: Number(so.totalAmount),
-            customerName: so.customer.name,
+            customerName: so.customer?.name ?? 'Khách Lẻ',
             status: so.status,
         })),
     }
