@@ -16,4 +16,3 @@ export default async function SalesPage() {
 
     return <SalesClient initialRows={rows} initialTotal={total} stats={stats} />
 }
-
