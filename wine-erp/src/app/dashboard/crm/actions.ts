@@ -88,6 +88,8 @@ export async function getCustomer360(id: string) {
             include: {
                 salesRep: { select: { name: true } },
                 addresses: true,
+                contacts: { orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }] },
+                tags: { orderBy: { createdAt: 'asc' } },
                 opportunities: {
                     where: { stage: { notIn: ['WON', 'LOST'] } },
                     select: { id: true, name: true, expectedValue: true, stage: true, probability: true, closeDate: true },
@@ -294,4 +296,153 @@ export async function recalcAllCustomerTiers(): Promise<{ success: boolean; upda
         updated++
     }
     return { success: true, updated }
+}
+
+// ═══════════════════════════════════════════════════
+// CUSTOMER CONTACTS — Multiple contacts per customer
+// ═══════════════════════════════════════════════════
+
+export type ContactRow = {
+    id: string
+    name: string
+    title: string | null
+    phone: string | null
+    email: string | null
+    isPrimary: boolean
+    createdAt: Date
+}
+
+export async function getCustomerContacts(customerId: string): Promise<ContactRow[]> {
+    return prisma.customerContact.findMany({
+        where: { customerId },
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+    })
+}
+
+export async function createCustomerContact(input: {
+    customerId: string
+    name: string
+    title?: string
+    phone?: string
+    email?: string
+    isPrimary?: boolean
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        if (input.isPrimary) {
+            await prisma.customerContact.updateMany({
+                where: { customerId: input.customerId, isPrimary: true },
+                data: { isPrimary: false },
+            })
+        }
+        await prisma.customerContact.create({
+            data: {
+                customerId: input.customerId,
+                name: input.name,
+                title: input.title ?? null,
+                phone: input.phone ?? null,
+                email: input.email ?? null,
+                isPrimary: input.isPrimary ?? false,
+            },
+        })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function updateCustomerContact(
+    id: string,
+    input: { name?: string; title?: string; phone?: string; email?: string; isPrimary?: boolean }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        if (input.isPrimary) {
+            const contact = await prisma.customerContact.findUnique({ where: { id } })
+            if (contact) {
+                await prisma.customerContact.updateMany({
+                    where: { customerId: contact.customerId, isPrimary: true },
+                    data: { isPrimary: false },
+                })
+            }
+        }
+        await prisma.customerContact.update({ where: { id }, data: input as any })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function deleteCustomerContact(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.customerContact.delete({ where: { id } })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// CUSTOMER TAGS — Custom labels (VIP, At-risk, etc.)
+// ═══════════════════════════════════════════════════
+
+export type TagRow = {
+    id: string
+    tag: string
+    color: string
+    createdAt: Date
+}
+
+const PRESET_TAGS: { tag: string; color: string }[] = [
+    { tag: 'VIP', color: '#D4A853' },
+    { tag: 'At-risk', color: '#E05252' },
+    { tag: 'Price-sensitive', color: '#4A8FAB' },
+    { tag: 'EVFTA', color: '#5BA88A' },
+    { tag: 'New', color: '#87CBB9' },
+    { tag: 'Top Buyer', color: '#A5DED0' },
+    { tag: 'HORECA Key', color: '#8AAEBB' },
+]
+
+export async function getPresetTags() {
+    return PRESET_TAGS
+}
+
+export async function getCustomerTags(customerId: string): Promise<TagRow[]> {
+    return prisma.customerTag.findMany({
+        where: { customerId },
+        orderBy: { createdAt: 'asc' },
+    })
+}
+
+export async function addCustomerTag(input: {
+    customerId: string
+    tag: string
+    color?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const preset = PRESET_TAGS.find(p => p.tag === input.tag)
+        await prisma.customerTag.create({
+            data: {
+                customerId: input.customerId,
+                tag: input.tag,
+                color: input.color ?? preset?.color ?? '#87CBB9',
+            },
+        })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        if (err.code === 'P2002') return { success: false, error: 'Tag đã tồn tại cho KH này' }
+        return { success: false, error: err.message }
+    }
+}
+
+export async function removeCustomerTag(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.customerTag.delete({ where: { id } })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }

@@ -7,6 +7,7 @@ import {
     ShoppingCart, Clock, CheckCircle2
 } from 'lucide-react'
 import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions } from './actions'
+import { ContactsPanel, TagsPanel } from './ContactsTagsPanel'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -315,6 +316,16 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
                             {/* Quick log */}
                             <QuickLogPanel customerId={selectedCustomer.id} onLogged={() => reload()} />
+
+                            {/* Contacts + Tags */}
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <ContactsPanel customerId={selectedCustomer.id} />
+                                </div>
+                                <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <TagsPanel customerId={selectedCustomer.id} />
+                                </div>
+                            </div>
 
                             {/* 360 data from profile */}
                             {profileLoading ? (

@@ -335,6 +335,8 @@ model Customer {
   salesRep      User?                  @relation("CustomerSalesRep", fields: [salesRepId], references: [id])
   status        CustomerStatus         @default(ACTIVE)
   addresses     CustomerAddress[]
+  contacts      CustomerContact[]
+  tags          CustomerTag[]
   activities    CustomerActivity[]
   opportunities SalesOpportunity[]
   complaints    ComplaintTicket[]
@@ -366,6 +368,32 @@ model CustomerAddress {
   salesOrders SalesOrder[] @relation("ShippingAddress")
 
   @@map("customer_addresses")
+}
+
+model CustomerContact {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  name       String
+  title      String?  // "Quản lý mua hàng", "Giám đốc"
+  phone      String?
+  email      String?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("customer_contacts")
+}
+
+model CustomerTag {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  tag        String   // "VIP", "Price-sensitive", "At-risk", "EVFTA"
+  color      String   @default("#87CBB9") // Hex color for badge
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, tag])
+  @@map("customer_tags")
 }
 
 // =============================================================
