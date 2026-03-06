@@ -128,31 +128,44 @@ export type ProductInput = z.infer<typeof productSchema>
 
 // ─── Create ───────────────────────────────────────
 export async function createProduct(input: ProductInput) {
-    const data = productSchema.parse(input)
-    const product = await prisma.product.create({
-        data: {
-            skuCode: data.skuCode,
-            productName: data.productName,
-            producerId: data.producerId,
-            vintage: data.vintage ?? null,
-            appellationId: data.appellationId ?? null,
-            country: data.country,
-            abvPercent: data.abvPercent ?? 13.0,
-            volumeMl: data.volumeMl ?? 750,
-            format: data.format,
-            packagingType: data.packagingType,
-            unitsPerCase: data.unitsPerCase ?? 12,
-            hsCode: data.hsCode ?? '2204211000',
-            barcodeEan: data.barcodeEan ?? null,
-            wineType: data.wineType,
-            classification: data.classification ?? null,
-            tastingNotes: data.tastingNotes ?? null,
-            status: data.status,
-        },
-    })
-    revalidateCache('products')
-    revalidatePath('/dashboard/products')
-    return { success: true, id: product.id }
+    try {
+        const data = productSchema.parse(input)
+        const product = await prisma.product.create({
+            data: {
+                skuCode: data.skuCode,
+                productName: data.productName,
+                producerId: data.producerId,
+                vintage: data.vintage ?? null,
+                appellationId: data.appellationId ?? null,
+                country: data.country,
+                abvPercent: data.abvPercent ?? 13.0,
+                volumeMl: data.volumeMl ?? 750,
+                format: data.format,
+                packagingType: data.packagingType,
+                unitsPerCase: data.unitsPerCase ?? 12,
+                hsCode: data.hsCode ?? '2204211000',
+                barcodeEan: data.barcodeEan ?? null,
+                wineType: data.wineType,
+                classification: data.classification ?? null,
+                tastingNotes: data.tastingNotes ?? null,
+                status: data.status,
+            },
+        })
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true, id: product.id }
+    } catch (err: any) {
+        // Extract meaningful error message
+        if (err?.issues) {
+            // Zod validation error
+            const msgs = err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')
+            throw new Error(`Validation: ${msgs}`)
+        }
+        if (err?.code === 'P2002') {
+            throw new Error('SKU đã tồn tại. Vui lòng chọn mã SKU khác.')
+        }
+        throw new Error(err.message ?? 'Lỗi tạo sản phẩm không xác định')
+    }
 }
 
 // ─── Update ───────────────────────────────────────
