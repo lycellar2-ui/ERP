@@ -152,10 +152,11 @@ wine-erp/src/
 | ~~28~~ | ~~`CRM`~~ | ~~**Complaint Ticket system**~~ | ✅ Backend done — CRUD + SLA tracking (4h/24h/72h/168h) + resolve |
 | ~~29~~ | ~~`POS`~~ | ~~**Loyalty Program**~~ | ✅ Backend done — earn/redeem points + balance + tier + history |
 | ~~30~~ | ~~`CNT`~~ | ~~**Digital Signature nội bộ**~~ | ✅ Backend done — `signContractInternal()` + SHA-256 hash + audit log |
-| ~~31~~ | ~~`MDM`~~ | ~~**Supplier Scorecard**~~ | ✅ Backend done — on-time rate, quality score, overall grade A-F |
-| ~~32~~ | ~~`MDM`~~ | ~~**Duplicate Detection**~~ | ✅ Backend done — Dice coefficient similarity scan Products/KH/NCC |
-| ~~33~~ | ~~`RPT`~~ | ~~**Print Preview A4**~~ | ✅ Done — `globals.css` @media print full A4 stylesheet |
-| ~~34~~ | ~~`DSH`~~ | ~~**Doanh thu YoY comparison**~~ | ✅ Full — `getRevenueYoY()` + 12-month bar chart |
+| ~~31~~ | ~~`CNT`~~ | ~~**Email alert tự động**~~ | ✅ Backend done — `sendContractExpiryAlerts()` + `notifyContractExpiring` (7d/30d) |
+| ~~32~~ | ~~`MDM`~~ | ~~**Supplier Scorecard**~~ | ✅ Backend done — on-time rate, quality score, overall grade A-F |
+| ~~33~~ | ~~`MDM`~~ | ~~**Duplicate Detection**~~ | ✅ Backend done — Dice coefficient similarity scan Products/KH/NCC |
+| ~~34~~ | ~~`RPT`~~ | ~~**Print Preview A4**~~ | ✅ Done — `globals.css` @media print full A4 stylesheet |
+| ~~35~~ | ~~`DSH`~~ | ~~**Doanh thu YoY comparison**~~ | ✅ Full — `getRevenueYoY()` + 12-month bar chart |
 
 ---
 
@@ -326,7 +327,7 @@ wine-erp/src/
 - [x] **OCR Upload UI**: Drag&drop + paste text + CustomsResultView + LogisticsResultView (OCRWidget.tsx)
 - [x] CEO Monthly Summary (`generateCEOSummary`)
 - [x] Smart Product Search (keyword decomposition)
-- [ ] Product Description gen via Gemini
+- [x] **Product Description gen via Gemini**: generateProductDescription() + ProductDrawer UI (Tasting Notes + AI button)
 
 ### AGN — Agency Portal (85%)
 - [x] Partners Tab: CRUD + submission counts
