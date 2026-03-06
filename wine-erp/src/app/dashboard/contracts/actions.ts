@@ -389,3 +389,73 @@ export async function signContract(contractId: string, signatureUrl: string) {
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// #30 — DIGITAL SIGNATURE (Internal)
+// ═══════════════════════════════════════════════════
+
+export async function signContractInternal(input: {
+    contractId: string
+    signerId: string
+    signerRole: string
+    signatureDataUrl: string // base64 canvas signature
+    ipAddress?: string
+}): Promise<{ success: boolean; signatureHash?: string; error?: string }> {
+    try {
+        const contract = await prisma.contract.findUnique({ where: { id: input.contractId } })
+        if (!contract) return { success: false, error: 'Hợp đồng không tồn tại' }
+        if (contract.status === 'ACTIVE') return { success: false, error: 'Hợp đồng đã được ký' }
+
+        // Generate hash for verification
+        const encoder = new TextEncoder()
+        const data = encoder.encode(`${input.contractId}:${input.signerId}:${Date.now()}`)
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+        const hashArray = Array.from(new Uint8Array(hashBuffer))
+        const signatureHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+
+        await prisma.contract.update({
+            where: { id: input.contractId },
+            data: {
+                signatureUrl: input.signatureDataUrl,
+                status: 'ACTIVE',
+                signedBy: input.signerId,
+                signedAt: new Date(),
+                signatureHash,
+            },
+        })
+
+        // Log audit for signature
+        const { logAudit } = await import('@/lib/audit')
+        await logAudit({
+            userId: input.signerId,
+            action: 'SIGN',
+            entityType: 'Contract',
+            entityId: input.contractId,
+            description: `Ký nội bộ HĐ ${contract.contractNo} — ${input.signerRole}`,
+            newValue: { signatureHash, signerRole: input.signerRole, ip: input.ipAddress },
+        })
+
+        revalidatePath('/dashboard/contracts')
+        return { success: true, signatureHash }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function verifyContractSignature(contractId: string): Promise<{
+    isSigned: boolean
+    signedAt: Date | null
+    signedBy: string | null
+    signatureHash: string | null
+}> {
+    const contract = await prisma.contract.findUnique({
+        where: { id: contractId },
+        select: { signatureUrl: true, signedAt: true, signedBy: true, signatureHash: true },
+    })
+    return {
+        isSigned: !!contract?.signatureUrl,
+        signedAt: contract?.signedAt ?? null,
+        signedBy: contract?.signedBy ?? null,
+        signatureHash: contract?.signatureHash ?? null,
+    }
+}

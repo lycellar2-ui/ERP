@@ -798,6 +798,151 @@ export async function exportProfitLossExcel(year?: number, month?: number): Prom
 }
 
 // ═══════════════════════════════════════════════════
+// BALANCE SHEET — Bảng Cân Đối Kế Toán (VAS)
+// ═══════════════════════════════════════════════════
+
+export type BSLineItem = {
+    code: string
+    label: string
+    amount: number
+    category: 'asset' | 'liability' | 'equity' | 'summary'
+    indent?: number
+}
+
+export type BalanceSheetData = {
+    asOf: Date
+    year: number
+    month: number
+    // Summaries
+    totalAssets: number
+    totalLiabilities: number
+    totalEquity: number
+    isBalanced: boolean
+    lines: BSLineItem[]
+}
+
+export async function getBalanceSheet(filters: {
+    year?: number
+    month?: number
+} = {}): Promise<BalanceSheetData> {
+    const now = new Date()
+    const year = filters.year ?? now.getFullYear()
+    const month = filters.month ?? (now.getMonth() + 1)
+    const asOf = new Date(year, month, 0, 23, 59, 59) // Last day of month
+
+    // Get ALL journal lines up to end of period (cumulative)
+    const allLines = await prisma.journalLine.findMany({
+        where: {
+            entry: {
+                postedAt: { lte: asOf },
+            },
+        },
+        select: { account: true, debit: true, credit: true },
+    })
+
+    // Aggregate by account prefix
+    const balances: Record<string, number> = {}
+    for (const line of allLines) {
+        const acct = line.account
+        if (!balances[acct]) balances[acct] = 0
+        // Assets (1xx): debit increases, credit decreases
+        // Liabilities (3xx): credit increases, debit decreases
+        // Revenue (5xx): credit increases
+        // Expenses (6xx, 8xx): debit increases
+        balances[acct] += Number(line.debit) - Number(line.credit)
+    }
+
+    // Helper: sum accounts matching prefix
+    const sumAcct = (prefix: string): number => {
+        let total = 0
+        for (const [acct, bal] of Object.entries(balances)) {
+            if (acct.startsWith(prefix)) total += bal
+        }
+        return total
+    }
+
+    // ── ASSETS ──
+    const cash = sumAcct('112')           // Tiền gửi ngân hàng
+    const ar = sumAcct('131')             // Phải thu khách hàng
+    const inventory = sumAcct('156')      // Hàng tồn kho
+
+    // Also fetch real-time inventory value for accuracy
+    const stockValue = await prisma.stockLot.aggregate({
+        where: { status: { in: ['AVAILABLE', 'QUARANTINE', 'RESERVED'] } },
+        _sum: { qtyAvailable: true },
+    })
+
+    // Real-time AR outstanding
+    const arRealtime = await prisma.aRInvoice.aggregate({
+        where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+        _sum: { totalAmount: true },
+    })
+
+    // Real-time AP outstanding
+    const apRealtime = await prisma.aPInvoice.aggregate({
+        where: { status: { in: ['UNPAID', 'PARTIALLY_PAID'] } },
+        _sum: { amount: true },
+    })
+
+    const cashFinal = Math.abs(cash) || 0
+    const arFinal = Math.max(ar, Number(arRealtime._sum?.totalAmount ?? 0))
+    const inventoryFinal = Math.abs(inventory) || 0
+
+    const totalCurrentAssets = cashFinal + arFinal + inventoryFinal
+    const totalAssets = totalCurrentAssets
+
+    // ── LIABILITIES ──
+    const ap = Math.abs(sumAcct('331'))   // Phải trả NCC
+    const vatPayable = Math.abs(sumAcct('3331')) // VAT đầu ra phải nộp
+    const apFinal = Math.max(ap, Number(apRealtime._sum?.amount ?? 0))
+
+    const totalCurrentLiabilities = apFinal + vatPayable
+    const totalLiabilities = totalCurrentLiabilities
+
+    // ── EQUITY ── (Lợi nhuận chưa phân phối = cumulative net profit)
+    const revenue = Math.abs(sumAcct('511'))
+    const cogs = Math.abs(sumAcct('632'))
+    const sellingExp = Math.abs(sumAcct('641'))
+    const adminExp = Math.abs(sumAcct('642'))
+    const finExp = Math.abs(sumAcct('635'))
+    const otherExp = Math.abs(sumAcct('811'))
+    const retainedEarnings = revenue - cogs - sellingExp - adminExp - finExp - otherExp
+
+    const totalEquity = retainedEarnings
+    const isBalanced = Math.abs(totalAssets - totalLiabilities - totalEquity) < 1
+
+    const lines: BSLineItem[] = [
+        // Assets
+        { code: 'A', label: 'TÀI SẢN', amount: totalAssets, category: 'summary' },
+        { code: 'A1', label: 'Tài sản ngắn hạn', amount: totalCurrentAssets, category: 'summary', indent: 1 },
+        { code: '112', label: 'Tiền gửi ngân hàng', amount: cashFinal, category: 'asset', indent: 2 },
+        { code: '131', label: 'Phải thu khách hàng', amount: arFinal, category: 'asset', indent: 2 },
+        { code: '156', label: 'Hàng tồn kho', amount: inventoryFinal, category: 'asset', indent: 2 },
+
+        // Liabilities
+        { code: 'L', label: 'NỢ PHẢI TRẢ', amount: totalLiabilities, category: 'summary' },
+        { code: 'L1', label: 'Nợ ngắn hạn', amount: totalCurrentLiabilities, category: 'summary', indent: 1 },
+        { code: '331', label: 'Phải trả nhà cung cấp', amount: apFinal, category: 'liability', indent: 2 },
+        { code: '3331', label: 'Thuế GTGT phải nộp', amount: vatPayable, category: 'liability', indent: 2 },
+
+        // Equity
+        { code: 'E', label: 'VỐN CHỦ SỞ HỮU', amount: totalEquity, category: 'summary' },
+        { code: '421', label: 'Lợi nhuận chưa phân phối', amount: retainedEarnings, category: 'equity', indent: 2 },
+    ]
+
+    return {
+        asOf,
+        year,
+        month,
+        totalAssets,
+        totalLiabilities,
+        totalEquity,
+        isBalanced,
+        lines,
+    }
+}
+
+// ═══════════════════════════════════════════════════
 // EXPENSE MANAGEMENT
 // ═══════════════════════════════════════════════════
 
@@ -1111,4 +1256,112 @@ export async function getPeriodCloseChecklist(year: number, month: number): Prom
             status: expPending > 0 ? 'danger' : 'ok',
         },
     ]
+}
+
+// ═══════════════════════════════════════════════════
+// BAD DEBT WRITE-OFF — Nợ khó đòi
+// ═══════════════════════════════════════════════════
+
+export type BadDebtCandidate = {
+    invoiceId: string
+    invoiceNo: string
+    customerName: string
+    amount: number
+    outstanding: number
+    dueDate: Date
+    daysOverdue: number
+}
+
+export async function getBadDebtCandidates(minDaysOverdue: number = 180): Promise<BadDebtCandidate[]> {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - minDaysOverdue)
+
+    const invoices = await prisma.aRInvoice.findMany({
+        where: {
+            dueDate: { lt: cutoff },
+            status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+        },
+        include: {
+            salesOrder: {
+                include: { customer: { select: { shortName: true } } },
+            },
+        },
+        orderBy: { dueDate: 'asc' },
+    })
+
+    const now = new Date()
+    return invoices.map(inv => ({
+        invoiceId: inv.id,
+        invoiceNo: inv.invoiceNo,
+        customerName: inv.salesOrder?.customer?.shortName ?? 'N/A',
+        amount: Number(inv.totalAmount ?? inv.amount),
+        outstanding: Number(inv.totalAmount ?? inv.amount) - Number(inv.paidAmount ?? 0),
+        dueDate: inv.dueDate,
+        daysOverdue: Math.floor((now.getTime() - inv.dueDate.getTime()) / (1000 * 60 * 60 * 24)),
+    }))
+}
+
+export async function writeOffBadDebt(input: {
+    invoiceId: string
+    reason: string
+    approvedBy?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        let userId = input.approvedBy
+        if (!userId) {
+            const user = await getCurrentUser()
+            userId = user?.id
+        }
+        if (!userId) {
+            const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } })
+            userId = admin?.id
+        }
+        if (!userId) return { success: false, error: 'No user found' }
+
+        const invoice = await prisma.aRInvoice.findUnique({
+            where: { id: input.invoiceId },
+            include: {
+                salesOrder: {
+                    include: { customer: { select: { shortName: true } } },
+                },
+            },
+        })
+        if (!invoice) return { success: false, error: 'Hóa đơn không tồn tại' }
+
+        const outstanding = Number(invoice.totalAmount ?? invoice.amount) - Number(invoice.paidAmount ?? 0)
+        if (outstanding <= 0) return { success: false, error: 'Hóa đơn đã thanh toán đủ' }
+
+        // 1. Mark invoice as BAD_DEBT
+        await prisma.aRInvoice.update({
+            where: { id: input.invoiceId },
+            data: { status: 'CANCELLED', notes: `[XÓA NỢ] ${input.reason}` },
+        })
+
+        // 2. Create journal entry: DR 642 (Chi phí quản lý DN - bad debt) / CR 131 (Phải thu KH)
+        const now = new Date()
+        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
+        const entryNo = await nextEntryNo('JE-BD')
+
+        await prisma.journalEntry.create({
+            data: {
+                entryNo,
+                docType: 'BAD_DEBT',
+                docId: input.invoiceId,
+                periodId: period.id,
+                description: `Xóa nợ khó đòi: ${invoice.invoiceNo} - ${invoice.salesOrder?.customer?.shortName ?? 'N/A'} - ${input.reason}`,
+                createdBy: userId,
+                lines: {
+                    create: [
+                        { account: '642 - Chi phí quản lý DN', debit: outstanding, credit: 0, description: `Nợ khó đòi ${invoice.invoiceNo}` },
+                        { account: '131 - Phải thu KH', debit: 0, credit: outstanding, description: `Xóa phải thu ${invoice.invoiceNo}` },
+                    ],
+                },
+            },
+        })
+
+        revalidatePath('/dashboard/finance')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Layers, Calculator, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X, Loader2, Zap } from 'lucide-react'
+import { Layers, Calculator, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X, Loader2, Zap, CalendarRange, ArrowRight } from 'lucide-react'
 import { TaxRateRow, TaxRateInput, getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate, calculateTaxEngine, TaxEngineResult } from './actions'
 import { calculateLandedCost, LandedCostResult } from './taxUtils'
 import { formatVND } from '@/lib/utils'
@@ -275,6 +275,221 @@ function TaxEnginePanel() {
     )
 }
 
+// ── EVFTA Roadmap Panel ──────────────────────────
+const EVFTA_CATEGORIES = [
+    {
+        name: 'Rượu vang ≤ 2L (HS 2204.21)',
+        hsCode: '2204.21',
+        color: '#87CBB9',
+        schedule: [
+            { year: 2020, rate: 42, note: 'Năm đầu áp dụng EVFTA' },
+            { year: 2021, rate: 36, note: '' },
+            { year: 2022, rate: 30, note: '' },
+            { year: 2023, rate: 24, note: '' },
+            { year: 2024, rate: 18, note: '' },
+            { year: 2025, rate: 12, note: '' },
+            { year: 2026, rate: 6, note: '' },
+            { year: 2027, rate: 0, note: 'Miễn thuế hoàn toàn' },
+        ],
+    },
+    {
+        name: 'Rượu vang > 2L (HS 2204.22)',
+        hsCode: '2204.22',
+        color: '#D4A853',
+        schedule: [
+            { year: 2020, rate: 34, note: '' },
+            { year: 2021, rate: 29, note: '' },
+            { year: 2022, rate: 24, note: '' },
+            { year: 2023, rate: 19, note: '' },
+            { year: 2024, rate: 14, note: '' },
+            { year: 2025, rate: 10, note: '' },
+            { year: 2026, rate: 5, note: '' },
+            { year: 2027, rate: 0, note: 'Miễn thuế hoàn toàn' },
+        ],
+    },
+    {
+        name: 'Rượu mạnh < 20° (HS 2208.xx)',
+        hsCode: '2208',
+        color: '#C45A2A',
+        schedule: [
+            { year: 2020, rate: 48, note: '' },
+            { year: 2021, rate: 41, note: '' },
+            { year: 2022, rate: 34, note: '' },
+            { year: 2023, rate: 27, note: '' },
+            { year: 2024, rate: 21, note: '' },
+            { year: 2025, rate: 14, note: '' },
+            { year: 2026, rate: 7, note: '' },
+            { year: 2027, rate: 0, note: 'Miễn thuế hoàn toàn' },
+        ],
+    },
+    {
+        name: 'Rượu mạnh ≥ 20° (HS 2208.xx)',
+        hsCode: '2208',
+        color: '#8B1A2E',
+        schedule: [
+            { year: 2020, rate: 48, note: '' },
+            { year: 2021, rate: 41, note: '' },
+            { year: 2022, rate: 34, note: '' },
+            { year: 2023, rate: 27, note: '' },
+            { year: 2024, rate: 21, note: '' },
+            { year: 2025, rate: 14, note: '' },
+            { year: 2026, rate: 7, note: '' },
+            { year: 2027, rate: 0, note: 'Miễn thuế hoàn toàn' },
+        ],
+    },
+]
+
+function EVFTARoadmapPanel() {
+    const currentYear = new Date().getFullYear()
+    const years = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027]
+    const maxRate = 50
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="flex items-center gap-3 mb-3">
+                    <CalendarRange size={20} style={{ color: '#5BA88A' }} />
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                        Lộ Trình Giảm Thuế EVFTA (2020–2027)
+                    </h3>
+                </div>
+                <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                    Hiệp định EVFTA có hiệu lực 01/08/2020. Thuế NK rượu vang & spirits từ EU giảm dần về 0% trong 7 năm.
+                    Yêu cầu C/O EUR.1 hoặc tự chứng nhận xuất xứ REX.
+                </p>
+                <div className="flex items-center gap-2 mt-3">
+                    <span className="text-xs px-2 py-0.5 rounded font-bold"
+                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A' }}>
+                        Năm hiện tại: {currentYear}
+                    </span>
+                    {currentYear >= 2027 && (
+                        <span className="text-xs px-2 py-0.5 rounded font-bold"
+                            style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A' }}>
+                            ✅ Đã miễn thuế hoàn toàn
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            {/* Timeline chart */}
+            <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <h4 className="text-sm font-semibold mb-4" style={{ color: '#E8F1F2' }}>Biểu Đồ Thuế NK Theo Năm (%)</h4>
+                <div className="overflow-x-auto">
+                    <div style={{ minWidth: 700 }}>
+                        {/* Year header */}
+                        <div className="flex items-end gap-1 mb-2" style={{ paddingLeft: 160 }}>
+                            {years.map(y => (
+                                <div key={y} className="flex-1 text-center">
+                                    <span className="text-xs font-bold" style={{
+                                        color: y === currentYear ? '#87CBB9' : y < currentYear ? '#4A6A7A' : '#8AAEBB',
+                                        fontFamily: '"DM Mono"',
+                                    }}>
+                                        {y}
+                                    </span>
+                                    {y === currentYear && (
+                                        <div className="w-1.5 h-1.5 rounded-full mx-auto mt-0.5" style={{ background: '#87CBB9' }} />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Category bars */}
+                        {EVFTA_CATEGORIES.map(cat => (
+                            <div key={cat.name} className="flex items-center gap-1 mb-2">
+                                <div className="w-40 text-right pr-3 shrink-0">
+                                    <span className="text-xs font-semibold" style={{ color: cat.color }}>{cat.name.split(' (')[0]}</span>
+                                </div>
+                                {cat.schedule.map(s => {
+                                    const pct = (s.rate / maxRate) * 100
+                                    const isPast = s.year < currentYear
+                                    const isCurrent = s.year === currentYear
+                                    return (
+                                        <div key={s.year} className="flex-1" style={{ height: 28 }}>
+                                            <div className="relative h-full flex items-end rounded-sm overflow-hidden"
+                                                style={{ background: '#142433' }}>
+                                                <div className="w-full rounded-sm transition-all duration-300"
+                                                    style={{
+                                                        height: `${pct}%`,
+                                                        background: isPast ? `${cat.color}40` : isCurrent ? cat.color : `${cat.color}80`,
+                                                        border: isCurrent ? `2px solid ${cat.color}` : 'none',
+                                                    }} />
+                                                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold"
+                                                    style={{ color: s.rate === 0 ? '#5BA88A' : '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                                    {s.rate === 0 ? '0%' : `${s.rate}%`}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Detail cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {EVFTA_CATEGORIES.map(cat => {
+                    const currentEntry = cat.schedule.find(s => s.year === currentYear) ?? cat.schedule[cat.schedule.length - 1]
+                    const nextEntry = cat.schedule.find(s => s.year === currentYear + 1)
+                    return (
+                        <div key={cat.name} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${cat.color}` }}>
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <p className="text-xs font-bold" style={{ color: cat.color }}>{cat.name}</p>
+                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{cat.hsCode}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-lg font-bold" style={{ color: cat.color, fontFamily: '"DM Mono"' }}>
+                                        {currentEntry.rate}%
+                                    </p>
+                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>thuế NK {currentYear}</p>
+                                </div>
+                            </div>
+                            {nextEntry && (
+                                <div className="flex items-center gap-2 text-xs" style={{ color: '#5BA88A' }}>
+                                    <ArrowRight size={10} />
+                                    {nextEntry.year}: {nextEntry.rate}%
+                                    {nextEntry.rate === 0 && ' (Miễn thuế!)'}
+                                </div>
+                            )}
+                            {/* Mini progress */}
+                            <div className="mt-3">
+                                <div className="flex justify-between text-[10px] mb-1">
+                                    <span style={{ color: '#4A6A7A' }}>Tiến trình giảm thuế</span>
+                                    <span style={{ color: '#8AAEBB' }}>
+                                        {Math.round(((cat.schedule[0].rate - currentEntry.rate) / cat.schedule[0].rate) * 100)}% hoàn thành
+                                    </span>
+                                </div>
+                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                    <div className="h-full rounded-full transition-all" style={{
+                                        width: `${((cat.schedule[0].rate - currentEntry.rate) / cat.schedule[0].rate) * 100}%`,
+                                        background: cat.color,
+                                    }} />
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+
+            {/* Notes */}
+            <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <p className="text-xs font-semibold mb-2" style={{ color: '#D4A853' }}>⚠ Điều Kiện Áp Dụng EVFTA</p>
+                <ul className="grid grid-cols-1 lg:grid-cols-2 gap-1.5 text-xs" style={{ color: '#4A6A7A' }}>
+                    <li>• Hàng hóa phải có xuất xứ EU (C/O EUR.1)</li>
+                    <li>• Tự chứng nhận xuất xứ REX cho lô {'<'} 6,000 EUR</li>
+                    <li>• Thuế TTĐB không thay đổi (35% / 65%)</li>
+                    <li>• VAT 10% không thay đổi</li>
+                    <li>• Áp dụng cho 27 quốc gia thành viên EU</li>
+                    <li>• Không áp dụng cho hàng gia công tại nước thứ 3</li>
+                </ul>
+            </div>
+        </div>
+    )
+}
+
 // ── Main Client ──────────────────────────────────
 export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateRow[]; initialTotal: number }) {
     const [rows, setRows] = useState(initialRows)
@@ -289,7 +504,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
     const [editRow, setEditRow] = useState<TaxRateRow | null>(null)
 
     // Tab state
-    const [tab, setTab] = useState<'lookup' | 'engine'>('lookup')
+    const [tab, setTab] = useState<'lookup' | 'engine' | 'evfta'>('lookup')
 
     // Calculator state (manual)
     const [cifUsd, setCifUsd] = useState(10000)
@@ -356,6 +571,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                 {[
                     { key: 'lookup' as const, label: 'Tra Cứu & Bảng Thuế', icon: Layers },
                     { key: 'engine' as const, label: 'Tax Engine (Tự Động)', icon: Zap },
+                    { key: 'evfta' as const, label: 'EVFTA Roadmap', icon: CalendarRange },
                 ].map(t => {
                     const Icon = t.icon
                     return (
@@ -544,7 +760,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                         </div>
                     </div>
                 </div>
-            ) : (
+            ) : tab === 'engine' ? (
                 <div className="grid grid-cols-12 gap-5">
                     <div className="col-span-12 lg:col-span-7">
                         <TaxEnginePanel />
@@ -580,7 +796,9 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                         </div>
                     </div>
                 </div>
-            )}
+            ) : tab === 'evfta' ? (
+                <EVFTARoadmapPanel />
+            ) : null}
 
             {/* Form modal */}
             {showForm && (

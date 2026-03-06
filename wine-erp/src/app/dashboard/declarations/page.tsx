@@ -6,7 +6,8 @@ import {
     getDeclarations, getDeclarationStats, createDeclaration,
     getDeclarationData, updateDeclarationStatus,
     uploadTaxDocument, signTaxDeclaration,
-    type DeclarationRow,
+    getSCTDetailedReport,
+    type DeclarationRow, type SCTDetailedReport,
 } from './actions'
 import { SignaturePad } from '@/components/SignaturePad'
 import { formatDate } from '@/lib/utils'
@@ -37,6 +38,8 @@ export default function DeclarationsPage() {
     // Upload & Sign states
     const [uploadingDoc, setUploadingDoc] = useState(false)
     const [savingSignature, setSavingSignature] = useState(false)
+    const [sctReport, setSctReport] = useState<SCTDetailedReport | null>(null)
+    const [sctLoading, setSctLoading] = useState(false)
     const [signatureUrl, setSignatureUrl] = useState('')
 
     const reload = async () => {
@@ -59,8 +62,16 @@ export default function DeclarationsPage() {
 
     const handleViewDetail = async (row: DeclarationRow) => {
         setDetailRow(row)
+        setSctReport(null)
         const data = await getDeclarationData({ type: row.type, year: row.periodYear, month: row.periodMonth ?? undefined })
         setDetailData(data)
+        // Auto-load SCT detailed report for SCT declarations
+        if (row.type.startsWith('SCT')) {
+            setSctLoading(true)
+            const report = await getSCTDetailedReport({ year: row.periodYear, month: row.periodMonth ?? undefined })
+            setSctReport(report)
+            setSctLoading(false)
+        }
     }
 
     const handleStatusChange = async (id: string, status: 'APPROVED' | 'SUBMITTED') => {
@@ -303,24 +314,117 @@ export default function DeclarationsPage() {
                             )}
 
                             {detailData?.type === 'SCT' && (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     <p className="text-xs font-bold" style={{ color: '#D4A853' }}>
                                         {detailData.lotCount} lô hàng chịu TTĐB
                                     </p>
-                                    {detailData.lots?.map((lot: any) => (
-                                        <div key={lot.lotNo} className="p-2 rounded text-xs" style={{ background: '#142433' }}>
-                                            <div className="flex justify-between">
-                                                <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{lot.lotNo}</span>
-                                                <span className="px-2 py-0.5 rounded" style={{
-                                                    background: lot.sctRate === 65 ? 'rgba(139,26,46,0.2)' : 'rgba(212,168,83,0.2)',
-                                                    color: lot.sctRate === 65 ? '#C04E65' : '#D4A853',
-                                                }}>TTĐB {lot.sctRate}%</span>
+
+                                    {/* TTĐB Bảng Kê Chi Tiết */}
+                                    {sctLoading ? (
+                                        <div className="flex items-center gap-2 py-4 justify-center text-xs" style={{ color: '#4A6A7A' }}>
+                                            <Loader2 size={14} className="animate-spin" /> Đang tính toán bảng kê TTĐB...
+                                        </div>
+                                    ) : sctReport ? (
+                                        <div className="space-y-4">
+                                            {/* Header */}
+                                            <div className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(212,168,83,0.08) 0%, rgba(135,203,185,0.05) 100%)', border: '1px solid rgba(212,168,83,0.2)' }}>
+                                                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#D4A853' }}>
+                                                    📊 Bảng Kê Thuế TTĐB — Kỳ {sctReport.period.month ? `T${sctReport.period.month}/${sctReport.period.year}` : sctReport.period.year}
+                                                </p>
+
+                                                {/* 3-column summary: Input | Output | Net */}
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    <div className="p-3 rounded-lg" style={{ background: '#1B2E3D' }}>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#4A8FAB' }}>⬇ Đầu Vào (Nhập)</p>
+                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>SL: <b>{sctReport.inputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
+                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>GT: <b style={{ fontFamily: '"DM Mono"' }}>{sctReport.inputSummary.totalValue.toLocaleString('vi-VN')} ₫</b></p>
+                                                        <p className="text-sm font-bold mt-1" style={{ color: '#4A8FAB', fontFamily: '"DM Mono"' }}>
+                                                            TTĐB: {sctReport.inputSummary.totalSCT.toLocaleString('vi-VN')} ₫
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg" style={{ background: '#1B2E3D' }}>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#D4A853' }}>⬆ Đầu Ra (Bán)</p>
+                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>SL: <b>{sctReport.outputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
+                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>DT: <b style={{ fontFamily: '"DM Mono"' }}>{sctReport.outputSummary.totalRevenue.toLocaleString('vi-VN')} ₫</b></p>
+                                                        <p className="text-sm font-bold mt-1" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                                            TTĐB: {sctReport.outputSummary.totalSCT.toLocaleString('vi-VN')} ₫
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg" style={{ background: sctReport.netSCTPayable > 0 ? 'rgba(139,26,46,0.08)' : 'rgba(91,168,138,0.08)', border: `1px solid ${sctReport.netSCTPayable > 0 ? 'rgba(139,26,46,0.3)' : 'rgba(91,168,138,0.3)'}` }}>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#5BA88A' }}>💰 Thuế Phải Nộp</p>
+                                                        <p className="text-lg font-bold mt-2" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#5BA88A', fontFamily: '"DM Mono"' }}>
+                                                            {sctReport.netSCTPayable.toLocaleString('vi-VN')} ₫
+                                                        </p>
+                                                        <p className="text-[9px] mt-1" style={{ color: '#4A6A7A' }}>= Đầu ra − Đầu vào</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="mt-1" style={{ color: '#8AAEBB' }}>
-                                                {lot.skuCode} — {lot.productName} | ABV: {lot.abvPercent}% | SL: {lot.qty}
+
+                                            {/* Product-level breakdown table */}
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#8AAEBB' }}>
+                                                    Chi Tiết Theo Sản Phẩm ({sctReport.lines.length})
+                                                </p>
+                                                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                                        <thead>
+                                                            <tr style={{ background: '#142433' }}>
+                                                                {['SKU', 'Sản Phẩm', 'ABV', 'TTĐB%', 'Nhập (SL)', 'TTĐB Nhập', 'Bán (SL)', 'TTĐB Bán', 'Nộp'].map(h => (
+                                                                    <th key={h} className="px-2 py-2 text-[9px] uppercase tracking-wider font-bold" style={{ color: '#4A6A7A', borderBottom: '1px solid #2A4355' }}>{h}</th>
+                                                                ))}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {sctReport.lines.map(line => (
+                                                                <tr key={line.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
+                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{line.skuCode}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px] truncate max-w-[100px]" style={{ color: '#E8F1F2' }}>{line.productName}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{line.abvPercent}%</td>
+                                                                    <td className="px-2 py-1.5">
+                                                                        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{
+                                                                            background: line.sctRate === 65 ? 'rgba(139,26,46,0.2)' : 'rgba(212,168,83,0.2)',
+                                                                            color: line.sctRate === 65 ? '#C04E65' : '#D4A853',
+                                                                        }}>{line.sctRate}%</span>
+                                                                    </td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB', fontFamily: '"DM Mono"' }}>{line.inputQty}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB', fontFamily: '"DM Mono"' }}>{line.inputSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{line.outputQty}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{line.outputSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{
+                                                                        color: line.netSCT > 0 ? '#C04E65' : '#5BA88A',
+                                                                        fontFamily: '"DM Mono"'
+                                                                    }}>{line.netSCT.toLocaleString('vi-VN')}</td>
+                                                                </tr>
+                                                            ))}
+                                                            {sctReport.lines.length === 0 && (
+                                                                <tr><td colSpan={9} className="text-center py-6 text-xs" style={{ color: '#4A6A7A' }}>Không có dữ liệu TTĐB trong kỳ này</td></tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    ) : null}
+
+                                    {/* Legacy lot list (compact fallback) */}
+                                    {!sctReport && detailData.lots?.length > 0 && (
+                                        <div className="space-y-1">
+                                            {detailData.lots.map((lot: any) => (
+                                                <div key={lot.lotNo} className="p-2 rounded text-xs" style={{ background: '#142433' }}>
+                                                    <div className="flex justify-between">
+                                                        <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{lot.lotNo}</span>
+                                                        <span className="px-2 py-0.5 rounded" style={{
+                                                            background: lot.sctRate === 65 ? 'rgba(139,26,46,0.2)' : 'rgba(212,168,83,0.2)',
+                                                            color: lot.sctRate === 65 ? '#C04E65' : '#D4A853',
+                                                        }}>TTĐB {lot.sctRate}%</span>
+                                                    </div>
+                                                    <div className="mt-1" style={{ color: '#8AAEBB' }}>
+                                                        {lot.skuCode} — {lot.productName} | ABV: {lot.abvPercent}% | SL: {lot.qty}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

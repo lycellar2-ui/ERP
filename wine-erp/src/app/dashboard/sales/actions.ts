@@ -243,7 +243,39 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             return { success: false, error: `Vượt quota phân bổ:\n${quotaWarnings.join('\n')}`, quotaWarnings }
         }
 
-        // --- 2. Create the SO ---
+        // --- 2. Credit Hold Check ---
+        const customer = await prisma.customer.findUnique({
+            where: { id: input.customerId },
+            select: { creditLimit: true, name: true },
+        })
+
+        // Auto credit limit enforcement
+        if (customer && Number(customer.creditLimit) > 0) {
+            const arBalance = await getCustomerARBalance(input.customerId)
+
+            const newOrderAmount = input.lines.reduce((sum, l) => {
+                const lineTotal = l.qtyOrdered * l.unitPrice
+                const discount = lineTotal * ((l.lineDiscountPct ?? 0) / 100)
+                return sum + lineTotal - discount
+            }, 0) * (1 - (input.orderDiscount ?? 0) / 100)
+
+            const creditLimit = Number(customer.creditLimit)
+            const projectedBalance = arBalance + newOrderAmount
+
+            if (projectedBalance > creditLimit) {
+                return {
+                    success: false,
+                    error: `⚠️ Vượt hạn mức tín dụng!\n` +
+                        `• Hạn mức: ${creditLimit.toLocaleString('vi-VN')} ₫\n` +
+                        `• Công nợ hiện tại: ${arBalance.toLocaleString('vi-VN')} ₫\n` +
+                        `• Đơn mới: ${Math.round(newOrderAmount).toLocaleString('vi-VN')} ₫\n` +
+                        `• Tổng dự kiến: ${Math.round(projectedBalance).toLocaleString('vi-VN')} ₫\n` +
+                        `Cần thu nợ thêm ${Math.round(projectedBalance - creditLimit).toLocaleString('vi-VN')} ₫ trước khi tạo đơn.`,
+                }
+            }
+        }
+
+        // --- 3. Create the SO ---
         const count = await prisma.salesOrder.count()
         const soNo = generateSoNo(count + 1)
 
@@ -282,7 +314,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             include: { lines: { select: { id: true, productId: true } } },
         })
 
-        // --- 3. Consume allocation quotas ---
+        // --- 4. Consume allocation quotas ---
         for (const qc of quotaChecks) {
             const soLine = so.lines.find(l => l.productId === input.lines[qc.lineIdx].productId)
             if (soLine) {
@@ -290,7 +322,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             }
         }
 
-        // --- 4. Audit log ---
+        // --- 5. Audit log ---
         try {
             await logAudit({ userId: input.salesRepId, action: 'CREATE', entityType: 'SalesOrder', entityId: so.id, newValue: { soNo, channel: input.channel, totalAmount: finalAmount } })
         } catch { /* silent */ }

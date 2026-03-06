@@ -3,14 +3,19 @@
 import {
     getDashboardStats, getMonthlyRevenue, approveSO, rejectSO,
     getPLSummary, getCashPosition, getARAgingChart, getPendingApprovalDetails,
-    exportDashboardExcel
+    exportDashboardExcel, getCostWaterfall, WaterfallBar, getRevenueYoY,
+    getDashboardConfig, type DashboardSection, getMySales, getWarehouseDashboard,
+    getRealtimeChannels,
 } from './actions'
 import { getKpiSummary } from './kpi/actions'
+import { getCurrentUser } from '@/lib/session'
 import {
     TrendingUp, TrendingDown, AlertCircle, Ship, Package, CheckCircle2,
-    ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck, Download
+    ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck, Download,
+    Link as LinkIcon
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
+import Link from 'next/link'
 
 function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#87CBB9' }: {
     label: string; value: string; sub?: string
@@ -50,18 +55,30 @@ const SHIPMENT_STATUS: Record<string, { label: string; color: string }> = {
 }
 
 export default async function DashboardPage() {
-    const [stats, monthlyRevenue, plSummary, cashPosition, arAging, kpiSummary, pendingApprovalReqs] = await Promise.all([
+    const user = await getCurrentUser()
+    const roles = user?.roles ?? ['CEO'] // fallback for dev
+    const dashConfig = await getDashboardConfig(roles)
+    const has = (s: DashboardSection) => dashConfig.sections.includes(s)
+
+    const [stats, monthlyRevenue, plSummary, cashPosition, arAging, kpiSummary, pendingApprovalReqs, waterfall, yoy] = await Promise.all([
         getDashboardStats('month'),
         getMonthlyRevenue(),
-        getPLSummary(),
-        getCashPosition(),
-        getARAgingChart(),
-        getKpiSummary(),
-        getPendingApprovalDetails(),
+        has('pl_summary') ? getPLSummary() : null,
+        has('cash_position') ? getCashPosition() : null,
+        has('ar_aging') ? getARAgingChart() : null,
+        has('kpi_targets') ? getKpiSummary() : null,
+        has('pending_approvals') ? getPendingApprovalDetails() : [],
+        has('cost_waterfall') ? getCostWaterfall() : [],
+        has('revenue_yoy') ? getRevenueYoY() : null,
     ])
 
+    // Role-specific data
+    const mySales = has('my_sales') && user ? await getMySales(user.id) : null
+    const warehouseData = has('warehouse_summary') ? await getWarehouseDashboard() : null
+    const realtimeChannels = getRealtimeChannels(roles)
+
     const maxBar = Math.max(...monthlyRevenue.map(m => m.revenue), 1)
-    const arMax = Math.max(...arAging.buckets.map(b => b.amount), 1)
+    const arMax = arAging ? Math.max(...arAging.buckets.map(b => b.amount), 1) : 1
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -71,10 +88,10 @@ export default async function DashboardPage() {
                 <div>
                     <h2 className="text-2xl font-bold"
                         style={{ fontFamily: 'var(--font-display), Georgia, serif', color: '#E8F1F2' }}>
-                        Báo Cáo Tháng {new Date().toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' })}
+                        {dashConfig.greeting}
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Cập nhật real-time từ database &bull; {new Date().toLocaleString('vi-VN')}
+                        {user?.name ?? 'Dashboard'} · {roles.join(', ')} &bull; {new Date().toLocaleString('vi-VN')}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -414,6 +431,146 @@ export default async function DashboardPage() {
                 </div>
             </div>
 
+            {/* Row 3.5 — Cost Structure Waterfall */}
+            <div className="rounded-md p-6" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                        <BarChart3 size={16} style={{ color: '#D4A853' }} />
+                        <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Cơ Cấu Chi Phí — Waterfall</h3>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                        style={{ background: waterfall.netProfit >= 0 ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)', color: waterfall.netProfit >= 0 ? '#5BA88A' : '#8B1A2E' }}>
+                        Net Margin: {waterfall.revenue > 0 ? ((waterfall.netProfit / waterfall.revenue) * 100).toFixed(1) : 0}%
+                    </span>
+                </div>
+
+                {/* Waterfall chart */}
+                <div className="flex items-end gap-2 h-48 mb-4">
+                    {waterfall.bars.map((bar: WaterfallBar) => {
+                        const absMax = Math.max(...waterfall.bars.map((b: WaterfallBar) => Math.abs(b.value)), 1)
+                        const barH = Math.max(8, (Math.abs(bar.value) / absMax) * 160)
+                        const isNeg = bar.type === 'negative'
+                        return (
+                            <div key={bar.label} className="flex-1 flex flex-col items-center gap-1">
+                                <span className="text-[9px] font-bold" style={{ color: bar.color, fontFamily: 'var(--font-mono)' }}>
+                                    {bar.value !== 0 ? `${(Math.abs(bar.value) / 1e6).toFixed(0)}M` : '0'}
+                                </span>
+                                <div className="w-full relative" style={{ height: 160 }}>
+                                    <div className="absolute bottom-0 w-full rounded-t-sm transition-all duration-500"
+                                        style={{
+                                            height: barH,
+                                            background: isNeg ? `${bar.color}35` : `${bar.color}60`,
+                                            borderLeft: `2px solid ${bar.color}`,
+                                            borderTop: `2px solid ${bar.color}`,
+                                            borderRight: `2px solid ${bar.color}`,
+                                        }} />
+                                </div>
+                                <p className="text-[9px] text-center leading-tight font-medium" style={{ color: '#8AAEBB' }}>
+                                    {bar.label.split(' (')[0]}
+                                </p>
+                                <span className="text-[8px] font-bold" style={{ color: bar.color }}>
+                                    {isNeg ? '-' : ''}{bar.pct}%
+                                </span>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* Legend row */}
+                <div className="flex items-center justify-center gap-6 pt-3" style={{ borderTop: '1px solid #2A4355' }}>
+                    {[
+                        { label: 'Doanh Thu', color: '#5BA88A', val: waterfall.revenue },
+                        { label: 'COGS', color: '#E05252', val: waterfall.cogs },
+                        { label: 'Chi Phí', color: '#D4A853', val: waterfall.totalExpenses },
+                        { label: 'Lãi Ròng', color: waterfall.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', val: waterfall.netProfit },
+                    ].map(l => (
+                        <div key={l.label} className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
+                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{l.label}</span>
+                            <span className="text-[10px] font-bold" style={{ color: l.color, fontFamily: 'var(--font-mono)' }}>
+                                {formatVND(Math.abs(l.val))}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Row 3.75 — Revenue YoY Comparison */}
+            {(() => {
+                const yoyMax = Math.max(
+                    ...yoy.current.map(m => m.revenue),
+                    ...yoy.previous.map(m => m.revenue),
+                    1
+                )
+                const currentMonth = new Date().getMonth() + 1
+                return (
+                    <div className="rounded-md p-6" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp size={16} style={{ color: '#87CBB9' }} />
+                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>
+                                    Doanh Thu YoY — {yoy.thisYear} vs {yoy.lastYear}
+                                </h3>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3 h-2 rounded-sm" style={{ background: '#87CBB9' }} />
+                                    <span className="text-[10px]" style={{ color: '#8AAEBB' }}>{yoy.thisYear}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3 h-2 rounded-sm" style={{ background: '#2A4355' }} />
+                                    <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{yoy.lastYear}</span>
+                                </div>
+                                <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                                    style={{
+                                        background: yoy.yoyGrowth >= 0 ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)',
+                                        color: yoy.yoyGrowth >= 0 ? '#5BA88A' : '#8B1A2E',
+                                    }}>
+                                    {yoy.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(yoy.yoyGrowth).toFixed(1)}% YoY
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-end gap-1 h-40">
+                            {yoy.current.map((m, i) => {
+                                const prev = yoy.previous[i]
+                                const curH = Math.max(2, (m.revenue / yoyMax) * 130)
+                                const prevH = Math.max(2, (prev.revenue / yoyMax) * 130)
+                                const isFuture = m.month > currentMonth
+                                return (
+                                    <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+                                        <div className="w-full flex gap-0.5" style={{ height: 130, alignItems: 'flex-end' }}>
+                                            <div className="flex-1 rounded-t-sm transition-all" style={{
+                                                height: prevH,
+                                                background: '#2A4355',
+                                            }} />
+                                            <div className="flex-1 rounded-t-sm transition-all" style={{
+                                                height: isFuture ? 0 : curH,
+                                                background: isFuture ? 'transparent' : m.revenue > prev.revenue ? '#87CBB9' : '#D4A853',
+                                            }} />
+                                        </div>
+                                        <span className="text-[9px] font-medium" style={{
+                                            color: m.month === currentMonth ? '#87CBB9' : '#4A6A7A'
+                                        }}>{m.label}</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        <div className="flex justify-center gap-8 pt-3 mt-3" style={{ borderTop: '1px solid #2A4355' }}>
+                            <div className="text-center">
+                                <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{yoy.thisYear} Tổng</p>
+                                <p className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>{formatVND(yoy.totalCurrent)}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{yoy.lastYear} Tổng</p>
+                                <p className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#4A6A7A' }}>{formatVND(yoy.totalPrevious)}</p>
+                            </div>
+                        </div>
+                    </div>
+                )
+            })()}
+
             {/* Row 4 — Pending approvals */}
             <div className="rounded-md p-6" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                 <div className="flex items-center justify-between mb-5">
@@ -503,6 +660,85 @@ export default async function DashboardPage() {
                     </div>
                 )}
             </div>
+
+            {/* ── Quick Links (Role-based) ─────────────── */}
+            {dashConfig.quickLinks.length > 0 && (
+                <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#4A6A7A' }}>
+                        Truy Cập Nhanh
+                    </p>
+                    <div className="grid grid-cols-3 gap-3">
+                        {dashConfig.quickLinks.map(link => (
+                            <Link key={link.href} href={link.href}
+                                className="flex items-center gap-3 p-3 rounded-md transition-all hover:scale-[1.01]"
+                                style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.1)' }}>
+                                    <LinkIcon size={14} style={{ color: '#87CBB9' }} />
+                                </div>
+                                <span className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{link.label}</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ── My Sales (SALES_MGR / SALES_REP) ─────── */}
+            {mySales && (
+                <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#D4A853' }}>
+                            📊 Doanh Số Của Tôi (Tháng Này)
+                        </p>
+                        <div className="flex items-center gap-4">
+                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                {mySales.orderCount} đơn
+                            </span>
+                            <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                {formatVND(mySales.totalRevenue)}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+                        {mySales.orders.map(o => (
+                            <div key={o.soNo} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#142433' }}>
+                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{o.soNo}</span>
+                                <span className="text-xs" style={{ color: '#8AAEBB' }}>{o.customerName}</span>
+                                <span className="text-xs px-1.5 py-0.5 rounded" style={{
+                                    background: o.status === 'PAID' ? 'rgba(91,168,138,0.15)' : 'rgba(138,174,187,0.15)',
+                                    color: o.status === 'PAID' ? '#5BA88A' : '#8AAEBB',
+                                }}>{o.status}</span>
+                                <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{formatVND(o.amount)}</span>
+                            </div>
+                        ))}
+                        {mySales.orders.length === 0 && (
+                            <p className="text-xs text-center py-4" style={{ color: '#4A6A7A' }}>Chưa có đơn hàng tháng này</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Warehouse Summary (THU_KHO) ──────────── */}
+            {warehouseData && (
+                <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: '#4A8FAB' }}>
+                        📦 Tổng Quan Kho
+                    </p>
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                        {[
+                            { label: 'Tổng Chai', value: warehouseData.totalBottles.toLocaleString('vi-VN'), color: '#87CBB9' },
+                            { label: 'SKU Sắp Hết', value: warehouseData.lowStockSKUs, color: '#D4A853' },
+                            { label: 'Cách Ly', value: warehouseData.quarantinedLots, color: '#8B1A2E' },
+                            { label: 'GR Chờ Duyệt', value: warehouseData.pendingGoodsReceipts, color: '#4A8FAB' },
+                            { label: 'DO Chờ Duyệt', value: warehouseData.pendingDeliveryOrders, color: '#5BA88A' },
+                        ].map(s => (
+                            <div key={s.label} className="text-center p-3 rounded-md" style={{ background: '#142433' }}>
+                                <p className="text-xl font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>{s.value}</p>
+                                <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
         </div>
     )

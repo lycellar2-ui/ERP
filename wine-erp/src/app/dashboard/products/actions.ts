@@ -4,6 +4,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { uploadFile } from '@/lib/storage'
 
 // ─── Types ────────────────────────────────────────
 export type ProductRow = {
@@ -24,6 +25,7 @@ export type ProductRow = {
     classification: string | null
     status: string
     mediaCount: number
+    primaryImageUrl: string | null
     totalStock: number
     createdAt: Date
 }
@@ -61,7 +63,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
             include: {
                 producer: { select: { name: true, country: true } },
                 appellation: { select: { name: true } },
-                media: { select: { id: true }, where: { mediaType: 'PRODUCT_MAIN' } },
+                media: { select: { id: true, url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
                 stockLots: { select: { qtyAvailable: true }, where: { status: 'AVAILABLE' } },
             },
             orderBy: { createdAt: 'desc' },
@@ -89,6 +91,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
         classification: p.classification,
         status: p.status,
         mediaCount: p.media.length,
+        primaryImageUrl: p.media.find((m: any) => m.isPrimary)?.url ?? p.media[0]?.url ?? null,
         totalStock: p.stockLots.reduce((sum: number, l: { qtyAvailable: unknown }) => sum + Number(l.qtyAvailable), 0),
         createdAt: p.createdAt,
     }))
@@ -347,6 +350,205 @@ export async function deletePriceList(id: string): Promise<{ success: boolean; e
             prisma.priceListLine.deleteMany({ where: { priceListId: id } }),
             prisma.priceList.delete({ where: { id } }),
         ])
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// PRODUCT MEDIA — Upload, List, Delete, Primary
+// ═══════════════════════════════════════════════════
+
+export type ProductMediaRow = {
+    id: string
+    url: string
+    thumbnailUrl: string | null
+    mediaType: string
+    isPrimary: boolean
+    tags: string[]
+    uploadedAt: Date
+}
+
+export async function getProductMedia(productId: string): Promise<ProductMediaRow[]> {
+    const media = await prisma.productMedia.findMany({
+        where: { productId },
+        orderBy: [{ isPrimary: 'desc' }, { uploadedAt: 'desc' }],
+    })
+    return media.map(m => ({
+        id: m.id,
+        url: m.url,
+        thumbnailUrl: m.thumbnailUrl,
+        mediaType: m.mediaType,
+        isPrimary: m.isPrimary,
+        tags: m.tags,
+        uploadedAt: m.uploadedAt,
+    }))
+}
+
+export async function uploadProductMedia(
+    productId: string,
+    formData: FormData,
+    mediaType: string = 'PRODUCT_MAIN'
+): Promise<{ success: boolean; media?: ProductMediaRow; error?: string }> {
+    try {
+        const result = await uploadFile(formData, 'products')
+        if (!result.success || !result.url) {
+            return { success: false, error: result.error ?? 'Upload thất bại' }
+        }
+
+        // Check if this is the first media → auto-set as primary
+        const existingCount = await prisma.productMedia.count({ where: { productId } })
+
+        const media = await prisma.productMedia.create({
+            data: {
+                productId,
+                url: result.url,
+                mediaType: mediaType as any,
+                isPrimary: existingCount === 0,
+            },
+        })
+
+        revalidatePath('/dashboard/products')
+        return {
+            success: true,
+            media: {
+                id: media.id,
+                url: media.url,
+                thumbnailUrl: media.thumbnailUrl,
+                mediaType: media.mediaType,
+                isPrimary: media.isPrimary,
+                tags: media.tags,
+                uploadedAt: media.uploadedAt,
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function deleteProductMedia(
+    mediaId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const media = await prisma.productMedia.findUnique({
+            where: { id: mediaId },
+            select: { productId: true, isPrimary: true },
+        })
+        if (!media) return { success: false, error: 'Media not found' }
+
+        await prisma.productMedia.delete({ where: { id: mediaId } })
+
+        // If deleted was primary, set next as primary
+        if (media.isPrimary) {
+            const next = await prisma.productMedia.findFirst({
+                where: { productId: media.productId },
+                orderBy: { uploadedAt: 'asc' },
+            })
+            if (next) {
+                await prisma.productMedia.update({
+                    where: { id: next.id },
+                    data: { isPrimary: true },
+                })
+            }
+        }
+
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function setPrimaryMedia(
+    mediaId: string,
+    productId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.$transaction([
+            prisma.productMedia.updateMany({
+                where: { productId },
+                data: { isPrimary: false },
+            }),
+            prisma.productMedia.update({
+                where: { id: mediaId },
+                data: { isPrimary: true },
+            }),
+        ])
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// PRODUCT AWARDS & SCORES
+// ═══════════════════════════════════════════════════
+
+const MEDAL_LABEL: Record<string, string> = {
+    GOLD: '🥇 Gold',
+    SILVER: '🥈 Silver',
+    BRONZE: '🥉 Bronze',
+    DOUBLE_GOLD: '🏆 Double Gold',
+}
+
+export type ProductAwardRow = {
+    id: string
+    source: string
+    score: number | null
+    medal: string | null
+    medalLabel: string | null
+    vintage: number | null
+    awardedYear: number | null
+}
+
+export async function getProductAwards(productId: string): Promise<ProductAwardRow[]> {
+    const awards = await prisma.productAward.findMany({
+        where: { productId },
+        orderBy: [{ awardedYear: 'desc' }, { source: 'asc' }],
+    })
+    return awards.map(a => ({
+        id: a.id,
+        source: a.source,
+        score: a.score ? Number(a.score) : null,
+        medal: a.medal,
+        medalLabel: a.medal ? MEDAL_LABEL[a.medal] ?? a.medal : null,
+        vintage: a.vintage,
+        awardedYear: a.awardedYear,
+    }))
+}
+
+export async function addProductAward(input: {
+    productId: string
+    source: string
+    score?: number
+    medal?: string
+    vintage?: number
+    awardedYear?: number
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.productAward.create({
+            data: {
+                productId: input.productId,
+                source: input.source,
+                score: input.score ?? null,
+                medal: (input.medal as any) ?? null,
+                vintage: input.vintage ?? null,
+                awardedYear: input.awardedYear ?? null,
+            },
+        })
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function deleteProductAward(awardId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.productAward.delete({ where: { id: awardId } })
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {

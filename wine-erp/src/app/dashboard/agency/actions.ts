@@ -24,6 +24,9 @@ export type AgencySubmissionRow = {
     partnerName: string
     partnerType: string
     shipmentBol: string | null
+    shipmentStatus: string | null
+    vesselName: string | null
+    shipmentEta: Date | null
     declarationNo: string | null
     status: string
     notes: string | null
@@ -120,7 +123,7 @@ export async function getAgencySubmissions(filters: {
         where,
         include: {
             partner: { select: { name: true, type: true } },
-            shipment: { select: { billOfLading: true } },
+            shipment: { select: { billOfLading: true, status: true, vesselName: true, eta: true } },
             documents: { select: { id: true } },
         },
         orderBy: { submittedAt: 'desc' },
@@ -132,6 +135,9 @@ export async function getAgencySubmissions(filters: {
         partnerName: s.partner.name,
         partnerType: s.partner.type,
         shipmentBol: s.shipment?.billOfLading ?? null,
+        shipmentStatus: s.shipment?.status ?? null,
+        vesselName: s.shipment?.vesselName ?? null,
+        shipmentEta: s.shipment?.eta ?? null,
         declarationNo: s.declarationNo,
         status: s.status,
         notes: s.notes,
@@ -207,4 +213,142 @@ export async function getActiveShipments() {
         },
         orderBy: { eta: 'asc' },
     })
+}
+
+// ═══════════════════════════════════════════════════
+// PARTNER AUTHENTICATION & PORTAL
+// ═══════════════════════════════════════════════════
+
+export async function authenticatePartner(
+    email: string,
+    password: string
+): Promise<{ success: boolean; partner?: { id: string; name: string; type: string; code: string }; error?: string }> {
+    try {
+        const partner = await prisma.externalPartner.findUnique({
+            where: { email },
+            select: { id: true, name: true, type: true, code: true, email: true, passwordHash: true, status: true },
+        })
+
+        if (!partner) return { success: false, error: 'Email không tồn tại trong hệ thống' }
+        if (partner.status !== 'ACTIVE') return { success: false, error: 'Tài khoản đã bị vô hiệu hóa' }
+
+        // Simple comparison — passwordHash is stored as-is in this codebase
+        const valid = partner.passwordHash === password
+        if (!valid) return { success: false, error: 'Mật khẩu không đúng' }
+
+        return {
+            success: true,
+            partner: { id: partner.id, name: partner.name, type: partner.type, code: partner.code },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export type PartnerShipmentView = {
+    id: string
+    billOfLading: string
+    vesselName: string | null
+    eta: Date | null
+    status: string
+    submissionCount: number
+}
+
+export async function getPartnerPortalData(partnerId: string): Promise<{
+    shipments: PartnerShipmentView[]
+    submissions: AgencySubmissionRow[]
+}> {
+    // Get shipments assigned to this partner
+    const accesses = await prisma.partnerShipmentAccess.findMany({
+        where: { partnerId },
+        select: { shipmentId: true },
+    })
+
+    const shipmentIds = accesses.map(a => a.shipmentId)
+    const shipments = await prisma.shipment.findMany({
+        where: { id: { in: shipmentIds } },
+        include: {
+            agencySubmissions: { where: { partnerId }, select: { id: true } },
+        },
+        orderBy: { eta: 'desc' },
+    })
+
+    const formattedShipments: PartnerShipmentView[] = shipments.map(s => ({
+        id: s.id,
+        billOfLading: s.billOfLading,
+        vesselName: s.vesselName,
+        eta: s.eta,
+        status: s.status,
+        submissionCount: s.agencySubmissions.length,
+    }))
+
+    // Get partner's submissions
+    const submissions = await getAgencySubmissions({ partnerId })
+
+    return { shipments: formattedShipments, submissions }
+}
+
+// ═══════════════════════════════════════════════════
+// DOCUMENT UPLOAD & MANAGEMENT
+// ═══════════════════════════════════════════════════
+
+import { uploadFile } from '@/lib/storage'
+
+const DOC_TYPE_LABEL: Record<string, string> = {
+    CUSTOMS_DECLARATION: 'Tờ Khai HQ',
+    LOGISTICS_INVOICE: 'Invoice Logistics',
+    INSPECTION_CERT: 'Chứng Nhận Giám Định',
+    OTHER: 'Khác',
+}
+
+export type AgencyDocumentRow = {
+    id: string
+    type: string
+    typeLabel: string
+    fileUrl: string
+    uploadedAt: Date
+}
+
+export async function uploadAgencyDocument(
+    submissionId: string,
+    formData: FormData,
+    docType: string = 'OTHER'
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const file = formData.get('file') as File
+        if (!file) return { success: false, error: 'Chưa chọn file' }
+
+        const uploadRes = await uploadFile(formData, 'agency-documents')
+        if (!uploadRes.success || !uploadRes.url) {
+            return { success: false, error: uploadRes.error ?? 'Upload thất bại' }
+        }
+
+        await prisma.agencyDocument.create({
+            data: {
+                submissionId,
+                type: docType as any,
+                fileUrl: uploadRes.url,
+            },
+        })
+
+        revalidatePath('/dashboard/agency')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getSubmissionDocuments(submissionId: string): Promise<AgencyDocumentRow[]> {
+    const docs = await prisma.agencyDocument.findMany({
+        where: { submissionId },
+        orderBy: { uploadedAt: 'desc' },
+    })
+
+    return docs.map(d => ({
+        id: d.id,
+        type: d.type,
+        typeLabel: DOC_TYPE_LABEL[d.type] ?? d.type,
+        fileUrl: d.fileUrl,
+        uploadedAt: d.uploadedAt,
+    }))
 }

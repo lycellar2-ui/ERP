@@ -324,6 +324,143 @@ export async function getDeclarationCalendar() {
     })
 }
 
+// ─── SCT Detailed Report (TTĐB Bảng Kê Chi Tiết) ─
+export type SCTLineItem = {
+    skuCode: string
+    productName: string
+    abvPercent: number
+    sctRate: number
+    // Input (đầu vào - hàng nhập)
+    inputQty: number
+    inputValue: number
+    inputSCT: number
+    // Output (đầu ra - hàng bán)
+    outputQty: number
+    outputRevenue: number
+    outputSCT: number
+    // Net (thuế phải nộp)
+    netSCT: number
+}
+
+export type SCTDetailedReport = {
+    period: { year: number; month?: number }
+    inputSummary: { totalQty: number; totalValue: number; totalSCT: number }
+    outputSummary: { totalQty: number; totalRevenue: number; totalSCT: number }
+    netSCTPayable: number
+    lines: SCTLineItem[]
+}
+
+export async function getSCTDetailedReport(input: {
+    year: number
+    month?: number
+}): Promise<SCTDetailedReport> {
+    const { year, month } = input
+    const startDate = new Date(year, month ? month - 1 : 0, 1)
+    const endDate = month
+        ? new Date(year, month, 0, 23, 59, 59)
+        : new Date(year, 11, 31, 23, 59, 59)
+
+    // ── ĐẦU VÀO: StockLots received in period (từ GR confirm) ──
+    const inputLots = await prisma.stockLot.findMany({
+        where: {
+            receivedDate: { gte: startDate, lte: endDate },
+        },
+        include: {
+            product: {
+                select: {
+                    id: true, skuCode: true, productName: true,
+                    abvPercent: true, hsCode: true,
+                },
+            },
+        },
+    })
+
+    // ── ĐẦU RA: SO lines delivered in period (từ DO confirm → COGS) ──
+    const outputOrders = await prisma.salesOrderLine.findMany({
+        where: {
+            so: {
+                status: { in: ['DELIVERED', 'INVOICED', 'PAID'] },
+                updatedAt: { gte: startDate, lte: endDate },
+            },
+        },
+        include: {
+            product: {
+                select: {
+                    id: true, skuCode: true, productName: true,
+                    abvPercent: true,
+                },
+            },
+        },
+    })
+
+    // ── Aggregate by product ──
+    const productMap = new Map<string, SCTLineItem>()
+
+    const getOrInit = (p: { id: string; skuCode: string; productName: string; abvPercent: any }): SCTLineItem => {
+        if (!productMap.has(p.id)) {
+            const abv = Number(p.abvPercent ?? 0)
+            productMap.set(p.id, {
+                skuCode: p.skuCode,
+                productName: p.productName,
+                abvPercent: abv,
+                sctRate: abv >= 20 ? 65 : 35,
+                inputQty: 0, inputValue: 0, inputSCT: 0,
+                outputQty: 0, outputRevenue: 0, outputSCT: 0,
+                netSCT: 0,
+            })
+        }
+        return productMap.get(p.id)!
+    }
+
+    // Accumulate input (purchases)
+    for (const lot of inputLots) {
+        const line = getOrInit(lot.product)
+        const qty = Number(lot.qtyReceived)
+        const value = qty * Number(lot.unitLandedCost)
+        const sct = value * (line.sctRate / 100)
+        line.inputQty += qty
+        line.inputValue += Math.round(value)
+        line.inputSCT += Math.round(sct)
+    }
+
+    // Accumulate output (sales)
+    for (const sol of outputOrders) {
+        const line = getOrInit(sol.product)
+        const qty = Number(sol.qtyOrdered)
+        const revenue = qty * Number(sol.unitPrice)
+        const sct = revenue * (line.sctRate / 100)
+        line.outputQty += qty
+        line.outputRevenue += Math.round(revenue)
+        line.outputSCT += Math.round(sct)
+    }
+
+    // Calculate net SCT per product
+    const lines = Array.from(productMap.values()).map(l => ({
+        ...l,
+        netSCT: l.outputSCT - l.inputSCT,
+    }))
+
+    // Summaries
+    const inputSummary = {
+        totalQty: lines.reduce((s, l) => s + l.inputQty, 0),
+        totalValue: lines.reduce((s, l) => s + l.inputValue, 0),
+        totalSCT: lines.reduce((s, l) => s + l.inputSCT, 0),
+    }
+    const outputSummary = {
+        totalQty: lines.reduce((s, l) => s + l.outputQty, 0),
+        totalRevenue: lines.reduce((s, l) => s + l.outputRevenue, 0),
+        totalSCT: lines.reduce((s, l) => s + l.outputSCT, 0),
+    }
+
+    return {
+        period: { year, month },
+        inputSummary,
+        outputSummary,
+        netSCTPayable: outputSummary.totalSCT - inputSummary.totalSCT,
+        lines: lines.sort((a, b) => b.netSCT - a.netSCT),
+    }
+}
+
 // ─── Document & Signature ─────────────────────────
 import { uploadFile } from '@/lib/storage'
 

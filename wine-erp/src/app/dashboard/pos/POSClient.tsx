@@ -6,8 +6,9 @@ import type { POSProduct, CartItem } from './actions'
 import { formatVND } from '@/lib/utils'
 import {
     Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote,
-    QrCode, Wine, Check, X, BarChart3, Receipt, ScanBarcode, FileText
+    QrCode, Wine, Check, X, BarChart3, Receipt, ScanBarcode, FileText, Star
 } from 'lucide-react'
+import Link from 'next/link'
 
 export default function POSClient() {
     const [products, setProducts] = useState<POSProduct[]>([])
@@ -136,6 +137,11 @@ export default function POSClient() {
                             <span style={{ fontSize: '12px', color: '#8AAEBB' }}>Doanh thu:</span>
                             <span style={{ fontSize: '13px', fontWeight: 700, color: '#5BA88A' }}>{formatVND(shiftSummary.totalRevenue)}</span>
                         </div>
+                        <Link href="/dashboard/pos/loyalty"
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: 'rgba(212,168,83,0.08)', borderRadius: '8px', border: '1px solid rgba(212,168,83,0.25)', textDecoration: 'none' }}>
+                            <Star size={14} style={{ color: '#D4A853' }} />
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#D4A853' }}>Loyalty</span>
+                        </Link>
                     </div>
                 )}
 

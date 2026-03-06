@@ -1249,3 +1249,149 @@ export async function getWMSFullStats() {
         recentDOsThisWeek: recentDOs,
     }
 }
+
+// ═══════════════════════════════════════════════════
+// #25 — MOBILE SCANNER (PWA Backend)
+// ═══════════════════════════════════════════════════
+
+export type ScanResult = {
+    found: boolean
+    type: 'PRODUCT' | 'LOT' | 'LOCATION' | 'UNKNOWN'
+    product?: {
+        id: string
+        skuCode: string
+        productName: string
+        wineType: string
+        country: string
+        vintage: number | null
+    }
+    stock?: {
+        totalAvailable: number
+        totalValue: number
+        lots: { lotNo: string; location: string; qty: number; receivedDate: Date }[]
+    }
+    location?: {
+        id: string
+        locationCode: string
+        zone: string
+        warehouseName: string
+        stockCount: number
+    }
+}
+
+export async function scanBarcode(code: string): Promise<ScanResult> {
+    const trimmed = code.trim()
+
+    // 1. Try product lookup by SKU
+    const product = await prisma.product.findFirst({
+        where: {
+            OR: [
+                { skuCode: trimmed },
+                { skuCode: { contains: trimmed, mode: 'insensitive' } },
+            ],
+            deletedAt: null,
+        },
+        select: {
+            id: true, skuCode: true, productName: true, wineType: true,
+            country: true, vintage: true,
+        },
+    })
+
+    if (product) {
+        const lots = await prisma.stockLot.findMany({
+            where: { productId: product.id, status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+            include: { location: { select: { locationCode: true } } },
+            orderBy: { receivedDate: 'asc' },
+        })
+        const totalAvailable = lots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
+        const totalValue = lots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
+
+        return {
+            found: true,
+            type: 'PRODUCT',
+            product: { ...product, wineType: product.wineType ?? 'OTHER', country: product.country ?? '' },
+            stock: {
+                totalAvailable,
+                totalValue,
+                lots: lots.map(l => ({
+                    lotNo: l.lotNo,
+                    location: l.location.locationCode,
+                    qty: Number(l.qtyAvailable),
+                    receivedDate: l.receivedDate,
+                })),
+            },
+        }
+    }
+
+    // 2. Try lot lookup
+    const lot = await prisma.stockLot.findFirst({
+        where: { lotNo: trimmed },
+        include: {
+            product: { select: { id: true, skuCode: true, productName: true, wineType: true, country: true, vintage: true } },
+            location: { select: { locationCode: true } },
+        },
+    })
+
+    if (lot) {
+        return {
+            found: true,
+            type: 'LOT',
+            product: { ...lot.product, wineType: lot.product.wineType ?? 'OTHER', country: lot.product.country ?? '' },
+            stock: {
+                totalAvailable: Number(lot.qtyAvailable),
+                totalValue: Number(lot.qtyAvailable) * Number(lot.unitLandedCost),
+                lots: [{
+                    lotNo: lot.lotNo,
+                    location: lot.location.locationCode,
+                    qty: Number(lot.qtyAvailable),
+                    receivedDate: lot.receivedDate,
+                }],
+            },
+        }
+    }
+
+    // 3. Try location lookup
+    const location = await prisma.location.findFirst({
+        where: { locationCode: trimmed },
+        include: {
+            warehouse: { select: { name: true } },
+            stockLots: { where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } }, select: { id: true } },
+        },
+    })
+
+    if (location) {
+        return {
+            found: true,
+            type: 'LOCATION',
+            location: {
+                id: location.id,
+                locationCode: location.locationCode,
+                zone: location.zone,
+                warehouseName: location.warehouse.name,
+                stockCount: location.stockLots.length,
+            },
+        }
+    }
+
+    return { found: false, type: 'UNKNOWN' }
+}
+
+export async function quickStockCheck(productId: string) {
+    const lots = await prisma.stockLot.findMany({
+        where: { productId, status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+        include: { location: { include: { warehouse: { select: { name: true } } } } },
+        orderBy: { receivedDate: 'asc' },
+    })
+
+    return {
+        totalAvailable: lots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
+        locations: lots.map(l => ({
+            lotNo: l.lotNo,
+            warehouse: l.location.warehouse.name,
+            location: l.location.locationCode,
+            zone: l.location.zone,
+            qty: Number(l.qtyAvailable),
+            daysInStock: Math.floor((Date.now() - l.receivedDate.getTime()) / 86400000),
+        })),
+    }
+}

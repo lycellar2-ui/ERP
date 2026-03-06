@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import {
     Globe, Package, FileText, CheckCircle2, Clock, Users, Plus, X, Loader2,
-    AlertTriangle, ChevronRight, Ship, Eye, Check, XCircle, Send
+    AlertTriangle, ChevronRight, Ship, Eye, Check, XCircle, Send, UploadCloud
 } from 'lucide-react'
 import {
-    AgencyPartnerRow, AgencySubmissionRow, AgencyDashboardStats,
+    AgencyPartnerRow, AgencySubmissionRow, AgencyDashboardStats, AgencyDocumentRow,
     getAgencyPartners, getAgencySubmissions, getAgencyDashboardStats,
     createAgencyPartner, createAgencySubmission, reviewAgencySubmission,
-    getActiveShipments
+    getActiveShipments, uploadAgencyDocument, getSubmissionDocuments
 } from './actions'
 import { formatDate } from '@/lib/utils'
 
@@ -29,6 +29,14 @@ const PARTNER_TYPE_MAP: Record<string, { label: string; color: string }> = {
     FORWARDER: { label: 'Forwarding', color: '#4A8FAB' },
     SURVEYOR: { label: 'Giám Định', color: '#87CBB9' },
 }
+
+const SHIPMENT_MILESTONES = [
+    { key: 'BOOKED', label: 'Đặt Chỗ', icon: '📦' },
+    { key: 'ON_VESSEL', label: 'Trên Tàu', icon: '⛴️' },
+    { key: 'ARRIVED_PORT', label: 'Đến Cảng', icon: '🏠' },
+    { key: 'CUSTOMS_CLEARED', label: 'Thông Quan', icon: '✅' },
+    { key: 'DELIVERED_TO_WAREHOUSE', label: 'Về Kho', icon: '🏭' },
+] as const
 
 const TABS = [
     { key: 'submissions', label: 'Submissions', icon: FileText },
@@ -67,6 +75,13 @@ export function AgencyClient() {
     // Review
     const [reviewingId, setReviewingId] = useState<string | null>(null)
     const [reviewAction, setReviewAction] = useState<'APPROVED' | 'REJECTED' | null>(null)
+
+    // Document expansion
+    const [expandedSubId, setExpandedSubId] = useState<string | null>(null)
+    const [documents, setDocuments] = useState<AgencyDocumentRow[]>([])
+    const [docsLoading, setDocsLoading] = useState(false)
+    const [uploadingDoc, setUploadingDoc] = useState(false)
+    const [selectedDocType, setSelectedDocType] = useState('OTHER')
 
     const loadStats = useCallback(async () => {
         const data = await getAgencyDashboardStats()
@@ -156,6 +171,34 @@ export function AgencyClient() {
         setReviewAction(null)
         loadSubmissions(subsFilter)
         loadStats()
+    }
+
+    // ── Document Management ─────────────────────
+    const toggleExpand = async (subId: string) => {
+        if (expandedSubId === subId) { setExpandedSubId(null); return }
+        setExpandedSubId(subId)
+        setDocsLoading(true)
+        const docs = await getSubmissionDocuments(subId)
+        setDocuments(docs)
+        setDocsLoading(false)
+    }
+
+    const handleUploadDoc = async (subId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setUploadingDoc(true)
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await uploadAgencyDocument(subId, formData, selectedDocType)
+        if (res.success) {
+            const docs = await getSubmissionDocuments(subId)
+            setDocuments(docs)
+            loadSubmissions(subsFilter)
+        } else {
+            alert(`Lỗi upload: ${res.error}`)
+        }
+        setUploadingDoc(false)
+        e.target.value = ''
     }
 
     return (
@@ -351,63 +394,178 @@ export function AgencyClient() {
                                     const st = STATUS_MAP[sub.status] ?? STATUS_MAP.PENDING_REVIEW
                                     const pt = PARTNER_TYPE_MAP[sub.partnerType] ?? { label: sub.partnerType, color: '#8AAEBB' }
                                     const isReviewing = reviewingId === sub.id
+                                    const isExpanded = expandedSubId === sub.id
 
                                     return (
-                                        <tr key={sub.id}
-                                            style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                            <td className="px-3 py-3 text-sm font-medium" style={{ color: '#E8F1F2' }}>{sub.partnerName}</td>
-                                            <td className="px-3 py-3">
-                                                <span className="text-xs font-semibold px-2 py-0.5 rounded"
-                                                    style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
-                                            </td>
-                                            <td className="px-3 py-3 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
-                                                {sub.shipmentBol || '—'}
-                                            </td>
-                                            <td className="px-3 py-3 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
-                                                {sub.declarationNo || '—'}
-                                            </td>
-                                            <td className="px-3 py-3 text-xs font-bold" style={{ color: sub.documentCount > 0 ? '#5BA88A' : '#4A6A7A' }}>
-                                                {sub.documentCount} file
-                                            </td>
-                                            <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>
-                                                {formatDate(sub.submittedAt)}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                                                    style={{ color: st.color, background: st.bg }}>{st.label}</span>
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                {sub.status === 'PENDING_REVIEW' && (
-                                                    <div className="flex gap-1">
-                                                        <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'APPROVED') }}
-                                                            disabled={isReviewing}
-                                                            className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
-                                                            style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.25)' }}>
-                                                            {isReviewing && reviewAction === 'APPROVED'
-                                                                ? <Loader2 size={10} className="animate-spin" />
-                                                                : <Check size={10} />}
-                                                            Duyệt
-                                                        </button>
-                                                        <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'REJECTED') }}
-                                                            disabled={isReviewing}
-                                                            className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
-                                                            style={{ background: 'rgba(224,82,82,0.1)', color: '#E05252', border: '1px solid rgba(224,82,82,0.2)' }}>
-                                                            {isReviewing && reviewAction === 'REJECTED'
-                                                                ? <Loader2 size={10} className="animate-spin" />
-                                                                : <XCircle size={10} />}
-                                                            Từ chối
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {sub.status !== 'PENDING_REVIEW' && sub.reviewedAt && (
-                                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
-                                                        {formatDate(sub.reviewedAt)}
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </tr>
+                                        <React.Fragment key={sub.id}>
+                                            <tr
+                                                className="cursor-pointer"
+                                                style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
+                                                onClick={() => toggleExpand(sub.id)}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                <td className="px-3 py-3 text-sm font-medium" style={{ color: '#E8F1F2' }}>{sub.partnerName}</td>
+                                                <td className="px-3 py-3">
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded"
+                                                        style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
+                                                </td>
+                                                <td className="px-3 py-3 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                                    {sub.shipmentBol || '—'}
+                                                </td>
+                                                <td className="px-3 py-3 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                                    {sub.declarationNo || '—'}
+                                                </td>
+                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: sub.documentCount > 0 ? '#5BA88A' : '#4A6A7A' }}>
+                                                    {sub.documentCount} file
+                                                </td>
+                                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>
+                                                    {formatDate(sub.submittedAt)}
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                                        style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {sub.status === 'PENDING_REVIEW' && (
+                                                        <div className="flex gap-1">
+                                                            <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'APPROVED') }}
+                                                                disabled={isReviewing}
+                                                                className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
+                                                                style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.25)' }}>
+                                                                {isReviewing && reviewAction === 'APPROVED'
+                                                                    ? <Loader2 size={10} className="animate-spin" />
+                                                                    : <Check size={10} />}
+                                                                Duyệt
+                                                            </button>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'REJECTED') }}
+                                                                disabled={isReviewing}
+                                                                className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
+                                                                style={{ background: 'rgba(224,82,82,0.1)', color: '#E05252', border: '1px solid rgba(224,82,82,0.2)' }}>
+                                                                {isReviewing && reviewAction === 'REJECTED'
+                                                                    ? <Loader2 size={10} className="animate-spin" />
+                                                                    : <XCircle size={10} />}
+                                                                Từ chối
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {sub.status !== 'PENDING_REVIEW' && sub.reviewedAt && (
+                                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                            {formatDate(sub.reviewedAt)}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            {/* ── Document Expansion Row ── */}
+                                            {isExpanded && (
+                                                <tr style={{ background: '#142433' }}>
+                                                    <td colSpan={8} className="px-6 py-4">
+                                                        {docsLoading ? (
+                                                            <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6A7A' }}>
+                                                                <Loader2 size={12} className="animate-spin" /> Đang tải chứng từ...
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                {/* ── Tracking Milestones ── */}
+                                                                {sub.shipmentStatus && (
+                                                                    <div className="mb-4 pb-4" style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#D4A853' }}>
+                                                                            Tracking Lô Hàng {sub.vesselName && `— ${sub.vesselName}`}
+                                                                            {sub.shipmentEta && <span style={{ color: '#4A6A7A' }}> · ETA: {formatDate(sub.shipmentEta)}</span>}
+                                                                        </p>
+                                                                        <div className="flex items-center gap-0">
+                                                                            {SHIPMENT_MILESTONES.map((m, i) => {
+                                                                                const currentIdx = SHIPMENT_MILESTONES.findIndex(ms => ms.key === sub.shipmentStatus)
+                                                                                const isDone = i <= currentIdx
+                                                                                const isCurrent = i === currentIdx
+                                                                                return (
+                                                                                    <React.Fragment key={m.key}>
+                                                                                        <div className="flex flex-col items-center" style={{ minWidth: 70 }}>
+                                                                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1 transition-all"
+                                                                                                style={{
+                                                                                                    background: isDone ? (isCurrent ? 'rgba(135,203,185,0.2)' : 'rgba(91,168,138,0.15)') : '#1B2E3D',
+                                                                                                    border: `2px solid ${isDone ? (isCurrent ? '#87CBB9' : '#5BA88A') : '#2A4355'}`,
+                                                                                                    boxShadow: isCurrent ? '0 0 12px rgba(135,203,185,0.3)' : 'none',
+                                                                                                }}>
+                                                                                                {m.icon}
+                                                                                            </div>
+                                                                                            <span className="text-[10px] font-semibold text-center leading-tight"
+                                                                                                style={{ color: isDone ? (isCurrent ? '#87CBB9' : '#5BA88A') : '#4A6A7A' }}>
+                                                                                                {m.label}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        {i < SHIPMENT_MILESTONES.length - 1 && (
+                                                                                            <div className="flex-1 h-0.5 -mt-4" style={{
+                                                                                                background: i < currentIdx ? '#5BA88A' : '#2A4355',
+                                                                                                minWidth: 16,
+                                                                                            }} />
+                                                                                        )}
+                                                                                    </React.Fragment>
+                                                                                )
+                                                                            })}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* ── Documents Section ── */}
+                                                                <div className="flex items-center justify-between">
+                                                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#87CBB9' }}>
+                                                                        Chứng từ đính kèm ({documents.length})
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <select value={selectedDocType}
+                                                                            onChange={e => setSelectedDocType(e.target.value)}
+                                                                            onClick={e => e.stopPropagation()}
+                                                                            className="px-2 py-1 text-xs outline-none rounded"
+                                                                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
+                                                                            <option value="CUSTOMS_DECLARATION">Tờ Khai HQ</option>
+                                                                            <option value="LOGISTICS_INVOICE">Invoice Logistics</option>
+                                                                            <option value="INSPECTION_CERT">Chứng Nhận GĐ</option>
+                                                                            <option value="OTHER">Khác</option>
+                                                                        </select>
+                                                                        <label className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer"
+                                                                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}
+                                                                            onClick={e => e.stopPropagation()}>
+                                                                            {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                                            {uploadingDoc ? 'Đang tải...' : 'Upload File'}
+                                                                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"
+                                                                                onChange={e => handleUploadDoc(sub.id, e)} disabled={uploadingDoc} />
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+
+                                                                {documents.length > 0 ? (
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                                        {documents.map(doc => (
+                                                                            <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
+                                                                                onClick={e => e.stopPropagation()}
+                                                                                className="flex items-center gap-3 p-3 rounded transition-colors"
+                                                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
+                                                                                onMouseEnter={e => e.currentTarget.style.background = '#2A4355'}
+                                                                                onMouseLeave={e => e.currentTarget.style.background = '#1B2E3D'}>
+                                                                                <FileText size={18} style={{ color: '#8AAEBB', flexShrink: 0 }} />
+                                                                                <div className="overflow-hidden flex-1">
+                                                                                    <p className="text-xs font-semibold" style={{ color: '#D4A853' }}>{doc.typeLabel}</p>
+                                                                                    <p className="text-[10px] truncate" style={{ color: '#4A6A7A' }}>{formatDate(doc.uploadedAt)}</p>
+                                                                                </div>
+                                                                            </a>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa có chứng từ nào. Nhấn "Upload File" để thêm.</p>
+                                                                )}
+
+                                                                {sub.notes && (
+                                                                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                                        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: '#4A6A7A' }}>Ghi chú</p>
+                                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>{sub.notes}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
                                     )
                                 })}
                             </tbody>

@@ -36,10 +36,10 @@ function ProductTableRow({ row, onEdit }: { row: ProductRow; onEdit: () => void 
             {/* Product */}
             <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center"
-                        style={{ background: row.mediaCount > 0 ? 'rgba(135,203,185,0.12)' : '#142433', border: '1px solid #2A4355' }}>
-                        {row.mediaCount > 0
-                            ? <span style={{ fontSize: 18 }}>🍾</span>
+                    <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"
+                        style={{ background: row.primaryImageUrl ? 'transparent' : '#142433', border: '1px solid #2A4355' }}>
+                        {row.primaryImageUrl
+                            ? <img src={row.primaryImageUrl} alt={row.productName} className="w-full h-full object-cover rounded-lg" />
                             : <ImageOff size={14} style={{ color: '#2A4355' }} />}
                     </div>
                     <div className="min-w-0">

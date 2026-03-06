@@ -57,7 +57,7 @@
 | Phase 1 | Phân tích Nghiệp vụ (Business Analysis) | ✅ Hoàn thành |
 | Phase 2 | Lập Kế hoạch & Task Breakdown | ✅ Hoàn thành |
 | Phase 3 | Architecture & Database Schema | ✅ Hoàn thành |
-| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P7 100%** \| P8 ~75% — AI Vault, OCR, QR Print, Dashboard Export done |
+| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P7 100%** \| P8 ~95% — +28 features phiên 06/03 (14 backend + 3 UI + 4 CSS/Infra + 7 verified) |
 | Phase 5 | Testing & Go-live | — |
 
 ---
@@ -160,4 +160,4 @@ docs/
 4. **AI context** → Cập nhật `llms.txt` khi có thêm khái niệm domain mới
 
 ---
-*Last updated: 2026-03-05 17:55 | Wine ERP v4.0 — **P1-P7 100% ✅** | **P8 ~75%** | AI Vault + OCR + QR Print + Dashboard Export done*
+*Last updated: 2026-03-06 11:12 | Wine ERP v4.4 — **P1-P7 100% ✅** | **P8 ~95%** | Session 06/03: +28 features (Waterfall, YoY, CRM Pref/Events/Tickets, Loyalty, DigiSign, Scorecard, Duplicates, Scanner, Print A4, Scheduled Reports, Cron Route)*

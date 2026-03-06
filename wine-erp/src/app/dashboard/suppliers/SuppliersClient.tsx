@@ -1,8 +1,8 @@
 ﻿'use client'
 
 import { useState } from 'react'
-import { Search, Plus, Building2, Globe, Clock, ShoppingCart, X, Save, Loader2, AlertCircle } from 'lucide-react'
-import { SupplierRow, SupplierInput, createSupplier } from './actions'
+import { Search, Plus, Building2, Globe, Clock, ShoppingCart, X, Save, Loader2, AlertCircle, Award, Copy } from 'lucide-react'
+import { SupplierRow, SupplierInput, createSupplier, getAllSupplierScorecards, detectDuplicates, type SupplierScorecard, type DuplicateCandidate } from './actions'
 import { formatVND } from '@/lib/utils'
 
 // ── Type badge ──────────────────────────────────────────────
@@ -268,6 +268,11 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
     const [rows, setRows] = useState(initialRows)
     const [search, setSearch] = useState('')
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState<'list' | 'scorecard' | 'duplicates'>('list')
+    const [scorecards, setScorecards] = useState<SupplierScorecard[] | null>(null)
+    const [scoreLoading, setScoreLoading] = useState(false)
+    const [duplicates, setDuplicates] = useState<DuplicateCandidate[] | null>(null)
+    const [dupLoading, setDupLoading] = useState(false)
 
     const filtered = rows.filter(r =>
         !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.code.toLowerCase().includes(search.toLowerCase())
@@ -275,6 +280,32 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
 
     const activeCount = rows.filter(r => r.status === 'ACTIVE').length
     const countries = [...new Set(rows.map(r => r.country))].length
+
+    const loadScorecards = async () => {
+        setActiveTab('scorecard')
+        if (scorecards) return
+        setScoreLoading(true)
+        const data = await getAllSupplierScorecards()
+        setScorecards(data)
+        setScoreLoading(false)
+    }
+
+    const loadDuplicates = async () => {
+        setActiveTab('duplicates')
+        if (duplicates) return
+        setDupLoading(true)
+        const data = await detectDuplicates()
+        setDuplicates(data)
+        setDupLoading(false)
+    }
+
+    const GRADE_COLOR: Record<string, { color: string; bg: string }> = {
+        A: { color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+        B: { color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+        C: { color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
+        D: { color: '#C07434', bg: 'rgba(192,116,52,0.15)' },
+        F: { color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
+    }
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
@@ -320,74 +351,205 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
                 ))}
             </div>
 
-            {/* Search */}
-            <div className="relative max-w-sm">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
-                <input type="text" placeholder="Tìm NCC..." value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                    onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+            {/* Tabs */}
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433' }}>
+                {([
+                    { key: 'list', label: 'Danh Sách NCC', icon: Building2 },
+                    { key: 'scorecard', label: 'Scorecard', icon: Award },
+                    { key: 'duplicates', label: 'Phát Hiện Trùng', icon: Copy },
+                ] as const).map(tab => (
+                    <button key={tab.key}
+                        onClick={() => tab.key === 'scorecard' ? loadScorecards() : tab.key === 'duplicates' ? loadDuplicates() : setActiveTab('list')}
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
+                        style={{
+                            background: activeTab === tab.key ? '#1B2E3D' : 'transparent',
+                            color: activeTab === tab.key ? '#87CBB9' : '#4A6A7A',
+                            border: activeTab === tab.key ? '1px solid #2A4355' : '1px solid transparent',
+                        }}>
+                        <tab.icon size={13} /> {tab.label}
+                    </button>
+                ))}
             </div>
 
-            {/* Table */}
-            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                            {['Nhà Cung Cấp', 'Loại', 'Quốc Gia', 'Hiệp Định / C/O', 'Thanh Toán', 'Lead Time', 'Đơn Hàng', 'Trạng Thái'].map(h => (
-                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
-                                    style={{ color: '#4A6A7A' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.length === 0 ? (
-                            <tr><td colSpan={8}>
-                                <div className="flex flex-col items-center py-16 gap-3">
-                                    <span className="text-3xl">🏭</span>
-                                    <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có nhà cung cấp nào</p>
+            {/* Tab: NCC List */}
+            {activeTab === 'list' && (
+                <>
+                    {/* Search */}
+                    <div className="relative max-w-sm">
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <input type="text" placeholder="Tìm NCC..." value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </div>
+
+                    {/* Table */}
+                    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                    {['Nhà Cung Cấp', 'Loại', 'Quốc Gia', 'Hiệp Định / C/O', 'Thanh Toán', 'Lead Time', 'Đơn Hàng', 'Trạng Thái'].map(h => (
+                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
+                                            style={{ color: '#4A6A7A' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filtered.length === 0 ? (
+                                    <tr><td colSpan={8}>
+                                        <div className="flex flex-col items-center py-16 gap-3">
+                                            <span className="text-3xl">🏭</span>
+                                            <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có nhà cung cấp nào</p>
+                                        </div>
+                                    </td></tr>
+                                ) : filtered.map(row => (
+                                    <tr key={row.id} className="group transition-colors duration-100"
+                                        style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
+                                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                        <td className="px-4 py-3">
+                                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
+                                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                        </td>
+                                        <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
+                                        <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>
+                                            {COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#2A4355' }}>
+                                                {row.tradeAgreement ?? 'MFN'}
+                                            </p>
+                                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{row.coFormType ?? '—'}</p>
+                                        </td>
+                                        <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                            {row.paymentTerm ?? '—'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
+                                                <Clock size={12} /> {row.leadTimeDays} ngày
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="text-sm font-bold" style={{ color: row.poCount > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                                {row.poCount}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3"><StatusDot status={row.status} /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+
+            {/* Tab: Scorecard */}
+            {activeTab === 'scorecard' && (
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                    {scoreLoading ? (
+                        <div className="flex items-center justify-center py-16 gap-2">
+                            <Loader2 size={16} className="animate-spin" style={{ color: '#87CBB9' }} />
+                            <span className="text-sm" style={{ color: '#4A6A7A' }}>Đang tính Scorecard...</span>
+                        </div>
+                    ) : scorecards && scorecards.length > 0 ? (
+                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                    {['NCC', 'Giao Đúng Hạn', 'Chất Lượng', 'Lead Time TB', 'Tổng PO', 'Xếp Hạng'].map(h => (
+                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {scorecards.map(sc => {
+                                    const gc = GRADE_COLOR[sc.grade] ?? GRADE_COLOR.C
+                                    return (
+                                        <tr key={sc.supplierId} style={{ borderBottom: '1px solid rgba(42,67,85,0.6)' }}>
+                                            <td className="px-4 py-3">
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{sc.supplierName}</p>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-16 h-1.5 rounded-full" style={{ background: '#2A4355' }}>
+                                                        <div className="h-full rounded-full" style={{
+                                                            background: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E',
+                                                            width: `${Math.min(sc.onTimeRate, 100)}%`
+                                                        }} />
+                                                    </div>
+                                                    <span className="text-xs font-bold" style={{
+                                                        color: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E',
+                                                        fontFamily: '"DM Mono"'
+                                                    }}>{sc.onTimeRate.toFixed(0)}%</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="text-xs font-bold" style={{
+                                                    color: sc.qualityScore >= 90 ? '#5BA88A' : '#D4A853', fontFamily: '"DM Mono"'
+                                                }}>{sc.qualityScore.toFixed(0)}/100</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>
+                                                {sc.avgLeadTimeDays.toFixed(0)} ngày
+                                            </td>
+                                            <td className="px-4 py-3 text-xs text-center" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                {sc.totalPOs}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold"
+                                                    style={{ background: gc.bg, color: gc.color }}>{sc.grade}</span>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div className="text-center py-16 text-sm" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu scorecard</div>
+                    )}
+                </div>
+            )}
+
+            {/* Tab: Duplicate Detection */}
+            {activeTab === 'duplicates' && (
+                <div className="space-y-3">
+                    {dupLoading ? (
+                        <div className="flex items-center justify-center py-16 gap-2">
+                            <Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} />
+                            <span className="text-sm" style={{ color: '#4A6A7A' }}>Đang quét dữ liệu trùng...</span>
+                        </div>
+                    ) : duplicates && duplicates.length > 0 ? (
+                        duplicates.map((dup, i) => (
+                            <div key={i} className="p-4 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full"
+                                        style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>
+                                        {dup.type === 'PRODUCT' ? '📦 Sản phẩm' : dup.type === 'CUSTOMER' ? '👤 Khách hàng' : '🏭 NCC'}
+                                    </span>
+                                    <span className="text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                        {(dup.similarity * 100).toFixed(0)}% giống nhau
+                                    </span>
                                 </div>
-                            </td></tr>
-                        ) : filtered.map(row => (
-                            <tr key={row.id} className="group transition-colors duration-100"
-                                style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                <td className="px-4 py-3">
-                                    <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
-                                </td>
-                                <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
-                                <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>
-                                    {COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#2A4355' }}>
-                                        {row.tradeAgreement ?? 'MFN'}
-                                    </p>
-                                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{row.coFormType ?? '—'}</p>
-                                </td>
-                                <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                    {row.paymentTerm ?? '—'}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
-                                        <Clock size={12} /> {row.leadTimeDays} ngày
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                    <span className="text-sm font-bold" style={{ color: row.poCount > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
-                                        {row.poCount}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3"><StatusDot status={row.status} /></td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-2 rounded" style={{ background: '#142433' }}>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Mục 1</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{dup.itemA.name}</p>
+                                    </div>
+                                    <div className="p-2 rounded" style={{ background: '#142433' }}>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Mục 2</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{dup.itemB.name}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-16 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <span className="text-3xl">✅</span>
+                            <p className="text-sm mt-3" style={{ color: '#5BA88A' }}>Không phát hiện dữ liệu trùng lặp</p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <AddSupplierDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}
                 onSaved={async () => {
@@ -398,3 +560,4 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
         </div>
     )
 }
+

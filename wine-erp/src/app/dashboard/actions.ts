@@ -475,3 +475,338 @@ export async function exportDashboardExcel(): Promise<string> {
 
     return Buffer.from(buffer).toString('base64')
 }
+
+// ─── Cost Structure Waterfall for Dashboard ──────────────
+export type WaterfallBar = {
+    label: string
+    value: number
+    type: 'total' | 'positive' | 'negative'
+    color: string
+    pct: number // % of revenue
+}
+
+export async function getCostWaterfall() {
+    return cached('dashboard:cost-waterfall', async () => {
+        const now = new Date()
+        const from = startOfMonth(now)
+        const to = endOfMonth(now)
+
+        const lines = await prisma.journalLine.findMany({
+            where: { entry: { postedAt: { gte: from, lte: to } } },
+            select: { account: true, debit: true, credit: true },
+        })
+
+        let revenue = 0
+        let cogs = 0
+        let sellingExp = 0   // TK 641
+        let adminExp = 0     // TK 642
+        let financialExp = 0 // TK 635
+        let otherExp = 0     // TK 811
+
+        for (const l of lines) {
+            const acc = l.account.split(' - ')[0]?.trim() ?? l.account
+            const debit = Number(l.debit)
+            const credit = Number(l.credit)
+
+            if (acc.startsWith('511')) revenue += credit - debit
+            else if (acc.startsWith('632')) cogs += debit - credit
+            else if (acc.startsWith('641')) sellingExp += debit - credit
+            else if (acc.startsWith('642')) adminExp += debit - credit
+            else if (acc.startsWith('635')) financialExp += debit - credit
+            else if (acc.startsWith('811')) otherExp += debit - credit
+        }
+
+        const grossProfit = revenue - cogs
+        const totalExpenses = sellingExp + adminExp + financialExp + otherExp
+        const netProfit = grossProfit - totalExpenses
+
+        const pct = (v: number) => revenue > 0 ? Math.round((v / revenue) * 100) : 0
+
+        const bars: WaterfallBar[] = [
+            { label: 'Doanh Thu', value: revenue, type: 'total', color: '#5BA88A', pct: 100 },
+            { label: 'Giá Vốn (COGS)', value: -cogs, type: 'negative', color: '#E05252', pct: pct(cogs) },
+            { label: 'Lãi Gộp', value: grossProfit, type: 'total', color: '#87CBB9', pct: pct(grossProfit) },
+            { label: 'CP Bán Hàng (641)', value: -sellingExp, type: 'negative', color: '#D4A853', pct: pct(sellingExp) },
+            { label: 'CP Quản Lý (642)', value: -adminExp, type: 'negative', color: '#C45A2A', pct: pct(adminExp) },
+            { label: 'CP Tài Chính (635)', value: -financialExp, type: 'negative', color: '#4A8FAB', pct: pct(financialExp) },
+            { label: 'CP Khác (811)', value: -otherExp, type: 'negative', color: '#8B1A2E', pct: pct(otherExp) },
+            { label: 'Lãi Ròng', value: netProfit, type: 'total', color: netProfit >= 0 ? '#5BA88A' : '#8B1A2E', pct: pct(netProfit) },
+        ]
+
+        return { bars, revenue, cogs, grossProfit, totalExpenses, netProfit }
+    }, 60_000)
+}
+
+// ─── Revenue YoY Comparison (12 months) ──────────────
+export async function getRevenueYoY() {
+    return cached('dashboard:revenue-yoy', async () => {
+        const now = new Date()
+        const thisYear = now.getFullYear()
+        const lastYear = thisYear - 1
+
+        const fetchYear = async (year: number) => {
+            const results = await Promise.all(
+                Array.from({ length: 12 }, (_, i) => {
+                    const m = new Date(year, i, 1)
+                    return prisma.salesOrder.aggregate({
+                        where: {
+                            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                            createdAt: { gte: startOfMonth(m), lte: endOfMonth(m) },
+                        },
+                        _sum: { totalAmount: true },
+                    }).then(r => ({
+                        month: i + 1,
+                        label: `T${i + 1}`,
+                        revenue: Number(r._sum.totalAmount ?? 0),
+                    }))
+                })
+            )
+            return results
+        }
+
+        const [current, previous] = await Promise.all([
+            fetchYear(thisYear),
+            fetchYear(lastYear),
+        ])
+
+        const totalCurrent = current.reduce((s, m) => s + m.revenue, 0)
+        const totalPrevious = previous.reduce((s, m) => s + m.revenue, 0)
+        const yoyGrowth = totalPrevious > 0 ? ((totalCurrent - totalPrevious) / totalPrevious) * 100 : 0
+
+        return {
+            thisYear,
+            lastYear,
+            current,
+            previous,
+            totalCurrent,
+            totalPrevious,
+            yoyGrowth,
+        }
+    }, 120_000) // 2min
+}
+
+// ═══════════════════════════════════════════════════
+// #10 — ROLE-BASED DASHBOARD CONFIG
+// ═══════════════════════════════════════════════════
+
+export type DashboardSection =
+    | 'kpi_cards' | 'revenue_chart' | 'pending_approvals' | 'pl_summary'
+    | 'cash_position' | 'ar_aging' | 'cost_waterfall' | 'revenue_yoy'
+    | 'shipment_tracker' | 'kpi_targets' | 'stock_alerts' | 'recent_orders'
+    | 'my_sales' | 'warehouse_summary'
+
+export type DashboardConfig = {
+    greeting: string
+    sections: DashboardSection[]
+    quickLinks: { label: string; href: string; icon: string }[]
+}
+
+const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
+    CEO: {
+        greeting: 'Tổng Quan Kinh Doanh',
+        sections: [
+            'kpi_cards', 'revenue_chart', 'pl_summary', 'cash_position',
+            'ar_aging', 'cost_waterfall', 'revenue_yoy', 'pending_approvals',
+            'shipment_tracker', 'kpi_targets',
+        ],
+        quickLinks: [
+            { label: 'Báo cáo', href: '/dashboard/reports', icon: 'BarChart3' },
+            { label: 'Phê duyệt', href: '/dashboard/settings?tab=approvals', icon: 'ClipboardCheck' },
+            { label: 'Tài chính', href: '/dashboard/finance', icon: 'DollarSign' },
+        ],
+    },
+    SALES_MGR: {
+        greeting: 'Quản Lý Bán Hàng',
+        sections: [
+            'kpi_cards', 'revenue_chart', 'recent_orders', 'my_sales',
+            'ar_aging', 'kpi_targets', 'pending_approvals',
+        ],
+        quickLinks: [
+            { label: 'Đơn hàng', href: '/dashboard/sales', icon: 'Package' },
+            { label: 'Khách hàng', href: '/dashboard/crm', icon: 'Users' },
+            { label: 'Pipeline', href: '/dashboard/pipeline', icon: 'Target' },
+        ],
+    },
+    SALES_REP: {
+        greeting: 'Bán Hàng',
+        sections: ['kpi_cards', 'my_sales', 'recent_orders', 'kpi_targets'],
+        quickLinks: [
+            { label: 'Tạo đơn mới', href: '/dashboard/sales', icon: 'Plus' },
+            { label: 'Khách hàng', href: '/dashboard/crm', icon: 'Users' },
+            { label: 'Báo giá', href: '/dashboard/quotations', icon: 'FileText' },
+        ],
+    },
+    KE_TOAN: {
+        greeting: 'Kế Toán — Tài Chính',
+        sections: [
+            'kpi_cards', 'pl_summary', 'cash_position', 'ar_aging',
+            'pending_approvals', 'cost_waterfall',
+        ],
+        quickLinks: [
+            { label: 'Công nợ', href: '/dashboard/finance', icon: 'DollarSign' },
+            { label: 'Báo cáo', href: '/dashboard/reports', icon: 'BarChart3' },
+            { label: 'Sổ cái', href: '/dashboard/finance?tab=journal', icon: 'BookOpen' },
+        ],
+    },
+    THU_KHO: {
+        greeting: 'Quản Lý Kho',
+        sections: ['kpi_cards', 'warehouse_summary', 'stock_alerts', 'shipment_tracker'],
+        quickLinks: [
+            { label: 'Tồn kho', href: '/dashboard/warehouse', icon: 'Package' },
+            { label: 'Nhập kho', href: '/dashboard/warehouse?tab=gr', icon: 'ArrowDownLeft' },
+            { label: 'Xuất kho', href: '/dashboard/warehouse?tab=do', icon: 'ArrowUpRight' },
+        ],
+    },
+    THU_MUA: {
+        greeting: 'Thu Mua — Nhập Khẩu',
+        sections: ['kpi_cards', 'shipment_tracker', 'pending_approvals', 'stock_alerts'],
+        quickLinks: [
+            { label: 'Đơn mua', href: '/dashboard/procurement', icon: 'Ship' },
+            { label: 'NCC', href: '/dashboard/suppliers', icon: 'Users' },
+            { label: 'Lô hàng', href: '/dashboard/procurement?tab=shipments', icon: 'Package' },
+        ],
+    },
+}
+
+export async function getDashboardConfig(roles: string[]): Promise<DashboardConfig> {
+    // Priority: CEO > KE_TOAN > SALES_MGR > THU_KHO > THU_MUA > SALES_REP
+    const priority = ['CEO', 'KE_TOAN', 'SALES_MGR', 'THU_KHO', 'THU_MUA', 'SALES_REP']
+
+    for (const role of priority) {
+        if (roles.includes(role)) {
+            return ROLE_DASHBOARD[role]
+        }
+    }
+
+    // Default fallback — minimal dashboard
+    return {
+        greeting: 'Dashboard',
+        sections: ['kpi_cards', 'recent_orders'],
+        quickLinks: [],
+    }
+}
+
+// ── Sales Rep's own sales data ────────────────────
+export async function getMySales(salesRepId: string) {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    const orders = await prisma.salesOrder.findMany({
+        where: {
+            salesRepId,
+            createdAt: { gte: startOfMonth },
+            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+        },
+        include: { customer: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+    })
+
+    const totalRevenue = orders.reduce((s, o) => s + Number(o.totalAmount), 0)
+
+    return {
+        orderCount: orders.length,
+        totalRevenue,
+        orders: orders.map(o => ({
+            soNo: o.soNo,
+            customerName: o.customer.name,
+            amount: Number(o.totalAmount),
+            status: o.status,
+            date: o.createdAt,
+        })),
+    }
+}
+
+// ── Warehouse quick summary for THU_KHO ───────────
+export async function getWarehouseDashboard() {
+    const [totalQty, lowStock, quarantine, pendingGR, pendingDO] = await Promise.all([
+        prisma.stockLot.aggregate({
+            where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+            _sum: { qtyAvailable: true },
+        }),
+        prisma.stockLot.groupBy({
+            by: ['productId'],
+            where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+            _sum: { qtyAvailable: true },
+            having: { qtyAvailable: { _sum: { lt: 12 } } },
+        }),
+        prisma.stockLot.count({
+            where: { status: 'QUARANTINE', qtyAvailable: { gt: 0 } },
+        }),
+        prisma.goodsReceipt.count({ where: { status: 'DRAFT' } }),
+        prisma.deliveryOrder.count({ where: { status: 'DRAFT' } }),
+    ])
+
+    return {
+        totalBottles: Number(totalQty._sum.qtyAvailable ?? 0),
+        lowStockSKUs: lowStock.length,
+        quarantinedLots: quarantine,
+        pendingGoodsReceipts: pendingGR,
+        pendingDeliveryOrders: pendingDO,
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// #9 — SUPABASE REALTIME CONFIG
+// ═══════════════════════════════════════════════════
+
+export type RealtimeChannelConfig = {
+    channel: string
+    table: string
+    event: 'INSERT' | 'UPDATE' | 'DELETE' | '*'
+    filter?: string
+}
+
+export function getRealtimeChannels(roles: string[]): RealtimeChannelConfig[] {
+    const channels: RealtimeChannelConfig[] = []
+
+    // Everyone gets approval notifications
+    channels.push({
+        channel: 'approvals',
+        table: 'ApprovalRequest',
+        event: '*',
+    })
+
+    // CEO/KE_TOAN get AR invoice updates
+    if (roles.some(r => ['CEO', 'KE_TOAN'].includes(r))) {
+        channels.push({
+            channel: 'ar-invoices',
+            table: 'ARInvoice',
+            event: '*',
+        })
+    }
+
+    // THU_KHO gets stock lot changes
+    if (roles.some(r => ['CEO', 'THU_KHO'].includes(r))) {
+        channels.push({
+            channel: 'stock-changes',
+            table: 'StockLot',
+            event: '*',
+        })
+        channels.push({
+            channel: 'goods-receipts',
+            table: 'GoodsReceipt',
+            event: 'INSERT',
+        })
+    }
+
+    // SALES gets SO updates
+    if (roles.some(r => ['CEO', 'SALES_MGR', 'SALES_REP'].includes(r))) {
+        channels.push({
+            channel: 'sales-orders',
+            table: 'SalesOrder',
+            event: '*',
+        })
+    }
+
+    // THU_MUA gets shipment updates
+    if (roles.some(r => ['CEO', 'THU_MUA'].includes(r))) {
+        channels.push({
+            channel: 'shipments',
+            table: 'Shipment',
+            event: '*',
+        })
+    }
+
+    return channels
+}

@@ -1,8 +1,13 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Save, Loader2, AlertCircle, Wine } from 'lucide-react'
-import { ProductInput, createProduct, updateProduct, getProducers, getRegions } from './actions'
+import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus } from 'lucide-react'
+import {
+    ProductInput, createProduct, updateProduct, getProducers, getRegions,
+    getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
+    getProductAwards, addProductAward, deleteProductAward,
+    type ProductMediaRow, type ProductAwardRow,
+} from './actions'
 
 // ── Form field ─────────────────────────────────────
 function Field({ label, required, error, children }: {
@@ -111,6 +116,20 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     const [producers, setProducers] = useState<{ id: string; name: string }[]>([])
     const [regions, setRegions] = useState<{ id: string; name: string; country: string }[]>([])
 
+    // Media state
+    const [mediaList, setMediaList] = useState<ProductMediaRow[]>([])
+    const [uploadingMedia, setUploadingMedia] = useState(false)
+
+    // Awards state
+    const [awards, setAwards] = useState<ProductAwardRow[]>([])
+    const [showAwardForm, setShowAwardForm] = useState(false)
+    const [awardSource, setAwardSource] = useState('Robert Parker')
+    const [awardScore, setAwardScore] = useState('')
+    const [awardMedal, setAwardMedal] = useState('')
+    const [awardVintage, setAwardVintage] = useState('')
+    const [awardYear, setAwardYear] = useState('')
+    const [savingAward, setSavingAward] = useState(false)
+
     const [form, setForm] = useState<ProductFormState>({
         status: 'ACTIVE',
         format: 'STANDARD',
@@ -126,7 +145,14 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
             setProducers(p)
             setRegions(r)
         })
-    }, [open])
+        if (editingId) {
+            getProductMedia(editingId).then(setMediaList)
+            getProductAwards(editingId).then(setAwards)
+        } else {
+            setMediaList([])
+            setAwards([])
+        }
+    }, [open, editingId])
 
     // Reset form when opening for new
     useEffect(() => {
@@ -405,6 +431,239 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                             </Field>
                         </div>
                     </div>
+
+                    {/* Section: Hình ảnh sản phẩm (chỉ khi edit) */}
+                    {isEdit && (
+                        <div className="space-y-4">
+                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                                ── Hình Ảnh Sản Phẩm
+                            </p>
+
+                            {/* Upload button */}
+                            <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-all"
+                                style={{ background: '#1B2E3D', border: '2px dashed #2A4355', color: '#4A6A7A' }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#87CBB9'; e.currentTarget.style.color = '#87CBB9' }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#2A4355'; e.currentTarget.style.color = '#4A6A7A' }}>
+                                {uploadingMedia
+                                    ? <><Loader2 size={16} className="animate-spin" /> Đang upload...</>
+                                    : <><UploadCloud size={16} /> Thêm hình ảnh (JPG, PNG, WEBP)</>
+                                }
+                                <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp"
+                                    disabled={uploadingMedia}
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0]
+                                        if (!file || !editingId) return
+                                        setUploadingMedia(true)
+                                        const fd = new FormData()
+                                        fd.append('file', file)
+                                        const res = await uploadProductMedia(editingId, fd)
+                                        setUploadingMedia(false)
+                                        if (res.success && res.media) {
+                                            setMediaList(prev => [res.media!, ...prev])
+                                        } else {
+                                            alert(`Lỗi upload: ${res.error}`)
+                                        }
+                                        e.target.value = ''
+                                    }}
+                                />
+                            </label>
+
+                            {/* Media grid */}
+                            {mediaList.length > 0 ? (
+                                <div className="grid grid-cols-3 gap-3">
+                                    {mediaList.map(m => (
+                                        <div key={m.id} className="relative group rounded-lg overflow-hidden"
+                                            style={{ border: m.isPrimary ? '2px solid #87CBB9' : '1px solid #2A4355', aspectRatio: '1' }}>
+                                            <img src={m.url} alt="Product" className="w-full h-full object-cover" />
+
+                                            {/* Primary badge */}
+                                            {m.isPrimary && (
+                                                <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                                                    style={{ background: 'rgba(135,203,185,0.9)', color: '#0A1926' }}>
+                                                    <Star size={8} /> Ảnh chính
+                                                </div>
+                                            )}
+
+                                            {/* Action overlay */}
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                {!m.isPrimary && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            const res = await setPrimaryMedia(m.id, editingId!)
+                                                            if (res.success) {
+                                                                setMediaList(prev => prev.map(x => ({ ...x, isPrimary: x.id === m.id })))
+                                                            }
+                                                        }}
+                                                        className="p-2 rounded-lg transition-colors"
+                                                        style={{ background: 'rgba(135,203,185,0.2)', color: '#87CBB9' }}
+                                                        title="Đặt làm ảnh chính">
+                                                        <Star size={14} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!confirm('Xóa hình này?')) return
+                                                        const res = await deleteProductMedia(m.id)
+                                                        if (res.success) {
+                                                            setMediaList(prev => prev.filter(x => x.id !== m.id))
+                                                        }
+                                                    }}
+                                                    className="p-2 rounded-lg transition-colors"
+                                                    style={{ background: 'rgba(139,26,46,0.2)', color: '#E05252' }}
+                                                    title="Xóa">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#142433' }}>
+                                    <ImageIcon size={24} style={{ color: '#2A4355' }} />
+                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có hình ảnh nào</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Section: Awards & Scores (chỉ khi edit) */}
+                    {isEdit && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#D4A853' }}>
+                                    ── Giải Thưởng & Điểm Số
+                                </p>
+                                <button
+                                    onClick={() => setShowAwardForm(v => !v)}
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors"
+                                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                                    <Plus size={10} /> Thêm
+                                </button>
+                            </div>
+
+                            {/* Add form */}
+                            {showAwardForm && (
+                                <div className="p-4 rounded-lg space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Field label="Nguồn">
+                                            <Select value={awardSource} onChange={e => setAwardSource(e.target.value)}>
+                                                <option>Robert Parker</option>
+                                                <option>Wine Spectator</option>
+                                                <option>Decanter</option>
+                                                <option>James Suckling</option>
+                                                <option>Jancis Robinson</option>
+                                                <option>Vivino</option>
+                                            </Select>
+                                        </Field>
+                                        <Field label="Điểm">
+                                            <Input type="number" value={awardScore}
+                                                onChange={e => setAwardScore(e.target.value)}
+                                                placeholder="95" min={0} max={100} />
+                                        </Field>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <Field label="Huy chương">
+                                            <Select value={awardMedal} onChange={e => setAwardMedal(e.target.value)}>
+                                                <option value="">— Không —</option>
+                                                <option value="DOUBLE_GOLD">🏆 Double Gold</option>
+                                                <option value="GOLD">🥇 Gold</option>
+                                                <option value="SILVER">🥈 Silver</option>
+                                                <option value="BRONZE">🥉 Bronze</option>
+                                            </Select>
+                                        </Field>
+                                        <Field label="Vintage">
+                                            <Input type="number" value={awardVintage}
+                                                onChange={e => setAwardVintage(e.target.value)}
+                                                placeholder="2018" />
+                                        </Field>
+                                        <Field label="Năm trao">
+                                            <Input type="number" value={awardYear}
+                                                onChange={e => setAwardYear(e.target.value)}
+                                                placeholder="2022" />
+                                        </Field>
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                        <button onClick={() => setShowAwardForm(false)}
+                                            className="px-3 py-1.5 text-xs rounded" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                        <button
+                                            disabled={savingAward || !awardSource}
+                                            onClick={async () => {
+                                                if (!editingId) return
+                                                setSavingAward(true)
+                                                await addProductAward({
+                                                    productId: editingId,
+                                                    source: awardSource,
+                                                    score: awardScore ? Number(awardScore) : undefined,
+                                                    medal: awardMedal || undefined,
+                                                    vintage: awardVintage ? Number(awardVintage) : undefined,
+                                                    awardedYear: awardYear ? Number(awardYear) : undefined,
+                                                })
+                                                const fresh = await getProductAwards(editingId)
+                                                setAwards(fresh)
+                                                setShowAwardForm(false)
+                                                setAwardScore(''); setAwardMedal(''); setAwardVintage(''); setAwardYear('')
+                                                setSavingAward(false)
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
+                                            style={{ background: '#D4A853', color: '#0A1926' }}>
+                                            {savingAward ? <Loader2 size={10} className="animate-spin" /> : <Award size={10} />} Lưu
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Awards list */}
+                            {awards.length > 0 ? (
+                                <div className="space-y-2">
+                                    {awards.map(aw => (
+                                        <div key={aw.id} className="flex items-center gap-3 p-3 rounded-lg group"
+                                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0"
+                                                style={{ background: 'rgba(212,168,83,0.12)' }}>
+                                                {aw.medalLabel?.charAt(0) ?? '🏅'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{aw.source}</span>
+                                                    {aw.score && (
+                                                        <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                                            {aw.score}/100
+                                                        </span>
+                                                    )}
+                                                    {aw.medalLabel && (
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853' }}>
+                                                            {aw.medalLabel}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                                                    {aw.vintage && `Vintage ${aw.vintage}`}
+                                                    {aw.vintage && aw.awardedYear && ' · '}
+                                                    {aw.awardedYear && `Năm ${aw.awardedYear}`}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm('Xóa giải thưởng này?')) return
+                                                    await deleteProductAward(aw.id)
+                                                    setAwards(prev => prev.filter(a => a.id !== aw.id))
+                                                }}
+                                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded transition-all"
+                                                style={{ color: '#E05252' }}
+                                                title="Xóa">
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : !showAwardForm && (
+                                <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#142433' }}>
+                                    <Award size={24} style={{ color: '#2A4355' }} />
+                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có giải thưởng nào</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                 </div>
 

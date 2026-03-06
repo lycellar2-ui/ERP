@@ -7,7 +7,9 @@ import {
     PLRow, getProfitLoss, getProfitLossComparison, exportProfitLossExcel,
     getAccountingPeriods, closeAccountingPeriod,
     ExpenseRow, getExpenses, createExpense, approveExpense, rejectExpense,
-    PeriodCloseCheckItem, getPeriodCloseChecklist
+    PeriodCloseCheckItem, getPeriodCloseChecklist,
+    BSLineItem, getBalanceSheet,
+    BadDebtCandidate, getBadDebtCandidates, writeOffBadDebt,
 } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 
@@ -602,6 +604,316 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                     )}
                 </div>
             ) : null}
+        </div>
+    )
+}
+
+// ── Balance Sheet Tab ────────────────────────────────
+export function BalanceSheetTab() {
+    const now = new Date()
+    const [year, setYear] = useState(now.getFullYear())
+    const [month, setMonth] = useState(now.getMonth() + 1)
+    const [data, setData] = useState<{
+        totalAssets: number; totalLiabilities: number; totalEquity: number;
+        isBalanced: boolean; lines: BSLineItem[]; asOf: Date
+    } | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    const loadBS = useCallback(async () => {
+        setLoading(true)
+        const result = await getBalanceSheet({ year, month })
+        setData(result)
+        setLoading(false)
+    }, [year, month])
+
+    if (!data && !loading) loadBS()
+
+    const categoryColor = (cat: string) => {
+        switch (cat) {
+            case 'asset': return '#87CBB9'
+            case 'liability': return '#D4A853'
+            case 'equity': return '#5BA88A'
+            default: return '#E8F1F2'
+        }
+    }
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                    Bảng Cân Đối Kế Toán (VAS)
+                </h3>
+                <div className="flex gap-2">
+                    <select value={month} onChange={e => { setMonth(Number(e.target.value)); setData(null) }}
+                        className="text-xs px-3 py-1.5 rounded"
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                        {Array.from({ length: 12 }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                        ))}
+                    </select>
+                    <select value={year} onChange={e => { setYear(Number(e.target.value)); setData(null) }}
+                        className="text-xs px-3 py-1.5 rounded"
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                        {[2024, 2025, 2026].map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                    <button onClick={loadBS} className="text-xs px-3 py-1.5 rounded font-semibold"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        Xem
+                    </button>
+                </div>
+            </div>
+
+            {loading ? (
+                <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+            ) : !data ? null : (
+                <div className="space-y-4">
+                    {/* Balance check */}
+                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-md text-xs font-semibold"
+                        style={{
+                            background: data.isBalanced ? 'rgba(91,168,138,0.1)' : 'rgba(224,82,82,0.1)',
+                            border: `1px solid ${data.isBalanced ? 'rgba(91,168,138,0.3)' : 'rgba(224,82,82,0.3)'}`,
+                            color: data.isBalanced ? '#5BA88A' : '#E05252',
+                        }}>
+                        {data.isBalanced ? <CircleCheck size={14} /> : <XCircle size={14} />}
+                        {data.isBalanced
+                            ? `Cân đối ✔ — Tài Sản = Nợ + Vốn CSH (tại ${month}/${year})`
+                            : `⚠️ Bảng không cân đối! Tài sản: ${formatVND(data.totalAssets)} ≠ Nợ+Vốn: ${formatVND(data.totalLiabilities + data.totalEquity)}`
+                        }
+                    </div>
+
+                    {/* Summary cards */}
+                    <div className="grid grid-cols-3 gap-3">
+                        {[
+                            { label: 'Tài Sản', value: data.totalAssets, color: '#87CBB9', prefix: 'A' },
+                            { label: 'Nợ Phải Trả', value: data.totalLiabilities, color: '#D4A853', prefix: 'L' },
+                            { label: 'Vốn CSH', value: data.totalEquity, color: '#5BA88A', prefix: 'E' },
+                        ].map(s => (
+                            <div key={s.prefix} className="p-4 rounded-md" style={card}>
+                                <p className="text-xs uppercase mb-1 font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                                <p className="text-xl font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>
+                                    {formatVND(s.value)}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Detail table */}
+                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                        <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#4A6A7A' }}>Mã TK</th>
+                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#4A6A7A' }}>Khoản mục</th>
+                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right" style={{ color: '#4A6A7A' }}>
+                                        Số dư cuối kỳ T{month}/{year}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.lines.map((line, i) => {
+                                    const isSummary = line.category === 'summary'
+                                    return (
+                                        <tr key={i} style={{
+                                            borderBottom: '1px solid rgba(42,67,85,0.5)',
+                                            background: isSummary ? 'rgba(135,203,185,0.06)' : 'transparent',
+                                        }}>
+                                            <td className="px-4 py-2.5 text-xs" style={{
+                                                color: isSummary ? '#E8F1F2' : '#4A6A7A',
+                                                fontFamily: '"DM Mono"',
+                                                paddingLeft: `${16 + (line.indent ?? 0) * 20}px`,
+                                                fontWeight: isSummary ? 700 : 400,
+                                            }}>
+                                                {line.code}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-sm" style={{
+                                                color: isSummary ? '#E8F1F2' : '#8AAEBB',
+                                                fontWeight: isSummary ? 700 : 400,
+                                                paddingLeft: `${16 + (line.indent ?? 0) * 20}px`,
+                                            }}>
+                                                {line.label}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right" style={{ fontFamily: '"DM Mono"' }}>
+                                                <span className="text-sm" style={{
+                                                    color: isSummary ? '#E8F1F2' : categoryColor(line.category),
+                                                    fontWeight: isSummary ? 700 : 500,
+                                                }}>
+                                                    {line.amount !== 0 ? formatVND(line.amount) : '—'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Equation */}
+                    <div className="flex items-center justify-center gap-4 py-3 rounded-md text-sm" style={card}>
+                        <span style={{ color: '#87CBB9', fontWeight: 700 }}>
+                            Tài sản <span style={{ fontFamily: '"DM Mono"' }}>{formatVND(data.totalAssets)}</span>
+                        </span>
+                        <span style={{ color: '#4A6A7A', fontSize: 18 }}>=</span>
+                        <span style={{ color: '#D4A853', fontWeight: 700 }}>
+                            Nợ <span style={{ fontFamily: '"DM Mono"' }}>{formatVND(data.totalLiabilities)}</span>
+                        </span>
+                        <span style={{ color: '#4A6A7A', fontSize: 18 }}>+</span>
+                        <span style={{ color: '#5BA88A', fontWeight: 700 }}>
+                            Vốn <span style={{ fontFamily: '"DM Mono"' }}>{formatVND(data.totalEquity)}</span>
+                        </span>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ── Bad Debt Write-off Tab ────────────────────────
+export function BadDebtTab({ userId }: { userId: string }) {
+    const [candidates, setCandidates] = useState<BadDebtCandidate[]>([])
+    const [loaded, setLoaded] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [writingOff, setWritingOff] = useState<string | null>(null) // invoiceId
+    const [reason, setReason] = useState('')
+    const [processing, setProcessing] = useState(false)
+
+    const load = useCallback(async () => {
+        setLoading(true)
+        const data = await getBadDebtCandidates(180)
+        setCandidates(data)
+        setLoaded(true)
+        setLoading(false)
+    }, [])
+
+    if (!loaded && !loading) load()
+
+    const handleWriteOff = async (invoiceId: string) => {
+        if (!reason.trim()) return
+        setProcessing(true)
+        const res = await writeOffBadDebt({ invoiceId, reason: reason.trim(), approvedBy: userId })
+        if (res.success) {
+            setCandidates(prev => prev.filter(c => c.invoiceId !== invoiceId))
+            setWritingOff(null)
+            setReason('')
+        } else {
+            alert(res.error ?? 'Lỗi xóa nợ')
+        }
+        setProcessing(false)
+    }
+
+    const severityColor = (days: number) => days > 270 ? '#8B1A2E' : days > 180 ? '#C45A2A' : '#D4A853'
+    const totalOutstanding = candidates.reduce((s, c) => s + c.outstanding, 0)
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                        Nợ Khó Đòi — Bad Debt Write-off
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+                        Hóa đơn quá hạn &gt; 180 ngày. Xóa nợ sẽ ghi DR 642 / CR 131
+                    </p>
+                </div>
+                {candidates.length > 0 && (
+                    <div className="text-right">
+                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{candidates.length} hóa đơn</p>
+                        <p className="text-sm font-bold" style={{ color: '#8B1A2E', fontFamily: '"DM Mono"' }}>
+                            {formatVND(totalOutstanding)}
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {loading ? (
+                <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+            ) : candidates.length === 0 ? (
+                <div className="text-center py-16 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
+                    <CircleCheck size={32} className="mx-auto mb-3" style={{ color: '#5BA88A' }} />
+                    <p className="text-sm font-semibold" style={{ color: '#5BA88A' }}>Không có nợ khó đòi</p>
+                    <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>Tất cả AR đều trong vòng 180 ngày</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {candidates.map(c => {
+                        const sColor = severityColor(c.daysOverdue)
+                        const isExpanded = writingOff === c.invoiceId
+                        return (
+                            <div key={c.invoiceId} className="rounded-md overflow-hidden" style={card}>
+                                <div className="flex items-center justify-between p-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-md flex items-center justify-center text-xs font-bold"
+                                            style={{ background: `${sColor}18`, color: sColor }}>
+                                            +{c.daysOverdue}d
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                    {c.invoiceNo}
+                                                </span>
+                                                <span className="text-sm font-medium" style={{ color: '#E8F1F2' }}>
+                                                    {c.customerName}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+                                                Hạn TT: {formatDate(c.dueDate)} · Gốc: {formatVND(c.amount)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold" style={{ color: sColor, fontFamily: '"DM Mono"' }}>
+                                                {formatVND(c.outstanding)}
+                                            </p>
+                                            <p className="text-[10px]" style={{ color: '#4A6A7A' }}>còn lại</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setWritingOff(isExpanded ? null : c.invoiceId)}
+                                            className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
+                                            style={{
+                                                background: isExpanded ? 'rgba(139,26,46,0.2)' : 'rgba(139,26,46,0.1)',
+                                                color: '#8B1A2E',
+                                                border: '1px solid rgba(139,26,46,0.3)',
+                                            }}>
+                                            {isExpanded ? 'Hủy' : 'Xóa Nợ'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {isExpanded && (
+                                    <div className="px-4 pb-4 pt-2 space-y-3" style={{ borderTop: '1px solid #2A4355' }}>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#4A6A7A' }}>
+                                                Lý do xóa nợ <span style={{ color: '#8B1A2E' }}>*</span>
+                                            </label>
+                                            <input
+                                                value={reason}
+                                                onChange={e => setReason(e.target.value)}
+                                                placeholder="VD: Khách phá sản, không liên lạc được..."
+                                                className="w-full px-3 py-2 text-sm outline-none"
+                                                style={{ ...input }} />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                Bút toán: DR 642 (CP quản lý) {formatVND(c.outstanding)} / CR 131 (Phải thu) {formatVND(c.outstanding)}
+                                            </p>
+                                            <button
+                                                onClick={() => handleWriteOff(c.invoiceId)}
+                                                disabled={processing || !reason.trim()}
+                                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-md disabled:opacity-50"
+                                                style={{ background: '#8B1A2E', color: '#E8F1F2' }}>
+                                                {processing ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
+                                                Xác Nhận Xóa Nợ
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
         </div>
     )
 }

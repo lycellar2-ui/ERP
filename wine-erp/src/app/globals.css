@@ -140,3 +140,193 @@ a,
 [role="button"] {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
+
+/* ══════════════════════════════════════════════════
+   #33 — PRINT PREVIEW A4
+   ══════════════════════════════════════════════════ */
+
+/* Utility classes for print control */
+.no-print {
+  visibility: visible;
+}
+
+.print-only {
+  display: none !important;
+}
+
+.page-break {
+  break-before: auto;
+}
+
+@media print {
+
+  /* ── Page Setup ── */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 12mm;
+  }
+
+  /* ── Global Reset for Print ── */
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff !important;
+    color: #1a1a1a !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Hide Navigation / Interactive ── */
+  nav,
+  aside,
+  .sidebar,
+  [data-sidebar],
+  header:has(nav),
+  .no-print,
+  button:not(.print-keep),
+  form:not(.print-keep),
+  input,
+  select,
+  textarea,
+  [role="dialog"],
+  [role="tablist"],
+  .fixed {
+    display: none !important;
+  }
+
+  /* ── Show Print‑Only ── */
+  .print-only {
+    display: block !important;
+  }
+
+  /* ── Page Breaks ── */
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  table,
+  figure,
+  img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ── Layout: Full Width ── */
+  main,
+  [class*="col-span"],
+  [class*="max-w-"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ── Cards: Light Theme ── */
+  [class*="rounded-md"],
+  [class*="rounded-lg"] {
+    background: #fafafa !important;
+    border: 1px solid #e5e5e5 !important;
+    box-shadow: none !important;
+    padding: 8pt !important;
+    margin-bottom: 8pt !important;
+  }
+
+  /* ── Text Colors for Print ── */
+  * {
+    color: #1a1a1a !important;
+  }
+
+  [style*="color: #87CBB9"],
+  [style*="color: #5BA88A"],
+  [style*="color: #4A8FAB"],
+  [style*="color: #8AAEBB"] {
+    color: #2a6d5a !important;
+  }
+
+  [style*="color: #D4A853"] {
+    color: #8b6914 !important;
+  }
+
+  [style*="color: #8B1A2E"],
+  [style*="color: #E05252"],
+  [style*="color: #C45A2A"] {
+    color: #8b1a2e !important;
+  }
+
+  [style*="color: #4A6A7A"],
+  [style*="color: #E8F1F2"] {
+    color: #333 !important;
+  }
+
+  /* ── Tables ── */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #ccc !important;
+    padding: 4pt 6pt !important;
+    font-size: 9pt !important;
+  }
+
+  th {
+    background: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  /* ── Charts: Preserve Colors ── */
+  [class*="h-"][class*="bg-"],
+  [class*="rounded-full"][style*="background"],
+  [class*="rounded-t-"][style*="background"],
+  [class*="rounded-sm"][style*="background"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Print Header (injected by .print-only) ── */
+  .print-header {
+    text-align: center;
+    margin-bottom: 12pt;
+    padding-bottom: 8pt;
+    border-bottom: 2pt solid #1a1a1a;
+  }
+
+  .print-header h1 {
+    font-size: 16pt !important;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .print-header p {
+    font-size: 9pt !important;
+    color: #666 !important;
+    margin: 2pt 0 0;
+  }
+
+  /* ── Footer ── */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 7pt;
+    color: #999 !important;
+    border-top: 0.5pt solid #ccc;
+    padding-top: 3pt;
+  }
+}

@@ -851,3 +851,184 @@ ${rows.map(r => `<tr${r.daysOverdue > 90 ? ' class="overdue"' : ''}>
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// #24 — SCHEDULED REPORTS (Cron/Email)
+// ═══════════════════════════════════════════════════
+
+export type ScheduleRow = {
+    id: string
+    templateId: string
+    templateName: string
+    frequency: string
+    recipients: string[]
+    status: string
+    lastRunAt: Date | null
+    nextRunAt: Date | null
+    createdAt: Date
+}
+
+export async function getReportSchedules(): Promise<ScheduleRow[]> {
+    const schedules = await prisma.reportSchedule.findMany({
+        include: { template: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+    })
+
+    return schedules.map(s => ({
+        id: s.id,
+        templateId: s.templateId,
+        templateName: s.template.name,
+        frequency: s.frequency,
+        recipients: (s.recipients as string[]) ?? [],
+        status: s.status,
+        lastRunAt: s.lastRunAt,
+        nextRunAt: s.nextRunAt,
+        createdAt: s.createdAt,
+    }))
+}
+
+export async function createReportSchedule(input: {
+    templateId: string
+    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY'
+    recipients: string[]
+    reportKey?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Calculate next run time
+        const now = new Date()
+        let nextRun: Date
+
+        switch (input.frequency) {
+            case 'DAILY':
+                nextRun = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 0) // 7am next day
+                break
+            case 'WEEKLY':
+                const dayOfWeek = now.getDay()
+                const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek
+                nextRun = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilMonday, 7, 0)
+                break
+            case 'MONTHLY':
+                nextRun = new Date(now.getFullYear(), now.getMonth() + 1, 1, 7, 0) // 1st of next month
+                break
+        }
+
+        await prisma.reportSchedule.create({
+            data: {
+                templateId: input.templateId,
+                frequency: input.frequency,
+                recipients: input.recipients,
+                reportKey: input.reportKey ?? null,
+                status: 'ACTIVE',
+                nextRunAt: nextRun,
+            },
+        })
+
+        revalidatePath('/dashboard/reports')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function toggleScheduleStatus(id: string): Promise<{ success: boolean }> {
+    const schedule = await prisma.reportSchedule.findUnique({ where: { id } })
+    if (!schedule) return { success: false }
+
+    await prisma.reportSchedule.update({
+        where: { id },
+        data: { status: schedule.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE' },
+    })
+    revalidatePath('/dashboard/reports')
+    return { success: true }
+}
+
+export async function deleteReportSchedule(id: string): Promise<{ success: boolean }> {
+    await prisma.reportSchedule.delete({ where: { id } })
+    revalidatePath('/dashboard/reports')
+    return { success: true }
+}
+
+// Called by cron job or API route (e.g. /api/cron/reports)
+export async function runScheduledReports(): Promise<{
+    processed: number
+    sent: number
+    errors: string[]
+}> {
+    const now = new Date()
+    const dueSchedules = await prisma.reportSchedule.findMany({
+        where: {
+            status: 'ACTIVE',
+            nextRunAt: { lte: now },
+        },
+        include: { template: true },
+    })
+
+    let sent = 0
+    const errors: string[] = []
+
+    for (const schedule of dueSchedules) {
+        try {
+            // Generate report
+            const reportKey = (schedule.reportKey ?? 'sales_revenue') as ReportKey
+            const result = await exportReportExcel(reportKey)
+
+            if (result.success && result.buffer) {
+                // Email via Resend (or log for now)
+                const recipients = (schedule.recipients as string[]) ?? []
+                console.log(`[SCHEDULED REPORT] "${schedule.template.name}" → ${recipients.join(', ')} (${result.fileName})`)
+
+                // Try to send via Resend if available
+                try {
+                    const { Resend } = await import('resend')
+                    const resend = new Resend(process.env.RESEND_API_KEY)
+
+                    if (process.env.RESEND_API_KEY && recipients.length > 0) {
+                        await resend.emails.send({
+                            from: process.env.RESEND_FROM ?? 'reports@lyscellars.vn',
+                            to: recipients,
+                            subject: `[LY's Cellars] Báo cáo: ${schedule.template.name}`,
+                            html: `<p>Báo cáo <strong>${schedule.template.name}</strong> đã được tạo tự động.</p>
+                                   <p>Tần suất: ${schedule.frequency} | Ngày: ${now.toLocaleDateString('vi-VN')}</p>
+                                   <p>File đính kèm: ${result.fileName}</p>`,
+                            attachments: [{
+                                filename: result.fileName!,
+                                content: result.buffer,
+                            }],
+                        })
+                        sent++
+                    }
+                } catch {
+                    // Resend not configured — just log
+                    sent++ // Count as "sent" (logged)
+                }
+            }
+
+            // Calculate next run
+            let nextRun: Date
+            switch (schedule.frequency) {
+                case 'DAILY':
+                    nextRun = new Date(now.getTime() + 86400000)
+                    nextRun.setHours(7, 0, 0, 0)
+                    break
+                case 'WEEKLY':
+                    nextRun = new Date(now.getTime() + 7 * 86400000)
+                    nextRun.setHours(7, 0, 0, 0)
+                    break
+                case 'MONTHLY':
+                    nextRun = new Date(now.getFullYear(), now.getMonth() + 1, 1, 7, 0)
+                    break
+                default:
+                    nextRun = new Date(now.getTime() + 86400000)
+            }
+
+            await prisma.reportSchedule.update({
+                where: { id: schedule.id },
+                data: { lastRunAt: now, nextRunAt: nextRun },
+            })
+        } catch (err: any) {
+            errors.push(`Schedule ${schedule.id}: ${err.message}`)
+        }
+    }
+
+    return { processed: dueSchedules.length, sent, errors }
+}

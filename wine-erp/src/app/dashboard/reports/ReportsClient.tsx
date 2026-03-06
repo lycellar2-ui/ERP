@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { BarChart3, TrendingUp, Package, Wine, Download, Loader2, FileSpreadsheet, CheckCircle2 } from 'lucide-react'
-import { formatVND } from '@/lib/utils'
-import { exportReportExcel } from './actions'
+import { BarChart3, TrendingUp, Package, Wine, Download, Loader2, FileSpreadsheet, CheckCircle2, Clock, Calendar } from 'lucide-react'
+import { formatVND, formatDate } from '@/lib/utils'
+import { exportReportExcel, getReportSchedules, toggleScheduleStatus, type ScheduleRow } from './actions'
 import { REPORT_CATALOG, type ReportKey } from './constants'
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -33,6 +33,7 @@ const MODULE_COLORS: Record<string, string> = {
 const TABS = [
     { key: 'overview', label: 'Tổng Quan', icon: BarChart3 },
     { key: 'export', label: 'Xuất Excel (15 Báo Cáo)', icon: FileSpreadsheet },
+    { key: 'schedule', label: 'Lịch Tự Động', icon: Calendar },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
@@ -48,6 +49,17 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
     const [tab, setTab] = useState<TabKey>('overview')
     const [downloading, setDownloading] = useState<string | null>(null)
     const [lastDownloaded, setLastDownloaded] = useState<string | null>(null)
+    const [schedules, setSchedules] = useState<ScheduleRow[] | null>(null)
+    const [scheduleLoading, setScheduleLoading] = useState(false)
+
+    const loadSchedules = async () => {
+        setTab('schedule')
+        if (schedules) return
+        setScheduleLoading(true)
+        const data = await getReportSchedules()
+        setSchedules(data)
+        setScheduleLoading(false)
+    }
 
     const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue), 1)
     const maxQty = Math.max(...topSKUs.map(s => s.qtyOrdered), 1)
@@ -96,7 +108,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                     const Icon = t.icon
                     const isActive = tab === t.key
                     return (
-                        <button key={t.key} onClick={() => setTab(t.key)}
+                        <button key={t.key} onClick={() => t.key === 'schedule' ? loadSchedules() : setTab(t.key)}
                             className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-md transition-all flex-1 justify-center"
                             style={{
                                 background: isActive ? '#1B2E3D' : 'transparent',
@@ -325,6 +337,88 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+            {/* Tab: Scheduled Reports */}
+            {tab === 'schedule' && (
+                <div className="space-y-4">
+                    <div className="p-4 rounded-md" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.15)' }}>
+                        <p className="text-xs" style={{ color: '#D4A853' }}>
+                            <Calendar size={14} className="inline mr-1.5" />
+                            Lịch gửi báo cáo tự động qua email. Cron job chạy mỗi 15 phút kiểm tra lịch hẹn và gửi Excel đính kèm.
+                        </p>
+                    </div>
+
+                    {scheduleLoading ? (
+                        <div className="flex items-center justify-center py-16 gap-2">
+                            <Loader2 size={16} className="animate-spin" style={{ color: '#D4A853' }} />
+                            <span className="text-sm" style={{ color: '#4A6A7A' }}>Đang tải lịch...</span>
+                        </div>
+                    ) : schedules && schedules.length > 0 ? (
+                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        {['Template', 'Tần Suất', 'Người Nhận', 'Chạy Lần Cuối', 'Chạy Tiếp', 'Trạng Thái'].map(h => (
+                                            <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {schedules.map(s => {
+                                        const freqLabel = s.frequency === 'DAILY' ? 'Hàng ngày' : s.frequency === 'WEEKLY' ? 'Hàng tuần' : 'Hàng tháng'
+                                        const isActive = s.status === 'ACTIVE'
+                                        return (
+                                            <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                                <td className="px-4 py-3 text-sm font-medium" style={{ color: '#E8F1F2' }}>{s.templateName}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className="flex items-center gap-1.5 text-xs" style={{ color: '#D4A853' }}>
+                                                        <Clock size={11} /> {freqLabel}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {s.recipients.map(r => (
+                                                            <span key={r} className="text-xs px-1.5 py-0.5 rounded" style={{ background: '#142433', color: '#8AAEBB' }}>{r}</span>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                    {s.lastRunAt ? formatDate(s.lastRunAt) : '—'}
+                                                </td>
+                                                <td className="px-4 py-3 text-xs" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                    {s.nextRunAt ? formatDate(s.nextRunAt) : '—'}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <button
+                                                        onClick={async () => {
+                                                            await toggleScheduleStatus(s.id)
+                                                            const updated = await getReportSchedules()
+                                                            setSchedules(updated)
+                                                        }}
+                                                        className="text-xs font-semibold px-2 py-1 rounded transition-all"
+                                                        style={{
+                                                            background: isActive ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)',
+                                                            color: isActive ? '#5BA88A' : '#8B1A2E',
+                                                            border: `1px solid ${isActive ? 'rgba(91,168,138,0.3)' : 'rgba(139,26,46,0.3)'}`,
+                                                        }}>
+                                                        {isActive ? '✓ Active' : '⏸ Paused'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <Calendar size={28} style={{ color: '#2A4355', margin: '0 auto' }} />
+                            <p className="text-sm mt-3" style={{ color: '#4A6A7A' }}>Chưa có lịch báo cáo tự động</p>
+                            <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>Tạo lịch qua API: <code className="text-xs" style={{ color: '#87CBB9' }}>createReportSchedule()</code></p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

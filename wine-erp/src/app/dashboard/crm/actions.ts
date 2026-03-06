@@ -446,3 +446,348 @@ export async function removeCustomerTag(id: string): Promise<{ success: boolean;
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// #26 — WINE PREFERENCE PROFILE
+// ═══════════════════════════════════════════════════
+
+export type WinePreference = {
+    id: string
+    grapeVarieties: string[]
+    regions: string[]
+    tasteProfile: string[]
+    priceRangeMin: number
+    priceRangeMax: number
+    notes: string | null
+    updatedAt: Date
+}
+
+export async function getWinePreference(customerId: string): Promise<WinePreference | null> {
+    const pref = await prisma.winePreference.findUnique({ where: { customerId } })
+    if (!pref) return null
+    return {
+        id: pref.id,
+        grapeVarieties: (pref.grapeVarieties as string[]) ?? [],
+        regions: (pref.regions as string[]) ?? [],
+        tasteProfile: (pref.tasteProfile as string[]) ?? [],
+        priceRangeMin: Number(pref.priceRangeMin),
+        priceRangeMax: Number(pref.priceRangeMax),
+        notes: pref.notes,
+        updatedAt: pref.updatedAt,
+    }
+}
+
+export async function saveWinePreference(input: {
+    customerId: string
+    grapeVarieties: string[]
+    regions: string[]
+    tasteProfile: string[]
+    priceRangeMin: number
+    priceRangeMax: number
+    notes?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.winePreference.upsert({
+            where: { customerId: input.customerId },
+            create: {
+                customerId: input.customerId,
+                grapeVarieties: input.grapeVarieties,
+                regions: input.regions,
+                tasteProfile: input.tasteProfile,
+                priceRangeMin: input.priceRangeMin,
+                priceRangeMax: input.priceRangeMax,
+                notes: input.notes ?? null,
+            },
+            update: {
+                grapeVarieties: input.grapeVarieties,
+                regions: input.regions,
+                tasteProfile: input.tasteProfile,
+                priceRangeMin: input.priceRangeMin,
+                priceRangeMax: input.priceRangeMax,
+                notes: input.notes ?? null,
+            },
+        })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export const GRAPE_PRESETS = [
+    'Cabernet Sauvignon', 'Merlot', 'Pinot Noir', 'Syrah/Shiraz', 'Malbec',
+    'Chardonnay', 'Sauvignon Blanc', 'Riesling', 'Pinot Grigio', 'Moscato',
+    'Tempranillo', 'Nebbiolo', 'Sangiovese', 'Grenache', 'Zinfandel',
+]
+
+export const REGION_PRESETS = [
+    'Bordeaux', 'Bourgogne', 'Champagne', 'Rhône', 'Loire',
+    'Tuscany', 'Piedmont', 'Rioja', 'Barossa', 'Napa Valley',
+    'Mendoza', 'Mosel', 'Douro', 'Marlborough', 'Central Otago',
+]
+
+export const TASTE_PRESETS = [
+    'Fruity', 'Dry', 'Sweet', 'Tannic', 'Oaky',
+    'Light-bodied', 'Full-bodied', 'Crisp', 'Smooth', 'Spicy',
+]
+
+// ═══════════════════════════════════════════════════
+// #27 — TASTING EVENT MANAGEMENT
+// ═══════════════════════════════════════════════════
+
+export type TastingEventRow = {
+    id: string
+    name: string
+    date: Date
+    venue: string
+    description: string | null
+    maxGuests: number
+    status: string
+    rsvpCount: number
+    checkinCount: number
+    conversionCount: number
+    totalConversionValue: number
+    createdAt: Date
+}
+
+export async function getTastingEvents(): Promise<TastingEventRow[]> {
+    const events = await prisma.tastingEvent.findMany({
+        orderBy: { date: 'desc' },
+        include: {
+            guests: { select: { id: true, rsvpStatus: true, checkedIn: true, linkedSOId: true } },
+        },
+    })
+
+    return events.map(ev => {
+        const rsvpCount = ev.guests.filter(g => g.rsvpStatus === 'CONFIRMED').length
+        const checkinCount = ev.guests.filter(g => g.checkedIn).length
+        const conversions = ev.guests.filter(g => g.linkedSOId)
+        return {
+            id: ev.id,
+            name: ev.name,
+            date: ev.date,
+            venue: ev.venue,
+            description: ev.description,
+            maxGuests: ev.maxGuests,
+            status: ev.status,
+            rsvpCount,
+            checkinCount,
+            conversionCount: conversions.length,
+            totalConversionValue: 0,
+            createdAt: ev.createdAt,
+        }
+    })
+}
+
+export async function createTastingEvent(input: {
+    name: string
+    date: string
+    venue: string
+    description?: string
+    maxGuests: number
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.tastingEvent.create({
+            data: {
+                name: input.name,
+                date: new Date(input.date),
+                venue: input.venue,
+                description: input.description ?? null,
+                maxGuests: input.maxGuests,
+                status: 'PLANNED',
+            },
+        })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function addEventGuest(input: {
+    eventId: string
+    customerId: string
+    rsvpStatus?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.tastingEventGuest.create({
+            data: {
+                eventId: input.eventId,
+                customerId: input.customerId,
+                rsvpStatus: input.rsvpStatus ?? 'INVITED',
+                checkedIn: false,
+            },
+        })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        if (err.code === 'P2002') return { success: false, error: 'Khách đã được mời' }
+        return { success: false, error: err.message }
+    }
+}
+
+export async function checkinGuest(guestId: string): Promise<{ success: boolean }> {
+    await prisma.tastingEventGuest.update({
+        where: { id: guestId },
+        data: { checkedIn: true, checkinAt: new Date() },
+    })
+    revalidatePath('/dashboard/crm')
+    return { success: true }
+}
+
+export async function linkGuestConversion(guestId: string, soId: string): Promise<{ success: boolean }> {
+    await prisma.tastingEventGuest.update({
+        where: { id: guestId },
+        data: { linkedSOId: soId },
+    })
+    revalidatePath('/dashboard/crm')
+    return { success: true }
+}
+
+export async function getEventDetails(eventId: string) {
+    const ev = await prisma.tastingEvent.findUnique({
+        where: { id: eventId },
+        include: {
+            guests: {
+                include: {
+                    customer: { select: { id: true, name: true, code: true, customerType: true } },
+                    linkedSO: { select: { id: true, soNo: true, totalAmount: true } },
+                },
+                orderBy: { createdAt: 'asc' },
+            },
+        },
+    })
+    if (!ev) return null
+
+    const rsvpConfirmed = ev.guests.filter(g => g.rsvpStatus === 'CONFIRMED')
+    const checkedIn = ev.guests.filter(g => g.checkedIn)
+    const conversions = ev.guests.filter(g => g.linkedSOId)
+    const conversionValue = conversions.reduce((s, g) => s + Number(g.linkedSO?.totalAmount ?? 0), 0)
+
+    return {
+        ...ev,
+        stats: {
+            invited: ev.guests.length,
+            rsvpConfirmed: rsvpConfirmed.length,
+            checkedIn: checkedIn.length,
+            conversions: conversions.length,
+            conversionValue,
+            conversionRate: checkedIn.length > 0 ? (conversions.length / checkedIn.length) * 100 : 0,
+        },
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// #28 — COMPLAINT TICKET SYSTEM
+// ═══════════════════════════════════════════════════
+
+export type ComplaintRow = {
+    id: string
+    ticketNo: string
+    customerId: string
+    customerName: string
+    type: string
+    severity: string
+    status: string
+    subject: string
+    description: string
+    resolution: string | null
+    resolvedAt: Date | null
+    slaDeadline: Date | null
+    isOverSLA: boolean
+    createdAt: Date
+}
+
+const SLA_HOURS: Record<string, number> = {
+    CRITICAL: 4,
+    HIGH: 24,
+    MEDIUM: 72,
+    LOW: 168,
+}
+
+export async function getComplaintTickets(filters: {
+    status?: string
+    severity?: string
+} = {}): Promise<ComplaintRow[]> {
+    const where: any = {}
+    if (filters.status) where.status = filters.status
+    if (filters.severity) where.severity = filters.severity
+
+    const tickets = await prisma.complaintTicket.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: { customer: { select: { name: true } } },
+        take: 100,
+    })
+
+    const now = new Date()
+    return tickets.map(t => {
+        const slaHours = SLA_HOURS[t.severity] ?? 72
+        const slaDeadline = new Date(t.createdAt.getTime() + slaHours * 3600000)
+        const isOverSLA = t.status !== 'RESOLVED' && t.status !== 'CLOSED' && now > slaDeadline
+        return {
+            id: t.id,
+            ticketNo: t.ticketNo,
+            customerId: t.customerId,
+            customerName: t.customer.name,
+            type: t.type,
+            severity: t.severity,
+            status: t.status,
+            subject: t.subject,
+            description: t.description,
+            resolution: t.resolution,
+            resolvedAt: t.resolvedAt,
+            slaDeadline,
+            isOverSLA,
+            createdAt: t.createdAt,
+        }
+    })
+}
+
+export async function createComplaintTicket(input: {
+    customerId: string
+    type: string
+    severity: string
+    subject: string
+    description: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const count = await prisma.complaintTicket.count()
+        const ticketNo = `TK-${String(count + 1).padStart(5, '0')}`
+        await prisma.complaintTicket.create({
+            data: {
+                ticketNo,
+                customerId: input.customerId,
+                type: input.type,
+                severity: input.severity,
+                subject: input.subject,
+                description: input.description,
+                status: 'OPEN',
+            },
+        })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function resolveComplaintTicket(id: string, resolution: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.complaintTicket.update({
+            where: { id },
+            data: {
+                status: 'RESOLVED',
+                resolution,
+                resolvedAt: new Date(),
+            },
+        })
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export const COMPLAINT_TYPES = ['QUALITY', 'DELIVERY', 'BILLING', 'SERVICE', 'PACKAGING', 'OTHER']
+export const COMPLAINT_SEVERITY = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']

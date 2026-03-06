@@ -377,3 +377,100 @@ export async function generatePOSVATInvoice(input: {
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// #29 — LOYALTY PROGRAM
+// ═══════════════════════════════════════════════════
+
+const POINTS_PER_10K = 1  // 1 point per 10,000 VND
+const POINT_VALUE_VND = 1000  // 1 point = 1,000 VND
+
+export type LoyaltyInfo = {
+    customerId: string
+    customerName: string
+    pointsBalance: number
+    totalEarned: number
+    totalRedeemed: number
+    redeemableValue: number
+    tier: string
+    history: { date: Date; type: string; points: number; description: string }[]
+}
+
+export async function getLoyaltyInfo(customerId: string): Promise<LoyaltyInfo | null> {
+    const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { name: true },
+    })
+    if (!customer) return null
+
+    const transactions = await prisma.loyaltyTransaction.findMany({
+        where: { customerId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+    })
+
+    const totalEarned = transactions.filter(t => t.type === 'EARN').reduce((s, t) => s + t.points, 0)
+    const totalRedeemed = transactions.filter(t => t.type === 'REDEEM').reduce((s, t) => s + Math.abs(t.points), 0)
+    const pointsBalance = totalEarned - totalRedeemed
+
+    const tier = pointsBalance >= 5000 ? 'PLATINUM' :
+        pointsBalance >= 2000 ? 'GOLD' :
+            pointsBalance >= 500 ? 'SILVER' : 'BRONZE'
+
+    return {
+        customerId,
+        customerName: customer.name,
+        pointsBalance,
+        totalEarned,
+        totalRedeemed,
+        redeemableValue: pointsBalance * POINT_VALUE_VND,
+        tier,
+        history: transactions.map(t => ({
+            date: t.createdAt,
+            type: t.type,
+            points: t.points,
+            description: t.description,
+        })),
+    }
+}
+
+export async function earnLoyaltyPoints(input: {
+    customerId: string
+    orderAmount: number
+    soNo: string
+}): Promise<{ success: boolean; pointsEarned: number }> {
+    const points = Math.floor(input.orderAmount / 10000) * POINTS_PER_10K
+    if (points <= 0) return { success: true, pointsEarned: 0 }
+
+    await prisma.loyaltyTransaction.create({
+        data: {
+            customerId: input.customerId,
+            type: 'EARN',
+            points,
+            description: `Tích điểm từ đơn ${input.soNo}`,
+        },
+    })
+    return { success: true, pointsEarned: points }
+}
+
+export async function redeemLoyaltyPoints(input: {
+    customerId: string
+    points: number
+}): Promise<{ success: boolean; discountAmount: number; error?: string }> {
+    const info = await getLoyaltyInfo(input.customerId)
+    if (!info) return { success: false, discountAmount: 0, error: 'Không tìm thấy KH' }
+    if (info.pointsBalance < input.points) {
+        return { success: false, discountAmount: 0, error: `Không đủ điểm (còn ${info.pointsBalance})` }
+    }
+
+    await prisma.loyaltyTransaction.create({
+        data: {
+            customerId: input.customerId,
+            type: 'REDEEM',
+            points: -input.points,
+            description: `Đổi ${input.points} điểm = ${(input.points * POINT_VALUE_VND).toLocaleString()}đ`,
+        },
+    })
+
+    return { success: true, discountAmount: input.points * POINT_VALUE_VND }
+}
