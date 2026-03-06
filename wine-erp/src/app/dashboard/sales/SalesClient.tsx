@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, ChevronRight, Loader2, X, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, advanceSalesOrderStatus, getSalesOrderDetail, getSOMarginData, SOMarginData } from './actions'
+import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, advanceSalesOrderStatus, getSalesOrderDetailWithMargin, SOMarginData } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { CreateSODrawer } from './CreateSODrawer'
 
@@ -61,19 +61,24 @@ const SO_NEXT_STATUS: Partial<Record<SOStatus, { status: SOStatus; label: string
 }
 
 // ── SO Detail Drawer ─────────────────────────────
-type DetailType = Awaited<ReturnType<typeof getSalesOrderDetail>>
+type DetailType = Awaited<ReturnType<typeof getSalesOrderDetailWithMargin>>['detail']
 
 function SODetailDrawer({ soId, onClose }: { soId: string; onClose: () => void }) {
     const [detail, setDetail] = useState<DetailType>(null)
     const [marginData, setMarginData] = useState<SOMarginData | null>(null)
     const [loading, setLoading] = useState(true)
 
-    useState(() => {
-        Promise.all([
-            getSalesOrderDetail(soId),
-            getSOMarginData(soId),
-        ]).then(([d, m]) => { setDetail(d); setMarginData(m); setLoading(false) })
-    })
+    useEffect(() => {
+        let cancelled = false
+        setLoading(true)
+        getSalesOrderDetailWithMargin(soId).then(result => {
+            if (cancelled) return
+            setDetail(result.detail)
+            setMarginData(result.margin)
+            setLoading(false)
+        })
+        return () => { cancelled = true }
+    }, [soId])
 
     return (
         <>

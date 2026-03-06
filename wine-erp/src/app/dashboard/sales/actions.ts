@@ -114,6 +114,82 @@ export async function getSalesOrderDetail(id: string) {
     })
 }
 
+// ── Combined detail + margin (single server action, 2 queries instead of N+1) ──
+export async function getSalesOrderDetailWithMargin(id: string): Promise<{
+    detail: Awaited<ReturnType<typeof getSalesOrderDetail>>
+    margin: SOMarginData | null
+}> {
+    const detail = await prisma.salesOrder.findUnique({
+        where: { id },
+        include: {
+            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
+            salesRep: { select: { name: true } },
+            shippingAddress: true,
+            lines: {
+                include: {
+                    product: { select: { skuCode: true, productName: true, wineType: true, country: true } },
+                },
+            },
+            deliveryOrders: { select: { id: true, doNo: true, status: true } },
+            arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true } },
+        },
+    })
+    if (!detail) return { detail: null, margin: null }
+
+    // Single batch query for ALL product costs (eliminates N+1)
+    const productIds = [...new Set(detail.lines.map(l => l.productId))]
+    const allLots = await prisma.stockLot.findMany({
+        where: { productId: { in: productIds }, qtyAvailable: { gt: 0 } },
+        select: { productId: true, qtyAvailable: true, unitLandedCost: true },
+    })
+
+    // Build cost map from batch result
+    const costMap: Record<string, number> = {}
+    for (const pid of productIds) {
+        const lots = allLots.filter(l => l.productId === pid)
+        const totalQty = lots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
+        const totalValue = lots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
+        costMap[pid] = totalQty > 0 ? totalValue / totalQty : 0
+    }
+
+    let totalRevenue = 0
+    let totalCOGS = 0
+    let hasNegativeMargin = false
+
+    const marginLines: SOMarginLine[] = detail.lines.map(l => {
+        const qty = Number(l.qtyOrdered)
+        const unitPrice = Number(l.unitPrice)
+        const discPct = Number(l.lineDiscountPct)
+        const revenue = qty * unitPrice * (1 - discPct / 100)
+        const avgCost = costMap[l.productId] ?? 0
+        const cogs = qty * avgCost
+        const margin = revenue - cogs
+        const marginPct = revenue > 0 ? (margin / revenue) * 100 : 0
+        const isNegative = margin < 0
+
+        if (isNegative) hasNegativeMargin = true
+        totalRevenue += revenue
+        totalCOGS += cogs
+
+        return {
+            lineId: l.id,
+            productId: l.productId,
+            skuCode: l.product.skuCode,
+            productName: l.product.productName,
+            qty, unitPrice, lineDiscountPct: discPct,
+            revenue, avgCost, cogs, margin, marginPct, isNegative,
+        }
+    })
+
+    const totalMargin = totalRevenue - totalCOGS
+    const totalMarginPct = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0
+
+    return {
+        detail,
+        margin: { lines: marginLines, totalRevenue, totalCOGS, totalMargin, totalMarginPct, hasNegativeMargin },
+    }
+}
+
 // ── Customers for dropdown ───────────────────────
 export async function getCustomersForSO() {
     return cached('sales:customers', async () => {
