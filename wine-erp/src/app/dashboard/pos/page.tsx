@@ -1,6 +1,6 @@
 ﻿import POSClient from './POSClient'
 
-export const revalidate = 45
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = { title: 'POS — Bán Hàng Tại Quầy' }

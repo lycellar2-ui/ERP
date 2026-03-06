@@ -1,7 +1,7 @@
 ﻿import { getStampPurchases, getStampSummary } from './actions'
 import StampsClient from './StampsClient'
 
-export const revalidate = 90
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = {

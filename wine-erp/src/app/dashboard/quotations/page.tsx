@@ -1,7 +1,7 @@
 ﻿import { getQuotations, getQuotationStats } from './actions'
 import { QuotationClient } from './QuotationClient'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = { title: 'Báo Giá | Wine ERP' }

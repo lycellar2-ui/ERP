@@ -1,4 +1,4 @@
-﻿export const revalidate = 60
+﻿export const dynamic = 'force-dynamic'
 
 import { getUsers, getRoles, getPermissions, getSettingsStats } from './actions'
 import { SettingsClient } from './SettingsClient'

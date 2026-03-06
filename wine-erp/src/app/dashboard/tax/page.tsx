@@ -1,4 +1,4 @@
-﻿export const revalidate = 90
+﻿export const dynamic = 'force-dynamic'
 
 import { getTaxRates } from './actions'
 import { TaxClient } from './TaxClient'

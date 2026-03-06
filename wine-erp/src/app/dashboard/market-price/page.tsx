@@ -1,4 +1,4 @@
-﻿export const revalidate = 90
+﻿export const dynamic = 'force-dynamic'
 
 import { getMarketPrices, getMarketPriceStats } from './actions'
 import { MarketPriceClient } from './MarketPriceClient'

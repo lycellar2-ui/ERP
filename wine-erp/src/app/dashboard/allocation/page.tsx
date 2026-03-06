@@ -1,4 +1,4 @@
-﻿export const revalidate = 90
+﻿export const dynamic = 'force-dynamic'
 
 import { getAllocCampaigns, getAllocStats } from './actions'
 import { AllocationClient } from './AllocationClient'

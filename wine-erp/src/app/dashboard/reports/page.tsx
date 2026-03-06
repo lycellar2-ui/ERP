@@ -1,4 +1,4 @@
-﻿export const revalidate = 60
+﻿export const dynamic = 'force-dynamic'
 
 import { getTopSKUs, getMonthlyRevenue, getRevenueByChannel, getStockValuation } from './actions'
 import { ReportsClient } from './ReportsClient'

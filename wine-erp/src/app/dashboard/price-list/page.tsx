@@ -1,7 +1,7 @@
 ﻿import { getPriceLists } from './actions'
 import { PriceListClient } from './PriceListClient'
 
-export const revalidate = 90
+export const dynamic = 'force-dynamic'
 
 
 export const metadata = {
