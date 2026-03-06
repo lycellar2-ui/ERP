@@ -75,7 +75,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
 
                 {[
                     { key: 'code', label: 'Mã Kho (VD: KHO-HCM)', placeholder: 'KHO-HCM-01' },
-                    { key: 'name', label: 'Tên Kho', placeholder: 'Kho Lạnh Hồ Chí Minh' },
+                    { key: 'name', label: 'Tên Kho', placeholder: 'Kho Cửa hàng' },
                     { key: 'address', label: 'Địa Chỉ', placeholder: '15 Đường Xuyên Á, Củ Chi, TP.HCM' },
                 ].map(f => (
                     <div key={f.key}>

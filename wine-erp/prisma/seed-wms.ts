@@ -26,30 +26,30 @@ async function main() {
     console.log('  → Creating warehouses...')
     const khoHCM = await prisma.warehouse.upsert({
         where: { code: 'KHO-HCM-01' },
-        update: {},
+        update: { name: 'Kho Cửa hàng' },
         create: {
             code: 'KHO-HCM-01',
-            name: 'Kho Lạnh HCM (Bình Dương)',
+            name: 'Kho Cửa hàng',
             address: '15 Đường Xuyên Á, An Phú, Thuận An, Bình Dương',
         },
     })
 
     const khoHNI = await prisma.warehouse.upsert({
         where: { code: 'KHO-HNI-01' },
-        update: {},
+        update: { name: 'Kho Thường Tín' },
         create: {
             code: 'KHO-HNI-01',
-            name: 'Kho Hà Nội (Gia Lâm)',
+            name: 'Kho Thường Tín',
             address: 'KCN Phú Thị, Gia Lâm, Hà Nội',
         },
     })
 
     const showroom = await prisma.warehouse.upsert({
         where: { code: 'SHOWROOM-HCM' },
-        update: {},
+        update: { name: 'Showroom Giang Văn Minh' },
         create: {
             code: 'SHOWROOM-HCM',
-            name: 'Showroom Quận 1',
+            name: 'Showroom Giang Văn Minh',
             address: '12 Ngô Đức Kế, Bến Nghé, Quận 1, TP.HCM',
         },
     })
