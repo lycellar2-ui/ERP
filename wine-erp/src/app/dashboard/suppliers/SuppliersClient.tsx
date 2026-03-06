@@ -1,9 +1,11 @@
 ﻿'use client'
 
-import { useState } from 'react'
-import { Search, Plus, Building2, Globe, Clock, ShoppingCart, X, Save, Loader2, AlertCircle, Award, Copy } from 'lucide-react'
-import { SupplierRow, SupplierInput, createSupplier, getAllSupplierScorecards, detectDuplicates, type SupplierScorecard, type DuplicateCandidate } from './actions'
+import { useState, useCallback } from 'react'
+import { Plus, Building2, Globe, Clock, X, Save, Loader2, AlertCircle, Award, Copy } from 'lucide-react'
+import { SupplierRow, SupplierInput, createSupplier, getSuppliers, getAllSupplierScorecards, detectDuplicates, type SupplierScorecard, type DuplicateCandidate } from './actions'
 import { formatVND } from '@/lib/utils'
+import { DataPagination } from '@/components/DataPagination'
+import { FilterBar } from '@/components/FilterBar'
 
 // ── Type badge ──────────────────────────────────────────────
 const SUPPLIER_TYPE: Record<string, { label: string; color: string; bg: string }> = {
@@ -264,9 +266,13 @@ function AddSupplierDrawer({ open, onClose, onSaved }: {
 }
 
 // ── Main ───────────────────────────────────────────────────
-export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] }) {
+export function SuppliersClient({ initialRows, initialTotal }: { initialRows: SupplierRow[]; initialTotal: number }) {
     const [rows, setRows] = useState(initialRows)
+    const [total, setTotal] = useState(initialTotal)
     const [search, setSearch] = useState('')
+    const [typeFilter, setTypeFilter] = useState('')
+    const [statusFilter, setStatusFilter] = useState('')
+    const [page, setPage] = useState(1)
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<'list' | 'scorecard' | 'duplicates'>('list')
     const [scorecards, setScorecards] = useState<SupplierScorecard[] | null>(null)
@@ -274,12 +280,17 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
     const [duplicates, setDuplicates] = useState<DuplicateCandidate[] | null>(null)
     const [dupLoading, setDupLoading] = useState(false)
 
-    const filtered = rows.filter(r =>
-        !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.code.toLowerCase().includes(search.toLowerCase())
-    )
-
-    const activeCount = rows.filter(r => r.status === 'ACTIVE').length
-    const countries = [...new Set(rows.map(r => r.country))].length
+    const reload = useCallback(async (s?: string, t?: string, st?: string, p?: number) => {
+        const result = await getSuppliers({
+            search: (s ?? search) || undefined,
+            type: (t ?? typeFilter) || undefined,
+            status: (st ?? statusFilter) || undefined,
+            page: p ?? page,
+            pageSize: 25,
+        })
+        setRows(result.rows)
+        setTotal(result.total)
+    }, [search, typeFilter, statusFilter, page])
 
     const loadScorecards = async () => {
         setActiveTab('scorecard')
@@ -332,9 +343,9 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: 'Tổng NCC', value: rows.length, icon: Building2, accent: '#87CBB9' },
-                    { label: 'Đang hoạt động', value: activeCount, icon: Globe, accent: '#5BA88A' },
-                    { label: 'Quốc gia', value: countries, icon: Globe, accent: '#4A8FAB' },
+                    { label: 'Tổng NCC', value: total, icon: Building2, accent: '#87CBB9' },
+                    { label: 'Trang hiện tại', value: rows.length, icon: Globe, accent: '#5BA88A' },
+                    { label: 'Quốc gia', value: [...new Set(rows.map(r => r.country))].length, icon: Globe, accent: '#4A8FAB' },
                     { label: 'Avg Lead Time', value: rows.length ? `${Math.round(rows.reduce((s, r) => s + r.leadTimeDays, 0) / rows.length)} ngày` : '—', icon: Clock, accent: '#87CBB9' },
                 ].map(s => (
                     <div key={s.label} className="flex items-center gap-4 p-4 rounded-xl"
@@ -374,74 +385,92 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
             {/* Tab: NCC List */}
             {activeTab === 'list' && (
                 <>
-                    {/* Search */}
-                    <div className="relative max-w-sm">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
-                        <input type="text" placeholder="Tìm NCC..." value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    <FilterBar
+                        searchValue={search}
+                        searchPlaceholder="Tìm NCC (tên, mã)..."
+                        onSearchChange={v => { setSearch(v); setPage(1); reload(v, undefined, undefined, 1) }}
+                        filters={[
+                            {
+                                key: 'type', label: 'Tất cả loại',
+                                options: Object.entries(SUPPLIER_TYPE).map(([k, v]) => ({ value: k, label: v.label })),
+                                value: typeFilter,
+                                onChange: v => { setTypeFilter(v); setPage(1); reload(undefined, v, undefined, 1) },
+                            },
+                            {
+                                key: 'status', label: 'Trạng thái',
+                                options: [
+                                    { value: 'ACTIVE', label: 'Hoạt động' },
+                                    { value: 'INACTIVE', label: 'Tạm dừng' },
+                                    { value: 'BLACKLISTED', label: 'Blacklist' },
+                                ],
+                                value: statusFilter,
+                                onChange: v => { setStatusFilter(v); setPage(1); reload(undefined, undefined, v, 1) },
+                            },
+                        ]}
+                        onClearAll={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); setPage(1); reload('', '', '', 1) }}
+                    />
+
+                    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                        <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                                        {['Nhà Cung Cấp', 'Loại', 'Quốc Gia', 'Hiệp Định / C/O', 'Thanh Toán', 'Lead Time', 'Đơn Hàng', 'Trạng Thái'].map(h => (
+                                            <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
+                                                style={{ color: '#4A6A7A' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rows.length === 0 ? (
+                                        <tr><td colSpan={8}>
+                                            <div className="flex flex-col items-center py-16 gap-3">
+                                                <span className="text-3xl">🏭</span>
+                                                <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có nhà cung cấp nào</p>
+                                            </div>
+                                        </td></tr>
+                                    ) : rows.map(row => (
+                                        <tr key={row.id} className="group transition-colors duration-100"
+                                            style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                            <td className="px-4 py-3">
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
+                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                            </td>
+                                            <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
+                                            <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>
+                                                {COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#2A4355' }}>
+                                                    {row.tradeAgreement ?? 'MFN'}
+                                                </p>
+                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{row.coFormType ?? '—'}</p>
+                                            </td>
+                                            <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                                {row.paymentTerm ?? '—'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
+                                                    <Clock size={12} /> {row.leadTimeDays} ngày
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-sm font-bold" style={{ color: row.poCount > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                                    {row.poCount}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3"><StatusDot status={row.status} /></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    {/* Table */}
-                    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                    {['Nhà Cung Cấp', 'Loại', 'Quốc Gia', 'Hiệp Định / C/O', 'Thanh Toán', 'Lead Time', 'Đơn Hàng', 'Trạng Thái'].map(h => (
-                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
-                                            style={{ color: '#4A6A7A' }}>{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filtered.length === 0 ? (
-                                    <tr><td colSpan={8}>
-                                        <div className="flex flex-col items-center py-16 gap-3">
-                                            <span className="text-3xl">🏭</span>
-                                            <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có nhà cung cấp nào</p>
-                                        </div>
-                                    </td></tr>
-                                ) : filtered.map(row => (
-                                    <tr key={row.id} className="group transition-colors duration-100"
-                                        style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                        <td className="px-4 py-3">
-                                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
-                                        </td>
-                                        <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
-                                        <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>
-                                            {COUNTRY_FLAGS[row.country] ?? '🌍'} {row.country}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#2A4355' }}>
-                                                {row.tradeAgreement ?? 'MFN'}
-                                            </p>
-                                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{row.coFormType ?? '—'}</p>
-                                        </td>
-                                        <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                            {row.paymentTerm ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
-                                                <Clock size={12} /> {row.leadTimeDays} ngày
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-bold" style={{ color: row.poCount > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
-                                                {row.poCount}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3"><StatusDot status={row.status} /></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <DataPagination page={page} pageSize={25} total={total}
+                        onPageChange={p => { setPage(p); reload(undefined, undefined, undefined, p) }} />
                 </>
             )}
 
@@ -554,8 +583,7 @@ export function SuppliersClient({ initialRows }: { initialRows: SupplierRow[] })
             <AddSupplierDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}
                 onSaved={async () => {
                     setDrawerOpen(false)
-                    const { getSuppliers } = await import('./actions')
-                    setRows(await getSuppliers())
+                    reload()
                 }} />
         </div>
     )

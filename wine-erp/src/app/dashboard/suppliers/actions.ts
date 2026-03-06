@@ -23,41 +23,44 @@ export type SupplierRow = {
     createdAt: Date
 }
 
-export async function getSuppliers(search?: string): Promise<SupplierRow[]> {
-    const cacheKey = `suppliers:list:${search ?? ''}`
-    return cached(cacheKey, async () => {
-        const where: any = { deletedAt: null }
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { code: { contains: search, mode: 'insensitive' } },
-            ]
-        }
-        const items = await prisma.supplier.findMany({
+export async function getSuppliers(params?: {
+    search?: string; type?: string; status?: string; country?: string; page?: number; pageSize?: number
+}): Promise<{ rows: SupplierRow[]; total: number }> {
+    const { search, type, status, country, page = 1, pageSize = 25 } = params ?? {}
+    const where: any = { deletedAt: null }
+    if (search) {
+        where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { code: { contains: search, mode: 'insensitive' } },
+        ]
+    }
+    if (type) where.type = type
+    if (status) where.status = status
+    if (country) where.country = country
+
+    const [items, total] = await Promise.all([
+        prisma.supplier.findMany({
             where,
-            include: {
-                purchaseOrders: { select: { id: true } },
-            },
+            include: { purchaseOrders: { select: { id: true } } },
             orderBy: { name: 'asc' },
-        })
-        return items.map(s => ({
-            id: s.id,
-            code: s.code,
-            name: s.name,
-            type: s.type,
-            country: s.country,
-            taxId: s.taxId,
-            tradeAgreement: s.tradeAgreement,
-            coFormType: s.coFormType,
-            paymentTerm: s.paymentTerm,
-            defaultCurrency: s.defaultCurrency,
-            incoterms: s.incoterms,
-            leadTimeDays: s.leadTimeDays,
-            status: s.status,
-            poCount: s.purchaseOrders.length,
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+        }),
+        prisma.supplier.count({ where }),
+    ])
+
+    return {
+        rows: items.map(s => ({
+            id: s.id, code: s.code, name: s.name, type: s.type,
+            country: s.country, taxId: s.taxId,
+            tradeAgreement: s.tradeAgreement, coFormType: s.coFormType,
+            paymentTerm: s.paymentTerm, defaultCurrency: s.defaultCurrency,
+            incoterms: s.incoterms, leadTimeDays: s.leadTimeDays ?? 45,
+            status: s.status, poCount: s.purchaseOrders.length,
             createdAt: s.createdAt,
-        }))
-    }) // end cached
+        })),
+        total,
+    }
 }
 
 const supplierSchema = z.object({

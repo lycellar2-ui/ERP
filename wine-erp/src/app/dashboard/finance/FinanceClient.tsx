@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull } from 'lucide-react'
 import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab } from './FinanceTabs'
+import { DataPagination } from '@/components/DataPagination'
+import { FilterBar } from '@/components/FilterBar'
 
 type Tab = 'ar' | 'ap' | 'aging' | 'journal' | 'pnl' | 'bs' | 'expense' | 'period' | 'baddebt'
 
@@ -85,93 +87,127 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
 function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) => void }) {
     return (
         <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                <thead>
-                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                        {['Số HĐ', 'Khách Hàng', 'SO', 'Giá Trị', 'Đã Thu', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
-                            <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.length === 0 ? (
-                        <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
-                            Không có hóa đơn nào
-                        </td></tr>
-                    ) : rows.map(row => (
-                        <tr key={row.id}
-                            style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
-                        >
-                            <td className="px-3 py-3">
-                                <div className="flex items-center gap-1.5">
-                                    {row.isOverdue && <AlertCircle size={12} style={{ color: '#8B1A2E' }} />}
-                                    <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.invoiceNo}</span>
-                                </div>
-                            </td>
-                            <td className="px-3 py-3">
-                                <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.customerName}</p>
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
-                            </td>
-                            <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.soNo ?? '–'}</td>
-                            <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{formatVND(row.amount)}</td>
-                            <td className="px-3 py-3 text-sm" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>{formatVND(row.paidAmount)}</td>
-                            <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
-                                {formatVND(row.outstanding)}
-                            </td>
-                            <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#8AAEBB' }}>
-                                {formatDate(row.dueDate)}
-                                {row.isOverdue && row.daysOverdue > 0 && (
-                                    <p className="font-bold" style={{ color: '#8B1A2E' }}>+{row.daysOverdue}d</p>
-                                )}
-                            </td>
-                            <td className="px-3 py-3">
-                                {AR_STATUS[row.status] && (
-                                    <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                                        style={{ color: AR_STATUS[row.status].color, background: `${AR_STATUS[row.status].color}18` }}>
-                                        {AR_STATUS[row.status].label}
-                                    </span>
-                                )}
-                            </td>
-                            <td className="px-3 py-3">
-                                {row.outstanding > 0 && row.status !== 'CANCELLED' && (
-                                    <button onClick={() => onPayment(row.id)}
-                                        className="px-2.5 py-1 text-xs font-semibold transition-all"
-                                        style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.25)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.15)')}
-                                    >
-                                        Ghi Thu
-                                    </button>
-                                )}
-                            </td>
+            <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                            {['Số HĐ', 'Khách Hàng', 'SO', 'Giá Trị', 'Đã Thu', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
+                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                            ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {rows.length === 0 ? (
+                            <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
+                                Không có hóa đơn nào
+                            </td></tr>
+                        ) : rows.map(row => (
+                            <tr key={row.id}
+                                style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
+                            >
+                                <td className="px-3 py-3">
+                                    <div className="flex items-center gap-1.5">
+                                        {row.isOverdue && <AlertCircle size={12} style={{ color: '#8B1A2E' }} />}
+                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.invoiceNo}</span>
+                                    </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                    <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.customerName}</p>
+                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
+                                </td>
+                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.soNo ?? '–'}</td>
+                                <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{formatVND(row.amount)}</td>
+                                <td className="px-3 py-3 text-sm" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>{formatVND(row.paidAmount)}</td>
+                                <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
+                                    {formatVND(row.outstanding)}
+                                </td>
+                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#8AAEBB' }}>
+                                    {formatDate(row.dueDate)}
+                                    {row.isOverdue && row.daysOverdue > 0 && (
+                                        <p className="font-bold" style={{ color: '#8B1A2E' }}>+{row.daysOverdue}d</p>
+                                    )}
+                                </td>
+                                <td className="px-3 py-3">
+                                    {AR_STATUS[row.status] && (
+                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                                            style={{ color: AR_STATUS[row.status].color, background: `${AR_STATUS[row.status].color}18` }}>
+                                            {AR_STATUS[row.status].label}
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-3 py-3">
+                                    {row.outstanding > 0 && row.status !== 'CANCELLED' && (
+                                        <button onClick={() => onPayment(row.id)}
+                                            className="px-2.5 py-1 text-xs font-semibold transition-all"
+                                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.25)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.15)')}
+                                        >
+                                            Ghi Thu
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     )
 }
 
 interface Props {
     initialAR: ARRow[]
+    initialARTotal: number
     initialAP: APRow[]
+    initialAPTotal: number
     stats: { arTotal: number; arOverdue: number; apTotal: number; apOverdue: number; monthRevenue: number; arOverdueCount: number; apOverdueCount: number }
     agingBuckets: Record<string, number>
     userId: string
 }
 
-export function FinanceClient({ initialAR, initialAP, stats, agingBuckets, userId }: Props) {
+export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPTotal, stats, agingBuckets, userId }: Props) {
     const [tab, setTab] = useState<Tab>('ar')
     const [arRows, setArRows] = useState(initialAR)
+    const [arTotal, setArTotal] = useState(initialARTotal)
     const [apRows, setApRows] = useState(initialAP)
-    const [paymentModal, setPaymentModal] = useState<string | null>(null)   // AR invoice ID
-    const [apPaymentModal, setApPaymentModal] = useState<string | null>(null) // AP invoice ID
+    const [apTotal, setApTotal] = useState(initialAPTotal)
+    const [arSearch, setArSearch] = useState('')
+    const [arStatus, setArStatus] = useState('')
+    const [arPage, setArPage] = useState(1)
+    const [apSearch, setApSearch] = useState('')
+    const [apStatus, setApStatus] = useState('')
+    const [apPage, setApPage] = useState(1)
+    const [paymentModal, setPaymentModal] = useState<string | null>(null)
+    const [apPaymentModal, setApPaymentModal] = useState<string | null>(null)
     const [payAmount, setPayAmount] = useState('')
     const [payMethod, setPayMethod] = useState('BANK_TRANSFER')
     const [payReference, setPayReference] = useState('')
     const [payLoading, setPayLoading] = useState(false)
+
+    const reloadAR = useCallback(async (search?: string, status?: string, page?: number) => {
+        const result = await getARInvoices({
+            search: (search ?? arSearch) || undefined,
+            status: (status ?? arStatus) || undefined,
+            page: page ?? arPage,
+            pageSize: 25,
+        })
+        setArRows(result.rows)
+        setArTotal(result.total)
+    }, [arSearch, arStatus, arPage])
+
+    const reloadAP = useCallback(async (search?: string, status?: string, page?: number) => {
+        const result = await getAPInvoices({
+            search: (search ?? apSearch) || undefined,
+            status: (status ?? apStatus) || undefined,
+            page: page ?? apPage,
+            pageSize: 25,
+        })
+        setApRows(result.rows)
+        setApTotal(result.total)
+    }, [apSearch, apStatus, apPage])
 
     const handlePayment = async () => {
         if (!paymentModal || !payAmount) return
@@ -268,62 +304,102 @@ export function FinanceClient({ initialAR, initialAP, stats, agingBuckets, userI
             </div>
 
             {/* Content */}
-            {tab === 'ar' && <ARTable rows={arRows} onPayment={setPaymentModal} />}
+            {tab === 'ar' && (
+                <div className="space-y-3">
+                    <FilterBar
+                        searchValue={arSearch}
+                        searchPlaceholder="Tìm HĐ, khách hàng..."
+                        onSearchChange={v => { setArSearch(v); setArPage(1); reloadAR(v, undefined, 1) }}
+                        filters={[{
+                            key: 'arStatus', label: 'Tất cả trạng thái',
+                            options: Object.entries(AR_STATUS).map(([k, v]) => ({ value: k, label: v.label })),
+                            value: arStatus,
+                            onChange: v => { setArStatus(v); setArPage(1); reloadAR(undefined, v, 1) },
+                        }]}
+                        onClearAll={() => { setArSearch(''); setArStatus(''); setArPage(1); reloadAR('', '', 1) }}
+                    />
+                    <ARTable rows={arRows} onPayment={setPaymentModal} />
+                    <DataPagination page={arPage} pageSize={25} total={arTotal}
+                        onPageChange={p => { setArPage(p); reloadAR(undefined, undefined, p) }} />
+                </div>
+            )}
 
             {tab === 'ap' && (
-                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                {['Số HĐ', 'Nhà Cung Cấp', 'PO', 'Giá Trị', 'Tiền Tệ', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
-                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {apRows.length === 0 ? (
-                                <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Không có AP nào</td></tr>
-                            ) : apRows.map(row => (
-                                <tr key={row.id}
-                                    style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
-                                >
-                                    <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.invoiceNo}</td>
-                                    <td className="px-3 py-3">
-                                        <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.supplierName}</p>
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.supplierCode}</p>
-                                    </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.poNo ?? '–'}</td>
-                                    <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
-                                        {row.currency === 'VND' ? formatVND(row.amount) : `$${row.amount.toLocaleString()}`}
-                                    </td>
-                                    <td className="px-3 py-3 text-xs font-bold" style={{ color: '#D4A853' }}>{row.currency}</td>
-                                    <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
-                                        {row.currency === 'VND' ? formatVND(row.outstanding) : `$${row.outstanding.toLocaleString()}`}
-                                    </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#8AAEBB' }}>{formatDate(row.dueDate)}</td>
-                                    <td className="px-3 py-3">
-                                        <span className="text-xs px-2 py-0.5 rounded-full"
-                                            style={{ background: row.isOverdue ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.15)', color: row.isOverdue ? '#8B1A2E' : '#D4A853' }}>
-                                            {row.isOverdue ? 'Quá Hạn' : 'Chưa Trả'}
-                                        </span>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                        {row.outstanding > 0 && (
-                                            <button onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
-                                                className="px-2.5 py-1 text-xs font-semibold"
-                                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.25)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.15)')}>
-                                                Ghi Trả
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="space-y-3">
+                    <FilterBar
+                        searchValue={apSearch}
+                        searchPlaceholder="Tìm HĐ, NCC..."
+                        onSearchChange={v => { setApSearch(v); setApPage(1); reloadAP(v, undefined, 1) }}
+                        filters={[{
+                            key: 'apStatus', label: 'Tất cả trạng thái',
+                            options: [
+                                { value: 'UNPAID', label: 'Chưa Trả' },
+                                { value: 'PARTIALLY_PAID', label: 'Đã Trả 1 Phần' },
+                                { value: 'PAID', label: 'Đã Trả Đủ' },
+                            ],
+                            value: apStatus,
+                            onChange: v => { setApStatus(v); setApPage(1); reloadAP(undefined, v, 1) },
+                        }]}
+                        onClearAll={() => { setApSearch(''); setApStatus(''); setApPage(1); reloadAP('', '', 1) }}
+                    />
+                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                        <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                                        {['Số HĐ', 'Nhà Cung Cấp', 'PO', 'Giá Trị', 'Tiền Tệ', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
+                                            <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {apRows.length === 0 ? (
+                                        <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Không có AP nào</td></tr>
+                                    ) : apRows.map(row => (
+                                        <tr key={row.id}
+                                            style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
+                                        >
+                                            <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.invoiceNo}</td>
+                                            <td className="px-3 py-3">
+                                                <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.supplierName}</p>
+                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.supplierCode}</p>
+                                            </td>
+                                            <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.poNo ?? '–'}</td>
+                                            <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                                {row.currency === 'VND' ? formatVND(row.amount) : `$${row.amount.toLocaleString()}`}
+                                            </td>
+                                            <td className="px-3 py-3 text-xs font-bold" style={{ color: '#D4A853' }}>{row.currency}</td>
+                                            <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
+                                                {row.currency === 'VND' ? formatVND(row.outstanding) : `$${row.outstanding.toLocaleString()}`}
+                                            </td>
+                                            <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#8AAEBB' }}>{formatDate(row.dueDate)}</td>
+                                            <td className="px-3 py-3">
+                                                <span className="text-xs px-2 py-0.5 rounded-full"
+                                                    style={{ background: row.isOverdue ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.15)', color: row.isOverdue ? '#8B1A2E' : '#D4A853' }}>
+                                                    {row.isOverdue ? 'Quá Hạn' : 'Chưa Trả'}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {row.outstanding > 0 && (
+                                                    <button onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
+                                                        className="px-2.5 py-1 text-xs font-semibold"
+                                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}
+                                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.25)')}
+                                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.15)')}>
+                                                        Ghi Trả
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <DataPagination page={apPage} pageSize={25} total={apTotal}
+                        onPageChange={p => { setApPage(p); reloadAP(undefined, undefined, p) }} />
                 </div>
             )}
 

@@ -53,7 +53,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     useEffect(() => {
         if (!open) return
         Promise.all([
-            getSuppliers().then(s => setSuppliers(s.map(x => ({ id: x.id, name: x.name, defaultCurrency: x.defaultCurrency })))),
+            getSuppliers({ pageSize: 200 }).then(r => setSuppliers(r.rows.map(x => ({ id: x.id, name: x.name, defaultCurrency: x.defaultCurrency })))),
             getProducts({ pageSize: 100 }).then(r => setProducts(r.rows.map(p => ({ id: p.id, productName: p.productName, skuCode: p.skuCode })))),
         ])
     }, [open])

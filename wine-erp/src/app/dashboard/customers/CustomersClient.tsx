@@ -1,9 +1,11 @@
 ﻿'use client'
 
-import { useState } from 'react'
-import { Search, Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle } from 'lucide-react'
-import { CustomerRow, CustomerInput, createCustomer } from './actions'
+import { useState, useCallback } from 'react'
+import { Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle } from 'lucide-react'
+import { CustomerRow, CustomerInput, createCustomer, getCustomers } from './actions'
 import { formatVND } from '@/lib/utils'
+import { DataPagination } from '@/components/DataPagination'
+import { FilterBar } from '@/components/FilterBar'
 
 const CUSTOMER_TYPE: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
     HORECA: { label: 'HORECA', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)', emoji: '🏨' },
@@ -196,20 +198,28 @@ function AddCustomerDrawer({ open, onClose, onSaved }: {
     )
 }
 
-export function CustomersClient({ initialRows }: { initialRows: CustomerRow[] }) {
+export function CustomersClient({ initialRows, initialTotal }: { initialRows: CustomerRow[]; initialTotal: number }) {
     const [rows, setRows] = useState(initialRows)
+    const [total, setTotal] = useState(initialTotal)
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
+    const [statusFilter, setStatusFilter] = useState('')
+    const [page, setPage] = useState(1)
     const [drawerOpen, setDrawerOpen] = useState(false)
 
-    const filtered = rows.filter(r =>
-        (!search || r.name.toLowerCase().includes(search.toLowerCase()) || r.code.toLowerCase().includes(search.toLowerCase())) &&
-        (!typeFilter || r.customerType === typeFilter)
-    )
+    const reload = useCallback(async (s?: string, t?: string, st?: string, p?: number) => {
+        const result = await getCustomers({
+            search: (s ?? search) || undefined,
+            type: (t ?? typeFilter) || undefined,
+            status: (st ?? statusFilter) || undefined,
+            page: p ?? page,
+            pageSize: 25,
+        })
+        setRows(result.rows)
+        setTotal(result.total)
+    }, [search, typeFilter, statusFilter, page])
 
     const totalCredit = rows.reduce((s, r) => s + r.creditLimit, 0)
-    const horecaCount = rows.filter(r => r.customerType === 'HORECA').length
-    const activeCount = rows.filter(r => r.status === 'ACTIVE').length
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
@@ -219,7 +229,7 @@ export function CustomersClient({ initialRows }: { initialRows: CustomerRow[] })
                         Khách Hàng (CRM)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        B2B: Khách sạn, nhà hàng, phân phối, VIP retail
+                        B2B: Khách sạn, nhà hàng, phân phối, VIP retail — {total.toLocaleString()} khách hàng
                     </p>
                 </div>
                 <button onClick={() => setDrawerOpen(true)}
@@ -233,9 +243,9 @@ export function CustomersClient({ initialRows }: { initialRows: CustomerRow[] })
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: 'Tổng KH', value: rows.length, icon: Users, accent: '#87CBB9' },
-                    { label: 'Đang hoạt động', value: activeCount, icon: Building2, accent: '#5BA88A' },
-                    { label: 'HORECA', value: horecaCount, icon: ShoppingBag, accent: '#4A8FAB' },
+                    { label: 'Tổng KH', value: total, icon: Users, accent: '#87CBB9' },
+                    { label: 'Trang hiện tại', value: rows.length, icon: Building2, accent: '#5BA88A' },
+                    { label: 'Hạn mức cao', value: rows.filter(r => r.creditLimit > 0).length, icon: ShoppingBag, accent: '#4A8FAB' },
                     { label: 'Tổng hạn mức', value: formatVND(totalCredit), icon: CreditCard, accent: '#87CBB9' },
                 ].map(s => (
                     <div key={s.label} className="flex items-center gap-4 p-4 rounded-xl"
@@ -252,83 +262,96 @@ export function CustomersClient({ initialRows }: { initialRows: CustomerRow[] })
                 ))}
             </div>
 
-            <div className="flex gap-3">
-                <div className="relative flex-1 max-w-xs">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
-                    <input type="text" placeholder="Tìm khách hàng..." value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
-                </div>
-                <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả loại</option>
-                    <option value="HORECA">🏨 HORECA</option>
-                    <option value="WHOLESALE_DISTRIBUTOR">🏭 Phân Phối</option>
-                    <option value="VIP_RETAIL">👑 VIP Retail</option>
-                    <option value="INDIVIDUAL">👤 Cá Nhân</option>
-                </select>
-            </div>
+            <FilterBar
+                searchValue={search}
+                searchPlaceholder="Tìm khách hàng (tên, mã)..."
+                onSearchChange={v => { setSearch(v); setPage(1); reload(v, undefined, undefined, 1) }}
+                filters={[
+                    {
+                        key: 'type', label: 'Tất cả loại',
+                        options: [
+                            { value: 'HORECA', label: '🏨 HORECA' },
+                            { value: 'WHOLESALE_DISTRIBUTOR', label: '🏭 Phân Phối' },
+                            { value: 'VIP_RETAIL', label: '👑 VIP Retail' },
+                            { value: 'INDIVIDUAL', label: '👤 Cá Nhân' },
+                        ],
+                        value: typeFilter,
+                        onChange: v => { setTypeFilter(v); setPage(1); reload(undefined, v, undefined, 1) },
+                    },
+                    {
+                        key: 'status', label: 'Trạng thái',
+                        options: [
+                            { value: 'ACTIVE', label: 'Hoạt động' },
+                            { value: 'CREDIT_HOLD', label: 'Tạm giữ tín dụng' },
+                            { value: 'INACTIVE', label: 'Tạm dừng' },
+                        ],
+                        value: statusFilter,
+                        onChange: v => { setStatusFilter(v); setPage(1); reload(undefined, undefined, v, 1) },
+                    },
+                ]}
+                onClearAll={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); setPage(1); reload('', '', '', 1) }}
+            />
 
             <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                            {['Khách Hàng', 'Loại', 'MST', 'Kênh', 'Thanh Toán', 'Hạn Mức', 'Đơn Hàng', 'Trạng Thái'].map(h => (
-                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.length === 0 ? (
-                            <tr><td colSpan={8}>
-                                <div className="flex flex-col items-center py-16 gap-3">
-                                    <span className="text-3xl">👥</span>
-                                    <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có khách hàng nào</p>
-                                </div>
-                            </td></tr>
-                        ) : filtered.map(row => (
-                            <tr key={row.id} className="group transition-colors duration-100"
-                                style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                <td className="px-4 py-3">
-                                    <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
-                                </td>
-                                <td className="px-4 py-3"><TypeBadge type={row.customerType} /></td>
-                                <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
-                                    {row.taxId ?? '—'}
-                                </td>
-                                <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB' }}>
-                                    {CHANNEL_LABEL[row.channel ?? ''] ?? '—'}
-                                </td>
-                                <td className="px-4 py-3 text-xs font-semibold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                    {row.paymentTerm}
-                                </td>
-                                <td className="px-4 py-3 text-sm" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
-                                    {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                    <span className="text-sm font-bold" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
-                                        {row.orderCount}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3"><StatusDot status={row.status} /></td>
+                <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                                {['Khách Hàng', 'Loại', 'MST', 'Kênh', 'Thanh Toán', 'Hạn Mức', 'Đơn Hàng', 'Trạng Thái'].map(h => (
+                                    <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {rows.length === 0 ? (
+                                <tr><td colSpan={8}>
+                                    <div className="flex flex-col items-center py-16 gap-3">
+                                        <span className="text-3xl">👥</span>
+                                        <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có khách hàng nào</p>
+                                    </div>
+                                </td></tr>
+                            ) : rows.map(row => (
+                                <tr key={row.id} className="group transition-colors duration-100"
+                                    style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                    <td className="px-4 py-3">
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
+                                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                    </td>
+                                    <td className="px-4 py-3"><TypeBadge type={row.customerType} /></td>
+                                    <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                                        {row.taxId ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB' }}>
+                                        {CHANNEL_LABEL[row.channel ?? ''] ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-xs font-semibold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                        {row.paymentTerm}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                        {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-sm font-bold" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                            {row.orderCount}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3"><StatusDot status={row.status} /></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            <DataPagination page={page} pageSize={25} total={total}
+                onPageChange={p => { setPage(p); reload(undefined, undefined, undefined, p) }} />
 
             <AddCustomerDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}
                 onSaved={async () => {
                     setDrawerOpen(false)
-                    const { getCustomers } = await import('./actions')
-                    setRows(await getCustomers())
+                    reload()
                 }} />
         </div>
     )

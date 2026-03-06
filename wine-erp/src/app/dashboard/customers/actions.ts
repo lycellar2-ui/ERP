@@ -20,25 +20,37 @@ export type CustomerRow = {
     createdAt: Date
 }
 
-export async function getCustomers(search?: string): Promise<CustomerRow[]> {
-    const cacheKey = `customers:list:${search ?? ''}`
-    return cached(cacheKey, async () => {
-        const where: any = { deletedAt: null }
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { code: { contains: search, mode: 'insensitive' } },
-            ]
-        }
-        const items = await prisma.customer.findMany({
+export async function getCustomers(params?: {
+    search?: string; type?: string; status?: string; channel?: string; page?: number; pageSize?: number
+}): Promise<{ rows: CustomerRow[]; total: number }> {
+    const { search, type, status, channel, page = 1, pageSize = 25 } = params ?? {}
+    const where: any = { deletedAt: null }
+    if (search) {
+        where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { code: { contains: search, mode: 'insensitive' } },
+        ]
+    }
+    if (type) where.customerType = type
+    if (status) where.status = status
+    if (channel) where.channel = channel
+
+    const [items, total] = await Promise.all([
+        prisma.customer.findMany({
             where,
             include: {
                 salesRep: { select: { name: true } },
                 salesOrders: { select: { id: true } },
             },
             orderBy: { name: 'asc' },
-        })
-        return items.map(c => ({
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+        }),
+        prisma.customer.count({ where }),
+    ])
+
+    return {
+        rows: items.map(c => ({
             id: c.id,
             code: c.code,
             name: c.name,
@@ -51,8 +63,9 @@ export async function getCustomers(search?: string): Promise<CustomerRow[]> {
             status: c.status,
             orderCount: c.salesOrders.length,
             createdAt: c.createdAt,
-        }))
-    }) // end cached
+        })),
+        total,
+    }
 }
 
 const customerSchema = z.object({

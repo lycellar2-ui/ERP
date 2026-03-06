@@ -171,87 +171,89 @@ function StockTable({ lots }: { lots: StockLotRow[] }) {
 
     return (
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
-            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                <thead>
-                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                        {['Lô Hàng', 'Sản Phẩm', 'Vị Trí', 'Nhập Ngày', 'SL Nhận', 'Còn Lại', 'Đơn Giá Đầu Vào', 'Status'].map(h => (
-                            <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {lots.map(lot => {
-                        const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
-                        const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#8AAEBB'
-                        const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#8AAEBB' }
-                        const pctRemaining = lot.qtyReceived > 0 ? (lot.qtyAvailable / lot.qtyReceived) * 100 : 0
-                        return (
-                            <tr key={lot.id} className="group transition-colors"
-                                style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                <td className="px-4 py-3">
-                                    <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{lot.lotNo}</span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <p className="text-sm font-medium truncate max-w-[220px]" style={{ color: '#E8F1F2' }}>{lot.productName}</p>
-                                    <p className="text-xs mt-0.5 flex items-center gap-1.5" style={{ color: '#4A6A7A' }}>
-                                        {flag}
-                                        <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: wineColor }} />
-                                        {lot.skuCode}
-                                    </p>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className="text-xs font-bold px-2 py-1 rounded-lg"
-                                        style={{ background: '#1B2E3D', color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                        {lot.locationCode}
-                                    </span>
-                                    <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>{lot.warehouseName}</p>
-                                </td>
-                                <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>
-                                    {formatDate(lot.receivedDate)}
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                    <span className="text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                        {lot.qtyReceived.toLocaleString()}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-bold" style={{
-                                            color: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#87CBB9' : '#5BA88A',
-                                            fontFamily: '"DM Mono", monospace'
-                                        }}>
-                                            {lot.qtyAvailable.toLocaleString()}
+            <div style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto' }}>
+                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                            {['Lô Hàng', 'Sản Phẩm', 'Vị Trí', 'Nhập Ngày', 'SL Nhận', 'Còn Lại', 'Đơn Giá Đầu Vào', 'Status'].map(h => (
+                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {lots.map(lot => {
+                            const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
+                            const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#8AAEBB'
+                            const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#8AAEBB' }
+                            const pctRemaining = lot.qtyReceived > 0 ? (lot.qtyAvailable / lot.qtyReceived) * 100 : 0
+                            return (
+                                <tr key={lot.id} className="group transition-colors"
+                                    style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                    <td className="px-4 py-3">
+                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{lot.lotNo}</span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <p className="text-sm font-medium truncate max-w-[220px]" style={{ color: '#E8F1F2' }}>{lot.productName}</p>
+                                        <p className="text-xs mt-0.5 flex items-center gap-1.5" style={{ color: '#4A6A7A' }}>
+                                            {flag}
+                                            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: wineColor }} />
+                                            {lot.skuCode}
+                                        </p>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className="text-xs font-bold px-2 py-1 rounded-lg"
+                                            style={{ background: '#1B2E3D', color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                            {lot.locationCode}
                                         </span>
-                                        <div className="w-12 h-1.5 rounded-full overflow-hidden" style={{ background: '#1B2E3D' }}>
-                                            <div className="h-full rounded-full" style={{
-                                                width: `${pctRemaining}%`,
-                                                background: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#87CBB9' : '#5BA88A',
-                                            }} />
+                                        <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>{lot.warehouseName}</p>
+                                    </td>
+                                    <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>
+                                        {formatDate(lot.receivedDate)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                            {lot.qtyReceived.toLocaleString()}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold" style={{
+                                                color: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#87CBB9' : '#5BA88A',
+                                                fontFamily: '"DM Mono", monospace'
+                                            }}>
+                                                {lot.qtyAvailable.toLocaleString()}
+                                            </span>
+                                            <div className="w-12 h-1.5 rounded-full overflow-hidden" style={{ background: '#1B2E3D' }}>
+                                                <div className="h-full rounded-full" style={{
+                                                    width: `${pctRemaining}%`,
+                                                    background: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#87CBB9' : '#5BA88A',
+                                                }} />
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    {lot.unitLandedCost > 0 ? (
-                                        <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
-                                            {formatVND(lot.unitLandedCost)}/chai
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                        {lot.unitLandedCost > 0 ? (
+                                            <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                                {formatVND(lot.unitLandedCost)}/chai
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs" style={{ color: '#2A4355' }}>—</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                            style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>
+                                            {statusCfg.label}
                                         </span>
-                                    ) : (
-                                        <span className="text-xs" style={{ color: '#2A4355' }}>—</span>
-                                    )}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                                        style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>
-                                        {statusCfg.label}
-                                    </span>
-                                </td>
-                            </tr>
-                        )
-                    })}
-                </tbody>
-            </table>
+                                    </td>
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
     )
 }

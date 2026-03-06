@@ -20,7 +20,9 @@ export default async function FinancePage() {
     return (
         <FinanceClient
             initialAR={ar.rows}
+            initialARTotal={ar.total}
             initialAP={ap.rows}
+            initialAPTotal={ap.total}
             stats={stats}
             agingBuckets={aging}
             userId={user?.id ?? ''}
