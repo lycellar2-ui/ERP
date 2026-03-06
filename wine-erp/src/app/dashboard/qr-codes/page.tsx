@@ -1,7 +1,7 @@
 ﻿import { QRCodeClient } from './QRCodeClient'
 import { getQRCodes, getQRStats } from './actions'
 
-export const revalidate = 30
+export const revalidate = 90
 
 
 export default async function QRCodePage() {

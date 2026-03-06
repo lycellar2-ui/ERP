@@ -14,12 +14,15 @@ function createPrismaClient() {
         throw new Error('DATABASE_URL environment variable is not set')
     }
 
-    // Session Pooler (port 5432) — max pool low to avoid Supabase free tier limits (~15 total)
+    // Transaction Pooler (port 6543 + pgBouncer)
+    // - max: 5 — enough for ISR concurrent revalidation without exhausting pool
+    // - idleTimeoutMillis: 10s — release idle connections quickly back to pgBouncer
+    // - allowExitOnIdle: true — don't keep process alive for idle connections
     const pool = new pg.Pool({
         connectionString,
         ssl: { rejectUnauthorized: false },
-        max: 3,
-        idleTimeoutMillis: 15000,
+        max: 5,
+        idleTimeoutMillis: 10000,
         connectionTimeoutMillis: 10000,
         allowExitOnIdle: true,
     })
@@ -39,6 +42,6 @@ const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined
 }
 
+// Singleton — reuse across hot reloads (dev) and serverless invocations (prod)
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+globalForPrisma.prisma = prisma

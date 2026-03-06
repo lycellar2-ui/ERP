@@ -19,6 +19,7 @@ type CacheEntry<T> = {
 }
 
 const cache = new Map<string, CacheEntry<unknown>>()
+const pendingRefreshes = new Set<string>() // Dedup SWR background refreshes
 
 const DEFAULT_TTL_MS = 30_000 // 30 seconds
 const STALE_MULTIPLIER = 3    // stale data lives 3x TTL before eviction
@@ -49,16 +50,21 @@ export async function cached<T>(
 
     // STALE — return immediately + background refresh (SWR)
     if (existing && now < existing.staleDeadline) {
-        // Fire-and-forget background refresh
-        fn().then(freshData => {
-            cache.set(key, {
-                data: freshData,
-                expiry: Date.now() + ttlMs,
-                staleDeadline: Date.now() + ttlMs * STALE_MULTIPLIER,
+        // Dedup: only one background refresh per key at a time
+        if (!pendingRefreshes.has(key)) {
+            pendingRefreshes.add(key)
+            fn().then(freshData => {
+                cache.set(key, {
+                    data: freshData,
+                    expiry: Date.now() + ttlMs,
+                    staleDeadline: Date.now() + ttlMs * STALE_MULTIPLIER,
+                })
+            }).catch(() => {
+                // On error, keep stale data — better than nothing
+            }).finally(() => {
+                pendingRefreshes.delete(key)
             })
-        }).catch(() => {
-            // On error, keep stale data — better than nothing
-        })
+        }
         return existing.data
     }
 

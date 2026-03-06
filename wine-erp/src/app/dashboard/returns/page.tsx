@@ -1,4 +1,4 @@
-﻿export const revalidate = 30
+﻿export const revalidate = 90
 
 import { getReturnOrders, getReturnStats } from './actions'
 import { ReturnsClient } from './ReturnsClient'

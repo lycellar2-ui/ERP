@@ -1,4 +1,4 @@
-﻿export const revalidate = 30
+﻿export const revalidate = 60
 
 import { getTopSKUs, getMonthlyRevenue, getRevenueByChannel, getStockValuation } from './actions'
 import { ReportsClient } from './ReportsClient'

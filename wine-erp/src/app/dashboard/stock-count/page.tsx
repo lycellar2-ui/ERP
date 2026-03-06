@@ -1,4 +1,4 @@
-﻿export const revalidate = 30
+﻿export const revalidate = 90
 
 import { getStockCountList, getCountStats } from './actions'
 import { StockCountClient } from './StockCountClient'

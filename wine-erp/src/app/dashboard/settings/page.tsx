@@ -1,4 +1,4 @@
-﻿export const revalidate = 30
+﻿export const revalidate = 60
 
 import { getUsers, getRoles, getPermissions, getSettingsStats } from './actions'
 import { SettingsClient } from './SettingsClient'

@@ -1,4 +1,4 @@
-﻿export const revalidate = 30
+﻿export const revalidate = 90
 
 import { getMarketPrices, getMarketPriceStats } from './actions'
 import { MarketPriceClient } from './MarketPriceClient'

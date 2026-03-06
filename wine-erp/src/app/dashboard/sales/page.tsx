@@ -1,4 +1,4 @@
-﻿export const revalidate = 30
+﻿export const revalidate = 45
 
 import { getSalesOrders, getSalesStats } from './actions'
 import { SalesClient } from './SalesClient'

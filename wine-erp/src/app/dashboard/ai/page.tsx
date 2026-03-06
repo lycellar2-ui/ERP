@@ -1,4 +1,4 @@
-﻿export const revalidate = 30
+﻿export const revalidate = 90
 
 import { Brain } from 'lucide-react'
 import { AnomalyWidget, DemandForecastWidget, PricingWidget } from './AIWidgets'
