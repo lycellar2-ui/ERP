@@ -290,7 +290,8 @@ wine-erp/src/
 - [x] Document Upload backend (`uploadContractDocument`)
 - [x] **File Upload UI**: Upload PDF + Document grid trong Utilization panel
 - [x] E-Sign backend (`signContract`)
-- [ ] Email alert tự động
+- [x] **Digital Signature nội bộ**: signContractInternal() + SHA-256 hash + audit log
+- [x] **Email alert tự động**: sendContractExpiryAlerts() + notifyContractExpiring (7d/30d)
 
 ### STM — Stamps (70%)
 - [x] Stamp Purchase CRUD + Usage recording
