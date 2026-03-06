@@ -11,6 +11,7 @@
 2. [BUG-002: Dashboard Navigation Chậm 2-5s](#bug-002-dashboard-navigation-chậm-2-5s)
 3. [BUG-003: PowerShell Encoding Phá File UTF-8](#bug-003-powershell-encoding-phá-file-utf-8)
 4. [BUG-004: Build Fail — Prerender Exhausts DB Pool](#bug-004-build-fail--prerender-exhausts-db-pool)
+5. [BUG-005: Build Fail — Non-Async Export in 'use server'](#bug-005-build-fail--non-async-export-in-use-server-file)
 
 ---
 
@@ -196,6 +197,44 @@ Thay vào đó, dùng:
 
 ---
 
+## BUG-005: Build Fail — Non-Async Export in 'use server' File
+
+**Ngày:** 2026-03-06
+**Severity:** 🟠 Medium — Vercel build fail, deploy blocked
+
+### Triệu chứng
+```
+Error: Turbopack build failed with 1 errors:
+./wine-erp/src/app/dashboard/actions.ts:760:17
+Server Actions must be async functions.
+```
+
+### Nguyên nhân gốc rễ
+
+File `actions.ts` có `'use server'` directive. Next.js 16 (Turbopack) yêu cầu **tất cả exported functions** trong file `'use server'` phải là `async`.
+
+`getRealtimeChannels()` là sync function (return trực tiếp `RealtimeChannelConfig[]`, không cần await) nhưng vẫn **bắt buộc** phải khai báo `async` khi export từ server action file.
+
+```typescript
+// ❌ SAI — build fail
+export function getRealtimeChannels(roles: string[]): RealtimeChannelConfig[] { ... }
+
+// ✅ ĐÚNG
+export async function getRealtimeChannels(roles: string[]): Promise<RealtimeChannelConfig[]> { ... }
+```
+
+### Cách fix
+
+Thêm `async` keyword và đổi return type thành `Promise<RealtimeChannelConfig[]>`.
+
+### Bài học
+
+> ⚠️ **RULE 12: Mọi exported function trong file `'use server'` PHẢI là `async`.**
+> Kể cả function không cần await — Next.js enforce rule này lúc build.
+> Nếu function không cần server, tách ra file riêng không có `'use server'` directive.
+
+---
+
 ## Template cho Bug mới
 
 ```markdown
@@ -222,7 +261,7 @@ Thay vào đó, dùng:
 ## Quick Reference — All Rules
 
 | # | Rule | Context |
-|---|------|---------|
+|---|------|---------| 
 | 1 | Không chạy đồng thời dev + seed + prisma CLI | Connection pool |
 | 2 | Check zombie processes trước khi debug | Connection pool |
 | 3 | `pg.Pool({ max: 3 })` cho Supabase Free | Connection pool |
@@ -234,3 +273,4 @@ Thay vào đó, dùng:
 | 9 | Check encoding sau khi sửa file bằng PowerShell | Encoding |
 | 10 | Không dùng `revalidate = N` trên dashboard pages | Build |
 | 11 | Test `npx next build` sau thay đổi page config | Build |
+| 12 | Mọi export trong `'use server'` file PHẢI là `async` | Server Actions |

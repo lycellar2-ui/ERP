@@ -23,14 +23,14 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Master Data**: `src/app/dashboard/products` (**Media Upload Gallery**), `src/app/dashboard/customers` (**Address CRUD**, soft-delete), `src/app/dashboard/suppliers` (soft-delete)
 - **Warehouse**: `src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats)
 - **Sales & Allocation**: `src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**), `src/app/dashboard/quotations`, `src/app/dashboard/price-list`, `src/app/dashboard/allocation`, `src/app/dashboard/returns` (Credit Note + WMS Quarantine)
-- **CRM**: `src/app/dashboard/crm`, `src/app/dashboard/pipeline`
+- **CRM**: `src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `src/app/dashboard/pipeline`
 - **Finance & Tem**: `src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `src/app/dashboard/stamps`
 - **Procurement & Operations**: `src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**), `src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `src/app/dashboard/agency`
 - **Tax & Market Data**: `src/app/dashboard/tax`, `src/app/dashboard/costing`, `src/app/dashboard/market-price`
 - **Logistics**: `src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `src/app/dashboard/consignment`, `src/app/dashboard/transfers`, `src/app/dashboard/returns`, `src/app/dashboard/stock-count`
 - **CEO Board**: `src/app/dashboard`, `src/app/dashboard/kpi`, `src/app/dashboard/reports`
 - **AI & Features**: `src/app/dashboard/ai` (Demand Forecast, Smart Pricing)
-- **POS & QR**: `src/app/dashboard/pos` (Barcode scan, VAT Invoice), `src/app/dashboard/qr-codes` (Anti-counterfeit)
+- **POS & QR**: `src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `src/app/dashboard/pos/loyalty`, `src/app/dashboard/qr-codes` (Anti-counterfeit)
 - **External Portal**: `src/app/partner-login` (**External Partner Login & Portal**)
 
 ## 4. CROSS-CUTTING ENGINES (Shared Libraries)
@@ -47,6 +47,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **AI Service** | `src/lib/ai-service.ts` | Gemini API integration (OCR, Forecast, Anomaly) |
 | **Encryption** | `src/lib/encryption.ts` | AES-256 key vault for API keys |
 | **Server Cache** | `src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
+| **Realtime Hook** | `src/lib/useRealtimeDashboard.ts` | Supabase Realtime subscriptions — role-based channel management |
 
 ## 5. LƯU Ý QUAN TRỌNG
 - **Soft Delete Pattern**: Product, Customer, Supplier sử dụng `deletedAt` + `status: INACTIVE`. Kiểm tra active PO/SO trước khi xoá.
@@ -74,3 +75,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 ### Encoding
 - KHÔNG dùng PowerShell `Set-Content` cho file code (phá UTF-8)
 - Dùng `[System.IO.File]::WriteAllText($path, $content, [System.Text.Encoding]::UTF8)` hoặc tool `replace_file_content`
+
+### Server Actions
+- Mọi exported function trong file `'use server'` PHẢI là `async` — kể cả không cần await
+- Nếu function không cần server, tách ra file riêng không có `'use server'` directive

@@ -1,6 +1,6 @@
 # 🔍 Wine ERP — Audit Hợp Nhất (Cuối Cùng)
-**Ngày:** 06/03/2026 11:12 | **Phiên bản:** Wine ERP v4.4  
-**Phương pháp:** Gộp audit trước + session 06/03 (28 features tổng cộng)  
+**Ngày:** 06/03/2026 14:00 | **Phiên bản:** Wine ERP v4.5  
+**Phương pháp:** Gộp audit trước + session 06/03 (43 features tổng cộng qua 2 phiên)  
 **Phạm vi:** So sánh 19 file đặc tả với codebase tại `wine-erp/src/`
 
 ---
@@ -32,7 +32,7 @@
 | Market Price | `MKT` | **75%** 🟢 | 🆕 | Comparison table + Margin Gap + Below-cost alert |
 | AI Features | `AI` | **70%** 🟢 | ▲▲▲ | Key Vault + OCR Upload UI + Forecast + Pricing + Anomaly + Smart Search |
 
-> **Tổng hoàn thiện ước tính: ~99%** trọng tâm core. Tất cả P1 features hoàn thành. Session 06/03: +28 features (21 built + 7 verified).
+> **Tổng hoàn thiện ước tính: ~99%** trọng tâm core. Tất cả P1 features hoàn thành. Session 06/03: +43 features qua 2 phiên (36 built + 7 verified).
 
 ---
 
@@ -460,6 +460,6 @@ AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
 
 ---
 
-*Audit updated: 06/03/2026 13:37 | Session: +43 features (36 built + 7 verified)*  
+*Audit updated: 06/03/2026 14:00 | Session: +43 features (36 built + 7 verified) qua 2 phiên*  
 *Scan method: Code outline + grep search toàn bộ codebase*  
 *Total spec files: 19 | Total code modules: 32 | Prisma models: ~57*

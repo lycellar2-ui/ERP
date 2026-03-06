@@ -57,7 +57,7 @@
 | Phase 1 | Phân tích Nghiệp vụ (Business Analysis) | ✅ Hoàn thành |
 | Phase 2 | Lập Kế hoạch & Task Breakdown | ✅ Hoàn thành |
 | Phase 3 | Architecture & Database Schema | ✅ Hoàn thành |
-| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P7 100%** \| P8 ~95% — +28 features phiên 06/03 (14 backend + 3 UI + 4 CSS/Infra + 7 verified) |
+| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P7 100%** \| P8 ~97% — +43 features phiên 06/03 (CRM UI ×4, POS Loyalty, KPI Copy Year, Wine Preference, Scheduled Reports, Scorecard, Duplicates, Role-based Dashboard, Realtime) |
 | Phase 5 | Testing & Go-live | — |
 
 ---
@@ -98,6 +98,7 @@
 | **QR Traceability** | ✅ Auto-sinh QR khi GR confirm, trang verify public, anti-counterfeit, in nhãn A4 |
 | **Kiến trúc** | Modular-first: Mỗi module độc lập, có thể bật/tắt/deploy riêng |
 | **Hải quan điện tử** | Chưa chốt (VNACCS/ECUS hay chỉ Export Excel?) |
+| **Realtime** | ✅ Supabase Realtime — Role-based channels cho approvals, AR, stock, SO |
 
 ---
 
@@ -160,4 +161,4 @@ docs/
 4. **AI context** → Cập nhật `llms.txt` khi có thêm khái niệm domain mới
 
 ---
-*Last updated: 2026-03-06 11:12 | Wine ERP v4.4 — **P1-P7 100% ✅** | **P8 ~95%** | Session 06/03: +28 features (Waterfall, YoY, CRM Pref/Events/Tickets, Loyalty, DigiSign, Scorecard, Duplicates, Scanner, Print A4, Scheduled Reports, Cron Route)*
+*Last updated: 2026-03-06 14:00 | Wine ERP v4.5 — **P1-P7 100% ✅** | **P8 ~97%** | Session 06/03: +43 features (Phiên 1: Supplier Scorecard/Duplicates, Dashboard Widgets, Scheduled Reports, Partner Portal. Phiên 2: CRM Tasting Events/Complaints/Wine Preference, POS Loyalty, KPI Copy Year, Build fix)*
