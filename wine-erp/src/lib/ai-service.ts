@@ -70,33 +70,74 @@ export async function callGemini(options: AIGenerateOptions): Promise<{
 }
 
 // ── Generate Product Description ──────────────────
-export async function generateProductDescription(productId: string): Promise<{
+interface FormDataForAI {
+    name: string
+    wineType?: string
+    vintage?: number
+    abv?: number
+    tastingNotes?: string
+    countryCode?: string
+}
+
+export async function generateProductDescription(
+    productId?: string,
+    formData?: FormDataForAI,
+): Promise<{
     success: boolean
     descriptionVI?: string
     descriptionEN?: string
     error?: string
 }> {
-    const product = await prisma.product.findUnique({
-        where: { id: productId },
-        select: {
-            productName: true, skuCode: true, wineType: true,
-            country: true, vintage: true, abvPercent: true,
-            volumeMl: true, classification: true,
-            appellation: { select: { name: true } },
-        },
-    })
-    if (!product) return { success: false, error: 'Product not found' }
+    let pName = ''
+    let wType = 'N/A'
+    let pVintage: string | number = 'N/A'
+    let pAbv: string | number = 'N/A'
+    let pClassification = 'N/A'
+    let pVolume: string | number = 'N/A'
+    let pRegion = 'N/A'
+    let pSku = 'N/A'
+
+    if (productId) {
+        const product = await prisma.product.findUnique({
+            where: { id: productId },
+            select: {
+                productName: true, skuCode: true, wineType: true,
+                country: true, vintage: true, abvPercent: true,
+                volumeMl: true, classification: true,
+                appellation: { select: { name: true } },
+            },
+        })
+        if (!product) return { success: false, error: 'Product not found' }
+
+        pName = product.productName
+        pSku = product.skuCode
+        wType = product.wineType ?? 'N/A'
+        pVintage = product.vintage ?? 'N/A'
+        pAbv = product.abvPercent ?? 'N/A'
+        pClassification = product.classification ?? 'N/A'
+        pVolume = product.volumeMl ?? 'N/A'
+        pRegion = product.appellation?.name ?? product.country ?? 'N/A'
+    } else if (formData) {
+        pName = formData.name
+        wType = formData.wineType || 'N/A'
+        pVintage = formData.vintage ?? 'N/A'
+        pAbv = formData.abv ?? 'N/A'
+        pRegion = formData.countryCode || 'N/A'
+        if (!pName) return { success: false, error: 'Product name is required' }
+    } else {
+        return { success: false, error: 'Either productId or formData is required' }
+    }
 
     const prompt = `Viết mô tả chuyên nghiệp cho rượu vang sau (2 phiên bản: Tiếng Việt và English):
 
-Tên: ${product.productName}
-SKU: ${product.skuCode}
-Loại: ${product.wineType ?? 'N/A'}
-Vùng: ${product.appellation?.name ?? product.country ?? 'N/A'}
-Vintage: ${product.vintage ?? 'N/A'}
-Nồng độ: ${product.abvPercent ?? 'N/A'}%
-Classification: ${product.classification ?? 'N/A'}
-Dung tích: ${product.volumeMl ?? 'N/A'}ml
+Tên: ${pName}
+SKU: ${pSku}
+Loại: ${wType}
+Vùng: ${pRegion}
+Vintage: ${pVintage}
+Nồng độ: ${pAbv}%
+Classification: ${pClassification}
+Dung tích: ${pVolume}ml
 
 Yêu cầu:
 - Mô tả tasting notes (mắt, mũi, miệng)
