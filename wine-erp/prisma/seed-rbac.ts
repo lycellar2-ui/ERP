@@ -157,11 +157,11 @@ async function main() {
     // ─── 4. Create sample users ────────────────────
     console.log('  → Creating sample users...')
     const sampleUsers = [
-        { id: 'user-ketoan', email: 'ketoan@lyscellars.com', name: 'Nguyễn Thị Hương (Kế Toán)', roleId: 'role-kế-toán' },
-        { id: 'user-sales-mgr', email: 'sales.mgr@lyscellars.com', name: 'Trần Minh Đức (Sales Manager)', roleId: 'role-sales-manager' },
-        { id: 'user-sales-01', email: 'sales01@lyscellars.com', name: 'Lê Văn An (Sales Rep)', roleId: 'role-sales-rep' },
+        { id: 'user-ketoan', email: 'ketoan@lyscellars.com', name: 'Trà (Kế toán)', roleId: 'role-kế-toán' },
+        { id: 'user-sales-mgr', email: 'sales.mgr@lyscellars.com', name: 'Jeremy (Sale Manager)', roleId: 'role-sales-manager' },
+        { id: 'user-sales-01', email: 'sales01@lyscellars.com', name: 'Khánh (Sale rep)', roleId: 'role-sales-rep' },
         { id: 'user-thukho', email: 'thukho@lyscellars.com', name: 'Phạm Quốc Hùng (Thủ Kho)', roleId: 'role-thủ-kho' },
-        { id: 'user-thumua', email: 'thumua@lyscellars.com', name: 'Võ Ngọc Mai (Thu Mua)', roleId: 'role-thu-mua' },
+        { id: 'user-thumua', email: 'thumua@lyscellars.com', name: 'Nga (Mua Hàng)', roleId: 'role-thu-mua' },
     ]
 
     for (const u of sampleUsers) {

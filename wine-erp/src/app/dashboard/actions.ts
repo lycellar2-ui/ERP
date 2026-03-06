@@ -658,7 +658,7 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
         ],
     },
     THU_MUA: {
-        greeting: 'Thu Mua — Nhập Khẩu',
+        greeting: 'Mua Hàng — Nhập Khẩu',
         sections: ['kpi_cards', 'shipment_tracker', 'pending_approvals', 'stock_alerts'],
         quickLinks: [
             { label: 'Đơn mua', href: '/dashboard/procurement', icon: 'Ship' },
