@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { BarChart3, TrendingUp, Package, Wine, Download, Loader2, FileSpreadsheet, CheckCircle2, Clock, Calendar } from 'lucide-react'
+import { toast } from 'sonner'
 import { formatVND, formatDate } from '@/lib/utils'
 import { exportReportExcel, getReportSchedules, toggleScheduleStatus, type ScheduleRow } from './actions'
 import { REPORT_CATALOG, type ReportKey } from './constants'
@@ -85,7 +86,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
             URL.revokeObjectURL(url)
             setLastDownloaded(key)
         } else {
-            alert(result.error || 'Lỗi xuất báo cáo')
+            toast.error(result.error || 'Lỗi xuất báo cáo')
         }
         setDownloading(null)
     }

@@ -1,0 +1,175 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e8]:
+          - paragraph [ref=e9]: LY's Cellars
+          - paragraph [ref=e10]: FINE WINE SPECIALIST
+      - navigation [ref=e11]:
+        - generic [ref=e12]:
+          - paragraph [ref=e13]: Tổng Quan
+          - link "Dashboard CEO" [ref=e14] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e15]
+            - generic [ref=e20]: Dashboard CEO
+        - generic [ref=e21]:
+          - paragraph [ref=e22]: Danh Mục
+          - link "Sản Phẩm" [ref=e23] [cursor=pointer]:
+            - /url: /dashboard/products
+            - img [ref=e24]
+            - generic [ref=e28]: Sản Phẩm
+          - link "Nhà Cung Cấp" [ref=e29] [cursor=pointer]:
+            - /url: /dashboard/suppliers
+            - img [ref=e30]
+            - generic [ref=e34]: Nhà Cung Cấp
+          - link "Khách Hàng" [ref=e35] [cursor=pointer]:
+            - /url: /dashboard/customers
+            - img [ref=e36]
+            - generic [ref=e41]: Khách Hàng
+          - link "Hợp Đồng" [ref=e42] [cursor=pointer]:
+            - /url: /dashboard/contracts
+            - img [ref=e43]
+            - generic [ref=e47]: Hợp Đồng
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Mua Hàng
+          - link "Đơn Mua Hàng" [ref=e50] [cursor=pointer]:
+            - /url: /dashboard/procurement
+            - img [ref=e51]
+            - generic [ref=e55]: Đơn Mua Hàng
+          - link "Agency Portal" [ref=e56] [cursor=pointer]:
+            - /url: /dashboard/agency
+            - img [ref=e57]
+            - generic [ref=e60]: Agency Portal
+          - link "Tra Cứu Thuế" [ref=e61] [cursor=pointer]:
+            - /url: /dashboard/tax
+            - img [ref=e62]
+            - generic [ref=e66]: Tra Cứu Thuế
+          - link "Tính Giá Vốn (CST)" [ref=e67] [cursor=pointer]:
+            - /url: /dashboard/costing
+            - img [ref=e68]
+            - generic [ref=e70]: Tính Giá Vốn (CST)
+        - generic [ref=e71]:
+          - paragraph [ref=e72]: Kho & Bán Hàng
+          - link "Kho Hàng" [ref=e73] [cursor=pointer]:
+            - /url: /dashboard/warehouse
+            - img [ref=e74]
+            - generic [ref=e77]: Kho Hàng
+          - link "Chuyển Kho" [ref=e78] [cursor=pointer]:
+            - /url: /dashboard/transfers
+            - img [ref=e79]
+            - generic [ref=e82]: Chuyển Kho
+          - link "Kiểm Kê" [ref=e83] [cursor=pointer]:
+            - /url: /dashboard/stock-count
+            - img [ref=e84]
+            - generic [ref=e87]: Kiểm Kê
+          - link "Đơn Bán Hàng" [ref=e88] [cursor=pointer]:
+            - /url: /dashboard/sales
+            - img [ref=e89]
+            - generic [ref=e92]: Đơn Bán Hàng
+          - link "Báo Giá" [ref=e93] [cursor=pointer]:
+            - /url: /dashboard/quotations
+            - img [ref=e94]
+            - generic [ref=e97]: Báo Giá
+          - link "Bảng Giá" [ref=e98] [cursor=pointer]:
+            - /url: /dashboard/price-list
+            - img [ref=e99]
+            - generic [ref=e102]: Bảng Giá
+          - link "CRM — Khách Hàng" [ref=e103] [cursor=pointer]:
+            - /url: /dashboard/crm
+            - img [ref=e104]
+            - generic [ref=e109]: CRM — Khách Hàng
+          - link "Sales Pipeline" [ref=e110] [cursor=pointer]:
+            - /url: /dashboard/pipeline
+            - img [ref=e111]
+            - generic [ref=e115]: Sales Pipeline
+          - link "Ký Gửi (CSG)" [ref=e116] [cursor=pointer]:
+            - /url: /dashboard/consignment
+            - img [ref=e117]
+            - generic [ref=e122]: Ký Gửi (CSG)
+          - link "Allocation Engine" [ref=e123] [cursor=pointer]:
+            - /url: /dashboard/allocation
+            - img [ref=e124]
+            - generic [ref=e126]: Allocation Engine
+          - link "Vận Chuyển" [ref=e127] [cursor=pointer]:
+            - /url: /dashboard/delivery
+            - img [ref=e128]
+            - generic [ref=e133]: Vận Chuyển
+          - link "Trả Hàng & CN" [ref=e134] [cursor=pointer]:
+            - /url: /dashboard/returns
+            - img [ref=e135]
+            - generic [ref=e139]: Trả Hàng & CN
+          - link "POS Showroom" [ref=e140] [cursor=pointer]:
+            - /url: /dashboard/pos
+            - img [ref=e141]
+            - generic [ref=e143]: POS Showroom
+          - link "QR Truy Xuất" [ref=e144] [cursor=pointer]:
+            - /url: /dashboard/qr-codes
+            - img [ref=e145]
+            - generic [ref=e151]: QR Truy Xuất
+        - generic [ref=e152]:
+          - paragraph [ref=e153]: Tài Chính
+          - link "Công Nợ & Kế Toán" [ref=e154] [cursor=pointer]:
+            - /url: /dashboard/finance
+            - img [ref=e155]
+            - generic [ref=e157]: Công Nợ & Kế Toán
+          - link "Tờ Khai Thuế" [ref=e158] [cursor=pointer]:
+            - /url: /dashboard/declarations
+            - img [ref=e159]
+            - generic [ref=e162]: Tờ Khai Thuế
+          - link "Quản Lý Tem" [ref=e163] [cursor=pointer]:
+            - /url: /dashboard/stamps
+            - img [ref=e164]
+            - generic [ref=e167]: Quản Lý Tem
+          - link "Báo Cáo" [ref=e168] [cursor=pointer]:
+            - /url: /dashboard/reports
+            - img [ref=e169]
+            - generic [ref=e171]: Báo Cáo
+          - link "Giá Thị Trường" [ref=e172] [cursor=pointer]:
+            - /url: /dashboard/market-price
+            - img [ref=e173]
+            - generic [ref=e176]: Giá Thị Trường
+          - link "KPI Chỉ Tiêu" [ref=e177] [cursor=pointer]:
+            - /url: /dashboard/kpi
+            - img [ref=e178]
+            - generic [ref=e182]: KPI Chỉ Tiêu
+        - generic [ref=e183]:
+          - paragraph [ref=e184]: Hệ Thống
+          - link "AI & Prompt" [ref=e185] [cursor=pointer]:
+            - /url: /dashboard/ai
+            - img [ref=e186]
+            - generic [ref=e194]: AI & Prompt
+          - link "Cài Đặt & RBAC" [ref=e195] [cursor=pointer]:
+            - /url: /dashboard/settings
+            - img [ref=e196]
+            - generic [ref=e199]: Cài Đặt & RBAC
+      - generic [ref=e200]:
+        - button "Đăng Xuất" [ref=e201]:
+          - img [ref=e202]
+          - generic [ref=e205]: Đăng Xuất
+        - button [ref=e206]:
+          - img [ref=e207]
+    - generic [ref=e209]:
+      - banner [ref=e210]:
+        - generic [ref=e211]:
+          - heading "LY's Cellars" [level=1] [ref=e212]
+          - paragraph [ref=e213]: Hệ thống quản lý nhập khẩu rượu vang
+        - generic [ref=e214]:
+          - button "Tìm kiếm... ⌘K" [ref=e215]:
+            - img [ref=e216]
+            - generic [ref=e219]: Tìm kiếm...
+            - generic [ref=e220]: ⌘K
+          - button [ref=e221]:
+            - img [ref=e222]
+          - button "A Admin" [ref=e226]:
+            - generic [ref=e227]: A
+            - generic [ref=e228]: Admin
+      - main [ref=e229]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e347] [cursor=pointer]:
+    - img [ref=e348]
+  - alert [ref=e351]
+```

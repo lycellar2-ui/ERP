@@ -468,7 +468,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                         if (res.success) {
                                             setAiDescription({ vi: res.descriptionVI ?? '', en: res.descriptionEN ?? '' })
                                         } else {
-                                            alert(`AI Error: ${res.error} `)
+                                            toast.error(`AI Error: ${res.error} `)
                                         }
                                     }}
                                     disabled={generatingAI}
@@ -529,7 +529,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                         if (res.success && res.media) {
                                             setMediaList(prev => [res.media!, ...prev])
                                         } else {
-                                            alert(`Lỗi upload: ${res.error} `)
+                                            toast.error(`Lỗi upload: ${res.error} `)
                                         }
                                         e.target.value = ''
                                     }}

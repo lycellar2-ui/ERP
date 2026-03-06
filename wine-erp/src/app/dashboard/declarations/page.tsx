@@ -11,6 +11,7 @@ import {
 } from './actions'
 import { SignaturePad } from '@/components/SignaturePad'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const TYPE_MAP: Record<string, { label: string; color: string; icon: string }> = {
     IMPORT_CUSTOMS: { label: 'Tờ Khai NK', color: '#87CBB9', icon: '📋' },
@@ -57,7 +58,7 @@ export default function DeclarationsPage() {
     const handleCreate = async (type: string, year: number, month?: number) => {
         const res = await createDeclaration({ type: type as any, periodYear: year, periodMonth: month, createdBy: 'system' })
         if (res.success) { setCreateOpen(false); reload() }
-        else alert(res.error)
+        else toast.error(res.error || 'Lỗi tạo tờ khai')
     }
 
     const handleViewDetail = async (row: DeclarationRow) => {
@@ -77,7 +78,7 @@ export default function DeclarationsPage() {
     const handleStatusChange = async (id: string, status: 'APPROVED' | 'SUBMITTED') => {
         const res = await updateDeclarationStatus(id, status)
         if (res.success) { reload(); setDetailRow(null) }
-        else alert(res.error)
+        else toast.error(res.error || 'Lỗi cập nhật trạng thái')
     }
 
     const handleUpload = async (taxId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +94,7 @@ export default function DeclarationsPage() {
             // reload detail row to show newly added doc
             setDetailRow(prev => prev ? { ...prev, documents: [...(prev.documents || []), res.document as any] } : prev)
         } else {
-            alert(`Lỗi upload: ${res.error}`)
+            toast.error(`Lỗi upload: ${res.error}`)
         }
     }
 
@@ -107,7 +108,7 @@ export default function DeclarationsPage() {
             setDetailRow(null)
             setDetailData(null)
         } else {
-            alert(`Lỗi ký duyệt: ${res.error}`)
+            toast.error(`Lỗi ký duyệt: ${res.error}`)
         }
     }
 

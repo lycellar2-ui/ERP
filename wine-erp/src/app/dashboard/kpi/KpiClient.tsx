@@ -5,6 +5,7 @@ import {
     Target, TrendingUp, TrendingDown, AlertCircle, CheckCircle2,
     Settings, Plus, Trash2, Save, X, Copy, Loader2
 } from 'lucide-react'
+import { toast } from 'sonner'
 import type { KpiSummary, KpiTargetRow } from './actions'
 import {
     getKpiSummary, getKpiTargets, upsertKpiTarget, deleteKpiTarget,
@@ -57,7 +58,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
     useEffect(() => { if (tab === 'setup') loadSetup() }, [tab])
 
     const handleSave = async () => {
-        if (!addForm.targetValue) return alert('Nhập giá trị chỉ tiêu')
+        if (!addForm.targetValue) return toast.error('Nhập giá trị chỉ tiêu')
         const res = await upsertKpiTarget({
             metric: addForm.metric,
             year: addForm.year,
@@ -73,7 +74,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
             // Reload dashboard data
             const newSummaries = await getKpiSummary()
             setSummaries(newSummaries)
-        } else alert(res.error)
+        } else toast.error(res.error || 'Lỗi lưu chỉ tiêu')
     }
 
     const handleDelete = async (id: string) => {

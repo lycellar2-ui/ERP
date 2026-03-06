@@ -1,0 +1,105 @@
+﻿
+Running 30 tests using 1 worker
+
+Dashboard: 2212ms
+  Γ£ÿ   1 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Dashboard loads within 800ms (2.7s)
+Products: 1291ms
+  Γ£ÿ   2 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Products loads within 500ms (1.5s)
+Customers: 418ms
+  Γ£ô   3 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Customers loads within 500ms (610ms)
+Suppliers: 656ms
+  Γ£ô   4 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Suppliers loads within 500ms (781ms)
+Sales: 514ms
+  Γ£ô   5 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Sales loads within 600ms (631ms)
+Warehouse: 864ms
+  Γ£ô   6 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Warehouse loads within 600ms (1.0s)
+Finance: 706ms
+  Γ£ô   7 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Finance loads within 600ms (809ms)
+Procurement: 851ms
+  Γ£ô   8 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Procurement loads within 600ms (971ms)
+CRM: 437ms
+  Γ£ô   9 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] CRM loads within 600ms (566ms)
+Reports: 413ms
+  Γ£ô  10 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Reports loads within 400ms (512ms)
+Contracts: 486ms
+  Γ£ô  11 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Contracts loads within 500ms (607ms)
+Agency: 578ms
+  Γ£ô  12 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Agency loads within 500ms (721ms)
+Tax: 427ms
+  Γ£ô  13 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Tax loads within 400ms (542ms)
+Delivery: 423ms
+  Γ£ô  14 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Delivery loads within 500ms (522ms)
+Consignment: 370ms
+  Γ£ô  15 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Consignment loads within 500ms (480ms)
+Stamps: 334ms
+  Γ£ô  16 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Stamps loads within 400ms (429ms)
+KPI: 436ms
+  Γ£ô  17 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] KPI loads within 400ms (540ms)
+POS: 595ms
+  Γ£ô  18 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] POS loads within 500ms (704ms)
+AI: 605ms
+  Γ£ô  19 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] AI loads within 600ms (697ms)
+Declarations: 604ms
+  Γ£ô  20 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Declarations loads within 500ms (708ms)
+QR Codes: 370ms
+  Γ£ô  21 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] QR Codes loads within 400ms (453ms)
+Allocation: 877ms
+  Γ£ô  22 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Allocation loads within 500ms (987ms)
+Quotations: 590ms
+  Γ£ô  23 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Quotations loads within 500ms (728ms)
+Returns: 360ms
+  Γ£ô  24 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Returns loads within 500ms (451ms)
+Settings: 714ms
+  Γ£ô  25 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Settings loads within 400ms (807ms)
+Pipeline: 326ms
+  Γ£ô  26 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Pipeline loads within 500ms (413ms)
+Market Price: 549ms
+  Γ£ô  27 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Market Price loads within 500ms (635ms)
+Costing: 291ms
+  Γ£ô  28 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Costing loads within 500ms (376ms)
+Stock Count: 365ms
+  Γ£ô  29 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Stock Count loads within 500ms (458ms)
+Transfers: 385ms
+  Γ£ô  30 tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Transfers loads within 500ms (487ms)
+
+
+  1) tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Dashboard loads within 800ms ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m1600[39m
+    Received:   [31m2212[39m
+
+      48 |
+      49 |         console.log(`${page.name}: ${loadTime}ms`)
+    > 50 |         expect(loadTime).toBeLessThan(page.sla * 2) // Using *2 for local dev mode performance tolerance
+         |                          ^
+      51 |
+      52 |         await context.close()
+      53 |     })
+        at C:\Onedrive\OneDrive - NU Viet Nam\New folder\Lyruou\wine-erp\tests\performance\page-load.spec.ts:50:26
+
+    Error Context: test-results\tests-performance-page-loa-4423a-ashboard-loads-within-800ms\error-context.md
+
+  2) tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Products loads within 500ms ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m1000[39m
+    Received:   [31m1291[39m
+
+      48 |
+      49 |         console.log(`${page.name}: ${loadTime}ms`)
+    > 50 |         expect(loadTime).toBeLessThan(page.sla * 2) // Using *2 for local dev mode performance tolerance
+         |                          ^
+      51 |
+      52 |         await context.close()
+      53 |     })
+        at C:\Onedrive\OneDrive - NU Viet Nam\New folder\Lyruou\wine-erp\tests\performance\page-load.spec.ts:50:26
+
+    Error Context: test-results\tests-performance-page-loa-589de-Products-loads-within-500ms\error-context.md
+
+  2 failed
+    tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Dashboard loads within 800ms ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    tests\performance\page-load.spec.ts:37:9 ΓÇ║ [PERF] Products loads within 500ms ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  28 passed (36.0s)

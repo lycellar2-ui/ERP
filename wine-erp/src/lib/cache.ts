@@ -112,3 +112,24 @@ export function getCacheStats() {
     }
     return { total: cache.size, fresh, stale, dead }
 }
+
+/**
+ * Server-side wrapper with performance timing.
+ * 
+ * Logs execution time of the cache function when PERF_LOG environment variable is set.
+ */
+export async function cachedWithTiming<T>(
+    key: string,
+    fn: () => Promise<T>,
+    ttlMs: number = DEFAULT_TTL_MS
+): Promise<T> {
+    const start = performance.now()
+    const result = await cached(key, fn, ttlMs)
+    const elapsed = performance.now() - start
+
+    if (process.env.PERF_LOG === 'true') {
+        console.log(`[PERF] ${key} → ${elapsed.toFixed(1)}ms`)
+    }
+
+    return result
+}

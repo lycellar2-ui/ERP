@@ -37,17 +37,17 @@ async function main() {
         update: {},
         create: { id: 'region-burgundy', name: 'Burgundy (Bourgogne)', country: 'FR' },
     })
-    const champagne = await prisma.wineRegion.upsert({
+    await prisma.wineRegion.upsert({
         where: { id: 'region-champagne' },
         update: {},
         create: { id: 'region-champagne', name: 'Champagne', country: 'FR' },
     })
-    const tuscany = await prisma.wineRegion.upsert({
+    await prisma.wineRegion.upsert({
         where: { id: 'region-tuscany' },
         update: {},
         create: { id: 'region-tuscany', name: 'Tuscany (Toscana)', country: 'IT' },
     })
-    const napa = await prisma.wineRegion.upsert({
+    await prisma.wineRegion.upsert({
         where: { id: 'region-napa' },
         update: {},
         create: { id: 'region-napa', name: 'Napa Valley', country: 'US' },

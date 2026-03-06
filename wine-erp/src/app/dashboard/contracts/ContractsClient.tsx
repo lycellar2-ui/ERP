@@ -5,6 +5,7 @@ import { FileSignature, AlertCircle, CheckCircle2, Clock, Search, Plus, X, Save,
 import { ContractRow, getContracts, createContract, getCounterparties, getContractUtilization, uploadContractDocument, signContract } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { SignaturePad } from '@/components/SignaturePad'
+import { toast } from 'sonner'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)' },
@@ -245,11 +246,11 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
         const res = await signContract(contractId, currentSignatureUrl)
         setSavingSignature(false)
         if (res.success) {
-            alert('Ký duyệt hợp đồng thành công!')
+            toast.success('Ký duyệt hợp đồng thành công!')
             if (selectedId === contractId) showUtilization(contractId, true)
             reload()
         } else {
-            alert(`Lỗi ký duyệt: ${res.error}`)
+            toast.error(`Lỗi ký duyệt: ${res.error || ''}`)
         }
     }
 
@@ -263,12 +264,12 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
         const res = await uploadContractDocument(contractId, formData)
         setUploadingDoc(false)
         if (res.success) {
-            alert('Tải file lên thành công!')
+            toast.success('Tải file lên thành công!')
             if (selectedId === contractId) {
                 showUtilization(contractId, true)
             }
         } else {
-            alert(`Lỗi tải file: ${res.error}`)
+            toast.error(`Lỗi tải file: ${res.error || ''}`)
         }
     }
 

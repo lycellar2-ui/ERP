@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Plus, X, AlertTriangle, DollarSign, Search } from 'lucide-react'
+import { toast } from 'sonner'
 import { type MarketPriceRow, getMarketPrices, addMarketPrice, getProductOptions } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 
@@ -24,7 +25,7 @@ export function MarketPriceClient({ initialRows, stats }: {
     }
 
     const handleAdd = async () => {
-        if (!form.productId || !form.price) return alert('Chọn SP và nhập giá')
+        if (!form.productId || !form.price) return toast.error('Chọn SP và nhập giá')
         const res = await addMarketPrice({
             productId: form.productId,
             price: Number(form.price),
@@ -37,7 +38,7 @@ export function MarketPriceClient({ initialRows, stats }: {
             setDrawerOpen(false)
             setForm({ productId: '', price: '', source: 'Manual', priceDate: new Date().toISOString().slice(0, 10), currency: 'VND' })
             reload()
-        } else alert(res.error)
+        } else toast.error(res.error || 'Lỗi lưu giá thị trường')
     }
 
     const filtered = rows.filter(r =>

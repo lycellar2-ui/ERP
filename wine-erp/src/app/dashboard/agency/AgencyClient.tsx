@@ -12,6 +12,7 @@ import {
     getActiveShipments, uploadAgencyDocument, getSubmissionDocuments
 } from './actions'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const card: React.CSSProperties = { background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '8px' }
 const inputStyle: React.CSSProperties = {
@@ -195,7 +196,7 @@ export function AgencyClient() {
             setDocuments(docs)
             loadSubmissions(subsFilter)
         } else {
-            alert(`Lỗi upload: ${res.error}`)
+            toast.error(`Lỗi upload: ${res.error || ''}`)
         }
         setUploadingDoc(false)
         e.target.value = ''

@@ -7,6 +7,7 @@ import {
     getAllocCampaigns, getAllocQuotas, getAllocStats,
     createAllocCampaign, addAllocQuota, getAllocOptions,
 } from './actions'
+import { toast } from 'sonner'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
     ACTIVE: { label: 'Hoạt Động', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
@@ -45,18 +46,18 @@ export function AllocationClient({ initialCampaigns, stats }: {
     }
 
     const handleCreateCampaign = async () => {
-        if (!form.name || !form.productId || !form.totalQty) return alert('Điền đủ thông tin')
+        if (!form.name || !form.productId || !form.totalQty) return toast.error('Điền đủ thông tin')
         const res = await createAllocCampaign({
             name: form.name, productId: form.productId,
             totalQty: Number(form.totalQty), unit: form.unit,
             startDate: form.startDate, endDate: form.endDate,
         })
         if (res.success) { setCreateOpen(false); setForm({ name: '', productId: '', totalQty: '', unit: 'CASE', startDate: '', endDate: '' }); reload() }
-        else alert(res.error)
+        else toast.error(res.error || 'Lỗi tạo campaign')
     }
 
     const handleAddQuota = async () => {
-        if (!selected || !quotaForm.targetId || !quotaForm.qtyAllocated) return alert('Điền đủ thông tin')
+        if (!selected || !quotaForm.targetId || !quotaForm.qtyAllocated) return toast.error('Điền đủ thông tin')
         const res = await addAllocQuota({
             campaignId: selected.id, targetType: quotaForm.targetType,
             targetId: quotaForm.targetId, qtyAllocated: Number(quotaForm.qtyAllocated),
@@ -66,7 +67,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
             const q = await getAllocQuotas(selected.id)
             setQuotas(q)
             reload()
-        } else alert(res.error)
+        } else toast.error(res.error || 'Lỗi thêm quota')
     }
 
     useEffect(() => { loadOptions() }, [])
