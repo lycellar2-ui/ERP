@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const revalidate = 45
 
 import { getWarehouses, getWMSStats } from './actions'
 import { WarehouseClient } from './WarehouseClient'

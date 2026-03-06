@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const revalidate = 60
 
 import { getSuppliers } from './actions'
 import { SuppliersClient } from './SuppliersClient'

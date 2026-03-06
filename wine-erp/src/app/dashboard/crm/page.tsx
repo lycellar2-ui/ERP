@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const revalidate = 45
 
 import { getCRMCustomers, getCRMStats } from './actions'
 import { CRMClient } from './CRMClient'
