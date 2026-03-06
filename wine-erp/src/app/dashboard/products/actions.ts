@@ -204,6 +204,94 @@ export async function deleteProduct(id: string) {
     revalidatePath('/dashboard/products')
 }
 
+// ─── Bulk import from Excel ──────────────────────
+export type ImportResult = {
+    success: number
+    errors: { row: number; message: string }[]
+    total: number
+}
+
+export async function bulkImportProducts(rows: Record<string, any>[]): Promise<ImportResult> {
+    const result: ImportResult = { success: 0, errors: [], total: rows.length }
+    if (rows.length > 500) {
+        result.errors.push({ row: 0, message: 'Tối đa 500 dòng mỗi lần import' })
+        return result
+    }
+
+    const validWineTypes = ['RED', 'WHITE', 'ROSE', 'SPARKLING', 'FORTIFIED', 'DESSERT']
+    const wineTypeMap: Record<string, string> = {
+        'Đỏ': 'RED', 'Trắng': 'WHITE', 'Rosé': 'ROSE', 'Sâm panh': 'SPARKLING',
+        'Red': 'RED', 'White': 'WHITE',
+    }
+
+    // Cache producers for reuse
+    const producerCache = new Map<string, string>()
+    const producers = await prisma.producer.findMany({ select: { id: true, name: true } })
+    producers.forEach(p => producerCache.set(p.name.toLowerCase(), p.id))
+
+    for (let i = 0; i < rows.length; i++) {
+        const r = rows[i]
+        try {
+            const sku = String(r['SKU'] ?? r['skuCode'] ?? '').trim()
+            const name = String(r['Tên SP'] ?? r['productName'] ?? '').trim()
+            if (!sku || !name) { result.errors.push({ row: i + 2, message: 'Thiếu SKU hoặc Tên SP' }); continue }
+
+            // Check duplicate SKU
+            const existing = await prisma.product.findFirst({ where: { skuCode: sku, deletedAt: null } })
+            if (existing) { result.errors.push({ row: i + 2, message: `SKU '${sku}' đã tồn tại — bỏ qua` }); continue }
+
+            // Wine type
+            const rawType = String(r['Loại'] ?? r['wineType'] ?? 'RED').trim()
+            const wineType = wineTypeMap[rawType] ?? rawType
+            if (!validWineTypes.includes(wineType)) {
+                result.errors.push({ row: i + 2, message: `Loại rượu không hợp lệ: ${rawType}` }); continue
+            }
+
+            // Producer
+            const producerName = String(r['Nhà SX'] ?? r['producerName'] ?? '').trim()
+            if (!producerName) { result.errors.push({ row: i + 2, message: 'Thiếu Nhà SX' }); continue }
+            let producerId = producerCache.get(producerName.toLowerCase())
+            if (!producerId) {
+                const country = String(r['Quốc Gia'] ?? r['country'] ?? 'FR').trim().toUpperCase()
+                const newProducer = await prisma.producer.create({ data: { name: producerName, country } })
+                producerId = newProducer.id
+                producerCache.set(producerName.toLowerCase(), producerId)
+            }
+
+            const country = String(r['Quốc Gia'] ?? r['country'] ?? 'FR').trim().toUpperCase()
+
+            await prisma.product.create({
+                data: {
+                    skuCode: sku,
+                    productName: name,
+                    producerId,
+                    vintage: r['Vintage'] ? Number(r['Vintage']) : null,
+                    country,
+                    abvPercent: r['ABV'] ? Number(r['ABV']) : 13.0,
+                    volumeMl: Number(r['Dung Tích'] ?? r['volumeMl'] ?? 750),
+                    format: (['STANDARD', 'MAGNUM', 'JEROBOAM', 'METHUSELAH'].includes(r['Format'] ?? 'STANDARD') ? r['Format'] : 'STANDARD') as any,
+                    packagingType: (['OWC', 'CARTON'].includes(r['Đóng Gói'] ?? 'CARTON') ? r['Đóng Gói'] : 'CARTON') as any,
+                    unitsPerCase: Number(r['Chai/Thùng'] ?? r['unitsPerCase'] ?? 12),
+                    hsCode: '2204211000',
+                    barcodeEan: r['Barcode'] ?? r['barcodeEan'] ?? null,
+                    wineType: wineType as any,
+                    classification: r['Classification'] ?? null,
+                    status: 'ACTIVE',
+                },
+            })
+            result.success++
+        } catch (err: any) {
+            result.errors.push({ row: i + 2, message: err.message ?? 'Lỗi không xác định' })
+        }
+    }
+
+    if (result.success > 0) {
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+    }
+    return result
+}
+
 // ─── Reference data ───────────────────────────────
 export async function getProducers() {
     return prisma.producer.findMany({

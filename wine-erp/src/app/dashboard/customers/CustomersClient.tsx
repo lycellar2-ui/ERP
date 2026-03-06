@@ -1,11 +1,12 @@
 ﻿'use client'
 
 import { useState, useCallback } from 'react'
-import { Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle } from 'lucide-react'
-import { CustomerRow, CustomerInput, createCustomer, getCustomers } from './actions'
+import { Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle, Upload } from 'lucide-react'
+import { CustomerRow, CustomerInput, createCustomer, getCustomers, bulkImportCustomers } from './actions'
 import { formatVND } from '@/lib/utils'
 import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
+import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 
 const CUSTOMER_TYPE: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
     HORECA: { label: 'HORECA', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)', emoji: '🏨' },
@@ -154,6 +155,53 @@ function AddCustomerDrawer({ open, onClose, onSaved }: {
                         </select>
                     </div>
 
+                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Liên Hệ & Địa Chỉ</p>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Người liên hệ</label>
+                            <input className={inputCls} style={inputStyle} value={(form as any).contactName ?? ''} placeholder="Nguyễn Văn A"
+                                onChange={e => set('contactName' as any, e.target.value || null)}
+                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Số điện thoại</label>
+                            <input className={inputCls} style={inputStyle} value={(form as any).phone ?? ''} placeholder="0901234567"
+                                onChange={e => set('phone' as any, e.target.value || null)}
+                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Email</label>
+                        <input type="email" className={inputCls} style={inputStyle} value={(form as any).email ?? ''} placeholder="contact@hotel.com"
+                            onChange={e => set('email' as any, e.target.value || null)}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Địa chỉ</label>
+                        <input className={inputCls} style={inputStyle} value={(form as any).address ?? ''} placeholder="123 Đường Lê Lai, Quận 1"
+                            onChange={e => set('address' as any, e.target.value || null)}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Thành phố</label>
+                        <select className={inputCls} style={inputStyle} value={(form as any).city ?? ''}
+                            onChange={e => set('city' as any, e.target.value || null)}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                            <option value="">— Chọn —</option>
+                            <option value="Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                            <option value="Hà Nội">Hà Nội</option>
+                            <option value="Đà Nẵng">Đà Nẵng</option>
+                            <option value="Nha Trang">Nha Trang</option>
+                            <option value="Phú Quốc">Phú Quốc</option>
+                            <option value="Hội An">Hội An</option>
+                        </select>
+                    </div>
+
                     <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Tín Dụng & Thanh Toán</p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -206,6 +254,7 @@ export function CustomersClient({ initialRows, initialTotal }: { initialRows: Cu
     const [statusFilter, setStatusFilter] = useState('')
     const [page, setPage] = useState(1)
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const [importOpen, setImportOpen] = useState(false)
 
     const reload = useCallback(async (s?: string, t?: string, st?: string, p?: number) => {
         const result = await getCustomers({
@@ -232,13 +281,22 @@ export function CustomersClient({ initialRows, initialTotal }: { initialRows: Cu
                         B2B: Khách sạn, nhà hàng, phân phối, VIP retail — {total.toLocaleString()} khách hàng
                     </p>
                 </div>
-                <button onClick={() => setDrawerOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                    <Plus size={16} /> Thêm Khách Hàng
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setImportOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                        style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}>
+                        <Upload size={16} /> Import Excel
+                    </button>
+                    <button onClick={() => setDrawerOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        <Plus size={16} /> Thêm Khách Hàng
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -353,6 +411,29 @@ export function CustomersClient({ initialRows, initialTotal }: { initialRows: Cu
                     setDrawerOpen(false)
                     reload()
                 }} />
+
+            <ExcelImportDialog
+                open={importOpen}
+                onClose={() => setImportOpen(false)}
+                title="Import Khách Hàng"
+                templateFileName="template_khach_hang.xlsx"
+                templateColumns={[
+                    { header: 'Mã KH', sample: 'CUS-PARKHYATT', required: true },
+                    { header: 'Tên KH', sample: 'Park Hyatt Saigon', required: true },
+                    { header: 'Loại KH', sample: 'HORECA', required: true },
+                    { header: 'Kênh', sample: 'HORECA' },
+                    { header: 'MST', sample: '0302012345' },
+                    { header: 'Thanh Toán', sample: 'NET30' },
+                    { header: 'Hạn Mức', sample: '500000000' },
+                    { header: 'Người Liên Hệ', sample: 'Nguyễn Văn A' },
+                    { header: 'Email', sample: 'contact@parkhyatt.com' },
+                    { header: 'SĐT', sample: '0281234567' },
+                    { header: 'Địa Chỉ', sample: '2 Công Trường Lam Sơn, Q.1' },
+                    { header: 'Thành Phố', sample: 'Hồ Chí Minh' },
+                ]}
+                onImport={bulkImportCustomers}
+                onComplete={() => reload()}
+            />
         </div>
     )
 }

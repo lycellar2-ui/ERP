@@ -1,10 +1,11 @@
 ﻿'use client'
 
 import { useState, useCallback } from 'react'
-import { Search, Plus, Wine, Package, AlertCircle, TrendingUp } from 'lucide-react'
-import { ProductRow, ProductFilters } from './actions'
+import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload } from 'lucide-react'
+import { ProductRow, ProductFilters, bulkImportProducts } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
+import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
@@ -71,6 +72,7 @@ export function ProductsClient({ initialRows, initialTotal }: ProductsClientProp
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
+    const [importOpen, setImportOpen] = useState(false)
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
@@ -105,15 +107,26 @@ export function ProductsClient({ initialRows, initialTotal }: ProductsClientProp
                         Master Data — Quản lý toàn bộ danh mục rượu vang nhập khẩu
                     </p>
                 </div>
-                <button
-                    onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
-                >
-                    <Plus size={16} /> Thêm Sản Phẩm
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setImportOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                        style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
+                    >
+                        <Upload size={16} /> Import Excel
+                    </button>
+                    <button
+                        onClick={() => { setEditingId(null); setDrawerOpen(true) }}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
+                    >
+                        <Plus size={16} /> Thêm Sản Phẩm
+                    </button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -183,6 +196,30 @@ export function ProductsClient({ initialRows, initialTotal }: ProductsClientProp
                 open={drawerOpen} editingId={editingId}
                 onClose={() => setDrawerOpen(false)}
                 onSaved={() => { setDrawerOpen(false); applyFilter({}) }}
+            />
+
+            <ExcelImportDialog
+                open={importOpen}
+                onClose={() => setImportOpen(false)}
+                title="Import Sản Phẩm"
+                templateFileName="template_san_pham.xlsx"
+                templateColumns={[
+                    { header: 'SKU', sample: 'MOUTON-2018-750', required: true },
+                    { header: 'Tên SP', sample: 'Château Mouton Rothschild 2018', required: true },
+                    { header: 'Nhà SX', sample: 'Château Mouton Rothschild', required: true },
+                    { header: 'Vintage', sample: '2018' },
+                    { header: 'Loại', sample: 'RED', required: true },
+                    { header: 'Quốc Gia', sample: 'FR', required: true },
+                    { header: 'ABV', sample: '13.5' },
+                    { header: 'Dung Tích', sample: '750' },
+                    { header: 'Format', sample: 'STANDARD' },
+                    { header: 'Đóng Gói', sample: 'OWC' },
+                    { header: 'Chai/Thùng', sample: '6' },
+                    { header: 'Barcode', sample: '3760076009012' },
+                    { header: 'Classification', sample: 'Premier Cru Classé' },
+                ]}
+                onImport={bulkImportProducts}
+                onComplete={() => applyFilter({})}
             />
         </div>
     )

@@ -77,26 +77,145 @@ const customerSchema = z.object({
     paymentTerm: z.string().default('NET30'),
     creditLimit: z.number().default(0),
     status: z.enum(['ACTIVE', 'CREDIT_HOLD', 'INACTIVE']).default('ACTIVE'),
+    // Contact info (optional, auto-creates CustomerContact)
+    contactName: z.string().nullable().optional(),
+    email: z.string().email('Email không hợp lệ').nullable().optional(),
+    phone: z.string().nullable().optional(),
+    // Address (optional, auto-creates CustomerAddress)
+    address: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
 })
 
 export type CustomerInput = z.infer<typeof customerSchema>
 
 export async function createCustomer(input: CustomerInput) {
-    const data = customerSchema.parse(input)
-    await prisma.customer.create({
-        data: {
-            code: data.code,
-            name: data.name,
-            taxId: data.taxId ?? null,
-            customerType: data.customerType,
-            channel: data.channel ?? null,
-            paymentTerm: data.paymentTerm,
-            creditLimit: data.creditLimit,
-            status: data.status,
-        },
-    })
-    revalidatePath('/dashboard/customers')
-    return { success: true }
+    try {
+        const data = customerSchema.parse(input)
+        const customer = await prisma.customer.create({
+            data: {
+                code: data.code,
+                name: data.name,
+                taxId: data.taxId ?? null,
+                customerType: data.customerType,
+                channel: data.channel ?? null,
+                paymentTerm: data.paymentTerm,
+                creditLimit: data.creditLimit,
+                status: data.status,
+            },
+        })
+
+        // Auto-create primary contact if contact info provided
+        const hasContact = data.contactName || data.email || data.phone
+        if (hasContact) {
+            await prisma.customerContact.create({
+                data: {
+                    customerId: customer.id,
+                    name: data.contactName || data.name,
+                    email: data.email ?? null,
+                    phone: data.phone ?? null,
+                    isPrimary: true,
+                },
+            })
+        }
+
+        // Auto-create address if provided
+        if (data.address) {
+            await prisma.customerAddress.create({
+                data: {
+                    customerId: customer.id,
+                    label: 'Địa chỉ chính',
+                    address: data.address,
+                    city: data.city ?? null,
+                    isDefault: true,
+                },
+            })
+        }
+
+        revalidatePath('/dashboard/customers')
+        return { success: true }
+    } catch (err: any) {
+        if (err?.code === 'P2002') throw new Error('Mã KH đã tồn tại. Vui lòng chọn mã khác.')
+        if (err?.issues) {
+            const msgs = err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')
+            throw new Error(`Validation: ${msgs}`)
+        }
+        throw new Error(err.message ?? 'Lỗi tạo khách hàng')
+    }
+}
+
+// ── Bulk import from Excel ──────────────────────────
+export type ImportResult = {
+    success: number
+    errors: { row: number; message: string }[]
+    total: number
+}
+
+export async function bulkImportCustomers(rows: Record<string, any>[]): Promise<ImportResult> {
+    const result: ImportResult = { success: 0, errors: [], total: rows.length }
+    if (rows.length > 500) {
+        result.errors.push({ row: 0, message: 'Tối đa 500 dòng mỗi lần import' })
+        return result
+    }
+
+    for (let i = 0; i < rows.length; i++) {
+        const r = rows[i]
+        try {
+            const code = String(r['Mã KH'] ?? r['code'] ?? '').trim()
+            const name = String(r['Tên KH'] ?? r['name'] ?? '').trim()
+            if (!code || !name) { result.errors.push({ row: i + 2, message: 'Thiếu Mã KH hoặc Tên KH' }); continue }
+
+            const typeMap: Record<string, string> = { 'HORECA': 'HORECA', 'Phân Phối': 'WHOLESALE_DISTRIBUTOR', 'VIP Retail': 'VIP_RETAIL', 'Cá Nhân': 'INDIVIDUAL' }
+            const rawType = String(r['Loại KH'] ?? r['customerType'] ?? 'HORECA').trim()
+            const customerType = typeMap[rawType] ?? rawType
+            if (!['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'INDIVIDUAL'].includes(customerType)) {
+                result.errors.push({ row: i + 2, message: `Loại KH không hợp lệ: ${rawType}` }); continue
+            }
+
+            // Check duplicate
+            const existing = await prisma.customer.findFirst({ where: { code, deletedAt: null } })
+            if (existing) { result.errors.push({ row: i + 2, message: `Mã KH '${code}' đã tồn tại — bỏ qua` }); continue }
+
+            const customer = await prisma.customer.create({
+                data: {
+                    code,
+                    name,
+                    customerType: customerType as any,
+                    taxId: r['MST'] ?? r['taxId'] ?? null,
+                    channel: r['Kênh'] ?? r['channel'] ?? null,
+                    paymentTerm: r['Thanh Toán'] ?? r['paymentTerm'] ?? 'NET30',
+                    creditLimit: Number(r['Hạn Mức'] ?? r['creditLimit'] ?? 0),
+                    status: 'ACTIVE',
+                },
+            })
+
+            // Contact
+            const email = r['Email'] ?? r['email'] ?? null
+            const phone = r['SĐT'] ?? r['phone'] ?? null
+            const contactName = r['Người Liên Hệ'] ?? r['contactName'] ?? null
+            if (email || phone || contactName) {
+                await prisma.customerContact.create({
+                    data: { customerId: customer.id, name: contactName || name, email, phone, isPrimary: true },
+                })
+            }
+
+            // Address
+            const address = r['Địa Chỉ'] ?? r['address'] ?? null
+            if (address) {
+                await prisma.customerAddress.create({
+                    data: { customerId: customer.id, label: 'Địa chỉ chính', address, city: r['Thành Phố'] ?? r['city'] ?? null, isDefault: true },
+                })
+            }
+
+            result.success++
+        } catch (err: any) {
+            result.errors.push({ row: i + 2, message: err.message ?? 'Lỗi không xác định' })
+        }
+    }
+
+    if (result.success > 0) {
+        revalidatePath('/dashboard/customers')
+    }
+    return result
 }
 
 export async function updateCustomer(id: string, input: Partial<CustomerInput>) {

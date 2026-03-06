@@ -130,6 +130,74 @@ export async function deleteSupplier(id: string): Promise<{ success: boolean; er
     }
 }
 
+// ── Bulk import from Excel ──────────────────────────
+export type ImportResult = {
+    success: number
+    errors: { row: number; message: string }[]
+    total: number
+}
+
+export async function bulkImportSuppliers(rows: Record<string, any>[]): Promise<ImportResult> {
+    const result: ImportResult = { success: 0, errors: [], total: rows.length }
+    if (rows.length > 500) {
+        result.errors.push({ row: 0, message: 'Tối đa 500 dòng mỗi lần import' })
+        return result
+    }
+
+    const validTypes = ['WINERY', 'NEGOCIANT', 'DISTRIBUTOR', 'LOGISTICS', 'FORWARDER', 'CUSTOMS_BROKER']
+    const typeMap: Record<string, string> = {
+        'Winery': 'WINERY', 'Négociant': 'NEGOCIANT', 'Distributor': 'DISTRIBUTOR',
+        'Logistics': 'LOGISTICS', 'Forwarder': 'FORWARDER', 'Customs Broker': 'CUSTOMS_BROKER',
+    }
+
+    for (let i = 0; i < rows.length; i++) {
+        const r = rows[i]
+        try {
+            const code = String(r['Mã NCC'] ?? r['code'] ?? '').trim()
+            const name = String(r['Tên NCC'] ?? r['name'] ?? '').trim()
+            if (!code || !name) { result.errors.push({ row: i + 2, message: 'Thiếu Mã NCC hoặc Tên NCC' }); continue }
+
+            const rawType = String(r['Loại'] ?? r['type'] ?? 'WINERY').trim()
+            const supplierType = typeMap[rawType] ?? rawType
+            if (!validTypes.includes(supplierType)) {
+                result.errors.push({ row: i + 2, message: `Loại NCC không hợp lệ: ${rawType}` }); continue
+            }
+
+            const country = String(r['Quốc Gia'] ?? r['country'] ?? '').trim()
+            if (!country || country.length !== 2) {
+                result.errors.push({ row: i + 2, message: 'Quốc gia phải là mã 2 ký tự (FR, IT, US...)' }); continue
+            }
+
+            const existing = await prisma.supplier.findFirst({ where: { code, deletedAt: null } })
+            if (existing) { result.errors.push({ row: i + 2, message: `Mã NCC '${code}' đã tồn tại — bỏ qua` }); continue }
+
+            await prisma.supplier.create({
+                data: {
+                    code,
+                    name,
+                    type: supplierType as any,
+                    country: country.toUpperCase(),
+                    taxId: r['MST'] ?? r['taxId'] ?? null,
+                    tradeAgreement: r['Hiệp Định'] ?? r['tradeAgreement'] ?? null,
+                    paymentTerm: r['Thanh Toán'] ?? r['paymentTerm'] ?? null,
+                    defaultCurrency: r['Tiền Tệ'] ?? r['currency'] ?? 'USD',
+                    incoterms: r['Incoterms'] ?? r['incoterms'] ?? null,
+                    leadTimeDays: Number(r['Lead Time'] ?? r['leadTimeDays'] ?? 45),
+                    status: 'ACTIVE',
+                },
+            })
+            result.success++
+        } catch (err: any) {
+            result.errors.push({ row: i + 2, message: err.message ?? 'Lỗi không xác định' })
+        }
+    }
+
+    if (result.success > 0) {
+        revalidatePath('/dashboard/suppliers')
+    }
+    return result
+}
+
 // ═══════════════════════════════════════════════════
 // #31 — SUPPLIER SCORECARD
 // ═══════════════════════════════════════════════════

@@ -1,11 +1,12 @@
 ﻿'use client'
 
 import { useState, useCallback } from 'react'
-import { Plus, Building2, Globe, Clock, X, Save, Loader2, AlertCircle, Award, Copy } from 'lucide-react'
-import { SupplierRow, SupplierInput, createSupplier, getSuppliers, getAllSupplierScorecards, detectDuplicates, type SupplierScorecard, type DuplicateCandidate } from './actions'
+import { Plus, Building2, Globe, Clock, X, Save, Loader2, AlertCircle, Award, Copy, Upload } from 'lucide-react'
+import { SupplierRow, SupplierInput, createSupplier, getSuppliers, getAllSupplierScorecards, detectDuplicates, bulkImportSuppliers, type SupplierScorecard, type DuplicateCandidate } from './actions'
 import { formatVND } from '@/lib/utils'
 import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
+import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 
 // ── Type badge ──────────────────────────────────────────────
 const SUPPLIER_TYPE: Record<string, { label: string; color: string; bg: string }> = {
@@ -274,6 +275,7 @@ export function SuppliersClient({ initialRows, initialTotal }: { initialRows: Su
     const [statusFilter, setStatusFilter] = useState('')
     const [page, setPage] = useState(1)
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const [importOpen, setImportOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<'list' | 'scorecard' | 'duplicates'>('list')
     const [scorecards, setScorecards] = useState<SupplierScorecard[] | null>(null)
     const [scoreLoading, setScoreLoading] = useState(false)
@@ -331,13 +333,22 @@ export function SuppliersClient({ initialRows, initialTotal }: { initialRows: Su
                         Winery, Négociant, Distributor, Forwarder — toàn bộ đối tác nhập hàng
                     </p>
                 </div>
-                <button onClick={() => setDrawerOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                    <Plus size={16} /> Thêm NCC
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setImportOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                        style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}>
+                        <Upload size={16} /> Import Excel
+                    </button>
+                    <button onClick={() => setDrawerOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        <Plus size={16} /> Thêm NCC
+                    </button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -585,6 +596,27 @@ export function SuppliersClient({ initialRows, initialTotal }: { initialRows: Su
                     setDrawerOpen(false)
                     reload()
                 }} />
+
+            <ExcelImportDialog
+                open={importOpen}
+                onClose={() => setImportOpen(false)}
+                title="Import Nhà Cung Cấp"
+                templateFileName="template_nha_cung_cap.xlsx"
+                templateColumns={[
+                    { header: 'Mã NCC', sample: 'SUP-MOUTON', required: true },
+                    { header: 'Tên NCC', sample: 'Château Mouton Rothschild', required: true },
+                    { header: 'Loại', sample: 'WINERY', required: true },
+                    { header: 'Quốc Gia', sample: 'FR', required: true },
+                    { header: 'MST', sample: 'FR123456789' },
+                    { header: 'Hiệp Định', sample: 'EVFTA' },
+                    { header: 'Thanh Toán', sample: 'NET30' },
+                    { header: 'Tiền Tệ', sample: 'EUR' },
+                    { header: 'Incoterms', sample: 'CIF' },
+                    { header: 'Lead Time', sample: '45' },
+                ]}
+                onImport={bulkImportSuppliers}
+                onComplete={() => reload()}
+            />
         </div>
     )
 }
