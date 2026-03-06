@@ -325,8 +325,8 @@ export async function sendContractExpiryAlerts(): Promise<{ success: boolean; se
             daysRemaining: contract.daysRemaining,
             managerEmail,
         })
-        if (result.success) sent++
-        else errors.push(`${contract.contractNo}: ${result.error}`)
+        if (result.email.success || result.telegram.success) sent++
+        else errors.push(`${contract.contractNo}: ${result.email.error ?? result.telegram.error ?? 'Unknown'}`)
     }
 
     return { success: true, sent, errors }

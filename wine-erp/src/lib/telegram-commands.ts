@@ -12,6 +12,7 @@ import {
     sendMessage, sendMessageWithKeyboard, answerCallbackQuery,
     editMessageText, formatVND, escapeHtml,
     type TelegramCallbackQuery,
+    type InlineKeyboardButton,
 } from '@/lib/telegram'
 import { startOfMonth, endOfMonth, subMonths } from 'date-fns'
 
@@ -198,7 +199,7 @@ export async function handleApprovals(chatId: number) {
 
     let msg = `✅ <b>Phê duyệt chờ xử lý</b> (${requests.length})\n━━━━━━━━━━━━━━━━━━\n\n`
 
-    const buttons: { text: string; callback_data: string }[][] = []
+    const buttons: InlineKeyboardButton[][] = []
 
     for (const r of requests) {
         const typeLabel = r.docType === 'PURCHASE_ORDER' ? 'PO' : r.docType === 'SALES_ORDER' ? 'SO' : r.docType
