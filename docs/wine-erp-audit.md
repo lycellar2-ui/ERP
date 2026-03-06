@@ -170,16 +170,16 @@ wine-erp/src/
 - [x] Middleware RBAC route guard: `ROUTE_PERMISSIONS` mapping
 - [ ] Audit Trail middleware tracking (changes per field)
 
-### MDM — Master Data (93%)
+### MDM — Master Data (98%)
 - [x] Products: Full CRUD + Drawer detail + all wine fields
 - [x] Suppliers: CRUD + **Soft Delete** (`deleteSupplier`)
 - [x] Customers: CRUD + **Soft Delete** + **Address CRUD** (4 actions)
 - [x] Price List: CRUD + 4 channels + Effective Date + Bulk Update
 - [x] Auto-load price by channel khi tạo SO
 - [x] **Product Media Upload**: CRUD (`uploadProductMedia`, `deleteProductMedia`, `setPrimaryMedia`) + Gallery UI + Thumbnail in table
-- [ ] Awards & Scores (Robert Parker, Wine Spectator)
+- [x] **Awards & Scores**: addProductAward() + CRUD + ProductDrawer UI (Robert Parker, WS, Decanter)
 
-### WMS — Warehouse (92%)
+### WMS — Warehouse (95%)
 - [x] Multi-warehouse + Zone/Rack/Bin + Location Manager + Heatmap
 - [x] Goods Receipt (GR) từ PO → StockLot + auto Journal DR 156/CR 331
 - [x] Delivery Order (DO) từ SO → FIFO pick + auto COGS Journal DR 632/CR 156
@@ -188,7 +188,7 @@ wine-erp/src/
 - [x] Quarantine: move + release (RESTORE/WRITE_OFF)
 - [x] Write-off: giảm stock + auto Journal DR 811/CR 156
 - [x] QR Code auto-gen after GR confirm
-- [ ] Mobile Scanner PWA
+- [x] **Mobile Scanner backend**: scanBarcode() + quickStockCheck() (frontend PWA pending)
 
 ### SLS — Sales & Allocation (90%)
 - [x] SO lifecycle 8 status + Confirm/Advance/Cancel
@@ -211,9 +211,10 @@ wine-erp/src/
 - [x] COD Collection: `collectCODPayment()` → AR Payment + auto Journal
 - [x] Cash Position + AR Aging Dashboard widgets
 - [x] **Balance Sheet (CĐKT)**: `getBalanceSheet()` VAS — Assets (112,131,156) / Liabilities (331,3331) / Equity (421) + `BalanceSheetTab` UI
-- [ ] Bad Debt Write-off, E-Invoice integration
+- [x] **Bad Debt Write-off**: writeOffBadDebt() + getBadDebtCandidates() + BadDebtTab UI
+- [ ] E-Invoice integration (blocked — cần API nhà cung cấp HĐĐT)
 
-### DSH — CEO Dashboard (88%)
+### DSH — CEO Dashboard (98%)
 - [x] KPI Cards (Revenue, Orders, Stock Value, Pending Approvals)
 - [x] Revenue chart 6 tháng
 - [x] In-transit Shipments (ETA)
@@ -223,7 +224,10 @@ wine-erp/src/
 - [x] AR Aging Chart (5 buckets)
 - [x] KPI Progress Bars (5 metrics)
 - [x] Export Dashboard Excel
-- [ ] Realtime subscription, Role-based dashboard, Cost Waterfall
+- [x] **Realtime subscription**: useRealtimeDashboard hook + Supabase Realtime channels
+- [x] **Role-based Dashboard**: 6 roles config + Quick Links + My Sales + Warehouse Summary
+- [x] **Cost Waterfall**: getCostWaterfall() + SVG waterfall chart
+- [x] **Revenue YoY**: getRevenueYoY() + 12-month comparison bar chart
 
 ### PRC — Procurement (82%)
 - [x] PO CRUD + Status workflow
@@ -234,12 +238,13 @@ wine-erp/src/
 - [x] Variance Report: PO vs Actual
 - [ ] Multi-currency VND convert at trade date
 
-### RPT — Reporting (80%)
+### RPT — Reporting (92%)
 - [x] 15 Standard Reports (R01-R15) + Excel Export
 - [x] Report Builder: template CRUD + dynamic execution
 - [x] Report Permissions: role-based access control
 - [x] AR Aging PDF Export
-- [ ] Scheduled Reports email
+- [x] **Scheduled Reports**: createReportSchedule() + runScheduledReports() + Cron route + Resend email
+- [x] **Print Preview A4**: globals.css @media print A4 stylesheet
 
 ### CST — Costing (80%)
 - [x] Landed Cost Campaign: Create + Calculate + Finalize → StockLot update
@@ -248,31 +253,34 @@ wine-erp/src/
 - [x] Margin analysis per SKU
 - [ ] Sensitivity Analysis ("nếu tỷ giá tăng X%...")
 
-### TAX — Tax & Market Price (78%)
+### TAX — Tax & Market Price (82%)
 - [x] Tax Rate CRUD + Tax Engine (NK/SCT/VAT auto)
 - [x] Auto SCT 35%/65% based on ABV%
 - [x] Market Price Tracking: CRUD + Margin Gap % + below-cost alert
-- [ ] EVFTA roadmap, bulk upload Excel thuế
+- [x] **EVFTA Roadmap**: EVFTARoadmapPanel + timeline chart (2020–2027, 4 categories)
+- [ ] Bulk upload Excel thuế
 
-### CRM — Customer (78%)
+### CRM — Customer (98%)
 - [x] 360° Profile + Activity Log (6 types)
 - [x] Sales Pipeline: Kanban 6 cột, stage transitions
 - [x] Customer Transaction History: all-time orders + AR + top SKUs
 - [x] Customer Tier Auto-Calculation: Bronze/Silver/Gold/Platinum
 - [x] **Multi-Contact**: CRUD nhiều người liên hệ per customer (phiên 05/03)
 - [x] **Custom Tags**: Tag CRUD + color + Chips UI (phiên 05/03)
-- [ ] Wine Preference Profile, Tasting Events
+- [x] **Wine Preference Profile**: getWinePreference() + saveWinePreference() + WinePreferencePanel UI
+- [x] **Tasting Events**: CRUD + RSVP + check-in + conversion + TastingEventsPanel UI
+- [x] **Complaint Tickets**: CRUD + SLA (4h/24h/72h/168h) + resolve + ComplaintTicketsPanel UI
 
-### TRS — Transportation (78%)
+### TRS — Transportation (85%)
 - [x] Route Planning + Status workflow 4 bước
 - [x] E-POD: Xác nhận giao hàng per stop (tên + ghi chú)
 - [x] COD Collection → AR Payment + auto Journal
 - [x] Reverse Logistics: `recordDeliveryFailure()` + `scheduleRedelivery()`
 - [x] **Shipper Mobile View** (phiên 05/03)
 - [x] **E-POD Signature + Photo** (phiên 05/03)
-- [ ] Canvas chữ ký KH (nâng cao)
+- [x] **Canvas chữ ký**: SignaturePad component + integrated in ShipperView.tsx (e-POD)
 
-### CNT — Contract (72%)
+### CNT — Contract (80%)
 - [x] CRUD + 5 loại HĐ + Status workflow
 - [x] Utilization Tracking: PO/SO value vs contract value + progress bar
 - [x] Contract ↔ PO/SO linking
@@ -290,7 +298,7 @@ wine-erp/src/
 - [x] Stamp Report Excel (quarterly/annual)
 - [ ] Biên bản hủy tem, Alert overuse UI
 
-### POS — Point of Sale (75%)
+### POS — Point of Sale (88%)
 - [x] Product grid + Cart + multi-line
 - [x] 3 payment methods: Cash (tiền thối) + Bank Transfer + QR
 - [x] Barcode/SKU lookup
@@ -298,7 +306,7 @@ wine-erp/src/
 - [x] Shift Summary
 - [x] VAT Invoice generation
 - [x] VIP customer pricing
-- [ ] Loyalty Program
+- [x] **Loyalty Program**: earn/redeem points + balance + tier + history + LoyaltyPanel UI
 
 ### QRC — QR Code (70%)
 - [x] Auto-generate QR after GR confirm
@@ -308,7 +316,7 @@ wine-erp/src/
 - [x] Anti-counterfeit: first scan ✅, subsequent ⚠
 - [x] Dashboard: stats + table + search
 
-### AI — AI Features (55%)
+### AI — AI Features (70%)
 - [x] AI API Key Vault: AES-256 encryption + test + budget
 - [x] Prompt Library: CRUD templates
 - [x] Demand Forecast: exponential smoothing + trend
@@ -320,7 +328,7 @@ wine-erp/src/
 - [x] Smart Product Search (keyword decomposition)
 - [ ] Product Description gen via Gemini
 
-### AGN — Agency Portal (65%)
+### AGN — Agency Portal (85%)
 - [x] Partners Tab: CRUD + submission counts
 - [x] Submissions Tab: create + filter + inline review
 - [x] Dynamic data từ DB
@@ -350,31 +358,31 @@ wine-erp/src/
 ```
 Module          % Hoàn thiện   Status Bar               Status
 ──────────────────────────────────────────────────────────────
+MDM MasterData   98%          ▓▓▓▓▓▓▓▓▓▓  🟢 DONE      ▲ Scorecard+Duplicate
+CRM Customer     98%          ▓▓▓▓▓▓▓▓▓▓  🟢 DONE      ▲ Events+Complaints
+DSH Dashboard    98%          ▓▓▓▓▓▓▓▓▓▓  🟢 DONE      ▲ Realtime+Roles
 SYS Auth/RBAC    95%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
-MDM MasterData   93%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Media Upload
-WMS Warehouse    92%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
-SLS Sales        90%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Discount+CreditHold
-FIN Finance      90%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Balance Sheet
-DSH Dashboard    88%          ▓▓▓▓▓▓▓▓░░  🟢 DONE
+WMS Warehouse    95%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Scanner
+RPT Reports      92%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Scheduled+Print
+SLS Sales        90%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
+FIN Finance      90%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ BadDebt+CĐKT
+POS Showroom     88%          ▓▓▓▓▓▓▓▓░░  🟢 DONE      ▲ Loyalty
+TRS Delivery     85%          ▓▓▓▓▓▓▓▓░░  🟢 DONE      ▲ Signature+Mobile
+AGN Agency       85%          ▓▓▓▓▓▓▓▓░░  🟢 DONE      ▲ Partner Login
 PRC Procurement  82%          ▓▓▓▓▓▓▓▓░░  🟢 Working
-RPT Reports      80%          ▓▓▓▓▓▓▓▓░░  🟢 Working
+TAX Tax          82%          ▓▓▓▓▓▓▓▓░░  🟢 Working   ▲ EVFTA
 CST Costing      80%          ▓▓▓▓▓▓▓▓░░  🟢 Working
-CRM Customer     78%          ▓▓▓▓▓▓▓░░░  🟢 Working   ▲ Contacts+Tags
-TRS Delivery     78%          ▓▓▓▓▓▓▓░░░  🟢 Working   ▲ E-POD+Mobile
-TAX Tax          78%          ▓▓▓▓▓▓▓░░░  🟢 Working
-POS Showroom     75%          ▓▓▓▓▓▓▓░░░  🟢 Working
+CNT Contracts    80%          ▓▓▓▓▓▓▓▓░░  🟢 Working   ▲ DigitalSign
+KPI Targets      80%          ▓▓▓▓▓▓▓▓░░  🟢 Working   ▲ CopyYear
 MKT MarketPrice  75%          ▓▓▓▓▓▓▓░░░  🟢 Working
-CNT Contracts    72%          ▓▓▓▓▓▓▓░░░  🟢 Working
 QRC QR Code      70%          ▓▓▓▓▓▓▓░░░  🟢 Working
 STM Stamps       70%          ▓▓▓▓▓▓▓░░░  🟢 Working
-KPI Targets      68%          ▓▓▓▓▓▓░░░░  🟡 Partial
+AI Features      70%          ▓▓▓▓▓▓▓░░░  � Working   ▲ OCR+Search
 DCL Declarations 68%          ▓▓▓▓▓▓░░░░  🟡 Partial   ▲ TTĐB Report
-AGN Agency       65%          ▓▓▓▓▓▓░░░░  🟡 Partial   ▲ Partner Login
 CSG Consignment  65%          ▓▓▓▓▓▓░░░░  🟡 Partial
-AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
 ```
 
-**Trung bình: ~79% ÷ module | ~98% chức năng core nghiệp vụ (P1 15/15 ✅)**
+**Trung bình: ~83% ÷ module | ~99% chức năng core nghiệp vụ (P1 15/15 ✅)**
 
 ---
 
@@ -403,8 +411,8 @@ AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
 ## 📝 Tóm Tắt
 
 - **P1 (Core Business):** 15/15 hoàn thành ✅
-- **P2 (Enhancement):** ~85% hoàn thành
-- **P3 (Advanced):** ~55% hoàn thành
+- **P2 (Enhancement):** ~92% hoàn thành
+- **P3 (Advanced):** ~70% hoàn thành
 - **Tổng modules:** 22 modules, 32 action files, ~57 Prisma models
 - **Routes:** 32 (bao gồm `/partner-login` mới)
 - **Unit Tests:** 188/188 passed (xem `docs/wine-erp-testing.md`)
@@ -477,58 +485,6 @@ AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
 
 ---
 
-*Audit updated: 06/03/2026 15:35 | Session: +43 features (36 built + 7 verified) + Performance Optimization*
+*Audit updated: 06/03/2026 15:52 | Session: +43 features (36 built + 7 verified) + Performance Optimization*
 *Scan method: Code outline + grep search toàn bộ codebase*
-*Total spec files: 19 | Total code modules: 32 | Prisma models: ~57*
-
-| Credit Hold Auto | SLS | `sales/actions.ts` |
-| Product Media Upload | MDM | `products/actions.ts`, `ProductTable.tsx`, `ProductDrawer.tsx` |
-| Balance Sheet (CĐKT) | FIN | `finance/actions.ts`, `FinanceTabs.tsx`, `FinanceClient.tsx` |
-| External Partner Login | AGN | `agency/actions.ts`, `partner-login/page.tsx` |
-| Order Discount (verify) | SLS | Already existed, confirmed working |
-| ✨ OCR Upload UI (verify) | AI | `ai/OCRWidget.tsx` (352 lines, already existed) |
-| ✨ Contract File Upload UI (verify) | CNT | `contracts/ContractsClient.tsx` (already existed) |
-| ✨ Agency Document Upload | AGN | `agency/actions.ts`, `agency/AgencyClient.tsx` (new) |
-| ✨ Agency Tracking Milestones | AGN | `agency/actions.ts`, `agency/AgencyClient.tsx` (new) |
-| ✅ TRS E-Signature (verify) | TRS | `ShipperView.tsx` — `SignaturePad` (already existed) |
-| ✅ TRS POD Photo (verify) | TRS | `ShipperView.tsx` + `uploadPODPhoto()` (already existed) |
-| ✅ TRS Shipper Mobile (verify) | TRS | `shipper/ShipperView.tsx` (451 lines, already existed) |
-| ✨ MDM Awards & Scores | MDM | `products/actions.ts`, `ProductDrawer.tsx` (new) |
-| ✨ FIN Bad Debt Write-off | FIN | `finance/actions.ts`, `FinanceTabs.tsx`, `FinanceClient.tsx` (new) |
-| ✨ TAX EVFTA Roadmap | TAX | `TaxClient.tsx` — EVFTARoadmapPanel + timeline chart (new) |
-| ✨ DSH Cost Waterfall | DSH | `actions.ts` getCostWaterfall() + `page.tsx` waterfall chart (new) |
-| ✨ DSH Revenue YoY | DSH | `actions.ts` getRevenueYoY() + `page.tsx` YoY comparison (new) |
-| ✨ CRM Wine Preference | CRM | `crm/actions.ts` — getWinePreference, saveWinePreference + presets |
-| ✨ CRM Tasting Events | CRM | `crm/actions.ts` — CRUD events + RSVP + check-in + conversion |
-| ✨ CRM Complaint Tickets | CRM | `crm/actions.ts` — CRUD + SLA + resolve |
-| ✨ POS Loyalty Program | POS | `pos/actions.ts` — earn/redeem/balance/tier |
-| ✨ CNT Digital Signature | CNT | `contracts/actions.ts` — signContractInternal + SHA-256 |
-| ✨ MDM Supplier Scorecard | MDM | `suppliers/actions.ts` — on-time, quality, grade |
-| ✨ MDM Duplicate Detection | MDM | `suppliers/actions.ts` — Dice similarity scan |
-| ✨ WMS Mobile Scanner | WMS | `warehouse/actions.ts` — scanBarcode + quickStockCheck |
-| ✨ RPT Print Preview A4 | RPT | `globals.css` — @media print A4 dark→light + utility classes |
-| ✨ RPT Scheduled Reports | RPT | `reports/actions.ts` — schedule CRUD + `runScheduledReports()` + cron route |
-| ✨ DSH Role-based Dashboard | DSH | `actions.ts` — 6 roles config + `getDashboardConfig()` + My Sales + Warehouse Summary |
-| ✨ DSH Realtime Hook | DSH | `useRealtimeDashboard.ts` — client-side Supabase Realtime channels |
-| ✨ AGN Shipment Scope Lock | AGN | `agency/actions.ts` — `partnerShipmentAccess` scope filter verified complete |
-| ✨ MDM Scorecard UI | MDM | `SuppliersClient.tsx` — Tab Scorecard + on-time% bar + grade badge A-F |
-| ✨ MDM Duplicate Detection UI | MDM | `SuppliersClient.tsx` — Tab Phát Hiện Trùng + similarity %, itemA/B cards |
-| ✨ RPT Scheduled Reports UI | RPT | `ReportsClient.tsx` — Tab Lịch Tự Động + toggle Active/Paused |
-| ✨ RPT toggleScheduleStatus | RPT | `reports/actions.ts` — ACTIVE ↔ PAUSED toggle for report schedules |
-| ✨ DSH Quick Links | DSH | `page.tsx` — Role-based quick navigation links grid |
-| ✨ DSH My Sales Widget | DSH | `page.tsx` + `actions.ts` — `getMySales()` + inline orders table for SALES_REP |
-| ✨ DSH Warehouse Widget | DSH | `page.tsx` + `actions.ts` — `getWarehouseDashboard()` + 5-metric grid for THU_KHO |
-| ✨ CRM Tasting Events UI | CRM | `TastingEventsPanel.tsx` — Event cards + RSVP/check-in/conversion metrics + create form |
-| ✨ CRM Complaint Tickets UI | CRM | `ComplaintTicketsPanel.tsx` — SLA tracking + severity badges + resolve action + filters |
-| ✨ CRM Tab Navigation | CRM | `CRMClient.tsx` — 3-tab switcher (Khách Hàng, Sự Kiện, Khiếu Nại) |
-| ✨ POS Loyalty UI | POS | `LoyaltyPanel.tsx` — Tier display + points lookup + redeem value + transaction history |
-| ✨ POS Loyalty Page | POS | `/dashboard/pos/loyalty/page.tsx` — Dedicated loyalty page + link from POS header |
-| ✨ CRM Wine Preference UI | CRM | `WinePreferencePanel.tsx` — Tag selector (grapes/regions/taste) + price range + notes + upsert |
-| ✨ KPI Copy Year | KPI | `KpiClient.tsx` — Copy targets from previous year with growth% multiplier |
-| ✨ KPI Forecast Display | KPI | `KpiClient.tsx` — Enhanced forecast with AI value + safe division |
-
----
-
-*Audit updated: 06/03/2026 14:00 | Session: +43 features (36 built + 7 verified) qua 2 phiên*  
-*Scan method: Code outline + grep search toàn bộ codebase*  
 *Total spec files: 19 | Total code modules: 32 | Prisma models: ~57*
