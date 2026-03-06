@@ -158,3 +158,43 @@ export async function notifyLowStock(input: {
         `,
     })
 }
+
+export async function notifyContractExpiring(input: {
+    contractNo: string
+    supplierName: string
+    contractType: string
+    expiryDate: string
+    daysRemaining: number
+    managerEmail: string
+}) {
+    const urgencyColor = input.daysRemaining <= 7 ? '#DC2626' : '#F59E0B'
+    const urgencyLabel = input.daysRemaining <= 7 ? '🔴 Khẩn cấp' : '🟡 Sắp hết hạn'
+
+    return sendEmail({
+        to: input.managerEmail,
+        subject: `${urgencyLabel} Hợp đồng ${input.contractNo} — còn ${input.daysRemaining} ngày`,
+        html: `
+            <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
+                <div style="background: ${urgencyColor}; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: white; margin: 0;">📋 ${urgencyLabel}: Hợp đồng sắp hết hạn</h2>
+                </div>
+                <div style="background: #1B2E3D; padding: 24px; border-radius: 0 0 8px 8px; color: #E8F1F2;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Số HĐ:</td><td style="padding: 8px; font-weight: bold;">${input.contractNo}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Nhà cung cấp:</td><td style="padding: 8px;">${input.supplierName}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Loại HĐ:</td><td style="padding: 8px;">${input.contractType}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Hạn HĐ:</td><td style="padding: 8px; font-weight: bold;">${input.expiryDate}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Còn lại:</td><td style="padding: 8px; color: ${urgencyColor}; font-weight: bold;">${input.daysRemaining} ngày</td></tr>
+                    </table>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard/contracts" 
+                           style="display: inline-block; background: #87CBB9; color: #0A1926; padding: 12px 32px; 
+                                  border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Xem hợp đồng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `,
+    })
+}

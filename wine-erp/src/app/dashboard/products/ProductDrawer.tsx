@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus } from 'lucide-react'
+import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, Sparkles } from 'lucide-react'
 import {
     ProductInput, createProduct, updateProduct, getProducers, getRegions,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
@@ -129,6 +129,10 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     const [awardVintage, setAwardVintage] = useState('')
     const [awardYear, setAwardYear] = useState('')
     const [savingAward, setSavingAward] = useState(false)
+
+    // AI description state
+    const [generatingAI, setGeneratingAI] = useState(false)
+    const [aiDescription, setAiDescription] = useState<{ vi: string; en: string } | null>(null)
 
     const [form, setForm] = useState<ProductFormState>({
         status: 'ACTIVE',
@@ -430,6 +434,66 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                 />
                             </Field>
                         </div>
+                    </div>
+
+                    {/* Section: Tasting Notes + AI */}
+                    <div className="space-y-4">
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                            ── Tasting Notes
+                        </p>
+                        <Field label="Ghi chú nếm rượu">
+                            <textarea
+                                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[80px]"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                value={form.tastingNotes ?? ''}
+                                onChange={e => set('tastingNotes', e.target.value || null)}
+                                placeholder="Deep ruby color, notes of blackcurrant, cedar, and vanilla..."
+                                rows={3}
+                            />
+                        </Field>
+                        {isEdit && (
+                            <>
+                                <button
+                                    onClick={async () => {
+                                        if (!editingId) return
+                                        setGeneratingAI(true)
+                                        setAiDescription(null)
+                                        const { generateProductDescription } = await import('@/lib/ai-service')
+                                        const res = await generateProductDescription(editingId)
+                                        setGeneratingAI(false)
+                                        if (res.success) {
+                                            setAiDescription({ vi: res.descriptionVI ?? '', en: res.descriptionEN ?? '' })
+                                        } else {
+                                            alert(`AI Error: ${res.error}`)
+                                        }
+                                    }}
+                                    disabled={generatingAI}
+                                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all w-full justify-center disabled:opacity-60"
+                                    style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+                                    {generatingAI ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                                    {generatingAI ? 'AI đang viết mô tả...' : '✨ AI Tạo Mô Tả (Gemini)'}
+                                </button>
+                                {aiDescription && (
+                                    <div className="space-y-3 p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold" style={{ color: '#667eea' }}>🤖 Mô tả AI</span>
+                                            <button
+                                                onClick={() => { set('tastingNotes', aiDescription.vi); setAiDescription(null) }}
+                                                className="text-[10px] px-2 py-1 rounded font-semibold"
+                                                style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
+                                                Áp dụng bản Tiếng Việt
+                                            </button>
+                                        </div>
+                                        <div className="text-xs leading-relaxed" style={{ color: '#8AAEBB' }}>
+                                            <p className="font-bold mb-1" style={{ color: '#E8F1F2' }}>🇻🇳 Tiếng Việt:</p>
+                                            <p className="whitespace-pre-wrap mb-3">{aiDescription.vi}</p>
+                                            <p className="font-bold mb-1" style={{ color: '#E8F1F2' }}>🇬🇧 English:</p>
+                                            <p className="whitespace-pre-wrap">{aiDescription.en}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     {/* Section: Hình ảnh sản phẩm (chỉ khi edit) */}

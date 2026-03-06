@@ -295,6 +295,43 @@ export async function autoExpireContracts(): Promise<{ success: boolean; expired
     return { success: true, expired: result.count }
 }
 
+// ── Send Contract Expiry Email Alerts ─────────────
+export async function sendContractExpiryAlerts(): Promise<{ success: boolean; sent: number; errors: string[] }> {
+    const { notifyContractExpiring } = await import('@/lib/notifications')
+    const expiringContracts = await getExpiringContracts(30)
+
+    // Only send for contracts expiring within 7 or 30 days
+    const alertDays = [7, 30]
+    const toAlert = expiringContracts.filter(c => alertDays.includes(c.daysRemaining))
+
+    // Get manager email from admin users
+    const managers = await prisma.user.findMany({
+        where: { roles: { some: { role: { name: { in: ['ADMIN', 'CEO'] } } } }, status: 'ACTIVE' },
+        select: { email: true },
+    })
+    const managerEmail = managers[0]?.email ?? process.env.ADMIN_EMAIL ?? ''
+
+    if (!managerEmail) return { success: false, sent: 0, errors: ['No manager email configured'] }
+
+    let sent = 0
+    const errors: string[] = []
+
+    for (const contract of toAlert) {
+        const result = await notifyContractExpiring({
+            contractNo: contract.contractNo,
+            supplierName: contract.counterpartyName,
+            contractType: contract.type,
+            expiryDate: contract.endDate.toLocaleDateString('vi-VN'),
+            daysRemaining: contract.daysRemaining,
+            managerEmail,
+        })
+        if (result.success) sent++
+        else errors.push(`${contract.contractNo}: ${result.error}`)
+    }
+
+    return { success: true, sent, errors }
+}
+
 // ── Contract Amendment ────────────────────────────
 export async function createContractAmendment(input: {
     contractId: string

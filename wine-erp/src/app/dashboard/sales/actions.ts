@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { generateSoNo } from '@/lib/utils'
 import { logAudit } from '@/lib/audit'
 import { submitForApproval } from '@/lib/approval'
+import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL'
@@ -291,6 +292,9 @@ export async function getSalesReps() {
 // ── Create Sales Order ───────────────────────────
 export async function createSalesOrder(input: SOCreateInput): Promise<{ success: boolean; soId?: string; soNo?: string; error?: string; quotaWarnings?: string[] }> {
     try {
+        // --- 0. Validate input ---
+        parseOrThrow(SOCreateSchema, input)
+
         // --- 1. Check allocation quotas BEFORE creating ---
         const quotaWarnings: string[] = []
         const quotaChecks: { lineIdx: number; quotaId: string; campaignId: string; qty: number }[] = []
