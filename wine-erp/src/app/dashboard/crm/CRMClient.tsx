@@ -10,6 +10,7 @@ import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, get
 import { ContactsPanel, TagsPanel } from './ContactsTagsPanel'
 import { TastingEventsPanel } from './TastingEventsPanel'
 import { ComplaintTicketsPanel } from './ComplaintTicketsPanel'
+import { WinePreferencePanel } from './WinePreferencePanel'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -369,6 +370,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                         <TagsPanel customerId={selectedCustomer.id} />
                                     </div>
                                 </div>
+
+                                {/* Wine Preference */}
+                                <WinePreferencePanel customerId={selectedCustomer.id} />
 
                                 {/* 360 data from profile */}
                                 {profileLoading ? (

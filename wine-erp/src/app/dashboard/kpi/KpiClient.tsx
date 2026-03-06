@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import {
     Target, TrendingUp, TrendingDown, AlertCircle, CheckCircle2,
-    Settings, Plus, Trash2, Save, X
+    Settings, Plus, Trash2, Save, X, Copy, Loader2
 } from 'lucide-react'
 import type { KpiSummary, KpiTargetRow } from './actions'
 import {
     getKpiSummary, getKpiTargets, upsertKpiTarget, deleteKpiTarget,
-    getSalesRepOptions, getAvailableMetrics,
+    getSalesRepOptions, getAvailableMetrics, copyKpiFromPreviousYear,
 } from './actions'
 
 const STATUS_CFG = {
@@ -42,6 +42,9 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
     const [addForm, setAddForm] = useState({ metric: 'REVENUE', year, month: month as number | null, targetValue: '', unit: 'VND', salesRepId: '' })
 
     const [metrics, setMetrics] = useState<{ metric: string; label: string; unit: string }[]>([])
+    const [copying, setCopying] = useState(false)
+    const [copyResult, setCopyResult] = useState<string | null>(null)
+    const [growthPct, setGrowthPct] = useState(10)
 
     useEffect(() => { getAvailableMetrics().then(setMetrics) }, [])
 
@@ -182,9 +185,14 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                         </div>
                                     </div>
                                     <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                                        {kpi.unit === 'VND' && kpi.actual > 0
-                                            ? `Dự báo cuối tháng: ${formatValue(kpi.actual * (30 / new Date().getDate()), 'VND')}`
-                                            : 'Cập nhật real-time từ database'}
+                                        {kpi.unit === 'VND' && kpi.actual > 0 ? (
+                                            <>
+                                                Dự báo cuối tháng: <span style={{ color: '#D4A853', fontWeight: 600 }}>
+                                                    {formatValue(kpi.actual * (30 / Math.max(new Date().getDate(), 1)), 'VND')}
+                                                </span>
+                                                {kpi.forecast ? ` (AI: ${formatValue(kpi.forecast, 'VND')})` : ''}
+                                            </>
+                                        ) : 'Cập nhật real-time từ database'}
                                     </p>
                                 </div>
                             )
@@ -199,10 +207,38 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                         <h3 className="text-sm font-bold" style={{ color: '#D4A853' }}>
                             Cấu hình chỉ tiêu năm {year}
                         </h3>
-                        <button onClick={() => setAddOpen(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
-                            <Plus size={12} /> Thêm Chỉ Tiêu
-                        </button>
+                        <div className="flex gap-2">
+                            <button onClick={() => setAddOpen(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
+                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                <Plus size={12} /> Thêm Chỉ Tiêu
+                            </button>
+                            <div className="flex items-center gap-1">
+                                <input type="number" className="w-14 px-2 py-1.5 rounded text-xs text-center"
+                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#D4A853' }}
+                                    value={growthPct} onChange={e => setGrowthPct(Number(e.target.value))} />
+                                <span className="text-xs" style={{ color: '#4A6A7A' }}>%</span>
+                                <button onClick={async () => {
+                                    setCopying(true); setCopyResult(null)
+                                    const res = await copyKpiFromPreviousYear({
+                                        fromYear: year - 1,
+                                        toYear: year,
+                                        growthMultiplier: 1 + growthPct / 100,
+                                    })
+                                    if (res.success) {
+                                        setCopyResult(`✅ Đã copy ${res.copied} chỉ tiêu từ ${year - 1} (+${growthPct}%)`)
+                                        loadSetup()
+                                    } else setCopyResult(res.error || 'Lỗi copy')
+                                    setCopying(false)
+                                    setTimeout(() => setCopyResult(null), 4000)
+                                }} disabled={copying}
+                                    className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold disabled:opacity-50"
+                                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                                    {copying ? <Loader2 size={12} className="animate-spin" /> : <Copy size={12} />}
+                                    Copy từ {year - 1}
+                                </button>
+                            </div>
+                        </div>
+                        {copyResult && <p className="text-xs mt-1" style={{ color: '#D4A853' }}>{copyResult}</p>}
                     </div>
 
                     {/* Add Form */}

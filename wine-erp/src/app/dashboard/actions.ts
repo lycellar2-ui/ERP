@@ -757,7 +757,7 @@ export type RealtimeChannelConfig = {
     filter?: string
 }
 
-export function getRealtimeChannels(roles: string[]): RealtimeChannelConfig[] {
+export async function getRealtimeChannels(roles: string[]): Promise<RealtimeChannelConfig[]> {
     const channels: RealtimeChannelConfig[] = []
 
     // Everyone gets approval notifications

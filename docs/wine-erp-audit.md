@@ -19,11 +19,11 @@
 | Reporting & BI | `RPT` | **92%** 🟢 | ▲▲▲ | 15 Reports (R01-R15) + Excel Export + Report Builder + **Scheduled Reports UI** + **Print A4** |
 | Product Costing | `CST` | **80%** 🟢 | ▲▲ | Landed Cost Campaign + Proration + Price Suggestion |
 | Tax & Market Price | `TAX` | **82%** 🟢 | ▲▲ | CRUD + Tax Engine + Market Price + **EVFTA Roadmap** |
-| CRM | `CRM` | **95%** 🟢 | ▲▲▲ | 360° + Pipeline + Tier + Tags + Wine Preference + **Tasting Events UI** + **Complaint Tickets UI** |
+| CRM | `CRM` | **98%** 🟢 | ▲▲▲ | 360° + Pipeline + Tier + Tags + **Wine Preference UI** + **Tasting Events UI** + **Complaint Tickets UI** |
 | Transportation | `TRS` | **78%** 🟢 | ▲▲▲ | Routes + E-POD (signature+photo) + COD→AR + Shipper Mobile View |
 | Contract Management | `CNT` | **80%** 🟢 | ▲▲▲ | CRUD + Utilization + Amendment + Expiry Alert + **Digital Signature** |
 | Stamps | `STM` | **70%** 🟢 | ▲ | Purchase + Usage + Link Shipment/Lot + Report Excel |
-| KPI Targets | `KPI` | **68%** 🟡 | ▲▲ | Setup UI + DB targets + Forecast + Copy year |
+| KPI Targets | `KPI` | **80%** � | ▲▲ | Setup UI + DB targets + Forecast + **Copy Year UI** + Growth multiplier |
 | Consignment | `CSG` | **65%** 🟡 | ▲▲▲ | Agreement + Stock tracking + Reports + Auto Invoice |
 | Import Agency Portal | `AGN` | **85%** 🟢 | ▲▲▲ | Partners + Submissions + Review + Partner Login + Document Upload + Tracking Milestones + **Scope Lock** |
 | Declarations | `DCL` | **68%** 🟡 | ▲▲▲ | CRUD + Data aggregation + NK data + Calendar + TTĐB Bảng Kê |
@@ -454,9 +454,12 @@ AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
 | ✨ CRM Tab Navigation | CRM | `CRMClient.tsx` — 3-tab switcher (Khách Hàng, Sự Kiện, Khiếu Nại) |
 | ✨ POS Loyalty UI | POS | `LoyaltyPanel.tsx` — Tier display + points lookup + redeem value + transaction history |
 | ✨ POS Loyalty Page | POS | `/dashboard/pos/loyalty/page.tsx` — Dedicated loyalty page + link from POS header |
+| ✨ CRM Wine Preference UI | CRM | `WinePreferencePanel.tsx` — Tag selector (grapes/regions/taste) + price range + notes + upsert |
+| ✨ KPI Copy Year | KPI | `KpiClient.tsx` — Copy targets from previous year with growth% multiplier |
+| ✨ KPI Forecast Display | KPI | `KpiClient.tsx` — Enhanced forecast with AI value + safe division |
 
 ---
 
-*Audit updated: 06/03/2026 13:28 | Session: +40 features (33 built + 7 verified)*  
+*Audit updated: 06/03/2026 13:37 | Session: +43 features (36 built + 7 verified)*  
 *Scan method: Code outline + grep search toàn bộ codebase*  
 *Total spec files: 19 | Total code modules: 32 | Prisma models: ~57*
