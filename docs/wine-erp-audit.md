@@ -392,7 +392,11 @@ AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
 | AI Service | ✅ | `lib/ai-service.ts` (Gemini wrapper) |
 | Encryption | ✅ | `lib/encryption.ts` (AES-256-GCM) |
 | Error Boundaries | ✅ | `app/error.tsx`, `dashboard/error.tsx` |
-| SSL/DB Connection | ✅ | `lib/db.ts` (Supabase pooler compatible) |
+| SSL/DB Connection | ✅ | `lib/db.ts` (pgBouncer Transaction mode, port 6543) |
+| **Performance Cache** | ✅ | `lib/cache.ts` (SWR pattern + dedup guard) |
+| **ISR Staggered** | ✅ | 30 pages: core=30s, frequent=45s, normal=60s, rare=90s |
+| **Smart Prefetch** | ✅ | `Sidebar.tsx` (hover + adjacent tab auto-prefetch) |
+| **Router Cache** | ✅ | `next.config.ts` staleTimes (dynamic=30s, static=300s) |
 
 ---
 
@@ -406,12 +410,77 @@ AI Features      55%          ▓▓▓▓▓░░░░░  🟡 Partial
 - **Unit Tests:** 188/188 passed (xem `docs/wine-erp-testing.md`)
 - **Build Status:** ✅ Next.js 16.1.6 build thành công (0 errors)
 - **Deploy:** Vercel (www.lyscellars.io.vn)
-- **Tính năng thiếu nghiêm trọng nhất:** OCR Upload UI, E-Invoice, Agency Document Upload
+- **Performance:** 4-layer cache (ISR + SWR + staleTimes + Prefetch)
+- **Tính năng thiếu nghiêm trọng nhất:** E-Invoice integration
 
 ### 📅 Session 06/03/2026 — 10 Features Completed
 | Feature | Module | Files |
 |---------|--------|-------|
 | TTĐB Bảng Kê Chi Tiết | DCL | `declarations/actions.ts`, `declarations/page.tsx` |
+| Credit Hold Auto | SLS | `sales/actions.ts` |
+| Product Media Upload | MDM | `products/actions.ts`, `ProductTable.tsx`, `ProductDrawer.tsx` |
+| Balance Sheet (CĐKT) | FIN | `finance/actions.ts`, `FinanceTabs.tsx`, `FinanceClient.tsx` |
+| External Partner Login | AGN | `agency/actions.ts`, `partner-login/page.tsx` |
+| Order Discount (verify) | SLS | Already existed, confirmed working |
+| ✨ OCR Upload UI (verify) | AI | `ai/OCRWidget.tsx` (352 lines, already existed) |
+| ✨ Contract File Upload UI (verify) | CNT | `contracts/ContractsClient.tsx` (already existed) |
+| ✨ Agency Document Upload | AGN | `agency/actions.ts`, `agency/AgencyClient.tsx` (new) |
+| ✨ Agency Tracking Milestones | AGN | `agency/actions.ts`, `agency/AgencyClient.tsx` (new) |
+| ✅ TRS E-Signature (verify) | TRS | `ShipperView.tsx` — `SignaturePad` (already existed) |
+| ✅ TRS POD Photo (verify) | TRS | `ShipperView.tsx` + `uploadPODPhoto()` (already existed) |
+| ✅ TRS Shipper Mobile (verify) | TRS | `shipper/ShipperView.tsx` (451 lines, already existed) |
+| ✨ MDM Awards & Scores | MDM | `products/actions.ts`, `ProductDrawer.tsx` (new) |
+| ✨ FIN Bad Debt Write-off | FIN | `finance/actions.ts`, `FinanceTabs.tsx`, `FinanceClient.tsx` (new) |
+| ✨ TAX EVFTA Roadmap | TAX | `TaxClient.tsx` — EVFTARoadmapPanel + timeline chart (new) |
+| ✨ DSH Cost Waterfall | DSH | `actions.ts` getCostWaterfall() + `page.tsx` waterfall chart (new) |
+| ✨ DSH Revenue YoY | DSH | `actions.ts` getRevenueYoY() + `page.tsx` YoY comparison (new) |
+| ✨ CRM Wine Preference | CRM | `crm/actions.ts` — getWinePreference, saveWinePreference + presets |
+| ✨ CRM Tasting Events | CRM | `crm/actions.ts` — CRUD events + RSVP + check-in + conversion |
+| ✨ CRM Complaint Tickets | CRM | `crm/actions.ts` — CRUD + SLA + resolve |
+| ✨ POS Loyalty Program | POS | `pos/actions.ts` — earn/redeem/balance/tier |
+| ✨ CNT Digital Signature | CNT | `contracts/actions.ts` — signContractInternal + SHA-256 |
+| ✨ MDM Supplier Scorecard | MDM | `suppliers/actions.ts` — on-time, quality, grade |
+| ✨ MDM Duplicate Detection | MDM | `suppliers/actions.ts` — Dice similarity scan |
+| ✨ WMS Mobile Scanner | WMS | `warehouse/actions.ts` — scanBarcode + quickStockCheck |
+| ✨ RPT Print Preview A4 | RPT | `globals.css` — @media print A4 dark→light + utility classes |
+| ✨ RPT Scheduled Reports | RPT | `reports/actions.ts` — schedule CRUD + `runScheduledReports()` + cron route |
+| ✨ DSH Role-based Dashboard | DSH | `actions.ts` — 6 roles config + `getDashboardConfig()` + My Sales + Warehouse Summary |
+| ✨ DSH Realtime Hook | DSH | `useRealtimeDashboard.ts` — client-side Supabase Realtime channels |
+| ✨ AGN Shipment Scope Lock | AGN | `agency/actions.ts` — `partnerShipmentAccess` scope filter verified complete |
+| ✨ MDM Scorecard UI | MDM | `SuppliersClient.tsx` — Tab Scorecard + on-time% bar + grade badge A-F |
+| ✨ MDM Duplicate Detection UI | MDM | `SuppliersClient.tsx` — Tab Phát Hiện Trùng + similarity %, itemA/B cards |
+| ✨ RPT Scheduled Reports UI | RPT | `ReportsClient.tsx` — Tab Lịch Tự Động + toggle Active/Paused |
+| ✨ RPT toggleScheduleStatus | RPT | `reports/actions.ts` — ACTIVE ↔ PAUSED toggle for report schedules |
+| ✨ DSH Quick Links | DSH | `page.tsx` — Role-based quick navigation links grid |
+| ✨ DSH My Sales Widget | DSH | `page.tsx` + `actions.ts` — `getMySales()` + inline orders table for SALES_REP |
+| ✨ DSH Warehouse Widget | DSH | `page.tsx` + `actions.ts` — `getWarehouseDashboard()` + 5-metric grid for THU_KHO |
+| ✨ CRM Tasting Events UI | CRM | `TastingEventsPanel.tsx` — Event cards + RSVP/check-in/conversion metrics + create form |
+| ✨ CRM Complaint Tickets UI | CRM | `ComplaintTicketsPanel.tsx` — SLA tracking + severity badges + resolve action + filters |
+| ✨ CRM Tab Navigation | CRM | `CRMClient.tsx` — 3-tab switcher (Khách Hàng, Sự Kiện, Khiếu Nại) |
+| ✨ POS Loyalty UI | POS | `LoyaltyPanel.tsx` — Tier display + points lookup + redeem value + transaction history |
+| ✨ POS Loyalty Page | POS | `/dashboard/pos/loyalty/page.tsx` — Dedicated loyalty page + link from POS header |
+| ✨ CRM Wine Preference UI | CRM | `WinePreferencePanel.tsx` — Tag selector (grapes/regions/taste) + price range + notes + upsert |
+| ✨ KPI Copy Year | KPI | `KpiClient.tsx` — Copy targets from previous year with growth% multiplier |
+| ✨ KPI Forecast Display | KPI | `KpiClient.tsx` — Enhanced forecast with AI value + safe division |
+
+### 📅 Session 06/03/2026 (Chiều) — Performance Optimization
+| Change | Scope | Files |
+|--------|-------|-------|
+| SWR Cache Engine | `lib/cache.ts` | 115 lines — FRESH/STALE/DEAD states + dedup guard |
+| `cached()` wrapper | 23 modules | ~60+ READ functions wrapped |
+| `revalidateCache()` on mutations | 23 modules | ~120+ mutation functions |
+| ISR Staggered | 30 pages | core=30s, frequent=45s, normal=60s, rare=90s |
+| Smart Prefetch | `Sidebar.tsx` | hover + adjacent tab + dashboard auto-prefetch |
+| pgBouncer Transaction mode | `lib/db.ts` + `.env.local` | port 5432 → 6543, pool max 5 |
+| Router Cache | `next.config.ts` | staleTimes dynamic=30s, static=300s |
+| SWR Dedup Guard | `lib/cache.ts` | `pendingRefreshes` Set — 1 refresh per key |
+
+---
+
+*Audit updated: 06/03/2026 15:35 | Session: +43 features (36 built + 7 verified) + Performance Optimization*
+*Scan method: Code outline + grep search toàn bộ codebase*
+*Total spec files: 19 | Total code modules: 32 | Prisma models: ~57*
+
 | Credit Hold Auto | SLS | `sales/actions.ts` |
 | Product Media Upload | MDM | `products/actions.ts`, `ProductTable.tsx`, `ProductDrawer.tsx` |
 | Balance Sheet (CĐKT) | FIN | `finance/actions.ts`, `FinanceTabs.tsx`, `FinanceClient.tsx` |

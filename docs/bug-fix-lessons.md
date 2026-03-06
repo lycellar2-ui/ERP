@@ -12,6 +12,7 @@
 3. [BUG-003: PowerShell Encoding Phá File UTF-8](#bug-003-powershell-encoding-phá-file-utf-8)
 4. [BUG-004: Build Fail — Prerender Exhausts DB Pool](#bug-004-build-fail--prerender-exhausts-db-pool)
 5. [BUG-005: Build Fail — Non-Async Export in 'use server'](#bug-005-build-fail--non-async-export-in-use-server-file)
+6. [BUG-006: MaxClientsInSessionMode on Vercel Runtime](#bug-006-maxclientsinsessionmode-on-vercel-runtime)
 
 ---
 
@@ -164,7 +165,7 @@ $content = $content -replace 'old', 'new'
 
 ## BUG-004: Build Fail — Prerender Exhausts DB Pool
 
-**Ngày:** 2026-03-05
+**Ngày:** 2026-03-05 → **Cập nhật:** 2026-03-06
 **Severity:** 🟠 Medium — Production build không thành công
 
 ### Triệu chứng
@@ -177,20 +178,26 @@ Next.js build worker exited with code: 1
 ### Nguyên nhân gốc rễ
 
 `export const revalidate = 30` khiến Next.js **prerender tất cả 30+ pages cùng lúc** khi build.
-Mỗi page gọi 5-7 DB queries → 150+ concurrent queries → vượt giới hạn 15 connections.
+Mỗi page gọi 5-7 DB queries → 150+ concurrent queries → vượt giới hạn Session mode (port 5432).
 
-### Cách fix
+### Cách fix (Cập nhật 06/03)
 
-Giữ `export const dynamic = 'force-dynamic'` — **KHÔNG dùng `revalidate`** với Supabase Free Tier.
-Thay vào đó, dùng:
-- `staleTimes` (client-side cache) cho browser
-- `src/lib/cache.ts` (server-side cache) cho server memory
+Chuyển DATABASE_URL sang **Transaction mode (port 6543 + pgBouncer)**:
+```env
+# ✅ ĐÚNG — pgBouncer multiplex connections
+DATABASE_URL=postgresql://...@pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
+
+# ❌ SAI — Session mode giới hạn connections
+DATABASE_URL=postgresql://...@pooler.supabase.com:5432/postgres?sslmode=require
+```
+
+Kết hợp ISR + stagger revalidation (30/45/60/90s) để không tất cả pages cùng revalidate.
 
 ### Bài học
 
-> ⚠️ **RULE 10: KHÔNG dùng `export const revalidate = N` trên dashboard pages.**
-> Nó trigger prerender lúc build → exhausts connection pool.
-> Dùng `force-dynamic` + `cached()` + `staleTimes` thay thế.
+> ⚠️ **RULE 10: Vercel PHẢI dùng Transaction Pooler (port 6543 + pgBouncer).**
+> Session mode (port 5432) giới hạn ~15 connections → exhausts khi ISR prerender.
+> Transaction mode multiplex được 100+ concurrent queries qua ít connections thực.
 
 > ⚠️ **RULE 11: Luôn test `npx next build` sau khi thay đổi page config.**
 > Build fail = deploy fail. Check exit code 0 trước khi push.
@@ -235,6 +242,45 @@ Thêm `async` keyword và đổi return type thành `Promise<RealtimeChannelConf
 
 ---
 
+## BUG-006: MaxClientsInSessionMode on Vercel Runtime
+
+**Ngày:** 2026-03-06
+**Severity:** 🔴 Critical — App trả 500 error khi user navigate
+
+### Triệu chứng
+```
+prisma:error MaxClientsInSessionMode: max clients reached
+Error [DriverAdapterError]: MaxClientsInSessionMode
+page: '/dashboard/allocation'
+```
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **ISR + SWR cùng lúc** | ISR revalidation + SWR background refresh tạo nhiều concurrent queries |
+| **Session mode (port 5432)** | Supabase giới hạn connections per client, không multiplex |
+| **30 pages cùng revalidate** | "Thundering herd" — tất cả pages hết cache cùng lúc |
+| **Thiếu dedup guard** | Nhiều request cho cùng cache key → nhiều DB connections song song |
+
+### Cách fix (4 lớp)
+
+1. **Chuyển Transaction mode (port 6543 + pgBouncer)** — multiplex connections hiệu quả
+2. **Thêm SWR dedup guard** — `pendingRefreshes` Set ngăn nhiều background refresh cùng key
+3. **Stagger ISR revalidation** — core=30s, frequent=45s, normal=60s, rare=90s
+4. **Cache Prisma singleton** — `globalForPrisma.prisma = prisma` cả dev + prod
+
+### Bài học
+
+> ⚠️ **RULE 13: SWR background refresh PHẢI có dedup guard.**
+> Dùng `Set<string>` để track pending refreshes — chỉ 1 refresh per key tại mỗi thời điểm.
+
+> ⚠️ **RULE 14: ISR revalidation intervals phải STAGGER.**
+> Không set cùng 1 giá trị cho tất cả pages → thundering herd pattern.
+> Group pages theo tần suất sử dụng: 30/45/60/90 giây.
+
+---
+
 ## Template cho Bug mới
 
 ```markdown
@@ -261,16 +307,18 @@ Thêm `async` keyword và đổi return type thành `Promise<RealtimeChannelConf
 ## Quick Reference — All Rules
 
 | # | Rule | Context |
-|---|------|---------| 
+|---|------|---------|
 | 1 | Không chạy đồng thời dev + seed + prisma CLI | Connection pool |
 | 2 | Check zombie processes trước khi debug | Connection pool |
-| 3 | `pg.Pool({ max: 3 })` cho Supabase Free | Connection pool |
+| 3 | `pg.Pool({ max: 5 })` + pgBouncer (port 6543) | Connection pool |
 | 4 | Mọi `/dashboard/*` PHẢI có `loading.tsx` | Navigation UX |
 | 5 | Layout = Server Component, state = tách Client | Architecture |
 | 6 | READ functions → `cached()` từ `@/lib/cache` | Performance |
 | 7 | `staleTimes` trong next.config.ts là bắt buộc | Performance |
 | 8 | Không dùng `Set-Content`, dùng `WriteAllText` UTF-8 | Encoding |
 | 9 | Check encoding sau khi sửa file bằng PowerShell | Encoding |
-| 10 | Không dùng `revalidate = N` trên dashboard pages | Build |
+| 10 | Vercel PHẢI dùng Transaction Pooler (6543+pgBouncer) | Connection pool |
 | 11 | Test `npx next build` sau thay đổi page config | Build |
 | 12 | Mọi export trong `'use server'` file PHẢI là `async` | Server Actions |
+| 13 | SWR background refresh phải có dedup guard | Performance |
+| 14 | ISR revalidation intervals phải stagger (30/45/60/90s) | Performance |
