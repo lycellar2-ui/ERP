@@ -326,6 +326,7 @@ model Customer {
   id            String                 @id @default(cuid())
   code          String                 @unique
   name          String
+  shortName     String?                // Abbreviated name for reports
   taxId         String?
   customerType  CustomerType
   channel       SalesChannel?
@@ -347,6 +348,9 @@ model Customer {
   contracts     Contract[]
   returnOrders  ReturnOrder[]
   creditNotes   CreditNote[]
+  winePreference WinePreference?
+  tastingGuests  TastingEventGuest[]   @relation("TastingGuests")
+  loyaltyTransactions LoyaltyTransaction[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   deletedAt     DateTime?
@@ -435,9 +439,14 @@ model TastingEvent {
   id          String                 @id @default(cuid())
   name        String
   eventDate   DateTime
+  date        DateTime?              // Alias for code compat
   location    String?
+  venue       String?                // Alias for code compat
   description String?
+  maxGuests   Int                    @default(50)
+  status      String                 @default("PLANNED")
   attendees   TastingEventAttendee[]
+  guests      TastingEventGuest[]    // Code-compat relation
   createdAt   DateTime               @default(now())
 
   @@map("tasting_events")
@@ -456,21 +465,58 @@ model TastingEventAttendee {
   @@map("tasting_event_attendees")
 }
 
+model TastingEventGuest {
+  id          String       @id @default(cuid())
+  eventId     String
+  event       TastingEvent @relation(fields: [eventId], references: [id])
+  customerId  String
+  customer    Customer     @relation("TastingGuests", fields: [customerId], references: [id])
+  rsvpStatus  String       @default("INVITED")
+  checkedIn   Boolean      @default(false)
+  checkinAt   DateTime?
+  linkedSOId  String?
+  linkedSO    SalesOrder?  @relation("TastingConversion", fields: [linkedSOId], references: [id])
+  createdAt   DateTime     @default(now())
+
+  @@unique([eventId, customerId])
+  @@map("tasting_event_guests")
+}
+
 model ComplaintTicket {
   id          String            @id @default(cuid())
+  ticketNo    String?           @unique
   customerId  String
   customer    Customer          @relation(fields: [customerId], references: [id])
   soId        String?
   so          SalesOrder?       @relation(fields: [soId], references: [id])
   type        ComplaintType
   severity    ComplaintSeverity
+  subject     String?           // Ticket subject line
+  description String?           // Detailed description
   status      TicketStatus      @default(OPEN)
   resolution  String?
+  resolvedAt  DateTime?
   slaDeadline DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
   @@map("complaint_tickets")
+}
+
+model WinePreference {
+  id              String   @id @default(cuid())
+  customerId      String   @unique
+  customer        Customer @relation(fields: [customerId], references: [id])
+  grapeVarieties  String[]
+  regions         String[]
+  tasteProfile    String[]
+  priceRangeMin   Decimal  @default(0)
+  priceRangeMax   Decimal  @default(10000000)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("wine_preferences")
 }
 
 // =============================================================
@@ -570,27 +616,29 @@ model MarketPrice {
 // =============================================================
 
 model PurchaseOrder {
-  id            String              @id @default(cuid())
-  poNo          String              @unique
-  supplierId    String
-  supplier      Supplier            @relation(fields: [supplierId], references: [id])
-  contractId    String?
-  contract      Contract?           @relation(fields: [contractId], references: [id])
-  currency      String              @default("USD")
-  exchangeRate  Decimal             @default(1)
-  status        POStatus            @default(DRAFT)
-  createdBy     String
-  creator       User                @relation(fields: [createdBy], references: [id])
-  signatureUrl  String?
+  id                String              @id @default(cuid())
+  poNo              String              @unique
+  supplierId        String
+  supplier          Supplier            @relation(fields: [supplierId], references: [id])
+  contractId        String?
+  contract          Contract?           @relation(fields: [contractId], references: [id])
+  currency          String              @default("USD")
+  exchangeRate      Decimal             @default(1)
+  status            POStatus            @default(DRAFT)
+  estimatedDelivery DateTime?           // Expected delivery date for scorecard
+  receivedAt        DateTime?           // Actual receive date for scorecard
+  createdBy         String
+  creator           User                @relation(fields: [createdBy], references: [id])
+  signatureUrl      String?
 
-  lines         PurchaseOrderLine[]
-  shipments     Shipment[]
-  apInvoices    APInvoice[]
-  goodsReceipts GoodsReceipt[]
-  documents     PODocument[]
+  lines             PurchaseOrderLine[]
+  shipments         Shipment[]
+  apInvoices        APInvoice[]
+  goodsReceipts     GoodsReceipt[]
+  documents         PODocument[]
 
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   @@map("purchase_orders")
 }
@@ -943,28 +991,29 @@ model SalesQuotationLine {
 }
 
 model SalesOrder {
-  id                String            @id @default(cuid())
-  soNo              String            @unique
+  id                String              @id @default(cuid())
+  soNo              String              @unique
   customerId        String
-  customer          Customer          @relation(fields: [customerId], references: [id])
+  customer          Customer            @relation(fields: [customerId], references: [id])
   contractId        String?
-  contract          Contract?         @relation(fields: [contractId], references: [id])
+  contract          Contract?           @relation(fields: [contractId], references: [id])
   salesRepId        String
-  salesRep          User              @relation("SOSalesRep", fields: [salesRepId], references: [id])
+  salesRep          User                @relation("SOSalesRep", fields: [salesRepId], references: [id])
   channel           SalesChannel
   shippingAddressId String?
-  shippingAddress   CustomerAddress?  @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingAddress   CustomerAddress?    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   paymentTerm       String
-  totalAmount       Decimal           @default(0)
-  orderDiscount     Decimal           @default(0)
-  status            SOStatus          @default(DRAFT)
+  totalAmount       Decimal             @default(0)
+  orderDiscount     Decimal             @default(0)
+  status            SOStatus            @default(DRAFT)
   lines             SalesOrderLine[]
   deliveryOrders    DeliveryOrder[]
   arInvoices        ARInvoice[]
   complaints        ComplaintTicket[]
   returnOrders      ReturnOrder[]
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  tastingConversions TastingEventGuest[] @relation("TastingConversion")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   @@map("sales_orders")
 }
@@ -1249,8 +1298,10 @@ model ARInvoice {
   amount      Decimal
   vatAmount   Decimal       @default(0)
   totalAmount Decimal
+  paidAmount  Decimal       @default(0)
   dueDate     DateTime
   status      InvoiceStatus @default(UNPAID)
+  notes       String?
   payments    ARPayment[]
   createdAt   DateTime      @default(now())
 
@@ -1393,10 +1444,13 @@ model ReportSchedule {
   templateId String
   template   ReportTemplate    @relation(fields: [templateId], references: [id])
   frequency  ScheduleFrequency
-  runAt      String // Cron expression: "0 8 * * 1" = 8am Monday
-  recipients String[] // Email list
+  runAt      String            @default("0 7 * * *") // Cron expression
+  reportKey  String?           // Report key for auto-export
+  recipients String[]          // Email list
   lastRunAt  DateTime?
-  status     UserStatus        @default(ACTIVE)
+  nextRunAt  DateTime?
+  status     String            @default("ACTIVE") // ACTIVE | PAUSED
+  createdAt  DateTime          @default(now())
 
   @@map("report_schedules")
 }
@@ -1557,6 +1611,8 @@ enum OpportunityStage {
 
 enum RsvpStatus {
   PENDING
+  INVITED
+  CONFIRMED
   ACCEPTED
   DECLINED
 }
@@ -1565,7 +1621,10 @@ enum ComplaintType {
   BREAKAGE
   WRONG_SKU_SHORT_SHIPPED
   QUALITY
+  DELIVERY
+  BILLING
   SERVICE
+  PACKAGING
   OTHER
 }
 
@@ -1785,6 +1844,7 @@ enum JournalDocType {
   ADJUSTMENT
   OPENING_STOCK
   COD_COLLECTION
+  BAD_DEBT
 }
 
 enum InvoiceStatus {
@@ -2046,3 +2106,19 @@ model AiPromptRun {
   @@map("ai_prompt_runs")
 }
 
+// ═══════════════════════════════════════════════════
+// POS — Loyalty Program
+// ═══════════════════════════════════════════════════
+
+model LoyaltyTransaction {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  type        String   // EARN | REDEEM
+  points      Int
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([customerId])
+  @@map("loyalty_transactions")
+}

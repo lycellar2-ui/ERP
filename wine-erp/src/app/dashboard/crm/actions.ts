@@ -514,22 +514,28 @@ export async function saveWinePreference(input: {
     }
 }
 
-export const GRAPE_PRESETS = [
-    'Cabernet Sauvignon', 'Merlot', 'Pinot Noir', 'Syrah/Shiraz', 'Malbec',
-    'Chardonnay', 'Sauvignon Blanc', 'Riesling', 'Pinot Grigio', 'Moscato',
-    'Tempranillo', 'Nebbiolo', 'Sangiovese', 'Grenache', 'Zinfandel',
-]
+export async function getGrapePresets() {
+    return [
+        'Cabernet Sauvignon', 'Merlot', 'Pinot Noir', 'Syrah/Shiraz', 'Malbec',
+        'Chardonnay', 'Sauvignon Blanc', 'Riesling', 'Pinot Grigio', 'Moscato',
+        'Tempranillo', 'Nebbiolo', 'Sangiovese', 'Grenache', 'Zinfandel',
+    ]
+}
 
-export const REGION_PRESETS = [
-    'Bordeaux', 'Bourgogne', 'Champagne', 'Rhône', 'Loire',
-    'Tuscany', 'Piedmont', 'Rioja', 'Barossa', 'Napa Valley',
-    'Mendoza', 'Mosel', 'Douro', 'Marlborough', 'Central Otago',
-]
+export async function getRegionPresets() {
+    return [
+        'Bordeaux', 'Bourgogne', 'Champagne', 'Rhône', 'Loire',
+        'Tuscany', 'Piedmont', 'Rioja', 'Barossa', 'Napa Valley',
+        'Mendoza', 'Mosel', 'Douro', 'Marlborough', 'Central Otago',
+    ]
+}
 
-export const TASTE_PRESETS = [
-    'Fruity', 'Dry', 'Sweet', 'Tannic', 'Oaky',
-    'Light-bodied', 'Full-bodied', 'Crisp', 'Smooth', 'Spicy',
-]
+export async function getTastePresets() {
+    return [
+        'Fruity', 'Dry', 'Sweet', 'Tannic', 'Oaky',
+        'Light-bodied', 'Full-bodied', 'Crisp', 'Smooth', 'Spicy',
+    ]
+}
 
 // ═══════════════════════════════════════════════════
 // #27 — TASTING EVENT MANAGEMENT
@@ -538,8 +544,8 @@ export const TASTE_PRESETS = [
 export type TastingEventRow = {
     id: string
     name: string
-    date: Date
-    venue: string
+    date: Date | null
+    venue: string | null
     description: string | null
     maxGuests: number
     status: string
@@ -590,7 +596,9 @@ export async function createTastingEvent(input: {
         await prisma.tastingEvent.create({
             data: {
                 name: input.name,
+                eventDate: new Date(input.date),
                 date: new Date(input.date),
+                location: input.venue,
                 venue: input.venue,
                 description: input.description ?? null,
                 maxGuests: input.maxGuests,
@@ -683,14 +691,14 @@ export async function getEventDetails(eventId: string) {
 
 export type ComplaintRow = {
     id: string
-    ticketNo: string
+    ticketNo: string | null
     customerId: string
     customerName: string
     type: string
     severity: string
     status: string
-    subject: string
-    description: string
+    subject: string | null
+    description: string | null
     resolution: string | null
     resolvedAt: Date | null
     slaDeadline: Date | null
@@ -758,8 +766,8 @@ export async function createComplaintTicket(input: {
             data: {
                 ticketNo,
                 customerId: input.customerId,
-                type: input.type,
-                severity: input.severity,
+                type: input.type as any,
+                severity: input.severity as any,
                 subject: input.subject,
                 description: input.description,
                 status: 'OPEN',
@@ -789,5 +797,10 @@ export async function resolveComplaintTicket(id: string, resolution: string): Pr
     }
 }
 
-export const COMPLAINT_TYPES = ['QUALITY', 'DELIVERY', 'BILLING', 'SERVICE', 'PACKAGING', 'OTHER']
-export const COMPLAINT_SEVERITY = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+export async function getComplaintTypes() {
+    return ['QUALITY', 'DELIVERY', 'BILLING', 'SERVICE', 'PACKAGING', 'OTHER']
+}
+
+export async function getComplaintSeverityLevels() {
+    return ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+}

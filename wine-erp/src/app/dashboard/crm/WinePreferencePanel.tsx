@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Wine, Save, Loader2, X, Plus } from 'lucide-react'
 import {
     getWinePreference, saveWinePreference,
-    GRAPE_PRESETS, REGION_PRESETS, TASTE_PRESETS,
+    getGrapePresets, getRegionPresets, getTastePresets,
     type WinePreference,
 } from './actions'
 import { formatVND } from '@/lib/utils'
@@ -51,10 +51,22 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
     const [priceMax, setPriceMax] = useState(5000000)
     const [notes, setNotes] = useState('')
 
+    const [GRAPE_PRESETS, setGrapePresets] = useState<string[]>([])
+    const [REGION_PRESETS, setRegionPresets] = useState<string[]>([])
+    const [TASTE_PRESETS, setTastePresets] = useState<string[]>([])
+
     useEffect(() => {
         setLoading(true)
-        getWinePreference(customerId).then(data => {
+        Promise.all([
+            getWinePreference(customerId),
+            getGrapePresets(),
+            getRegionPresets(),
+            getTastePresets(),
+        ]).then(([data, grapeP, regionP, tasteP]) => {
             setPref(data)
+            setGrapePresets(grapeP)
+            setRegionPresets(regionP)
+            setTastePresets(tasteP)
             if (data) {
                 setGrapes(data.grapeVarieties)
                 setRegions(data.regions)

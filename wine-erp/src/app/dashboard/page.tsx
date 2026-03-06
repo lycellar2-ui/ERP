@@ -77,8 +77,15 @@ export default async function DashboardPage() {
     const warehouseData = has('warehouse_summary') ? await getWarehouseDashboard() : null
     const realtimeChannels = getRealtimeChannels(roles)
 
+    const _kpiSummary = kpiSummary ?? []
+    const _plSummary = plSummary ?? { revenue: 0, cogs: 0, grossProfit: 0, expenses: 0, netProfit: 0, grossMargin: 0 }
+    const _cashPosition = cashPosition ?? { netCashFlow: 0, cashIn: 0, cashOutAP: 0, cashOutExpenses: 0, arOutstanding: 0, apOutstanding: 0 }
+    const _arAging = arAging ?? { invoiceCount: 0, totalOutstanding: 0, buckets: [] as { label: string; amount: number; color: string }[] }
+    const _waterfall = Array.isArray(waterfall) ? { bars: [] as WaterfallBar[], revenue: 0, cogs: 0, totalExpenses: 0, netProfit: 0 } : waterfall
+    const _yoy = yoy ?? { thisYear: new Date().getFullYear(), lastYear: new Date().getFullYear() - 1, current: [] as { month: number; label: string; revenue: number }[], previous: [] as { month: number; label: string; revenue: number }[], totalCurrent: 0, totalPrevious: 0, yoyGrowth: 0 }
+
     const maxBar = Math.max(...monthlyRevenue.map(m => m.revenue), 1)
-    const arMax = arAging ? Math.max(...arAging.buckets.map(b => b.amount), 1) : 1
+    const arMax = _arAging.buckets.length > 0 ? Math.max(..._arAging.buckets.map(b => b.amount), 1) : 1
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -157,11 +164,11 @@ export default async function DashboardPage() {
                     <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>KPI Tháng Này</h3>
                     <span className="text-xs px-2 py-0.5 rounded-full ml-auto"
                         style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
-                        {kpiSummary.filter(k => k.progressPct >= 100).length}/{kpiSummary.length} đạt
+                        {_kpiSummary.filter(k => k.progressPct >= 100).length}/{_kpiSummary.length} đạt
                     </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                    {kpiSummary.map(kpi => {
+                    {_kpiSummary.map(kpi => {
                         const pct = Math.min(kpi.progressPct, 100)
                         const statusColor = kpi.status === 'ON_TRACK' ? '#5BA88A' : kpi.status === 'AT_RISK' ? '#D4A853' : '#8B1A2E'
                         const statusLabel = kpi.status === 'ON_TRACK' ? 'Đạt' : kpi.status === 'AT_RISK' ? 'Cận' : 'Chậm'
@@ -286,11 +293,11 @@ export default async function DashboardPage() {
                     </div>
                     <div className="space-y-3">
                         {[
-                            { label: 'Doanh thu (TK 511)', value: plSummary.revenue, color: '#87CBB9' },
-                            { label: 'COGS (TK 632)', value: -plSummary.cogs, color: '#E05252', prefix: '−' },
-                            { label: 'Lãi gộp', value: plSummary.grossProfit, color: '#D4A853', bold: true, divider: true },
-                            { label: 'Chi phí (641+642+635)', value: -plSummary.expenses, color: '#8AAEBB', prefix: '−' },
-                            { label: 'Lãi ròng', value: plSummary.netProfit, color: plSummary.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', bold: true, divider: true },
+                            { label: 'Doanh thu (TK 511)', value: _plSummary.revenue, color: '#87CBB9' },
+                            { label: 'COGS (TK 632)', value: -_plSummary.cogs, color: '#E05252', prefix: '−' },
+                            { label: 'Lãi gộp', value: _plSummary.grossProfit, color: '#D4A853', bold: true, divider: true },
+                            { label: 'Chi phí (641+642+635)', value: -_plSummary.expenses, color: '#8AAEBB', prefix: '−' },
+                            { label: 'Lãi ròng', value: _plSummary.netProfit, color: _plSummary.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', bold: true, divider: true },
                         ].map((row) => (
                             <div key={row.label}>
                                 {row.divider && <div className="mb-2" style={{ borderTop: '1px solid #2A4355' }} />}
@@ -309,10 +316,10 @@ export default async function DashboardPage() {
                         <div className="flex justify-end mt-1">
                             <span className="text-xs px-2 py-0.5 rounded-full font-bold"
                                 style={{
-                                    background: plSummary.grossMargin >= 30 ? 'rgba(91,168,138,0.15)' : 'rgba(212,168,83,0.15)',
-                                    color: plSummary.grossMargin >= 30 ? '#5BA88A' : '#D4A853',
+                                    background: _plSummary.grossMargin >= 30 ? 'rgba(91,168,138,0.15)' : 'rgba(212,168,83,0.15)',
+                                    color: _plSummary.grossMargin >= 30 ? '#5BA88A' : '#D4A853',
                                 }}>
-                                Biên lãi gộp: {plSummary.grossMargin.toFixed(1)}%
+                                Biên lãi gộp: {_plSummary.grossMargin.toFixed(1)}%
                             </span>
                         </div>
                     </div>
@@ -332,9 +339,9 @@ export default async function DashboardPage() {
                         </p>
                         <p className="text-2xl font-bold" style={{
                             fontFamily: 'var(--font-mono)',
-                            color: cashPosition.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E',
+                            color: _cashPosition.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E',
                         }}>
-                            {cashPosition.netCashFlow >= 0 ? '+' : ''}{formatVND(cashPosition.netCashFlow)}
+                            {_cashPosition.netCashFlow >= 0 ? '+' : ''}{formatVND(_cashPosition.netCashFlow)}
                         </p>
                     </div>
 
@@ -346,7 +353,7 @@ export default async function DashboardPage() {
                                 <span className="text-xs" style={{ color: '#5BA88A' }}>Thu AR (Thanh toán KH)</span>
                             </div>
                             <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#5BA88A' }}>
-                                +{formatVND(cashPosition.cashIn)}
+                                +{formatVND(_cashPosition.cashIn)}
                             </span>
                         </div>
 
@@ -357,7 +364,7 @@ export default async function DashboardPage() {
                                 <span className="text-xs" style={{ color: '#E05252' }}>Trả NCC (AP)</span>
                             </div>
                             <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#E05252' }}>
-                                −{formatVND(cashPosition.cashOutAP)}
+                                −{formatVND(_cashPosition.cashOutAP)}
                             </span>
                         </div>
 
@@ -368,18 +375,18 @@ export default async function DashboardPage() {
                                 <span className="text-xs" style={{ color: '#D4A853' }}>Chi phí hoạt động</span>
                             </div>
                             <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#D4A853' }}>
-                                −{formatVND(cashPosition.cashOutExpenses)}
+                                −{formatVND(_cashPosition.cashOutExpenses)}
                             </span>
                         </div>
 
                         <div style={{ borderTop: '1px solid #2A4355' }} className="pt-2">
                             <div className="flex justify-between text-xs">
                                 <span style={{ color: '#4A6A7A' }}>AR Chưa Thu</span>
-                                <span style={{ fontFamily: 'var(--font-mono)', color: '#8AAEBB' }}>{formatVND(cashPosition.arOutstanding)}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', color: '#8AAEBB' }}>{formatVND(_cashPosition.arOutstanding)}</span>
                             </div>
                             <div className="flex justify-between text-xs mt-1">
                                 <span style={{ color: '#4A6A7A' }}>AP Chưa Trả</span>
-                                <span style={{ fontFamily: 'var(--font-mono)', color: '#8AAEBB' }}>{formatVND(cashPosition.apOutstanding)}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', color: '#8AAEBB' }}>{formatVND(_cashPosition.apOutstanding)}</span>
                             </div>
                         </div>
                     </div>
@@ -394,7 +401,7 @@ export default async function DashboardPage() {
                         </div>
                         <span className="text-xs px-2 py-0.5 rounded-full font-bold"
                             style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>
-                            {arAging.invoiceCount} hoá đơn
+                            {_arAging.invoiceCount} hoá đơn
                         </span>
                     </div>
 
@@ -403,13 +410,13 @@ export default async function DashboardPage() {
                         <p className="text-xs uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Tổng Công Nợ</p>
                         <p className="text-xl font-bold"
                             style={{ fontFamily: 'var(--font-mono)', color: '#D4A853' }}>
-                            {formatVND(arAging.totalOutstanding)}
+                            {formatVND(_arAging.totalOutstanding)}
                         </p>
                     </div>
 
                     {/* Horizontal bars */}
                     <div className="space-y-3">
-                        {arAging.buckets.map((b) => {
+                        {_arAging.buckets.map((b) => {
                             const pct = arMax > 0 ? (b.amount / arMax) * 100 : 0
                             return (
                                 <div key={b.label}>
@@ -439,15 +446,15 @@ export default async function DashboardPage() {
                         <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Cơ Cấu Chi Phí — Waterfall</h3>
                     </div>
                     <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                        style={{ background: waterfall.netProfit >= 0 ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)', color: waterfall.netProfit >= 0 ? '#5BA88A' : '#8B1A2E' }}>
-                        Net Margin: {waterfall.revenue > 0 ? ((waterfall.netProfit / waterfall.revenue) * 100).toFixed(1) : 0}%
+                        style={{ background: _waterfall.netProfit >= 0 ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)', color: _waterfall.netProfit >= 0 ? '#5BA88A' : '#8B1A2E' }}>
+                        Net Margin: {_waterfall.revenue > 0 ? ((_waterfall.netProfit / _waterfall.revenue) * 100).toFixed(1) : 0}%
                     </span>
                 </div>
 
                 {/* Waterfall chart */}
                 <div className="flex items-end gap-2 h-48 mb-4">
-                    {waterfall.bars.map((bar: WaterfallBar) => {
-                        const absMax = Math.max(...waterfall.bars.map((b: WaterfallBar) => Math.abs(b.value)), 1)
+                    {_waterfall.bars.map((bar: WaterfallBar) => {
+                        const absMax = Math.max(..._waterfall.bars.map((b: WaterfallBar) => Math.abs(b.value)), 1)
                         const barH = Math.max(8, (Math.abs(bar.value) / absMax) * 160)
                         const isNeg = bar.type === 'negative'
                         return (
@@ -479,10 +486,10 @@ export default async function DashboardPage() {
                 {/* Legend row */}
                 <div className="flex items-center justify-center gap-6 pt-3" style={{ borderTop: '1px solid #2A4355' }}>
                     {[
-                        { label: 'Doanh Thu', color: '#5BA88A', val: waterfall.revenue },
-                        { label: 'COGS', color: '#E05252', val: waterfall.cogs },
-                        { label: 'Chi Phí', color: '#D4A853', val: waterfall.totalExpenses },
-                        { label: 'Lãi Ròng', color: waterfall.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', val: waterfall.netProfit },
+                        { label: 'Doanh Thu', color: '#5BA88A', val: _waterfall.revenue },
+                        { label: 'COGS', color: '#E05252', val: _waterfall.cogs },
+                        { label: 'Chi Phí', color: '#D4A853', val: _waterfall.totalExpenses },
+                        { label: 'Lãi Ròng', color: _waterfall.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', val: _waterfall.netProfit },
                     ].map(l => (
                         <div key={l.label} className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
@@ -498,8 +505,8 @@ export default async function DashboardPage() {
             {/* Row 3.75 — Revenue YoY Comparison */}
             {(() => {
                 const yoyMax = Math.max(
-                    ...yoy.current.map(m => m.revenue),
-                    ...yoy.previous.map(m => m.revenue),
+                    ..._yoy.current.map(m => m.revenue),
+                    ..._yoy.previous.map(m => m.revenue),
                     1
                 )
                 const currentMonth = new Date().getMonth() + 1
@@ -509,31 +516,31 @@ export default async function DashboardPage() {
                             <div className="flex items-center gap-2">
                                 <TrendingUp size={16} style={{ color: '#87CBB9' }} />
                                 <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>
-                                    Doanh Thu YoY — {yoy.thisYear} vs {yoy.lastYear}
+                                    Doanh Thu YoY — {_yoy.thisYear} vs {_yoy.lastYear}
                                 </h3>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-3 h-2 rounded-sm" style={{ background: '#87CBB9' }} />
-                                    <span className="text-[10px]" style={{ color: '#8AAEBB' }}>{yoy.thisYear}</span>
+                                    <span className="text-[10px]" style={{ color: '#8AAEBB' }}>{_yoy.thisYear}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-3 h-2 rounded-sm" style={{ background: '#2A4355' }} />
-                                    <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{yoy.lastYear}</span>
+                                    <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{_yoy.lastYear}</span>
                                 </div>
                                 <span className="text-xs px-2 py-0.5 rounded-full font-bold"
                                     style={{
-                                        background: yoy.yoyGrowth >= 0 ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)',
-                                        color: yoy.yoyGrowth >= 0 ? '#5BA88A' : '#8B1A2E',
+                                        background: _yoy.yoyGrowth >= 0 ? 'rgba(91,168,138,0.15)' : 'rgba(139,26,46,0.15)',
+                                        color: _yoy.yoyGrowth >= 0 ? '#5BA88A' : '#8B1A2E',
                                     }}>
-                                    {yoy.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(yoy.yoyGrowth).toFixed(1)}% YoY
+                                    {_yoy.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(_yoy.yoyGrowth).toFixed(1)}% YoY
                                 </span>
                             </div>
                         </div>
 
                         <div className="flex items-end gap-1 h-40">
-                            {yoy.current.map((m, i) => {
-                                const prev = yoy.previous[i]
+                            {_yoy.current.map((m, i) => {
+                                const prev = _yoy.previous[i]
                                 const curH = Math.max(2, (m.revenue / yoyMax) * 130)
                                 const prevH = Math.max(2, (prev.revenue / yoyMax) * 130)
                                 const isFuture = m.month > currentMonth
@@ -559,12 +566,12 @@ export default async function DashboardPage() {
 
                         <div className="flex justify-center gap-8 pt-3 mt-3" style={{ borderTop: '1px solid #2A4355' }}>
                             <div className="text-center">
-                                <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{yoy.thisYear} Tổng</p>
-                                <p className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>{formatVND(yoy.totalCurrent)}</p>
+                                <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{_yoy.thisYear} Tổng</p>
+                                <p className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>{formatVND(_yoy.totalCurrent)}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{yoy.lastYear} Tổng</p>
-                                <p className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#4A6A7A' }}>{formatVND(yoy.totalPrevious)}</p>
+                                <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{_yoy.lastYear} Tổng</p>
+                                <p className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#4A6A7A' }}>{formatVND(_yoy.totalPrevious)}</p>
                             </div>
                         </div>
                     </div>

@@ -116,10 +116,10 @@ export function TastingEventsPanel() {
                                         <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{ev.name}</p>
                                         <div className="flex items-center gap-3 mt-1">
                                             <span className="flex items-center gap-1 text-xs" style={{ color: '#4A6A7A' }}>
-                                                <Calendar size={11} /> {formatDate(ev.date)}
+                                                <Calendar size={11} /> {ev.date ? formatDate(ev.date) : '—'}
                                             </span>
                                             <span className="flex items-center gap-1 text-xs" style={{ color: '#4A6A7A' }}>
-                                                <MapPin size={11} /> {ev.venue}
+                                                <MapPin size={11} /> {ev.venue ?? '—'}
                                             </span>
                                         </div>
                                     </div>

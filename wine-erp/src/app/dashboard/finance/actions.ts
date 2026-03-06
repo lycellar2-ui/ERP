@@ -1282,9 +1282,7 @@ export async function getBadDebtCandidates(minDaysOverdue: number = 180): Promis
             status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
         },
         include: {
-            salesOrder: {
-                include: { customer: { select: { shortName: true } } },
-            },
+            customer: { select: { name: true, shortName: true } },
         },
         orderBy: { dueDate: 'asc' },
     })
@@ -1293,7 +1291,7 @@ export async function getBadDebtCandidates(minDaysOverdue: number = 180): Promis
     return invoices.map(inv => ({
         invoiceId: inv.id,
         invoiceNo: inv.invoiceNo,
-        customerName: inv.salesOrder?.customer?.shortName ?? 'N/A',
+        customerName: inv.customer?.shortName ?? inv.customer?.name ?? 'N/A',
         amount: Number(inv.totalAmount ?? inv.amount),
         outstanding: Number(inv.totalAmount ?? inv.amount) - Number(inv.paidAmount ?? 0),
         dueDate: inv.dueDate,
@@ -1321,9 +1319,7 @@ export async function writeOffBadDebt(input: {
         const invoice = await prisma.aRInvoice.findUnique({
             where: { id: input.invoiceId },
             include: {
-                salesOrder: {
-                    include: { customer: { select: { shortName: true } } },
-                },
+                customer: { select: { name: true, shortName: true } },
             },
         })
         if (!invoice) return { success: false, error: 'Hóa đơn không tồn tại' }
@@ -1348,7 +1344,7 @@ export async function writeOffBadDebt(input: {
                 docType: 'BAD_DEBT',
                 docId: input.invoiceId,
                 periodId: period.id,
-                description: `Xóa nợ khó đòi: ${invoice.invoiceNo} - ${invoice.salesOrder?.customer?.shortName ?? 'N/A'} - ${input.reason}`,
+                description: `Xóa nợ khó đòi: ${invoice.invoiceNo} - ${invoice.customer?.shortName ?? invoice.customer?.name ?? 'N/A'} - ${input.reason}`,
                 createdBy: userId,
                 lines: {
                     create: [

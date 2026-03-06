@@ -418,13 +418,10 @@ export async function signContractInternal(input: {
             data: {
                 signatureUrl: input.signatureDataUrl,
                 status: 'ACTIVE',
-                signedBy: input.signerId,
-                signedAt: new Date(),
-                signatureHash,
             },
         })
 
-        // Log audit for signature
+        // Log audit for signature (stores signedBy, signatureHash, etc.)
         const { logAudit } = await import('@/lib/audit')
         await logAudit({
             userId: input.signerId,
@@ -432,7 +429,7 @@ export async function signContractInternal(input: {
             entityType: 'Contract',
             entityId: input.contractId,
             description: `Ký nội bộ HĐ ${contract.contractNo} — ${input.signerRole}`,
-            newValue: { signatureHash, signerRole: input.signerRole, ip: input.ipAddress },
+            newValue: { signatureHash, signedBy: input.signerId, signedAt: new Date().toISOString(), signerRole: input.signerRole, ip: input.ipAddress },
         })
 
         revalidatePath('/dashboard/contracts')
@@ -450,12 +447,17 @@ export async function verifyContractSignature(contractId: string): Promise<{
 }> {
     const contract = await prisma.contract.findUnique({
         where: { id: contractId },
-        select: { signatureUrl: true, signedAt: true, signedBy: true, signatureHash: true },
+        select: { signatureUrl: true, updatedAt: true },
     })
+
+    if (!contract?.signatureUrl) {
+        return { isSigned: false, signedAt: null, signedBy: null, signatureHash: null }
+    }
+
     return {
-        isSigned: !!contract?.signatureUrl,
-        signedAt: contract?.signedAt ?? null,
-        signedBy: contract?.signedBy ?? null,
-        signatureHash: contract?.signatureHash ?? null,
+        isSigned: true,
+        signedAt: contract.updatedAt,
+        signedBy: null,
+        signatureHash: null,
     }
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Clock, CheckCircle2, Loader2, Filter, ChevronDown } from 'lucide-react'
-import { getComplaintTickets, resolveComplaintTicket, COMPLAINT_TYPES, COMPLAINT_SEVERITY, type ComplaintRow } from './actions'
+import { getComplaintTickets, resolveComplaintTicket, type ComplaintRow } from './actions'
 
 const SEVERITY_CFG: Record<string, { label: string; color: string; bg: string }> = {
     CRITICAL: { label: '🔴 Critical', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
