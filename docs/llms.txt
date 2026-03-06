@@ -1,14 +1,14 @@
 # Wine ERP Project
 > Hệ thống ERP tối ưu cho nghiệp vụ Nhập khẩu và Phân phối Rượu Vang.
-> **Phase 4 — Implementation đang triển khai** (05/03/2026) — P1 Progress: 11/15 (73%)
+> **Phase 4 — Implementation** (06/03/2026) — **P1-P7 100% | P8 ~97%** | Phase 10: Telegram Bot ✅
 
 ## Core Files & Context
 - [docs/wine-erp-plan.md]: Master Plan v3.0 và Task Breakdown (Phase 4 đang triển khai).
-- [docs/wine-erp-implementation-plan.md]: Kế hoạch triển khai chi tiết 8 Phase — tracking progress.
-- [docs/wine-erp-audit-05-03.md]: Audit đặc tả vs code thực tế — **~65% hoàn thành**.
+- [docs/wine-erp-implementation-plan.md]: Kế hoạch triển khai chi tiết 10 Phase — tracking progress.
+- [docs/wine-erp-audit-05-03.md]: Audit đặc tả vs code thực tế — **~97% hoàn thành**.
 - [docs/README.md]: Mục lục hệ thống tài liệu.
 - [docs/architecture/]: Các file thiết kế kiến trúc và mô hình Database.
-- [docs/modules/]: Đặc tả nghiệp vụ (Business Requirements) — 20 modules.
+- [docs/modules/]: Đặc tả nghiệp vụ (Business Requirements) — 21 modules (incl. TLG Telegram).
 
 ## Implementation Progress (05/03/2026 13:45)
 - **SLS (Sales): 80%** — SO, Allocation, Credit Check, SO Margin Analysis, Quotation Module, Price List
@@ -22,10 +22,11 @@
 - **CRM: 55%** — Customer 360°, Activity Log, Sales Pipeline (Kanban)
 - **CST (Costing): 60%** — SKU view, Landed Cost Campaign
 
-## New Modules (Session 05/03)
+## New Modules (Session 05-06/03)
 - **Quotation (QTN)**: `/dashboard/quotations` — CRUD, DRAFT→SENT→ACCEPTED→CONVERTED, Convert to SO
 - **Sales Pipeline (PPL)**: `/dashboard/pipeline` — Kanban 6 cột, move stage, stats, create opp
 - **Price List (PRC-L)**: `/dashboard/price-list` — 4 channel cards, CRUD, add product + price
+- **Telegram Bot (TLG)**: `/api/telegram` (webhook) + `/dashboard/settings/telegram` (UI) — 9 commands, 5 push notifications, dual-channel Email+Telegram, inline approval
 
 ## Key Concepts (Wine ERP Specifics)
 - **Allocation**: Cơ chế phân bổ số lượng bán tối đa cho từng Sales Rep hoặc Khách hàng VIP với các loại rượu Grand Cru hiếm.
@@ -36,4 +37,4 @@
 - **Period Close**: Đóng kỳ kế toán tháng — pre-closing checklist 5 mục (AR/AP/GR/DO/Expense), lock chứng từ.
 - **SO Margin**: Phân tích biên lợi nhuận per dòng SO, alert khi biên âm, dùng weighted avg landed cost.
 - **Quotation**: Báo giá → Gửi khách → Chấp nhận → 1-click chuyển thành Sales Order.
-
+- **Telegram Bot (TLG)**: Webhook-based CEO bot — truy vấn DB qua Prisma, 9 lệnh tiếng Việt, 5 push notifications (dual-channel Email+Telegram), inline keyboard approve/reject, 3-layer security (webhook secret + whitelist + read-only).

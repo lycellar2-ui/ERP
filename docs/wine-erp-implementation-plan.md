@@ -21,6 +21,7 @@ graph LR
     P6 --> P7[Phase 7: Portals & Modules mới]
     P7 --> P8[Phase 8: AI & Nâng cao]
     P8 --> P9[Phase 9: Unit Testing Core Logic]
+    P8 --> P10[Phase 10: Telegram Bot Integration]
 ```
 
 ---
@@ -481,6 +482,7 @@ graph LR
 | **Phase 7** | Agency Portal, POS, QR Code, Market Price | ~1.5 tuần | Phase 5+6 |
 | **Phase 8** | AI (9 features), Realtime, Advanced Dashboard | ~1.5 tuần | Phase 7 |
 | **Phase 9** | Unit Testing Business Logic (188 Tests) | ✅ DONE | Phase 8 |
+| **Phase 10** | Telegram Bot Integration (TLG) | ✅ DONE | Phase 8 |
 
 **Tổng ước tính: ~11 tuần** (nếu làm fulltime 1 dev)
 
@@ -488,6 +490,72 @@ graph LR
 
 ## Báo Cáo Kiểm Thử (Phase 9)
 Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Testing nghiệp vụ cho hệ thống. Đạt 188/188 tests passed phủ toàn bộ 100% Core Business Logic. Tình trạng: **Sẵn sàng nghiệm thu (Production-Ready)**.
+
+---
+
+## PHASE 10 — Telegram Bot Integration (TLG)
+> **Tích hợp bot Telegram cho CEO — truy vấn ERP & nhận thông báo tự động.**
+
+### 10.1 Core API Client ✅ DONE
+- [x] `lib/telegram.ts` — Zero-dependency Telegram Bot API wrapper (native fetch)
+- [x] Types: TelegramUpdate, Message, CallbackQuery, User, Chat, InlineKeyboard
+- [x] `sendMessage()`, `sendMessageWithKeyboard()`, `answerCallbackQuery()`, `editMessageText()`
+- [x] `setWebhook()`, `deleteWebhook()`, `getWebhookInfo()`
+- [x] `isAuthorizedUser()` — whitelist check
+- [x] `notifyTelegram()` — push notification helper (CEO Chat ID)
+- [x] Formatting: `formatVND()`, `escapeHtml()`, `parseCommand()`
+- [x] Mock mode: khi chưa có BOT_TOKEN, log ra console
+- → **Verify:** ✅ 216 dòng, zero external dependencies.
+
+### 10.2 Command Handlers ✅ DONE
+- [x] `lib/telegram-commands.ts` — 9 command handlers query DB qua Prisma
+- [x] `/start` — Welcome message + danh sách lệnh
+- [x] `/menu` — Interactive inline keyboard menu
+- [x] `/doanhthu` — Doanh thu tháng/hôm nay + so sánh tháng trước
+- [x] `/donhang` — 8 đơn hàng gần nhất với status emoji
+- [x] `/pheduyet` — Pending approvals + Quick approve/reject inline buttons
+- [x] `/tonkho` — Tổng quan tồn kho + Top 5 sản phẩm
+- [x] `/congno` — Công nợ phải thu (AR Aging 5 bucket) + Top 5 khách nợ
+- [x] `/timkiem <key>` — Tìm kiếm đa module (Products, SO, Customers)
+- [x] `/baocao` — Báo cáo tổng hợp nhanh (7 chỉ số)
+- [x] Callback query handler (menu buttons, approve/reject)
+- → **Verify:** ✅ ~420 dòng, 9 commands + callback handler.
+
+### 10.3 Webhook Endpoint ✅ DONE
+- [x] `api/telegram/route.ts` — POST handler nhận update từ Telegram
+- [x] Webhook secret verification (x-telegram-bot-api-secret-token)
+- [x] Authorization check (TELEGRAM_ALLOWED_CHAT_IDS)
+- [x] Command routing: switch(command) → handler()
+- [x] Natural language fallback: non-command text → handleSearch()
+- [x] Error handling: always return 200 to Telegram
+- [x] GET health check endpoint
+- → **Verify:** ✅ ~130 dòng, 3-layer security.
+
+### 10.4 Webhook Setup ✅ DONE
+- [x] `api/telegram/setup/route.ts` — One-time webhook registration
+- [x] Actions: register, unregister, info
+- [x] Protected by TELEGRAM_SETUP_SECRET query param
+- → **Verify:** ✅ ~70 dòng.
+
+### 10.5 Dual-Channel Notifications ✅ DONE
+- [x] `lib/notifications.ts` modified — tất cả 5 templates gửi song song Email + Telegram
+- [x] `sendNotification()` — Promise.allSettled([email, telegram])
+- [x] SO cần phê duyệt → Telegram push
+- [x] Hóa đơn quá hạn → Telegram push
+- [x] Lô hàng sắp cập cảng → Telegram push
+- [x] Tồn kho thấp → Telegram push
+- [x] Hợp đồng sắp hết hạn → Telegram push
+- → **Verify:** ✅ Fail-safe: 1 kênh lỗi, kênh còn lại vẫn hoạt động.
+
+### 10.6 Settings UI ✅ DONE
+- [x] `/dashboard/settings/telegram` — Trang cấu hình bot
+- [x] Status cards: Bot Token / Webhook / CEO Chat ID
+- [x] Danh sách 9 lệnh bot với mô tả
+- [x] 5 push notification events với trạng thái Bật/Tắt
+- [x] Nút "Gửi test notification" + kết quả inline
+- [x] Hướng dẫn cài đặt 5 bước
+- [x] Settings page header link "🤖 Telegram Bot"
+- → **Verify:** ✅ Trang hoạt động, hiển thị status, test notification.
 
 ---
 
@@ -502,4 +570,4 @@ Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Test
 ---
 
 *Created: 05/03/2026 | Based on: wine-erp-audit-05-03.md*
-*Updated: 05/03/2026 18:10 — **P1-P8 ~95% ✅** | 14 tasks completed in evening session*
+*Updated: 06/03/2026 20:15 — **P1-P8 ~97% ✅** | Phase 10: Telegram Bot Integration ✅ DONE (9 commands, 5 push notifications, Settings UI)*

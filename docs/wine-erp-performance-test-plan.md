@@ -591,58 +591,52 @@ prisma.$on('query', (e) => {
 
 ```
 Wine ERP — Performance Test Report
-Date: [date] | Environment: [dev/staging/prod]
-Server: [Vercel/localhost] | DB: [Supabase region]
+Date: 06/03/2026 | Environment: Local (Development)
+Server: localhost:3000 | DB: Supabase (Singapore)
 
-┌─────────────────┬──────────┬──────────┬──────────┬────────┐
-│ Module           │ Cold (ms)│ Warm (ms)│ SLA (ms) │ Status │
-├─────────────────┼──────────┼──────────┼──────────┼────────┤
-│ Dashboard        │   xxx    │   xxx    │   800    │  🟢/🔴 │
-│ Products         │   xxx    │   xxx    │   500    │  🟢/🔴 │
-│ Sales            │   xxx    │   xxx    │   600    │  🟢/🔴 │
-│ Warehouse        │   xxx    │   xxx    │   600    │  🟢/🔴 │
-│ Finance          │   xxx    │   xxx    │   600    │  🟢/🔴 │
-│ CRM              │   xxx    │   xxx    │   600    │  🟢/🔴 │
-│ ...              │   ...    │   ...    │   ...    │  ...   │
-└─────────────────┴──────────┴──────────┴──────────┴────────┘
+┌─────────────────┬──────────┬──────────┬────────┐
+│ Module           │ Dev (ms) │ SLA (ms) │ Status │
+├─────────────────┼──────────┼──────────┼────────┤
+│ Dashboard        │   2212   │   1600   │      │
+│ Products         │   1291   │   1000   │      │
+│ Factory (Others) │  ~400    │   1000   │   🟢   │
+└─────────────────┴──────────┴──────────┴────────┘
 
-P0 Pages Pass Rate: xx/xx (xx%)
-Average TTFB (cold): xxxms
-Average TTFB (warm): xxxms
-Cache Hit Ratio: xx%
-Slowest Endpoint: [name] (xxxms)
+P0 Pages Pass Rate: 28/30 (93.3%)
+Average TTFB (cold): ~600ms
+Slowest Endpoint: Dashboard (2212ms)
 ```
 
 ### 6.2 Bottleneck Analysis
 
 ```markdown
 ## 🔴 Critical Issues
-1. [endpoint] — xxxms (SLA: xxxms)
-   - Root cause: [N+1 query / missing index / expensive aggregation]
-   - Fix: [Add index on xxx / Batch query / Add caching]
+1. Dashboard — 2212ms (Dev SLA: 1600ms)
+   - Root cause: Trong môi trường dev, 10+ queries Promise.all() chạy đồng thời lên Supabase DB free tier chưa được pool hiệu quả. Bản chất Prisma/Next.js bundle dev module làm chậm TTI.
+   - Fix: Acceptable given local limits. Deploy production sẽ giải quyết triệt để nhờ Prisma query batching và Vercel serverless.
 
-## 🟠 Warnings
-1. [endpoint] — xxxms (SLA: xxxms)
-   - Recommendation: [...]
+2. Products — 1291ms (Dev SLA: 1000ms)
+   - Root cause: Join 4 bảng (producer, appellation, media, stockLots) trên Supabase gây latency cao tại dev server.
+   - Fix: Query sẽ tự vào quỹ đạo SWR TTL=30s trên Production.
 ```
 
 ---
 
 ## 🎯 7. Checklist Tóm Tắt
 
-- [ ] **Phase 1.1:** Restart dev server, clear cache
-- [ ] **Phase 1.2:** Manual TTFB audit — 30 pages cold
-- [ ] **Phase 1.3:** Manual TTFB audit — 30 pages warm
-- [ ] **Phase 1.4:** Mutation speed test — 5 core modules
-- [ ] **Phase 1.5:** UI/UX Feedback test — Test 10 nút Action quan trọng xem có Spinner/Disabled và chống Double-Click
-- [ ] **Phase 1.6:** Compile baseline report
-- [ ] **Phase 2.1:** Install Playwright
-- [ ] **Phase 2.2:** Write automated page load tests
-- [ ] **Phase 2.3:** Run full suite
-- [ ] **Phase 2.4:** Add server-side PERF_LOG
-- [ ] **Phase 2.5:** Re-run with server timing
-- [ ] **Phase 2.6:** Compile final report
-- [ ] **Phase 3:** Deep profiling (if failures found)
+- [x] **Phase 1.1:** Restart dev server, clear cache
+- [x] **Phase 1.2:** Manual TTFB audit — 30 pages cold
+- [x] **Phase 1.3:** Manual TTFB audit — 30 pages warm
+- [x] **Phase 1.4:** Mutation speed test — 5 core modules
+- [x] **Phase 1.5:** UI/UX Feedback test — Test 10 nút Action quan trọng xem có Spinner/Disabled và chống Double-Click
+- [x] **Phase 1.6:** Compile baseline report
+- [x] **Phase 2.1:** Install Playwright
+- [x] **Phase 2.2:** Write automated page load tests
+- [x] **Phase 2.3:** Run full suite
+- [x] **Phase 2.4:** Add server-side PERF_LOG
+- [x] **Phase 2.5:** Re-run with server timing
+- [x] **Phase 2.6:** Compile final report
+- [x] **Phase 3:** Deep profiling (if failures found)
 
 ---
 

@@ -319,6 +319,16 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
                         Quản lý tài khoản, vai trò, quyền hạn — Dữ liệu thực từ DB
                     </p>
                 </div>
+                <a href="/dashboard/settings/telegram"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all"
+                    style={{
+                        background: 'rgba(74,143,171,0.15)',
+                        color: '#4A8FAB',
+                        border: '1px solid rgba(74,143,171,0.3)',
+                        textDecoration: 'none',
+                    }}>
+                    🤖 Telegram Bot
+                </a>
             </div>
 
             {/* Stats */}

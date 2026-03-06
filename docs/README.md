@@ -44,8 +44,9 @@
 | 18 | `DSH` | CEO Executive Dashboard + **KPI Targets** | [ceo-dashboard.md](./modules/ceo-dashboard.md) | ✅ Cập nhật |
 | 19 | `KPI` | **KPI Target Management** (Setup & Tracking chỉ tiêu) | [kpi-targets.md](./modules/kpi-targets.md) | ✅ **MỚI** |
 | 20 | `AI` | AI Features & API Key Management | [ai-features.md](./modules/ai-features.md) | ✅ Hoàn thành |
+| 21 | `TLG` | **Telegram Bot Integration** (CEO Bot, Push Notifications) | [telegram-bot.md](./modules/telegram-bot.md) | ✅ **MỚI** |
 
-**Tài liệu hoàn thành: 🎉 20/20** (thêm 5 module mới: QRC, POS, CST, KPI, STP) + 3 module code mới: QTN, PPL, PRC-L
+**Tài liệu hoàn thành: 🎉 21/21** (thêm 6 module mới: QRC, POS, CST, KPI, STP, TLG) + 3 module code mới: QTN, PPL, PRC-L
 
 ---
 
@@ -57,7 +58,7 @@
 | Phase 1 | Phân tích Nghiệp vụ (Business Analysis) | ✅ Hoàn thành |
 | Phase 2 | Lập Kế hoạch & Task Breakdown | ✅ Hoàn thành |
 | Phase 3 | Architecture & Database Schema | ✅ Hoàn thành |
-| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P7 100%** \| P8 ~97% — +43 features phiên 06/03 (CRM UI ×4, POS Loyalty, KPI Copy Year, Wine Preference, Scheduled Reports, Scorecard, Duplicates, Role-based Dashboard, Realtime) |
+| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P7 100%** \| P8 ~97% — +43 features phiên 06/03 + **Telegram Bot Integration** (9 commands, 5 push notifications, Settings UI) |
 | Phase 5 | Testing & Go-live | — |
 
 ---
@@ -99,6 +100,7 @@
 | **Kiến trúc** | Modular-first: Mỗi module độc lập, có thể bật/tắt/deploy riêng |
 | **Hải quan điện tử** | Chưa chốt (VNACCS/ECUS hay chỉ Export Excel?) |
 | **Realtime** | ✅ Supabase Realtime — Role-based channels cho approvals, AR, stock, SO |
+| **Telegram Bot** | ✅ Webhook-based CEO Bot — 9 commands VN, 5 push notifications, inline approval |
 
 ---
 
@@ -148,7 +150,8 @@ docs/
     ├── ceo-dashboard.md        ✅  DSH
     ├── wms-inventory.md        ✅  WMS  (Zone/Rack/Bin, FIFO, GR/DO)
     ├── sales-allocation.md     ✅  SLS  (SO, Quotation, Allocation Engine)
-    └── reporting-bi.md         ✅  RPT  (15 reports, Report Builder, Scheduler)
+    ├── reporting-bi.md         ✅  RPT  (15 reports, Report Builder, Scheduler)
+    └── telegram-bot.md         ✅  TLG  (CEO Bot, Push Notifications)  ← MỚI
 ```
 
 ---
@@ -161,4 +164,4 @@ docs/
 4. **AI context** → Cập nhật `llms.txt` khi có thêm khái niệm domain mới
 
 ---
-*Last updated: 2026-03-06 14:00 | Wine ERP v4.5 — **P1-P7 100% ✅** | **P8 ~97%** | Session 06/03: +43 features (Phiên 1: Supplier Scorecard/Duplicates, Dashboard Widgets, Scheduled Reports, Partner Portal. Phiên 2: CRM Tasting Events/Complaints/Wine Preference, POS Loyalty, KPI Copy Year, Build fix)*
+*Last updated: 2026-03-06 20:15 | Wine ERP v4.6 — **P1-P7 100% ✅** | **P8 ~97%** | Session 06/03 (tối): +Telegram Bot Integration (TLG) — 9 commands, 5 push notifications, dual-channel Email+Telegram, Settings UI, webhook endpoint*

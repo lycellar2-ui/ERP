@@ -1,6 +1,7 @@
 'use server'
 
 import { Resend } from 'resend'
+import { notifyTelegram, formatVND } from '@/lib/telegram'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.EMAIL_FROM ?? "LY's Cellars ERP <noreply@lyscellars.com>"
@@ -34,6 +35,25 @@ async function sendEmail(payload: EmailPayload): Promise<{ success: boolean; id?
 }
 
 // ═══════════════════════════════════════════════════
+// Telegram notification channel (alongside email)
+// ═══════════════════════════════════════════════════
+
+async function sendNotification(
+    emailPayload: EmailPayload,
+    telegramMessage: string
+) {
+    const results = await Promise.allSettled([
+        sendEmail(emailPayload),
+        notifyTelegram(telegramMessage),
+    ])
+
+    return {
+        email: results[0].status === 'fulfilled' ? results[0].value : { success: false, error: 'Email failed' },
+        telegram: results[1].status === 'fulfilled' ? results[1].value : { success: false, error: 'Telegram failed' },
+    }
+}
+
+// ═══════════════════════════════════════════════════
 // Pre-built notification templates
 // ═══════════════════════════════════════════════════
 
@@ -44,10 +64,18 @@ export async function notifySOApprovalRequired(input: {
     salesRepName: string
     approverEmail: string
 }) {
-    return sendEmail({
-        to: input.approverEmail,
-        subject: `[Phê duyệt] Đơn hàng ${input.soNo} — ${input.customerName}`,
-        html: `
+    const telegramMsg = `✅ <b>Yêu cầu phê duyệt đơn hàng</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số SO: <b>${input.soNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Tổng tiền: <b>${formatVND(input.totalAmount)}</b>
+🧑‍💼 NV Bán hàng: ${input.salesRepName}`
+
+    return sendNotification(
+        {
+            to: input.approverEmail,
+            subject: `[Phê duyệt] Đơn hàng ${input.soNo} — ${input.customerName}`,
+            html: `
             <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
                 <div style="background: #0A1926; padding: 24px; border-radius: 8px 8px 0 0;">
                     <h2 style="color: #87CBB9; margin: 0;">🍷 Yêu cầu phê duyệt đơn hàng</h2>
@@ -69,7 +97,9 @@ export async function notifySOApprovalRequired(input: {
                 </div>
             </div>
         `,
-    })
+        },
+        telegramMsg,
+    )
 }
 
 export async function notifyInvoiceOverdue(input: {
@@ -80,10 +110,19 @@ export async function notifyInvoiceOverdue(input: {
     daysOverdue: number
     collectorEmail: string
 }) {
-    return sendEmail({
-        to: input.collectorEmail,
-        subject: `⚠️ Hóa đơn quá hạn ${input.invoiceNo} — ${input.daysOverdue} ngày`,
-        html: `
+    const telegramMsg = `⚠️ <b>Hóa đơn quá hạn thanh toán</b>
+━━━━━━━━━━━━━━━━━━
+🧾 Số HĐ: <b>${input.invoiceNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Số tiền: <b>${formatVND(input.amount)}</b>
+📅 Hạn thanh toán: ${input.dueDate}
+🔴 Quá hạn: <b>${input.daysOverdue} ngày</b>`
+
+    return sendNotification(
+        {
+            to: input.collectorEmail,
+            subject: `⚠️ Hóa đơn quá hạn ${input.invoiceNo} — ${input.daysOverdue} ngày`,
+            html: `
             <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
                 <div style="background: #92400E; padding: 24px; border-radius: 8px 8px 0 0;">
                     <h2 style="color: #FEF3C7; margin: 0;">⚠️ Hóa đơn quá hạn thanh toán</h2>
@@ -99,7 +138,9 @@ export async function notifyInvoiceOverdue(input: {
                 </div>
             </div>
         `,
-    })
+        },
+        telegramMsg,
+    )
 }
 
 export async function notifyShipmentArrival(input: {
@@ -108,10 +149,19 @@ export async function notifyShipmentArrival(input: {
     eta: string
     recipientEmails: string[]
 }) {
-    return sendEmail({
-        to: input.recipientEmails,
-        subject: `🚢 Lô hàng sắp cập cảng — ${input.billOfLading}`,
-        html: `
+    const telegramMsg = `🚢 <b>Lô hàng sắp cập cảng</b>
+━━━━━━━━━━━━━━━━━━
+📋 Vận đơn: <b>${input.billOfLading}</b>
+🚢 Tàu: ${input.vesselName}
+📅 ETA: <b>${input.eta}</b>
+
+📦 Vui lòng chuẩn bị chứng từ thông quan và bố trí kho nhận hàng.`
+
+    return sendNotification(
+        {
+            to: input.recipientEmails,
+            subject: `🚢 Lô hàng sắp cập cảng — ${input.billOfLading}`,
+            html: `
             <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
                 <div style="background: #0A1926; padding: 24px; border-radius: 8px 8px 0 0;">
                     <h2 style="color: #87CBB9; margin: 0;">🚢 Thông báo tàu cập cảng</h2>
@@ -128,7 +178,9 @@ export async function notifyShipmentArrival(input: {
                 </div>
             </div>
         `,
-    })
+        },
+        telegramMsg,
+    )
 }
 
 export async function notifyLowStock(input: {
@@ -138,10 +190,18 @@ export async function notifyLowStock(input: {
     threshold: number
     managerEmail: string
 }) {
-    return sendEmail({
-        to: input.managerEmail,
-        subject: `📦 Tồn kho thấp: ${input.skuCode} — ${input.productName}`,
-        html: `
+    const telegramMsg = `📦 <b>Cảnh báo tồn kho thấp</b>
+━━━━━━━━━━━━━━━━━━
+🍷 Sản phẩm: <b>${input.productName}</b>
+🏷️ SKU: ${input.skuCode}
+🔴 Tồn hiện tại: <b>${input.currentQty}</b>
+📊 Ngưỡng tối thiểu: ${input.threshold}`
+
+    return sendNotification(
+        {
+            to: input.managerEmail,
+            subject: `📦 Tồn kho thấp: ${input.skuCode} — ${input.productName}`,
+            html: `
             <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
                 <div style="background: #0A1926; padding: 24px; border-radius: 8px 8px 0 0;">
                     <h2 style="color: #87CBB9; margin: 0;">📦 Cảnh báo tồn kho thấp</h2>
@@ -156,7 +216,9 @@ export async function notifyLowStock(input: {
                 </div>
             </div>
         `,
-    })
+        },
+        telegramMsg,
+    )
 }
 
 export async function notifyContractExpiring(input: {
@@ -170,10 +232,19 @@ export async function notifyContractExpiring(input: {
     const urgencyColor = input.daysRemaining <= 7 ? '#DC2626' : '#F59E0B'
     const urgencyLabel = input.daysRemaining <= 7 ? '🔴 Khẩn cấp' : '🟡 Sắp hết hạn'
 
-    return sendEmail({
-        to: input.managerEmail,
-        subject: `${urgencyLabel} Hợp đồng ${input.contractNo} — còn ${input.daysRemaining} ngày`,
-        html: `
+    const telegramMsg = `📋 <b>${urgencyLabel}: Hợp đồng sắp hết hạn</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số HĐ: <b>${input.contractNo}</b>
+🏢 Nhà cung cấp: ${input.supplierName}
+📁 Loại HĐ: ${input.contractType}
+📅 Hạn HĐ: <b>${input.expiryDate}</b>
+⏰ Còn lại: <b>${input.daysRemaining} ngày</b>`
+
+    return sendNotification(
+        {
+            to: input.managerEmail,
+            subject: `${urgencyLabel} Hợp đồng ${input.contractNo} — còn ${input.daysRemaining} ngày`,
+            html: `
             <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
                 <div style="background: ${urgencyColor}; padding: 24px; border-radius: 8px 8px 0 0;">
                     <h2 style="color: white; margin: 0;">📋 ${urgencyLabel}: Hợp đồng sắp hết hạn</h2>
@@ -196,5 +267,7 @@ export async function notifyContractExpiring(input: {
                 </div>
             </div>
         `,
-    })
+        },
+        telegramMsg,
+    )
 }
