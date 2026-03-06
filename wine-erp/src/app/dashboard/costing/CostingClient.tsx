@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Calculator, AlertCircle, TrendingUp, TrendingDown, Wine, Ship, Package } from 'lucide-react'
-import { CostingProduct } from './actions'
+import { useState, useEffect } from 'react'
+import { Calculator, AlertCircle, TrendingUp, TrendingDown, Wine, Ship, Package, Beaker } from 'lucide-react'
+import { CostingProduct, runSensitivityAnalysis, getPresetScenarios } from './actions'
+import type { SensitivityResult, SensitivityScenario } from './actions'
 import { suggestPrices } from './costingUtils'
 import { formatVND } from '@/lib/utils'
 import { LandedCostTab } from './LandedCostTab'
@@ -25,6 +26,7 @@ const CHANNEL_LABEL: Record<string, string> = {
 const TABS = [
     { key: 'sku', label: 'Giá Vốn SKU', icon: Package },
     { key: 'campaign', label: 'Landed Cost Campaign', icon: Ship },
+    { key: 'sensitivity', label: 'Phân Tích Nhạy Cảm', icon: Beaker },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
@@ -264,6 +266,138 @@ export function CostingClient({ products }: Props) {
             )}
 
             {tab === 'campaign' && <LandedCostTab />}
+
+            {tab === 'sensitivity' && <SensitivityPanel products={products} />}
+        </div>
+    )
+}
+
+// ── Sensitivity Analysis Panel ──────────────────────
+function SensitivityPanel({ products }: { products: CostingProduct[] }) {
+    const [presets, setPresets] = useState<SensitivityScenario[]>([])
+    const [results, setResults] = useState<SensitivityResult[]>([])
+    const [loading, setLoading] = useState(false)
+    const [custom, setCustom] = useState<SensitivityScenario>({ label: 'Tùy Chỉnh', exchangeRateChange: 0, importTaxChange: 0, sctChange: 0 })
+
+    useEffect(() => {
+        getPresetScenarios().then(setPresets)
+    }, [])
+
+    const runAnalysis = async (scenario: SensitivityScenario) => {
+        setLoading(true)
+        const res = await runSensitivityAnalysis([scenario])
+        if (res.success && res.results) setResults(res.results)
+        setLoading(false)
+    }
+
+    return (
+        <div className="space-y-5">
+            {/* Preset Scenarios Grid */}
+            <div>
+                <h4 className="text-sm font-semibold mb-3" style={{ color: '#E8F1F2' }}>⚡ Kịch Bản Có Sẵn</h4>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                    {presets.map((s, i) => (
+                        <button key={i} onClick={() => runAnalysis(s)}
+                            className="p-3 text-left rounded-md transition-all"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                            <p className="text-xs font-bold mb-1" style={{ color: '#E8F1F2' }}>{s.label}</p>
+                            <div className="flex gap-3 text-[10px]" style={{ color: '#4A6A7A' }}>
+                                {s.exchangeRateChange !== 0 && <span>FX: {s.exchangeRateChange > 0 ? '+' : ''}{s.exchangeRateChange}%</span>}
+                                {s.importTaxChange !== 0 && <span>NK: {s.importTaxChange > 0 ? '+' : ''}{s.importTaxChange}%</span>}
+                                {s.sctChange !== 0 && <span>SCT: {s.sctChange > 0 ? '+' : ''}{s.sctChange}%</span>}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Custom Input */}
+            <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <h4 className="text-sm font-semibold mb-3" style={{ color: '#D4A853' }}>🔧 Kịch Bản Tùy Chỉnh</h4>
+                <div className="grid grid-cols-3 gap-3">
+                    <div>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>Tỷ giá Δ (%)</label>
+                        <input type="number" value={custom.exchangeRateChange}
+                            onChange={e => setCustom({ ...custom, exchangeRateChange: Number(e.target.value) })}
+                            className="w-full px-3 py-2 text-sm outline-none"
+                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            step={1} placeholder="VD: +5" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>Thuế NK Δ (%)</label>
+                        <input type="number" value={custom.importTaxChange}
+                            onChange={e => setCustom({ ...custom, importTaxChange: Number(e.target.value) })}
+                            className="w-full px-3 py-2 text-sm outline-none"
+                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            step={1} placeholder="VD: -10" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#4A6A7A' }}>TTĐB Δ (%)</label>
+                        <input type="number" value={custom.sctChange}
+                            onChange={e => setCustom({ ...custom, sctChange: Number(e.target.value) })}
+                            className="w-full px-3 py-2 text-sm outline-none"
+                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            step={1} placeholder="VD: +5" />
+                    </div>
+                </div>
+                <button onClick={() => runAnalysis(custom)} disabled={loading}
+                    className="mt-3 w-full py-2 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                    style={{ background: '#D4A853', color: '#0A1926', borderRadius: '6px' }}>
+                    <Beaker size={14} />{loading ? 'Đang tính...' : 'Chạy Phân Tích'}
+                </button>
+            </div>
+
+            {/* Results Table */}
+            {results.length > 0 && (
+                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                {['SKU', 'Giá vốn hiện tại', 'Giá vốn mới', 'Δ Chi phí', 'Margin hiện tại', 'Margin mới', 'Δ Margin'].map(h => (
+                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {results.map(r => {
+                                const sc = r.scenarios[0] // first (and only) scenario
+                                if (!sc) return null
+                                const costUp = sc.costDeltaPct > 0
+                                const marginDown = (sc.marginDelta ?? 0) < 0
+                                return (
+                                    <tr key={r.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.skuCode}</td>
+                                        <td className="px-3 py-2.5 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>{formatVND(r.currentUnitCost)}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: costUp ? '#E85D5D' : '#5BA88A' }}>{formatVND(sc.newUnitCost)}</td>
+                                        <td className="px-3 py-2.5">
+                                            <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{
+                                                background: costUp ? 'rgba(232,93,93,0.15)' : 'rgba(91,168,138,0.15)',
+                                                color: costUp ? '#E85D5D' : '#5BA88A',
+                                            }}>
+                                                {sc.costDeltaPct > 0 ? '+' : ''}{sc.costDeltaPct.toFixed(1)}%
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-2.5 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>{r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: marginDown ? '#E85D5D' : '#5BA88A' }}>{sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}</td>
+                                        <td className="px-3 py-2.5">
+                                            {sc.marginDelta !== null ? (
+                                                <div className="flex items-center gap-1">
+                                                    {marginDown ? <TrendingDown size={10} style={{ color: '#E85D5D' }} /> : <TrendingUp size={10} style={{ color: '#5BA88A' }} />}
+                                                    <span className="text-xs font-bold" style={{ color: marginDown ? '#E85D5D' : '#5BA88A' }}>
+                                                        {sc.marginDelta > 0 ? '+' : ''}{sc.marginDelta.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            ) : <span className="text-xs" style={{ color: '#4A6A7A' }}>—</span>}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     )
 }

@@ -435,3 +435,148 @@ export async function finalizeLandedCostCampaign(
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// SENSITIVITY ANALYSIS — "What-if" Cost Simulation
+// ═══════════════════════════════════════════════════
+
+export type SensitivityScenario = {
+    label: string
+    exchangeRateChange: number // % change (-20 to +20)
+    importTaxChange: number    // % change
+    sctChange: number          // % change
+}
+
+export type SensitivityResult = {
+    skuCode: string
+    productName: string
+    currentUnitCost: number
+    currentMarginPct: number | null
+    listPrice: number | null
+    scenarios: {
+        label: string
+        newUnitCost: number
+        costDelta: number
+        costDeltaPct: number
+        newMarginPct: number | null
+        marginDelta: number | null
+    }[]
+}
+
+export async function runSensitivityAnalysis(
+    scenarios: SensitivityScenario[]
+): Promise<{ success: boolean; results?: SensitivityResult[]; error?: string }> {
+    try {
+        const products = await getCostingProducts()
+        const activeProducts = products.filter(p => p.unitLandedCost > 0)
+
+        // Get base cost components from latest Landed Cost Campaign
+        const campaigns = await prisma.landedCostCampaign.findMany({
+            where: { status: 'ALLOCATED' },
+            include: {
+                shipment: {
+                    select: {
+                        cifAmount: true,
+                        po: { select: { exchangeRate: true } },
+                    },
+                },
+                allocations: { select: { productId: true, unitLandedCost: true, qty: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+        })
+
+        // Build per-product cost breakdown from campaigns
+        const productCostMap = new Map<string, {
+            cifPerUnit: number
+            importTaxPct: number
+            sctPct: number
+            vatPct: number
+            exchangeRate: number
+        }>()
+
+        for (const c of campaigns) {
+            const totalTaxCost = Number(c.totalImportTax) + Number(c.totalSct) + Number(c.totalVat) + Number(c.totalOtherCost)
+            const cifVnd = Number(c.shipment.cifAmount) * Number(c.shipment.po.exchangeRate)
+            const totalQty = c.allocations.reduce((s, a) => s + Number(a.qty), 0)
+
+            for (const alloc of c.allocations) {
+                if (!productCostMap.has(alloc.productId)) {
+                    productCostMap.set(alloc.productId, {
+                        cifPerUnit: cifVnd > 0 && totalQty > 0 ? (cifVnd / totalQty) : Number(alloc.unitLandedCost) * 0.5,
+                        importTaxPct: cifVnd > 0 ? (Number(c.totalImportTax) / cifVnd) * 100 : 0,
+                        sctPct: cifVnd > 0 ? (Number(c.totalSct) / cifVnd) * 100 : 35,
+                        vatPct: 10,
+                        exchangeRate: Number(c.shipment.po.exchangeRate),
+                    })
+                }
+            }
+        }
+
+        const results: SensitivityResult[] = activeProducts.map(p => {
+            const breakdown = productCostMap.get(p.id)
+            const baseExRate = breakdown?.exchangeRate ?? 25000
+            const baseCifPerUnit = breakdown?.cifPerUnit ?? p.unitLandedCost * 0.4
+            const baseImportPct = breakdown?.importTaxPct ?? 0
+            const baseSctPct = breakdown?.sctPct ?? 35
+            const baseVatPct = 10
+
+            return {
+                skuCode: p.skuCode,
+                productName: p.productName,
+                currentUnitCost: Math.round(p.unitLandedCost),
+                currentMarginPct: p.marginPct ? Math.round(p.marginPct * 10) / 10 : null,
+                listPrice: p.listPrice,
+                scenarios: scenarios.map(sc => {
+                    const newExRate = baseExRate * (1 + sc.exchangeRateChange / 100)
+                    const newImportPct = baseImportPct * (1 + sc.importTaxChange / 100)
+                    const newSctPct = baseSctPct * (1 + sc.sctChange / 100)
+
+                    // Recalculate: CIF(VND) → +ImportTax → +SCT → +VAT
+                    const cifVndUnit = (baseCifPerUnit / baseExRate) * newExRate
+                    const importTax = cifVndUnit * (newImportPct / 100)
+                    const sctBase = cifVndUnit + importTax
+                    const sct = sctBase * (newSctPct / 100)
+                    const vatBase = sctBase + sct
+                    const vat = vatBase * (baseVatPct / 100)
+                    const newUnitCost = Math.round(cifVndUnit + importTax + sct + vat)
+
+                    const costDelta = newUnitCost - Math.round(p.unitLandedCost)
+                    const costDeltaPct = p.unitLandedCost > 0 ? Math.round((costDelta / p.unitLandedCost) * 1000) / 10 : 0
+
+                    let newMarginPct: number | null = null
+                    let marginDelta: number | null = null
+                    if (p.listPrice && newUnitCost > 0) {
+                        newMarginPct = Math.round(((p.listPrice - newUnitCost) / p.listPrice) * 1000) / 10
+                        marginDelta = p.marginPct ? Math.round((newMarginPct - p.marginPct) * 10) / 10 : null
+                    }
+
+                    return {
+                        label: sc.label,
+                        newUnitCost,
+                        costDelta,
+                        costDeltaPct,
+                        newMarginPct,
+                        marginDelta,
+                    }
+                }),
+            }
+        })
+
+        return { success: true, results }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// Preset scenarios for quick analysis
+export async function getPresetScenarios(): Promise<SensitivityScenario[]> {
+    return [
+        { label: 'Tỷ giá +5%', exchangeRateChange: 5, importTaxChange: 0, sctChange: 0 },
+        { label: 'Tỷ giá +10%', exchangeRateChange: 10, importTaxChange: 0, sctChange: 0 },
+        { label: 'Tỷ giá -5%', exchangeRateChange: -5, importTaxChange: 0, sctChange: 0 },
+        { label: 'EVFTA giảm NK 50%', exchangeRateChange: 0, importTaxChange: -50, sctChange: 0 },
+        { label: 'TTĐB tăng 20%', exchangeRateChange: 0, importTaxChange: 0, sctChange: 20 },
+        { label: 'Xấu nhất: FX+10% & TTĐB+20%', exchangeRateChange: 10, importTaxChange: 0, sctChange: 20 },
+    ]
+}

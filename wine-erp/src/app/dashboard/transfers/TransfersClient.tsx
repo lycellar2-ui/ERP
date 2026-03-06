@@ -1,12 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowRightLeft, Plus, X, Save, ChevronRight } from 'lucide-react'
+import { ArrowRightLeft, Plus, Play, CheckCircle2, Factory, Store, X, Truck, Ban, Save, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     type TransferOrderRow,
     getTransferOrders, createTransferOrder, advanceTransferStatus, getTransferOptions,
 } from './actions'
 import { formatDate } from '@/lib/utils'
+
+type WarehouseOption = { id: string; code: string; name: string };
+type ProductOption = { id: string; skuCode: string; productName: string };
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; next?: string }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.15)', next: '→ Xác Nhận' },
@@ -20,9 +24,9 @@ export function TransfersClient({ initialRows, stats }: {
     initialRows: TransferOrderRow[]
     stats: { total: number; inTransit: number; completed: number }
 }) {
-    const [rows, setRows] = useState(initialRows)
+    const [rows, setRows] = useState<TransferOrderRow[]>(initialRows)
     const [createOpen, setCreateOpen] = useState(false)
-    const [options, setOptions] = useState<{ warehouses: any[]; products: any[] }>({ warehouses: [], products: [] })
+    const [options, setOptions] = useState<{ warehouses: WarehouseOption[]; products: ProductOption[] }>({ warehouses: [], products: [] })
     const [form, setForm] = useState({ fromWarehouseId: '', toWarehouseId: '', notes: '' })
     const [lines, setLines] = useState<{ productId: string; qtyTransferred: number }[]>([])
 
@@ -38,17 +42,38 @@ export function TransfersClient({ initialRows, stats }: {
 
     const handleCreate = async () => {
         const validLines = lines.filter(l => l.productId && l.qtyTransferred > 0)
-        if (!form.fromWarehouseId || !form.toWarehouseId || validLines.length === 0) return alert('Điền đủ thông tin')
-        const res = await createTransferOrder({ ...form, lines: validLines })
-        if (res.success) {
-            setCreateOpen(false); setForm({ fromWarehouseId: '', toWarehouseId: '', notes: '' }); setLines([]); reload()
-        } else alert(res.error)
+        if (!form.fromWarehouseId || !form.toWarehouseId || validLines.length === 0) {
+            toast.error('Điền đủ thông tin')
+            return
+        }
+
+        toast.promise(
+            createTransferOrder({ ...form, lines: validLines }).then(async (res: { success: boolean; error?: string }) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi tạo lệnh chuyển kho')
+                setCreateOpen(false); setForm({ fromWarehouseId: '', toWarehouseId: '', notes: '' }); setLines([]); reload()
+                return res
+            }),
+            {
+                loading: 'Đang tạo lệnh chuyển kho...',
+                success: 'Đã tạo lệnh chuyển kho!',
+                error: (err: Error) => `Lỗi: ${err.message}`
+            }
+        )
     }
 
     const handleAdvance = async (id: string) => {
-        const res = await advanceTransferStatus(id)
-        if (res.success) reload()
-        else alert(res.error)
+        toast.promise(
+            advanceTransferStatus(id).then(async (res: { success: boolean; error?: string }) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi cập nhật trạng thái')
+                reload()
+                return res
+            }),
+            {
+                loading: 'Đang cập nhật trạng thái...',
+                success: 'Đã cập nhật trạng thái chuyến!',
+                error: (err: Error) => `Lỗi: ${err.message}`
+            }
+        )
     }
 
     return (
@@ -95,7 +120,7 @@ export function TransfersClient({ initialRows, stats }: {
                     <tbody>
                         {rows.length === 0 ? (
                             <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Chưa có lệnh chuyển kho</td></tr>
-                        ) : rows.map(r => {
+                        ) : rows.map((r: TransferOrderRow) => {
                             const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
                             return (
                                 <tr key={r.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
@@ -139,7 +164,7 @@ export function TransfersClient({ initialRows, stats }: {
                                     <select value={form.fromWarehouseId} onChange={e => setForm(prev => ({ ...prev, fromWarehouseId: e.target.value }))}
                                         className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                                         <option value="">— Chọn —</option>
-                                        {options.warehouses.map(w => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
+                                        {options.warehouses.map((w: WarehouseOption) => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
                                     </select>
                                 </div>
                                 <div>
@@ -147,7 +172,7 @@ export function TransfersClient({ initialRows, stats }: {
                                     <select value={form.toWarehouseId} onChange={e => setForm(prev => ({ ...prev, toWarehouseId: e.target.value }))}
                                         className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                                         <option value="">— Chọn —</option>
-                                        {options.warehouses.filter(w => w.id !== form.fromWarehouseId).map(w =>
+                                        {options.warehouses.filter(w => w.id !== form.fromWarehouseId).map((w: WarehouseOption) =>
                                             <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
                                         )}
                                     </select>
@@ -176,7 +201,7 @@ export function TransfersClient({ initialRows, stats }: {
                                                 }}
                                                     className="w-full px-2 py-1.5 rounded text-xs" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                                                     <option value="">— SP —</option>
-                                                    {options.products.map(p => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
+                                                    {options.products.map((p: ProductOption) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
                                                 </select>
                                             </div>
                                             <div className="col-span-3">

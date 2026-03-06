@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { BookOpen, Loader2, TrendingUp, TrendingDown, Filter, Plus, CheckCircle2, XCircle, Lock, AlertTriangle, CircleCheck, Download } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     JournalEntryRow, getJournalEntries,
     PLRow, getProfitLoss, getProfitLossComparison, exportProfitLossExcel,
@@ -364,19 +365,41 @@ export function ExpenseTab({ userId }: { userId: string }) {
     const handleCreate = async () => {
         if (!amount || !desc) return
         setSaving(true)
-        await createExpense({ category: cat, amount: Number(amount), description: desc })
-        setCat('SALARY'); setAmount(''); setDesc(''); setShowCreate(false)
-        await load()
-        setSaving(false)
+        toast.promise(
+            createExpense({ category: cat, amount: Number(amount), description: desc }).then(async (res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi tạo chi phí')
+                setCat('SALARY'); setAmount(''); setDesc(''); setShowCreate(false)
+                await load()
+                return res
+            }),
+            {
+                loading: 'Đang tạo chi phí...',
+                success: 'Đã tạo phiếu chi!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setSaving(false)
+            }
+        )
     }
 
     const handleApprove = async (id: string) => {
-        await approveExpense(id)
-        load()
+        toast.promise(
+            approveExpense(id).then(async (res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi duyệt')
+                await load()
+                return res
+            }),
+            { loading: 'Đang duyệt...', success: 'Đã duyệt!', error: (err: any) => `Lỗi: ${err.message}` }
+        )
     }
     const handleReject = async (id: string) => {
-        await rejectExpense(id)
-        load()
+        toast.promise(
+            rejectExpense(id).then(async (res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi từ chối')
+                await load()
+                return res
+            }),
+            { loading: 'Đang từ chối...', success: 'Đã từ chối!', error: (err: any) => `Lỗi: ${err.message}` }
+        )
     }
 
     return (
@@ -519,9 +542,19 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
     const handleClose = async () => {
         if (!currentPeriod || hasDanger) return
         setClosing(true)
-        await closeAccountingPeriod(currentPeriod.id, userId)
-        await load()
-        setClosing(false)
+        toast.promise(
+            closeAccountingPeriod(currentPeriod.id, userId).then(async (res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi đóng kỳ')
+                await load()
+                return res
+            }),
+            {
+                loading: 'Đang xử lý đóng kỳ...',
+                success: 'Đã đóng kỳ kế toán thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setClosing(false)
+            }
+        )
     }
 
     const statusIcon = (s: string) => {
@@ -791,15 +824,21 @@ export function BadDebtTab({ userId }: { userId: string }) {
     const handleWriteOff = async (invoiceId: string) => {
         if (!reason.trim()) return
         setProcessing(true)
-        const res = await writeOffBadDebt({ invoiceId, reason: reason.trim(), approvedBy: userId })
-        if (res.success) {
-            setCandidates(prev => prev.filter(c => c.invoiceId !== invoiceId))
-            setWritingOff(null)
-            setReason('')
-        } else {
-            alert(res.error ?? 'Lỗi xóa nợ')
-        }
-        setProcessing(false)
+        toast.promise(
+            writeOffBadDebt({ invoiceId, reason: reason.trim(), approvedBy: userId }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi xóa nợ')
+                setCandidates(prev => prev.filter(c => c.invoiceId !== invoiceId))
+                setWritingOff(null)
+                setReason('')
+                return res
+            }),
+            {
+                loading: 'Đang xóa nợ...',
+                success: 'Đã xóa nợ khó đòi thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setProcessing(false)
+            }
+        )
     }
 
     const severityColor = (days: number) => days > 270 ? '#8B1A2E' : days > 180 ? '#C45A2A' : '#D4A853'

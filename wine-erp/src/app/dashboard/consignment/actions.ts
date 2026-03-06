@@ -431,3 +431,137 @@ export async function getReplenishmentAlerts(minStock: number = 10): Promise<Rep
         agreementId: s.agreement.id,
     }))
 }
+
+// ═══════════════════════════════════════════════════
+// PHYSICAL COUNT AT HORECA
+// ═══════════════════════════════════════════════════
+
+export type PhysicalCountSession = {
+    id: string
+    agreementId: string
+    customerName: string
+    countDate: Date
+    status: string // DRAFT | COUNTING | CONFIRMED
+    countedBy: string
+    items: PhysicalCountItem[]
+    createdAt: Date
+}
+
+export type PhysicalCountItem = {
+    stockId: string
+    skuCode: string
+    productName: string
+    systemQty: number      // qtyRemaining from system
+    physicalQty: number     // actual count at HORECA
+    variance: number        // physical - system
+    variancePct: number
+}
+
+export async function createPhysicalCount(input: {
+    agreementId: string
+    countedBy: string
+    countDate: string
+}): Promise<{ success: boolean; session?: PhysicalCountSession; error?: string }> {
+    try {
+        const agreement = await prisma.consignmentAgreement.findUnique({
+            where: { id: input.agreementId },
+            include: {
+                customer: { select: { name: true } },
+                stocks: {
+                    include: { product: { select: { skuCode: true, productName: true } } },
+                },
+            },
+        })
+        if (!agreement) return { success: false, error: 'Hợp đồng ký gửi không tồn tại' }
+
+        const items: PhysicalCountItem[] = agreement.stocks.map(s => ({
+            stockId: s.id,
+            skuCode: s.product.skuCode,
+            productName: s.product.productName,
+            systemQty: Number(s.qtyRemaining),
+            physicalQty: Number(s.qtyRemaining), // Default to system qty
+            variance: 0,
+            variancePct: 0,
+        }))
+
+        return {
+            success: true,
+            session: {
+                id: `PC-${Date.now()}`,
+                agreementId: input.agreementId,
+                customerName: agreement.customer.name,
+                countDate: new Date(input.countDate),
+                status: 'COUNTING',
+                countedBy: input.countedBy,
+                items,
+                createdAt: new Date(),
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function confirmPhysicalCount(input: {
+    agreementId: string
+    countedBy: string
+    items: { stockId: string; physicalQty: number }[]
+}): Promise<{ success: boolean; adjustments?: { skuCode: string; variance: number }[]; error?: string }> {
+    try {
+        const adjustments: { skuCode: string; variance: number }[] = []
+
+        await prisma.$transaction(async (tx) => {
+            for (const item of input.items) {
+                const stock = await tx.consignmentStock.findUnique({
+                    where: { id: item.stockId },
+                    include: { product: { select: { skuCode: true } } },
+                })
+                if (!stock) continue
+
+                const systemQty = Number(stock.qtyRemaining)
+                const variance = item.physicalQty - systemQty
+
+                if (variance !== 0) {
+                    // Adjust qtyRemaining to match physical count
+                    // If physical < system: record as additional sales (unrecorded)
+                    // If physical > system: unexpected surplus
+                    const newRemaining = item.physicalQty
+                    const soldAdjust = variance < 0 ? Math.abs(variance) : 0
+
+                    await tx.consignmentStock.update({
+                        where: { id: item.stockId },
+                        data: {
+                            qtyRemaining: newRemaining,
+                            qtySold: { increment: soldAdjust }, // lost stock = "sold" for accounting
+                        },
+                    })
+
+                    adjustments.push({
+                        skuCode: stock.product.skuCode,
+                        variance,
+                    })
+                }
+            }
+
+            // Create report for the count
+            await tx.consignmentReport.create({
+                data: {
+                    agreementId: input.agreementId,
+                    periodStart: new Date(),
+                    periodEnd: new Date(),
+                    status: 'CONFIRMED',
+                    confirmedAt: new Date(),
+                },
+            })
+        })
+
+        revalidateCache('consignment')
+        revalidatePath('/dashboard/consignment')
+        return {
+            success: true,
+            adjustments: adjustments.length > 0 ? adjustments : undefined,
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}

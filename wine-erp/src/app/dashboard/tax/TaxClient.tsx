@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Layers, Calculator, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X, Loader2, Zap, CalendarRange, ArrowRight } from 'lucide-react'
-import { TaxRateRow, TaxRateInput, getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate, calculateTaxEngine, TaxEngineResult } from './actions'
+import { Layers, Calculator, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X, Loader2, Zap, CalendarRange, ArrowRight, Upload } from 'lucide-react'
+import { TaxRateRow, TaxRateInput, getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate, calculateTaxEngine, TaxEngineResult, importTaxRatesFromExcel, parseTaxExcelTemplate } from './actions'
+import type { BulkTaxRow } from './actions'
 import { calculateLandedCost, LandedCostResult } from './taxUtils'
 import { formatVND } from '@/lib/utils'
 
@@ -504,7 +505,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
     const [editRow, setEditRow] = useState<TaxRateRow | null>(null)
 
     // Tab state
-    const [tab, setTab] = useState<'lookup' | 'engine' | 'evfta'>('lookup')
+    const [tab, setTab] = useState<'lookup' | 'engine' | 'evfta' | 'upload'>('lookup')
 
     // Calculator state (manual)
     const [cifUsd, setCifUsd] = useState(10000)
@@ -572,6 +573,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                     { key: 'lookup' as const, label: 'Tra Cứu & Bảng Thuế', icon: Layers },
                     { key: 'engine' as const, label: 'Tax Engine (Tự Động)', icon: Zap },
                     { key: 'evfta' as const, label: 'EVFTA Roadmap', icon: CalendarRange },
+                    { key: 'upload' as const, label: 'Nhập Excel', icon: Upload },
                 ].map(t => {
                     const Icon = t.icon
                     return (
@@ -798,6 +800,8 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                 </div>
             ) : tab === 'evfta' ? (
                 <EVFTARoadmapPanel />
+            ) : tab === 'upload' ? (
+                <BulkUploadPanel onDone={refresh} />
             ) : null}
 
             {/* Form modal */}
@@ -807,6 +811,138 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                     onClose={() => { setShowForm(false); setEditRow(null) }}
                     onSaved={refresh}
                 />
+            )}
+        </div>
+    )
+}
+
+// ── Bulk Upload Panel ────────────────────────────
+function BulkUploadPanel({ onDone }: { onDone: () => void }) {
+    const [pasteData, setPasteData] = useState('')
+    const [parsed, setParsed] = useState<BulkTaxRow[]>([])
+    const [importing, setImporting] = useState(false)
+    const [result, setResult] = useState<{ imported: number; updated: number; errors: string[] } | null>(null)
+
+    const HEADER_LABELS = ['HS Code', 'Quốc Gia', 'Hiệp Định', 'NK %', 'TTĐB %', 'VAT %', 'Ngày HĐ']
+
+    const handleParse = () => {
+        const lines = pasteData.trim().split('\n').filter(l => l.trim())
+        const rows: BulkTaxRow[] = []
+        for (const line of lines) {
+            const cols = line.split('\t').length > 1 ? line.split('\t') : line.split(',')
+            if (cols.length < 7) continue
+            if (cols[0].toLowerCase().includes('hscode') || cols[0].toLowerCase().includes('hs code')) continue
+            rows.push({
+                hsCode: cols[0]?.trim() || '',
+                countryOfOrigin: cols[1]?.trim() || '',
+                tradeAgreement: cols[2]?.trim() || 'MFN',
+                importTaxRate: parseFloat(cols[3]) || 0,
+                sctRate: parseFloat(cols[4]) || 35,
+                vatRate: parseFloat(cols[5]) || 10,
+                effectiveDate: cols[6]?.trim() || new Date().toISOString().split('T')[0],
+            })
+        }
+        setParsed(rows)
+    }
+
+    const handleImport = async () => {
+        if (parsed.length === 0) return
+        setImporting(true)
+        const res = await importTaxRatesFromExcel(parsed)
+        setResult({ imported: res.success ? (res as any).imported : 0, updated: res.success ? (res as any).updated : 0, errors: res.success ? [] : [(res as any).error || 'Lỗi nhập dữ liệu'] })
+        setImporting(false)
+        if (res.success) onDone()
+    }
+
+    return (
+        <div className="space-y-5">
+            <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="flex items-center gap-2 mb-3">
+                    <Upload size={18} style={{ color: '#D4A853' }} />
+                    <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Nhập Thuế Suất Hàng Loạt</h3>
+                </div>
+                <p className="text-xs mb-3" style={{ color: '#4A6A7A' }}>
+                    Sao chép dữ liệu từ Excel (Tab-delimited hoặc CSV) và dán vào ô bên dưới. Hệ thống sẽ tự nhận dạng và upsert.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {HEADER_LABELS.map(h => (
+                        <span key={h} className="px-2 py-0.5 text-[10px] font-bold rounded"
+                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>{h}</span>
+                    ))}
+                </div>
+            </div>
+
+            <textarea value={pasteData} onChange={e => setPasteData(e.target.value)}
+                placeholder="2204.21&#9;France&#9;EVFTA&#9;10&#9;35&#9;10&#9;2026-01-01"
+                rows={6} className="w-full px-4 py-3 text-xs font-mono"
+                style={{ ...inputStyle, resize: 'vertical' as const, minHeight: '100px' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+
+            <button onClick={handleParse}
+                className="px-5 py-2 text-sm font-semibold transition-all"
+                style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
+                📋 Phân Tích Dữ Liệu
+            </button>
+
+            {parsed.length > 0 && (
+                <div>
+                    <h4 className="text-sm font-semibold mb-2" style={{ color: '#E8F1F2' }}>
+                        Xem Trước ({parsed.length} bản ghi)
+                    </h4>
+                    <div className="rounded-md overflow-auto" style={{ border: '1px solid #2A4355', maxHeight: '300px' }}>
+                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                    {HEADER_LABELS.map(h => (
+                                        <th key={h} className="px-3 py-2 text-xs uppercase tracking-wider font-semibold sticky top-0"
+                                            style={{ color: '#4A6A7A', background: '#142433' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {parsed.map((r, i) => (
+                                    <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.hsCode}</td>
+                                        <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{r.countryOfOrigin}</td>
+                                        <td className="px-3 py-2"><span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>{r.tradeAgreement}</span></td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>{r.importTaxRate}%</td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#C45A2A' }}>{r.sctRate}%</td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#A5DED0' }}>{r.vatRate}%</td>
+                                        <td className="px-3 py-2 text-xs" style={{ color: '#8AAEBB' }}>{r.effectiveDate}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button onClick={handleImport} disabled={importing}
+                        className="mt-3 px-6 py-2.5 text-sm font-bold transition-all flex items-center gap-2"
+                        style={{ background: '#D4A853', color: '#0A1926', borderRadius: '6px', opacity: importing ? 0.7 : 1 }}>
+                        {importing && <Loader2 size={14} className="animate-spin" />}
+                        {importing ? 'Đang nhập...' : `⬆️ Nhập ${parsed.length} Thuế Suất`}
+                    </button>
+                </div>
+            )}
+
+            {result && (
+                <div className="p-4 rounded-md" style={{ border: '1px solid #2A4355', background: result.errors.length === 0 ? 'rgba(91,168,138,0.08)' : 'rgba(232,93,93,0.08)' }}>
+                    <div className="flex items-center gap-3 mb-2">
+                        <CheckCircle2 size={16} style={{ color: '#5BA88A' }} />
+                        <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Kết Quả Nhập</span>
+                    </div>
+                    <div className="flex gap-4 text-xs">
+                        <span style={{ color: '#5BA88A' }}>✅ Mới: {result.imported}</span>
+                        <span style={{ color: '#D4A853' }}>🔄 Cập nhật: {result.updated}</span>
+                        {result.errors.length > 0 && <span style={{ color: '#E85D5D' }}>❌ Lỗi: {result.errors.length}</span>}
+                    </div>
+                    {result.errors.length > 0 && (
+                        <div className="mt-2 p-2 rounded text-xs space-y-1" style={{ background: 'rgba(232,93,93,0.1)' }}>
+                            {result.errors.slice(0, 5).map((e, i) => (
+                                <p key={i} style={{ color: '#E85D5D' }}>• {e}</p>
+                            ))}
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     )

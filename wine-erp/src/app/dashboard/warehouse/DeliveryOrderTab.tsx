@@ -5,6 +5,7 @@ import {
     Truck, X, Loader2, Save, CheckCircle2, AlertCircle,
     PackageOpen, ArrowRightCircle
 } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     DeliveryOrderRow, getDeliveryOrders, getSOsForDelivery,
     createDeliveryOrder, confirmDeliveryOrder, DOLineInput,
@@ -75,33 +76,38 @@ function CreateDODrawer({ open, onClose, onCreated, warehouses }: {
     const handleSave = async () => {
         if (!selectedSO || !warehouseId) return
         const validLines = lines.filter(l => l.lotId && l.qtyPicked > 0)
-        if (validLines.length === 0) { setError('Cần ít nhất 1 dòng có lô hàng'); return }
+        if (validLines.length === 0) { toast.error('Cần ít nhất 1 dòng có lô hàng'); return }
 
         setSaving(true)
-        setError('')
-        const result = await createDeliveryOrder({
-            soId: selectedSO.id,
-            warehouseId,
-            lines: validLines.map(l => {
-                const lot = stockLots.find(s => s.id === l.lotId)
-                return {
-                    productId: l.productId,
-                    lotId: l.lotId,
-                    locationId: lot?.id ? stockLots.find(s => s.id === l.lotId)?.id ?? '' : '',
-                    qtyPicked: l.qtyPicked,
-                }
+        toast.promise(
+            createDeliveryOrder({
+                soId: selectedSO.id,
+                warehouseId,
+                lines: validLines.map(l => {
+                    const lot = stockLots.find(s => s.id === l.lotId)
+                    return {
+                        productId: l.productId,
+                        lotId: l.lotId,
+                        locationId: lot?.id ? stockLots.find(s => s.id === l.lotId)?.id ?? '' : '',
+                        qtyPicked: l.qtyPicked,
+                    }
+                }),
+            }).then(async (res: any) => {
+                if (!res.success) throw new Error(res.error ?? 'Lỗi tạo DO')
+                onCreated()
+                onClose()
+                setStep('select-so')
+                setSelectedSO(null)
+                setLines([])
+                return res
             }),
-        })
-        if (result.success) {
-            onCreated()
-            onClose()
-            setStep('select-so')
-            setSelectedSO(null)
-            setLines([])
-        } else {
-            setError(result.error ?? 'Lỗi tạo DO')
-        }
-        setSaving(false)
+            {
+                loading: 'Đang tạo phiếu xuất kho...',
+                success: 'Tạo DO thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setSaving(false)
+            }
+        )
     }
 
     if (!open) return null
@@ -119,12 +125,7 @@ function CreateDODrawer({ open, onClose, onCreated, warehouses }: {
                     </button>
                 </div>
 
-                {error && (
-                    <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                        style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)', color: '#f87171' }}>
-                        <AlertCircle size={14} /> {error}
-                    </div>
-                )}
+
 
                 {step === 'select-so' && (
                     <div className="space-y-3">
@@ -247,9 +248,19 @@ export function DeliveryOrderTab({ warehouses }: DeliveryOrderTabProps) {
 
     const handleConfirm = async (doId: string) => {
         setConfirming(doId)
-        await confirmDeliveryOrder(doId)
-        loadDOs()
-        setConfirming(null)
+        toast.promise(
+            confirmDeliveryOrder(doId).then(async (res: any) => {
+                if (res && res.success === false) throw new Error(res.error || 'Có lỗi xảy ra')
+                loadDOs()
+                return res
+            }),
+            {
+                loading: 'Đang xuất kho...',
+                success: 'Xuất kho thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setConfirming(null)
+            }
+        )
     }
 
     return (

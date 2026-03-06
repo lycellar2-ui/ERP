@@ -6,6 +6,7 @@ import {
     Package, AlertCircle, TrendingUp, ChevronRight, MessageSquarePlus,
     ShoppingCart, Clock, CheckCircle2, Loader2, Crown, Calendar, AlertTriangle
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions, recalcAllCustomerTiers } from './actions'
 import { ContactsPanel, TagsPanel } from './ContactsTagsPanel'
 import { TastingEventsPanel } from './TastingEventsPanel'
@@ -92,10 +93,19 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
     const handleLog = async () => {
         if (!desc.trim()) return
         setSaving(true)
-        await logCustomerActivity({ customerId, type, description: desc, performedBy: 'SYSTEM' })
-        setSaving(false)
-        setDesc('')
-        onLogged()
+        toast.promise(
+            logCustomerActivity({ customerId, type, description: desc, performedBy: 'SYSTEM' }).then(res => {
+                setDesc('')
+                onLogged()
+                return res
+            }),
+            {
+                loading: 'Đang lưu tương tác...',
+                success: 'Đã lưu tương tác!',
+                error: 'Lỗi lưu tương tác',
+                finally: () => setSaving(false)
+            }
+        )
     }
 
     return (
@@ -162,7 +172,6 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     const [txHistory, setTxHistory] = useState<Awaited<ReturnType<typeof getCustomerTransactions>> | null>(null)
     const [txOpen, setTxOpen] = useState(false)
     const [tierRecalcing, setTierRecalcing] = useState(false)
-    const [tierResult, setTierResult] = useState<string | null>(null)
     const [crmTab, setCrmTab] = useState<'customers' | 'events' | 'complaints'>('customers')
 
     const reload = useCallback(async (s?: string, t?: string) => {
@@ -206,16 +215,24 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     </p>
                 </div>
                 <button onClick={async () => {
-                    setTierRecalcing(true); setTierResult(null)
-                    const res = await recalcAllCustomerTiers()
-                    setTierResult(res.success ? `✅ Đã cập nhật ${res.updated} khách hàng` : 'Lỗi')
-                    setTierRecalcing(false)
-                    setTimeout(() => setTierResult(null), 3000)
+                    setTierRecalcing(true)
+                    toast.promise(
+                        recalcAllCustomerTiers().then((res: any) => {
+                            if (!res.success) throw new Error('Có lỗi xảy ra')
+                            return res
+                        }),
+                        {
+                            loading: 'Đang tính toán tier...',
+                            success: (res: any) => `✅ Đã cập nhật ${res.updated} khách hàng`,
+                            error: 'Lỗi tính toán',
+                            finally: () => setTierRecalcing(false)
+                        }
+                    )
                 }} disabled={tierRecalcing}
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-all"
                     style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
                     {tierRecalcing ? <Loader2 size={12} className="animate-spin" /> : <Crown size={12} />}
-                    {tierRecalcing ? 'Đang tính...' : tierResult || 'Recalc Tiers'}
+                    {tierRecalcing ? 'Đang tính...' : 'Recalc Tiers'}
                 </button>
             </div>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
     Shield, Users, Settings, Bell, Plus, X, Save, Loader2,
     User, ChevronDown, CheckCircle2, AlertCircle, Search, Eye,
@@ -11,7 +11,7 @@ import {
     createRole, updateRolePermissions, getUsers, getRoles,
     getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate
 } from './actions'
-import { getAuditLogs } from '@/lib/audit'
+import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 
 // ── Shared Style Tokens ──────────────────────────
 const card = { background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '8px' }
@@ -251,6 +251,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
     const [pendingApprovals, setPendingApprovals] = useState<any[]>([])
     const [approvalsLoaded, setApprovalsLoaded] = useState(false)
     const [processingId, setProcessingId] = useState<string | null>(null)
+    const [expandedLogId, setExpandedLogId] = useState<string | null>(null)
+    const [fieldChanges, setFieldChanges] = useState<any[]>([])
+    const [loadingChanges, setLoadingChanges] = useState(false)
 
     const reload = useCallback(async () => {
         const [u, r] = await Promise.all([getUsers(), getRoles()])
@@ -575,7 +578,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                    {['Thời Gian', 'Người Dùng', 'Hành Động', 'Đối Tượng', 'ID'].map(h => (
+                                    {['Thời Gian', 'Người Dùng', 'Hành Động', 'Đối Tượng', 'ID', 'Chi Tiết'].map(h => (
                                         <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
                                             style={{ color: '#4A6A7A' }}>{h}</th>
                                     ))}
@@ -583,32 +586,78 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
                             </thead>
                             <tbody>
                                 {auditLogs.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
+                                    <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>
                                         {auditLoaded ? 'Chưa có nhật ký nào' : 'Đang tải...'}
                                     </td></tr>
                                 ) : auditLogs.map((log: any) => (
-                                    <tr key={log.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
-                                            {new Date(log.createdAt).toLocaleString('vi-VN')}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>
-                                            {log.userName || log.userId || '—'}
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <span className="text-xs px-2 py-0.5 rounded font-bold" style={{
-                                                color: log.action === 'DELETE' ? '#8B1A2E' : log.action === 'CREATE' ? '#5BA88A' : '#D4A853',
-                                                background: log.action === 'DELETE' ? 'rgba(139,26,46,0.15)' : log.action === 'CREATE' ? 'rgba(91,168,138,0.15)' : 'rgba(212,168,83,0.15)',
+                                    <React.Fragment key={log.id}>
+                                        <tr style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', cursor: 'pointer' }}
+                                            onClick={async () => {
+                                                if (expandedLogId === log.id) { setExpandedLogId(null); return }
+                                                setExpandedLogId(log.id)
+                                                if (log.entityId && log.entityType) {
+                                                    setLoadingChanges(true)
+                                                    const res = await getFieldChanges(log.entityType, log.entityId)
+                                                    setFieldChanges(res.changes)
+                                                    setLoadingChanges(false)
+                                                } else {
+                                                    setFieldChanges([])
+                                                }
                                             }}>
-                                                {log.action}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#87CBB9' }}>
-                                            {log.entityType}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
-                                            {log.entityId?.slice(-8) || '—'}
-                                        </td>
-                                    </tr>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                {new Date(log.createdAt).toLocaleString('vi-VN')}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>
+                                                {log.userName || log.userId || '—'}
+                                            </td>
+                                            <td className="px-3 py-2.5">
+                                                <span className="text-xs px-2 py-0.5 rounded font-bold" style={{
+                                                    color: log.action === 'DELETE' ? '#8B1A2E' : log.action === 'CREATE' ? '#5BA88A' : '#D4A853',
+                                                    background: log.action === 'DELETE' ? 'rgba(139,26,46,0.15)' : log.action === 'CREATE' ? 'rgba(91,168,138,0.15)' : 'rgba(212,168,83,0.15)',
+                                                }}>
+                                                    {log.action}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#87CBB9' }}>
+                                                {log.entityType}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                {log.entityId?.slice(-8) || '—'}
+                                            </td>
+                                            <td className="px-3 py-2.5">
+                                                <span className="text-xs" style={{ color: expandedLogId === log.id ? '#87CBB9' : '#4A6A7A' }}>
+                                                    {expandedLogId === log.id ? '▼' : '▶'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {expandedLogId === log.id && (
+                                            <tr><td colSpan={6} style={{ background: '#142433', padding: '12px 16px' }}>
+                                                {loadingChanges ? (
+                                                    <div className="flex items-center gap-2 py-2">
+                                                        <Loader2 size={14} className="animate-spin" style={{ color: '#87CBB9' }} />
+                                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>Đang tải chi tiết...</span>
+                                                    </div>
+                                                ) : fieldChanges.length === 0 ? (
+                                                    <p className="text-xs py-2" style={{ color: '#4A6A7A' }}>Không có chi tiết thay đổi theo trường cho bản ghi này.</p>
+                                                ) : (
+                                                    <div className="space-y-1">
+                                                        <p className="text-xs font-semibold mb-2" style={{ color: '#D4A853' }}>📋 Lịch Sử Thay Đổi Theo Trường</p>
+                                                        {fieldChanges.slice(0, 20).map((fc: any, i: number) => (
+                                                            <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
+                                                                <span className="text-xs font-bold shrink-0" style={{ color: '#87CBB9', minWidth: '100px' }}>{fc.field}</span>
+                                                                <span className="text-xs" style={{ color: '#E85D5D' }}>{String(fc.oldValue ?? '(trống)').slice(0, 40)}</span>
+                                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>→</span>
+                                                                <span className="text-xs" style={{ color: '#5BA88A' }}>{String(fc.newValue ?? '(trống)').slice(0, 40)}</span>
+                                                                <span className="text-xs ml-auto shrink-0" style={{ color: '#4A6A7A' }}>
+                                                                    {new Date(fc.changedAt).toLocaleString('vi-VN')}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </td></tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>

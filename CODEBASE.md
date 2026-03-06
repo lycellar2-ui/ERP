@@ -25,7 +25,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Sales & Allocation**: `src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**), `src/app/dashboard/quotations`, `src/app/dashboard/price-list`, `src/app/dashboard/allocation`, `src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `src/app/dashboard/pipeline`
 - **Finance & Tem**: `src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `src/app/dashboard/stamps`
-- **Procurement & Operations**: `src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**), `src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `src/app/dashboard/agency`
+- **Procurement & Operations**: `src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**, **Multi-currency VND**), `src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `src/app/dashboard/agency`
 - **Tax & Market Data**: `src/app/dashboard/tax`, `src/app/dashboard/costing`, `src/app/dashboard/market-price`
 - **Logistics**: `src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `src/app/dashboard/consignment`, `src/app/dashboard/transfers`, `src/app/dashboard/returns`, `src/app/dashboard/stock-count`
 - **CEO Board**: `src/app/dashboard`, `src/app/dashboard/kpi`, `src/app/dashboard/reports`
@@ -48,6 +48,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **Encryption** | `src/lib/encryption.ts` | AES-256 key vault for API keys |
 | **Server Cache** | `src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
 | **Realtime Hook** | `src/lib/useRealtimeDashboard.ts` | Supabase Realtime subscriptions — role-based channel management |
+| **Audit Diff** | `src/lib/audit.ts` | `logAuditWithDiff()` — per-field change tracking + auto-description |
 
 ## 5. LƯU Ý QUAN TRỌNG
 - **Soft Delete Pattern**: Product, Customer, Supplier sử dụng `deletedAt` + `status: INACTIVE`. Kiểm tra active PO/SO trước khi xoá.

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     ProductInput, createProduct, updateProduct, getProducers, getRegions,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
@@ -180,19 +181,22 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     const handleSave = async () => {
         if (!validate()) return
         setSaving(true)
-        try {
-            const input = formToInput(form)
-            if (isEdit) {
-                await updateProduct(editingId!, input)
-            } else {
-                await createProduct(input)
-            }
-            onSaved()
-        } catch (err: any) {
-            setErrors({ _global: err.message ?? 'Lỗi không xác định' })
-        } finally {
-            setSaving(false)
-        }
+
+        const input = formToInput(form)
+        const savePromise = isEdit ? updateProduct(editingId!, input) : createProduct(input)
+
+        toast.promise(savePromise, {
+            loading: isEdit ? 'Đang cập nhật sản phẩm...' : 'Đang tạo sản phẩm...',
+            success: () => {
+                onSaved()
+                return isEdit ? 'Đã cập nhật thành công!' : 'Tạo sản phẩm mới thành công!'
+            },
+            error: (err: any) => {
+                setErrors({ _global: err.message ?? 'Lỗi không xác định' })
+                return `Lỗi: ${err.message}`
+            },
+            finally: () => setSaving(false)
+        })
     }
 
     // Overlay + slide-in animation
@@ -464,7 +468,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                         if (res.success) {
                                             setAiDescription({ vi: res.descriptionVI ?? '', en: res.descriptionEN ?? '' })
                                         } else {
-                                            alert(`AI Error: ${res.error}`)
+                                            alert(`AI Error: ${res.error} `)
                                         }
                                     }}
                                     disabled={generatingAI}
@@ -525,7 +529,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                         if (res.success && res.media) {
                                             setMediaList(prev => [res.media!, ...prev])
                                         } else {
-                                            alert(`Lỗi upload: ${res.error}`)
+                                            alert(`Lỗi upload: ${res.error} `)
                                         }
                                         e.target.value = ''
                                     }}
@@ -654,19 +658,24 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                             onClick={async () => {
                                                 if (!editingId) return
                                                 setSavingAward(true)
-                                                await addProductAward({
+                                                toast.promise(addProductAward({
                                                     productId: editingId,
                                                     source: awardSource,
                                                     score: awardScore ? Number(awardScore) : undefined,
                                                     medal: awardMedal || undefined,
                                                     vintage: awardVintage ? Number(awardVintage) : undefined,
                                                     awardedYear: awardYear ? Number(awardYear) : undefined,
+                                                }), {
+                                                    loading: 'Đang lưu giải thưởng...',
+                                                    success: () => {
+                                                        getProductAwards(editingId).then(setAwards)
+                                                        setShowAwardForm(false)
+                                                        setAwardScore(''); setAwardMedal(''); setAwardVintage(''); setAwardYear('')
+                                                        return 'Đã lưu giải thưởng'
+                                                    },
+                                                    error: 'Không thể lưu giải thưởng',
+                                                    finally: () => setSavingAward(false)
                                                 })
-                                                const fresh = await getProductAwards(editingId)
-                                                setAwards(fresh)
-                                                setShowAwardForm(false)
-                                                setAwardScore(''); setAwardMedal(''); setAwardVintage(''); setAwardYear('')
-                                                setSavingAward(false)
                                             }}
                                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
                                             style={{ background: '#D4A853', color: '#0A1926' }}>
@@ -701,9 +710,9 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                                     )}
                                                 </div>
                                                 <p className="text-[10px]" style={{ color: '#4A6A7A' }}>
-                                                    {aw.vintage && `Vintage ${aw.vintage}`}
+                                                    {aw.vintage && `Vintage ${aw.vintage} `}
                                                     {aw.vintage && aw.awardedYear && ' · '}
-                                                    {aw.awardedYear && `Năm ${aw.awardedYear}`}
+                                                    {aw.awardedYear && `Năm ${aw.awardedYear} `}
                                                 </p>
                                             </div>
                                             <button

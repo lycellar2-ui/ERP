@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Trash2, MapPin, Thermometer, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { type LocationRow, getLocations, createLocation, deleteLocation, getLocationHeatmap } from './actions'
 
 type HeatmapItem = { zone: string; totalLocations: number; usedLocations: number; totalCapacity: number; usedBottles: number; occupancyPct: number; hasTempControl: boolean }
@@ -28,26 +29,45 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
 
     const handleCreate = async () => {
         setLoading(true)
-        await createLocation({
-            warehouseId,
-            zone: form.zone,
-            rack: form.rack || null,
-            bin: form.bin || null,
-            type: form.type as any,
-            capacityCases: form.capacityCases ? Number(form.capacityCases) : null,
-            tempControlled: form.tempControlled,
-        })
-        setForm({ zone: '', rack: '', bin: '', type: 'STORAGE', capacityCases: '', tempControlled: false })
-        setShowCreate(false)
-        await refresh()
-        setLoading(false)
+        toast.promise(
+            createLocation({
+                warehouseId,
+                zone: form.zone,
+                rack: form.rack || null,
+                bin: form.bin || null,
+                type: form.type as any,
+                capacityCases: form.capacityCases ? Number(form.capacityCases) : null,
+                tempControlled: form.tempControlled,
+            }).then(async (res: any) => {
+                if (!res.success) throw new Error(res.error || 'Có lỗi xảy ra')
+                setForm({ zone: '', rack: '', bin: '', type: 'STORAGE', capacityCases: '', tempControlled: false })
+                setShowCreate(false)
+                await refresh()
+                return res
+            }),
+            {
+                loading: 'Đang thêm vị trí...',
+                success: 'Thêm vị trí thành công!',
+                error: (err) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Xóa vị trí này?')) return
-        const res = await deleteLocation(id)
-        if (!res.success) alert(res.error)
-        else await refresh()
+    const handleDelete = async (id: string, code: string) => {
+        if (!confirm(`Chắc chắn xóa vị trí ${code}?`)) return
+        toast.promise(
+            deleteLocation(id).then(async (res: any) => {
+                if (!res.success) throw new Error(res.error || 'Có lỗi xảy ra')
+                await refresh()
+                return res
+            }),
+            {
+                loading: 'Đang xóa vị trí...',
+                success: 'Xóa vị trí thành công!',
+                error: (err) => `Lỗi: ${err.message}`
+            }
+        )
     }
 
     const typeColor: Record<string, string> = {
@@ -208,7 +228,7 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
                                     <td className="px-4 py-2 text-center font-mono">{loc.usedBottles}</td>
                                     <td className="px-4 py-2 text-right">
                                         {loc.stockCount === 0 && (
-                                            <button onClick={() => handleDelete(loc.id)}
+                                            <button onClick={() => handleDelete(loc.id, loc.locationCode)}
                                                 className="p-1 rounded hover:opacity-60 transition-opacity"
                                                 style={{ color: '#E05252' }}>
                                                 <Trash2 size={12} />

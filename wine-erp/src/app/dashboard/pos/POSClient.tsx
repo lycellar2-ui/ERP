@@ -8,6 +8,7 @@ import {
     Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote,
     QrCode, Wine, Check, X, BarChart3, Receipt, ScanBarcode, FileText, Star
 } from 'lucide-react'
+import { toast } from 'sonner'
 import Link from 'next/link'
 
 export default function POSClient() {
@@ -84,13 +85,18 @@ export default function POSClient() {
     const handleVATInvoice = async () => {
         if (!lastSale) return
         setVatLoading(true)
-        const result = await generatePOSVATInvoice({ soNo: lastSale.soNo, customerName: 'Khách lẻ' })
-        setVatLoading(false)
-        if (result.success) {
-            alert(`Đã xuất hóa đơn VAT: ${result.invoiceNo}`)
-        } else {
-            alert(result.error)
-        }
+        toast.promise(
+            generatePOSVATInvoice({ soNo: lastSale.soNo, customerName: 'Khách lẻ' }).then(result => {
+                if (!result.success) throw new Error(result.error || 'Lỗi xuất hóa đơn')
+                return result
+            }),
+            {
+                loading: 'Đang xuất hóa đơn VAT...',
+                success: (res: any) => `Đã xuất hóa đơn VAT ${res.invoiceNo}`,
+                error: (err: any) => `Lỗi xuất VAT: ${err.message}`,
+                finally: () => setVatLoading(false)
+            }
+        )
     }
 
     const cartTotal = cart.reduce((sum, item) => {
@@ -100,24 +106,30 @@ export default function POSClient() {
 
     const handleCheckout = async () => {
         setLoading(true)
-        const result = await processPOSSale({
-            items: cart,
-            paymentMethod,
-            cashReceived: paymentMethod === 'CASH' ? Number(cashReceived) : undefined,
-        })
-        setLoading(false)
+        toast.promise(
+            processPOSSale({
+                items: cart,
+                paymentMethod,
+                cashReceived: paymentMethod === 'CASH' ? Number(cashReceived) : undefined,
+            }).then(result => {
+                if (!result.success) throw new Error(result.error || 'Thanh toán thất bại')
 
-        if (result.success) {
-            setLastSale({ soNo: result.soNo!, totalAmount: result.totalAmount!, change: result.change })
-            setShowPayment(false)
-            setShowReceipt(true)
-            setCart([])
-            setCashReceived('')
-            loadProducts()
-            getPOSShiftSummary().then(setShiftSummary)
-        } else {
-            alert(result.error)
-        }
+                setLastSale({ soNo: result.soNo!, totalAmount: result.totalAmount!, change: result.change })
+                setShowPayment(false)
+                setShowReceipt(true)
+                setCart([])
+                setCashReceived('')
+                loadProducts()
+                getPOSShiftSummary().then(setShiftSummary)
+                return result
+            }),
+            {
+                loading: 'Đang xử lý thanh toán...',
+                success: 'Thanh toán thành công!',
+                error: (err) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
     }
 
     return (

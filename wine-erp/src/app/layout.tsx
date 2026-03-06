@@ -36,6 +36,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+import { Toaster } from 'sonner'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -43,7 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={`${cormorant.variable} ${dmMono.variable} ${dmSans.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster position="bottom-right" richColors theme="dark" />
+      </body>
     </html>
   )
 }

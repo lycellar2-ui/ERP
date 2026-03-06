@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull } from 'lucide-react'
+import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab } from './FinanceTabs'
@@ -175,28 +176,44 @@ export function FinanceClient({ initialAR, initialAP, stats, agingBuckets, userI
     const handlePayment = async () => {
         if (!paymentModal || !payAmount) return
         setPayLoading(true)
-        const result = await recordARPayment(paymentModal, Number(payAmount), payMethod)
-        if (result.success) {
-            const { rows } = await getARInvoices({ pageSize: 25 })
-            setArRows(rows)
-            setPaymentModal(null)
-            setPayAmount('')
-        }
-        setPayLoading(false)
+        toast.promise(
+            recordARPayment(paymentModal, Number(payAmount), payMethod).then(async (result: any) => {
+                if (!result.success) throw new Error(result.error || 'Thanh toán thất bại')
+                const { rows } = await getARInvoices({ pageSize: 25 })
+                setArRows(rows)
+                setPaymentModal(null)
+                setPayAmount('')
+                return result
+            }),
+            {
+                loading: 'Đang ghi nhận AR...',
+                success: 'Đã ghi nhận thanh toán AR!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setPayLoading(false)
+            }
+        )
     }
 
     const handleAPPayment = async () => {
         if (!apPaymentModal || !payAmount) return
         setPayLoading(true)
-        const result = await recordAPPayment(apPaymentModal, Number(payAmount), payMethod, payReference || undefined)
-        if (result.success) {
-            const { rows } = await getAPInvoices({ pageSize: 25 })
-            setApRows(rows)
-            setApPaymentModal(null)
-            setPayAmount('')
-            setPayReference('')
-        }
-        setPayLoading(false)
+        toast.promise(
+            recordAPPayment(apPaymentModal, Number(payAmount), payMethod, payReference || undefined).then(async (result: any) => {
+                if (!result.success) throw new Error(result.error || 'Ghi nhận thất bại')
+                const { rows } = await getAPInvoices({ pageSize: 25 })
+                setApRows(rows)
+                setApPaymentModal(null)
+                setPayAmount('')
+                setPayReference('')
+                return result
+            }),
+            {
+                loading: 'Đang ghi nhận AP...',
+                success: 'Đã ghi nhận thanh toán AP!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setPayLoading(false)
+            }
+        )
     }
 
     const tabs: { key: Tab; label: string; icon: React.FC<any> }[] = [

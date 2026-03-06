@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Clock, CheckCircle2, Loader2, Filter, ChevronDown } from 'lucide-react'
+import { toast } from 'sonner'
 import { getComplaintTickets, resolveComplaintTicket, type ComplaintRow } from './actions'
 
 const SEVERITY_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -51,11 +52,21 @@ export function ComplaintTicketsPanel() {
     const handleResolve = async (id: string) => {
         if (!resolutionText.trim()) return
         setResolving(id)
-        await resolveComplaintTicket(id, resolutionText)
-        setResolutionText('')
-        setExpandedId(null)
-        await load()
-        setResolving(null)
+        toast.promise(
+            resolveComplaintTicket(id, resolutionText).then(async (res: any) => {
+                if (res && res.success === false) throw new Error(res.error || 'Có lỗi xảy ra')
+                setResolutionText('')
+                setExpandedId(null)
+                await load()
+                return res
+            }),
+            {
+                loading: 'Đang lưu giải pháp...',
+                success: 'Đã giải quyết khiếu nại!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setResolving(null)
+            }
+        )
     }
 
     const openCount = tickets?.filter(t => t.status === 'OPEN').length ?? 0

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw } from 'lucide-react'
+import { toast } from 'sonner'
 import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation } from './actions'
 import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/actions'
 import { formatVND, formatDate } from '@/lib/utils'
@@ -57,22 +58,35 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const handleConvert = async (id: string) => {
         if (!confirm('Chuyển Quotation này thành Sales Order?')) return
         setActionLoading(id)
-        const res = await convertQuotationToSO(id)
-        if (res.success) {
-            alert(`✅ Đã tạo ${res.soNo} từ Quotation!`)
-            await reload()
-            setDetailId(null)
-        } else {
-            alert(`❌ ${res.error}`)
-        }
-        setActionLoading(null)
+        toast.promise(
+            convertQuotationToSO(id).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi chuyển đổi thành SO')
+                reload().then(() => setDetailId(null))
+                return res
+            }),
+            {
+                loading: 'Đang chuyển đổi thành Đơn Hàng...',
+                success: (res: any) => `Đã tạo ${res.soNo} từ Quotation!`,
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setActionLoading(null)
+            }
+        )
     }
 
     const handleStatusChange = async (id: string, status: QuotationStatus) => {
         setActionLoading(id)
-        await updateQuotationStatus(id, status)
-        await reload()
-        setActionLoading(null)
+        toast.promise(
+            updateQuotationStatus(id, status).then((res: any) => {
+                reload()
+                return res
+            }),
+            {
+                loading: 'Đang cập nhật trạng thái...',
+                success: 'Đã cập nhật trạng thái!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setActionLoading(null)
+            }
+        )
     }
 
     const openCreate = async () => {
@@ -86,19 +100,30 @@ export function QuotationClient({ initialRows, stats }: Props) {
     }
 
     const handleCreate = async () => {
-        if (!formData.customerId || !formData.salesRepId || !formData.validUntil || formLines.length === 0) return
-        setSaving(true)
-        const res = await createQuotation({
-            ...formData,
-            lines: formLines.map(l => ({ productId: l.productId, qtyOrdered: l.qty, unitPrice: l.price, lineDiscountPct: l.discount })),
-        })
-        if (res.success) {
-            setCreateOpen(false)
-            setFormData({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '' })
-            setFormLines([])
-            await reload()
+        if (!formData.customerId || !formData.salesRepId || !formData.validUntil || formLines.length === 0) {
+            toast.error('Vui lòng điền đầy đủ thông tin')
+            return
         }
-        setSaving(false)
+        setSaving(true)
+        toast.promise(
+            createQuotation({
+                ...formData,
+                lines: formLines.map(l => ({ productId: l.productId, qtyOrdered: l.qty, unitPrice: l.price, lineDiscountPct: l.discount })),
+            }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi tạo báo giá')
+                setCreateOpen(false)
+                setFormData({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '' })
+                setFormLines([])
+                reload()
+                return res
+            }),
+            {
+                loading: 'Đang tạo báo giá...',
+                success: 'Đã tạo báo giá thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setSaving(false)
+            }
+        )
     }
 
     const addLine = () => setFormLines([...formLines, { productId: '', qty: 1, price: 0, discount: 0 }])

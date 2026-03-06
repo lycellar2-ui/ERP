@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { RotateCcw, Plus, X, Save, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     type ReturnOrderRow,
     getReturnOrders, createReturnOrder, approveReturnOrder,
@@ -53,19 +54,39 @@ export function ReturnsClient({ initialRows, stats }: {
 
     const handleCreate = async () => {
         const validLines = returnLines.filter(l => l.qtyReturned > 0)
-        if (!selectedSo || !reason || validLines.length === 0) return alert('Điền đủ thông tin')
-        const res = await createReturnOrder({ soId: selectedSo, reason, lines: validLines })
-        if (res.success) {
-            setCreateOpen(false); setSelectedSo(''); setReason(''); setReturnLines([]); setSoLines([])
-            reload()
-        } else alert(res.error)
+        if (!selectedSo || !reason || validLines.length === 0) {
+            toast.error('Điền đủ thông tin')
+            return
+        }
+        toast.promise(
+            createReturnOrder({ soId: selectedSo, reason, lines: validLines }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi tạo đơn trả hàng')
+                setCreateOpen(false); setSelectedSo(''); setReason(''); setReturnLines([]); setSoLines([])
+                reload()
+                return res
+            }),
+            {
+                loading: 'Đang tạo đơn trả hàng...',
+                success: 'Đã tạo đơn trả hàng!',
+                error: (err: any) => `Lỗi: ${err.message}`
+            }
+        )
     }
 
     const handleApprove = async (id: string) => {
         if (!confirm('Duyệt đơn trả hàng này? Hệ thống sẽ tự tạo Credit Note.')) return
-        const res = await approveReturnOrder(id)
-        if (res.success) reload()
-        else alert(res.error)
+        toast.promise(
+            approveReturnOrder(id).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi duyệt đơn đổi trả')
+                reload()
+                return res
+            }),
+            {
+                loading: 'Đang duyệt đơn trả hàng...',
+                success: 'Đã duyệt đơn trả hàng!',
+                error: (err: any) => `Lỗi: ${err.message}`
+            }
+        )
     }
 
     return (
@@ -121,7 +142,7 @@ export function ReturnsClient({ initialRows, stats }: {
                     <tbody>
                         {rows.length === 0 ? (
                             <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Chưa có đơn trả hàng</td></tr>
-                        ) : rows.map(r => {
+                        ) : rows.map((r: any) => {
                             const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
                             return (
                                 <tr key={r.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
@@ -227,7 +248,7 @@ export function ReturnsClient({ initialRows, stats }: {
                                         <div className="mt-3 p-3 rounded flex items-center justify-between" style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.2)' }}>
                                             <span className="text-xs" style={{ color: '#D4A853' }}>Tổng giá trị trả lại:</span>
                                             <span className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
-                                                {formatVND(returnLines.filter(l => l.qtyReturned > 0).reduce((s, l) => s + l.qtyReturned * l.unitPrice, 0))}
+                                                {formatVND(returnLines.filter((l: any) => l.qtyReturned > 0).reduce((s: number, l: any) => s + l.qtyReturned * l.unitPrice, 0))}
                                             </span>
                                         </div>
                                     )}

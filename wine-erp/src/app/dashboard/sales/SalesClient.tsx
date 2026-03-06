@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, ChevronRight, Loader2, X, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react'
+import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, advanceSalesOrderStatus, getSalesOrderDetailWithMargin, SOMarginData } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { CreateSODrawer } from './CreateSODrawer'
@@ -295,24 +296,42 @@ export function SalesClient({ initialRows, initialTotal, stats }: Props) {
 
     const handleConfirm = async (id: string) => {
         setActionLoading(id)
-        await confirmSalesOrder(id)
-        await reload()
-        setActionLoading(null)
+        toast.promise(
+            confirmSalesOrder(id).then(() => reload()),
+            {
+                loading: 'Đang xác nhận...',
+                success: 'Xác nhận thành công!',
+                error: 'Không thể xác nhận đơn hàng',
+                finally: () => setActionLoading(null)
+            }
+        )
     }
 
     const handleAdvance = async (id: string, toStatus: SOStatus) => {
         setActionLoading(id)
-        await advanceSalesOrderStatus(id, toStatus)
-        await reload()
-        setActionLoading(null)
+        toast.promise(
+            advanceSalesOrderStatus(id, toStatus).then(() => reload()),
+            {
+                loading: 'Đang cập nhật trạng thái...',
+                success: 'Đã cập nhật trạng thái!',
+                error: 'Lỗi cập nhật trạng thái',
+                finally: () => setActionLoading(null)
+            }
+        )
     }
 
     const handleCancel = async (id: string) => {
         if (!confirm('Huỷ đơn hàng này?')) return
         setActionLoading(id)
-        await cancelSalesOrder(id)
-        await reload()
-        setActionLoading(null)
+        toast.promise(
+            cancelSalesOrder(id).then(() => reload()),
+            {
+                loading: 'Đang huỷ đơn hàng...',
+                success: 'Đã huỷ đơn hàng!',
+                error: 'Không thể huỷ đơn hàng',
+                finally: () => setActionLoading(null)
+            }
+        )
     }
 
     return (

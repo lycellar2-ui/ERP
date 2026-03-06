@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
     createSalesOrder, SOCreateInput, SalesChannel,
@@ -48,8 +49,6 @@ export function CreateSODrawer({ open, onClose, onSaved }: { open: boolean; onCl
     const [loadingPrices, setLoadingPrices] = useState(false)
 
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
-    const [success, setSuccess] = useState('')
 
     useEffect(() => {
         if (!open) return
@@ -134,12 +133,11 @@ export function CreateSODrawer({ open, onClose, onSaved }: { open: boolean; onCl
     const creditWarning = selectedCustomer && finalTotal > creditAvailable
 
     const handleSave = async () => {
-        setError('')
-        if (!customerId) return setError('Vui lòng chọn khách hàng')
-        if (lines.length === 0) return setError('Thêm ít nhất 1 sản phẩm')
+        if (!customerId) return toast.error('Vui lòng chọn khách hàng')
+        if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
 
         setSaving(true)
-        const result = await createSalesOrder({
+        const promise = createSalesOrder({
             customerId,
             salesRepId: 'SYSTEM', // TODO: từ auth context
             channel,
@@ -151,21 +149,26 @@ export function CreateSODrawer({ open, onClose, onSaved }: { open: boolean; onCl
                 unitPrice: l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
             })),
-        } as SOCreateInput)
-        setSaving(false)
+        } as SOCreateInput).then(res => {
+            if (!res.success) throw new Error(res.error ?? 'Có lỗi xảy ra')
+            return res
+        })
 
-        if (result.success) {
-            setSuccess(`Tạo thành công ${result.soNo}`)
-            setTimeout(() => { onSaved(); resetForm() }, 1200)
-        } else {
-            setError(result.error ?? 'Có lỗi xảy ra')
-        }
+        toast.promise(promise, {
+            loading: 'Đang tạo đơn hàng...',
+            success: (result) => {
+                setTimeout(() => { onSaved(); resetForm() }, 500)
+                return `Tạo thành công ${result.soNo}`
+            },
+            error: (err: any) => `Lỗi: ${err.message}`,
+            finally: () => setSaving(false)
+        })
     }
 
     const resetForm = () => {
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
-        setError(''); setSuccess(''); setArBalance(0); setPriceMap({})
+        setArBalance(0); setPriceMap({})
     }
 
     if (!open) return null
@@ -395,21 +398,7 @@ export function CreateSODrawer({ open, onClose, onSaved }: { open: boolean; onCl
                                 </div>
                             )}
 
-                            {error && (
-                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-md"
-                                    style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)' }}>
-                                    <AlertCircle size={14} style={{ color: '#8B1A2E' }} />
-                                    <p className="text-xs" style={{ color: '#8B1A2E' }}>{error}</p>
-                                </div>
-                            )}
 
-                            {success && (
-                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-md"
-                                    style={{ background: 'rgba(91,168,138,0.15)', border: '1px solid rgba(91,168,138,0.3)' }}>
-                                    <CheckCircle2 size={14} style={{ color: '#5BA88A' }} />
-                                    <p className="text-xs" style={{ color: '#5BA88A' }}>{success}</p>
-                                </div>
-                            )}
                         </>
                     )}
                 </div>

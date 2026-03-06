@@ -1,4 +1,4 @@
-'use server'
+// Shared Zod validation schemas for all modules
 
 import { z } from 'zod'
 

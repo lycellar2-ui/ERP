@@ -1,6 +1,6 @@
 # 🔍 Wine ERP — Audit Hợp Nhất (Cuối Cùng)
-**Ngày:** 06/03/2026 14:00 | **Phiên bản:** Wine ERP v4.5  
-**Phương pháp:** Gộp audit trước + session 06/03 (43 features tổng cộng qua 2 phiên)  
+**Ngày:** 06/03/2026 17:00 | **Phiên bản:** Wine ERP v4.6  
+**Phương pháp:** Gộp audit trước + session 06/03 (49 features tổng cộng qua 3 phiên)  
 **Phạm vi:** So sánh 19 file đặc tả với codebase tại `wine-erp/src/`
 
 ---
@@ -9,22 +9,22 @@
 
 | Module | Mã | Hoàn thiện | Trend | Ghi chú ngắn |
 |--------|-----|------------|-------|---------------|
-| Auth, RBAC & Workflow | `SYS` | **95%** 🟢 | ▲▲ | Full RBAC + Approval Engine + Audit Trail |
+| Auth, RBAC & Workflow | `SYS` | **98%** 🟢 | ▲▲▲ | Full RBAC + Approval Engine + Audit Trail + **Per-Field Change Tracking** |
 | Master Data & Partner | `MDM` | **98%** 🟢 | ▲▲▲ | CRUD + Price List + Address + Soft Delete + Media Upload + **Scorecard UI** + **Duplicate Detection UI** |
 | Warehouse & Inventory | `WMS` | **95%** 🟢 | ▲▲▲ | GR + DO + FIFO + Transfer + Count + Quarantine + Write-off + **Mobile Scanner** |
 | Sales & Allocation | `SLS` | **90%** 🟢 | ▲▲ | SO lifecycle + Allocation + Return/CN + Order Discount + Credit Hold |
 | Finance & Accounting | `FIN` | **90%** 🟢 | ▲▲▲ | AR/AP + Journal + P&L + CĐKT + Expense + Period Close + COD |
 | CEO Dashboard | `DSH` | **98%** 🟢 | ▲▲▲ | KPIs + P&L + Cash + AR Aging + Cost Waterfall + Revenue YoY + **Role-based** + **Realtime** |
-| Procurement & Import | `PRC` | **82%** 🟢 | ▲ | PO CRUD + Tax Engine + Landed Cost + Variance |
+| Procurement & Import | `PRC` | **87%** 🟢 | ▲▲ | PO CRUD + Tax Engine + Landed Cost + Variance + **Multi-currency VND** |
 | Reporting & BI | `RPT` | **92%** 🟢 | ▲▲▲ | 15 Reports (R01-R15) + Excel Export + Report Builder + **Scheduled Reports UI** + **Print A4** |
-| Product Costing | `CST` | **80%** 🟢 | ▲▲ | Landed Cost Campaign + Proration + Price Suggestion |
-| Tax & Market Price | `TAX` | **82%** 🟢 | ▲▲ | CRUD + Tax Engine + Market Price + **EVFTA Roadmap** |
+| Product Costing | `CST` | **88%** 🟢 | ▲▲ | Landed Cost Campaign + Proration + Price Suggestion + **Sensitivity Analysis** |
+| Tax & Market Price | `TAX` | **87%** 🟢 | ▲▲▲ | CRUD + Tax Engine + Market Price + **EVFTA Roadmap** + **Bulk Import Excel** |
 | CRM | `CRM` | **98%** 🟢 | ▲▲▲ | 360° + Pipeline + Tier + Tags + **Wine Preference UI** + **Tasting Events UI** + **Complaint Tickets UI** |
 | Transportation | `TRS` | **78%** 🟢 | ▲▲▲ | Routes + E-POD (signature+photo) + COD→AR + Shipper Mobile View |
 | Contract Management | `CNT` | **80%** 🟢 | ▲▲▲ | CRUD + Utilization + Amendment + Expiry Alert + **Digital Signature** |
-| Stamps | `STM` | **70%** 🟢 | ▲ | Purchase + Usage + Link Shipment/Lot + Report Excel |
-| KPI Targets | `KPI` | **80%** � | ▲▲ | Setup UI + DB targets + Forecast + **Copy Year UI** + Growth multiplier |
-| Consignment | `CSG` | **65%** 🟡 | ▲▲▲ | Agreement + Stock tracking + Reports + Auto Invoice |
+| Stamps | `STM` | **80%** 🟢 | ▲▲ | Purchase + Usage + Link + Report Excel + **Destruction Record** + **Overuse Alerts** |
+| KPI Targets | `KPI` | **80%** 🟢 | ▲▲ | Setup UI + DB targets + Forecast + **Copy Year UI** + Growth multiplier |
+| Consignment | `CSG` | **75%** � | ▲▲▲ | Agreement + Stock tracking + Reports + Auto Invoice + **Physical Count HORECA** |
 | Import Agency Portal | `AGN` | **85%** 🟢 | ▲▲▲ | Partners + Submissions + Review + Partner Login + Document Upload + Tracking Milestones + **Scope Lock** |
 | Declarations | `DCL` | **68%** 🟡 | ▲▲▲ | CRUD + Data aggregation + NK data + Calendar + TTĐB Bảng Kê |
 | POS Showroom | `POS` | **88%** 🟢 | ▲▲▲ | Product grid + Cart + Payment + FIFO + Barcode + VAT + **Loyalty Program UI** |
@@ -32,7 +32,7 @@
 | Market Price | `MKT` | **75%** 🟢 | 🆕 | Comparison table + Margin Gap + Below-cost alert |
 | AI Features | `AI` | **70%** 🟢 | ▲▲▲ | Key Vault + OCR Upload UI + Forecast + Pricing + Anomaly + Smart Search |
 
-> **Tổng hoàn thiện ước tính: ~99%** trọng tâm core. Tất cả P1 features hoàn thành. Session 06/03: +43 features qua 2 phiên (36 built + 7 verified).
+> **Tổng hoàn thiện ước tính: ~99%** trọng tâm core. Tất cả P1 features hoàn thành. Session 06/03: +49 features qua 3 phiên (42 built + 7 verified).
 
 ---
 
@@ -162,14 +162,14 @@ wine-erp/src/
 
 ## ✅ Tính Năng Đã Hoàn Thành (Verify Từ Code)
 
-### SYS — System Admin (95%)
+### SYS — System Admin (98%)
 - [x] Supabase Auth: Login/Logout + Session (`middleware.ts`, `lib/session.ts`)
 - [x] RBAC: 8 roles, 58 permissions, 8 users + Settings UI 3 tabs
 - [x] Approval Engine: `lib/approval.ts` — submit, approve, reject, multi-step, threshold
 - [x] Audit Trail: `lib/audit.ts` — `logAudit()` + Settings tab Audit Log
 - [x] Notification Engine: `lib/notifications.ts` — 4 email templates (Resend)
 - [x] Middleware RBAC route guard: `ROUTE_PERMISSIONS` mapping
-- [ ] Audit Trail middleware tracking (changes per field)
+- [x] **Audit Trail per-field tracking**: `logAuditWithDiff()` + `computeFieldDiff()` + `getFieldChanges()` — auto-diff old/new objects, human-readable descriptions, field-level change history
 
 ### MDM — Master Data (98%)
 - [x] Products: Full CRUD + Drawer detail + all wine fields
@@ -230,14 +230,14 @@ wine-erp/src/
 - [x] **Cost Waterfall**: getCostWaterfall() + SVG waterfall chart
 - [x] **Revenue YoY**: getRevenueYoY() + 12-month comparison bar chart
 
-### PRC — Procurement (82%)
+### PRC — Procurement (87%)
 - [x] PO CRUD + Status workflow
 - [x] Tax Engine: CIF → NK → SCT → VAT auto
 - [x] PO Tax Calculation panel
 - [x] Import PO from Excel
 - [x] Contract linking
 - [x] Variance Report: PO vs Actual
-- [ ] Multi-currency VND convert at trade date
+- [x] **Multi-currency VND Convert**: `convertPOToVND()` per-line breakdown + `getExchangeRateSummary()` — avg/min/max rate per currency
 
 ### RPT — Reporting (92%)
 - [x] 15 Standard Reports (R01-R15) + Excel Export
@@ -247,19 +247,19 @@ wine-erp/src/
 - [x] **Scheduled Reports**: createReportSchedule() + runScheduledReports() + Cron route + Resend email
 - [x] **Print Preview A4**: globals.css @media print A4 stylesheet
 
-### CST — Costing (80%)
+### CST — Costing (88%)
 - [x] Landed Cost Campaign: Create + Calculate + Finalize → StockLot update
 - [x] Proration Engine: phân bổ theo qty
 - [x] Price Suggestion: 4 kênh (HORECA/Đại Lý/VIP/POS)
 - [x] Margin analysis per SKU
-- [ ] Sensitivity Analysis ("nếu tỷ giá tăng X%...")
+- [x] **Sensitivity Analysis**: `runSensitivityAnalysis()` + 6 preset scenarios — what-if for exchange rate, import tax, SCT changes per SKU with margin impact
 
-### TAX — Tax & Market Price (82%)
+### TAX — Tax & Market Price (87%)
 - [x] Tax Rate CRUD + Tax Engine (NK/SCT/VAT auto)
 - [x] Auto SCT 35%/65% based on ABV%
 - [x] Market Price Tracking: CRUD + Margin Gap % + below-cost alert
 - [x] **EVFTA Roadmap**: EVFTARoadmapPanel + timeline chart (2020–2027, 4 categories)
-- [ ] Bulk upload Excel thuế
+- [x] **Bulk Upload Excel Thuế**: `importTaxRatesFromExcel()` — validate + upsert by hsCode×country, `parseTaxExcelTemplate()` for template headers
 
 ### CRM — Customer (98%)
 - [x] 360° Profile + Activity Log (6 types)
@@ -293,12 +293,13 @@ wine-erp/src/
 - [x] **Digital Signature nội bộ**: signContractInternal() + SHA-256 hash + audit log
 - [x] **Email alert tự động**: sendContractExpiryAlerts() + notifyContractExpiring (7d/30d)
 
-### STM — Stamps (70%)
+### STM — Stamps (80%)
 - [x] Stamp Purchase CRUD + Usage recording
 - [x] Stamp ↔ Shipment/StockLot linking
 - [x] Data validation (used + damaged > total)
 - [x] Stamp Report Excel (quarterly/annual)
-- [ ] Biên bản hủy tem, Alert overuse UI
+- [x] **Biên Bản Hủy Tem**: `createStampDestruction()` — reason + witness + validation + qty deduction
+- [x] **Overuse Alerts**: `getStampAlerts()` — >85% usage WARNING, >95% CRITICAL, >5% damaged rate alert
 
 ### POS — Point of Sale (88%)
 - [x] Product grid + Cart + multi-line
@@ -347,11 +348,11 @@ wine-erp/src/
 - [x] Document Upload + Sign
 - [x] **Thuế TTĐB Bảng Kê Chi Tiết**: `getSCTDetailedReport()` — Input/Output netting, ABV-based rates + 3-panel UI
 
-### CSG — Consignment (65%)
+### CSG — Consignment (75%)
 - [x] Agreement CRUD + Detail Drawer (Stock + Reports tabs)
 - [x] Consigned Stock Map + Replenishment alerts
 - [x] Reconciliation workflow: tạo BC → xác nhận → auto AR Invoice
-- [ ] Physical Count at HORECA
+- [x] **Physical Count at HORECA**: `createPhysicalCount()` → count session with system vs physical qty → `confirmPhysicalCount()` auto-adjust stock + variance report
 
 ---
 
@@ -361,30 +362,30 @@ wine-erp/src/
 Module          % Hoàn thiện   Status Bar               Status
 ──────────────────────────────────────────────────────────────
 MDM MasterData   98%          ▓▓▓▓▓▓▓▓▓▓  🟢 DONE      ▲ Scorecard+Duplicate
+SYS Auth/RBAC    98%          ▓▓▓▓▓▓▓▓▓▓  🟢 DONE      ▲ Per-Field Audit
 CRM Customer     98%          ▓▓▓▓▓▓▓▓▓▓  🟢 DONE      ▲ Events+Complaints
 DSH Dashboard    98%          ▓▓▓▓▓▓▓▓▓▓  🟢 DONE      ▲ Realtime+Roles
-SYS Auth/RBAC    95%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
 WMS Warehouse    95%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Scanner
 RPT Reports      92%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Scheduled+Print
 SLS Sales        90%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE
 FIN Finance      90%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ BadDebt+CĐKT
+CST Costing      88%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Sensitivity
 POS Showroom     88%          ▓▓▓▓▓▓▓▓░░  🟢 DONE      ▲ Loyalty
+PRC Procurement  87%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ Multi-currency
+TAX Tax          87%          ▓▓▓▓▓▓▓▓▓░  🟢 DONE      ▲ EVFTA+BulkImport
 TRS Delivery     85%          ▓▓▓▓▓▓▓▓░░  🟢 DONE      ▲ Signature+Mobile
 AGN Agency       85%          ▓▓▓▓▓▓▓▓░░  🟢 DONE      ▲ Partner Login
-PRC Procurement  82%          ▓▓▓▓▓▓▓▓░░  🟢 Working
-TAX Tax          82%          ▓▓▓▓▓▓▓▓░░  🟢 Working   ▲ EVFTA
-CST Costing      80%          ▓▓▓▓▓▓▓▓░░  🟢 Working
+STM Stamps       80%          ▓▓▓▓▓▓▓▓░░  🟢 DONE      ▲ Destruction+Alerts
 CNT Contracts    80%          ▓▓▓▓▓▓▓▓░░  🟢 Working   ▲ DigitalSign
 KPI Targets      80%          ▓▓▓▓▓▓▓▓░░  🟢 Working   ▲ CopyYear
 MKT MarketPrice  75%          ▓▓▓▓▓▓▓░░░  🟢 Working
+CSG Consignment  75%          ▓▓▓▓▓▓▓░░░  🟢 Working   ▲ Physical Count
 QRC QR Code      70%          ▓▓▓▓▓▓▓░░░  🟢 Working
-STM Stamps       70%          ▓▓▓▓▓▓▓░░░  🟢 Working
-AI Features      70%          ▓▓▓▓▓▓▓░░░  � Working   ▲ OCR+Search
+AI Features      70%          ▓▓▓▓▓▓▓░░░  🟢 Working   ▲ OCR+Search
 DCL Declarations 68%          ▓▓▓▓▓▓░░░░  🟡 Partial   ▲ TTĐB Report
-CSG Consignment  65%          ▓▓▓▓▓▓░░░░  🟡 Partial
 ```
 
-**Trung bình: ~83% ÷ module | ~99% chức năng core nghiệp vụ (P1 15/15 ✅)**
+**Trung bình: ~85% ÷ module | ~99% chức năng core nghiệp vụ (P1 15/15 ✅)**
 
 ---
 
@@ -485,8 +486,19 @@ CSG Consignment  65%          ▓▓▓▓▓▓░░░░  🟡 Partial
 | Router Cache | `next.config.ts` | staleTimes dynamic=30s, static=300s |
 | SWR Dedup Guard | `lib/cache.ts` | `pendingRefreshes` Set — 1 refresh per key |
 
+### 📅 Session 06/03/2026 (Tối) — 6 Feature Gaps Completed
+| Feature | Module | Files |
+|---------|--------|-------|
+| ✨ Multi-currency VND Convert | PRC | `procurement/actions.ts` — `convertPOToVND()` + `getExchangeRateSummary()` |
+| ✨ Sensitivity Analysis | CST | `costing/actions.ts` — `runSensitivityAnalysis()` + 6 preset scenarios |
+| ✨ Bulk Tax Import Excel | TAX | `tax/actions.ts` — `importTaxRatesFromExcel()` + `parseTaxExcelTemplate()` |
+| ✨ Stamp Destruction | STM | `stamps/actions.ts` — `createStampDestruction()` + `getStampDestructions()` |
+| ✨ Stamp Overuse Alerts | STM | `stamps/actions.ts` — `getStampAlerts()` (>85% usage, >5% damaged) |
+| ✨ Physical Count HORECA | CSG | `consignment/actions.ts` — `createPhysicalCount()` + `confirmPhysicalCount()` |
+| ✨ Audit Per-Field Tracking | SYS | `lib/audit.ts` — `logAuditWithDiff()` + `computeFieldDiff()` + `getFieldChanges()` |
+
 ---
 
-*Audit updated: 06/03/2026 15:52 | Session: +43 features (36 built + 7 verified) + Performance Optimization*
+*Audit updated: 06/03/2026 17:06 | Session: +49 features (42 built + 7 verified) + Performance Optimization + Feature Gaps*
 *Scan method: Code outline + grep search toàn bộ codebase*
 *Total spec files: 19 | Total code modules: 32 | Prisma models: ~57*

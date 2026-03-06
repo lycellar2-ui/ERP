@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Stamp, Plus, AlertTriangle, CheckCircle, Package } from 'lucide-react'
-import { createStampPurchase, recordStampUsage } from './actions'
+import { Stamp, Plus, AlertTriangle, CheckCircle, Package, Trash2, ShieldAlert } from 'lucide-react'
+import { toast } from 'sonner'
+import { createStampPurchase, recordStampUsage, createStampDestruction, getStampAlerts, getStampDestructions } from './actions'
+import type { StampAlert, StampDestructionRecord } from './actions'
 
 interface StampPurchase {
     id: string
@@ -59,7 +61,17 @@ export default function StampsClient({ purchases, summary }: Props) {
     const router = useRouter()
     const [showAddForm, setShowAddForm] = useState(false)
     const [showUsageForm, setShowUsageForm] = useState<string | null>(null)
+    const [showDestroyForm, setShowDestroyForm] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const [alerts, setAlerts] = useState<StampAlert[]>([])
+    const [destructions, setDestructions] = useState<StampDestructionRecord[]>([])
+    const [showDestroyHistory, setShowDestroyHistory] = useState(false)
+
+    // Load alerts & destructions on mount
+    useEffect(() => {
+        getStampAlerts().then(setAlerts)
+        getStampDestructions().then(setDestructions)
+    }, [])
 
     // Add stamp purchase form
     const [formData, setFormData] = useState({
@@ -78,46 +90,87 @@ export default function StampsClient({ purchases, summary }: Props) {
         notes: '',
     })
 
+    // Destruction form
+    const [destroyData, setDestroyData] = useState({
+        qtyDestroyed: 0,
+        reason: '',
+        witnessName: '',
+        destructionDate: new Date().toISOString().split('T')[0],
+        notes: '',
+    })
+
     async function handleAddPurchase(e: React.FormEvent) {
         e.preventDefault()
         setLoading(true)
-        try {
-            await createStampPurchase(formData)
-            setShowAddForm(false)
-            setFormData({
-                purchaseDate: new Date().toISOString().split('T')[0],
-                stampType: 'UNDER_20_ABV',
-                symbol: '',
-                serialStart: '',
-                serialEnd: '',
-                totalQty: 0,
-            })
-            router.refresh()
-        } catch (err) {
-            alert(err instanceof Error ? err.message : 'Lỗi khi tạo lô tem')
-        } finally {
-            setLoading(false)
-        }
+        toast.promise(
+            createStampPurchase(formData).then((res) => {
+                setShowAddForm(false)
+                setFormData({
+                    purchaseDate: new Date().toISOString().split('T')[0],
+                    stampType: 'UNDER_20_ABV',
+                    symbol: '',
+                    serialStart: '',
+                    serialEnd: '',
+                    totalQty: 0,
+                })
+                router.refresh()
+                return res
+            }),
+            {
+                loading: 'Đang lưu lô tem...',
+                success: 'Đã lưu lô tem thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
     }
 
     async function handleRecordUsage(purchaseId: string) {
         setLoading(true)
-        try {
-            await recordStampUsage({
+        toast.promise(
+            recordStampUsage({
                 purchaseId,
                 qtyUsed: usageData.qtyUsed,
                 qtyDamaged: usageData.qtyDamaged,
                 reportedBy: 'system', // TODO: replace with actual user ID
                 notes: usageData.notes || undefined,
-            })
-            setShowUsageForm(null)
-            setUsageData({ qtyUsed: 0, qtyDamaged: 0, notes: '' })
-            router.refresh()
-        } catch (err) {
-            alert(err instanceof Error ? err.message : 'Lỗi khi ghi nhận sử dụng tem')
-        } finally {
-            setLoading(false)
-        }
+            }).then((res) => {
+                setShowUsageForm(null)
+                setUsageData({ qtyUsed: 0, qtyDamaged: 0, notes: '' })
+                router.refresh()
+                return res
+            }),
+            {
+                loading: 'Đang ghi nhận dán tem...',
+                success: 'Đã ghi nhận sử dụng tem!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
+    }
+
+    async function handleDestruction(purchaseId: string) {
+        if (!destroyData.reason.trim()) { toast.error('Vui lòng nhập lý do hủy tem'); return; }
+        if (!destroyData.witnessName.trim()) { toast.error('Vui lòng nhập tên người chứng kiến'); return; }
+        if (destroyData.qtyDestroyed <= 0) { toast.error('Số lượng hủy phải > 0'); return; }
+        setLoading(true)
+        toast.promise(
+            createStampDestruction({ purchaseId, ...destroyData }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi khi hủy tem')
+                setShowDestroyForm(null)
+                setDestroyData({ qtyDestroyed: 0, reason: '', witnessName: '', destructionDate: new Date().toISOString().split('T')[0], notes: '' })
+                router.refresh()
+                getStampAlerts().then(setAlerts)
+                getStampDestructions().then(setDestructions)
+                return res
+            }),
+            {
+                loading: 'Đang xử lý hủy tem...',
+                success: 'Đã hủy tem thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
     }
 
     const pct = (used: number, total: number) =>
@@ -183,6 +236,40 @@ export default function StampsClient({ purchases, summary }: Props) {
                     </div>
                 ))}
             </div>
+
+            {/* Overuse Alerts Banner */}
+            {alerts.length > 0 && (
+                <div style={{ ...card, marginBottom: '24px', borderColor: alerts.some(a => a.severity === 'CRITICAL') ? '#E85D5D' : '#E8A87C' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <ShieldAlert size={18} style={{ color: alerts.some(a => a.severity === 'CRITICAL') ? '#E85D5D' : '#E8A87C' }} />
+                        <h3 style={{ color: '#E8F1F2', margin: 0, fontSize: '15px', fontWeight: 600 }}>
+                            Cảnh Báo Tem ({alerts.length})
+                        </h3>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {alerts.map(a => (
+                            <div key={a.id} style={{
+                                display: 'flex', alignItems: 'center', gap: '12px',
+                                padding: '10px 14px', borderRadius: '8px',
+                                background: a.severity === 'CRITICAL' ? 'rgba(232,93,93,0.08)' : 'rgba(232,168,124,0.08)',
+                                border: `1px solid ${a.severity === 'CRITICAL' ? 'rgba(232,93,93,0.25)' : 'rgba(232,168,124,0.25)'}`,
+                            }}>
+                                <AlertTriangle size={14} style={{ color: a.severity === 'CRITICAL' ? '#E85D5D' : '#E8A87C', flexShrink: 0 }} />
+                                <span style={{ color: a.severity === 'CRITICAL' ? '#E85D5D' : '#E8A87C', fontSize: '13px', flex: 1 }}>
+                                    {a.message}
+                                </span>
+                                <span style={{
+                                    padding: '2px 8px', borderRadius: '10px', fontSize: '10px', fontWeight: 700,
+                                    background: a.severity === 'CRITICAL' ? 'rgba(232,93,93,0.2)' : 'rgba(232,168,124,0.2)',
+                                    color: a.severity === 'CRITICAL' ? '#E85D5D' : '#E8A87C',
+                                }}>
+                                    {a.severity}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Add Stamp Form */}
             {showAddForm && (
@@ -334,17 +421,31 @@ export default function StampsClient({ purchases, summary }: Props) {
                                             )}
                                         </td>
                                         <td style={tdStyle}>
-                                            {!isExhaust && (
-                                                <button
-                                                    onClick={() => setShowUsageForm(showUsageForm === p.id ? null : p.id)}
-                                                    style={{
-                                                        padding: '5px 12px', borderRadius: '6px', border: '1px solid #2A4355',
-                                                        background: 'transparent', color: '#87CBB9', cursor: 'pointer', fontSize: '12px',
-                                                    }}
-                                                >
-                                                    Ghi Nhận Dán
-                                                </button>
-                                            )}
+                                            <div style={{ display: 'flex', gap: '6px' }}>
+                                                {!isExhaust && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setShowUsageForm(showUsageForm === p.id ? null : p.id) }}
+                                                        style={{
+                                                            padding: '5px 12px', borderRadius: '6px', border: '1px solid #2A4355',
+                                                            background: 'transparent', color: '#87CBB9', cursor: 'pointer', fontSize: '12px',
+                                                        }}
+                                                    >
+                                                        Ghi Nhận Dán
+                                                    </button>
+                                                )}
+                                                {!isExhaust && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setShowDestroyForm(showDestroyForm === p.id ? null : p.id) }}
+                                                        style={{
+                                                            padding: '5px 12px', borderRadius: '6px', border: '1px solid rgba(232,93,93,0.3)',
+                                                            background: 'transparent', color: '#E85D5D', cursor: 'pointer', fontSize: '12px',
+                                                            display: 'flex', alignItems: 'center', gap: '4px',
+                                                        }}
+                                                    >
+                                                        <Trash2 size={12} /> Hủy Tem
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 )
@@ -410,6 +511,123 @@ export default function StampsClient({ purchases, summary }: Props) {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Destruction Modal */}
+            {showDestroyForm && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
+                }}
+                    onClick={() => setShowDestroyForm(null)}
+                >
+                    <div
+                        style={{ ...card, width: '520px', borderColor: '#E85D5D' }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h3 style={{ color: '#E8F1F2', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Trash2 size={18} style={{ color: '#E85D5D' }} /> Biên Bản Hủy Tem
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                <div>
+                                    <label style={labelStyle}>Số Lượng Hủy *</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={destroyData.qtyDestroyed || ''}
+                                        onChange={e => setDestroyData({ ...destroyData, qtyDestroyed: parseInt(e.target.value) || 0 })}
+                                        style={inputStyle}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Ngày Hủy *</label>
+                                    <input
+                                        type="date"
+                                        value={destroyData.destructionDate}
+                                        onChange={e => setDestroyData({ ...destroyData, destructionDate: e.target.value })}
+                                        style={inputStyle}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Lý Do Hủy Tem *</label>
+                                <input
+                                    value={destroyData.reason}
+                                    onChange={e => setDestroyData({ ...destroyData, reason: e.target.value })}
+                                    placeholder="VD: Tem bị rách, ẩm mốc, in sai lỗi..."
+                                    style={inputStyle}
+                                />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Người Chứng Kiến *</label>
+                                <input
+                                    value={destroyData.witnessName}
+                                    onChange={e => setDestroyData({ ...destroyData, witnessName: e.target.value })}
+                                    placeholder="Họ tên người chứng kiến hủy tem"
+                                    style={inputStyle}
+                                />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Ghi Chú</label>
+                                <textarea
+                                    value={destroyData.notes}
+                                    onChange={e => setDestroyData({ ...destroyData, notes: e.target.value })}
+                                    placeholder="Ghi chú thêm (không bắt buộc)"
+                                    rows={2}
+                                    style={{ ...inputStyle, resize: 'vertical' as const }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                                <button onClick={() => setShowDestroyForm(null)} style={btnSecondary}>Hủy</button>
+                                <button
+                                    onClick={() => handleDestruction(showDestroyForm)}
+                                    disabled={loading}
+                                    style={{ ...btnPrimary, background: '#E85D5D' }}
+                                >
+                                    {loading ? 'Đang xử lý...' : '🗑️ Xác Nhận Hủy Tem'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Destruction History */}
+            {destructions.length > 0 && (
+                <div style={{ ...card, marginTop: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h3 style={{ color: '#E8F1F2', margin: 0, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Trash2 size={16} style={{ color: '#E85D5D' }} /> Lịch Sử Hủy Tem ({destructions.length})
+                        </h3>
+                        <button onClick={() => setShowDestroyHistory(!showDestroyHistory)}
+                            style={{ ...btnSecondary, padding: '5px 12px', fontSize: '12px' }}>
+                            {showDestroyHistory ? 'Thu gọn' : 'Xem chi tiết'}
+                        </button>
+                    </div>
+                    {showDestroyHistory && (
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #2A4355' }}>
+                                    {['Ngày Hủy', 'Lô Tem', 'SL Hủy', 'Lý Do', 'Chứng Kiến'].map(h => (
+                                        <th key={h} style={{ ...thStyle }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {destructions.map(d => (
+                                    <tr key={d.id} style={{ borderBottom: '1px solid #1E3344' }}>
+                                        <td style={tdStyle}>{new Date(d.destructionDate).toLocaleDateString('vi-VN')}</td>
+                                        <td style={{ ...tdStyle, fontWeight: 600, color: '#E8F1F2' }}>{d.purchaseSymbol}</td>
+                                        <td style={{ ...tdStyle, textAlign: 'right', color: '#E85D5D', fontWeight: 600 }}>{d.qtyDestroyed.toLocaleString()}</td>
+                                        <td style={{ ...tdStyle, maxWidth: '200px' }}>{d.reason}</td>
+                                        <td style={tdStyle}>{d.witnessName}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             )}
         </div>

@@ -311,3 +311,175 @@ export async function exportStampReportExcel(filters: {
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// STAMP DESTRUCTION RECORD (Biên Bản Hủy Tem)
+// ═══════════════════════════════════════════════════
+
+export type StampDestructionRecord = {
+    id: string
+    purchaseId: string
+    purchaseSymbol: string
+    qtyDestroyed: number
+    reason: string
+    witnessName: string
+    destructionDate: Date
+    notes: string | null
+    createdAt: Date
+}
+
+export async function createStampDestruction(data: {
+    purchaseId: string
+    qtyDestroyed: number
+    reason: string
+    witnessName: string
+    destructionDate: string
+    notes?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const purchase = await prisma.wineStampPurchase.findUnique({
+            where: { id: data.purchaseId },
+        })
+        if (!purchase) return { success: false, error: 'Lô tem không tồn tại' }
+
+        const remaining = purchase.totalQty - purchase.usedQty
+        if (data.qtyDestroyed > remaining) {
+            return { success: false, error: `Số lượng hủy (${data.qtyDestroyed}) vượt quá tồn kho tem (${remaining})` }
+        }
+
+        if (!data.reason.trim()) {
+            return { success: false, error: 'Lý do hủy tem là bắt buộc' }
+        }
+        if (!data.witnessName.trim()) {
+            return { success: false, error: 'Người chứng kiến là bắt buộc' }
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Record the destruction as a special usage with qtyDamaged
+            await tx.wineStampUsage.create({
+                data: {
+                    purchaseId: data.purchaseId,
+                    qtyUsed: 0,
+                    qtyDamaged: data.qtyDestroyed,
+                    reportedBy: data.witnessName,
+                    notes: `[HỦY TEM] ${data.reason}${data.notes ? ` — ${data.notes}` : ''} | Ngày: ${data.destructionDate} | Chứng kiến: ${data.witnessName}`,
+                },
+            })
+
+            // Update purchase quantities
+            const newUsedQty = purchase.usedQty + data.qtyDestroyed
+            await tx.wineStampPurchase.update({
+                where: { id: data.purchaseId },
+                data: {
+                    usedQty: newUsedQty,
+                    status: newUsedQty >= purchase.totalQty ? 'EXHAUSTED' : 'ACTIVE',
+                },
+            })
+        })
+
+        revalidateCache('stamps')
+        revalidatePath('/dashboard/stamps')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// Get destruction history
+export async function getStampDestructions(): Promise<StampDestructionRecord[]> {
+    const usages = await prisma.wineStampUsage.findMany({
+        where: {
+            notes: { startsWith: '[HỦY TEM]' },
+        },
+        include: {
+            purchase: { select: { symbol: true } },
+        },
+        orderBy: { usedAt: 'desc' },
+    })
+
+    return usages.map(u => ({
+        id: u.id,
+        purchaseId: u.purchaseId,
+        purchaseSymbol: u.purchase.symbol,
+        qtyDestroyed: u.qtyDamaged,
+        reason: (u.notes ?? '').replace('[HỦY TEM] ', '').split(' | ')[0],
+        witnessName: u.reportedBy,
+        destructionDate: u.usedAt,
+        notes: u.notes,
+        createdAt: u.usedAt,
+    }))
+}
+
+// ═══════════════════════════════════════════════════
+// STAMP OVERUSE ALERTS
+// ═══════════════════════════════════════════════════
+
+export type StampAlert = {
+    id: string
+    symbol: string
+    stampType: string
+    severity: 'WARNING' | 'CRITICAL'
+    message: string
+    usagePct: number
+    damagedPct: number
+    totalQty: number
+    usedQty: number
+    remaining: number
+}
+
+export async function getStampAlerts(): Promise<StampAlert[]> {
+    return cached('stamps:alerts', async () => {
+        const purchases = await prisma.wineStampPurchase.findMany({
+            where: { status: 'ACTIVE' },
+            include: {
+                usages: { select: { qtyUsed: true, qtyDamaged: true } },
+            },
+        })
+
+        const alerts: StampAlert[] = []
+
+        for (const p of purchases) {
+            const totalUsed = p.usages.reduce((s, u) => s + u.qtyUsed, 0)
+            const totalDamaged = p.usages.reduce((s, u) => s + u.qtyDamaged, 0)
+            const remaining = p.totalQty - p.usedQty
+            const usagePct = p.totalQty > 0 ? (p.usedQty / p.totalQty) * 100 : 0
+            const damagedPct = p.totalQty > 0 ? (totalDamaged / p.totalQty) * 100 : 0
+
+            // Alert: Usage > 85% — running low
+            if (usagePct > 85) {
+                alerts.push({
+                    id: `${p.id}-low`,
+                    symbol: p.symbol,
+                    stampType: p.stampType === 'UNDER_20_ABV' ? 'Dưới 20°' : 'Trên 20°',
+                    severity: usagePct > 95 ? 'CRITICAL' : 'WARNING',
+                    message: usagePct > 95
+                        ? `Lô tem ${p.symbol} sắp hết! Chỉ còn ${remaining} tem (${Math.round(100 - usagePct)}%)`
+                        : `Lô tem ${p.symbol} đã sử dụng ${Math.round(usagePct)}% — cần đặt thêm`,
+                    usagePct: Math.round(usagePct * 10) / 10,
+                    damagedPct: Math.round(damagedPct * 10) / 10,
+                    totalQty: p.totalQty,
+                    usedQty: p.usedQty,
+                    remaining,
+                })
+            }
+
+            // Alert: Damaged > 5% — abnormal damage rate
+            if (damagedPct > 5 && totalDamaged > 2) {
+                alerts.push({
+                    id: `${p.id}-dmg`,
+                    symbol: p.symbol,
+                    stampType: p.stampType === 'UNDER_20_ABV' ? 'Dưới 20°' : 'Trên 20°',
+                    severity: damagedPct > 10 ? 'CRITICAL' : 'WARNING',
+                    message: `Lô tem ${p.symbol} có tỷ lệ hỏng bất thường: ${Math.round(damagedPct)}% (${totalDamaged}/${p.totalQty})`,
+                    usagePct: Math.round(usagePct * 10) / 10,
+                    damagedPct: Math.round(damagedPct * 10) / 10,
+                    totalQty: p.totalQty,
+                    usedQty: p.usedQty,
+                    remaining,
+                })
+            }
+        }
+
+        return alerts.sort((a, b) => (a.severity === 'CRITICAL' ? -1 : 1) - (b.severity === 'CRITICAL' ? -1 : 1))
+    }, 60_000) // 1 min cache
+}

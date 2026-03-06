@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Package, Handshake, TrendingUp, CheckCircle2, Plus, Eye, X, Wine, ChevronRight, FileText, AlertCircle, MapPin, AlertTriangle } from 'lucide-react'
-import type { ConsignmentRow, ConsignmentStockRow, ConsignmentReportRow, ConsignedStockMapRow, ReplenishmentAlert } from './actions'
+import { toast } from 'sonner'
+import type { ConsignmentRow, ConsignmentStockRow, ConsignmentReportRow, ConsignedStockMapRow, ReplenishmentAlert, PhysicalCountSession, PhysicalCountItem } from './actions'
 import {
     getConsignmentAgreements, getConsignmentStats, createConsignmentAgreement,
     getConsignmentStocks, addConsignmentStock, getConsignmentReports,
     createConsignmentReport, confirmConsignmentReport,
     getCustomerOptionsForCSG, getProductOptionsForCSG,
     getConsignedStockMap, getReplenishmentAlerts,
+    createPhysicalCount, confirmPhysicalCount,
 } from './actions'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
@@ -36,12 +38,25 @@ function CreateDrawer({ open, onClose, onCreated }: {
     }, [open])
 
     const handleSubmit = async () => {
-        if (!form.customerId || !form.startDate || !form.endDate) return alert('Vui lòng điền đầy đủ')
+        if (!form.customerId || !form.startDate || !form.endDate) {
+            toast.error('Vui lòng điền đầy đủ')
+            return
+        }
         setLoading(true)
-        const res = await createConsignmentAgreement(form)
-        setLoading(false)
-        if (res.success) { onCreated(); onClose() }
-        else alert(res.error)
+        toast.promise(
+            createConsignmentAgreement(form).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi tạo hợp đồng')
+                onCreated()
+                onClose()
+                return res
+            }),
+            {
+                loading: 'Đang tạo hợp đồng...',
+                success: 'Đã tạo hợp đồng ký gửi!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
     }
 
     if (!open) return null
@@ -60,7 +75,7 @@ function CreateDrawer({ open, onClose, onCreated }: {
                         <select value={form.customerId} onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))}
                             className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                             <option value="">— Chọn KH HORECA/Đại lý —</option>
-                            {customers.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name} ({c.customerType})</option>)}
+                            {customers.map((c: any) => <option key={c.id} value={c.id}>{c.code} — {c.name} ({c.customerType})</option>)}
                         </select>
                     </div>
                     <div>
@@ -122,10 +137,19 @@ function DetailDrawer({ agreement, onClose, onRefresh }: {
     const handleAddStock = async () => {
         if (!agreement || !stockForm.productId || !stockForm.qty) return
         setLoading(true)
-        const res = await addConsignmentStock({ agreementId: agreement.id, productId: stockForm.productId, qtyConsigned: Number(stockForm.qty) })
-        setLoading(false)
-        if (res.success) { setAddStock(false); setStockForm({ productId: '', qty: '' }); loadData(); onRefresh() }
-        else alert(res.error)
+        toast.promise(
+            addConsignmentStock({ agreementId: agreement.id, productId: stockForm.productId, qtyConsigned: Number(stockForm.qty) }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi xuất kho ký gửi')
+                setAddStock(false); setStockForm({ productId: '', qty: '' }); loadData(); onRefresh()
+                return res
+            }),
+            {
+                loading: 'Đang lưu...',
+                success: 'Đã xuất kho ký gửi!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
     }
 
     const handleCreateReport = async () => {
@@ -138,21 +162,35 @@ function DetailDrawer({ agreement, onClose, onRefresh }: {
     const handleSubmitReport = async () => {
         if (!agreement) return
         const filledItems = reportForm.items.filter(i => i.qtySold > 0)
-        if (filledItems.length === 0) return alert('Nhập số lượng đã bán')
+        if (filledItems.length === 0) { toast.error('Nhập số lượng đã bán'); return; }
         setLoading(true)
-        const res = await createConsignmentReport({
-            agreementId: agreement.id, periodStart: reportForm.periodStart,
-            periodEnd: reportForm.periodEnd, items: filledItems,
-        })
-        setLoading(false)
-        if (res.success) { setAddReport(false); loadData(); onRefresh() }
-        else alert(res.error)
+        toast.promise(
+            createConsignmentReport({
+                agreementId: agreement.id, periodStart: reportForm.periodStart,
+                periodEnd: reportForm.periodEnd, items: filledItems,
+            }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi tạo báo cáo')
+                setAddReport(false); loadData(); onRefresh()
+                return res
+            }),
+            {
+                loading: 'Đang tạo báo cáo...',
+                success: 'Đã gửi báo cáo tiêu thụ!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
     }
 
     const handleConfirmReport = async (id: string) => {
-        const res = await confirmConsignmentReport(id)
-        if (res.success) loadData()
-        else alert(res.error)
+        toast.promise(
+            confirmConsignmentReport(id).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi xác nhận báo cáo')
+                loadData()
+                return res
+            }),
+            { loading: 'Đang xác nhận...', success: 'Đã xác nhận báo cáo!', error: (err: any) => `Lỗi: ${err.message}` }
+        )
     }
 
     if (!agreement) return null
@@ -207,7 +245,7 @@ function DetailDrawer({ agreement, onClose, onRefresh }: {
                                 <select value={stockForm.productId} onChange={e => setStockForm(f => ({ ...f, productId: e.target.value }))}
                                     className="w-full px-3 py-2 rounded text-xs" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                                     <option value="">— Chọn sản phẩm —</option>
-                                    {products.map(p => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
+                                    {products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
                                 </select>
                                 <input type="number" placeholder="Số lượng chai" value={stockForm.qty}
                                     onChange={e => setStockForm(f => ({ ...f, qty: e.target.value }))}
@@ -550,6 +588,150 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: {
             {/* Drawers */}
             <CreateDrawer open={createOpen} onClose={() => setCreateOpen(false)} onCreated={reload} />
             <DetailDrawer agreement={selectedAgreement} onClose={() => setSelectedAgreement(null)} onRefresh={reload} />
+        </div>
+    )
+}
+
+// PHYSICAL COUNT DRAWER
+export function PhysicalCountDrawer({ agreementId, onClose, onDone }: {
+    agreementId: string | null; onClose: () => void; onDone: () => void
+}) {
+    const [session, setSession] = useState<PhysicalCountSession | null>(null)
+    const [items, setItems] = useState<PhysicalCountItem[]>([])
+    const [loading, setLoading] = useState(false)
+    const [countedBy, setCountedBy] = useState('')
+    const [confirming, setConfirming] = useState(false)
+    const [adjustments, setAdjustments] = useState<{ skuCode: string; variance: number }[] | null>(null)
+
+    useEffect(() => {
+        if (!agreementId) { setSession(null); setItems([]); setAdjustments(null) }
+    }, [agreementId])
+
+    const startCount = async () => {
+        if (!agreementId || !countedBy.trim()) { toast.error('Vui lòng nhập tên người kiểm kê'); return; }
+        setLoading(true)
+        toast.promise(
+            createPhysicalCount({ agreementId, countedBy: countedBy.trim(), countDate: new Date().toISOString().split('T')[0] }).then((res: any) => {
+                if (!res.success || !res.session) throw new Error(res.error || 'Lỗi bắt đầu kiểm kê')
+                setSession(res.session); setItems(res.session.items)
+                return res
+            }),
+            {
+                loading: 'Đang tạo phiên kiểm kê...',
+                success: 'Đã tạo phiên kiểm kê!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setLoading(false)
+            }
+        )
+    }
+
+    const updateQty = (stockId: string, physicalQty: number) => {
+        setItems(prev => prev.map(item => {
+            if (item.stockId !== stockId) return item
+            const variance = physicalQty - item.systemQty
+            const variancePct = item.systemQty > 0 ? (variance / item.systemQty) * 100 : 0
+            return { ...item, physicalQty, variance, variancePct }
+        }))
+    }
+
+    const handleConfirm = async () => {
+        if (!agreementId) return
+        setConfirming(true)
+        toast.promise(
+            confirmPhysicalCount({ agreementId, countedBy: countedBy || 'System', items: items.map(i => ({ stockId: i.stockId, physicalQty: i.physicalQty })) }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi xác nhận kiểm kê')
+                setAdjustments(res.adjustments || [])
+                return res
+            }),
+            {
+                loading: 'Đang xác nhận kiểm kê...',
+                success: 'Xác nhận thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setConfirming(false)
+            }
+        )
+    }
+
+    if (!agreementId) return null
+
+    const cs = { background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '8px', padding: '20px' }
+    const is = { background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px', outline: 'none' as const }
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }} onClick={onClose}>
+            <div style={{ ...cs, width: '680px', maxHeight: '80vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Package size={18} style={{ color: '#D4A853' }} />
+                    <h3 style={{ color: '#E8F1F2', margin: 0, fontSize: '16px', fontWeight: 700 }}>Kiem Ke Thuc Te (HORECA)</h3>
+                    <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#4A6A7A', cursor: 'pointer' }}><X size={18} /></button>
+                </div>
+                {!session ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div>
+                            <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const, color: '#4A6A7A', display: 'block', marginBottom: '4px' }}>Nguoi Kiem Ke *</label>
+                            <input value={countedBy} onChange={e => setCountedBy(e.target.value)} placeholder="Ho ten" className="w-full px-3 py-2 text-sm" style={is} />
+                        </div>
+                        <button onClick={startCount} disabled={loading} style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 700, background: '#D4A853', color: '#0A1926', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                            {loading ? 'Dang tao...' : 'Bat Dau Kiem Ke'}
+                        </button>
+                    </div>
+                ) : adjustments !== null ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(91,168,138,0.08)', border: '1px solid rgba(91,168,138,0.25)' }}>
+                            <p style={{ color: '#5BA88A', fontSize: '14px', fontWeight: 700, margin: '0 0 8px' }}>Kiem Ke Hoan Tat</p>
+                            {adjustments.length === 0 ? (
+                                <p style={{ color: '#8AAEBB', fontSize: '13px', margin: 0 }}>Khong co chenh lech</p>
+                            ) : adjustments.map((a, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                                    <span style={{ color: '#87CBB9', fontSize: '12px', fontWeight: 600 }}>{a.skuCode}</span>
+                                    <span style={{ fontSize: '12px', fontWeight: 700, color: a.variance < 0 ? '#E85D5D' : '#5BA88A' }}>{a.variance > 0 ? '+' : ''}{a.variance}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={() => { onDone(); onClose() }} style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 700, background: '#87CBB9', color: '#0A1926', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>Dong</button>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <p style={{ color: '#4A6A7A', fontSize: '12px', margin: 0 }}>Nhap SL thuc te tai diem ban.</p>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #2A4355' }}>
+                                    {['SKU', 'San Pham', 'He Thong', 'Thuc Te', 'Chenh Lech'].map(h => (
+                                        <th key={h} style={{ padding: '8px 10px', fontSize: '10px', textTransform: 'uppercase' as const, fontWeight: 700, color: '#4A6A7A', textAlign: 'left' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {items.map(item => (
+                                    <tr key={item.stockId} style={{ borderBottom: '1px solid #1E3344' }}>
+                                        <td style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 700, color: '#87CBB9' }}>{item.skuCode}</td>
+                                        <td style={{ padding: '8px 10px', fontSize: '12px', color: '#E8F1F2' }}>{item.productName}</td>
+                                        <td style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, color: '#8AAEBB' }}>{item.systemQty}</td>
+                                        <td style={{ padding: '8px 10px' }}>
+                                            <input type="number" min={0} value={item.physicalQty}
+                                                onChange={e => updateQty(item.stockId, parseInt(e.target.value) || 0)}
+                                                style={{ ...is, width: '70px', padding: '4px 8px', fontSize: '12px', textAlign: 'right' as const }} />
+                                        </td>
+                                        <td style={{ padding: '8px 10px' }}>
+                                            {item.variance !== 0 ? (
+                                                <span style={{ fontSize: '12px', fontWeight: 700, color: item.variance < 0 ? '#E85D5D' : '#5BA88A' }}>
+                                                    {item.variance > 0 ? '+' : ''}{item.variance} ({item.variancePct.toFixed(0)}%)
+                                                </span>
+                                            ) : <span style={{ fontSize: '12px', color: '#4A6A7A' }}>OK</span>}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button onClick={onClose} style={{ padding: '8px 16px', fontSize: '13px', color: '#4A6A7A', background: 'none', border: '1px solid #2A4355', borderRadius: '6px', cursor: 'pointer' }}>Huy</button>
+                            <button onClick={handleConfirm} disabled={confirming} style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 700, background: '#D4A853', color: '#0A1926', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                                {confirming ? 'Dang xu ly...' : 'Xac Nhan Kiem Ke'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

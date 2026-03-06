@@ -6,7 +6,9 @@ import {
     FileText, ChevronDown, X, Trash2, Loader2, Save, AlertCircle,
     Package, Globe, ArrowRight, Eye, UploadCloud
 } from 'lucide-react'
-import { PORow, PODetail, CreatePOInput, createPurchaseOrder, updatePOStatus, getPurchaseOrders, getPODetail, uploadPODocument, signPO } from './actions'
+import { toast } from 'sonner'
+import { PORow, PODetail, CreatePOInput, createPurchaseOrder, updatePOStatus, getPurchaseOrders, getPODetail, uploadPODocument, signPO, convertPOToVND, getExchangeRateSummary } from './actions'
+import type { POCurrencyBreakdown } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { SignaturePad } from '@/components/SignaturePad'
 import { getSuppliers } from '@/app/dashboard/suppliers/actions'
@@ -47,7 +49,6 @@ function CreatePODrawer({ open, onClose, onCreated }: {
         { productId: '', qtyOrdered: 12, unitPrice: 0, uom: 'BOTTLE' }
     ])
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
 
     useEffect(() => {
         if (!open) return
@@ -66,18 +67,21 @@ function CreatePODrawer({ open, onClose, onCreated }: {
         setLines(ls => ls.map((l, idx) => idx === i ? { ...l, [key]: val } : l))
 
     const handleSave = async () => {
-        if (!supplierId) return setError('Chọn nhà cung cấp')
-        if (lines.some(l => !l.productId || l.unitPrice <= 0)) return setError('Điền đầy đủ thông tin tất cả dòng sản phẩm')
+        if (!supplierId) return toast.error('Chọn nhà cung cấp')
+        if (lines.some(l => !l.productId || l.unitPrice <= 0)) return toast.error('Điền đầy đủ thông tin tất cả dòng sản phẩm')
         setSaving(true)
-        setError('')
-        try {
-            const result = await createPurchaseOrder({ supplierId, currency, exchangeRate, lines })
-            onCreated(result.poNo)
-        } catch (err: any) {
-            setError(err.message ?? 'Lỗi không xác định')
-        } finally {
-            setSaving(false)
-        }
+        toast.promise(
+            createPurchaseOrder({ supplierId, currency, exchangeRate, lines }).then(res => {
+                onCreated(res.poNo)
+                return res
+            }),
+            {
+                loading: 'Đang tạo Purchase Order...',
+                success: 'Tạo PO thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setSaving(false)
+            }
+        )
     }
 
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150"
@@ -111,12 +115,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-                    {error && (
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
-                            style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.4)', color: '#E05252' }}>
-                            <AlertCircle size={14} /> {error}
-                        </div>
-                    )}
+
 
                     <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Thông Tin Chung</p>
                     <div className="grid grid-cols-3 gap-4">
@@ -261,12 +260,15 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
 
     const handleAdvance = async () => {
         setUpdating(true)
-        try {
-            await updatePOStatus(poId, nextStatus)
-            onUpdate()
-        } finally {
-            setUpdating(false)
-        }
+        toast.promise(
+            updatePOStatus(poId, nextStatus).then(() => onUpdate()),
+            {
+                loading: 'Đang cập nhật...',
+                success: 'Đã chuyển trạng thái',
+                error: 'Lỗi chuyển trạng thái',
+                finally: () => setUpdating(false)
+            }
+        )
     }
 
     return (
@@ -304,6 +306,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
     const [uploadingDoc, setUploadingDoc] = useState(false)
     const [savingSignature, setSavingSignature] = useState(false)
     const [signatureUrl, setSignatureUrl] = useState('')
+    const [showFxPanel, setShowFxPanel] = useState(false)
+    const [fxSummary, setFxSummary] = useState<{ currency: string; avgRate: number; minRate: number; maxRate: number; poCount: number; totalForeignValue: number; totalVNDValue: number }[]>([])
+    const [fxLoading, setFxLoading] = useState(false)
+    const [vndBreakdown, setVndBreakdown] = useState<POCurrencyBreakdown | null>(null)
 
     const showDetail = async (id: string, force = false) => {
         if (selectedId === id && !force) { setSelectedId(null); return }
@@ -321,28 +327,38 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         setUploadingDoc(true)
         const formData = new FormData()
         formData.append('file', file)
-        const res = await uploadPODocument(poId, formData)
-        setUploadingDoc(false)
-        if (res.success) {
-            setSuccessMsg('Upload thành công!')
-            if (selectedId === poId) showDetail(poId, true)
-        } else {
-            alert(`Upload lỗi: ${res.error}`)
-        }
+        toast.promise(
+            uploadPODocument(poId, formData).then((res: any) => {
+                if (!res.success) throw new Error(res.error)
+                if (selectedId === poId) showDetail(poId, true)
+                return res
+            }),
+            {
+                loading: 'Đang tải lên...',
+                success: 'Tải lên tài liệu thành công!',
+                error: (err: any) => `Lỗi tải lên: ${err.message}`,
+                finally: () => setUploadingDoc(false)
+            }
+        )
     }
 
     const handleSign = async (poId: string) => {
         if (!signatureUrl) return
         setSavingSignature(true)
-        const res = await signPO(poId, signatureUrl)
-        setSavingSignature(false)
-        if (res.success) {
-            setSuccessMsg('Ký duyệt thành công!')
-            refresh()
-            if (selectedId === poId) showDetail(poId, true)
-        } else {
-            alert(`Lỗi ký duyệt: ${res.error}`)
-        }
+        toast.promise(
+            signPO(poId, signatureUrl).then((res: any) => {
+                if (!res.success) throw new Error(res.error)
+                refresh()
+                if (selectedId === poId) showDetail(poId, true)
+                return res
+            }),
+            {
+                loading: 'Đang lưu chữ ký...',
+                success: 'Ký duyệt thành công!',
+                error: (err: any) => `Lỗi lưu chữ ký: ${err.message}`,
+                finally: () => setSavingSignature(false)
+            }
+        )
     }
 
     const refresh = async () => {
@@ -380,13 +396,20 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         Purchase Orders — Đặt hàng từ winery / négociant / distributor
                     </p>
                 </div>
-                <button onClick={() => setDrawerOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                    <Plus size={16} /> Tạo PO Mới
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={async () => { setShowFxPanel(!showFxPanel); if (!showFxPanel) { setFxLoading(true); const r = await getExchangeRateSummary(); setFxSummary(r.currencies); setFxLoading(false) } }}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold"
+                        style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                        <Globe size={15} /> FX Summary
+                    </button>
+                    <button onClick={() => setDrawerOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        <Plus size={16} /> Tạo PO Mới
+                    </button>
+                </div>
             </div>
 
             {/* Success toast */}
@@ -615,6 +638,87 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     setTimeout(() => setSuccessMsg(''), 5000)
                 }}
             />
+
+            {/* FX Summary Panel */}
+            {showFxPanel && (
+                <div className="rounded-xl p-5 space-y-4" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Globe size={18} style={{ color: '#D4A853' }} />
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Multi-Currency VND Conversion Summary</h3>
+                        </div>
+                        <button onClick={() => setShowFxPanel(false)} style={{ color: '#4A6A7A' }}><X size={16} /></button>
+                    </div>
+                    {fxLoading ? (
+                        <div className="flex items-center gap-2 py-4"><Loader2 size={14} className="animate-spin" style={{ color: '#87CBB9' }} /> <span className="text-xs" style={{ color: '#4A6A7A' }}>Loading...</span></div>
+                    ) : fxSummary.length === 0 ? (
+                        <p className="text-sm" style={{ color: '#4A6A7A' }}>No exchange rate data available.</p>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                            {fxSummary.map(fx => (
+                                <div key={fx.currency} className="p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{fx.currency}/VND</span>
+                                        <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{fx.poCount} PO</span>
+                                    </div>
+                                    <div className="space-y-1.5 text-xs">
+                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Trung bình:</span><span className="font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{fx.avgRate.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Thấp nhất:</span><span style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{fx.minRate.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Cao nhất:</span><span style={{ color: '#E85D5D', fontFamily: '"DM Mono"' }}>{fx.maxRate.toLocaleString()}</span></div>
+                                        <div className="pt-2 mt-2 flex justify-between" style={{ borderTop: '1px solid #2A4355' }}>
+                                            <span style={{ color: '#8AAEBB' }}>Tổng {fx.currency}:</span>
+                                            <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{fx.totalForeignValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span style={{ color: '#8AAEBB' }}>Quy VND:</span>
+                                            <span className="font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(fx.totalVNDValue)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* VND Breakdown Modal */}
+            {vndBreakdown && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setVndBreakdown(null)}>
+                    <div className="p-5 rounded-xl w-[560px] max-h-[70vh] overflow-auto" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }} onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>VND Conversion — {vndBreakdown.poNo}</h3>
+                            <button onClick={() => setVndBreakdown(null)} style={{ color: '#4A6A7A' }}><X size={16} /></button>
+                        </div>
+                        <div className="flex justify-between mb-3 text-xs">
+                            <span style={{ color: '#4A6A7A' }}>Currency: {vndBreakdown.currency} | Rate: {vndBreakdown.exchangeRate.toLocaleString()}</span>
+                        </div>
+                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #2A4355' }}>
+                                    {['SKU', 'SL', `Đơn giá (${vndBreakdown.currency})`, 'Đơn giá (VND)', 'Tổng VND'].map(h => (
+                                        <th key={h} className="px-2 py-2 text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {vndBreakdown.lines.map((l, i) => (
+                                    <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
+                                        <td className="px-2 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{l.skuCode}</td>
+                                        <td className="px-2 py-2 text-xs" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{l.qty}</td>
+                                        <td className="px-2 py-2 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{l.unitPriceForeign.toFixed(2)}</td>
+                                        <td className="px-2 py-2 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(l.unitPriceVND)}</td>
+                                        <td className="px-2 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(l.lineTotalVND)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div className="flex justify-between mt-3 pt-3" style={{ borderTop: '1px solid #2A4355' }}>
+                            <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Tổng VND</span>
+                            <span className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(vndBreakdown.totalVND)}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

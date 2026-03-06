@@ -382,3 +382,123 @@ export async function suggestMinSellPrice(productId: string, targetMarginPct: nu
     }
 }
 
+// ═══════════════════════════════════════════════════
+// BULK UPLOAD TAX RATES FROM EXCEL
+// ═══════════════════════════════════════════════════
+
+export type BulkTaxRow = {
+    hsCode: string
+    countryOfOrigin: string
+    tradeAgreement: string
+    importTaxRate: number
+    sctRate: number
+    vatRate: number
+    effectiveDate: string
+    expiryDate?: string | null
+    requiresCo?: boolean
+    coFormType?: string | null
+    notes?: string | null
+}
+
+export async function importTaxRatesFromExcel(
+    rows: BulkTaxRow[]
+): Promise<{ success: boolean; imported: number; updated: number; errors: string[] }> {
+    const errors: string[] = []
+    let imported = 0
+    let updated = 0
+
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]
+        const lineNo = i + 1
+
+        // Validate required fields
+        if (!row.hsCode || row.hsCode.length < 4) {
+            errors.push(`Dòng ${lineNo}: HS Code không hợp lệ (tối thiểu 4 ký tự)`)
+            continue
+        }
+        if (!row.countryOfOrigin) {
+            errors.push(`Dòng ${lineNo}: Thiếu quốc gia`)
+            continue
+        }
+        if (row.importTaxRate < 0 || row.sctRate < 0 || row.vatRate < 0) {
+            errors.push(`Dòng ${lineNo}: Thuế suất không thể âm`)
+            continue
+        }
+
+        try {
+            const existing = await prisma.taxRate.findFirst({
+                where: {
+                    hsCode: row.hsCode,
+                    countryOfOrigin: row.countryOfOrigin,
+                    tradeAgreement: row.tradeAgreement || 'MFN',
+                },
+            })
+
+            if (existing) {
+                await prisma.taxRate.update({
+                    where: { id: existing.id },
+                    data: {
+                        importTaxRate: row.importTaxRate,
+                        sctRate: row.sctRate,
+                        vatRate: row.vatRate,
+                        effectiveDate: new Date(row.effectiveDate),
+                        expiryDate: row.expiryDate ? new Date(row.expiryDate) : null,
+                        requiresCo: row.requiresCo ?? false,
+                        coFormType: row.coFormType ?? null,
+                        notes: row.notes ?? null,
+                    },
+                })
+                updated++
+            } else {
+                await prisma.taxRate.create({
+                    data: {
+                        hsCode: row.hsCode,
+                        countryOfOrigin: row.countryOfOrigin,
+                        tradeAgreement: row.tradeAgreement || 'MFN',
+                        importTaxRate: row.importTaxRate,
+                        sctRate: row.sctRate,
+                        vatRate: row.vatRate,
+                        effectiveDate: new Date(row.effectiveDate),
+                        expiryDate: row.expiryDate ? new Date(row.expiryDate) : null,
+                        requiresCo: row.requiresCo ?? false,
+                        coFormType: row.coFormType ?? null,
+                        notes: row.notes ?? null,
+                    },
+                })
+                imported++
+            }
+        } catch (err: any) {
+            errors.push(`Dòng ${lineNo}: ${err.message}`)
+        }
+    }
+
+    revalidatePath('/dashboard/tax')
+    return { success: errors.length === 0, imported, updated, errors }
+}
+
+// Parse Excel buffer to BulkTaxRow array (client calls this after reading file)
+export async function parseTaxExcelTemplate(): Promise<{
+    headers: string[]
+    sampleRow: Record<string, string>
+}> {
+    return {
+        headers: [
+            'hsCode', 'countryOfOrigin', 'tradeAgreement', 'importTaxRate',
+            'sctRate', 'vatRate', 'effectiveDate', 'expiryDate',
+            'requiresCo', 'coFormType', 'notes',
+        ],
+        sampleRow: {
+            hsCode: '2204.21',
+            countryOfOrigin: 'France',
+            tradeAgreement: 'EVFTA',
+            importTaxRate: '10',
+            sctRate: '35',
+            vatRate: '10',
+            effectiveDate: '2026-01-01',
+            expiryDate: '',
+            requiresCo: 'true',
+            coFormType: 'EUR.1',
+            notes: 'Wine < 2L',
+        },
+    }
+}

@@ -1,13 +1,46 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { ClipboardList, Plus, X, Play, CheckCircle, ArrowLeftRight, Eye, Save } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     type StockCountRow,
     getStockCountList, createStockCountSession, getWarehouseOptions,
     startStockCount, getStockCountDetail, recordCountLine, completeStockCount, adjustStockFromCount,
 } from './actions'
 import { formatDate } from '@/lib/utils'
+
+// Define types for API responses and state
+type WarehouseOption = {
+    id: string
+    code: string
+    name: string
+}
+
+type StockCountLine = {
+    id: string
+    skuCode: string
+    productName: string
+    locationCode: string
+    qtySystem: number
+    qtyActual: number | null
+    variance: number | null
+}
+
+type StockCountDetail = {
+    id: string
+    warehouseName: string
+    zone: string | null
+    type: string
+    status: string
+    lines: StockCountLine[]
+}
+
+type ActionResponse = {
+    success: boolean
+    error?: string
+    adjustedLines?: number
+}
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Chờ Bắt Đầu', color: '#8AAEBB', bg: 'rgba(138,174,187,0.15)' },
@@ -23,11 +56,11 @@ export function StockCountClient({ initialRows, stats }: {
     initialRows: StockCountRow[]
     stats: { total: number; inProgress: number; completed: number }
 }) {
-    const [rows, setRows] = useState(initialRows)
+    const [rows, setRows] = useState<StockCountRow[]>(initialRows)
     const [createOpen, setCreateOpen] = useState(false)
     const [detailId, setDetailId] = useState<string | null>(null)
-    const [detail, setDetail] = useState<any>(null)
-    const [warehouses, setWarehouses] = useState<any[]>([])
+    const [detail, setDetail] = useState<StockCountDetail | null>(null)
+    const [warehouses, setWarehouses] = useState<WarehouseOption[]>([])
     const [form, setForm] = useState({ warehouseId: '', zone: '', type: 'FULL' })
 
     const reload = async () => { const data = await getStockCountList(); setRows(data) }
@@ -39,34 +72,56 @@ export function StockCountClient({ initialRows, stats }: {
     }
 
     const handleCreate = async () => {
-        if (!form.warehouseId) return alert('Chọn kho')
-        const res = await createStockCountSession({
-            warehouseId: form.warehouseId,
-            zone: form.zone || undefined,
-            type: form.type as any,
-        })
-        if (res.success) {
-            setCreateOpen(false); setForm({ warehouseId: '', zone: '', type: 'FULL' }); reload()
-        } else alert(res.error)
+        if (!form.warehouseId) {
+            toast.error('Chọn kho')
+            return
+        }
+        toast.promise(
+            createStockCountSession({
+                warehouseId: form.warehouseId,
+                zone: form.zone || undefined,
+                type: form.type as 'FULL' | 'CYCLE' | 'SPOT',
+            }).then(async (res: ActionResponse) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi tạo phiên kiểm kê')
+                setCreateOpen(false); setForm({ warehouseId: '', zone: '', type: 'FULL' }); reload()
+                return res
+            }),
+            { loading: 'Đang tạo phiên...', success: 'Đã tạo phiên kiểm kê!', error: (err: any) => `Lỗi: ${err.message}` }
+        )
     }
 
     const handleStart = async (id: string) => {
-        const res = await startStockCount(id)
-        if (res.success) reload()
-        else alert(res.error)
+        toast.promise(
+            startStockCount(id).then(async (res: ActionResponse) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi bắt đầu kiểm kê')
+                reload()
+                return res
+            }),
+            { loading: 'Đang bắt đầu...', success: 'Đã bắt đầu kiểm kê!', error: (err: any) => `Lỗi: ${err.message}` }
+        )
     }
 
     const handleComplete = async (id: string) => {
-        const res = await completeStockCount(id)
-        if (res.success) reload()
-        else alert(res.error)
+        toast.promise(
+            completeStockCount(id).then(async (res: ActionResponse) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi hoàn thành kiểm kê')
+                reload()
+                return res
+            }),
+            { loading: 'Đang hoàn thành...', success: 'Đã hoàn thành kiểm kê!', error: (err: any) => `Lỗi: ${err.message}` }
+        )
     }
 
     const handleAdjust = async (id: string) => {
         if (!confirm('Điều chỉnh tồn kho theo kết quả kiểm kê?')) return
-        const res = await adjustStockFromCount(id)
-        if (res.success) { alert(`Đã điều chỉnh ${res.adjustedLines} dòng`); reload() }
-        else alert(res.error)
+        toast.promise(
+            adjustStockFromCount(id).then(async (res: ActionResponse) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi điều chỉnh tồn kho')
+                reload()
+                return res
+            }),
+            { loading: 'Đang điều chỉnh...', success: (res: ActionResponse) => `Đã điều chỉnh ${res.adjustedLines} dòng!`, error: (err: any) => `Lỗi: ${err.message}` }
+        )
     }
 
     const openDetail = async (id: string) => {
@@ -127,7 +182,7 @@ export function StockCountClient({ initialRows, stats }: {
                     <tbody>
                         {rows.length === 0 ? (
                             <tr><td colSpan={10} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Chưa có phiên kiểm kê</td></tr>
-                        ) : rows.map(r => {
+                        ) : rows.map((r: StockCountRow) => {
                             const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
                             const hasVariance = r.totalVariance !== 0
                             return (
@@ -184,7 +239,7 @@ export function StockCountClient({ initialRows, stats }: {
                                 <select value={form.warehouseId} onChange={e => setForm(f => ({ ...f, warehouseId: e.target.value }))}
                                     className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                                     <option value="">— Chọn kho —</option>
-                                    {warehouses.map(w => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
+                                    {warehouses.map((w: WarehouseOption) => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
                                 </select>
                             </div>
                             <div>
@@ -235,7 +290,7 @@ export function StockCountClient({ initialRows, stats }: {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {detail.lines.map((l: any) => (
+                                        {detail.lines.map((l: StockCountLine) => (
                                             <tr key={l.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
                                                 <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{l.skuCode}</td>
                                                 <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.productName}</td>

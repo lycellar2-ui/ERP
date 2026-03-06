@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Wine, Plus, MapPin, Users, Calendar, CheckCircle2, Loader2, X, TrendingUp } from 'lucide-react'
+import { toast } from 'sonner'
 import { getTastingEvents, createTastingEvent, type TastingEventRow } from './actions'
 import { formatDate, formatVND } from '@/lib/utils'
 
@@ -31,12 +32,20 @@ export function TastingEventsPanel() {
     const handleCreate = async () => {
         if (!form.name || !form.date || !form.venue) return
         setSaving(true)
-        await createTastingEvent(form)
-        setShowCreate(false)
-        setForm({ name: '', date: '', venue: '', description: '', maxGuests: 30 })
-        const data = await getTastingEvents()
-        setEvents(data)
-        setSaving(false)
+        toast.promise(
+            createTastingEvent(form).then(async (res: any) => {
+                setShowCreate(false)
+                setForm({ name: '', date: '', venue: '', description: '', maxGuests: 30 })
+                await load()
+                return res
+            }),
+            {
+                loading: 'Đang tạo sự kiện...',
+                success: 'Tạo sự kiện thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setSaving(false)
+            }
+        )
     }
 
     if (loading || !events) {

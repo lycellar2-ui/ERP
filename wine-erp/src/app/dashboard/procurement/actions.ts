@@ -494,3 +494,112 @@ export async function importPOFromExcel(data: {
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// MULTI-CURRENCY VND CONVERSION
+// ═══════════════════════════════════════════════════
+
+export type POCurrencyBreakdown = {
+    poId: string
+    poNo: string
+    currency: string
+    exchangeRate: number
+    totalForeign: number
+    totalVND: number
+    lines: {
+        skuCode: string
+        productName: string
+        qty: number
+        unitPriceForeign: number
+        unitPriceVND: number
+        lineTotalForeign: number
+        lineTotalVND: number
+    }[]
+}
+
+// Convert a specific PO to VND breakdown
+export async function convertPOToVND(poId: string): Promise<{ success: boolean; data?: POCurrencyBreakdown; error?: string }> {
+    try {
+        const po = await prisma.purchaseOrder.findUnique({
+            where: { id: poId },
+            include: {
+                supplier: { select: { name: true } },
+                lines: {
+                    include: { product: { select: { skuCode: true, productName: true } } },
+                },
+            },
+        })
+        if (!po) return { success: false, error: 'PO không tồn tại' }
+
+        const rate = Number(po.exchangeRate)
+        const lines = po.lines.map(l => {
+            const qty = Number(l.qtyOrdered)
+            const unitPriceForeign = Number(l.unitPrice)
+            return {
+                skuCode: l.product.skuCode,
+                productName: l.product.productName,
+                qty,
+                unitPriceForeign,
+                unitPriceVND: Math.round(unitPriceForeign * rate),
+                lineTotalForeign: qty * unitPriceForeign,
+                lineTotalVND: Math.round(qty * unitPriceForeign * rate),
+            }
+        })
+
+        return {
+            success: true,
+            data: {
+                poId: po.id,
+                poNo: po.poNo,
+                currency: po.currency,
+                exchangeRate: rate,
+                totalForeign: lines.reduce((s, l) => s + l.lineTotalForeign, 0),
+                totalVND: lines.reduce((s, l) => s + l.lineTotalVND, 0),
+                lines,
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// Exchange Rate Summary across all POs
+export async function getExchangeRateSummary(): Promise<{
+    currencies: { currency: string; avgRate: number; minRate: number; maxRate: number; poCount: number; totalForeignValue: number; totalVNDValue: number }[]
+}> {
+    const result = await cached('procurement:fx-summary', async () => {
+        const pos = await prisma.purchaseOrder.findMany({
+            where: { status: { not: 'CANCELLED' } },
+            select: {
+                currency: true,
+                exchangeRate: true,
+                lines: { select: { qtyOrdered: true, unitPrice: true } },
+            },
+        })
+
+        const map = new Map<string, { rates: number[]; totalForeign: number; count: number }>()
+        for (const po of pos) {
+            const rate = Number(po.exchangeRate)
+            const totalFg = po.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+            const entry = map.get(po.currency) ?? { rates: [], totalForeign: 0, count: 0 }
+            entry.rates.push(rate)
+            entry.totalForeign += totalFg
+            entry.count++
+            map.set(po.currency, entry)
+        }
+
+        const currencies = Array.from(map.entries()).map(([currency, data]) => ({
+            currency,
+            avgRate: Math.round(data.rates.reduce((a, b) => a + b, 0) / data.rates.length),
+            minRate: Math.min(...data.rates),
+            maxRate: Math.max(...data.rates),
+            poCount: data.count,
+            totalForeignValue: Math.round(data.totalForeign * 100) / 100,
+            totalVNDValue: Math.round(data.totalForeign * (data.rates.reduce((a, b) => a + b, 0) / data.rates.length)),
+        }))
+
+        return { currencies }
+    }, 120_000) // 2 min cache
+    // Strip Prisma Decimal objects for Next.js client serialization
+    return JSON.parse(JSON.stringify(result))
+}
