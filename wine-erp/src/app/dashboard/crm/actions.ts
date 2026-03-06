@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type ActivityType = 'CALL' | 'EMAIL' | 'MEETING' | 'TASTING' | 'DELIVERY' | 'COMPLAINT' | 'OTHER'
 export type OpportunityStage = 'LEAD' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST'
@@ -31,53 +32,56 @@ export async function getCRMCustomers(filters: {
     pageSize?: number
 } = {}): Promise<{ rows: CustomerCRMRow[]; total: number }> {
     const { search, type, page = 1, pageSize = 20 } = filters
-    const skip = (page - 1) * pageSize
+    const cacheKey = `crm:customers:${page}:${pageSize}:${search ?? ''}:${type ?? ''}`
+    return cached(cacheKey, async () => {
+        const skip = (page - 1) * pageSize
 
-    const where: any = { deletedAt: null }
-    if (search) where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { code: { contains: search, mode: 'insensitive' } },
-    ]
-    if (type) where.customerType = type
+        const where: any = { deletedAt: null }
+        if (search) where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { code: { contains: search, mode: 'insensitive' } },
+        ]
+        if (type) where.customerType = type
 
-    const [customers, total] = await Promise.all([
-        prisma.customer.findMany({
-            where,
-            skip,
-            take: pageSize,
-            orderBy: { createdAt: 'desc' },
-            include: {
-                salesRep: { select: { name: true } },
-                salesOrders: {
-                    where: { status: { in: ['CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] } },
-                    select: { totalAmount: true, createdAt: true },
-                    orderBy: { createdAt: 'desc' },
+        const [customers, total] = await Promise.all([
+            prisma.customer.findMany({
+                where,
+                skip,
+                take: pageSize,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    salesRep: { select: { name: true } },
+                    salesOrders: {
+                        where: { status: { in: ['CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] } },
+                        select: { totalAmount: true, createdAt: true },
+                        orderBy: { createdAt: 'desc' },
+                    },
+                    complaints: { where: { status: { in: ['OPEN', 'IN_PROGRESS'] } }, select: { id: true } },
                 },
-                complaints: { where: { status: { in: ['OPEN', 'IN_PROGRESS'] } }, select: { id: true } },
-            },
-        }),
-        prisma.customer.count({ where }),
-    ])
+            }),
+            prisma.customer.count({ where }),
+        ])
 
-    return {
-        rows: customers.map(c => ({
-            id: c.id,
-            code: c.code,
-            name: c.name,
-            customerType: c.customerType,
-            channel: c.channel,
-            paymentTerm: c.paymentTerm,
-            creditLimit: Number(c.creditLimit),
-            salesRepName: c.salesRep?.name ?? null,
-            status: c.status,
-            totalOrders: c.salesOrders.length,
-            totalRevenue: c.salesOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
-            lastOrderDate: c.salesOrders[0]?.createdAt ?? null,
-            openComplaints: c.complaints.length,
-            createdAt: c.createdAt,
-        })),
-        total,
-    }
+        return {
+            rows: customers.map(c => ({
+                id: c.id,
+                code: c.code,
+                name: c.name,
+                customerType: c.customerType,
+                channel: c.channel,
+                paymentTerm: c.paymentTerm,
+                creditLimit: Number(c.creditLimit),
+                salesRepName: c.salesRep?.name ?? null,
+                status: c.status,
+                totalOrders: c.salesOrders.length,
+                totalRevenue: c.salesOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
+                lastOrderDate: c.salesOrders[0]?.createdAt ?? null,
+                openComplaints: c.complaints.length,
+                createdAt: c.createdAt,
+            })),
+            total,
+        }
+    }) // end cached
 }
 
 // ── Full 360° profile ────────────────────────────
@@ -156,6 +160,7 @@ export async function logCustomerActivity(data: {
                 performedBy: data.performedBy,
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -176,6 +181,7 @@ export async function createOpportunity(data: {
 }): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.salesOpportunity.create({ data })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -185,13 +191,15 @@ export async function createOpportunity(data: {
 
 // ── CRM summary stats ────────────────────────────
 export async function getCRMStats() {
-    const [total, horeca, openOpps, openTickets] = await Promise.all([
-        prisma.customer.count({ where: { status: 'ACTIVE', deletedAt: null } }),
-        prisma.customer.count({ where: { channel: 'HORECA', status: 'ACTIVE', deletedAt: null } }),
-        prisma.salesOpportunity.count({ where: { stage: { notIn: ['WON', 'LOST'] } } }),
-        prisma.complaintTicket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
-    ])
-    return { total, horeca, openOpps, openTickets }
+    return cached('crm:stats', async () => {
+        const [total, horeca, openOpps, openTickets] = await Promise.all([
+            prisma.customer.count({ where: { status: 'ACTIVE', deletedAt: null } }),
+            prisma.customer.count({ where: { channel: 'HORECA', status: 'ACTIVE', deletedAt: null } }),
+            prisma.salesOpportunity.count({ where: { stage: { notIn: ['WON', 'LOST'] } } }),
+            prisma.complaintTicket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+        ])
+        return { total, horeca, openOpps, openTickets }
+    })
 }
 
 // ── Customer Transaction History (P1) ────────────
@@ -344,6 +352,7 @@ export async function createCustomerContact(input: {
                 isPrimary: input.isPrimary ?? false,
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -366,6 +375,7 @@ export async function updateCustomerContact(
             }
         }
         await prisma.customerContact.update({ where: { id }, data: input as any })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -376,6 +386,7 @@ export async function updateCustomerContact(
 export async function deleteCustomerContact(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.customerContact.delete({ where: { id } })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -429,6 +440,7 @@ export async function addCustomerTag(input: {
                 color: input.color ?? preset?.color ?? '#87CBB9',
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -440,6 +452,7 @@ export async function addCustomerTag(input: {
 export async function removeCustomerTag(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.customerTag.delete({ where: { id } })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -507,6 +520,7 @@ export async function saveWinePreference(input: {
                 notes: input.notes ?? null,
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -605,6 +619,7 @@ export async function createTastingEvent(input: {
                 status: 'PLANNED',
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -626,6 +641,7 @@ export async function addEventGuest(input: {
                 checkedIn: false,
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -773,6 +789,7 @@ export async function createComplaintTicket(input: {
                 status: 'OPEN',
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {
@@ -790,6 +807,7 @@ export async function resolveComplaintTicket(id: string, resolution: string): Pr
                 resolvedAt: new Date(),
             },
         })
+        revalidateCache('crm')
         revalidatePath('/dashboard/crm')
         return { success: true }
     } catch (err: any) {

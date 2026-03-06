@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type AllocationCampaignRow = {
     id: string; name: string; productId: string; skuCode: string; productName: string
@@ -16,29 +17,31 @@ export type AllocationQuotaRow = {
 
 // ─── Get all campaigns ────────────────────────────
 export async function getAllocCampaigns(): Promise<AllocationCampaignRow[]> {
-    const campaigns = await prisma.allocationCampaign.findMany({
-        include: {
-            product: { select: { skuCode: true, productName: true } },
-            quotas: { select: { qtyAllocated: true, qtySold: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-    })
+    return cached('allocation:campaigns', async () => {
+        const campaigns = await prisma.allocationCampaign.findMany({
+            include: {
+                product: { select: { skuCode: true, productName: true } },
+                quotas: { select: { qtyAllocated: true, qtySold: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        })
 
-    return campaigns.map(c => ({
-        id: c.id,
-        name: c.name,
-        productId: c.productId,
-        skuCode: c.product.skuCode,
-        productName: c.product.productName,
-        totalQty: Number(c.totalQty),
-        unit: c.unit,
-        startDate: c.startDate,
-        endDate: c.endDate,
-        status: c.status,
-        allocatedQty: c.quotas.reduce((s, q) => s + Number(q.qtyAllocated), 0),
-        soldQty: c.quotas.reduce((s, q) => s + Number(q.qtySold), 0),
-        quotaCount: c.quotas.length,
-    }))
+        return campaigns.map(c => ({
+            id: c.id,
+            name: c.name,
+            productId: c.productId,
+            skuCode: c.product.skuCode,
+            productName: c.product.productName,
+            totalQty: Number(c.totalQty),
+            unit: c.unit,
+            startDate: c.startDate,
+            endDate: c.endDate,
+            status: c.status,
+            allocatedQty: c.quotas.reduce((s, q) => s + Number(q.qtyAllocated), 0),
+            soldQty: c.quotas.reduce((s, q) => s + Number(q.qtySold), 0),
+            quotaCount: c.quotas.length,
+        }))
+    }) // end cached
 }
 
 // ─── Get quotas for a campaign ────────────────────
@@ -77,11 +80,13 @@ export async function getAllocQuotas(campaignId: string): Promise<AllocationQuot
 
 // ─── Stats ────────────────────────────────────────
 export async function getAllocStats() {
-    const [total, active] = await Promise.all([
-        prisma.allocationCampaign.count(),
-        prisma.allocationCampaign.count({ where: { status: 'ACTIVE' } }),
-    ])
-    return { total, active }
+    return cached('allocation:stats', async () => {
+        const [total, active] = await Promise.all([
+            prisma.allocationCampaign.count(),
+            prisma.allocationCampaign.count({ where: { status: 'ACTIVE' } }),
+        ])
+        return { total, active }
+    }) // end cached
 }
 
 // ─── Create Campaign ──────────────────────────────
@@ -100,6 +105,7 @@ export async function createAllocCampaign(input: {
                 endDate: new Date(input.endDate),
             },
         })
+        revalidateCache('allocation')
         revalidatePath('/dashboard/allocation')
         return { success: true }
     } catch (err: any) {
@@ -120,6 +126,7 @@ export async function addAllocQuota(input: {
                 qtyAllocated: input.qtyAllocated,
             },
         })
+        revalidateCache('allocation')
         revalidatePath('/dashboard/allocation')
         return { success: true }
     } catch (err: any) {

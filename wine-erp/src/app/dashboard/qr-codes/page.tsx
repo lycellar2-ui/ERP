@@ -1,7 +1,7 @@
 ﻿import { QRCodeClient } from './QRCodeClient'
 import { getQRCodes, getQRStats } from './actions'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 30
 
 
 export default async function QRCodePage() {

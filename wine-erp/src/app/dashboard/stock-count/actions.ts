@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 import {
     getStockCountSessions, createStockCountSession,
     recordCountLine, completeStockCount, adjustStockFromCount
@@ -18,38 +19,40 @@ export type StockCountRow = {
 }
 
 export async function getStockCountList(): Promise<StockCountRow[]> {
-    const sessions = await prisma.stockCountSession.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-        include: {
-            lines: {
-                select: { qtySystem: true, qtyActual: true, variance: true },
+    return cached('stock-count:list', async () => {
+        const sessions = await prisma.stockCountSession.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+            include: {
+                lines: {
+                    select: { qtySystem: true, qtyActual: true, variance: true },
+                },
             },
-        },
-    })
+        })
 
-    const warehouseIds = [...new Set(sessions.map(s => s.warehouseId))]
-    const warehouses = await prisma.warehouse.findMany({
-        where: { id: { in: warehouseIds } },
-        select: { id: true, name: true },
-    })
-    const whMap = new Map(warehouses.map(w => [w.id, w.name]))
+        const warehouseIds = [...new Set(sessions.map(s => s.warehouseId))]
+        const warehouses = await prisma.warehouse.findMany({
+            where: { id: { in: warehouseIds } },
+            select: { id: true, name: true },
+        })
+        const whMap = new Map(warehouses.map(w => [w.id, w.name]))
 
-    return sessions.map(s => ({
-        id: s.id,
-        warehouseId: s.warehouseId,
-        warehouseName: whMap.get(s.warehouseId) ?? '?',
-        zone: s.zone,
-        type: s.type,
-        status: s.status,
-        lineCount: s.lines.length,
-        startedAt: s.startedAt,
-        completedAt: s.completedAt,
-        createdAt: s.createdAt,
-        totalSystemQty: s.lines.reduce((sum, l) => sum + Number(l.qtySystem), 0),
-        totalActualQty: s.lines.reduce((sum, l) => sum + Number(l.qtyActual ?? 0), 0),
-        totalVariance: s.lines.reduce((sum, l) => sum + Number(l.variance ?? 0), 0),
-    }))
+        return sessions.map(s => ({
+            id: s.id,
+            warehouseId: s.warehouseId,
+            warehouseName: whMap.get(s.warehouseId) ?? '?',
+            zone: s.zone,
+            type: s.type,
+            status: s.status,
+            lineCount: s.lines.length,
+            startedAt: s.startedAt,
+            completedAt: s.completedAt,
+            createdAt: s.createdAt,
+            totalSystemQty: s.lines.reduce((sum, l) => sum + Number(l.qtySystem), 0),
+            totalActualQty: s.lines.reduce((sum, l) => sum + Number(l.qtyActual ?? 0), 0),
+            totalVariance: s.lines.reduce((sum, l) => sum + Number(l.variance ?? 0), 0),
+        }))
+    }) // end cached
 }
 
 export async function getStockCountDetail(sessionId: string) {
@@ -92,12 +95,14 @@ export async function getStockCountDetail(sessionId: string) {
 }
 
 export async function getCountStats() {
-    const [total, inProgress, completed] = await Promise.all([
-        prisma.stockCountSession.count(),
-        prisma.stockCountSession.count({ where: { status: 'DRAFT' } }),
-        prisma.stockCountSession.count({ where: { status: 'COMPLETED' } }),
-    ])
-    return { total, inProgress, completed }
+    return cached('stock-count:stats', async () => {
+        const [total, inProgress, completed] = await Promise.all([
+            prisma.stockCountSession.count(),
+            prisma.stockCountSession.count({ where: { status: 'DRAFT' } }),
+            prisma.stockCountSession.count({ where: { status: 'COMPLETED' } }),
+        ])
+        return { total, inProgress, completed }
+    }) // end cached
 }
 
 export async function startStockCount(sessionId: string): Promise<{ success: boolean; error?: string }> {
@@ -106,6 +111,7 @@ export async function startStockCount(sessionId: string): Promise<{ success: boo
             where: { id: sessionId },
             data: { status: 'IN_PROGRESS', startedAt: new Date() },
         })
+        revalidateCache('stock-count')
         revalidatePath('/dashboard/stock-count')
         return { success: true }
     } catch (err: any) {

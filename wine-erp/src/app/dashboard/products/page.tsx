@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const revalidate = 30
 
 import { Suspense } from 'react'
 import { getProducts } from './actions'

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/session'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export interface ARRow {
     id: string; invoiceNo: string; customerName: string; customerCode: string
@@ -110,50 +111,54 @@ export async function getAPInvoices(filters: {
 
 // ── Finance summary KPIs ─────────────────────────
 export async function getFinanceStats() {
-    const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    return cached('finance:stats', async () => {
+        const now = new Date()
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    const [arTotal, arOverdue, apTotal, apOverdue, monthRevenue] = await Promise.all([
-        prisma.aRInvoice.aggregate({ where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } }, _sum: { amount: true } }),
-        prisma.aRInvoice.aggregate({ where: { status: 'OVERDUE', dueDate: { lt: now } }, _sum: { amount: true }, _count: true }),
-        prisma.aPInvoice.aggregate({ where: { status: { in: ['UNPAID', 'PARTIALLY_PAID'] } }, _sum: { amount: true } }),
-        prisma.aPInvoice.aggregate({ where: { dueDate: { lt: now }, status: { notIn: ['PAID'] } }, _sum: { amount: true }, _count: true }),
-        prisma.aRInvoice.aggregate({ where: { createdAt: { gte: monthStart }, status: { in: ['UNPAID', 'PARTIALLY_PAID', 'PAID'] } }, _sum: { amount: true } }),
-    ])
+        const [arTotal, arOverdue, apTotal, apOverdue, monthRevenue] = await Promise.all([
+            prisma.aRInvoice.aggregate({ where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } }, _sum: { amount: true } }),
+            prisma.aRInvoice.aggregate({ where: { status: 'OVERDUE', dueDate: { lt: now } }, _sum: { amount: true }, _count: true }),
+            prisma.aPInvoice.aggregate({ where: { status: { in: ['UNPAID', 'PARTIALLY_PAID'] } }, _sum: { amount: true } }),
+            prisma.aPInvoice.aggregate({ where: { dueDate: { lt: now }, status: { notIn: ['PAID'] } }, _sum: { amount: true }, _count: true }),
+            prisma.aRInvoice.aggregate({ where: { createdAt: { gte: monthStart }, status: { in: ['UNPAID', 'PARTIALLY_PAID', 'PAID'] } }, _sum: { amount: true } }),
+        ])
 
-    return {
-        arTotal: Number(arTotal._sum?.amount ?? 0),
-        arOverdue: Number(arOverdue._sum?.amount ?? 0),
-        arOverdueCount: arOverdue._count,
-        apTotal: Number(apTotal._sum?.amount ?? 0),
-        apOverdue: Number(apOverdue._sum?.amount ?? 0),
-        apOverdueCount: apOverdue._count,
-        monthRevenue: Number(monthRevenue._sum?.amount ?? 0),
-    }
+        return {
+            arTotal: Number(arTotal._sum?.amount ?? 0),
+            arOverdue: Number(arOverdue._sum?.amount ?? 0),
+            arOverdueCount: arOverdue._count,
+            apTotal: Number(apTotal._sum?.amount ?? 0),
+            apOverdue: Number(apOverdue._sum?.amount ?? 0),
+            apOverdueCount: apOverdue._count,
+            monthRevenue: Number(monthRevenue._sum?.amount ?? 0),
+        }
+    }) // end cached
 }
 
 // ── AR Aging report ──────────────────────────────
 export async function getARAgingBuckets() {
-    const now = new Date()
-    const invoices = await prisma.aRInvoice.findMany({
-        where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
-        include: { customer: { select: { name: true } }, payments: { select: { amount: true } } },
-    })
+    return cached('finance:ar-aging', async () => {
+        const now = new Date()
+        const invoices = await prisma.aRInvoice.findMany({
+            where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+            include: { customer: { select: { name: true } }, payments: { select: { amount: true } } },
+        })
 
-    const buckets = { current: 0, d30: 0, d60: 0, d90: 0, over90: 0 }
-    invoices.forEach(inv => {
-        const paid = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
-        const outstanding = Number(inv.amount) - paid
-        if (outstanding <= 0) return
-        const days = Math.floor((now.getTime() - inv.dueDate.getTime()) / 86400000)
-        if (days <= 0) buckets.current += outstanding
-        else if (days <= 30) buckets.d30 += outstanding
-        else if (days <= 60) buckets.d60 += outstanding
-        else if (days <= 90) buckets.d90 += outstanding
-        else buckets.over90 += outstanding
-    })
+        const buckets = { current: 0, d30: 0, d60: 0, d90: 0, over90: 0 }
+        invoices.forEach(inv => {
+            const paid = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
+            const outstanding = Number(inv.amount) - paid
+            if (outstanding <= 0) return
+            const days = Math.floor((now.getTime() - inv.dueDate.getTime()) / 86400000)
+            if (days <= 0) buckets.current += outstanding
+            else if (days <= 30) buckets.d30 += outstanding
+            else if (days <= 60) buckets.d60 += outstanding
+            else if (days <= 90) buckets.d90 += outstanding
+            else buckets.over90 += outstanding
+        })
 
-    return buckets
+        return buckets
+    }) // end cached
 }
 
 // ── Record AR payment ────────────────────────────
@@ -170,6 +175,7 @@ export async function recordARPayment(invoiceId: string, amount: number, method:
             prisma.aRInvoice.update({ where: { id: invoiceId }, data: { status: newStatus } }),
         ])
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {
@@ -241,6 +247,7 @@ export async function collectCODPayment(input: {
             },
         })
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/delivery')
@@ -272,6 +279,7 @@ export async function recordAPPayment(invoiceId: string, amount: number, method:
             prisma.aPInvoice.update({ where: { id: invoiceId }, data: { status: newStatus } }),
         ])
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {
@@ -402,6 +410,7 @@ export async function generateGoodsReceiptJournal(
             },
         })
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true, entryId: entry.id }
     } catch (err: any) {
@@ -446,6 +455,7 @@ export async function generateSalesInvoiceJournal(
             },
         })
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true, entryId: entry.id }
     } catch (err: any) {
@@ -482,6 +492,7 @@ export async function generatePaymentInJournal(
             },
         })
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true, entryId: entry.id }
     } catch (err: any) {
@@ -520,6 +531,7 @@ export async function closeAccountingPeriod(
             where: { id: periodId },
             data: { isClosed: true, closedBy: userId, closedAt: new Date() },
         })
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {
@@ -570,6 +582,7 @@ export async function generateDeliveryOrderCOGSJournal(
             },
         })
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true, entryId: entry.id }
     } catch (err: any) {
@@ -617,6 +630,7 @@ export async function generateWriteOffJournal(
             },
         })
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true, entryId: entry.id }
     } catch (err: any) {
@@ -1076,6 +1090,7 @@ export async function createExpense(data: {
             await generateExpenseJournal(expense.id, userId)
         }
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {
@@ -1110,6 +1125,7 @@ export async function approveExpense(
 
         await generateExpenseJournal(expenseId, userId)
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {
@@ -1137,6 +1153,7 @@ export async function rejectExpense(
             where: { id: expenseId },
             data: { status: 'REJECTED', approvedBy: userId, approvedAt: new Date() },
         })
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {
@@ -1355,6 +1372,7 @@ export async function writeOffBadDebt(input: {
             },
         })
 
+        revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {

@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export async function getStampPurchases() {
     return prisma.wineStampPurchase.findMany({
@@ -96,23 +97,25 @@ export async function recordStampUsage(data: {
 }
 
 export async function getStampSummary() {
-    const purchases = await prisma.wineStampPurchase.findMany()
+    return cached('stamps:summary', async () => {
+        const purchases = await prisma.wineStampPurchase.findMany()
 
-    const under20 = purchases.filter((p) => p.stampType === 'UNDER_20_ABV')
-    const over20 = purchases.filter((p) => p.stampType === 'OVER_20_ABV')
+        const under20 = purchases.filter((p) => p.stampType === 'UNDER_20_ABV')
+        const over20 = purchases.filter((p) => p.stampType === 'OVER_20_ABV')
 
-    const sum = (items: typeof purchases) => ({
-        total: items.reduce((s, p) => s + p.totalQty, 0),
-        used: items.reduce((s, p) => s + p.usedQty, 0),
-        remaining: items.reduce((s, p) => s + (p.totalQty - p.usedQty), 0),
-        activeBatches: items.filter((p) => p.status === 'ACTIVE').length,
-    })
+        const sum = (items: typeof purchases) => ({
+            total: items.reduce((s, p) => s + p.totalQty, 0),
+            used: items.reduce((s, p) => s + p.usedQty, 0),
+            remaining: items.reduce((s, p) => s + (p.totalQty - p.usedQty), 0),
+            activeBatches: items.filter((p) => p.status === 'ACTIVE').length,
+        })
 
-    return {
-        under20: sum(under20),
-        over20: sum(over20),
-        all: sum(purchases),
-    }
+        return {
+            under20: sum(under20),
+            over20: sum(over20),
+            all: sum(purchases),
+        }
+    }) // end cached
 }
 
 // ── Stamp Linking Options ─────────────────────────
@@ -151,6 +154,7 @@ export async function safeRecordStampUsage(data: {
 }): Promise<{ success: boolean; error?: string }> {
     try {
         await recordStampUsage(data)
+        revalidateCache('stamps')
         revalidatePath('/dashboard/stamps')
         return { success: true }
     } catch (err: any) {

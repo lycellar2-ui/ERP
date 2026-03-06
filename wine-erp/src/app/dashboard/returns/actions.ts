@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type ReturnOrderRow = {
     id: string; returnNo: string; soNo: string; soId: string
@@ -12,30 +13,32 @@ export type ReturnOrderRow = {
 
 // ── List return orders ─────────────────────────────
 export async function getReturnOrders(): Promise<ReturnOrderRow[]> {
-    const orders = await prisma.returnOrder.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: {
-            so: { select: { soNo: true } },
-            customer: { select: { name: true } },
-            lines: { select: { id: true } },
-            creditNote: { select: { creditNoteNo: true } },
-        },
-    })
+    return cached('returns:list', async () => {
+        const orders = await prisma.returnOrder.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                so: { select: { soNo: true } },
+                customer: { select: { name: true } },
+                lines: { select: { id: true } },
+                creditNote: { select: { creditNoteNo: true } },
+            },
+        })
 
-    return orders.map(o => ({
-        id: o.id,
-        returnNo: o.returnNo,
-        soNo: o.so.soNo,
-        soId: o.soId,
-        customerName: o.customer.name,
-        customerId: o.customerId,
-        reason: o.reason,
-        status: o.status,
-        totalAmount: Number(o.totalAmount),
-        lineCount: o.lines.length,
-        createdAt: o.createdAt,
-        creditNoteNo: o.creditNote?.creditNoteNo ?? null,
-    }))
+        return orders.map(o => ({
+            id: o.id,
+            returnNo: o.returnNo,
+            soNo: o.so.soNo,
+            soId: o.soId,
+            customerName: o.customer.name,
+            customerId: o.customerId,
+            reason: o.reason,
+            status: o.status,
+            totalAmount: Number(o.totalAmount),
+            lineCount: o.lines.length,
+            createdAt: o.createdAt,
+            creditNoteNo: o.creditNote?.creditNoteNo ?? null,
+        }))
+    }) // end cached
 }
 
 // ── Create return order ──────────────────────────
@@ -74,6 +77,7 @@ export async function createReturnOrder(input: {
             },
         })
 
+        revalidateCache('returns')
         revalidatePath('/dashboard/returns')
         return { success: true }
     } catch (err: any) {
@@ -156,13 +160,15 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
 
 // ── Stats ─────────────────────────────────────────
 export async function getReturnStats() {
-    const [total, pending, approved, totalValue] = await Promise.all([
-        prisma.returnOrder.count(),
-        prisma.returnOrder.count({ where: { status: { in: ['DRAFT', 'PENDING_INSPECTION'] } } }),
-        prisma.returnOrder.count({ where: { status: 'APPROVED' } }),
-        prisma.creditNote.aggregate({ _sum: { amount: true } }),
-    ])
-    return { total, pending, approved, totalCredited: Number(totalValue._sum.amount ?? 0) }
+    return cached('returns:stats', async () => {
+        const [total, pending, approved, totalValue] = await Promise.all([
+            prisma.returnOrder.count(),
+            prisma.returnOrder.count({ where: { status: { in: ['DRAFT', 'PENDING_INSPECTION'] } } }),
+            prisma.returnOrder.count({ where: { status: 'APPROVED' } }),
+            prisma.creditNote.aggregate({ _sum: { amount: true } }),
+        ])
+        return { total, pending, approved, totalCredited: Number(totalValue._sum.amount ?? 0) }
+    }) // end cached
 }
 
 // ── SO options ────────────────────────────────────

@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export interface ContractRow {
     id: string
@@ -39,61 +40,66 @@ export async function getContracts(filters: {
     pageSize?: number
 } = {}): Promise<{ rows: ContractRow[]; total: number }> {
     const { status, type, search, page = 1, pageSize = 20 } = filters
-    const skip = (page - 1) * pageSize
+    const cacheKey = `contracts:list:${page}:${pageSize}:${status ?? ''}:${type ?? ''}:${search ?? ''}`
+    return cached(cacheKey, async () => {
+        const skip = (page - 1) * pageSize
 
-    const where: any = {}
-    if (status) where.status = status
-    if (type) where.type = type
-    if (search) where.contractNo = { contains: search, mode: 'insensitive' }
+        const where: any = {}
+        if (status) where.status = status
+        if (type) where.type = type
+        if (search) where.contractNo = { contains: search, mode: 'insensitive' }
 
-    const [contracts, total] = await Promise.all([
-        prisma.contract.findMany({
-            where, skip, take: pageSize,
-            orderBy: { createdAt: 'desc' },
-            include: {
-                supplier: { select: { name: true } },
-                customer: { select: { name: true } },
-            },
-        }),
-        prisma.contract.count({ where }),
-    ])
+        const [contracts, total] = await Promise.all([
+            prisma.contract.findMany({
+                where, skip, take: pageSize,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    supplier: { select: { name: true } },
+                    customer: { select: { name: true } },
+                },
+            }),
+            prisma.contract.count({ where }),
+        ])
 
-    const thirtyDaysFromNow = new Date()
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
+        const thirtyDaysFromNow = new Date()
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
 
-    return {
-        rows: contracts.map(c => ({
-            id: c.id,
-            contractNo: c.contractNo,
-            type: c.type,
-            counterpartyName: c.supplier?.name ?? c.customer?.name ?? 'Unknown',
-            counterpartyType: c.supplierId ? 'supplier' : 'customer',
-            value: Number(c.value),
-            currency: c.currency,
-            startDate: c.startDate,
-            endDate: c.endDate,
-            status: c.status,
-            isExpiringSoon: c.endDate <= thirtyDaysFromNow && c.status === 'ACTIVE',
-            createdAt: c.createdAt,
-        })),
-        total,
-    }
+        return {
+            rows: contracts.map(c => ({
+                id: c.id,
+                contractNo: c.contractNo,
+                type: c.type,
+                counterpartyName: c.supplier?.name ?? c.customer?.name ?? 'Unknown',
+                counterpartyType: c.supplierId ? 'supplier' : 'customer',
+                value: Number(c.value),
+                currency: c.currency,
+                startDate: c.startDate,
+                endDate: c.endDate,
+                status: c.status,
+                isExpiringSoon: c.endDate <= thirtyDaysFromNow && c.status === 'ACTIVE',
+                createdAt: c.createdAt,
+            })),
+            total,
+        }
+    }) // end cached
 }
 
 export async function getContractStats() {
-    const now = new Date()
-    const [total, active, expiringSoon, expired] = await Promise.all([
-        prisma.contract.count(),
-        prisma.contract.count({ where: { status: 'ACTIVE' } }),
-        prisma.contract.count({
-            where: {
-                status: 'ACTIVE',
-                endDate: { lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) },
-            },
-        }),
-        prisma.contract.count({ where: { status: 'EXPIRED' } }),
-    ])
-    return { total, active, expiringSoon, expired }
+    return cached('contracts:stats', async () => {
+        const now = new Date()
+        const [total, active, expiringSoon, expired] = await Promise.all([
+            prisma.contract.count(),
+            prisma.contract.count({ where: { status: 'ACTIVE' } }),
+            prisma.contract.count({
+                where: {
+                    status: 'ACTIVE',
+                    endDate: { lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) },
+                },
+            }),
+            prisma.contract.count({ where: { status: 'EXPIRED' } }),
+        ])
+        return { total, active, expiringSoon, expired }
+    }) // end cached
 }
 
 // ── Get suppliers & customers for contract form ───
@@ -136,6 +142,7 @@ export async function createContract(input: ContractCreateInput): Promise<{ succ
             },
         })
 
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         return { success: true, id: contract.id }
     } catch (err: any) {
@@ -150,6 +157,7 @@ export async function updateContractStatus(
 ): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.contract.update({ where: { id }, data: { status } })
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         return { success: true }
     } catch (err: any) {
@@ -208,6 +216,7 @@ export async function linkContractToSO(contractId: string, soId: string): Promis
         if (contract.endDate < new Date()) return { success: false, error: 'Hợp đồng đã hết hạn' }
 
         await prisma.salesOrder.update({ where: { id: soId }, data: { contractId } })
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         revalidatePath('/dashboard/sales')
         return { success: true }
@@ -225,6 +234,7 @@ export async function linkContractToPO(contractId: string, poId: string): Promis
         if (contract.endDate < new Date()) return { success: false, error: 'Hợp đồng đã hết hạn' }
 
         await prisma.purchaseOrder.update({ where: { id: poId }, data: { contractId } })
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         revalidatePath('/dashboard/procurement')
         return { success: true }
@@ -327,6 +337,7 @@ export async function createContractAmendment(input: {
             })
         })
 
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         return { success: true }
     } catch (err: any) {
@@ -363,6 +374,7 @@ export async function uploadContractDocument(contractId: string, formData: FormD
             }
         })
 
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         return { success: true, document: doc }
     } catch (err: any) {
@@ -383,6 +395,7 @@ export async function signContract(contractId: string, signatureUrl: string) {
             where: { id: contractId },
             data: { signatureUrl, status: 'ACTIVE' },
         })
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         return { success: true }
     } catch (err: any) {
@@ -432,6 +445,7 @@ export async function signContractInternal(input: {
             newValue: { signatureHash, signedBy: input.signerId, signedAt: new Date().toISOString(), signerRole: input.signerRole, ip: input.ipAddress },
         })
 
+        revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
         return { success: true, signatureHash }
     } catch (err: any) {

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type CustomerRow = {
     id: string
@@ -20,35 +21,38 @@ export type CustomerRow = {
 }
 
 export async function getCustomers(search?: string): Promise<CustomerRow[]> {
-    const where: any = { deletedAt: null }
-    if (search) {
-        where.OR = [
-            { name: { contains: search, mode: 'insensitive' } },
-            { code: { contains: search, mode: 'insensitive' } },
-        ]
-    }
-    const items = await prisma.customer.findMany({
-        where,
-        include: {
-            salesRep: { select: { name: true } },
-            salesOrders: { select: { id: true } },
-        },
-        orderBy: { name: 'asc' },
-    })
-    return items.map(c => ({
-        id: c.id,
-        code: c.code,
-        name: c.name,
-        taxId: c.taxId,
-        customerType: c.customerType,
-        channel: c.channel,
-        paymentTerm: c.paymentTerm,
-        creditLimit: Number(c.creditLimit),
-        salesRepName: c.salesRep?.name ?? null,
-        status: c.status,
-        orderCount: c.salesOrders.length,
-        createdAt: c.createdAt,
-    }))
+    const cacheKey = `customers:list:${search ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = { deletedAt: null }
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+        const items = await prisma.customer.findMany({
+            where,
+            include: {
+                salesRep: { select: { name: true } },
+                salesOrders: { select: { id: true } },
+            },
+            orderBy: { name: 'asc' },
+        })
+        return items.map(c => ({
+            id: c.id,
+            code: c.code,
+            name: c.name,
+            taxId: c.taxId,
+            customerType: c.customerType,
+            channel: c.channel,
+            paymentTerm: c.paymentTerm,
+            creditLimit: Number(c.creditLimit),
+            salesRepName: c.salesRep?.name ?? null,
+            status: c.status,
+            orderCount: c.salesOrders.length,
+            createdAt: c.createdAt,
+        }))
+    }) // end cached
 }
 
 const customerSchema = z.object({
@@ -102,6 +106,7 @@ export async function deleteCustomer(id: string): Promise<{ success: boolean; er
             where: { id },
             data: { deletedAt: new Date(), status: 'INACTIVE' },
         })
+        revalidateCache('customers')
         revalidatePath('/dashboard/customers')
         return { success: true }
     } catch (err: any) {
@@ -150,6 +155,7 @@ export async function createCustomerAddress(input: {
                 isDefault: input.isDefault ?? false,
             },
         })
+        revalidateCache('customers')
         revalidatePath('/dashboard/customers')
         return { success: true }
     } catch (err: any) {
@@ -181,6 +187,7 @@ export async function updateCustomerAddress(
         }
 
         await prisma.customerAddress.update({ where: { id }, data: input as any })
+        revalidateCache('customers')
         revalidatePath('/dashboard/customers')
         return { success: true }
     } catch (err: any) {
@@ -191,6 +198,7 @@ export async function updateCustomerAddress(
 export async function deleteCustomerAddress(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.customerAddress.delete({ where: { id } })
+        revalidateCache('customers')
         revalidatePath('/dashboard/customers')
         return { success: true }
     } catch (err: any) {

@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useCallback, useRef } from 'react'
 import {
     LayoutDashboard, Package, Users, ShoppingCart, Warehouse,
     Truck, DollarSign, FileText, BarChart3, Settings, ChevronLeft,
@@ -150,6 +151,41 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const pathname = usePathname()
+    const router = useRouter()
+    const prefetchedRef = useRef(new Set<string>())
+
+    // Smart prefetch: prefetch on hover (with debounce to avoid spam)
+    const handlePrefetch = useCallback((href: string) => {
+        if (prefetchedRef.current.has(href)) return
+        prefetchedRef.current.add(href)
+        router.prefetch(href)
+    }, [router])
+
+    // Auto-prefetch adjacent tabs when current page loads
+    useEffect(() => {
+        const allHrefs = NAV_GROUPS.flatMap(g => g.items.map(i => i.href))
+        const currentIdx = allHrefs.indexOf(pathname)
+        if (currentIdx === -1) return
+
+        // Prefetch prev + next tabs (most likely navigation targets)
+        const adjacentIdxs = [currentIdx - 1, currentIdx + 1].filter(
+            i => i >= 0 && i < allHrefs.length
+        )
+        // Also prefetch dashboard (most common return target)
+        const toPrefetch = [...adjacentIdxs.map(i => allHrefs[i]), '/dashboard']
+
+        // Delay slightly to not compete with current page load
+        const timer = setTimeout(() => {
+            toPrefetch.forEach(href => {
+                if (href !== pathname && !prefetchedRef.current.has(href)) {
+                    prefetchedRef.current.add(href)
+                    router.prefetch(href)
+                }
+            })
+        }, 1000)
+
+        return () => clearTimeout(timer)
+    }, [pathname, router])
 
     return (
         <aside
@@ -193,6 +229,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                                         borderLeft: isActive ? '2px solid #87CBB9' : '2px solid transparent',
                                     }}
                                     onMouseEnter={e => {
+                                        handlePrefetch(item.href)
                                         if (!isActive) {
                                             e.currentTarget.style.background = 'rgba(135,203,185,0.06)'
                                             e.currentTarget.style.color = '#E8F1F2'

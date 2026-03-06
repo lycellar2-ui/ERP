@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { uploadFile } from '@/lib/storage'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────
 export type ProductRow = {
@@ -45,58 +46,61 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
     total: number
 }> {
     const { search, wineType, status, country, page = 1, pageSize = 20 } = filters
+    const cacheKey = `products:list:${page}:${pageSize}:${search ?? ''}:${wineType ?? ''}:${status ?? ''}:${country ?? ''}`
+    return cached(cacheKey, async () => {
 
-    const where: any = { deletedAt: null }
-    if (search) {
-        where.OR = [
-            { skuCode: { contains: search, mode: 'insensitive' } },
-            { productName: { contains: search, mode: 'insensitive' } },
-        ]
-    }
-    if (wineType) where.wineType = wineType
-    if (status) where.status = status
-    if (country) where.country = country
+        const where: any = { deletedAt: null }
+        if (search) {
+            where.OR = [
+                { skuCode: { contains: search, mode: 'insensitive' } },
+                { productName: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+        if (wineType) where.wineType = wineType
+        if (status) where.status = status
+        if (country) where.country = country
 
-    const [items, total] = await Promise.all([
-        prisma.product.findMany({
-            where,
-            include: {
-                producer: { select: { name: true, country: true } },
-                appellation: { select: { name: true } },
-                media: { select: { id: true, url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
-                stockLots: { select: { qtyAvailable: true }, where: { status: 'AVAILABLE' } },
-            },
-            orderBy: { createdAt: 'desc' },
-            skip: (page - 1) * pageSize,
-            take: pageSize,
-        }),
-        prisma.product.count({ where }),
-    ])
+        const [items, total] = await Promise.all([
+            prisma.product.findMany({
+                where,
+                include: {
+                    producer: { select: { name: true, country: true } },
+                    appellation: { select: { name: true } },
+                    media: { select: { id: true, url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
+                    stockLots: { select: { qtyAvailable: true }, where: { status: 'AVAILABLE' } },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+            }),
+            prisma.product.count({ where }),
+        ])
 
-    const rows: ProductRow[] = items.map((p) => ({
-        id: p.id,
-        skuCode: p.skuCode,
-        productName: p.productName,
-        vintage: p.vintage,
-        wineType: p.wineType,
-        format: p.format,
-        packagingType: p.packagingType,
-        unitsPerCase: p.unitsPerCase,
-        abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
-        producerName: p.producer.name,
-        producerCountry: p.producer.country,
-        appellationName: p.appellation?.name ?? null,
-        country: p.country,
-        barcodeEan: p.barcodeEan,
-        classification: p.classification,
-        status: p.status,
-        mediaCount: p.media.length,
-        primaryImageUrl: p.media.find((m: any) => m.isPrimary)?.url ?? p.media[0]?.url ?? null,
-        totalStock: p.stockLots.reduce((sum: number, l: { qtyAvailable: unknown }) => sum + Number(l.qtyAvailable), 0),
-        createdAt: p.createdAt,
-    }))
+        const rows: ProductRow[] = items.map((p) => ({
+            id: p.id,
+            skuCode: p.skuCode,
+            productName: p.productName,
+            vintage: p.vintage,
+            wineType: p.wineType,
+            format: p.format,
+            packagingType: p.packagingType,
+            unitsPerCase: p.unitsPerCase,
+            abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
+            producerName: p.producer.name,
+            producerCountry: p.producer.country,
+            appellationName: p.appellation?.name ?? null,
+            country: p.country,
+            barcodeEan: p.barcodeEan,
+            classification: p.classification,
+            status: p.status,
+            mediaCount: p.media.length,
+            primaryImageUrl: p.media.find((m: any) => m.isPrimary)?.url ?? p.media[0]?.url ?? null,
+            totalStock: p.stockLots.reduce((sum: number, l: { qtyAvailable: unknown }) => sum + Number(l.qtyAvailable), 0),
+            createdAt: p.createdAt,
+        }))
 
-    return { rows, total }
+        return { rows, total }
+    }) // end cached
 }
 
 // ─── Schema ───────────────────────────────────────
@@ -146,6 +150,7 @@ export async function createProduct(input: ProductInput) {
             status: data.status,
         },
     })
+    revalidateCache('products')
     revalidatePath('/dashboard/products')
     return { success: true, id: product.id }
 }
@@ -172,6 +177,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
             ...(input.status && { status: input.status }),
         },
     })
+    revalidateCache('products')
     revalidatePath('/dashboard/products')
     return { success: true }
 }
@@ -303,6 +309,7 @@ export async function createPriceList(input: PriceListInput): Promise<{ success:
                 expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
             },
         })
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true, id: pl.id }
     } catch (err: any) {
@@ -325,6 +332,7 @@ export async function upsertPriceListLine(
             create: { priceListId, productId, unitPrice, currency },
             update: { unitPrice, currency },
         })
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {
@@ -336,6 +344,7 @@ export async function upsertPriceListLine(
 export async function deletePriceListLine(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.priceListLine.delete({ where: { id } })
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {
@@ -350,6 +359,7 @@ export async function deletePriceList(id: string): Promise<{ success: boolean; e
             prisma.priceListLine.deleteMany({ where: { priceListId: id } }),
             prisma.priceList.delete({ where: { id } }),
         ])
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {
@@ -410,6 +420,7 @@ export async function uploadProductMedia(
             },
         })
 
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return {
             success: true,
@@ -454,6 +465,7 @@ export async function deleteProductMedia(
             }
         }
 
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {
@@ -476,6 +488,7 @@ export async function setPrimaryMedia(
                 data: { isPrimary: true },
             }),
         ])
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {
@@ -539,6 +552,7 @@ export async function addProductAward(input: {
                 awardedYear: input.awardedYear ?? null,
             },
         })
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {
@@ -549,6 +563,7 @@ export async function addProductAward(input: {
 export async function deleteProductAward(awardId: string): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.productAward.delete({ where: { id: awardId } })
+        revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true }
     } catch (err: any) {

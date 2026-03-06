@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type QuotationStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'CONVERTED' | 'EXPIRED' | 'CANCELLED'
 
@@ -21,38 +22,41 @@ export type QuotationRow = {
 
 // ── List quotations ─────────────────────────────
 export async function getQuotations(filters: { search?: string; status?: string } = {}): Promise<QuotationRow[]> {
-    const where: any = {}
-    if (filters.status) where.status = filters.status
-    if (filters.search) {
-        where.OR = [
-            { quotationNo: { contains: filters.search, mode: 'insensitive' } },
-            { customer: { name: { contains: filters.search, mode: 'insensitive' } } },
-        ]
-    }
+    const cacheKey = `quotations:list:${filters.search ?? ''}:${filters.status ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = {}
+        if (filters.status) where.status = filters.status
+        if (filters.search) {
+            where.OR = [
+                { quotationNo: { contains: filters.search, mode: 'insensitive' } },
+                { customer: { name: { contains: filters.search, mode: 'insensitive' } } },
+            ]
+        }
 
-    const rows = await prisma.salesQuotation.findMany({
-        where,
-        include: {
-            customer: { select: { name: true, code: true } },
-            salesRep: { select: { name: true } },
-            _count: { select: { lines: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-    })
+        const rows = await prisma.salesQuotation.findMany({
+            where,
+            include: {
+                customer: { select: { name: true, code: true } },
+                salesRep: { select: { name: true } },
+                _count: { select: { lines: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        })
 
-    return rows.map(r => ({
-        id: r.id,
-        quotationNo: r.quotationNo,
-        customerName: r.customer.name,
-        customerCode: r.customer.code,
-        channel: r.channel,
-        salesRepName: r.salesRep.name,
-        totalAmount: Number(r.totalAmount),
-        status: r.status as QuotationStatus,
-        validUntil: r.validUntil,
-        lineCount: r._count.lines,
-        createdAt: r.createdAt,
-    }))
+        return rows.map(r => ({
+            id: r.id,
+            quotationNo: r.quotationNo,
+            customerName: r.customer.name,
+            customerCode: r.customer.code,
+            channel: r.channel,
+            salesRepName: r.salesRep.name,
+            totalAmount: Number(r.totalAmount),
+            status: r.status as QuotationStatus,
+            validUntil: r.validUntil,
+            lineCount: r._count.lines,
+            createdAt: r.createdAt,
+        }))
+    }) // end cached
 }
 
 // ── Get detail ───────────────────────────────────
@@ -116,6 +120,7 @@ export async function createQuotation(input: {
             },
         })
 
+        revalidateCache('quotations')
         revalidatePath('/dashboard/quotations')
         return { success: true, id: qt.id, quotationNo: qt.quotationNo }
     } catch (err: any) {
@@ -189,20 +194,22 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
 
 // ── Quotation stats ─────────────────────────────
 export async function getQuotationStats() {
-    const byStatus = await prisma.salesQuotation.groupBy({
-        by: ['status'],
-        _count: true,
-        _sum: { totalAmount: true },
-    })
-    const map = Object.fromEntries(byStatus.map(s => [s.status, { count: s._count, amount: Number(s._sum.totalAmount ?? 0) }]))
-    return {
-        total: byStatus.reduce((s, r) => s + r._count, 0),
-        draft: map['DRAFT']?.count ?? 0,
-        sent: map['SENT']?.count ?? 0,
-        accepted: map['ACCEPTED']?.count ?? 0,
-        converted: map['CONVERTED']?.count ?? 0,
-        totalValue: byStatus.reduce((s, r) => s + Number(r._sum.totalAmount ?? 0), 0),
-    }
+    return cached('quotations:stats', async () => {
+        const byStatus = await prisma.salesQuotation.groupBy({
+            by: ['status'],
+            _count: true,
+            _sum: { totalAmount: true },
+        })
+        const map = Object.fromEntries(byStatus.map(s => [s.status, { count: s._count, amount: Number(s._sum.totalAmount ?? 0) }]))
+        return {
+            total: byStatus.reduce((s, r) => s + r._count, 0),
+            draft: map['DRAFT']?.count ?? 0,
+            sent: map['SENT']?.count ?? 0,
+            accepted: map['ACCEPTED']?.count ?? 0,
+            converted: map['CONVERTED']?.count ?? 0,
+            totalValue: byStatus.reduce((s, r) => s + Number(r._sum.totalAmount ?? 0), 0),
+        }
+    }) // end cached
 }
 
 // ── Auto-expire quotations past validUntil ──────

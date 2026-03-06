@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { uploadFile } from '@/lib/storage'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export interface DeliveryRouteRow {
     id: string
@@ -26,55 +27,60 @@ export async function getDeliveryRoutes(filters: {
     pageSize?: number
 } = {}): Promise<{ rows: DeliveryRouteRow[]; total: number }> {
     const { status, page = 1, pageSize = 20 } = filters
-    const skip = (page - 1) * pageSize
+    const cacheKey = `delivery:routes:${page}:${pageSize}:${status ?? ''}`
+    return cached(cacheKey, async () => {
+        const skip = (page - 1) * pageSize
 
-    const where: any = {}
-    if (status) where.status = status
+        const where: any = {}
+        if (status) where.status = status
 
-    const [routes, total] = await Promise.all([
-        prisma.deliveryRoute.findMany({
-            where, skip, take: pageSize,
-            orderBy: { routeDate: 'desc' },
-            include: {
-                driver: { select: { name: true } },
-                vehicle: { select: { plateNo: true, type: true } },
-                stops: { select: { id: true, status: true, codAmount: true } },
-            },
-        }),
-        prisma.deliveryRoute.count({ where }),
-    ])
+        const [routes, total] = await Promise.all([
+            prisma.deliveryRoute.findMany({
+                where, skip, take: pageSize,
+                orderBy: { routeDate: 'desc' },
+                include: {
+                    driver: { select: { name: true } },
+                    vehicle: { select: { plateNo: true, type: true } },
+                    stops: { select: { id: true, status: true, codAmount: true } },
+                },
+            }),
+            prisma.deliveryRoute.count({ where }),
+        ])
 
-    return {
-        rows: routes.map(r => ({
-            id: r.id,
-            routeDate: r.routeDate,
-            driverName: r.driver.name,
-            vehiclePlate: r.vehicle.plateNo,
-            vehicleType: r.vehicle.type,
-            stopCount: r.stops.length,
-            deliveredCount: r.stops.filter(s => s.status === 'DELIVERED').length,
-            status: r.status,
-            totalCod: r.stops.reduce((sum, s) => sum + Number(s.codAmount), 0),
-            createdAt: r.createdAt,
-        })),
-        total,
-    }
+        return {
+            rows: routes.map(r => ({
+                id: r.id,
+                routeDate: r.routeDate,
+                driverName: r.driver.name,
+                vehiclePlate: r.vehicle.plateNo,
+                vehicleType: r.vehicle.type,
+                stopCount: r.stops.length,
+                deliveredCount: r.stops.filter(s => s.status === 'DELIVERED').length,
+                status: r.status,
+                totalCod: r.stops.reduce((sum, s) => sum + Number(s.codAmount), 0),
+                createdAt: r.createdAt,
+            })),
+            total,
+        }
+    }) // end cached
 }
 
 export async function getDeliveryStats() {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
+    return cached('delivery:stats', async () => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
 
-    const [todayRoutes, pending, delivered, inProgress] = await Promise.all([
-        prisma.deliveryRoute.count({ where: { routeDate: { gte: today, lt: tomorrow } } }),
-        prisma.deliveryStop.count({ where: { status: 'PENDING' } }),
-        prisma.deliveryStop.count({ where: { status: 'DELIVERED' } }),
-        prisma.deliveryRoute.count({ where: { status: 'IN_PROGRESS' } }),
-    ])
+        const [todayRoutes, pending, delivered, inProgress] = await Promise.all([
+            prisma.deliveryRoute.count({ where: { routeDate: { gte: today, lt: tomorrow } } }),
+            prisma.deliveryStop.count({ where: { status: 'PENDING' } }),
+            prisma.deliveryStop.count({ where: { status: 'DELIVERED' } }),
+            prisma.deliveryRoute.count({ where: { status: 'IN_PROGRESS' } }),
+        ])
 
-    return { todayRoutes, pending, delivered, inProgress }
+        return { todayRoutes, pending, delivered, inProgress }
+    }) // end cached
 }
 
 // ── Update route status ───────────────────────────────────
@@ -84,6 +90,7 @@ export async function updateRouteStatus(
 ): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.deliveryRoute.update({ where: { id: routeId }, data: { status } })
+        revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
         return { success: true }
     } catch (err: any) {
@@ -118,6 +125,7 @@ export async function createDeliveryRoute(data: {
                 status: 'PLANNED',
             },
         })
+        revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
         return { success: true, id: route.id }
     } catch (err: any) {
@@ -158,6 +166,7 @@ export async function recordEPOD(data: {
                 data: { status: 'DELIVERED', podSignedAt: new Date() },
             }),
         ])
+        revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
         return { success: true }
     } catch (err: any) {
@@ -252,6 +261,7 @@ export async function recordDeliveryFailure(input: {
             }
         }
 
+        revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
         return { success: true }
     } catch (err: any) {
@@ -355,6 +365,7 @@ export async function scheduleRedelivery(input: {
             },
         })
 
+        revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
         return { success: true }
     } catch (err: any) {
@@ -428,6 +439,7 @@ export async function syncCODToAR(input: {
             })
         }
 
+        revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
         revalidatePath('/dashboard/finance')
         return { success: true, paymentId: payment.id }
@@ -453,6 +465,7 @@ export async function uploadPODPhoto(
             update: { photoUrl: result.url },
         })
 
+        revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
         return { success: true, photoUrl: result.url }
     } catch (err: any) {

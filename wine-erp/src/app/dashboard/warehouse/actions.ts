@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { logAudit } from '@/lib/audit'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────
 export type WarehouseRow = {
@@ -51,33 +52,35 @@ export type LocationRow = {
 
 // ─── Warehouses ───────────────────────────────────
 export async function getWarehouses(): Promise<WarehouseRow[]> {
-    const warehouses = await prisma.warehouse.findMany({
-        include: {
-            locations: {
-                include: {
-                    stockLots: {
-                        where: { status: 'AVAILABLE' },
-                        select: { qtyAvailable: true },
+    return cached('wms:warehouses', async () => {
+        const warehouses = await prisma.warehouse.findMany({
+            include: {
+                locations: {
+                    include: {
+                        stockLots: {
+                            where: { status: 'AVAILABLE' },
+                            select: { qtyAvailable: true },
+                        },
                     },
                 },
             },
-        },
-        orderBy: { name: 'asc' },
-    })
+            orderBy: { name: 'asc' },
+        })
 
-    return warehouses.map(w => {
-        const lots = w.locations.flatMap(l => l.stockLots)
-        return {
-            id: w.id,
-            code: w.code,
-            name: w.name,
-            address: w.address,
-            locationCount: w.locations.length,
-            lotCount: lots.length,
-            totalStock: lots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
-            createdAt: w.createdAt,
-        }
-    })
+        return warehouses.map(w => {
+            const lots = w.locations.flatMap(l => l.stockLots)
+            return {
+                id: w.id,
+                code: w.code,
+                name: w.name,
+                address: w.address,
+                locationCount: w.locations.length,
+                lotCount: lots.length,
+                totalStock: lots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
+                createdAt: w.createdAt,
+            }
+        })
+    }) // end cached
 }
 
 // ─── Stock inventory view ─────────────────────────
@@ -178,6 +181,7 @@ const warehouseSchema = z.object({
 export async function createWarehouse(input: z.infer<typeof warehouseSchema>) {
     const data = warehouseSchema.parse(input)
     await prisma.warehouse.create({ data })
+    revalidateCache('wms')
     revalidatePath('/dashboard/warehouse')
     return { success: true }
 }
@@ -215,6 +219,7 @@ export async function deleteLocation(locationId: string): Promise<{ success: boo
             return { success: false, error: 'Không thể xóa — vị trí đang chứa hàng' }
         }
         await prisma.location.delete({ where: { id: locationId } })
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         return { success: true }
     } catch (err: any) {
@@ -269,21 +274,23 @@ export async function getLocationHeatmap(warehouseId: string) {
 
 // ─── WMS Stats ────────────────────────────────────
 export async function getWMSStats() {
-    const [warehouses, totalLots, availableBottles, reservedBottles, grCount] = await Promise.all([
-        prisma.warehouse.count(),
-        prisma.stockLot.count({ where: { status: 'AVAILABLE' } }),
-        prisma.stockLot.aggregate({ where: { status: 'AVAILABLE' }, _sum: { qtyAvailable: true } }),
-        prisma.stockLot.aggregate({ where: { status: 'RESERVED' }, _sum: { qtyAvailable: true } }),
-        prisma.goodsReceipt.count(),
-    ])
+    return cached('wms:stats', async () => {
+        const [warehouses, totalLots, availableBottles, reservedBottles, grCount] = await Promise.all([
+            prisma.warehouse.count(),
+            prisma.stockLot.count({ where: { status: 'AVAILABLE' } }),
+            prisma.stockLot.aggregate({ where: { status: 'AVAILABLE' }, _sum: { qtyAvailable: true } }),
+            prisma.stockLot.aggregate({ where: { status: 'RESERVED' }, _sum: { qtyAvailable: true } }),
+            prisma.goodsReceipt.count(),
+        ])
 
-    return {
-        warehouses,
-        totalLots,
-        availableBottles: Number(availableBottles._sum.qtyAvailable ?? 0),
-        reservedBottles: Number(reservedBottles._sum.qtyAvailable ?? 0),
-        grCount,
-    }
+        return {
+            warehouses,
+            totalLots,
+            availableBottles: Number(availableBottles._sum.qtyAvailable ?? 0),
+            reservedBottles: Number(reservedBottles._sum.qtyAvailable ?? 0),
+            grCount,
+        }
+    }) // end cached
 }
 
 // ═══════════════════════════════════════════════════
@@ -455,6 +462,7 @@ export async function createGoodsReceipt(input: {
             return gr
         })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/procurement')
         return { success: true, grId: result.id, grNo }
@@ -518,6 +526,7 @@ export async function confirmGoodsReceipt(
         const { generateQRCodesForGR } = await import('../qr-codes/actions')
         generateQRCodesForGR(grId).catch(() => { })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/procurement')
         revalidatePath('/dashboard/finance')
@@ -671,6 +680,7 @@ export async function createDeliveryOrder(input: {
             return deliveryOrder
         })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/sales')
         return { success: true, doId: result.id, doNo }
@@ -725,6 +735,7 @@ export async function confirmDeliveryOrder(
         const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
         generateDeliveryOrderCOGSJournal(doId, confirmerId ?? 'system').catch(() => { })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/finance')
@@ -793,6 +804,7 @@ export async function transferStock(input: {
             }
         })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         return { success: true }
     } catch (err: any) {
@@ -856,6 +868,7 @@ export async function createStockCountSession(input: {
             },
         })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         return { success: true, sessionId: session.id }
     } catch (err: any) {
@@ -896,6 +909,7 @@ export async function completeStockCount(
             },
         })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         return { success: true }
     } catch (err: any) {
@@ -1003,6 +1017,7 @@ export async function moveToQuarantine(input: {
             })
         })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         return { success: true }
     } catch (err: any) {
@@ -1072,6 +1087,7 @@ export async function releaseFromQuarantine(
             }
         }
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/finance')
         return { success: true }
@@ -1109,6 +1125,7 @@ export async function writeOffStock(input: {
         const { generateWriteOffJournal } = await import('../finance/actions')
         generateWriteOffJournal(input.lotId, input.qty, input.reason, 'system').catch(() => { })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/finance')
         return { success: true }
@@ -1182,6 +1199,7 @@ export async function adjustStockFromCount(
             data: { status: 'COMPLETED' }, // Could add an ADJUSTED status
         })
 
+        revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         return { success: true, adjustedLines }
     } catch (err: any) {

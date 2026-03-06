@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type OppStage = 'LEAD' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST'
 
@@ -23,28 +24,30 @@ export type PipelineRow = {
 
 // ── Get all opportunities ────────────────────────
 export async function getOpportunities(): Promise<PipelineRow[]> {
-    const rows = await prisma.salesOpportunity.findMany({
-        include: {
-            customer: { select: { name: true, code: true } },
-            assignee: { select: { name: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-    })
-    return rows.map(r => ({
-        id: r.id,
-        name: r.name,
-        customerId: r.customerId,
-        customerName: r.customer.name,
-        customerCode: r.customer.code,
-        stage: r.stage as OppStage,
-        expectedValue: Number(r.expectedValue),
-        probability: r.probability,
-        assigneeName: r.assignee.name,
-        assigneeId: r.assignedTo,
-        closeDate: r.closeDate,
-        notes: r.notes,
-        createdAt: r.createdAt,
-    }))
+    return cached('pipeline:list', async () => {
+        const rows = await prisma.salesOpportunity.findMany({
+            include: {
+                customer: { select: { name: true, code: true } },
+                assignee: { select: { name: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        })
+        return rows.map(r => ({
+            id: r.id,
+            name: r.name,
+            customerId: r.customerId,
+            customerName: r.customer.name,
+            customerCode: r.customer.code,
+            stage: r.stage as OppStage,
+            expectedValue: Number(r.expectedValue),
+            probability: r.probability,
+            assigneeName: r.assignee.name,
+            assigneeId: r.assignedTo,
+            closeDate: r.closeDate,
+            notes: r.notes,
+            createdAt: r.createdAt,
+        }))
+    }) // end cached
 }
 
 // ── Create opportunity ───────────────────────────
@@ -70,6 +73,7 @@ export async function createOpportunity(input: {
                 notes: input.notes,
             },
         })
+        revalidateCache('pipeline')
         revalidatePath('/dashboard/pipeline')
         return { success: true }
     } catch (err: any) {
@@ -94,24 +98,26 @@ export async function moveOpportunityStage(id: string, stage: OppStage): Promise
 
 // ── Pipeline stats ───────────────────────────────
 export async function getPipelineStats() {
-    const all = await prisma.salesOpportunity.findMany({
-        select: { stage: true, expectedValue: true, probability: true },
-    })
-    const stages = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] as OppStage[]
-    const byStage = Object.fromEntries(stages.map(s => [s, { count: 0, value: 0 }]))
-    for (const o of all) {
-        const s = o.stage as OppStage
-        byStage[s].count++
-        byStage[s].value += Number(o.expectedValue)
-    }
-    const open = all.filter(o => !['WON', 'LOST'].includes(o.stage))
-    const totalPipelineValue = open.reduce((s, o) => s + Number(o.expectedValue), 0)
-    const weightedValue = open.reduce((s, o) => s + Number(o.expectedValue) * o.probability / 100, 0)
-    const wonCount = byStage['WON'].count
-    const totalClosed = wonCount + byStage['LOST'].count
-    const conversionRate = totalClosed > 0 ? Math.round(wonCount / totalClosed * 100) : 0
+    return cached('pipeline:stats', async () => {
+        const all = await prisma.salesOpportunity.findMany({
+            select: { stage: true, expectedValue: true, probability: true },
+        })
+        const stages = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] as OppStage[]
+        const byStage = Object.fromEntries(stages.map(s => [s, { count: 0, value: 0 }]))
+        for (const o of all) {
+            const s = o.stage as OppStage
+            byStage[s].count++
+            byStage[s].value += Number(o.expectedValue)
+        }
+        const open = all.filter(o => !['WON', 'LOST'].includes(o.stage))
+        const totalPipelineValue = open.reduce((s, o) => s + Number(o.expectedValue), 0)
+        const weightedValue = open.reduce((s, o) => s + Number(o.expectedValue) * o.probability / 100, 0)
+        const wonCount = byStage['WON'].count
+        const totalClosed = wonCount + byStage['LOST'].count
+        const conversionRate = totalClosed > 0 ? Math.round(wonCount / totalClosed * 100) : 0
 
-    return { byStage, totalPipelineValue, weightedValue, conversionRate, total: all.length }
+        return { byStage, totalPipelineValue, weightedValue, conversionRate, total: all.length }
+    }) // end cached
 }
 
 // ── Delete opportunity ───────────────────────────

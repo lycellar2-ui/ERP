@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const revalidate = 30
 
 import { getARInvoices, getAPInvoices, getFinanceStats, getARAgingBuckets } from './actions'
 import { FinanceClient } from './FinanceClient'

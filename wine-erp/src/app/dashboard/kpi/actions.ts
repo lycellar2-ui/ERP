@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
 // KPI — Target Config & Auto-Calculation
@@ -48,125 +49,129 @@ const DEFAULT_TARGETS: Record<string, { value: number; unit: string; label: stri
 
 // ─── Get KPI Summary (with DB targets) ────────────
 export async function getKpiSummary(): Promise<KpiSummary[]> {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth() + 1
-    const monthStart = new Date(year, now.getMonth(), 1)
-    const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate()
-    const daysElapsed = Math.max(1, now.getDate())
-    const forecastMultiplier = daysInMonth / daysElapsed
+    return cached('kpi:summary', async () => {
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = now.getMonth() + 1
+        const monthStart = new Date(year, now.getMonth(), 1)
+        const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate()
+        const daysElapsed = Math.max(1, now.getDate())
+        const forecastMultiplier = daysInMonth / daysElapsed
 
-    // Load custom targets from DB
-    const dbTargets = await prisma.kpiTarget.findMany({
-        where: {
-            year,
-            OR: [{ month }, { month: null }], // monthly or annual
-            salesRepId: null, // company-wide only for summary
-        },
-    })
-
-    // Build target map (monthly overrides annual)
-    const targetMap = new Map<string, number>()
-    for (const t of dbTargets) {
-        const existing = targetMap.get(t.metric)
-        if (!existing || t.month !== null) {
-            targetMap.set(t.metric, Number(t.targetValue))
-        }
-    }
-
-    function getTarget(metric: string): number {
-        return targetMap.get(metric) ?? DEFAULT_TARGETS[metric]?.value ?? 0
-    }
-
-    const [monthRevenue, monthOrders, newCustomers, arOutstanding, stockValue] = await Promise.all([
-        prisma.salesOrder.aggregate({
+        // Load custom targets from DB
+        const dbTargets = await prisma.kpiTarget.findMany({
             where: {
-                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-                createdAt: { gte: monthStart },
+                year,
+                OR: [{ month }, { month: null }], // monthly or annual
+                salesRepId: null, // company-wide only for summary
             },
-            _sum: { totalAmount: true },
-        }),
-        prisma.salesOrder.count({ where: { createdAt: { gte: monthStart } } }),
-        prisma.customer.count({ where: { createdAt: { gte: monthStart }, deletedAt: null } }),
-        prisma.aRInvoice.aggregate({
-            where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
-            _sum: { amount: true },
-        }),
-        prisma.stockLot.findMany({
-            where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-            select: { qtyAvailable: true, unitLandedCost: true },
-        }),
-    ])
+        })
 
-    const revenueActual = Number(monthRevenue._sum?.totalAmount ?? 0)
-    const arActual = Number(arOutstanding._sum?.amount ?? 0)
-    const stockVal = stockValue.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
+        // Build target map (monthly overrides annual)
+        const targetMap = new Map<string, number>()
+        for (const t of dbTargets) {
+            const existing = targetMap.get(t.metric)
+            if (!existing || t.month !== null) {
+                targetMap.set(t.metric, Number(t.targetValue))
+            }
+        }
 
-    const tRevenue = getTarget('REVENUE')
-    const tOrders = getTarget('ORDERS')
-    const tNewCustomers = getTarget('NEW_CUSTOMERS')
-    const tARLimit = getTarget('AR_LIMIT')
-    const tStockValue = getTarget('STOCK_VALUE')
+        function getTarget(metric: string): number {
+            return targetMap.get(metric) ?? DEFAULT_TARGETS[metric]?.value ?? 0
+        }
 
-    return [
-        {
-            label: DEFAULT_TARGETS.REVENUE.label, metric: 'REVENUE',
-            target: tRevenue, actual: revenueActual, unit: 'VND',
-            progressPct: tRevenue > 0 ? (revenueActual / tRevenue) * 100 : 0,
-            status: calcStatus(tRevenue > 0 ? (revenueActual / tRevenue) * 100 : 0),
-            color: DEFAULT_TARGETS.REVENUE.color,
-            forecast: Math.round(revenueActual * forecastMultiplier),
-        },
-        {
-            label: DEFAULT_TARGETS.ORDERS.label, metric: 'ORDERS',
-            target: tOrders, actual: monthOrders, unit: 'đơn',
-            progressPct: tOrders > 0 ? (monthOrders / tOrders) * 100 : 0,
-            status: calcStatus(tOrders > 0 ? (monthOrders / tOrders) * 100 : 0),
-            color: DEFAULT_TARGETS.ORDERS.color,
-            forecast: Math.round(monthOrders * forecastMultiplier),
-        },
-        {
-            label: DEFAULT_TARGETS.NEW_CUSTOMERS.label, metric: 'NEW_CUSTOMERS',
-            target: tNewCustomers, actual: newCustomers, unit: 'KH',
-            progressPct: tNewCustomers > 0 ? (newCustomers / tNewCustomers) * 100 : 0,
-            status: calcStatus(tNewCustomers > 0 ? (newCustomers / tNewCustomers) * 100 : 0),
-            color: DEFAULT_TARGETS.NEW_CUSTOMERS.color,
-            forecast: Math.round(newCustomers * forecastMultiplier),
-        },
-        {
-            label: DEFAULT_TARGETS.AR_LIMIT.label, metric: 'AR_LIMIT',
-            target: tARLimit, actual: arActual, unit: 'VND',
-            progressPct: arActual > 0 ? Math.max(0, (1 - arActual / tARLimit) * 100) : 100,
-            status: arActual > tARLimit ? 'BEHIND' : arActual > tARLimit * 0.8 ? 'AT_RISK' : 'ON_TRACK',
-            color: DEFAULT_TARGETS.AR_LIMIT.color,
-        },
-        {
-            label: DEFAULT_TARGETS.STOCK_VALUE.label, metric: 'STOCK_VALUE',
-            target: tStockValue, actual: stockVal, unit: 'VND',
-            progressPct: tStockValue > 0 ? (stockVal / tStockValue) * 100 : 0,
-            status: calcStatus(tStockValue > 0 ? (stockVal / tStockValue) * 100 : 0),
-            color: DEFAULT_TARGETS.STOCK_VALUE.color,
-        },
-    ]
+        const [monthRevenue, monthOrders, newCustomers, arOutstanding, stockValue] = await Promise.all([
+            prisma.salesOrder.aggregate({
+                where: {
+                    status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                    createdAt: { gte: monthStart },
+                },
+                _sum: { totalAmount: true },
+            }),
+            prisma.salesOrder.count({ where: { createdAt: { gte: monthStart } } }),
+            prisma.customer.count({ where: { createdAt: { gte: monthStart }, deletedAt: null } }),
+            prisma.aRInvoice.aggregate({
+                where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                _sum: { amount: true },
+            }),
+            prisma.stockLot.findMany({
+                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                select: { qtyAvailable: true, unitLandedCost: true },
+            }),
+        ])
+
+        const revenueActual = Number(monthRevenue._sum?.totalAmount ?? 0)
+        const arActual = Number(arOutstanding._sum?.amount ?? 0)
+        const stockVal = stockValue.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
+
+        const tRevenue = getTarget('REVENUE')
+        const tOrders = getTarget('ORDERS')
+        const tNewCustomers = getTarget('NEW_CUSTOMERS')
+        const tARLimit = getTarget('AR_LIMIT')
+        const tStockValue = getTarget('STOCK_VALUE')
+
+        return [
+            {
+                label: DEFAULT_TARGETS.REVENUE.label, metric: 'REVENUE',
+                target: tRevenue, actual: revenueActual, unit: 'VND',
+                progressPct: tRevenue > 0 ? (revenueActual / tRevenue) * 100 : 0,
+                status: calcStatus(tRevenue > 0 ? (revenueActual / tRevenue) * 100 : 0),
+                color: DEFAULT_TARGETS.REVENUE.color,
+                forecast: Math.round(revenueActual * forecastMultiplier),
+            },
+            {
+                label: DEFAULT_TARGETS.ORDERS.label, metric: 'ORDERS',
+                target: tOrders, actual: monthOrders, unit: 'đơn',
+                progressPct: tOrders > 0 ? (monthOrders / tOrders) * 100 : 0,
+                status: calcStatus(tOrders > 0 ? (monthOrders / tOrders) * 100 : 0),
+                color: DEFAULT_TARGETS.ORDERS.color,
+                forecast: Math.round(monthOrders * forecastMultiplier),
+            },
+            {
+                label: DEFAULT_TARGETS.NEW_CUSTOMERS.label, metric: 'NEW_CUSTOMERS',
+                target: tNewCustomers, actual: newCustomers, unit: 'KH',
+                progressPct: tNewCustomers > 0 ? (newCustomers / tNewCustomers) * 100 : 0,
+                status: calcStatus(tNewCustomers > 0 ? (newCustomers / tNewCustomers) * 100 : 0),
+                color: DEFAULT_TARGETS.NEW_CUSTOMERS.color,
+                forecast: Math.round(newCustomers * forecastMultiplier),
+            },
+            {
+                label: DEFAULT_TARGETS.AR_LIMIT.label, metric: 'AR_LIMIT',
+                target: tARLimit, actual: arActual, unit: 'VND',
+                progressPct: arActual > 0 ? Math.max(0, (1 - arActual / tARLimit) * 100) : 100,
+                status: arActual > tARLimit ? 'BEHIND' : arActual > tARLimit * 0.8 ? 'AT_RISK' : 'ON_TRACK',
+                color: DEFAULT_TARGETS.AR_LIMIT.color,
+            },
+            {
+                label: DEFAULT_TARGETS.STOCK_VALUE.label, metric: 'STOCK_VALUE',
+                target: tStockValue, actual: stockVal, unit: 'VND',
+                progressPct: tStockValue > 0 ? (stockVal / tStockValue) * 100 : 0,
+                status: calcStatus(tStockValue > 0 ? (stockVal / tStockValue) * 100 : 0),
+                color: DEFAULT_TARGETS.STOCK_VALUE.color,
+            },
+        ]
+    }) // end cached
 }
 
 // ─── CRUD KPI Targets ─────────────────────────────
 export async function getKpiTargets(year: number): Promise<KpiTargetRow[]> {
-    const targets = await prisma.kpiTarget.findMany({
-        where: { year },
-        include: { salesRep: { select: { name: true } } },
-        orderBy: [{ metric: 'asc' }, { month: 'asc' }],
-    })
-    return targets.map(t => ({
-        id: t.id,
-        metric: t.metric,
-        year: t.year,
-        month: t.month,
-        targetValue: Number(t.targetValue),
-        unit: t.unit,
-        salesRepId: t.salesRepId,
-        salesRepName: t.salesRep?.name ?? null,
-    }))
+    return cached(`kpi:targets:${year}`, async () => {
+        const targets = await prisma.kpiTarget.findMany({
+            where: { year },
+            include: { salesRep: { select: { name: true } } },
+            orderBy: [{ metric: 'asc' }, { month: 'asc' }],
+        })
+        return targets.map(t => ({
+            id: t.id,
+            metric: t.metric,
+            year: t.year,
+            month: t.month,
+            targetValue: Number(t.targetValue),
+            unit: t.unit,
+            salesRepId: t.salesRepId,
+            salesRepName: t.salesRep?.name ?? null,
+        }))
+    }) // end cached
 }
 
 export async function upsertKpiTarget(input: {
@@ -203,6 +208,7 @@ export async function upsertKpiTarget(input: {
                 },
             })
         }
+        revalidateCache('kpi')
         revalidatePath('/dashboard/kpi')
         return { success: true }
     } catch (err: any) {
@@ -213,6 +219,7 @@ export async function upsertKpiTarget(input: {
 export async function deleteKpiTarget(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.kpiTarget.delete({ where: { id } })
+        revalidateCache('kpi')
         revalidatePath('/dashboard/kpi')
         return { success: true }
     } catch (err: any) {
@@ -271,6 +278,7 @@ export async function copyKpiFromPreviousYear(input: {
             copied++
         }
 
+        revalidateCache('kpi')
         revalidatePath('/dashboard/kpi')
         return { success: true, copied }
     } catch (err: any) {
@@ -330,6 +338,7 @@ export async function importKpiFromExcel(input: {
             imported++
         }
 
+        revalidateCache('kpi')
         revalidatePath('/dashboard/kpi')
         return { success: true, imported, skipped }
     } catch (err: any) {

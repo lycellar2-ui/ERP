@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type SupplierRow = {
     id: string
@@ -23,37 +24,40 @@ export type SupplierRow = {
 }
 
 export async function getSuppliers(search?: string): Promise<SupplierRow[]> {
-    const where: any = { deletedAt: null }
-    if (search) {
-        where.OR = [
-            { name: { contains: search, mode: 'insensitive' } },
-            { code: { contains: search, mode: 'insensitive' } },
-        ]
-    }
-    const items = await prisma.supplier.findMany({
-        where,
-        include: {
-            purchaseOrders: { select: { id: true } },
-        },
-        orderBy: { name: 'asc' },
-    })
-    return items.map(s => ({
-        id: s.id,
-        code: s.code,
-        name: s.name,
-        type: s.type,
-        country: s.country,
-        taxId: s.taxId,
-        tradeAgreement: s.tradeAgreement,
-        coFormType: s.coFormType,
-        paymentTerm: s.paymentTerm,
-        defaultCurrency: s.defaultCurrency,
-        incoterms: s.incoterms,
-        leadTimeDays: s.leadTimeDays,
-        status: s.status,
-        poCount: s.purchaseOrders.length,
-        createdAt: s.createdAt,
-    }))
+    const cacheKey = `suppliers:list:${search ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = { deletedAt: null }
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+        const items = await prisma.supplier.findMany({
+            where,
+            include: {
+                purchaseOrders: { select: { id: true } },
+            },
+            orderBy: { name: 'asc' },
+        })
+        return items.map(s => ({
+            id: s.id,
+            code: s.code,
+            name: s.name,
+            type: s.type,
+            country: s.country,
+            taxId: s.taxId,
+            tradeAgreement: s.tradeAgreement,
+            coFormType: s.coFormType,
+            paymentTerm: s.paymentTerm,
+            defaultCurrency: s.defaultCurrency,
+            incoterms: s.incoterms,
+            leadTimeDays: s.leadTimeDays,
+            status: s.status,
+            poCount: s.purchaseOrders.length,
+            createdAt: s.createdAt,
+        }))
+    }) // end cached
 }
 
 const supplierSchema = z.object({
@@ -115,6 +119,7 @@ export async function deleteSupplier(id: string): Promise<{ success: boolean; er
             where: { id },
             data: { deletedAt: new Date(), status: 'INACTIVE' },
         })
+        revalidateCache('suppliers')
         revalidatePath('/dashboard/suppliers')
         return { success: true }
     } catch (err: any) {

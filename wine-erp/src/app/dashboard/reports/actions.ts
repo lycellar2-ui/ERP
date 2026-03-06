@@ -2,110 +2,119 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ── Top selling SKUs ─────────────────────────────
 export async function getTopSKUs(limit = 10) {
-    const lines = await prisma.salesOrderLine.groupBy({
-        by: ['productId'],
-        _sum: { qtyOrdered: true },
-        orderBy: { _sum: { qtyOrdered: 'desc' } },
-        take: limit,
-        where: {
-            so: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
-        },
-    })
+    return cached(`reports:top-skus:${limit}`, async () => {
+        const lines = await prisma.salesOrderLine.groupBy({
+            by: ['productId'],
+            _sum: { qtyOrdered: true },
+            orderBy: { _sum: { qtyOrdered: 'desc' } },
+            take: limit,
+            where: {
+                so: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
+            },
+        })
 
-    const products = await prisma.product.findMany({
-        where: { id: { in: lines.map(l => l.productId) } },
-        select: { id: true, skuCode: true, productName: true, wineType: true },
-    })
+        const products = await prisma.product.findMany({
+            where: { id: { in: lines.map(l => l.productId) } },
+            select: { id: true, skuCode: true, productName: true, wineType: true },
+        })
 
-    return lines.map(l => {
-        const p = products.find(p => p.id === l.productId)!
-        return {
-            productId: l.productId,
-            skuCode: p?.skuCode ?? 'Unknown',
-            productName: p?.productName ?? 'Unknown',
-            wineType: p?.wineType ?? 'RED',
-            qtyOrdered: Number(l._sum.qtyOrdered ?? 0),
-        }
-    })
+        return lines.map(l => {
+            const p = products.find(p => p.id === l.productId)!
+            return {
+                productId: l.productId,
+                skuCode: p?.skuCode ?? 'Unknown',
+                productName: p?.productName ?? 'Unknown',
+                wineType: p?.wineType ?? 'RED',
+                qtyOrdered: Number(l._sum.qtyOrdered ?? 0),
+            }
+        })
+    }) // end cached
 }
 
 // ── Revenue by month (last 6) ────────────────────
 export async function getMonthlyRevenue() {
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
-    sixMonthsAgo.setDate(1)
-    sixMonthsAgo.setHours(0, 0, 0, 0)
+    return cached('reports:monthly-revenue', async () => {
+        const sixMonthsAgo = new Date()
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+        sixMonthsAgo.setDate(1)
+        sixMonthsAgo.setHours(0, 0, 0, 0)
 
-    const orders = await prisma.salesOrder.findMany({
-        where: {
-            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-            createdAt: { gte: sixMonthsAgo },
-        },
-        select: { totalAmount: true, createdAt: true },
-    })
-
-    const monthMap: Record<string, number> = {}
-    orders.forEach(o => {
-        const key = `${o.createdAt.getFullYear()}-${String(o.createdAt.getMonth() + 1).padStart(2, '0')}`
-        monthMap[key] = (monthMap[key] ?? 0) + Number(o.totalAmount)
-    })
-
-    const result = []
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date()
-        d.setMonth(d.getMonth() - i)
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        result.push({
-            month: key,
-            label: d.toLocaleDateString('vi-VN', { month: 'short', year: '2-digit' }),
-            revenue: monthMap[key] ?? 0,
+        const orders = await prisma.salesOrder.findMany({
+            where: {
+                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                createdAt: { gte: sixMonthsAgo },
+            },
+            select: { totalAmount: true, createdAt: true },
         })
-    }
-    return result
+
+        const monthMap: Record<string, number> = {}
+        orders.forEach(o => {
+            const key = `${o.createdAt.getFullYear()}-${String(o.createdAt.getMonth() + 1).padStart(2, '0')}`
+            monthMap[key] = (monthMap[key] ?? 0) + Number(o.totalAmount)
+        })
+
+        const result = []
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date()
+            d.setMonth(d.getMonth() - i)
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            result.push({
+                month: key,
+                label: d.toLocaleDateString('vi-VN', { month: 'short', year: '2-digit' }),
+                revenue: monthMap[key] ?? 0,
+            })
+        }
+        return result
+    }) // end cached
 }
 
 // ── Revenue by channel ───────────────────────────
 export async function getRevenueByChannel() {
-    const result = await prisma.salesOrder.groupBy({
-        by: ['channel'],
-        _sum: { totalAmount: true },
-        _count: true,
-        where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
-    })
-    return result.map(r => ({
-        channel: r.channel,
-        revenue: Number(r._sum.totalAmount ?? 0),
-        orders: r._count,
-    }))
+    return cached('reports:revenue-by-channel', async () => {
+        const result = await prisma.salesOrder.groupBy({
+            by: ['channel'],
+            _sum: { totalAmount: true },
+            _count: true,
+            where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
+        })
+        return result.map(r => ({
+            channel: r.channel,
+            revenue: Number(r._sum.totalAmount ?? 0),
+            orders: r._count,
+        }))
+    }) // end cached
 }
 
 // ── Stock valuation ──────────────────────────────
 export async function getStockValuation() {
-    const result = await prisma.stockLot.aggregate({
-        where: { status: 'AVAILABLE' },
-        _sum: { qtyAvailable: true, unitLandedCost: true },
-    })
+    return cached('reports:stock-valuation', async () => {
+        const result = await prisma.stockLot.aggregate({
+            where: { status: 'AVAILABLE' },
+            _sum: { qtyAvailable: true, unitLandedCost: true },
+        })
 
-    const productCount = await prisma.stockLot.groupBy({
-        by: ['productId'],
-        where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-    })
+        const productCount = await prisma.stockLot.groupBy({
+            by: ['productId'],
+            where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+        })
 
-    const lots = await prisma.stockLot.findMany({
-        where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-        select: { qtyAvailable: true, unitLandedCost: true },
-    })
+        const lots = await prisma.stockLot.findMany({
+            where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+            select: { qtyAvailable: true, unitLandedCost: true },
+        })
 
-    const totalValue = lots.reduce((sum, l) => sum + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
+        const totalValue = lots.reduce((sum, l) => sum + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
 
-    return {
-        totalQty: Number(result._sum.qtyAvailable ?? 0),
-        totalValue,
-        productCount: productCount.length,
-    }
+        return {
+            totalQty: Number(result._sum.qtyAvailable ?? 0),
+            totalValue,
+            productCount: productCount.length,
+        }
+    }) // end cached
 }
 
 // ═══════════════════════════════════════════════════

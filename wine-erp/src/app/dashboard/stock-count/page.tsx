@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const revalidate = 30
 
 import { getStockCountList, getCountStats } from './actions'
 import { StockCountClient } from './StockCountClient'

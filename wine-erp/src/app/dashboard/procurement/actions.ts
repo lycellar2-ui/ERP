@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────
 export type PORow = {
@@ -72,46 +73,49 @@ export async function getPurchaseOrders(filters: {
     pageSize?: number
 } = {}): Promise<{ rows: PORow[]; total: number }> {
     const { search, status, supplierId, page = 1, pageSize = 20 } = filters
+    const cacheKey = `procurement:list:${page}:${pageSize}:${search ?? ''}:${status ?? ''}:${supplierId ?? ''}`
+    return cached(cacheKey, async () => {
 
-    const where: any = {}
-    if (search) {
-        where.OR = [
-            { poNo: { contains: search, mode: 'insensitive' } },
-            { supplier: { name: { contains: search, mode: 'insensitive' } } },
-        ]
-    }
-    if (status) where.status = status
-    if (supplierId) where.supplierId = supplierId
+        const where: any = {}
+        if (search) {
+            where.OR = [
+                { poNo: { contains: search, mode: 'insensitive' } },
+                { supplier: { name: { contains: search, mode: 'insensitive' } } },
+            ]
+        }
+        if (status) where.status = status
+        if (supplierId) where.supplierId = supplierId
 
-    const [items, total] = await Promise.all([
-        prisma.purchaseOrder.findMany({
-            where,
-            include: {
-                supplier: { select: { name: true } },
-                lines: { select: { qtyOrdered: true, unitPrice: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-            skip: (page - 1) * pageSize,
-            take: pageSize,
-        }),
-        prisma.purchaseOrder.count({ where }),
-    ])
+        const [items, total] = await Promise.all([
+            prisma.purchaseOrder.findMany({
+                where,
+                include: {
+                    supplier: { select: { name: true } },
+                    lines: { select: { qtyOrdered: true, unitPrice: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+            }),
+            prisma.purchaseOrder.count({ where }),
+        ])
 
-    const rows = items.map(po => ({
-        id: po.id,
-        poNo: po.poNo,
-        supplierName: po.supplier.name,
-        supplierId: po.supplierId,
-        currency: po.currency,
-        exchangeRate: Number(po.exchangeRate),
-        status: po.status,
-        totalAmount: po.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0),
-        lineCount: po.lines.length,
-        totalQty: po.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0),
-        createdAt: po.createdAt,
-    }))
+        const rows = items.map(po => ({
+            id: po.id,
+            poNo: po.poNo,
+            supplierName: po.supplier.name,
+            supplierId: po.supplierId,
+            currency: po.currency,
+            exchangeRate: Number(po.exchangeRate),
+            status: po.status,
+            totalAmount: po.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0),
+            lineCount: po.lines.length,
+            totalQty: po.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0),
+            createdAt: po.createdAt,
+        }))
 
-    return { rows, total }
+        return { rows, total }
+    }) // end cached
 }
 
 // ─── Get single PO with lines ─────────────────────
@@ -207,6 +211,7 @@ export async function createPurchaseOrder(input: CreatePOInput) {
         },
     })
 
+    revalidateCache('procurement')
     revalidatePath('/dashboard/procurement')
     return { success: true, id: po.id, poNo: po.poNo }
 }
@@ -223,13 +228,15 @@ export async function updatePOStatus(id: string, status: string) {
 
 // ─── Stats for dashboard ──────────────────────────
 export async function getPOStats() {
-    const [total, draft, approved, inTransit] = await Promise.all([
-        prisma.purchaseOrder.count(),
-        prisma.purchaseOrder.count({ where: { status: 'DRAFT' } }),
-        prisma.purchaseOrder.count({ where: { status: 'APPROVED' } }),
-        prisma.purchaseOrder.count({ where: { status: 'IN_TRANSIT' } }),
-    ])
-    return { total, draft, approved, inTransit }
+    return cached('procurement:stats', async () => {
+        const [total, draft, approved, inTransit] = await Promise.all([
+            prisma.purchaseOrder.count(),
+            prisma.purchaseOrder.count({ where: { status: 'DRAFT' } }),
+            prisma.purchaseOrder.count({ where: { status: 'APPROVED' } }),
+            prisma.purchaseOrder.count({ where: { status: 'IN_TRANSIT' } }),
+        ])
+        return { total, draft, approved, inTransit }
+    }) // end cached
 }
 
 // ─── Upload Documents & E-Sign ──────────────────────
@@ -253,6 +260,7 @@ export async function uploadPODocument(poId: string, formData: FormData) {
             }
         })
 
+        revalidateCache('procurement')
         revalidatePath('/dashboard/procurement')
         return { success: true, document: doc }
     } catch (err: any) {
@@ -266,6 +274,7 @@ export async function signPO(poId: string, signatureUrl: string) {
             where: { id: poId },
             data: { signatureUrl, status: 'APPROVED' },
         })
+        revalidateCache('procurement')
         revalidatePath('/dashboard/procurement')
         return { success: true }
     } catch (err: any) {
@@ -478,6 +487,7 @@ export async function importPOFromExcel(data: {
             },
         })
 
+        revalidateCache('procurement')
         revalidatePath('/dashboard/procurement')
         return { success: true, poId: po.id }
     } catch (err: any) {

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
 // SETTINGS — RBAC, Users, System Config
@@ -28,23 +29,25 @@ export type RoleRow = {
 
 // ─── List Users ───────────────────────────────────
 export async function getUsers(): Promise<UserRow[]> {
-    const users = await prisma.user.findMany({
-        include: {
-            roles: {
-                include: { role: { select: { name: true } } },
+    return cached('settings:users', async () => {
+        const users = await prisma.user.findMany({
+            include: {
+                roles: {
+                    include: { role: { select: { name: true } } },
+                },
             },
-        },
-        orderBy: { createdAt: 'desc' },
-    })
+            orderBy: { createdAt: 'desc' },
+        })
 
-    return users.map(u => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        status: u.status,
-        roles: u.roles.map(r => r.role.name),
-        createdAt: u.createdAt,
-    }))
+        return users.map(u => ({
+            id: u.id,
+            email: u.email,
+            name: u.name,
+            status: u.status,
+            roles: u.roles.map(r => r.role.name),
+            createdAt: u.createdAt,
+        }))
+    }) // end cached
 }
 
 // ─── Create User ──────────────────────────────────
@@ -75,6 +78,7 @@ export async function createUser(input: UserInput): Promise<{ success: boolean; 
                 },
             },
         })
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true, id: user.id }
     } catch (err: any) {
@@ -95,6 +99,7 @@ export async function updateUser(
                 ...(input.status && { status: input.status }),
             },
         })
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }
     } catch (err: any) {
@@ -114,6 +119,7 @@ export async function updateUserRoles(
                 prisma.userRole.create({ data: { userId, roleId } })
             ),
         ])
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }
     } catch (err: any) {
@@ -160,6 +166,7 @@ export async function createRole(input: {
                     : undefined,
             },
         })
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true, id: role.id }
     } catch (err: any) {
@@ -186,6 +193,7 @@ export async function updateRolePermissions(
                 prisma.rolePermission.create({ data: { roleId, permissionId } })
             ),
         ])
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }
     } catch (err: any) {
@@ -195,13 +203,15 @@ export async function updateRolePermissions(
 
 // ─── System Stats ─────────────────────────────────
 export async function getSettingsStats() {
-    const [users, roles, activeUsers, pendingApprovals] = await Promise.all([
-        prisma.user.count(),
-        prisma.role.count(),
-        prisma.user.count({ where: { status: 'ACTIVE' } }),
-        prisma.approvalRequest.count({ where: { status: 'PENDING' } }),
-    ])
-    return { users, roles, activeUsers, pendingApprovals }
+    return cached('settings:stats', async () => {
+        const [users, roles, activeUsers, pendingApprovals] = await Promise.all([
+            prisma.user.count(),
+            prisma.role.count(),
+            prisma.user.count({ where: { status: 'ACTIVE' } }),
+            prisma.approvalRequest.count({ where: { status: 'PENDING' } }),
+        ])
+        return { users, roles, activeUsers, pendingApprovals }
+    }) // end cached
 }
 
 // ═══════════════════════════════════════════════════
@@ -239,6 +249,7 @@ export async function createApprovalTemplate(input: {
                 },
             },
         })
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true, id: template.id }
     } catch (err: any) {
@@ -280,6 +291,7 @@ export async function submitForApproval(input: {
             },
         })
 
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true, requestId: request.id }
     } catch (err: any) {
@@ -331,6 +343,7 @@ export async function processApproval(input: {
                 where: { id: input.requestId },
                 data: { status: 'REJECTED' },
             })
+            revalidateCache('settings')
             revalidatePath('/dashboard/settings')
             return { success: true, finalStatus: 'REJECTED' }
         }
@@ -345,6 +358,7 @@ export async function processApproval(input: {
                 where: { id: input.requestId },
                 data: { status: 'APPROVED', currentStep: request.currentStep },
             })
+            revalidateCache('settings')
             revalidatePath('/dashboard/settings')
             return { success: true, finalStatus: 'APPROVED' }
         } else {
@@ -353,6 +367,7 @@ export async function processApproval(input: {
                 where: { id: input.requestId },
                 data: { currentStep: nextStep },
             })
+            revalidateCache('settings')
             revalidatePath('/dashboard/settings')
             return { success: true, finalStatus: 'PENDING' }
         }

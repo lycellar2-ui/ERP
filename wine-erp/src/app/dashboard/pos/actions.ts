@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
 // POS — Point of Sale for Showroom
@@ -31,67 +32,72 @@ export type ShiftStatus = 'OPEN' | 'CLOSED'
 
 // ── Get products for POS display ──────────────────
 export async function getPOSProducts(search?: string, category?: string): Promise<POSProduct[]> {
-    const where: any = { status: 'ACTIVE', deletedAt: null }
-    if (search) {
-        where.OR = [
-            { productName: { contains: search, mode: 'insensitive' } },
-            { skuCode: { contains: search, mode: 'insensitive' } },
-        ]
-    }
-    if (category && category !== 'ALL') {
-        where.wineType = category
-    }
+    const cacheKey = `pos:products:${search ?? ''}:${category ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = { status: 'ACTIVE', deletedAt: null }
+        if (search) {
+            where.OR = [
+                { productName: { contains: search, mode: 'insensitive' } },
+                { skuCode: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+        if (category && category !== 'ALL') {
+            where.wineType = category
+        }
 
-    const products = await prisma.product.findMany({
-        where,
-        select: {
-            id: true, skuCode: true, productName: true, wineType: true,
-            stockLots: {
-                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-                select: { qtyAvailable: true },
+        const products = await prisma.product.findMany({
+            where,
+            select: {
+                id: true, skuCode: true, productName: true, wineType: true,
+                stockLots: {
+                    where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                    select: { qtyAvailable: true },
+                },
             },
-        },
-        orderBy: { productName: 'asc' },
-        take: 100,
-    })
-
-    // Get VIP/POS prices
-    const now = new Date()
-    const priceList = await prisma.priceList.findFirst({
-        where: { channel: 'VIP_RETAIL', effectiveDate: { lte: now } },
-        orderBy: { effectiveDate: 'desc' },
-    })
-    const priceLines = priceList
-        ? await prisma.priceListLine.findMany({
-            where: { priceListId: priceList.id },
-            select: { productId: true, unitPrice: true },
+            orderBy: { productName: 'asc' },
+            take: 100,
         })
-        : []
-    const priceMap = new Map(priceLines.map(l => [l.productId, Number(l.unitPrice)]))
 
-    return products.map(p => ({
-        id: p.id,
-        skuCode: p.skuCode,
-        productName: p.productName,
-        category: p.wineType ?? 'OTHER',
-        unitPrice: priceMap.get(p.id) ?? 0,
-        qtyAvailable: p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
-        imageUrl: null,
-    }))
+        // Get VIP/POS prices
+        const now = new Date()
+        const priceList = await prisma.priceList.findFirst({
+            where: { channel: 'VIP_RETAIL', effectiveDate: { lte: now } },
+            orderBy: { effectiveDate: 'desc' },
+        })
+        const priceLines = priceList
+            ? await prisma.priceListLine.findMany({
+                where: { priceListId: priceList.id },
+                select: { productId: true, unitPrice: true },
+            })
+            : []
+        const priceMap = new Map(priceLines.map(l => [l.productId, Number(l.unitPrice)]))
+
+        return products.map(p => ({
+            id: p.id,
+            skuCode: p.skuCode,
+            productName: p.productName,
+            category: p.wineType ?? 'OTHER',
+            unitPrice: priceMap.get(p.id) ?? 0,
+            qtyAvailable: p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
+            imageUrl: null,
+        }))
+    }) // end cached
 }
 
 // ── Get categories for filter ─────────────────────
 export async function getPOSCategories() {
-    const types = await prisma.product.groupBy({
-        by: ['wineType'],
-        where: { status: 'ACTIVE', deletedAt: null },
-        _count: true,
-    })
-    return types.map(t => ({
-        value: t.wineType ?? 'OTHER',
-        label: t.wineType ?? 'Khác',
-        count: t._count,
-    }))
+    return cached('pos:categories', async () => {
+        const types = await prisma.product.groupBy({
+            by: ['wineType'],
+            where: { status: 'ACTIVE', deletedAt: null },
+            _count: true,
+        })
+        return types.map(t => ({
+            value: t.wineType ?? 'OTHER',
+            label: t.wineType ?? 'Khác',
+            count: t._count,
+        }))
+    }) // end cached
 }
 
 // ── Process POS Sale ──────────────────────────────
@@ -227,6 +233,7 @@ export async function processPOSSale(input: {
             newValue: { soNo, totalAmount, paymentMethod: input.paymentMethod },
         }).catch(() => { })
 
+        revalidateCache('pos')
         revalidatePath('/dashboard/pos')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/warehouse')
@@ -370,6 +377,7 @@ export async function generatePOSVATInvoice(input: {
             },
         })
 
+        revalidateCache('pos')
         revalidatePath('/dashboard/pos')
         revalidatePath('/dashboard/finance')
         return { success: true, invoiceNo }

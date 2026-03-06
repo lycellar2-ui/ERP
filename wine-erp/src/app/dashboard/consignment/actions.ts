@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
 // CSG — Consignment Management
@@ -104,6 +105,7 @@ export async function createConsignmentAgreement(
                 status: 'ACTIVE',
             },
         })
+        revalidateCache('consignment')
         revalidatePath('/dashboard/consignment')
         return { success: true, id: agreement.id }
     } catch (err: any) {
@@ -317,18 +319,20 @@ export async function getConsignmentReports(agreementId?: string): Promise<Consi
 
 // ─── Stats ────────────────────────────────────────
 export async function getConsignmentStats() {
-    const [total, active, totalConsigned, totalSold] = await Promise.all([
-        prisma.consignmentAgreement.count(),
-        prisma.consignmentAgreement.count({ where: { status: 'ACTIVE' } }),
-        prisma.consignmentStock.aggregate({ _sum: { qtyConsigned: true } }),
-        prisma.consignmentStock.aggregate({ _sum: { qtySold: true } }),
-    ])
-    return {
-        total,
-        active,
-        totalStockSent: Number(totalConsigned._sum.qtyConsigned ?? 0),
-        totalSold: Number(totalSold._sum.qtySold ?? 0),
-    }
+    return cached('consignment:stats', async () => {
+        const [total, active, totalConsigned, totalSold] = await Promise.all([
+            prisma.consignmentAgreement.count(),
+            prisma.consignmentAgreement.count({ where: { status: 'ACTIVE' } }),
+            prisma.consignmentStock.aggregate({ _sum: { qtyConsigned: true } }),
+            prisma.consignmentStock.aggregate({ _sum: { qtySold: true } }),
+        ])
+        return {
+            total,
+            active,
+            totalStockSent: Number(totalConsigned._sum.qtyConsigned ?? 0),
+            totalSold: Number(totalSold._sum.qtySold ?? 0),
+        }
+    }) // end cached
 }
 
 // ─── Customer options for dropdown ────────────────

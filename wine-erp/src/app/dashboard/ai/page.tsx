@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic'
+﻿export const revalidate = 30
 
 import { Brain } from 'lucide-react'
 import { AnomalyWidget, DemandForecastWidget, PricingWidget } from './AIWidgets'

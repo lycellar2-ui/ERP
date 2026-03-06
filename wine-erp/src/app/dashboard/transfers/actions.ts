@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type TransferOrderRow = {
     id: string; transferNo: string
@@ -13,37 +14,41 @@ export type TransferOrderRow = {
 
 // ── List ──────────────────────────────────────────
 export async function getTransferOrders(): Promise<TransferOrderRow[]> {
-    const orders = await prisma.transferOrder.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: {
-            fromWarehouse: { select: { name: true } },
-            toWarehouse: { select: { name: true } },
-            lines: { select: { qtyTransferred: true } },
-        },
-    })
-    return orders.map(o => ({
-        id: o.id,
-        transferNo: o.transferNo,
-        fromWarehouse: o.fromWarehouse.name,
-        fromWarehouseId: o.fromWarehouseId,
-        toWarehouse: o.toWarehouse.name,
-        toWarehouseId: o.toWarehouseId,
-        status: o.status,
-        notes: o.notes,
-        lineCount: o.lines.length,
-        totalQty: o.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0),
-        createdAt: o.createdAt,
-    }))
+    return cached('transfers:list', async () => {
+        const orders = await prisma.transferOrder.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                fromWarehouse: { select: { name: true } },
+                toWarehouse: { select: { name: true } },
+                lines: { select: { qtyTransferred: true } },
+            },
+        })
+        return orders.map(o => ({
+            id: o.id,
+            transferNo: o.transferNo,
+            fromWarehouse: o.fromWarehouse.name,
+            fromWarehouseId: o.fromWarehouseId,
+            toWarehouse: o.toWarehouse.name,
+            toWarehouseId: o.toWarehouseId,
+            status: o.status,
+            notes: o.notes,
+            lineCount: o.lines.length,
+            totalQty: o.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0),
+            createdAt: o.createdAt,
+        }))
+    }) // end cached
 }
 
 // ── Stats ─────────────────────────────────────────
 export async function getTransferStats() {
-    const [total, inTransit, completed] = await Promise.all([
-        prisma.transferOrder.count(),
-        prisma.transferOrder.count({ where: { status: 'IN_TRANSIT' } }),
-        prisma.transferOrder.count({ where: { status: 'RECEIVED' } }),
-    ])
-    return { total, inTransit, completed }
+    return cached('transfers:stats', async () => {
+        const [total, inTransit, completed] = await Promise.all([
+            prisma.transferOrder.count(),
+            prisma.transferOrder.count({ where: { status: 'IN_TRANSIT' } }),
+            prisma.transferOrder.count({ where: { status: 'RECEIVED' } }),
+        ])
+        return { total, inTransit, completed }
+    }) // end cached
 }
 
 // ── Create ────────────────────────────────────────
@@ -72,6 +77,7 @@ export async function createTransferOrder(input: {
                 },
             },
         })
+        revalidateCache('transfers')
         revalidatePath('/dashboard/transfers')
         return { success: true }
     } catch (err: any) {
@@ -164,9 +170,11 @@ export async function advanceTransferStatus(id: string): Promise<{ success: bool
 
 // ── Options ───────────────────────────────────────
 export async function getTransferOptions() {
-    const [warehouses, products] = await Promise.all([
-        prisma.warehouse.findMany({ select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } }),
-        prisma.product.findMany({ where: { status: 'ACTIVE' }, select: { id: true, skuCode: true, productName: true }, orderBy: { skuCode: 'asc' } }),
-    ])
-    return { warehouses, products }
+    return cached('transfers:options', async () => {
+        const [warehouses, products] = await Promise.all([
+            prisma.warehouse.findMany({ select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } }),
+            prisma.product.findMany({ where: { status: 'ACTIVE' }, select: { id: true, skuCode: true, productName: true }, orderBy: { skuCode: 'asc' } }),
+        ])
+        return { warehouses, products }
+    }) // end cached
 }
