@@ -2,14 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
-    // Cache page responses in browser (Router Cache)
-    // This makes back-and-forth navigation between dashboard pages instant
+    // Router Cache: browser caches page RSC payload for instant tab switching
+    // - User clicks tab A → tab B → tab A: instant (from browser cache)
+    // - After mutation: revalidatePath() auto-clears this cache for affected paths
     staleTimes: {
-      dynamic: 60,   // force-dynamic pages cached 60s in browser (was 30s)
-      static: 300,   // static pages cached 5min in browser (was 180s)
+      dynamic: 30,   // ISR pages: browser caches 30s (matches shortest revalidate)
+      static: 300,   // static pages: browser caches 5min
     },
   },
 };
 
 export default nextConfig;
-
