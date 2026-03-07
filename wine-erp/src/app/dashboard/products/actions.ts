@@ -724,3 +724,81 @@ export async function deleteProductAward(awardId: string): Promise<{ success: bo
         return { success: false, error: err.message }
     }
 }
+
+// ─── Product Image Upload (ImgBB) ─────────────────
+import { uploadFileToImgBB } from '@/lib/imgbb'
+
+export async function uploadProductImage(
+    productId: string,
+    formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+        const file = formData.get('image') as File
+        if (!file || file.size === 0) return { success: false, error: 'Không có file' }
+        if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }
+        if (!file.type.startsWith('image/')) return { success: false, error: 'Chỉ chấp nhận file ảnh' }
+
+        const result = await uploadFileToImgBB(file)
+        if (!result.success) return { success: false, error: result.error }
+
+        // Check if product already has a primary image
+        const existing = await prisma.productMedia.findFirst({
+            where: { productId, isPrimary: true },
+        })
+
+        if (existing) {
+            // Update existing primary image
+            await prisma.productMedia.update({
+                where: { id: existing.id },
+                data: {
+                    url: result.url!,
+                    thumbnailUrl: result.thumbUrl ?? null,
+                    mediumUrl: result.mediumUrl ?? null,
+                },
+            })
+        } else {
+            // Create new primary image
+            await prisma.productMedia.create({
+                data: {
+                    productId,
+                    mediaType: 'PHOTO',
+                    url: result.url!,
+                    thumbnailUrl: result.thumbUrl ?? null,
+                    mediumUrl: result.mediumUrl ?? null,
+                    isPrimary: true,
+                },
+            })
+        }
+
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true, url: result.url }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function deleteProductImage(
+    productId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.productMedia.deleteMany({
+            where: { productId, isPrimary: true },
+        })
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getProductImage(
+    productId: string
+): Promise<string | null> {
+    const media = await prisma.productMedia.findFirst({
+        where: { productId, isPrimary: true },
+        select: { url: true },
+    })
+    return media?.url ?? null
+}
