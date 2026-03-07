@@ -65,7 +65,7 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
             <div className="grid grid-cols-2 gap-2">
                 <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                     <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
-                        {(row.totalRevenue / 1e6).toFixed(0)}M
+                        {row.totalRevenue >= 1e9 ? `${(row.totalRevenue / 1e9).toFixed(2)} tỷ` : row.totalRevenue >= 1e6 ? `${(row.totalRevenue / 1e6).toFixed(0)} tr` : formatVND(row.totalRevenue)}
                     </p>
                     <p className="text-xs" style={{ color: '#4A6A7A' }}>Doanh số</p>
                 </div>
@@ -363,9 +363,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     {/* KPIs */}
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
-                                            { label: 'Tổng Doanh Số', value: `${(selectedCustomer.totalRevenue / 1e6).toFixed(0)}M ₫`, color: '#87CBB9' },
+                                            { label: 'Tổng Doanh Số', value: selectedCustomer.totalRevenue >= 1e9 ? `${(selectedCustomer.totalRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(selectedCustomer.totalRevenue), color: '#87CBB9' },
                                             { label: 'Số Đơn Hàng', value: selectedCustomer.totalOrders, color: '#5BA88A' },
-                                            { label: 'Credit Limit', value: `${(selectedCustomer.creditLimit / 1e6).toFixed(0)}M`, color: '#D4A853' },
+                                            { label: 'Credit Limit', value: formatVND(selectedCustomer.creditLimit), color: '#D4A853' },
                                         ].map(kpi => (
                                             <div key={kpi.label} className="text-center p-3 rounded-md" style={{ background: '#142433' }}>
                                                 <p className="text-lg font-bold" style={{ color: kpi.color, fontFamily: '"DM Mono"' }}>{kpi.value}</p>
@@ -433,10 +433,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* Summary Stats */}
                                                 <div className="grid grid-cols-4 gap-2">
                                                     {[
-                                                        { label: 'All-time Revenue', value: `${(txHistory.allTimeRevenue / 1e6).toFixed(0)}M ₫`, color: '#87CBB9' },
+                                                        { label: 'All-time Revenue', value: txHistory.allTimeRevenue >= 1e9 ? `${(txHistory.allTimeRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(txHistory.allTimeRevenue), color: '#87CBB9' },
                                                         { label: 'Tổng Đơn', value: txHistory.totalOrders, color: '#4A8FAB' },
                                                         { label: 'Đã Xác Nhận', value: txHistory.confirmedOrders, color: '#5BA88A' },
-                                                        { label: 'TB/Đơn', value: `${(txHistory.avgOrderValue / 1e6).toFixed(0)}M`, color: '#D4A853' },
+                                                        { label: 'TB/Đơn', value: formatVND(txHistory.avgOrderValue), color: '#D4A853' },
                                                     ].map(s => (
                                                         <div key={s.label} className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                                             <p className="text-sm font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>{s.value}</p>
@@ -463,7 +463,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                     </div>
                                                                     <div className="text-right">
                                                                         <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{sku.totalQty} chai</span>
-                                                                        <span className="text-xs ml-2" style={{ color: '#5BA88A' }}>{(sku.totalValue / 1e6).toFixed(0)}M</span>
+                                                                        <span className="text-xs ml-2" style={{ color: '#5BA88A' }}>{sku.totalValue >= 1e9 ? `${(sku.totalValue / 1e9).toFixed(1)} tỷ` : formatVND(sku.totalValue)}</span>
                                                                     </div>
                                                                 </div>
                                                             ))}
