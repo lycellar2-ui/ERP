@@ -4,7 +4,6 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { uploadFile } from '@/lib/storage'
 import { cached, revalidateCache } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────
@@ -554,12 +553,18 @@ export async function getProductMedia(productId: string): Promise<ProductMediaRo
 export async function uploadProductMedia(
     productId: string,
     formData: FormData,
-    mediaType: string = 'PRODUCT_MAIN'
+    mediaType: string = 'PHOTO'
 ): Promise<{ success: boolean; media?: ProductMediaRow; error?: string }> {
     try {
-        const result = await uploadFile(formData, 'products')
+        const file = formData.get('file') as File
+        if (!file || file.size === 0) return { success: false, error: 'Không có file' }
+        if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }
+        if (!file.type.startsWith('image/')) return { success: false, error: 'Chỉ chấp nhận file ảnh' }
+
+        // Upload to ImgBB
+        const result = await uploadFileToImgBB(file)
         if (!result.success || !result.url) {
-            return { success: false, error: result.error ?? 'Upload thất bại' }
+            return { success: false, error: result.error ?? 'Upload ImgBB thất bại' }
         }
 
         // Check if this is the first media → auto-set as primary
@@ -569,6 +574,8 @@ export async function uploadProductMedia(
             data: {
                 productId,
                 url: result.url,
+                thumbnailUrl: result.thumbUrl ?? null,
+                mediumUrl: result.mediumUrl ?? null,
                 mediaType: mediaType as any,
                 isPrimary: existingCount === 0,
             },
