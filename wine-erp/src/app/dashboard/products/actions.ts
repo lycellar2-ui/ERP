@@ -553,7 +553,7 @@ export async function getProductMedia(productId: string): Promise<ProductMediaRo
 export async function uploadProductMedia(
     productId: string,
     formData: FormData,
-    mediaType: string = 'PHOTO'
+    mediaType: string = 'PRODUCT_MAIN'
 ): Promise<{ success: boolean; media?: ProductMediaRow; error?: string }> {
     try {
         const file = formData.get('file') as File
@@ -768,7 +768,7 @@ export async function uploadProductImage(
             await prisma.productMedia.create({
                 data: {
                     productId,
-                    mediaType: 'PHOTO',
+                    mediaType: 'PRODUCT_MAIN',
                     url: result.url!,
                     thumbnailUrl: result.thumbUrl ?? null,
                     mediumUrl: result.mediumUrl ?? null,
