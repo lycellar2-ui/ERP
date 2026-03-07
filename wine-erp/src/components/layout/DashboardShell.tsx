@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
+import { Menu } from 'lucide-react'
 
 function PageSkeleton() {
     return (
@@ -29,21 +30,75 @@ function PageSkeleton() {
     )
 }
 
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(false)
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768)
+        check()
+        window.addEventListener('resize', check)
+        return () => window.removeEventListener('resize', check)
+    }, [])
+    return isMobile
+}
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
     const [collapsed, setCollapsed] = useState(false)
+    const isMobile = useIsMobile()
+    const [mobileOpen, setMobileOpen] = useState(false)
+
+    // Auto-collapse on mobile
+    useEffect(() => {
+        if (isMobile) setCollapsed(true)
+    }, [isMobile])
 
     return (
         <div className="flex h-screen overflow-hidden" style={{ background: '#0A1926' }}>
             <NavigationProgress />
-            <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+
+            {/* Mobile overlay */}
+            {isMobile && mobileOpen && (
+                <div
+                    className="fixed inset-0 z-40"
+                    style={{ background: 'rgba(10,25,38,0.75)' }}
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
+
+            {/* Sidebar: on mobile, show as overlay; on desktop, inline */}
+            <div
+                className={isMobile ? 'fixed top-0 left-0 h-full z-50 transition-transform duration-200' : ''}
+                style={isMobile ? { transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)' } : {}}
+            >
+                <Sidebar
+                    collapsed={isMobile ? false : collapsed}
+                    onToggle={() => {
+                        if (isMobile) setMobileOpen(false)
+                        else setCollapsed(!collapsed)
+                    }}
+                    onNavigate={isMobile ? () => setMobileOpen(false) : undefined}
+                />
+            </div>
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                <Header title="LY's Cellars" subtitle="Hệ thống quản lý nhập khẩu rượu vang" />
+                <Header
+                    title="LY's Cellars"
+                    subtitle="Hệ thống quản lý nhập khẩu rượu vang"
+                    mobileMenuButton={isMobile ? (
+                        <button
+                            onClick={() => setMobileOpen(true)}
+                            className="p-2 rounded-lg mr-2"
+                            style={{ color: '#87CBB9' }}
+                        >
+                            <Menu size={20} />
+                        </button>
+                    ) : undefined}
+                />
 
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto p-4 md:p-6">
                     <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
                 </main>
             </div>
         </div>
     )
 }
+

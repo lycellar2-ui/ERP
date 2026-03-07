@@ -5,9 +5,10 @@ import { Bell, Search } from 'lucide-react'
 interface HeaderProps {
     title: string
     subtitle?: string
+    mobileMenuButton?: React.ReactNode
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+export function Header({ title, subtitle, mobileMenuButton }: HeaderProps) {
     return (
         <header
             className="sticky top-0 z-10 flex items-center justify-between px-6"
@@ -19,16 +20,19 @@ export function Header({ title, subtitle }: HeaderProps) {
             }}
         >
             {/* Page title */}
-            <div>
-                <h1
-                    className="font-semibold text-lg leading-tight"
-                    style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}
-                >
-                    {title}
-                </h1>
-                {subtitle && (
-                    <p className="text-xs" style={{ color: '#4A6A7A' }}>{subtitle}</p>
-                )}
+            <div className="flex items-center">
+                {mobileMenuButton}
+                <div>
+                    <h1
+                        className="font-semibold text-lg leading-tight"
+                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}
+                    >
+                        {title}
+                    </h1>
+                    {subtitle && (
+                        <p className="text-xs hidden sm:block" style={{ color: '#4A6A7A' }}>{subtitle}</p>
+                    )}
+                </div>
             </div>
 
             {/* Right side */}

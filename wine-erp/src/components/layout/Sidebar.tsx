@@ -154,9 +154,10 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
 interface SidebarProps {
     collapsed: boolean
     onToggle: () => void
+    onNavigate?: () => void
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const prefetchedRef = useRef(new Set<string>())
@@ -228,6 +229,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                                     key={item.href}
                                     href={item.href}
                                     title={collapsed ? item.label : undefined}
+                                    onClick={onNavigate}
                                     className="flex items-center gap-3 mx-2 px-3 py-2.5 mb-0.5 transition-all duration-150"
                                     style={{
                                         borderRadius: '6px',
