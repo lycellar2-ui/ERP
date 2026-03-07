@@ -13,6 +13,7 @@
 4. [BUG-004: Build Fail — Prerender Exhausts DB Pool](#bug-004-build-fail--prerender-exhausts-db-pool)
 5. [BUG-005: Build Fail — Non-Async Export in 'use server'](#bug-005-build-fail--non-async-export-in-use-server-file)
 6. [BUG-006: MaxClientsInSessionMode on Vercel Runtime](#bug-006-maxclientsinsessionmode-on-vercel-runtime)
+7. [BUG-007: Stat Cards Tính Sai — Chỉ Đếm Page Hiện Tại](#bug-007-stat-cards-tính-sai--chỉ-đếm-page-hiện-tại)
 
 ---
 
@@ -281,6 +282,76 @@ page: '/dashboard/allocation'
 
 ---
 
+## BUG-007: Stat Cards Tính Sai — Chỉ Đếm Page Hiện Tại
+
+**Ngày:** 2026-03-07
+**Severity:** 🟠 Medium — Dữ liệu thống kê hiển thị sai
+
+### Triệu chứng
+- Trang Sản Phẩm: "Đang kinh doanh" hiện **20** thay vì **112**, "Hết hàng" hiện **20** thay vì **103**
+- Trang Khách Hàng: "Hạn mức cao" chỉ đếm 25 KH trên page, "Tổng hạn mức" chỉ cộng 25 records
+- Trang NCC: "Quốc gia" chỉ đếm unique countries từ 25 NCC trên page 1
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Client-side computation từ paginated data** | Stat cards trong `*Client.tsx` dùng `rows.filter(...)` và `rows.reduce(...)` |
+| **`rows` chỉ chứa 20-25 records** | Server trả paginated data (`skip/take`), không phải toàn bộ DB |
+| **Pattern lặp lại ở 3 modules** | Products, Customers, Suppliers — cùng sai |
+| **Không ai nhận ra khi data ít** | Khi tổng < pageSize, stats "tình cờ" đúng → bug ẩn |
+
+### Cách fix
+
+**Pattern thống nhất cho cả 3 modules:**
+
+1. **Tạo `get{Module}Stats()` server action** trong `actions.ts`:
+   - `prisma.{model}.count()` cho tổng / active / conditions
+   - `prisma.{model}.aggregate()` cho sum / avg
+   - `prisma.{model}.groupBy()` cho phân nhóm
+   - Wrap trong `cached('prefix:stats', fn, 30_000)` để tối ưu performance
+
+2. **Update `page.tsx`** — fetch stats song song với rows:
+   ```typescript
+   const [{ rows, total }, stats] = await Promise.all([
+       getProducts({ page: 1, pageSize: 20 }),
+       getProductStats(),  // <-- aggregated from DB
+   ])
+   return <ProductsClient initialRows={rows} initialTotal={total} stats={stats} />
+   ```
+
+3. **Update `*Client.tsx`** — nhận `stats` prop, bỏ `rows.filter(...)`:
+   ```diff
+   - const activeCount = rows.filter(r => r.status === 'ACTIVE').length
+   + // Use stats from server (counts ALL products, not just current page)
+   ```
+
+### Files đã sửa
+
+| File | Thay đổi |
+|------|----------|
+| `products/actions.ts` | + `getProductStats()` |
+| `products/page.tsx` | Fetch `getProductStats()` parallel |
+| `products/ProductsClient.tsx` | Dùng `stats` prop |
+| `customers/actions.ts` | + `getCustomerStats()` |
+| `customers/page.tsx` | Fetch `getCustomerStats()` parallel |
+| `customers/CustomersClient.tsx` | Dùng `stats` prop |
+| `suppliers/actions.ts` | + `getSupplierStats()` |
+| `suppliers/page.tsx` | Fetch `getSupplierStats()` parallel |
+| `suppliers/SuppliersClient.tsx` | Dùng `stats` prop |
+
+### Bài học
+
+> ⚠️ **RULE 15: KHÔNG BAO GIỜ tính stats từ `rows` (paginated data) trên client.**
+> Stats PHẢI được aggregate từ DB bằng server action (`count()`, `aggregate()`, `groupBy()`).
+> Khi data < pageSize, bug sẽ ẩn → chỉ lộ khi dữ liệu tăng lên.
+> **Pattern:** `page.tsx` fetch `getXxxStats()` → pass `stats` prop → client hiển thị.
+
+> ⚠️ **RULE 16: Khi tạo module mới có stat cards, LUÔN tạo `get{Module}Stats()` từ đầu.**
+> Tham khảo `getProductStats()`, `getCustomerStats()`, `getSupplierStats()` làm template.
+
+---
+
 ## Template cho Bug mới
 
 ```markdown
@@ -322,3 +393,5 @@ page: '/dashboard/allocation'
 | 12 | Mọi export trong `'use server'` file PHẢI là `async` | Server Actions |
 | 13 | SWR background refresh phải có dedup guard | Performance |
 | 14 | ISR revalidation intervals phải stagger (30/45/60/90s) | Performance |
+| 15 | Stat cards KHÔNG tính từ `rows` — dùng `get{Module}Stats()` | Data Accuracy |
+| 16 | Module mới có stat cards → tạo `get{Module}Stats()` từ đầu | Data Accuracy |
