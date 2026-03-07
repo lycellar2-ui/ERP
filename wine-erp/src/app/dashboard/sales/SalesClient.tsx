@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, ChevronRight, Loader2, X, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react'
+import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, ChevronRight, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, advanceSalesOrderStatus, getSalesOrderDetailWithMargin, SOMarginData } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { CreateSODrawer } from './CreateSODrawer'
+import { EditSODrawer } from './EditSODrawer'
 
 const STATUS_CFG: Record<SOStatus, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: FileText },
@@ -265,9 +266,10 @@ interface Props {
     initialRows: SalesOrderRow[]
     initialTotal: number
     stats: { monthRevenue: number; monthOrders: number; pendingApproval: number; draft: number; confirmed: number }
+    userId: string
 }
 
-export function SalesClient({ initialRows, initialTotal, stats }: Props) {
+export function SalesClient({ initialRows, initialTotal, stats, userId }: Props) {
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -277,6 +279,7 @@ export function SalesClient({ initialRows, initialTotal, stats }: Props) {
     const [createOpen, setCreateOpen] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
+    const [editId, setEditId] = useState<string | null>(null)
 
     const reload = useCallback(async (newSearch?: string, newStatus?: string, newPage?: number) => {
         setLoading(true)
@@ -474,6 +477,17 @@ export function SalesClient({ initialRows, initialTotal, stats }: Props) {
                                                 {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : 'Xác Nhận'}
                                             </button>
                                         )}
+                                        {/* Edit DRAFT */}
+                                        {row.status === 'DRAFT' && (
+                                            <button onClick={() => setEditId(row.id)}
+                                                className="flex items-center gap-1 px-2 py-1 text-xs font-semibold"
+                                                style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.22)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.12)')}
+                                            >
+                                                <Pencil size={11} /> Sửa
+                                            </button>
+                                        )}
                                         {/* Advance status */}
                                         {SO_NEXT_STATUS[row.status] && (() => {
                                             const next = SO_NEXT_STATUS[row.status]!
@@ -536,11 +550,22 @@ export function SalesClient({ initialRows, initialTotal, stats }: Props) {
                 open={createOpen}
                 onClose={() => setCreateOpen(false)}
                 onSaved={() => { setCreateOpen(false); reload() }}
+                userId={userId}
             />
 
             {/* Detail Drawer */}
             {detailId && (
                 <SODetailDrawer soId={detailId} onClose={() => setDetailId(null)} />
+            )}
+
+            {/* Edit Drawer */}
+            {editId && (
+                <EditSODrawer
+                    open={!!editId}
+                    soId={editId}
+                    onClose={() => setEditId(null)}
+                    onSaved={() => { setEditId(null); reload() }}
+                />
             )}
         </div>
     )

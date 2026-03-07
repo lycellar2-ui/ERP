@@ -1378,3 +1378,730 @@ export async function writeOffBadDebt(input: {
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// CASH POSITION — "Tôi còn bao nhiêu tiền?"
+// ═══════════════════════════════════════════════════
+
+export type CashPositionData = {
+    asOf: Date
+    bankBalance: number        // TK 112 — Tiền gửi ngân hàng
+    pettyCash: number          // TK 111 — Tiền mặt quỹ
+    totalCash: number          // 111 + 112
+    arReceivable: number       // Tổng công nợ phải thu
+    apPayable: number          // Tổng công nợ phải trả
+    netWorkingCapital: number  // totalCash + AR - AP
+    // Alert
+    safetyThreshold: number
+    isBelowSafety: boolean
+    // Trends (vs 30 days ago)
+    cashChange30d: number
+    arChange30d: number
+    apChange30d: number
+}
+
+export async function getCashPosition(): Promise<CashPositionData> {
+    return cached('finance:cash-position', async () => {
+        const now = new Date()
+        const d30ago = new Date()
+        d30ago.setDate(d30ago.getDate() - 30)
+
+        // ── Current cash from Journal Entries (TK 112 + 111) ──
+        const allCashLines = await prisma.journalLine.findMany({
+            where: {
+                account: { startsWith: '112' },
+            },
+            select: { debit: true, credit: true },
+        })
+        const bankBalance = allCashLines.reduce((sum, l) => sum + Number(l.debit) - Number(l.credit), 0)
+
+        const allPettyLines = await prisma.journalLine.findMany({
+            where: { account: { startsWith: '111' } },
+            select: { debit: true, credit: true },
+        })
+        const pettyCash = allPettyLines.reduce((sum, l) => sum + Number(l.debit) - Number(l.credit), 0)
+
+        // ── Real-time AR/AP outstanding ──
+        const [arAgg, apAgg] = await Promise.all([
+            prisma.aRInvoice.aggregate({
+                where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                _sum: { amount: true },
+            }),
+            prisma.aPInvoice.aggregate({
+                where: { status: { in: ['UNPAID', 'PARTIALLY_PAID'] } },
+                _sum: { amount: true },
+            }),
+        ])
+        const arReceivable = Number(arAgg._sum?.amount ?? 0)
+        const apPayable = Number(apAgg._sum?.amount ?? 0)
+
+        const totalCash = Math.max(bankBalance, 0) + Math.max(pettyCash, 0)
+        const netWorkingCapital = totalCash + arReceivable - apPayable
+
+        // ── 30-day trend: compare with journal lines before 30 days ago ──
+        const cashLines30d = await prisma.journalLine.findMany({
+            where: {
+                account: { startsWith: '112' },
+                entry: { postedAt: { lte: d30ago } },
+            },
+            select: { debit: true, credit: true },
+        })
+        const bankBalance30d = cashLines30d.reduce((sum, l) => sum + Number(l.debit) - Number(l.credit), 0)
+
+        const [arAgg30d, apAgg30d] = await Promise.all([
+            prisma.aRInvoice.aggregate({
+                where: { createdAt: { lte: d30ago }, status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                _sum: { amount: true },
+            }),
+            prisma.aPInvoice.aggregate({
+                where: { createdAt: { lte: d30ago }, status: { in: ['UNPAID', 'PARTIALLY_PAID'] } },
+                _sum: { amount: true },
+            }),
+        ])
+
+        const SAFETY_THRESHOLD = 500_000_000 // 500M VND
+
+        return {
+            asOf: now,
+            bankBalance: Math.max(bankBalance, 0),
+            pettyCash: Math.max(pettyCash, 0),
+            totalCash,
+            arReceivable,
+            apPayable,
+            netWorkingCapital,
+            safetyThreshold: SAFETY_THRESHOLD,
+            isBelowSafety: totalCash < SAFETY_THRESHOLD,
+            cashChange30d: totalCash - Math.max(bankBalance30d, 0),
+            arChange30d: arReceivable - Number(arAgg30d._sum?.amount ?? 0),
+            apChange30d: apPayable - Number(apAgg30d._sum?.amount ?? 0),
+        }
+    }, 30_000) // cache 30s
+}
+
+// ═══════════════════════════════════════════════════
+// CASH FLOW FORECAST — Dự báo dòng tiền 30/60/90 ngày
+// ═══════════════════════════════════════════════════
+
+export type CashFlowBucket = {
+    period: string       // "0-30 ngày", "31-60 ngày", "61-90 ngày"
+    arExpected: number   // AR sẽ thu (theo due date)
+    apDue: number        // AP phải trả (theo due date)
+    expenseEstimate: number // Chi phí ước tính (avg 3 tháng gần nhất)
+    netCashFlow: number  // AR - AP - Expense
+    cumulative: number   // Lũy kế
+}
+
+export type CashFlowForecastData = {
+    currentCash: number
+    buckets: CashFlowBucket[]
+    endingCash30: number
+    endingCash60: number
+    endingCash90: number
+    isRisk30: boolean
+    isRisk60: boolean
+    isRisk90: boolean
+}
+
+export async function getCashFlowForecast(): Promise<CashFlowForecastData> {
+    return cached('finance:cash-forecast', async () => {
+        const now = new Date()
+        const d30 = new Date(now); d30.setDate(d30.getDate() + 30)
+        const d60 = new Date(now); d60.setDate(d60.getDate() + 60)
+        const d90 = new Date(now); d90.setDate(d90.getDate() + 90)
+
+        // Get current cash position
+        const cashPos = await getCashPosition()
+        const currentCash = cashPos.totalCash
+
+        // ── AR expected to collect (by due date) ──
+        const arInvoices = await prisma.aRInvoice.findMany({
+            where: {
+                status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+                dueDate: { lte: d90 },
+            },
+            select: { amount: true, paidAmount: true, dueDate: true },
+        })
+
+        const arBy30 = arInvoices.filter(i => i.dueDate <= d30).reduce((s, i) => s + Number(i.amount) - Number(i.paidAmount ?? 0), 0)
+        const arBy60 = arInvoices.filter(i => i.dueDate > d30 && i.dueDate <= d60).reduce((s, i) => s + Number(i.amount) - Number(i.paidAmount ?? 0), 0)
+        const arBy90 = arInvoices.filter(i => i.dueDate > d60 && i.dueDate <= d90).reduce((s, i) => s + Number(i.amount) - Number(i.paidAmount ?? 0), 0)
+
+        // ── AP due to pay (by due date) ──
+        const apInvoices = await prisma.aPInvoice.findMany({
+            where: {
+                status: { in: ['UNPAID', 'PARTIALLY_PAID'] },
+                dueDate: { lte: d90 },
+            },
+            select: { amount: true, dueDate: true, payments: { select: { amount: true } } },
+        })
+
+        const apOutstanding = (inv: { amount: any; payments: { amount: any }[] }) => {
+            const paid = inv.payments.reduce((s: number, p: { amount: any }) => s + Number(p.amount), 0)
+            return Number(inv.amount) - paid
+        }
+        const apBy30 = apInvoices.filter(i => i.dueDate <= d30).reduce((s, i) => s + apOutstanding(i), 0)
+        const apBy60 = apInvoices.filter(i => i.dueDate > d30 && i.dueDate <= d60).reduce((s, i) => s + apOutstanding(i), 0)
+        const apBy90 = apInvoices.filter(i => i.dueDate > d60 && i.dueDate <= d90).reduce((s, i) => s + apOutstanding(i), 0)
+
+        // ── Estimated monthly expenses (average of last 3 months) ──
+        const m3ago = new Date(now); m3ago.setMonth(m3ago.getMonth() - 3)
+        const recentExpenses = await prisma.expense.aggregate({
+            where: { status: 'APPROVED', createdAt: { gte: m3ago } },
+            _sum: { amount: true },
+        })
+        const monthlyExpenseAvg = Number(recentExpenses._sum?.amount ?? 0) / 3
+
+        // Build buckets
+        const b1Net = arBy30 - apBy30 - monthlyExpenseAvg
+        const endCash30 = currentCash + b1Net
+
+        const b2Net = arBy60 - apBy60 - monthlyExpenseAvg
+        const endCash60 = endCash30 + b2Net
+
+        const b3Net = arBy90 - apBy90 - monthlyExpenseAvg
+        const endCash90 = endCash60 + b3Net
+
+        const buckets: CashFlowBucket[] = [
+            { period: '0–30 ngày', arExpected: arBy30, apDue: apBy30, expenseEstimate: monthlyExpenseAvg, netCashFlow: b1Net, cumulative: endCash30 },
+            { period: '31–60 ngày', arExpected: arBy60, apDue: apBy60, expenseEstimate: monthlyExpenseAvg, netCashFlow: b2Net, cumulative: endCash60 },
+            { period: '61–90 ngày', arExpected: arBy90, apDue: apBy90, expenseEstimate: monthlyExpenseAvg, netCashFlow: b3Net, cumulative: endCash90 },
+        ]
+
+        return {
+            currentCash,
+            buckets,
+            endingCash30: endCash30,
+            endingCash60: endCash60,
+            endingCash90: endCash90,
+            isRisk30: endCash30 < 0,
+            isRisk60: endCash60 < 0,
+            isRisk90: endCash90 < 0,
+        }
+    }, 60_000) // cache 1 min
+}
+
+// ═══════════════════════════════════════════════════
+// BALANCE SHEET EXCEL EXPORT
+// ═══════════════════════════════════════════════════
+
+export async function exportBalanceSheetExcel(year?: number, month?: number): Promise<string> {
+    const { generateExcelBuffer } = await import('@/lib/excel')
+    const bs = await getBalanceSheet({ year, month })
+
+    type BSExcelRow = { code: string; item: string; amount: number }
+    const rows: BSExcelRow[] = bs.lines.map(l => ({
+        code: l.code,
+        item: (l.indent && l.indent > 0 ? '  '.repeat(l.indent) : '') + l.label,
+        amount: l.amount,
+    }))
+
+    // Add balance check row
+    rows.push({ code: '', item: '', amount: 0 })
+    rows.push({
+        code: '✓',
+        item: bs.isBalanced ? 'CÂN ĐỐI ✓ (Tài sản = Nợ + Vốn CSH)' : '⚠ CHÊNH LỆCH — Kiểm tra lại dữ liệu!',
+        amount: bs.totalAssets - bs.totalLiabilities - bs.totalEquity,
+    })
+
+    const buffer = await generateExcelBuffer({
+        sheetName: 'CĐKT',
+        title: `Bảng Cân Đối Kế Toán — T${bs.month}/${bs.year}`,
+        columns: [
+            { header: 'Mã số', key: 'code', width: 10 },
+            { header: 'Chỉ tiêu', key: 'item', width: 40 },
+            { header: `Số cuối kỳ (T${bs.month}/${bs.year})`, key: 'amount', width: 22, numFmt: '#,##0' },
+        ],
+        rows,
+    })
+
+    return Buffer.from(buffer).toString('base64')
+}
+
+// ═══════════════════════════════════════════════════
+// AR AGING EXCEL EXPORT — Chi tiết theo Khách hàng
+// ═══════════════════════════════════════════════════
+
+export async function exportARAgingExcel(): Promise<string> {
+    const { generateExcelBuffer } = await import('@/lib/excel')
+    const now = new Date()
+
+    const invoices = await prisma.aRInvoice.findMany({
+        where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+        include: {
+            customer: { select: { name: true, code: true } },
+            payments: { select: { amount: true } },
+        },
+        orderBy: [{ customer: { name: 'asc' } }, { dueDate: 'asc' }],
+    })
+
+    type ARAgingRow = {
+        customerCode: string
+        customerName: string
+        invoiceNo: string
+        amount: number
+        paid: number
+        outstanding: number
+        dueDate: string
+        daysOverdue: number
+        bucket: string
+    }
+
+    const rows: ARAgingRow[] = invoices.map(inv => {
+        const paid = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
+        const outstanding = Number(inv.amount) - paid
+        const days = Math.max(0, Math.floor((now.getTime() - inv.dueDate.getTime()) / 86400000))
+        let bucket = 'Chưa đến hạn'
+        if (days > 0 && days <= 30) bucket = '1–30 ngày'
+        else if (days > 30 && days <= 60) bucket = '31–60 ngày'
+        else if (days > 60 && days <= 90) bucket = '61–90 ngày'
+        else if (days > 90) bucket = 'Trên 90 ngày'
+
+        return {
+            customerCode: inv.customer?.code ?? '',
+            customerName: inv.customer?.name ?? 'N/A',
+            invoiceNo: inv.invoiceNo,
+            amount: Number(inv.amount),
+            paid,
+            outstanding,
+            dueDate: inv.dueDate.toLocaleDateString('vi-VN'),
+            daysOverdue: days,
+            bucket,
+        }
+    }).filter(r => r.outstanding > 0)
+
+    const buffer = await generateExcelBuffer({
+        sheetName: 'AR Aging',
+        title: `Báo Cáo Tuổi Nợ Phải Thu — ${now.toLocaleDateString('vi-VN')}`,
+        columns: [
+            { header: 'Mã KH', key: 'customerCode', width: 12 },
+            { header: 'Tên Khách Hàng', key: 'customerName', width: 30 },
+            { header: 'Số Hóa Đơn', key: 'invoiceNo', width: 18 },
+            { header: 'Giá trị HĐ', key: 'amount', width: 18, numFmt: '#,##0' },
+            { header: 'Đã thu', key: 'paid', width: 16, numFmt: '#,##0' },
+            { header: 'Còn nợ', key: 'outstanding', width: 18, numFmt: '#,##0' },
+            { header: 'Hạn TT', key: 'dueDate', width: 14 },
+            { header: 'Ngày QH', key: 'daysOverdue', width: 10 },
+            { header: 'Phân loại', key: 'bucket', width: 16 },
+        ],
+        rows,
+    })
+
+    return Buffer.from(buffer).toString('base64')
+}
+
+// ═══════════════════════════════════════════════════
+// CREDIT HOLD AUTO — Tự động flag khách hàng vượt hạn mức
+// ═══════════════════════════════════════════════════
+
+export type CreditHoldResult = {
+    customerId: string
+    customerName: string
+    creditLimit: number
+    currentAR: number
+    isOverLimit: boolean
+    overAmount: number
+    wasHeld: boolean // true = mới bị hold lần này
+}
+
+export async function autoCheckCreditHold(): Promise<{
+    success: boolean
+    checked: number
+    held: number
+    released: number
+    results: CreditHoldResult[]
+    error?: string
+}> {
+    try {
+        // Get all customers with credit limit > 0
+        const customers = await prisma.customer.findMany({
+            where: {
+                status: 'ACTIVE',
+                deletedAt: null,
+                creditLimit: { gt: 0 },
+            },
+            select: { id: true, name: true, creditLimit: true, creditHold: true },
+        })
+
+        const results: CreditHoldResult[] = []
+        let held = 0
+        let released = 0
+
+        for (const cust of customers) {
+            const arBalance = await prisma.aRInvoice.aggregate({
+                where: {
+                    customerId: cust.id,
+                    status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+                },
+                _sum: { amount: true },
+            })
+            const currentAR = Number(arBalance._sum?.amount ?? 0)
+            const creditLimit = Number(cust.creditLimit)
+            const isOverLimit = currentAR > creditLimit
+
+            let wasHeld = false
+            if (isOverLimit && !cust.creditHold) {
+                // Auto HOLD
+                await prisma.customer.update({
+                    where: { id: cust.id },
+                    data: { creditHold: true },
+                })
+                wasHeld = true
+                held++
+            } else if (!isOverLimit && cust.creditHold) {
+                // Auto RELEASE
+                await prisma.customer.update({
+                    where: { id: cust.id },
+                    data: { creditHold: false },
+                })
+                released++
+            }
+
+            if (isOverLimit || cust.creditHold) {
+                results.push({
+                    customerId: cust.id,
+                    customerName: cust.name,
+                    creditLimit,
+                    currentAR,
+                    isOverLimit,
+                    overAmount: Math.max(0, currentAR - creditLimit),
+                    wasHeld,
+                })
+            }
+        }
+
+        revalidateCache('finance')
+        revalidateCache('sales')
+        revalidatePath('/dashboard/finance')
+        revalidatePath('/dashboard/sales')
+
+        return { success: true, checked: customers.length, held, released, results }
+    } catch (err: any) {
+        return { success: false, checked: 0, held: 0, released: 0, results: [], error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// VAT DECLARATION — Bảng kê VAT Mua vào / Bán ra
+// ═══════════════════════════════════════════════════
+
+export type VATOutputRow = {
+    invoiceNo: string
+    customerName: string
+    customerTaxId: string
+    soNo: string
+    salesAmount: number
+    vatRate: number
+    vatAmount: number
+    totalAmount: number
+    invoiceDate: string
+}
+
+export type VATInputRow = {
+    invoiceNo: string
+    supplierName: string
+    supplierTaxId: string
+    poNo: string
+    purchaseAmount: number
+    vatRate: number
+    vatAmount: number
+    totalWithVat: number
+    invoiceDate: string
+}
+
+export type VATSummary = {
+    year: number
+    month: number
+    totalOutputVAT: number
+    totalInputVAT: number
+    netVATPayable: number
+    outputRows: VATOutputRow[]
+    inputRows: VATInputRow[]
+}
+
+export async function getVATDeclaration(year?: number, month?: number): Promise<VATSummary> {
+    const now = new Date()
+    const y = year ?? now.getFullYear()
+    const m = month ?? (now.getMonth() + 1)
+
+    const startDate = new Date(y, m - 1, 1)
+    const endDate = new Date(y, m, 0, 23, 59, 59)
+
+    // ── Output VAT (Bán ra) – AR Invoices ──
+    const arInvoices = await prisma.aRInvoice.findMany({
+        where: {
+            createdAt: { gte: startDate, lte: endDate },
+            status: { not: 'CANCELLED' },
+        },
+        include: {
+            customer: { select: { name: true, taxId: true } },
+            so: { select: { soNo: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+    })
+
+    const outputRows: VATOutputRow[] = arInvoices.map(inv => {
+        const amount = Number(inv.amount)
+        const vat = Number(inv.vatAmount ?? 0)
+        return {
+            invoiceNo: inv.invoiceNo,
+            customerName: inv.customer.name,
+            customerTaxId: inv.customer.taxId ?? '',
+            soNo: inv.so?.soNo ?? '',
+            salesAmount: amount,
+            vatRate: amount > 0 ? Math.round((vat / amount) * 100) : 10,
+            vatAmount: vat,
+            totalAmount: Number(inv.totalAmount ?? amount + vat),
+            invoiceDate: inv.createdAt.toISOString().slice(0, 10),
+        }
+    })
+
+    // ── Input VAT (Mua vào) – AP Invoices ──
+    const apInvoices = await prisma.aPInvoice.findMany({
+        where: {
+            createdAt: { gte: startDate, lte: endDate },
+            status: { not: 'CANCELLED' },
+        },
+        include: {
+            supplier: { select: { name: true, taxId: true } },
+            po: { select: { poNo: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+    })
+
+    const inputRows: VATInputRow[] = apInvoices.map(inv => {
+        const amount = Number(inv.amount) * Number(inv.exchangeRate ?? 1) // convert to VND
+        const vatRate = 10 // standard rate
+        const vatAmount = Math.round(amount * vatRate / 100)
+        return {
+            invoiceNo: inv.invoiceNo,
+            supplierName: inv.supplier.name,
+            supplierTaxId: inv.supplier.taxId ?? '',
+            poNo: inv.po?.poNo ?? '',
+            purchaseAmount: amount,
+            vatRate,
+            vatAmount,
+            totalWithVat: amount + vatAmount,
+            invoiceDate: inv.createdAt.toISOString().slice(0, 10),
+        }
+    })
+
+    const totalOutputVAT = outputRows.reduce((s, r) => s + r.vatAmount, 0)
+    const totalInputVAT = inputRows.reduce((s, r) => s + r.vatAmount, 0)
+
+    return {
+        year: y,
+        month: m,
+        totalOutputVAT,
+        totalInputVAT,
+        netVATPayable: totalOutputVAT - totalInputVAT,
+        outputRows,
+        inputRows,
+    }
+}
+
+export async function exportVATDeclarationExcel(year?: number, month?: number): Promise<string> {
+    const { generateExcelBuffer } = await import('@/lib/excel')
+    const data = await getVATDeclaration(year, month)
+
+    // Sheet 1: Output VAT (Bán ra)
+    const outputBuffer = await generateExcelBuffer({
+        sheetName: 'VAT Bán Ra',
+        title: `BẢNG KÊ HÓA ĐƠN, CHỨNG TỪ HÀNG BÁN RA — T${data.month}/${data.year}`,
+        columns: [
+            { header: 'Số HĐ', key: 'invoiceNo', width: 15 },
+            { header: 'Ngày HĐ', key: 'invoiceDate', width: 12 },
+            { header: 'Khách Hàng', key: 'customerName', width: 30 },
+            { header: 'MST', key: 'customerTaxId', width: 15 },
+            { header: 'Số SO', key: 'soNo', width: 15 },
+            { header: 'Doanh số bán', key: 'salesAmount', width: 18, numFmt: '#,##0' },
+            { header: 'Thuế suất (%)', key: 'vatRate', width: 12 },
+            { header: 'Thuế GTGT', key: 'vatAmount', width: 18, numFmt: '#,##0' },
+            { header: 'Tổng TT', key: 'totalAmount', width: 18, numFmt: '#,##0' },
+        ],
+        rows: [
+            ...data.outputRows,
+            {
+                invoiceNo: '',
+                invoiceDate: '',
+                customerName: 'TỔNG CỘNG',
+                customerTaxId: '',
+                soNo: '',
+                salesAmount: data.outputRows.reduce((s, r) => s + r.salesAmount, 0),
+                vatRate: '',
+                vatAmount: data.totalOutputVAT,
+                totalAmount: data.outputRows.reduce((s, r) => s + r.totalAmount, 0),
+            },
+        ],
+    })
+
+    // For simplicity, return single-sheet. In production, use ExcelJS multi-sheet.
+    return Buffer.from(outputBuffer).toString('base64')
+}
+
+// ═══════════════════════════════════════════════════
+// SCT DECLARATION — Tờ khai Thuế Tiêu Thụ Đặc Biệt (TTĐB)
+// ═══════════════════════════════════════════════════
+
+export type SCTRow = {
+    productSku: string
+    productName: string
+    hsCode: string
+    country: string
+    quantity: number
+    cifValueVND: number
+    importTaxRate: number
+    importTaxAmount: number
+    sctRate: number
+    sctBase: number
+    sctAmount: number
+    shipmentBL: string
+    grNo: string
+    grDate: string
+}
+
+export type SCTSummary = {
+    year: number
+    month: number
+    totalCIF: number
+    totalImportTax: number
+    totalSCT: number
+    rows: SCTRow[]
+}
+
+export async function getSCTDeclaration(year?: number, month?: number): Promise<SCTSummary> {
+    const now = new Date()
+    const y = year ?? now.getFullYear()
+    const m = month ?? (now.getMonth() + 1)
+
+    const startDate = new Date(y, m - 1, 1)
+    const endDate = new Date(y, m, 0, 23, 59, 59)
+
+    // Get all GR in period with PO lines + products
+    const goodsReceipts = await prisma.goodsReceipt.findMany({
+        where: {
+            status: 'CONFIRMED',
+            createdAt: { gte: startDate, lte: endDate },
+        },
+        include: {
+            po: {
+                include: {
+                    lines: {
+                        include: {
+                            product: { select: { skuCode: true, productName: true, hsCode: true, country: true } },
+                        },
+                    },
+                },
+            },
+            shipment: { select: { billOfLading: true, cifAmount: true, cifCurrency: true } },
+            lines: true,
+        },
+    })
+
+    // Get all tax rates for lookup
+    const taxRates = await prisma.taxRate.findMany({
+        where: { effectiveDate: { lte: endDate } },
+        orderBy: { effectiveDate: 'desc' },
+    })
+
+    const rows: SCTRow[] = []
+
+    for (const gr of goodsReceipts) {
+        const exchangeRate = Number(gr.po?.exchangeRate ?? 24500)
+
+        for (const grLine of gr.lines) {
+            const poLine = gr.po?.lines.find(l => l.productId === grLine.productId)
+            if (!poLine) continue
+
+            const product = poLine.product
+            const qty = Number(grLine.qtyReceived)
+            const unitPrice = Number(poLine.unitPrice)
+            const cifLineVND = qty * unitPrice * exchangeRate
+
+            // Find matching tax rate
+            const taxRate = taxRates.find(t =>
+                t.hsCode === product.hsCode && t.countryOfOrigin === product.country
+            )
+
+            const importTaxRate = Number(taxRate?.importTaxRate ?? 15)
+            const sctRate = Number(taxRate?.sctRate ?? 35)
+
+            const importTaxAmount = Math.round(cifLineVND * importTaxRate / 100)
+            // SCT base = CIF + Import Tax (theo luật VN)
+            const sctBase = cifLineVND + importTaxAmount
+            const sctAmount = Math.round(sctBase * sctRate / 100)
+
+            rows.push({
+                productSku: product.skuCode,
+                productName: product.productName,
+                hsCode: product.hsCode,
+                country: product.country,
+                quantity: qty,
+                cifValueVND: cifLineVND,
+                importTaxRate,
+                importTaxAmount,
+                sctRate,
+                sctBase,
+                sctAmount,
+                shipmentBL: gr.shipment?.billOfLading ?? '',
+                grNo: gr.grNo,
+                grDate: gr.createdAt.toISOString().slice(0, 10),
+            })
+        }
+    }
+
+    return {
+        year: y,
+        month: m,
+        totalCIF: rows.reduce((s, r) => s + r.cifValueVND, 0),
+        totalImportTax: rows.reduce((s, r) => s + r.importTaxAmount, 0),
+        totalSCT: rows.reduce((s, r) => s + r.sctAmount, 0),
+        rows,
+    }
+}
+
+export async function exportSCTDeclarationExcel(year?: number, month?: number): Promise<string> {
+    const { generateExcelBuffer } = await import('@/lib/excel')
+    const data = await getSCTDeclaration(year, month)
+
+    const buffer = await generateExcelBuffer({
+        sheetName: 'Tờ Khai TTĐB',
+        title: `TỜ KHAI THUẾ TIÊU THỤ ĐẶC BIỆT — T${data.month}/${data.year}`,
+        columns: [
+            { header: 'SKU', key: 'productSku', width: 15 },
+            { header: 'Tên SP', key: 'productName', width: 35 },
+            { header: 'HS Code', key: 'hsCode', width: 12 },
+            { header: 'Xuất xứ', key: 'country', width: 10 },
+            { header: 'SL', key: 'quantity', width: 8, numFmt: '#,##0' },
+            { header: 'CIF (VND)', key: 'cifValueVND', width: 18, numFmt: '#,##0' },
+            { header: '% NK', key: 'importTaxRate', width: 8 },
+            { header: 'Thuế NK', key: 'importTaxAmount', width: 18, numFmt: '#,##0' },
+            { header: '% TTĐB', key: 'sctRate', width: 8 },
+            { header: 'CIF+NK', key: 'sctBase', width: 18, numFmt: '#,##0' },
+            { header: 'Thuế TTĐB', key: 'sctAmount', width: 18, numFmt: '#,##0' },
+            { header: 'B/L', key: 'shipmentBL', width: 15 },
+            { header: 'GR', key: 'grNo', width: 12 },
+            { header: 'Ngày GR', key: 'grDate', width: 12 },
+        ],
+        rows: [
+            ...data.rows,
+            {
+                productSku: '',
+                productName: 'TỔNG CỘNG',
+                hsCode: '',
+                country: '',
+                quantity: data.rows.reduce((s, r) => s + r.quantity, 0),
+                cifValueVND: data.totalCIF,
+                importTaxRate: '',
+                importTaxAmount: data.totalImportTax,
+                sctRate: '',
+                sctBase: data.totalCIF + data.totalImportTax,
+                sctAmount: data.totalSCT,
+                shipmentBL: '',
+                grNo: '',
+                grDate: '',
+            },
+        ],
+    })
+
+    return Buffer.from(buffer).toString('base64')
+}

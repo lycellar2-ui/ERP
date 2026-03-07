@@ -332,6 +332,7 @@ model Customer {
   channel       SalesChannel?
   paymentTerm   String                 @default("NET30")
   creditLimit   Decimal                @default(0)
+  creditHold    Boolean                @default(false)
   salesRepId    String?
   salesRep      User?                  @relation("CustomerSalesRep", fields: [salesRepId], references: [id])
   status        CustomerStatus         @default(ACTIVE)

@@ -273,7 +273,7 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 
 ## 12. Implementation Status (Trạng Thái Triển Khai)
 
-> Cập nhật 05/03/2026 — **Hoàn thiện 75%**
+> Cập nhật 07/03/2026 — **Hoàn thiện 95%**
 
 ### ✅ Đã triển khai
 
@@ -288,20 +288,20 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | **P&L Statement** | `FinanceTabs.tsx` | Tab P&L — Revenue, COGS, GP, Expenses, Net Profit |
 | **Expense Management** | `FinanceTabs.tsx`, `schema.prisma` | Tab "Chi Phí" — CRUD + approval (>5M) + auto journal |
 | **Period End Close** | `FinanceTabs.tsx`, `actions.ts` | Tab "Đóng Kỳ" — 5-item checklist + lock period |
+| **Cash Flow + Cash Position** | `actions.ts`, `CashFlowTab` | ✨ Daily cash tracker + 30/60/90 forecast |
+| **Credit Hold tự động** | `actions.ts:checkCreditHold` | ✨ Auto flag CREDIT_HOLD khi vượt limit |
+| **Balance Sheet Excel** | `actions.ts:exportBalanceSheetExcel` | ✨ Excel chuẩn CĐKT |
+| **AR Aging Excel** | `actions.ts:exportARAging` | ✨ Excel AR Aging 4 bucket |
+| **Tờ khai TTĐB Excel** | `actions.ts:exportSCTDeclarationExcel` | ✨ 14 cột: SKU, HS Code, CIF, NK%, TTĐB% |
+| **Bảng kê VAT Excel** | `actions.ts:exportVATDeclarationExcel` | ✨ AR (bán ra) + AP (mua vào) → VAT phải nộp |
 
 ### ❌ Chưa triển khai
 
 | Tính năng | Ưu tiên |
 |---|---|
-| Cash Flow / Cash Position | 🟡 P2 |
-| Balance Sheet (Bảng CĐKT) | 🟡 P2 |
-| Credit Hold tự động | 🟡 P2 |
-| Bad Debt Write-off | 🟡 P2 |
+| Bad Debt Write-off (Approval) | 🟡 P2 |
 | Multi-currency AP | 🟡 P2 |
-| Export Excel tất cả báo cáo | 🟡 P2 |
 | E-Invoice integration | 🟢 P3 |
-| Tờ khai TTĐB Excel | 🟡 P2 |
-| Bảng kê VAT Excel | 🟡 P2 |
 
 ### Database Models (Prisma)
 
@@ -310,5 +310,7 @@ Expense           { expenseNo, category, account, amount, description, periodId,
 ExpenseCategory   enum: SALARY, RENT, UTILITIES, LOGISTICS, MARKETING, INSURANCE, BANK_FEE, OTHER
 ExpenseStatus     enum: DRAFT, PENDING_APPROVAL, APPROVED, REJECTED
 JournalDocType    enum: ..., COGS, EXPENSE (added)
+CashPosition      { date, opening, collections, payments, closing, snapshot_at }
 ```
 
+*Last updated: 2026-03-07 | Wine ERP v5.0*

@@ -153,3 +153,34 @@ ReturnOrder { return_no, original_so_id, status, reason }
 ReturnOrderLine { return_id, sku, qty_returned, qty_restocked, condition }
 CreditNote { cn_no, return_id, customer_id, amount, status }
 ```
+
+---
+
+## 8. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 07/03/2026 — **Hoàn thiện 95%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| Sales Order CRUD | `sales/actions.ts`, `SalesClient.tsx` | Tạo, xem, xác nhận, hủy SO |
+| CreateSODrawer | `CreateSODrawer.tsx` | Full drawer: chọn KH, kênh, sản phẩm, check tồn kho |
+| **EditSODrawer** | `EditSODrawer.tsx` | ✨ **MỚI** — Sửa DRAFT SO: KH, kênh, sản phẩm, discount |
+| **Sales Rep Auth** | `page.tsx` → `SalesClient` | ✨ Sales rep từ auth context (không còn hardcode) |
+| **Discount Approval** | `actions.ts:confirmSalesOrder` | ✨ CK > 15% → PENDING_APPROVAL + audit log với reason |
+| **FIFO Pick Suggestion** | `actions.ts:suggestPickListForSO` | ✨ Gợi ý pick list FIFO cho SO confirmed |
+| Credit Limit Check | `createSalesOrder` | Check công nợ + SO mới vs credit limit |
+| Allocation Engine | `actions.ts` | Campaign + quota per rep/customer/channel |
+| Price List auto-load | `getProductPricesForChannel` | Load giá theo kênh KH |
+| SO Detail Drawer | `SODetailDrawer.tsx` | Xem chi tiết SO + lines |
+
+### ❌ Chưa triển khai
+
+| Tính năng | Ưu tiên |
+|---|---|
+| Quotation (Báo giá) | 🟡 P2 |
+| Return Order + Credit Note | 🟡 P2 |
+| Export PDF Quotation | 🟢 P3 |
+
+*Last updated: 2026-03-07 | Wine ERP v5.0*

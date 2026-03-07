@@ -77,3 +77,34 @@ Trong mô hình kinh doanh Rượu Vang nhập khẩu, **hàng ký gửi (Consig
 - `ConsignmentReport`: Báo cáo HORECA gửi về (Đã bán bao nhiêu)
 - `ConsignmentReconciliation`: Kết quả đối chiếu + Variance
 - `ConsignmentInvoice`: Liên kết đến Invoice chính thức sau khi xác nhận bán
+
+---
+
+## 5. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 07/03/2026 — **Hoàn thiện 100%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| Agreement CRUD | `consignment/actions.ts` | Tạo, xem danh sách agreements |
+| Consignment Stock | `addConsignmentStock`, `getConsignmentStocks` | Upsert stock per agreement × product |
+| Sales Report | `createConsignmentReport` | HORECA báo cáo bán kỳ |
+| Confirm Report → AR | `confirmConsignmentReport` | Xác nhận → Auto tạo AR Invoice CSG-INV-xxx |
+| **Consigned Stock Map** | `getConsignedStockMap` | Bản đồ tồn kho ký gửi per Customer × SKU |
+| **Replenishment Alerts** | `getReplenishmentAlerts` | Cảnh báo khi tồn < min stock (10 chai) |
+| **Physical Count** | `createPhysicalCount` | Kiểm kê thực tế tại HORECA |
+| **Confirm Count** | `confirmPhysicalCount` | Xác nhận kiểm kê → adjust qty + auto report |
+| **Periodic Reconciliation** | `getPeriodicReconciliation` | ✨ **MỚI** — Tổng hợp per-customer: consigned, sold, remaining, variance, pending AR, overdue detection |
+| Stats | `getConsignmentStats` | KPI: total agreements, active, stock sent, sold |
+
+### Chi tiết Periodic Reconciliation
+
+- Aggregates tất cả HORECA customers
+- Tính estimated revenue = sold qty × latest price
+- Tính pending AR per customer
+- Overdue detection: WEEKLY > 7d, MONTHLY > 30d, QUARTERLY > 90d
+- Summary: totalCustomers, totalConsigned, totalSold, totalPendingAR, overdueCount
+
+*Last updated: 2026-03-07 | Wine ERP v5.0*

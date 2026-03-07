@@ -565,3 +565,120 @@ export async function confirmPhysicalCount(input: {
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// PERIODIC RECONCILIATION — HORECA Month-End Summary
+// ═══════════════════════════════════════════════════
+
+export type ReconciliationRow = {
+    customerId: string
+    customerName: string
+    agreementId: string
+    reportFrequency: string
+    skuCount: number
+    totalConsigned: number
+    totalSold: number
+    totalRemaining: number
+    varianceFromPhysical: number
+    estimatedRevenue: number
+    pendingARAmount: number
+    lastReportDate: Date | null
+    daysSinceLastReport: number | null
+    isOverdue: boolean
+}
+
+export async function getPeriodicReconciliation(periodStart?: string, periodEnd?: string): Promise<{
+    success: boolean
+    rows?: ReconciliationRow[]
+    summary?: { totalCustomers: number; totalConsigned: number; totalSold: number; totalPendingAR: number; overdueCount: number }
+    error?: string
+}> {
+    try {
+        const agreements = await prisma.consignmentAgreement.findMany({
+            where: { status: 'ACTIVE' },
+            include: {
+                customer: { select: { id: true, name: true } },
+                stocks: {
+                    include: { product: { select: { id: true, skuCode: true, productName: true } } },
+                },
+                reports: {
+                    orderBy: { periodEnd: 'desc' },
+                    take: 1,
+                    select: { periodEnd: true, status: true },
+                },
+            },
+        })
+
+        const now = new Date()
+        const rows: ReconciliationRow[] = []
+        let totalPendingAR = 0
+
+        for (const a of agreements) {
+            const totalConsigned = a.stocks.reduce((s, st) => s + Number(st.qtyConsigned), 0)
+            const totalSold = a.stocks.reduce((s, st) => s + Number(st.qtySold), 0)
+            const totalRemaining = a.stocks.reduce((s, st) => s + Number(st.qtyRemaining), 0)
+            const varianceFromPhysical = totalConsigned - totalSold - totalRemaining
+
+            // Estimate revenue from sold qty × latest price
+            let estimatedRevenue = 0
+            for (const st of a.stocks) {
+                const sold = Number(st.qtySold)
+                if (sold <= 0) continue
+                const priceLine = await prisma.priceListLine.findFirst({
+                    where: { productId: st.productId },
+                    orderBy: { priceList: { effectiveDate: 'desc' } },
+                    select: { unitPrice: true },
+                })
+                estimatedRevenue += sold * (priceLine ? Number(priceLine.unitPrice) : 0)
+            }
+
+            // Check pending AR for this customer
+            const pendingAR = await prisma.aRInvoice.aggregate({
+                where: { customerId: a.customer.id, status: { in: ['UNPAID', 'PARTIALLY_PAID'] } },
+                _sum: { totalAmount: true },
+            })
+            const pendingARAmount = Number(pendingAR._sum.totalAmount ?? 0)
+            totalPendingAR += pendingARAmount
+
+            const lastReport = a.reports[0]
+            const lastReportDate = lastReport?.periodEnd ?? null
+            const daysSince = lastReportDate ? Math.floor((now.getTime() - lastReportDate.getTime()) / 86400000) : null
+
+            // Determine overdue based on frequency
+            const freqDays: Record<string, number> = { WEEKLY: 7, MONTHLY: 30, QUARTERLY: 90, AS_NEEDED: 999 }
+            const maxDays = freqDays[a.reportFrequency] ?? 30
+            const isOverdue = daysSince !== null && daysSince > maxDays
+
+            rows.push({
+                customerId: a.customer.id,
+                customerName: a.customer.name,
+                agreementId: a.id,
+                reportFrequency: a.reportFrequency,
+                skuCount: a.stocks.length,
+                totalConsigned,
+                totalSold,
+                totalRemaining,
+                varianceFromPhysical,
+                estimatedRevenue,
+                pendingARAmount,
+                lastReportDate,
+                daysSinceLastReport: daysSince,
+                isOverdue,
+            })
+        }
+
+        return {
+            success: true,
+            rows,
+            summary: {
+                totalCustomers: rows.length,
+                totalConsigned: rows.reduce((s, r) => s + r.totalConsigned, 0),
+                totalSold: rows.reduce((s, r) => s + r.totalSold, 0),
+                totalPendingAR,
+                overdueCount: rows.filter(r => r.isOverdue).length,
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}

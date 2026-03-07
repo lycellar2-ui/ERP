@@ -580,3 +580,106 @@ export async function getPresetScenarios(): Promise<SensitivityScenario[]> {
         { label: 'Xấu nhất: FX+10% & TTĐB+20%', exchangeRateChange: 10, importTaxChange: 0, sctChange: 20 },
     ]
 }
+
+// ═══════════════════════════════════════════════════
+// PRICE SUGGESTION ENGINE — Landed Cost → Giá bán đề xuất
+// ═══════════════════════════════════════════════════
+
+const CHANNEL_TARGET_MARGIN: Record<string, number> = {
+    HORECA: 45,
+    WHOLESALE_DISTRIBUTOR: 35,
+    VIP_RETAIL: 50,
+    DIRECT_INDIVIDUAL: 40,
+}
+
+export type PriceSuggestionRow = {
+    productId: string
+    skuCode: string
+    productName: string
+    wineType: string
+    unitLandedCost: number
+    stockQty: number
+    suggestions: {
+        channel: string
+        channelLabel: string
+        targetMarginPct: number
+        suggestedPrice: number
+        currentListPrice: number | null
+        priceDelta: number | null
+        currentMarginPct: number | null
+    }[]
+}
+
+export async function getPriceSuggestions(): Promise<{ success: boolean; rows?: PriceSuggestionRow[]; error?: string }> {
+    try {
+        const costingProducts = await getCostingProducts()
+        const activeProducts = costingProducts.filter(p => p.unitLandedCost > 0 && p.stockQty > 0)
+
+        // Get current price lists for all channels
+        const now = new Date()
+        const priceLists = await prisma.priceList.findMany({
+            where: {
+                effectiveDate: { lte: now },
+                OR: [{ expiryDate: null }, { expiryDate: { gte: now } }],
+            },
+            include: { lines: { select: { productId: true, unitPrice: true } } },
+            orderBy: { effectiveDate: 'desc' },
+        })
+
+        // Build channel → product → price map
+        const channelPriceMap: Record<string, Record<string, number>> = {}
+        for (const pl of priceLists) {
+            const ch = pl.channel
+            if (!channelPriceMap[ch]) {
+                channelPriceMap[ch] = {}
+                for (const line of pl.lines) {
+                    channelPriceMap[ch][line.productId] = Number(line.unitPrice)
+                }
+            }
+        }
+
+        const channelEntries = Object.entries(CHANNEL_TARGET_MARGIN)
+        const channelLabels: Record<string, string> = {
+            HORECA: 'HORECA',
+            WHOLESALE_DISTRIBUTOR: 'Đại Lý',
+            VIP_RETAIL: 'VIP Retail',
+            DIRECT_INDIVIDUAL: 'Trực Tiếp',
+        }
+
+        const rows: PriceSuggestionRow[] = activeProducts.map(p => {
+            const suggestions = channelEntries.map(([channel, targetMargin]) => {
+                // Suggested price = Cost / (1 - targetMargin%)
+                const suggestedPrice = Math.round(p.unitLandedCost / (1 - targetMargin / 100))
+                const currentListPrice = channelPriceMap[channel]?.[p.id] ?? null
+                const priceDelta = currentListPrice !== null ? suggestedPrice - currentListPrice : null
+                const currentMarginPct = currentListPrice && p.unitLandedCost > 0
+                    ? Math.round(((currentListPrice - p.unitLandedCost) / currentListPrice) * 1000) / 10
+                    : null
+
+                return {
+                    channel,
+                    channelLabel: channelLabels[channel] ?? channel,
+                    targetMarginPct: targetMargin,
+                    suggestedPrice,
+                    currentListPrice,
+                    priceDelta,
+                    currentMarginPct,
+                }
+            })
+
+            return {
+                productId: p.id,
+                skuCode: p.skuCode,
+                productName: p.productName,
+                wineType: p.wineType,
+                unitLandedCost: Math.round(p.unitLandedCost),
+                stockQty: p.stockQty,
+                suggestions,
+            }
+        })
+
+        return { success: true, rows }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}

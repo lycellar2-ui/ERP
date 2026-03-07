@@ -2,6 +2,7 @@
 
 import { getSalesOrders, getSalesStats } from './actions'
 import { SalesClient } from './SalesClient'
+import { getCurrentUser } from '@/lib/session'
 
 export const metadata = {
     title: 'Đơn Bán Hàng | Wine ERP',
@@ -9,10 +10,11 @@ export const metadata = {
 }
 
 export default async function SalesPage() {
-    const [{ rows, total }, stats] = await Promise.all([
+    const [{ rows, total }, stats, user] = await Promise.all([
         getSalesOrders({ page: 1, pageSize: 20 }),
         getSalesStats(),
+        getCurrentUser(),
     ])
 
-    return <SalesClient initialRows={rows} initialTotal={total} stats={stats} />
+    return <SalesClient initialRows={rows} initialTotal={total} stats={stats} userId={user?.id ?? ''} />
 }

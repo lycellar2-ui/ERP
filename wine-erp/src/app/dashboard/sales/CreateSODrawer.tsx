@@ -29,7 +29,7 @@ const inputStyle = {
     outline: 'none',
 }
 
-export function CreateSODrawer({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) {
+export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boolean; onClose: () => void; onSaved: () => void; userId: string }) {
     const [customers, setCustomers] = useState<Customer[]>([])
     const [products, setProducts] = useState<ProductItem[]>([])
     const [loadingData, setLoadingData] = useState(false)
@@ -139,7 +139,7 @@ export function CreateSODrawer({ open, onClose, onSaved }: { open: boolean; onCl
         setSaving(true)
         const promise = createSalesOrder({
             customerId,
-            salesRepId: 'SYSTEM', // TODO: từ auth context
+            salesRepId: userId || 'SYSTEM',
             channel,
             paymentTerm,
             orderDiscount,

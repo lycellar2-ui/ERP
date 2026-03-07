@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull } from 'lucide-react'
+import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote } from 'lucide-react'
 import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
-import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab } from './FinanceTabs'
+import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab, CashFlowTab } from './FinanceTabs'
 import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
 
-type Tab = 'ar' | 'ap' | 'aging' | 'journal' | 'pnl' | 'bs' | 'expense' | 'period' | 'baddebt'
+type Tab = 'ar' | 'ap' | 'aging' | 'journal' | 'pnl' | 'bs' | 'expense' | 'period' | 'baddebt' | 'cashflow'
 
 const AR_STATUS: Record<string, { label: string; color: string }> = {
     ISSUED: { label: 'Chưa Thu', color: '#D4A853' },
@@ -261,6 +261,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         { key: 'bs', label: 'CĐKT', icon: ReceiptText },
         { key: 'expense', label: 'Chi Phí', icon: Wallet },
         { key: 'period', label: 'Đóng Kỳ', icon: Lock },
+        { key: 'cashflow', label: 'Dòng Tiền', icon: Banknote },
         { key: 'baddebt', label: 'Nợ Khó Đòi', icon: Skull },
     ]
 
@@ -416,6 +417,8 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             {tab === 'period' && <PeriodCloseTab userId={userId} />}
 
             {tab === 'baddebt' && <BadDebtTab userId={userId} />}
+
+            {tab === 'cashflow' && <CashFlowTab />}
 
             {/* Payment modal */}
             {paymentModal && (

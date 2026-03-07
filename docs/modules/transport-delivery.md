@@ -24,3 +24,27 @@ Kỷ nguyên ERP không còn dùng giấy tờ thủ công quá nhiều.
 ## 4. Reverse Logistics (Thu hồi hàng / Xử lý bể vỡ)
 - Chức năng đặc biệt khi hàng đến nơi phát hiện bể vỡ (Breakage) trong quá trình vận chuyển. 
 - Shipper nhập biên bản hao hụt ngay trên ERP mobile, Kho tự động ghi nhận Hàng Lỗi chờ xử lý (Quarantine), tự động tạo Credit Note trừ nợ cho khách hàng.
+
+---
+
+## 5. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 07/03/2026 — **Hoàn thiện 100%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| Delivery Route CRUD | `delivery/actions.ts` | Tạo, xem, cập nhật status route |
+| Driver & Vehicle Mgmt | `getDriversAndVehicles` | Dropdown tài xế + xe |
+| Route Stops | `getRouteStops` | Danh sách điểm giao per route |
+| **E-POD** | `recordEPOD` | Chữ ký điện tử + ghi chú xác nhận |
+| **POD Photo Upload** | `uploadPODPhoto` | Chụp ảnh bằng chứng giao hàng → Supabase |
+| **COD → AR Sync** | `syncCODToAR` | Thu hộ tiền → auto tạo AR Payment record |
+| **Delivery Failure** | `recordDeliveryFailure` | 5 reasons: ABSENT, WRONG_ADDRESS, REFUSED, DAMAGED, OTHER |
+| **Failed Delivery List** | `getFailedDeliveries` | Danh sách giao hàng thất bại |
+| **Redelivery** | `scheduleRedelivery` | Lên lịch giao lại → route mới |
+| **Shipper Manifest** | `getShipperManifest` | Bảng lộ trình ngày + stops + COD + POD status |
+| Delivery Stats | `getDeliveryStats` | KPI: total routes, delivered, in-progress, failed |
+
+*Last updated: 2026-03-07 | Wine ERP v5.0*

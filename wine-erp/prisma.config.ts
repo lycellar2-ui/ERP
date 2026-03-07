@@ -9,10 +9,9 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  // URL loaded from .env.local via dotenv above
-  // For migrations use: npx prisma db push --url "postgresql://..."
-  // See .env.local for the correct Session Pooler URL
+  // For migrations/db push: use DIRECT_URL (Session Pooler, port 5432, supports DDL)
+  // Falls back to DATABASE_URL (Transaction Pooler, port 6543, pgBouncer — DML only)
   datasource: {
-    url: process.env["DATABASE_URL"] ?? "",
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"] ?? "",
   },
 });

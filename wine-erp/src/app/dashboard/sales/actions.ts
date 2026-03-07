@@ -416,22 +416,107 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
     }
 }
 
+// ── Update Sales Order (DRAFT only) ──────────────
+export interface SOUpdateInput {
+    soId: string
+    customerId: string
+    channel: SalesChannel
+    paymentTerm: string
+    orderDiscount?: number
+    notes?: string
+    lines: SOLineCreate[]
+}
+
+export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success: boolean; error?: string }> {
+    try {
+        const so = await prisma.salesOrder.findUnique({
+            where: { id: input.soId },
+            select: { status: true, salesRepId: true, soNo: true },
+        })
+        if (!so) return { success: false, error: 'SO không tồn tại' }
+        if (so.status !== 'DRAFT') return { success: false, error: `Chỉ có thể sửa SO ở trạng thái DRAFT (hiện tại: ${so.status})` }
+
+        if (!input.lines || input.lines.length === 0) return { success: false, error: 'Cần ít nhất 1 dòng sản phẩm' }
+
+        const totalAmount = input.lines.reduce((sum, l) => {
+            const lineTotal = l.qtyOrdered * l.unitPrice
+            const discount = lineTotal * ((l.lineDiscountPct ?? 0) / 100)
+            return sum + lineTotal - discount
+        }, 0)
+        const finalAmount = totalAmount * (1 - (input.orderDiscount ?? 0) / 100)
+
+        // Credit check
+        const customer = await prisma.customer.findUnique({
+            where: { id: input.customerId },
+            select: { creditLimit: true },
+        })
+        if (customer && Number(customer.creditLimit) > 0) {
+            const arBalance = await getCustomerARBalance(input.customerId)
+            if (arBalance + finalAmount > Number(customer.creditLimit)) {
+                return { success: false, error: `Vượt hạn mức tín dụng! AR: ${arBalance.toLocaleString('vi-VN')}₫ + Đơn: ${Math.round(finalAmount).toLocaleString('vi-VN')}₫ > Limit: ${Number(customer.creditLimit).toLocaleString('vi-VN')}₫` }
+            }
+        }
+
+        await prisma.$transaction([
+            // Delete old lines
+            prisma.salesOrderLine.deleteMany({ where: { soId: input.soId } }),
+            // Update SO header
+            prisma.salesOrder.update({
+                where: { id: input.soId },
+                data: {
+                    customerId: input.customerId,
+                    channel: input.channel,
+                    paymentTerm: input.paymentTerm,
+                    orderDiscount: input.orderDiscount ?? 0,
+                    totalAmount: finalAmount,
+                },
+            }),
+            // Create new lines
+            ...input.lines.map(l => prisma.salesOrderLine.create({
+                data: {
+                    soId: input.soId,
+                    productId: l.productId,
+                    qtyOrdered: l.qtyOrdered,
+                    unitPrice: l.unitPrice,
+                    lineDiscountPct: l.lineDiscountPct ?? 0,
+                },
+            })),
+        ])
+
+        await logAudit({ userId: so.salesRepId, action: 'UPDATE', entityType: 'SalesOrder', entityId: input.soId, newValue: { channel: input.channel, totalAmount: finalAmount, lineCount: input.lines.length } }).catch(() => { })
+        revalidatePath('/dashboard/sales')
+        revalidateCache('sales')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
 // ── Confirm SO (with Approval Engine integration) ─
 const SO_APPROVAL_THRESHOLD = 100_000_000 // 100M VND → cần CEO duyệt
+const DISCOUNT_APPROVAL_THRESHOLD = 15 // > 15% discount → cần CEO duyệt
 
 export async function confirmSalesOrder(id: string): Promise<{ success: boolean; error?: string; needsApproval?: boolean }> {
     try {
         const so = await prisma.salesOrder.findUnique({
             where: { id },
-            select: { totalAmount: true, salesRepId: true, soNo: true, status: true },
+            select: { totalAmount: true, salesRepId: true, soNo: true, status: true, orderDiscount: true, lines: { select: { qtyOrdered: true, unitPrice: true, lineDiscountPct: true } } },
         })
         if (!so) return { success: false, error: 'SO not found' }
         if (so.status !== 'DRAFT') return { success: false, error: `Không thể xác nhận SO ở trạng thái ${so.status}` }
 
         const amount = Number(so.totalAmount)
 
-        // If above threshold, route to Approval Engine
-        if (amount >= SO_APPROVAL_THRESHOLD) {
+        // Calculate effective discount rate
+        const grossTotal = so.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+        const effectiveDiscount = grossTotal > 0 ? ((grossTotal - amount) / grossTotal) * 100 : 0
+        const needsDiscountApproval = effectiveDiscount > DISCOUNT_APPROVAL_THRESHOLD
+
+        // If above threshold OR excessive discount, route to Approval Engine
+        if (amount >= SO_APPROVAL_THRESHOLD || needsDiscountApproval) {
+            const reason = needsDiscountApproval
+                ? `Discount ${effectiveDiscount.toFixed(1)}% > ${DISCOUNT_APPROVAL_THRESHOLD}%`
+                : `Amount ${amount.toLocaleString('vi-VN')} >= ${SO_APPROVAL_THRESHOLD.toLocaleString('vi-VN')}`
             await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_APPROVAL' } })
             const result = await submitForApproval({
                 docType: 'SALES_ORDER',
@@ -440,8 +525,7 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
                 requestedBy: so.salesRepId,
             })
             if (!result.success) {
-                // Fallback: still mark as PENDING_APPROVAL
-                await logAudit({ userId: so.salesRepId, action: 'STATUS_CHANGE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'PENDING_APPROVAL', reason: 'Above threshold, approval engine failed' } }).catch(() => { })
+                await logAudit({ userId: so.salesRepId, action: 'STATUS_CHANGE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'PENDING_APPROVAL', reason } }).catch(() => { })
             }
             revalidatePath('/dashboard/sales')
             revalidatePath('/dashboard')
@@ -933,3 +1017,105 @@ export async function consumeAllocationQuota(input: {
     }
 }
 
+// ═══════════════════════════════════════════════════
+// FIFO PICK LIST SUGGESTION — SO → DO Auto-suggest
+// ═══════════════════════════════════════════════════
+
+export type PickSuggestionLine = {
+    productId: string
+    productName: string
+    skuCode: string
+    qtyOrdered: number
+    picks: { lotId: string; lotNo: string; locationCode: string; qty: number; receivedDate: string }[]
+    isFullyAllocated: boolean
+    shortfall: number
+}
+
+export type PickListSuggestion = {
+    soId: string
+    soNo: string
+    customerName: string
+    lines: PickSuggestionLine[]
+    allFullyAllocated: boolean
+    totalShortfall: number
+}
+
+export async function suggestPickListForSO(soId: string): Promise<{ success: boolean; suggestion?: PickListSuggestion; error?: string }> {
+    try {
+        const so = await prisma.salesOrder.findUnique({
+            where: { id: soId },
+            include: {
+                customer: { select: { name: true } },
+                lines: {
+                    include: { product: { select: { skuCode: true, productName: true } } },
+                },
+            },
+        })
+        if (!so) return { success: false, error: 'SO not found' }
+        if (!['CONFIRMED', 'PARTIALLY_DELIVERED'].includes(so.status)) {
+            return { success: false, error: `SO trạng thái ${so.status} — chỉ hỗ trợ CONFIRMED / PARTIALLY_DELIVERED` }
+        }
+
+        const lines: PickSuggestionLine[] = []
+        let totalShortfall = 0
+
+        for (const soLine of so.lines) {
+            const qtyNeeded = Number(soLine.qtyOrdered)
+
+            // FIFO: oldest receivedDate first
+            const lots = await prisma.stockLot.findMany({
+                where: {
+                    productId: soLine.productId,
+                    status: 'AVAILABLE',
+                    qtyAvailable: { gt: 0 },
+                },
+                include: { location: { select: { locationCode: true } } },
+                orderBy: { receivedDate: 'asc' },
+            })
+
+            let remaining = qtyNeeded
+            const picks: PickSuggestionLine['picks'] = []
+
+            for (const lot of lots) {
+                if (remaining <= 0) break
+                const available = Number(lot.qtyAvailable)
+                const pick = Math.min(available, remaining)
+                picks.push({
+                    lotId: lot.id,
+                    lotNo: lot.lotNo,
+                    locationCode: lot.location.locationCode,
+                    qty: pick,
+                    receivedDate: lot.receivedDate.toISOString().slice(0, 10),
+                })
+                remaining -= pick
+            }
+
+            const shortfall = Math.max(0, remaining)
+            totalShortfall += shortfall
+
+            lines.push({
+                productId: soLine.productId,
+                productName: soLine.product.productName,
+                skuCode: soLine.product.skuCode,
+                qtyOrdered: qtyNeeded,
+                picks,
+                isFullyAllocated: shortfall === 0,
+                shortfall,
+            })
+        }
+
+        return {
+            success: true,
+            suggestion: {
+                soId,
+                soNo: so.soNo,
+                customerName: so.customer.name,
+                lines,
+                allFullyAllocated: totalShortfall === 0,
+                totalShortfall,
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}

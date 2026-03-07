@@ -183,3 +183,37 @@ PriceSuggestion {
 ```
 
 *Last updated: 2026-03-04 | Wine ERP v4.0*
+
+---
+
+## 10. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 07/03/2026 — **Hoàn thiện 100%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| Costing Product View | `costing/actions.ts:getCostingProducts` | Unit Landed Cost, List Price, Margin%, isLoss flag |
+| Landed Cost Campaign | `createLandedCostCampaign` | Tạo campaign từ Shipment |
+| Cost Proration Engine | `calculateLandedCostProration` | Phân bổ chi phí theo qty ratio |
+| Finalize Campaign | `finalizeLandedCostCampaign` | Cập nhật StockLot.unitLandedCost |
+| **Sensitivity Analysis** | `runSensitivityAnalysis` | What-if: FX, NK, TTĐB thay đổi → tác động |
+| Preset Scenarios | `getPresetScenarios` | 6 kịch bản mặc định (FX ±5/10%, EVFTA, TTĐB) |
+| **Price Suggestion Engine** | `getPriceSuggestions` | ✨ **MỚI** — 4 kênh × target margin → giá đề xuất |
+
+### Chi tiết Price Suggestion Engine
+
+```
+Channel               Target Margin    Formula
+─────────────────────────────────────────────────
+HORECA                45%             Cost / (1 - 0.45)
+WHOLESALE_DISTRIBUTOR 35%             Cost / (1 - 0.35)
+VIP_RETAIL            50%             Cost / (1 - 0.50)
+DIRECT_INDIVIDUAL     40%             Cost / (1 - 0.40)
+```
+
+- So sánh giá đề xuất vs giá hiện tại trên Price List → delta
+- Tính margin thực tế từ giá hiện tại vs landed cost
+
+*Last updated: 2026-03-07 | Wine ERP v5.0*

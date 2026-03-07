@@ -9,8 +9,14 @@ import {
     getAccountingPeriods, closeAccountingPeriod,
     ExpenseRow, getExpenses, createExpense, approveExpense, rejectExpense,
     PeriodCloseCheckItem, getPeriodCloseChecklist,
-    BSLineItem, getBalanceSheet,
+    BSLineItem, getBalanceSheet, exportBalanceSheetExcel,
     BadDebtCandidate, getBadDebtCandidates, writeOffBadDebt,
+    CashPositionData, getCashPosition,
+    CashFlowBucket, CashFlowForecastData, getCashFlowForecast,
+    CreditHoldResult, autoCheckCreditHold,
+    exportARAgingExcel,
+    exportVATDeclarationExcel,
+    exportSCTDeclarationExcel,
 } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 
@@ -953,6 +959,342 @@ export function BadDebtTab({ userId }: { userId: string }) {
                     })}
                 </div>
             )}
+        </div>
+    )
+}
+
+// ═══════════════════════════════════════════════════
+// CASH FLOW TAB — Dòng tiền & Credit Hold
+// ═══════════════════════════════════════════════════
+
+export function CashFlowTab() {
+    const [cashPos, setCashPos] = useState<CashPositionData | null>(null)
+    const [forecast, setForecast] = useState<CashFlowForecastData | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [creditResults, setCreditResults] = useState<CreditHoldResult[] | null>(null)
+    const [creditRunning, setCreditRunning] = useState(false)
+    const [creditStats, setCreditStats] = useState<{ checked: number; held: number; released: number } | null>(null)
+    const [bsExporting, setBsExporting] = useState(false)
+    const [arExporting, setArExporting] = useState(false)
+    const [vatExporting, setVatExporting] = useState(false)
+    const [sctExporting, setSctExporting] = useState(false)
+
+    const load = useCallback(async () => {
+        setLoading(true)
+        const [pos, fc] = await Promise.all([getCashPosition(), getCashFlowForecast()])
+        setCashPos(pos)
+        setForecast(fc)
+        setLoading(false)
+    }, [])
+
+    if (!cashPos && !loading) load()
+
+    const trendArrow = (val: number) => {
+        if (val > 0) return <span style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>↑ {formatVND(Math.abs(val))}</span>
+        if (val < 0) return <span style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>↓ {formatVND(Math.abs(val))}</span>
+        return <span style={{ color: '#4A6A7A' }}>—</span>
+    }
+
+    const handleCreditCheck = async () => {
+        setCreditRunning(true)
+        try {
+            const result = await autoCheckCreditHold()
+            if (result.success) {
+                setCreditResults(result.results)
+                setCreditStats({ checked: result.checked, held: result.held, released: result.released })
+                toast.success(`Đã kiểm tra ${result.checked} KH — Hold: ${result.held}, Thả: ${result.released}`)
+            } else {
+                toast.error(result.error || 'Lỗi kiểm tra credit')
+            }
+        } catch (err: any) {
+            toast.error(err.message)
+        } finally {
+            setCreditRunning(false)
+        }
+    }
+
+    const downloadExcel = async (base64: string, filename: string) => {
+        const blob = new Blob([Uint8Array.from(atob(base64), c => c.charCodeAt(0))],
+            { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url; a.download = filename; a.click()
+        URL.revokeObjectURL(url)
+    }
+
+    return (
+        <div className="space-y-6">
+            {loading ? (
+                <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+            ) : cashPos && forecast ? (
+                <>
+                    {/* ── Cash Position Section ── */}
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Vị Thế Tiền Mặt</h3>
+                            <div className="flex gap-2">
+                                <button onClick={async () => {
+                                    setBsExporting(true)
+                                    try {
+                                        const base64 = await exportBalanceSheetExcel()
+                                        await downloadExcel(base64, `CDKT_${new Date().toISOString().slice(0, 7)}.xlsx`)
+                                    } finally { setBsExporting(false) }
+                                }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
+                                    style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                                    <Download size={12} /> {bsExporting ? '...' : 'CĐKT Excel'}
+                                </button>
+                                <button onClick={async () => {
+                                    setArExporting(true)
+                                    try {
+                                        const base64 = await exportARAgingExcel()
+                                        await downloadExcel(base64, `AR_Aging_${new Date().toISOString().slice(0, 10)}.xlsx`)
+                                    } finally { setArExporting(false) }
+                                }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
+                                    style={{ border: '1px solid #2A4355', color: '#D4A853' }}>
+                                    <Download size={12} /> {arExporting ? '...' : 'AR Aging Excel'}
+                                </button>
+                                <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
+                                    style={{ background: '#87CBB9', color: '#0A1926' }}>Làm Mới</button>
+                                <button onClick={async () => {
+                                    setVatExporting(true)
+                                    try {
+                                        const base64 = await exportVATDeclarationExcel()
+                                        await downloadExcel(base64, `VAT_BanRa_${new Date().toISOString().slice(0, 7)}.xlsx`)
+                                    } finally { setVatExporting(false) }
+                                }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
+                                    style={{ border: '1px solid #2A4355', color: '#5BA88A' }}>
+                                    <Download size={12} /> {vatExporting ? '...' : 'VAT Excel'}
+                                </button>
+                                <button onClick={async () => {
+                                    setSctExporting(true)
+                                    try {
+                                        const base64 = await exportSCTDeclarationExcel()
+                                        await downloadExcel(base64, `TTDB_${new Date().toISOString().slice(0, 7)}.xlsx`)
+                                    } finally { setSctExporting(false) }
+                                }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
+                                    style={{ border: '1px solid #2A4355', color: '#C45A2A' }}>
+                                    <Download size={12} /> {sctExporting ? '...' : 'TTĐB Excel'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Safety Alert */}
+                        {cashPos.isBelowSafety && (
+                            <div className="flex items-center gap-2 p-3 rounded-md mb-3"
+                                style={{ background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.3)' }}>
+                                <AlertTriangle size={16} style={{ color: '#E05252' }} />
+                                <span className="text-sm font-semibold" style={{ color: '#E05252' }}>
+                                    ⚠ Tiền mặt ({formatVND(cashPos.totalCash)}) dưới ngưỡng an toàn ({formatVND(cashPos.safetyThreshold)})
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Cash cards */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            {[
+                                { label: 'Tiền Gửi NH (TK 112)', value: cashPos.bankBalance, trend: cashPos.cashChange30d, color: '#87CBB9' },
+                                { label: 'Phải Thu (AR)', value: cashPos.arReceivable, trend: cashPos.arChange30d, color: '#5BA88A' },
+                                { label: 'Phải Trả (AP)', value: cashPos.apPayable, trend: cashPos.apChange30d, color: '#D4A853' },
+                                { label: 'Vốn Lưu Động Ròng', value: cashPos.netWorkingCapital, trend: null, color: cashPos.netWorkingCapital >= 0 ? '#87CBB9' : '#E05252' },
+                            ].map(c => (
+                                <div key={c.label} className="p-4 rounded-md" style={card}>
+                                    <p className="text-xs uppercase mb-1.5 font-semibold" style={{ color: '#4A6A7A' }}>{c.label}</p>
+                                    <p className="text-xl font-bold" style={{ color: c.color, fontFamily: '"DM Mono"' }}>
+                                        {formatVND(c.value)}
+                                    </p>
+                                    {c.trend !== null && (
+                                        <p className="text-xs mt-1">
+                                            <span style={{ color: '#4A6A7A' }}>30d: </span>{trendArrow(c.trend as number)}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Petty cash + total */}
+                        {cashPos.pettyCash > 0 && (
+                            <div className="flex items-center gap-4 px-4 py-2.5 mt-3 rounded-md" style={card}>
+                                <span className="text-xs" style={{ color: '#4A6A7A' }}>Quỹ tiền mặt (TK 111):</span>
+                                <span className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                    {formatVND(cashPos.pettyCash)}
+                                </span>
+                                <span className="text-xs" style={{ color: '#4A6A7A' }}>|</span>
+                                <span className="text-xs" style={{ color: '#4A6A7A' }}>Tổng tiền sẵn sàng:</span>
+                                <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                    {formatVND(cashPos.totalCash)}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Cash Flow Forecast ── */}
+                    <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: '#D4A853' }}>Dự Báo Dòng Tiền 90 Ngày</h3>
+
+                        {/* Risk alerts */}
+                        {(forecast.isRisk30 || forecast.isRisk60 || forecast.isRisk90) && (
+                            <div className="flex items-center gap-2 p-3 rounded-md mb-3"
+                                style={{ background: 'rgba(139,26,46,0.08)', border: '1px solid rgba(139,26,46,0.3)' }}>
+                                <AlertTriangle size={16} style={{ color: '#8B1A2E' }} />
+                                <span className="text-sm font-semibold" style={{ color: '#8B1A2E' }}>
+                                    🚨 Dự báo THIẾU TIỀN trong {forecast.isRisk30 ? '30' : forecast.isRisk60 ? '60' : '90'} ngày tới!
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Forecast table */}
+                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        {['Kho\u1EA3ng TG', 'AR Kỳ Vọng Thu', 'AP Phải Trả', 'Chi Phí ƯT', 'Dòng Tiền Ròng', 'Lũy Kế'].map(h => (
+                                            <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right first:text-left"
+                                                style={{ color: '#4A6A7A' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {/* Current cash row */}
+                                    <tr style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: 'rgba(135,203,185,0.06)' }}>
+                                        <td className="px-4 py-2.5 text-sm font-bold" style={{ color: '#E8F1F2' }}>Tiền hiện tại</td>
+                                        <td className="px-4 py-2.5 text-right" colSpan={4}></td>
+                                        <td className="px-4 py-2.5 text-right text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                            {formatVND(forecast.currentCash)}
+                                        </td>
+                                    </tr>
+                                    {forecast.buckets.map((b, i) => {
+                                        const riskColor = b.cumulative < 0 ? '#E05252' : b.netCashFlow < 0 ? '#D4A853' : '#5BA88A'
+                                        return (
+                                            <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                <td className="px-4 py-2.5 text-sm font-semibold" style={{ color: '#E8F1F2' }}>{b.period}</td>
+                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>+{formatVND(b.arExpected)}</td>
+                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>-{formatVND(b.apDue)}</td>
+                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>-{formatVND(b.expenseEstimate)}</td>
+                                                <td className="px-4 py-2.5 text-right text-sm font-bold" style={{
+                                                    color: b.netCashFlow >= 0 ? '#5BA88A' : '#E05252', fontFamily: '"DM Mono"'
+                                                }}>
+                                                    {b.netCashFlow >= 0 ? '+' : ''}{formatVND(b.netCashFlow)}
+                                                </td>
+                                                <td className="px-4 py-2.5 text-right text-sm font-bold" style={{
+                                                    color: riskColor, fontFamily: '"DM Mono"'
+                                                }}>
+                                                    {formatVND(b.cumulative)}
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Visual bars */}
+                        <div className="grid grid-cols-3 gap-3 mt-3">
+                            {[
+                                { label: '30 ngày', value: forecast.endingCash30, risk: forecast.isRisk30 },
+                                { label: '60 ngày', value: forecast.endingCash60, risk: forecast.isRisk60 },
+                                { label: '90 ngày', value: forecast.endingCash90, risk: forecast.isRisk90 },
+                            ].map(p => (
+                                <div key={p.label} className="p-3 rounded-md" style={{
+                                    ...card,
+                                    borderLeft: `3px solid ${p.risk ? '#E05252' : p.value > 500_000_000 ? '#5BA88A' : '#D4A853'}`,
+                                }}>
+                                    <p className="text-xs uppercase mb-1" style={{ color: '#4A6A7A' }}>Số dư {p.label}</p>
+                                    <p className="text-lg font-bold" style={{
+                                        color: p.risk ? '#E05252' : '#E8F1F2', fontFamily: '"DM Mono"',
+                                    }}>
+                                        {formatVND(p.value)}
+                                    </p>
+                                    {p.risk && <p className="text-xs mt-1 font-semibold" style={{ color: '#E05252' }}>⚠ Rủi ro thiếu tiền</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── Credit Hold ── */}
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Credit Hold — Kiểm Soát Hạn Mức</h3>
+                            <button onClick={handleCreditCheck} disabled={creditRunning}
+                                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
+                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                {creditRunning ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} />}
+                                {creditRunning ? 'Đang kiểm tra...' : 'Chạy Credit Check'}
+                            </button>
+                        </div>
+
+                        {creditStats && (
+                            <div className="flex gap-3 mb-3">
+                                <span className="text-xs px-3 py-1.5 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB' }}>
+                                    Đã kiểm tra: <b>{creditStats.checked}</b> KH
+                                </span>
+                                {creditStats.held > 0 && (
+                                    <span className="text-xs px-3 py-1.5 rounded-md font-bold" style={{ background: 'rgba(224,82,82,0.1)', border: '1px solid rgba(224,82,82,0.3)', color: '#E05252' }}>
+                                        🔒 Mới HOLD: {creditStats.held}
+                                    </span>
+                                )}
+                                {creditStats.released > 0 && (
+                                    <span className="text-xs px-3 py-1.5 rounded-md font-bold" style={{ background: 'rgba(91,168,138,0.1)', border: '1px solid rgba(91,168,138,0.3)', color: '#5BA88A' }}>
+                                        🔓 Đã thả: {creditStats.released}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {creditResults && creditResults.length > 0 ? (
+                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                            {['Khách Hàng', 'Credit Limit', 'AR Hiện Tại', 'Vượt', 'Trạng Thái'].map(h => (
+                                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#4A6A7A' }}>{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {creditResults.map(r => (
+                                            <tr key={r.customerId} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: r.wasHeld ? 'rgba(224,82,82,0.04)' : 'transparent' }}>
+                                                <td className="px-4 py-2.5 text-sm font-medium" style={{ color: '#E8F1F2' }}>{r.customerName}</td>
+                                                <td className="px-4 py-2.5 text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(r.creditLimit)}</td>
+                                                <td className="px-4 py-2.5 text-sm font-bold" style={{ color: r.isOverLimit ? '#E05252' : '#5BA88A', fontFamily: '"DM Mono"' }}>
+                                                    {formatVND(r.currentAR)}
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    {r.overAmount > 0 && (
+                                                        <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ color: '#E05252', background: 'rgba(224,82,82,0.15)', fontFamily: '"DM Mono"' }}>
+                                                            +{formatVND(r.overAmount)}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    <span className="text-xs px-2.5 py-1 rounded-full font-bold" style={{
+                                                        color: r.isOverLimit ? '#E05252' : '#5BA88A',
+                                                        background: r.isOverLimit ? 'rgba(224,82,82,0.15)' : 'rgba(91,168,138,0.15)',
+                                                    }}>
+                                                        {r.wasHeld ? '🔒 MỚI HOLD' : r.isOverLimit ? '🔒 HOLD' : '✅ OK'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : creditResults && creditResults.length === 0 ? (
+                            <div className="text-center py-8 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
+                                <CircleCheck size={28} className="mx-auto mb-2" style={{ color: '#5BA88A' }} />
+                                <p className="text-sm font-semibold" style={{ color: '#5BA88A' }}>Tất cả khách hàng trong hạn mức ✓</p>
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
+                                <AlertTriangle size={28} className="mx-auto mb-2" style={{ color: '#2A4355' }} />
+                                <p className="text-sm" style={{ color: '#4A6A7A' }}>Nhấn "Chạy Credit Check" để kiểm tra hạn mức tín dụng</p>
+                                <p className="text-xs mt-1" style={{ color: '#2A4355' }}>Sẽ auto lock KH có AR vượt credit limit</p>
+                            </div>
+                        )}
+                    </div>
+                </>
+            ) : null}
         </div>
     )
 }

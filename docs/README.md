@@ -171,4 +171,4 @@ docs/
 4. **AI context** → Cập nhật `llms.txt` khi có thêm khái niệm domain mới
 
 ---
-*Last updated: 2026-03-07 21:45 | Wine ERP v5.0 — **P1-P8 ~99% ✅** | **Production Readiness 100%** | Session 07/03: +Media Library, Responsive Sidebar, Security Headers, Zod POS/Warehouse, PWA Manifest, 404 Page, Env Validation | Deep Audit: Products (10 fixes) + **Customers (18 fixes)**: Edit/Delete, Export CSV, Sort, Channel filter, Sales Rep, shortName, CRM revenue format tỷ*
+*Last updated: 2026-03-07 23:10 | Wine ERP v5.0 — **All modules ~100% ✅** | Deep Feature Audit 7/7 sessions DONE: +SO Edit/Discount Approval/FIFO Pick (Sales) +Cash Flow/Credit Hold/VAT+SCT Excel (Finance) +Price Suggestion Engine (Costing) +Periodic Reconciliation (Consignment) +GR Variance Report (WMS) +Shift Mgmt/End-of-Day Report (POS) +Contract Link PO/SO/Utilization*

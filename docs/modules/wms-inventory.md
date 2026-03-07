@@ -299,3 +299,41 @@ WMS Mobile App (PWA):
 Cần thiết vì kho có thể có vùng mù sóng.
 
 *Last updated: 2026-03-04 | Wine ERP v4.0*
+
+---
+
+## 10. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 07/03/2026 — **Hoàn thiện 100%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| Warehouse CRUD | `warehouse/actions.ts` | Tạo, xem warehouses + locations |
+| Location Heatmap | `getLocationHeatmap` | Occupancy per zone |
+| Stock Inventory | `getStockInventory` | Lot view: filter by warehouse, wine type, status |
+| Goods Receipt | `createGoodsReceipt`, `confirmGoodsReceipt` | GR từ PO → StockLot auto-create |
+| Delivery Order | `createDeliveryOrder`, `confirmDeliveryOrder` | DO từ SO → FIFO pick + auto COGS journal |
+| **Stock Transfer** | `transferStock` | Chuyển lot giữa locations |
+| **Cycle Count** | Full cycle: `create → record → complete → adjust` | Session-based count with variance |
+| **FIFO Picking** | `pickByFIFO` | Auto-select oldest lots |
+| **Quarantine** | `moveToQuarantine`, `releaseFromQuarantine` | Cách ly + restore/write-off với approval |
+| **Write-Off** | `writeOffStock` | Ghi nhận hao hụt → auto DR 811 / CR 156 |
+| **Stock Adjustment** | `adjustStockFromCount` | From cycle count variance |
+| **Barcode Scanner** | `scanBarcode` | Scan PRODUCT / LOT / LOCATION |
+| **Quick Stock Check** | `quickStockCheck` | Product → all lots + locations + days in stock |
+| **GR Variance Report** | `getGRVarianceReport` | ✨ **MỚI** — PO ordered vs GR received per-product |
+| WMS Full Stats | `getWMSFullStats` | 9 KPIs: qty, value, SKUs, quarantine, low-stock alerts |
+
+### Chi tiết GR Variance Report
+
+```
+getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
+→ Per GR: grNo, poNo, supplier, lines[]
+→ Per line: product, qtyOrdered, qtyReceived, variance, variancePct
+→ Status: OK | SHORT | SURPLUS
+→ hasIssues flag cho quick filter
+```
+
+*Last updated: 2026-03-07 | Wine ERP v5.0*

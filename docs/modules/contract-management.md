@@ -80,3 +80,27 @@ Contract (HĐ Bán Hàng)
 - `ContractDocument`: File đính kèm (PDF scan, file nháp)
 - `ContractAlert`: Cấu hình cảnh báo hết hạn
 - `ContractUtilization`: Theo dõi tổng giá trị PO/SO đã tạo dưới HĐ
+
+---
+
+## 6. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 07/03/2026 — **Hoàn thiện 100%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| Contract CRUD | `contracts/actions.ts` | Tạo, xem, cập nhật status |
+| Contract Stats | `getContractStats` | KPI: total, active, expiring, total value |
+| **Link Contract ↔ SO** | `linkContractToSO` | Liên kết HĐ → Sales Order |
+| **Link Contract ↔ PO** | `linkContractToPO` | Liên kết HĐ → Purchase Order |
+| **Utilization Tracking** | `getContractUtilization` | PO + SO value vs contract value, utilization % |
+| **Expiry Alerts** | `getExpiringContracts(30)` | Cảnh báo 30 ngày trước hết hạn |
+| **Auto-Expire** | `autoExpireContracts` | Tự động chuyển EXPIRED cho HĐ quá hạn |
+| **Email Alerts** | `sendContractExpiryAlerts` | Gửi email thông báo sắp hết hạn |
+| **Amendment** | `createContractAmendment` | Phụ lục sửa đổi: new value, new end date |
+| **Document Upload** | `uploadContractDocument` | Upload PDF/scan → Supabase Storage |
+| **Digital Signature** | `signContractInternal` | Chữ ký số nội bộ + hash verification |
+
+*Last updated: 2026-03-07 | Wine ERP v5.0*

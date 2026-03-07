@@ -1411,3 +1411,122 @@ export async function quickStockCheck(productId: string) {
         })),
     }
 }
+
+// ═══════════════════════════════════════════════════
+// GR VARIANCE REPORT — PO Ordered vs Actual Received
+// ═══════════════════════════════════════════════════
+
+export type GRVarianceRow = {
+    grId: string
+    grNo: string
+    poNo: string
+    supplierName: string
+    warehouseName: string
+    receivedDate: Date
+    lines: {
+        productId: string
+        skuCode: string
+        productName: string
+        qtyOrdered: number
+        qtyReceived: number
+        variance: number
+        variancePct: number
+        status: 'OK' | 'SHORT' | 'SURPLUS'
+    }[]
+    totalOrdered: number
+    totalReceived: number
+    totalVariance: number
+    hasIssues: boolean
+}
+
+export async function getGRVarianceReport(filters: {
+    warehouseId?: string
+    dateFrom?: string
+    dateTo?: string
+} = {}): Promise<{ success: boolean; rows?: GRVarianceRow[]; error?: string }> {
+    try {
+        const where: any = { status: 'CONFIRMED' }
+        if (filters.warehouseId) where.warehouseId = filters.warehouseId
+        if (filters.dateFrom || filters.dateTo) {
+            where.createdAt = {}
+            if (filters.dateFrom) where.createdAt.gte = new Date(filters.dateFrom)
+            if (filters.dateTo) where.createdAt.lte = new Date(filters.dateTo)
+        }
+
+        const grs = await prisma.goodsReceipt.findMany({
+            where,
+            include: {
+                po: {
+                    select: {
+                        poNo: true,
+                        supplier: { select: { name: true } },
+                        lines: { select: { productId: true, qtyOrdered: true } },
+                    },
+                },
+                warehouse: { select: { name: true } },
+                lines: {
+                    include: { product: { select: { skuCode: true, productName: true } } },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 100,
+        })
+
+        const rows: GRVarianceRow[] = grs.map(gr => {
+            // Build PO ordered map: productId → total ordered
+            const orderedMap: Record<string, number> = {}
+            for (const poLine of gr.po.lines) {
+                orderedMap[poLine.productId] = (orderedMap[poLine.productId] ?? 0) + Number(poLine.qtyOrdered)
+            }
+
+            // Build GR lines with variance
+            const allProductIds = new Set([...Object.keys(orderedMap), ...gr.lines.map(l => l.productId)])
+            const lines: GRVarianceRow['lines'] = []
+            let totalOrdered = 0
+            let totalReceived = 0
+            let hasIssues = false
+
+            for (const pid of allProductIds) {
+                const grLine = gr.lines.find(l => l.productId === pid)
+                const qtyOrdered = orderedMap[pid] ?? 0
+                const qtyReceived = grLine ? Number(grLine.qtyReceived) : 0
+                const variance = qtyReceived - qtyOrdered
+                const variancePct = qtyOrdered > 0 ? (variance / qtyOrdered) * 100 : 0
+                const status = variance === 0 ? 'OK' : variance < 0 ? 'SHORT' : 'SURPLUS'
+
+                if (status !== 'OK') hasIssues = true
+                totalOrdered += qtyOrdered
+                totalReceived += qtyReceived
+
+                lines.push({
+                    productId: pid,
+                    skuCode: grLine?.product.skuCode ?? '—',
+                    productName: grLine?.product.productName ?? '—',
+                    qtyOrdered,
+                    qtyReceived,
+                    variance,
+                    variancePct: Math.round(variancePct * 10) / 10,
+                    status,
+                })
+            }
+
+            return {
+                grId: gr.id,
+                grNo: gr.grNo,
+                poNo: gr.po.poNo,
+                supplierName: gr.po.supplier.name,
+                warehouseName: gr.warehouse.name,
+                receivedDate: gr.createdAt,
+                lines: lines.sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance)),
+                totalOrdered,
+                totalReceived,
+                totalVariance: totalReceived - totalOrdered,
+                hasIssues,
+            }
+        })
+
+        return { success: true, rows }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
