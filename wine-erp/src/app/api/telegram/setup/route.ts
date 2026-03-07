@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { setWebhook, deleteWebhook, getWebhookInfo } from '@/lib/telegram'
 
-const SETUP_SECRET = process.env.TELEGRAM_SETUP_SECRET ?? 'lyscellars-setup-2026'
+const SETUP_SECRET = (process.env.TELEGRAM_SETUP_SECRET ?? 'lyscellars-setup-2026').trim()
 
 /**
  * GET /api/telegram/setup?action=register|unregister|info&secret=xxx
