@@ -2,13 +2,24 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
-    // Router Cache: browser caches page RSC payload for instant tab switching
-    // - User clicks tab A → tab B → tab A: instant (from browser cache)
-    // - After mutation: revalidatePath() auto-clears this cache for affected paths
     staleTimes: {
-      dynamic: 30,   // ISR pages: browser caches 30s (matches shortest revalidate)
-      static: 300,   // static pages: browser caches 5min
+      dynamic: 30,
+      static: 300,
     },
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ]
   },
   async rewrites() {
     return [
