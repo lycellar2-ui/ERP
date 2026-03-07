@@ -672,9 +672,13 @@ model PurchaseOrder {
   contract          Contract?           @relation(fields: [contractId], references: [id])
   currency          String              @default("USD")
   exchangeRate      Decimal             @default(1)
+  incoterms         String?             // EXW, FOB, CIF, DDP
+  paymentTerm       String?             // NET30, LC, TT_ADVANCE
   status            POStatus            @default(DRAFT)
   estimatedDelivery DateTime?           // Expected delivery date for scorecard
   receivedAt        DateTime?           // Actual receive date for scorecard
+  forwarderId       String?             // Assigned forwarder (ExternalPartner)
+  notes             String?
   createdBy         String
   creator           User                @relation(fields: [createdBy], references: [id])
   signatureUrl      String?
@@ -722,13 +726,27 @@ model Shipment {
   poId              String
   po                PurchaseOrder       @relation(fields: [poId], references: [id])
   vesselName        String?
+  voyageNo          String?
+  containerNo       String?             // Container number
+  containerType     String?             // 20ft, 40ft, 40HC, LCL
   portOfLoading     String?
-  portOfDischarge   String?
-  eta               DateTime?
+  portOfDischarge   String?             @default("VNSGN")
+  etd               DateTime?           // Estimated Time of Departure
+  eta               DateTime?           // Estimated Time of Arrival
+  ata               DateTime?           // Actual Time of Arrival
   cifAmount         Decimal
   cifCurrency       String              @default("USD")
+  freightAmount     Decimal?            // Ocean freight
+  insuranceAmount   Decimal?            // Cargo insurance
+  incoterms         String?             // EXW, FOB, CIF — inherited from PO
+  forwarderId       String?             // Assigned forwarder partner ID
+  customsBrokerId   String?             // Assigned customs broker partner ID
   status            ShipmentStatus      @default(BOOKED)
   agencySubmissions AgencySubmission[]
+  costItems         ShipmentCostItem[]
+  milestones        ShipmentMilestone[]
+  customsDecl       CustomsDeclaration?
+  insurancePolicy   InsurancePolicy?
   landedCost        LandedCostCampaign?
   goodsReceipts     GoodsReceipt[]
   stockLots         StockLot[]
@@ -737,6 +755,93 @@ model Shipment {
   updatedAt         DateTime            @updatedAt
 
   @@map("shipments")
+}
+
+// Dynamic cost items — admin can add any cost type
+model ShipmentCostItem {
+  id           String   @id @default(cuid())
+  shipmentId   String
+  shipment     Shipment @relation(fields: [shipmentId], references: [id])
+  category     String   // FREIGHT, INSURANCE, THC, CUSTOMS_FEE, INSPECTION, TRUCKING, DETENTION, STAMP, OTHER
+  description  String   // Human-readable description
+  amount       Decimal
+  currency     String   @default("VND") // Most local costs in VND
+  exchangeRate Decimal  @default(1)
+  amountVND    Decimal  // Pre-calculated VND equivalent
+  paidTo       String?  // Who was paid (forwarder name, insurance company, etc.)
+  invoiceNo    String?  // Reference invoice number
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  @@map("shipment_cost_items")
+}
+
+// Configurable workflow milestones
+model ShipmentMilestone {
+  id           String   @id @default(cuid())
+  shipmentId   String
+  shipment     Shipment @relation(fields: [shipmentId], references: [id])
+  milestone    String   // PO_CONFIRMED, BOOKING_CONFIRMED, DOCS_RECEIVED, LOADED, DEPARTED, ARRIVED, CUSTOMS_FILED, CUSTOMS_CLEARED, INSPECTION_DONE, STAMPED, WAREHOUSED
+  label        String   // Vietnamese display label
+  completedAt  DateTime?
+  completedBy  String?  // User who marked it complete
+  notes        String?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@map("shipment_milestones")
+}
+
+// Customs declaration (formal HQ data)
+model CustomsDeclaration {
+  id               String    @id @default(cuid())
+  shipmentId       String    @unique
+  shipment         Shipment  @relation(fields: [shipmentId], references: [id])
+  declarationNo    String?   // Số tờ khai: 305xxxxx/NKD/HQ
+  declarationType  String?   // C31 (kinh doanh), A11 (gia công), A12 (tạm nhập)
+  registeredAt     DateTime? // Ngày đăng ký tờ khai
+  clearedAt        DateTime? // Ngày thông quan
+  customsOffice    String?   // Chi cục HQ (Cát Lái, Tân Cảng...)
+  coFormType       String?   // EUR.1, Form AANZ, Form D...
+  coNumber         String?   // Số C/O
+  hsCode           String?   // HS code chính (2204.21)
+  importTaxRate    Decimal?  // Thuế NK %
+  importTaxAmount  Decimal?  // Tiền thuế NK
+  sctRate          Decimal?  // Thuế TTĐB %
+  sctAmount        Decimal?  // Tiền thuế TTĐB
+  vatRate          Decimal?  @default(10)  // VAT % (normally 10%)
+  vatAmount        Decimal?  // Tiền VAT
+  totalTax         Decimal?  // Tổng thuế
+  inspectionResult String?   // PASSED, FAILED, PENDING
+  inspectionBody   String?   // VNATEST, Quatest, Vinacontrol...
+  inspectionDate   DateTime?
+  status           String    @default("DRAFT") // DRAFT, REGISTERED, INSPECTING, CLEARED, RELEASED
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("customs_declarations")
+}
+
+// Cargo insurance tracking
+model InsurancePolicy {
+  id             String   @id @default(cuid())
+  shipmentId     String   @unique
+  shipment       Shipment @relation(fields: [shipmentId], references: [id])
+  policyNo       String?  // Số hợp đồng bảo hiểm
+  insurer        String?  // Bảo Việt, PVI, Bảo Minh...
+  insuredValue   Decimal? // Giá trị bảo hiểm (110% CIF)
+  premium        Decimal? // Phí bảo hiểm
+  currency       String   @default("USD")
+  coverageType   String?  // ALL_RISKS, WA, FPA
+  startDate      DateTime?
+  endDate        DateTime?
+  status         String   @default("ACTIVE") // ACTIVE, EXPIRED, CLAIMED
+  claimAmount    Decimal? // If claim filed
+  claimNotes     String?
+  createdAt      DateTime @default(now())
+
+  @@map("insurance_policies")
 }
 
 model LandedCostCampaign {
@@ -1717,11 +1822,19 @@ enum POStatus {
 }
 
 enum ShipmentStatus {
+  DRAFT
   BOOKED
+  DOCS_READY
+  LOADED
   ON_VESSEL
   ARRIVED_PORT
+  CUSTOMS_FILING
+  CUSTOMS_INSPECTING
   CUSTOMS_CLEARED
+  STAMPING
   DELIVERED_TO_WAREHOUSE
+  COMPLETED
+  CANCELLED
 }
 
 enum LandedCostStatus {
