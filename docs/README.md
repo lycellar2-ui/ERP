@@ -45,8 +45,9 @@
 | 19 | `KPI` | **KPI Target Management** (Setup & Tracking chỉ tiêu) | [kpi-targets.md](./modules/kpi-targets.md) | ✅ **MỚI** |
 | 20 | `AI` | AI Features & API Key Management | [ai-features.md](./modules/ai-features.md) | ✅ Hoàn thành |
 | 21 | `TLG` | **Telegram Bot Integration** (CEO Bot, Push Notifications) | [telegram-bot.md](./modules/telegram-bot.md) | ✅ **MỚI** |
+| 22 | `MKT` | **Marketing** (Media Library, Product Image Management) | [marketing.md](./modules/marketing.md) | ✅ **MỚI** |
 
-**Tài liệu hoàn thành: 🎉 21/21** (thêm 6 module mới: QRC, POS, CST, KPI, STP, TLG) + 3 module code mới: QTN, PPL, PRC-L
+**Tài liệu hoàn thành: 🎉 22/22** (thêm 7 module mới: QRC, POS, CST, KPI, STP, TLG, MKT) + 3 module code mới: QTN, PPL, PRC-L
 
 ---
 
@@ -58,8 +59,8 @@
 | Phase 1 | Phân tích Nghiệp vụ (Business Analysis) | ✅ Hoàn thành |
 | Phase 2 | Lập Kế hoạch & Task Breakdown | ✅ Hoàn thành |
 | Phase 3 | Architecture & Database Schema | ✅ Hoàn thành |
-| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P7 100%** \| P8 ~97% — +43 features phiên 06/03 + **Telegram Bot Integration** (9 commands, 5 push notifications, Settings UI) |
-| Phase 5 | Testing & Go-live | — |
+| Phase 4 | Implementation (8 Phases code) | ✅ **P1—P8 ~99%** — +Responsive, Security Headers, Zod Validation, PWA, 404 Page |
+| Phase 5 | Testing & Production Hardening | ✅ **Hoàn thành** — Build validation, E2E smoke tests, RBAC 31 routes, Zod 23+ schemas, Mobile responsive |
 
 ---
 
@@ -101,6 +102,11 @@
 | **Hải quan điện tử** | Chưa chốt (VNACCS/ECUS hay chỉ Export Excel?) |
 | **Realtime** | ✅ Supabase Realtime — Role-based channels cho approvals, AR, stock, SO |
 | **Telegram Bot** | ✅ Webhook-based CEO Bot — 9 commands VN, 5 push notifications, inline approval |
+| **File Storage** | ✅ **ImgBB** (product images) + **Supabase Storage** (contract documents) |
+| **Security Headers** | ✅ X-Frame-Options DENY, XSS Protection, Referrer-Policy, Permissions-Policy |
+| **Input Validation** | ✅ **Zod** 23+ schemas cho 7 modules: Sales, Finance, Delivery, CRM, Contracts, POS, Warehouse |
+| **Responsive** | ✅ Mobile sidebar auto-hide + hamburger menu overlay (<768px) |
+| **PWA** | ✅ Web App Manifest, robots.txt (blocks /dashboard/), custom 404 page |
 
 ---
 
@@ -151,6 +157,7 @@ docs/
     ├── wms-inventory.md        ✅  WMS  (Zone/Rack/Bin, FIFO, GR/DO)
     ├── sales-allocation.md     ✅  SLS  (SO, Quotation, Allocation Engine)
     ├── reporting-bi.md         ✅  RPT  (15 reports, Report Builder, Scheduler)
+    ├── marketing.md           ✅  MKT  (Media Library, Image Management)  ← MỚI
     └── telegram-bot.md         ✅  TLG  (CEO Bot, Push Notifications)  ← MỚI
 ```
 
@@ -164,4 +171,4 @@ docs/
 4. **AI context** → Cập nhật `llms.txt` khi có thêm khái niệm domain mới
 
 ---
-*Last updated: 2026-03-06 20:15 | Wine ERP v4.6 — **P1-P7 100% ✅** | **P8 ~97%** | Session 06/03 (tối): +Telegram Bot Integration (TLG) — 9 commands, 5 push notifications, dual-channel Email+Telegram, Settings UI, webhook endpoint*
+*Last updated: 2026-03-07 20:18 | Wine ERP v5.0 — **P1-P8 ~99% ✅** | **Production Readiness 100%** | Session 07/03: +Media Library, Responsive Sidebar, Security Headers, Zod POS/Warehouse, PWA Manifest, 404 Page, Env Validation*
