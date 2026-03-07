@@ -15,6 +15,7 @@
 6. [BUG-006: MaxClientsInSessionMode on Vercel Runtime](#bug-006-maxclientsinsessionmode-on-vercel-runtime)
 7. [BUG-007: Stat Cards Tính Sai — Chỉ Đếm Page Hiện Tại](#bug-007-stat-cards-tính-sai--chỉ-đếm-page-hiện-tại)
 8. [BUG-008: Git Commit Message Dài Gây Treo Terminal](#bug-008-git-commit-message-dài-gây-treo-terminal)
+9. [BUG-009: Build Fail — Many-to-Many Relation Query Sai](#bug-009-build-fail--many-to-many-relation-query-sai)
 
 ---
 
@@ -398,6 +399,7 @@ page: '/dashboard/allocation'
 | 16 | Module mới có stat cards → tạo `get{Module}Stats()` từ đầu | Data Accuracy |
 | 17 | **Git commit message NGẮN GỌN** (< 72 chars), không dùng body dài | Git Workflow |
 | 18 | Enum values PHẢI khớp Prisma schema (check trước khi dùng) | Schema |
+| 19 | **Many-to-many relation phải query qua pivot table** | Prisma Query |
 
 ---
 
@@ -440,4 +442,54 @@ git commit -m "feat: add Media Library page + Marketing sidebar"
 
 ### Bài học
 > **Git commit = tweet, không phải essay.** Chi tiết để trong PR description hoặc docs.
+
+---
+
+## BUG-009: Build Fail — Many-to-Many Relation Query Sai
+
+**Ngày:** 2026-03-07
+**Severity:** 🟠 Medium — Vercel build fail
+
+### Triệu chứng
+```
+Type error: Object literal may only specify known properties, but 'role' does not 
+exist in type 'UserWhereInput'. Did you mean to write 'roles'?
+```
+
+### Nguyên nhân gốc rễ
+
+User model dùng **many-to-many** relationship với Role qua pivot table `UserRole`:
+```prisma
+model User {
+  roles UserRole[]   // ← Đây là relation, KHÔNG phải field trực tiếp
+}
+
+model UserRole {
+  user  User   @relation(fields: [userId], references: [id])
+  role  Role   @relation(fields: [roleId], references: [id])
+}
+
+model Role {
+  name String
+}
+```
+
+Query sai:
+```typescript
+// ❌ SAI — `role` không tồn tại trên User
+prisma.user.findMany({ where: { role: { in: ['ADMIN', 'SALES_REP'] } } })
+
+// ✅ ĐÚNG — navigate qua pivot table
+prisma.user.findMany({
+    where: {
+        roles: { some: { role: { name: { in: ['ADMIN', 'SALES_REP'] } } } }
+    }
+})
+```
+
+### Bài học
+
+> ⚠️ **RULE 19: Many-to-many relation phải query qua `{ some: { pivot: { field: ... } } }`.**
+> LUÔN check Prisma schema trước khi viết where clause.
+> `User.roles` → `UserRole[]` → phải dùng `roles: { some: { role: { name: ... } } }`.
 

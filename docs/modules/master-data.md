@@ -131,30 +131,59 @@ Rượu vang cao cấp cần hình ảnh chuyên nghiệp cho Sales đem chào K
 
 Đây là thông tin nền của Khách hàng trong MDM — dữ liệu kế thừa để tạo SO, tính công nợ:
 
+| Trường | Mô tả | Trạng thái UI |
+|---|---|---|
+| `customer_code` | Mã KH nội bộ (unique) | ✅ Bắt buộc |
+| `customer_name` | Tên pháp lý / Tên thương mại | ✅ Bắt buộc |
+| `short_name` | Tên viết tắt cho reports/báo cáo | ✅ Đã triển khai |
+| `customer_type` | HORECA / WHOLESALE_DISTRIBUTOR / VIP_RETAIL / INDIVIDUAL | ✅ Dropdown |
+| `channel` | Kênh phân phối (HORECA / WHOLESALE / VIP_RETAIL / DIRECT_INDIVIDUAL) | ✅ Dropdown + Filter |
+| `tax_id` | MST để xuất hóa đơn VAT | ✅ Tìm kiếm được |
+| `payment_term` | Công nợ bao nhiêu ngày (COD / NET15 / NET30 / NET45 / NET60) | ✅ Dropdown |
+| `credit_limit` | Hạn mức công nợ tối đa được phép (VND) | ✅ Sortable |
+| `sales_rep_id` | Nhân viên Sales phụ trách (chọn từ danh sách Users) | ✅ Dropdown + Cột bảng |
+| `status` | ACTIVE / CREDIT_HOLD / INACTIVE | ✅ Filter |
+
+**Địa chỉ (CustomerAddress):**
+
 | Trường | Mô tả |
 |---|---|
-| `customer_code` | Mã KH nội bộ |
-| `customer_name` | Tên pháp lý / Tên thương mại |
-| `customer_type` | HORECA / WHOLESALE_DISTRIBUTOR / VIP_RETAIL / INDIVIDUAL |
-| `channel` | Kênh phân phối chính |
-| `tax_id` | MST để xuất hóa đơn VAT |
-| `payment_term` | Công nợ bao nhiêu ngày (NET30 / NET45 / COD) |
-| `credit_limit` | Hạn mức công nợ tối đa được phép (VND) |
-| `default_currency` | VND (nội địa) hoặc USD (nếu có KH ngoại) |
-| `assigned_sales_rep` | Nhân viên Sales phụ trách |
-| `addresses` | Danh sách địa chỉ giao hàng (Multi-address) |
-| `billing_address` | Địa chỉ xuất hóa đơn |
-| `status` | ACTIVE / CREDIT_HOLD / INACTIVE |
+| `label` | Nhãn địa chỉ ("Kho Hà Nội", "Nhà hàng Park Hyatt") |
+| `address` | Số nhà, tên đường |
+| `ward` | Phường/Xã |
+| `district` | Quận/Huyện |
+| `city` | Thành phố (14 thành phố: HCM, HN, ĐN, Nha Trang, Phú Quốc, Hội An, Hải Phòng, Cần Thơ, Huế, Vũng Tàu, Đà Lạt, Quy Nhơn, Phan Thiết, Sapa) |
+| `is_billing` | Là địa chỉ xuất hóa đơn? |
+| `is_default` | Là địa chỉ mặc định? |
+
+**Liên hệ chính (CustomerContact):**
+
+| Trường | Mô tả |
+|---|---|
+| `name` | Tên người liên hệ |
+| `title` | Chức vụ (Quản lý mua hàng, Giám đốc...) |
+| `phone` | Số điện thoại — tìm kiếm được |
+| `email` | Email — tìm kiếm được |
+| `is_primary` | Là liên hệ chính? |
+
+**Tính năng UI đã triển khai (07/03/2026):**
+- ✅ **CRUD đầy đủ**: Thêm mới + Chỉnh sửa (drawer load data by ID) + Xóa (soft-delete có kiểm tra SO active)
+- ✅ **Tìm kiếm mở rộng**: Tên, mã, MST, email, SĐT, tên viết tắt
+- ✅ **3 filter**: Loại KH + Trạng thái + Kênh bán hàng (dynamic từ DB)
+- ✅ **Sort**: Theo Tên, Hạn Mức, Đơn Hàng (asc/desc)
+- ✅ **Export CSV**: Xuất toàn bộ danh sách KH ra CSV (UTF-8 BOM)
+- ✅ **Import Excel**: Upload Excel hàng loạt, validate per row
+- ✅ **Gán Sales Rep**: Dropdown chọn từ danh sách Users có quyền Sales
 
 ---
 
 ## 4. Quản Lý Master Data — Admin Features
 
-### A. Import / Export Excel
+### A. Import / Export Excel ✅ Đã Triển Khai
 Vì công ty đang dùng Excel: Hỗ trợ upload Excel để:
-- Import danh sách sản phẩm hàng loạt (Bulk Product Import)
-- Import danh sách NCC, KH ban đầu (Data Migration từ Excel sang ERP)
-- Export toàn bộ Master Data ra Excel để kiểm tra
+- ✅ Import danh sách sản phẩm hàng loạt (Bulk Product Import)
+- ✅ Import danh sách NCC, KH ban đầu (Data Migration từ Excel sang ERP)
+- ✅ Export toàn bộ Master Data ra CSV (Products + Customers)
 
 ### B. Kiểm Soát Thay Đổi (Change Log)
 - Mọi thay đổi trên Master Data (Sửa giá, sửa HS Code, sửa ABV) đều bị ghi log
