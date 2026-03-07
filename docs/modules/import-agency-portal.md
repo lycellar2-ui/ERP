@@ -61,3 +61,41 @@ Phân hệ này mở ra một cổng web riêng biệt (subdomain hoặc section
 - `PartnerShipmentAccess`: Bảng gán Agency phụ trách Shipment nào
 - `AgencySubmission`: Thực thể chứa dữ liệu Agency submit, trạng thái review, ai confirm
 - `AgencyDocument`: Upload file tờ khai, hóa đơn chi phí
+
+---
+
+## 6. Trạng Thái Triển Khai ✅
+
+> **Cập nhật: 2026-03-08** — Module đã mở rộng thêm tab "Gán Đối Tác" và tích hợp chặt với [Shipment Tracking (SHP)](./shipment-tracking.md).
+
+### Đã triển khai:
+
+| Tính năng | Status | Chi tiết |
+|-----------|--------|----------|
+| **Dashboard thống kê** | ✅ | 4 stats: Đối Tác, Chờ Duyệt, Đã Duyệt, Lô Hàng Active |
+| **Tab Submissions** | ✅ | CRUD submissions, review (Approve/Reject), upload chứng từ |
+| **Tab Gán Đối Tác** | ✅ | **MỚI** — Assign Forwarder/Customs Broker cho Shipment |
+| **Tab Đối Tác** | ✅ | CRUD partner cards: CUSTOMS_BROKER, FORWARDER, SURVEYOR |
+| **Submission Review** | ✅ | PENDING_REVIEW → APPROVED/REJECTED workflow |
+| **Document Upload** | ✅ | Upload PDF/DOCX/XLSX/JPG, 4 doc types |
+| **Tracking Milestones** | ✅ | Inline milestone stepper trong submission expand row |
+| **Shipment Assignment** | ✅ | `assignShipmentToPartner()` — gán role cho partner |
+
+### Server Actions mới:
+
+| Action | Mô tả |
+|--------|-------|
+| `assignShipmentToPartner` | Gán partner với role (Forwarder/Broker) cho Shipment |
+| `getPartnerAssignments` | Lấy DS lô hàng đã gán cho partner |
+| `partnerUpdateShipmentInfo` | Partner cập nhật vessel, ETA |
+| `partnerUpdateMilestone` | Partner complete milestone |
+| `getPartnerCostSummary` | Partner xem tổng chi phí shipment |
+
+### Tham chiếu module liên quan:
+- [Shipment Tracking (SHP)](./shipment-tracking.md) — Quản lý lô hàng, milestones
+- [Tax & Landed Cost (PRC)](./tax-and-landed-cost.md) — Chi phí HQ & logistic
+
+---
+
+*Last updated: 2026-03-08 00:45*
+

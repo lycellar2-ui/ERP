@@ -26,9 +26,10 @@
 | 3 | `CRM` | Customer Relationship Management (B2B + B2C) | [crm.md](./modules/crm.md) | ✅ Hoàn thành |
 | 4 | `CNT` | Contract Management | [contract-management.md](./modules/contract-management.md) | ✅ Hoàn thành |
 | 5 | `TAX` | Tax Reference & Market Price | [market-price-tax-lookup.md](./modules/market-price-tax-lookup.md) | ✅ Hoàn thành |
-| 6 | `PRC` | Procurement & Import / Landed Cost | [tax-and-landed-cost.md](./modules/tax-and-landed-cost.md) | ✅ Hoàn thành |
+| 6 | `PRC` | Procurement & Import / Landed Cost | [tax-and-landed-cost.md](./modules/tax-and-landed-cost.md) | ✅ Cập nhật |
+| 6b | `SHP` | **Shipment Tracking** (Lô Hàng, Milestones, Landed Cost) | [shipment-tracking.md](./modules/shipment-tracking.md) | ✅ **MỚI** |
 | 7 | `CST` | **Product Costing** (Giá vốn/chai, Đề xuất giá) | [product-costing.md](./modules/product-costing.md) | ✅ **MỚI** |
-| 8 | `AGN` | Import Agency Portal (External) | [import-agency-portal.md](./modules/import-agency-portal.md) | ✅ Hoàn thành |
+| 8 | `AGN` | Import Agency Portal (External) | [import-agency-portal.md](./modules/import-agency-portal.md) | ✅ Cập nhật |
 | 9 | `WMS` | WMS & Inventory (Zone/Rack/Bin + Điều chuyển kho) | [wms-inventory.md](./modules/wms-inventory.md) | ✅ Cập nhật |
 | 10 | `QRC` | **QR & Barcode** (Tạo/In QR, Truy xuất nguồn gốc) | [qr-barcode.md](./modules/qr-barcode.md) | ✅ **MỚI** |
 | 11 | `SLS` | Sales & Allocation | [sales-allocation.md](./modules/sales-allocation.md) | ✅ Hoàn thành |
@@ -47,7 +48,7 @@
 | 21 | `TLG` | **Telegram Bot Integration** (CEO Bot, Push Notifications) | [telegram-bot.md](./modules/telegram-bot.md) | ✅ **MỚI** |
 | 22 | `MKT` | **Marketing** (Media Library, Product Image Management) | [marketing.md](./modules/marketing.md) | ✅ **MỚI** |
 
-**Tài liệu hoàn thành: 🎉 22/22** (thêm 7 module mới: QRC, POS, CST, KPI, STP, TLG, MKT) + 3 module code mới: QTN, PPL, PRC-L
+**Tài liệu hoàn thành: 🎉 23/23** (thêm 8 module mới: QRC, POS, CST, KPI, STP, TLG, MKT, SHP) + 3 module code mới: QTN, PPL, PRC-L
 
 ---
 
@@ -142,13 +143,14 @@ docs/
 │   ├── module-dependencies.md
 │   ├── api-design.md
 │   └── data-flow.md
-└── modules/                     ← Đặc tả nghiệp vụ (14 modules)
+└── modules/                     ← Đặc tả nghiệp vụ (15 modules)
     ├── admin-auth-workflow.md   ✅  SYS
     ├── master-data.md           ✅  MDM
     ├── crm.md                   ✅  CRM  ← MỚI
     ├── contract-management.md  ✅  CNT
     ├── market-price-tax-lookup.md ✅ TAX
     ├── tax-and-landed-cost.md  ✅  PRC
+    ├── shipment-tracking.md    ✅  SHP  (Lô Hàng, Milestones, Costs)  ← MỚI
     ├── import-agency-portal.md ✅  AGN
     ├── consignment.md          ✅  CSG
     ├── transport-delivery.md   ✅  TRS
@@ -171,4 +173,4 @@ docs/
 4. **AI context** → Cập nhật `llms.txt` khi có thêm khái niệm domain mới
 
 ---
-*Last updated: 2026-03-07 23:10 | Wine ERP v5.0 — **All modules ~100% ✅** | Deep Feature Audit 7/7 sessions DONE: +SO Edit/Discount Approval/FIFO Pick (Sales) +Cash Flow/Credit Hold/VAT+SCT Excel (Finance) +Price Suggestion Engine (Costing) +Periodic Reconciliation (Consignment) +GR Variance Report (WMS) +Shift Mgmt/End-of-Day Report (POS) +Contract Link PO/SO/Utilization*
+*Last updated: 2026-03-08 00:45 | Wine ERP v5.1 — **All modules ~100% ✅** | Procurement Deep Dive: +Shipment Tracking (SHP) module, +Create Shipment Drawer, +Landed Cost Breakdown Modal, +Customs/Insurance/Milestone Management, +Agency Assignment Tab*

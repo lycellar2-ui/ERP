@@ -46,3 +46,40 @@ Hệ thống cần các bảng:
 - `LandedCostCampaign`: Ghi nhận lô hàng nhập khẩu (Bill of Lading).
 - `LandedCostInvoice`: Hóa đơn chi phí cho Logistic, Dịch vụ cảng kết nối vào Campaign.
 - `ItemCostHistory`: Lưu trữ giá nhập thực tế sau khi đã tính toán đầy đủ thuế và phí phân bổ để sẵn sàng cho báo cáo Lợi nhuận.
+
+---
+
+## 4. Trạng Thái Triển Khai ✅
+
+> **Cập nhật: 2026-03-08** — Module đã được triển khai hoàn chỉnh, tích hợp sâu với [Shipment Tracking (SHP)](./shipment-tracking.md).
+
+### Đã triển khai:
+
+| Tính năng | Status | Chi tiết |
+|-----------|--------|----------|
+| **ShipmentCostItem model** | ✅ | 15 cost categories, đa tiền tệ, auto quy đổi VND |
+| **CustomsDeclaration model** | ✅ | Tờ khai HQ VN đầy đủ: HS, C/O, 3 tầng thuế, giám định |
+| **InsurancePolicy model** | ✅ | Bảo hiểm hàng hóa: All Risks/WA/FPA, claim tracking |
+| **Landed Cost Breakdown** | ✅ | `getLandedCostBreakdown()`: CIF + costs + tax → per SKU |
+| **UI Phân Tích Giá Vốn** | ✅ | Modal hiển thị: CIF VND, chi phí theo loại, thuế 3 tầng, giá/chai |
+| **Thuế engine** | ✅ | CIF → NK → TTĐB → VAT cascade, tự tra ABV cho 35%/65% TTĐB |
+| **Tax Lookup Module** | ✅ | `/dashboard/tax` — Tra cứu thuế suất theo HS, FTA |
+| **Product Costing** | ✅ | `/dashboard/costing` — Tính giá vốn/chai 3 lớp thuế + đề xuất giá bán |
+
+### Chi phí 15 loại đã cấu hình:
+
+```
+FREIGHT, INSURANCE, THC_ORIGIN, THC_DEST, TRUCKING_ORIGIN, TRUCKING_DEST,
+CUSTOMS_FEE, INSPECTION, FUMIGATION, DETENTION, DEMURRAGE, STAMP,
+DOCUMENTATION, BANK_CHARGE, OTHER
+```
+
+### Tham chiếu module liên quan:
+- [Shipment Tracking (SHP)](./shipment-tracking.md) — Quản lý lô hàng, milestones, costs
+- [Product Costing (CST)](./product-costing.md) — Tính giá vốn/chai và đề xuất giá bán
+- [Import Agency Portal (AGN)](./import-agency-portal.md) — Cổng đối tác hải quan
+
+---
+
+*Last updated: 2026-03-08 00:45*
+
