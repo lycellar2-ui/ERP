@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react'
 import {
     Search, Plus, ShoppingCart, Truck, CheckCircle2, Clock,
     FileText, ChevronDown, X, Trash2, Loader2, Save, AlertCircle,
-    Package, Globe, ArrowRight, Eye, UploadCloud
+    Package, Globe, ArrowRight, Eye, UploadCloud, Ship, Anchor
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PORow, PODetail, CreatePOInput, createPurchaseOrder, updatePOStatus, getPurchaseOrders, getPODetail, uploadPODocument, signPO, convertPOToVND, getExchangeRateSummary } from './actions'
 import type { POCurrencyBreakdown } from './actions'
+import { getShipments, type ShipmentRow } from './shipment-actions'
+import { ShipmentDetailDrawer } from './ShipmentDetailDrawer'
 import { formatVND, formatDate } from '@/lib/utils'
 import { SignaturePad } from '@/components/SignaturePad'
 import { getSuppliers } from '@/app/dashboard/suppliers/actions'
@@ -310,6 +312,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
     const [fxSummary, setFxSummary] = useState<{ currency: string; avgRate: number; minRate: number; maxRate: number; poCount: number; totalForeignValue: number; totalVNDValue: number }[]>([])
     const [fxLoading, setFxLoading] = useState(false)
     const [vndBreakdown, setVndBreakdown] = useState<POCurrencyBreakdown | null>(null)
+    const [shipmentDrawerOpen, setShipmentDrawerOpen] = useState(false)
+    const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null)
+    const [poShipments, setPoShipments] = useState<ShipmentRow[]>([])
+    const [shipmentsLoading, setShipmentsLoading] = useState(false)
 
     const showDetail = async (id: string, force = false) => {
         if (selectedId === id && !force) { setSelectedId(null); return }
@@ -543,77 +549,119 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             {detailLoading ? (
                                                 <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6A7A' }}><Loader2 size={12} className="animate-spin" /> Đang tải...</div>
                                             ) : poDetail ? (
-                                                <div className="grid grid-cols-2 gap-6">
-                                                    <div>
-                                                        <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8AAEBB' }}>Chi tiết Sản Phẩm</p>
-                                                        <div className="space-y-2">
-                                                            {poDetail.lines.map((l: any) => (
-                                                                <div key={l.id} className="flex justify-between items-center bg-[#1B2E3D] p-2 rounded" style={{ border: '1px solid #2A4355' }}>
-                                                                    <div>
-                                                                        <p className="text-sm text-[#E8F1F2]">{l.productName}</p>
-                                                                        <p className="text-[10px] text-[#4A6A7A]">{l.skuCode}</p>
+                                                <div className="space-y-5">
+                                                    <div className="grid grid-cols-2 gap-6">
+                                                        <div>
+                                                            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8AAEBB' }}>Chi tiết Sản Phẩm</p>
+                                                            <div className="space-y-2">
+                                                                {poDetail.lines.map((l: any) => (
+                                                                    <div key={l.id} className="flex justify-between items-center bg-[#1B2E3D] p-2 rounded" style={{ border: '1px solid #2A4355' }}>
+                                                                        <div>
+                                                                            <p className="text-sm text-[#E8F1F2]">{l.productName}</p>
+                                                                            <p className="text-[10px] text-[#4A6A7A]">{l.skuCode}</p>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="text-sm text-[#87CBB9] font-bold" style={{ fontFamily: '"DM Mono"' }}>{l.qtyOrdered} {l.uom}</p>
+                                                                            <p className="text-[10px] text-[#4A6A7A]">{l.unitPrice} {row.currency} / {l.uom}</p>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-right">
-                                                                        <p className="text-sm text-[#87CBB9] font-bold" style={{ fontFamily: '"DM Mono"' }}>{l.qtyOrdered} {l.uom}</p>
-                                                                        <p className="text-[10px] text-[#4A6A7A]">{l.unitPrice} {row.currency} / {l.uom}</p>
-                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-6">
+                                                            <div>
+                                                                <div className="flex items-center justify-between mb-3">
+                                                                    <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#8AAEBB' }}>Upload Bản Gốc (PDF/Scan)</p>
+                                                                    <label className="flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer font-bold"
+                                                                        style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                                                        {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                                        Upload
+                                                                        <input type="file" className="hidden" accept=".pdf,.png,.jpg" onChange={e => handleUpload(row.id, e)} disabled={uploadingDoc} />
+                                                                    </label>
                                                                 </div>
-                                                            ))}
+                                                                {poDetail.documents && poDetail.documents.length > 0 ? (
+                                                                    <div className="space-y-2">
+                                                                        {poDetail.documents.map((d: any) => (
+                                                                            <a key={d.id} href={d.fileUrl} target="_blank" rel="noreferrer"
+                                                                                className="flex items-center gap-2 p-2 rounded bg-[#1B2E3D] text-xs hover:bg-[#2A4355]" style={{ border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                                                                <FileText size={14} style={{ color: '#8AAEBB' }} />
+                                                                                <span className="truncate flex-1">{d.name}</span>
+                                                                                <span style={{ color: '#4A6A7A', fontSize: 10 }}>{formatDate(d.uploadedAt)}</span>
+                                                                            </a>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa có tài liệu nào.</p>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8AAEBB' }}>Ký Điện Tử Khê Duyệt Nhanh</p>
+                                                                {poDetail.signatureUrl ? (
+                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                                        <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
+                                                                        <img src={poDetail.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="space-y-3">
+                                                                        {poDetail.status === 'PENDING_APPROVAL' || poDetail.status === 'DRAFT' ? (
+                                                                            <>
+                                                                                <SignaturePad onEnd={setSignatureUrl} />
+                                                                                <div className="flex justify-end">
+                                                                                    <button onClick={() => handleSign(row.id)} disabled={!signatureUrl || savingSignature}
+                                                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50"
+                                                                                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                                        {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                                                                        Lưu Chữ Ký & Duyệt
+                                                                                    </button>
+                                                                                </div>
+                                                                            </>
+                                                                        ) : (
+                                                                            <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Đơn hàng không ở trạng thái chờ ký.</p>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div className="space-y-6">
-                                                        <div>
-                                                            <div className="flex items-center justify-between mb-3">
-                                                                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#8AAEBB' }}>Upload Bản Gốc (PDF/Scan)</p>
-                                                                <label className="flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer font-bold"
-                                                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
-                                                                    {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
-                                                                    Upload
-                                                                    <input type="file" className="hidden" accept=".pdf,.png,.jpg" onChange={e => handleUpload(row.id, e)} disabled={uploadingDoc} />
-                                                                </label>
-                                                            </div>
-                                                            {poDetail.documents && poDetail.documents.length > 0 ? (
-                                                                <div className="space-y-2">
-                                                                    {poDetail.documents.map((d: any) => (
-                                                                        <a key={d.id} href={d.fileUrl} target="_blank" rel="noreferrer"
-                                                                            className="flex items-center gap-2 p-2 rounded bg-[#1B2E3D] text-xs hover:bg-[#2A4355]" style={{ border: '1px solid #2A4355', color: '#E8F1F2' }}>
-                                                                            <FileText size={14} style={{ color: '#8AAEBB' }} />
-                                                                            <span className="truncate flex-1">{d.name}</span>
-                                                                            <span style={{ color: '#4A6A7A', fontSize: 10 }}>{formatDate(d.uploadedAt)}</span>
-                                                                        </a>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Chưa có tài liệu nào.</p>
-                                                            )}
+                                                    {/* Shipments linked to this PO */}
+                                                    <div className="pt-2">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <p className="text-xs font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A8FAB' }}><Ship size={13} /> Lô Hàng (Shipments)</p>
+                                                            <button onClick={async () => {
+                                                                setShipmentsLoading(true)
+                                                                try { const r = await getShipments({ search: row.poNo }); setPoShipments(r.rows) }
+                                                                finally { setShipmentsLoading(false) }
+                                                            }} className="text-[10px] font-bold px-2 py-1 rounded" style={{ color: '#4A8FAB', background: 'rgba(74,143,171,0.1)' }}>
+                                                                {shipmentsLoading ? <Loader2 size={10} className="animate-spin" /> : 'Tải lô hàng'}
+                                                            </button>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#8AAEBB' }}>Ký Điện Tử Khê Duyệt Nhanh</p>
-                                                            {poDetail.signatureUrl ? (
-                                                                <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid rgba(91,168,138,0.3)' }}>
-                                                                    <p className="text-xs text-[#5BA88A] mb-2 flex items-center gap-1"><CheckCircle2 size={12} /> Đã Ký Duyệt</p>
-                                                                    <img src={poDetail.signatureUrl} alt="Signature" className="h-[80px] object-contain bg-white rounded" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="space-y-3">
-                                                                    {poDetail.status === 'PENDING_APPROVAL' || poDetail.status === 'DRAFT' ? (
-                                                                        <>
-                                                                            <SignaturePad onEnd={setSignatureUrl} />
-                                                                            <div className="flex justify-end">
-                                                                                <button onClick={() => handleSign(row.id)} disabled={!signatureUrl || savingSignature}
-                                                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50"
-                                                                                    style={{ background: '#87CBB9', color: '#0A1926' }}>
-                                                                                    {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                                                                                    Lưu Chữ Ký & Duyệt
-                                                                                </button>
+                                                        {poShipments.length > 0 ? (
+                                                            <div className="space-y-1">
+                                                                {poShipments.map(s => (
+                                                                    <button key={s.id} onClick={() => { setSelectedShipmentId(s.id); setShipmentDrawerOpen(true) }}
+                                                                        className="w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors"
+                                                                        style={{ background: '#142433', border: '1px solid #2A4355' }}
+                                                                        onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
+                                                                        onMouseLeave={e => (e.currentTarget.style.background = '#142433')}>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <Anchor size={14} style={{ color: '#4A8FAB' }} />
+                                                                            <div>
+                                                                                <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{s.billOfLading}</p>
+                                                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{s.vesselName ?? 'TBC'} • ETA: {s.eta ? new Date(s.eta).toLocaleDateString('vi-VN') : '—'}</p>
                                                                             </div>
-                                                                        </>
-                                                                    ) : (
-                                                                        <p className="text-xs italic" style={{ color: '#4A6A7A' }}>Đơn hàng không ở trạng thái chờ ký.</p>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-16 h-1.5 rounded-full" style={{ background: '#2A4355' }}>
+                                                                                <div className="h-full rounded-full" style={{ background: '#5BA88A', width: `${s.milestoneProgress}%` }} />
+                                                                            </div>
+                                                                            <span className="text-[10px] font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{s.milestoneProgress}%</span>
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Nhấn "Tải lô hàng" để xem shipments liên kết</p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ) : (
@@ -681,7 +729,6 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 </div>
             )}
 
-            {/* VND Breakdown Modal */}
             {vndBreakdown && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setVndBreakdown(null)}>
                     <div className="p-5 rounded-xl w-[560px] max-h-[70vh] overflow-auto" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }} onClick={e => e.stopPropagation()}>
@@ -719,6 +766,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
                 </div>
             )}
+
+            <ShipmentDetailDrawer
+                open={shipmentDrawerOpen}
+                shipmentId={selectedShipmentId}
+                onClose={() => { setShipmentDrawerOpen(false); setSelectedShipmentId(null) }}
+            />
         </div>
     )
 }

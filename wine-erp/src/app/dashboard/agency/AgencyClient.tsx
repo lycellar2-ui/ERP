@@ -3,13 +3,14 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import {
     Globe, Package, FileText, CheckCircle2, Clock, Users, Plus, X, Loader2,
-    AlertTriangle, ChevronRight, Ship, Eye, Check, XCircle, Send, UploadCloud
+    AlertTriangle, ChevronRight, Ship, Eye, Check, XCircle, Send, UploadCloud, Link
 } from 'lucide-react'
 import {
     AgencyPartnerRow, AgencySubmissionRow, AgencyDashboardStats, AgencyDocumentRow,
     getAgencyPartners, getAgencySubmissions, getAgencyDashboardStats,
     createAgencyPartner, createAgencySubmission, reviewAgencySubmission,
-    getActiveShipments, uploadAgencyDocument, getSubmissionDocuments
+    getActiveShipments, uploadAgencyDocument, getSubmissionDocuments,
+    assignShipmentToPartner,
 } from './actions'
 import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -41,6 +42,7 @@ const SHIPMENT_MILESTONES = [
 
 const TABS = [
     { key: 'submissions', label: 'Submissions', icon: FileText },
+    { key: 'assignments', label: 'Gán Đối Tác', icon: Link },
     { key: 'partners', label: 'Đối Tác', icon: Users },
 ] as const
 
@@ -83,6 +85,12 @@ export function AgencyClient() {
     const [docsLoading, setDocsLoading] = useState(false)
     const [uploadingDoc, setUploadingDoc] = useState(false)
     const [selectedDocType, setSelectedDocType] = useState('OTHER')
+
+    // Assignment
+    const [assignShipments, setAssignShipments] = useState<any[]>([])
+    const [assignLoading, setAssignLoading] = useState(false)
+    const [assignForm, setAssignForm] = useState({ shipmentId: '', partnerId: '', role: 'FORWARDER' as 'FORWARDER' | 'CUSTOMS_BROKER' })
+    const [assigning, setAssigning] = useState(false)
 
     const loadStats = useCallback(async () => {
         const data = await getAgencyDashboardStats()
@@ -572,6 +580,94 @@ export function AgencyClient() {
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+            {/* ═══ ASSIGNMENTS TAB ═══ */}
+            {tab === 'assignments' && (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Gán Forwarder / Customs Broker cho Lô Hàng</p>
+                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Chọn lô hàng → Chọn đối tác → Gán vai trò</p>
+                        </div>
+                        <button onClick={async () => { setAssignLoading(true); const d = await getActiveShipments(); setAssignShipments(d); setAssignLoading(false) }}
+                            className="px-3 py-2 text-xs font-semibold rounded-md" style={{ color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                            {assignLoading ? <Loader2 size={12} className="animate-spin" /> : 'Tải danh sách lô hàng'}
+                        </button>
+                    </div>
+
+                    <div className="p-5 rounded-md space-y-4" style={card}>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div>
+                                <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>Lô hàng</label>
+                                <select value={assignForm.shipmentId} onChange={e => setAssignForm(f => ({ ...f, shipmentId: e.target.value }))}
+                                    className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
+                                    <option value="">— Chọn lô hàng —</option>
+                                    {assignShipments.map(s => <option key={s.id} value={s.id}>{s.billOfLading} — {s.vesselName ?? 'TBC'}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>Đối tác</label>
+                                <select value={assignForm.partnerId} onChange={e => setAssignForm(f => ({ ...f, partnerId: e.target.value }))}
+                                    className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
+                                    <option value="">— Chọn đối tác —</option>
+                                    {partners.filter(p => p.status === 'ACTIVE').map(p => (
+                                        <option key={p.id} value={p.id}>{p.name} ({PARTNER_TYPE_MAP[p.type]?.label})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>Vai trò</label>
+                                <select value={assignForm.role} onChange={e => setAssignForm(f => ({ ...f, role: e.target.value as any }))}
+                                    className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
+                                    <option value="FORWARDER">Forwarder</option>
+                                    <option value="CUSTOMS_BROKER">Customs Broker</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <button onClick={async () => {
+                                if (!assignForm.shipmentId || !assignForm.partnerId) { toast.error('Chọn lô hàng và đối tác'); return }
+                                setAssigning(true)
+                                const res = await assignShipmentToPartner(assignForm.shipmentId, assignForm.partnerId, assignForm.role)
+                                if (res.success) { toast.success('Đã gán đối tác thành công!'); setAssignForm({ shipmentId: '', partnerId: '', role: 'FORWARDER' }); loadStats() }
+                                else toast.error(res.error ?? 'Lỗi')
+                                setAssigning(false)
+                            }} disabled={assigning || !assignForm.shipmentId || !assignForm.partnerId}
+                                className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50 flex items-center gap-1.5"
+                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                {assigning ? <Loader2 size={12} className="animate-spin" /> : <Link size={12} />}
+                                {assigning ? 'Đang gán...' : 'Gán Đối Tác'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {assignShipments.length > 0 && (
+                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        {['B/L', 'Tàu', 'ETA', 'Trạng Thái'].map(h => (
+                                            <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {assignShipments.map(s => (
+                                        <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
+                                            <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{s.billOfLading}</td>
+                                            <td className="px-3 py-3 text-xs" style={{ color: '#E8F1F2' }}>{s.vesselName ?? '—'}</td>
+                                            <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{s.eta ? formatDate(s.eta) : '—'}</td>
+                                            <td className="px-3 py-3">
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: '#4A8FAB', background: 'rgba(74,143,171,0.12)' }}>{s.status}</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             )}
 
