@@ -14,6 +14,7 @@
 5. [BUG-005: Build Fail — Non-Async Export in 'use server'](#bug-005-build-fail--non-async-export-in-use-server-file)
 6. [BUG-006: MaxClientsInSessionMode on Vercel Runtime](#bug-006-maxclientsinsessionmode-on-vercel-runtime)
 7. [BUG-007: Stat Cards Tính Sai — Chỉ Đếm Page Hiện Tại](#bug-007-stat-cards-tính-sai--chỉ-đếm-page-hiện-tại)
+8. [BUG-008: Git Commit Message Dài Gây Treo Terminal](#bug-008-git-commit-message-dài-gây-treo-terminal)
 
 ---
 
@@ -395,3 +396,48 @@ page: '/dashboard/allocation'
 | 14 | ISR revalidation intervals phải stagger (30/45/60/90s) | Performance |
 | 15 | Stat cards KHÔNG tính từ `rows` — dùng `get{Module}Stats()` | Data Accuracy |
 | 16 | Module mới có stat cards → tạo `get{Module}Stats()` từ đầu | Data Accuracy |
+| 17 | **Git commit message NGẮN GỌN** (< 72 chars), không dùng body dài | Git Workflow |
+| 18 | Enum values PHẢI khớp Prisma schema (check trước khi dùng) | Schema |
+
+---
+
+## BUG-008: Git Commit Message Dài Gây Treo Terminal
+
+**Ngày:** 2026-03-07
+**Severity:** 🟡 Medium — Không ảnh hưởng logic, nhưng phí thời gian
+
+### Triệu chứng
+```
+git commit -m "feat: very long message with multi-line body..." → Treo vô hạn
+```
+
+### Nguyên nhân
+- Windows PowerShell xử lý chuỗi dài trong `-m` kém
+- Multi-line commit message qua `-m` gây parse error trên OneDrive path spaces
+- Terminal timeout khi đợi git response
+
+### Cách fix
+```bash
+# ❌ SAI — message dài, multi-line
+git commit -m "feat: implement file storage — ImgBB for images + Supabase Storage for documents
+
+- Add src/lib/imgbb.ts — ImgBB upload service
+- Add src/lib/supabase-storage.ts — Supabase Storage
+- Add ImageUploader component
+- Add DocumentUploader component"
+
+# ✅ ĐÚNG — ngắn gọn, < 72 ký tự
+git commit -m "feat: add Media Library page + Marketing sidebar"
+```
+
+### Quy tắc Git Commit
+| Quy tắc | Ví dụ |
+|---------|-------|
+| Prefix: `feat:`, `fix:`, `docs:`, `refactor:` | `feat: add media library` |
+| Max 72 ký tự | Không vượt quá |
+| Không dùng body (`-m` chỉ 1 dòng) | Thêm body qua PR description |
+| Ngôn ngữ: English | Nhất quán |
+
+### Bài học
+> **Git commit = tweet, không phải essay.** Chi tiết để trong PR description hoặc docs.
+
