@@ -9,9 +9,9 @@ import {
 import {
     getShipmentDetail, completeMilestone, uncompleteMilestone, addCustomMilestone,
     addCostItem, deleteCostItem, upsertCustomsDeclaration, upsertInsurancePolicy,
-    COST_CATEGORIES,
     type ShipmentDetail, type CostItemRow, type MilestoneRow,
 } from './shipment-actions'
+import { COST_CATEGORIES } from './shipment-constants'
 import { toast } from 'sonner'
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
