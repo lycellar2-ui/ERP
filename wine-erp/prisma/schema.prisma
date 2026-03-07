@@ -564,12 +564,13 @@ model ContractAmendment {
 }
 
 model ContractDocument {
-  id         String   @id @default(cuid())
-  contractId String
-  contract   Contract @relation(fields: [contractId], references: [id])
-  name       String
-  fileUrl    String
-  uploadedAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id])
+  name        String
+  fileUrl     String
+  storagePath String?
+  uploadedAt  DateTime @default(now())
 
   @@map("contract_documents")
 }

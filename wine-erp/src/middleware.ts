@@ -21,6 +21,19 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/settings': 'SYS:ADMIN',
     '/dashboard/kpi': 'RPT:READ',
     '/dashboard/ai': 'SYS:ADMIN',
+    // Added for complete coverage
+    '/dashboard/media': 'MDM:READ',
+    '/dashboard/pos': 'SLS:READ',
+    '/dashboard/pipeline': 'CRM:READ',
+    '/dashboard/quotations': 'SLS:READ',
+    '/dashboard/price-list': 'SLS:READ',
+    '/dashboard/allocation': 'SLS:READ',
+    '/dashboard/stamps': 'WMS:READ',
+    '/dashboard/stock-count': 'WMS:READ',
+    '/dashboard/transfers': 'WMS:READ',
+    '/dashboard/returns': 'SLS:READ',
+    '/dashboard/qr-codes': 'MDM:READ',
+    '/dashboard/market-price': 'TAX:READ',
 }
 
 export async function middleware(request: NextRequest) {

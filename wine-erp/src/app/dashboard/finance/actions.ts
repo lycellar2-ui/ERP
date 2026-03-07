@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/session'
 import { cached, revalidateCache } from '@/lib/cache'
+import { parseOrThrow, ARPaymentCreateSchema, ExpenseCreateSchema, JournalEntrySchema, CODCollectionSchema, BadDebtWriteOffSchema } from '@/lib/validations'
 
 export interface ARRow {
     id: string; invoiceNo: string; customerName: string; customerCode: string
@@ -191,9 +192,9 @@ export async function collectCODPayment(input: {
     notes?: string
 }): Promise<{ success: boolean; error?: string; invoiceNo?: string }> {
     try {
-        // Find AR invoice for this SO
+        const validated = parseOrThrow(CODCollectionSchema, input)
         const invoice = await prisma.aRInvoice.findFirst({
-            where: { soId: input.soId },
+            where: { soId: validated.soId },
             include: { payments: true },
         })
         if (!invoice) {
@@ -203,17 +204,17 @@ export async function collectCODPayment(input: {
         const alreadyPaid = invoice.payments.reduce((s, p) => s + Number(p.amount), 0)
         const outstanding = Number(invoice.totalAmount) - alreadyPaid
 
-        if (input.collectedAmount > outstanding) {
-            return { success: false, error: `Số tiền thu (${input.collectedAmount.toLocaleString()}) vượt quá công nợ (${outstanding.toLocaleString()})` }
+        if (validated.collectedAmount > outstanding) {
+            return { success: false, error: `Số tiền thu (${validated.collectedAmount.toLocaleString()}) vượt quá công nợ (${outstanding.toLocaleString()})` }
         }
 
-        const newTotalPaid = alreadyPaid + input.collectedAmount
+        const newTotalPaid = alreadyPaid + validated.collectedAmount
         const newStatus = newTotalPaid >= Number(invoice.totalAmount) ? 'PAID' : 'PARTIALLY_PAID'
 
         const payment = await prisma.aRPayment.create({
             data: {
                 invoiceId: invoice.id,
-                amount: input.collectedAmount,
+                amount: validated.collectedAmount,
                 method: 'CASH',
                 paidAt: new Date(),
             },
@@ -221,12 +222,10 @@ export async function collectCODPayment(input: {
 
         await prisma.aRInvoice.update({ where: { id: invoice.id }, data: { status: newStatus } })
 
-        // Update SO status if fully paid
         if (newStatus === 'PAID') {
-            await prisma.salesOrder.update({ where: { id: input.soId }, data: { status: 'PAID' } })
+            await prisma.salesOrder.update({ where: { id: validated.soId }, data: { status: 'PAID' } })
         }
 
-        // Auto journal: DR 111 (Tiền mặt) / CR 131 (Phải thu KH)
         const now = new Date()
         const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
         const entryNo = await nextEntryNo('JE-COD')
@@ -236,12 +235,12 @@ export async function collectCODPayment(input: {
                 docType: 'COD_COLLECTION',
                 docId: payment.id,
                 periodId: period.id,
-                description: `Thu COD ${invoice.invoiceNo} — ${input.collectedAmount.toLocaleString()} VND`,
-                createdBy: input.collectedBy,
+                description: `Thu COD ${invoice.invoiceNo} — ${validated.collectedAmount.toLocaleString()} VND`,
+                createdBy: validated.collectedBy,
                 lines: {
                     create: [
-                        { account: '111 - Tiền mặt', debit: input.collectedAmount, credit: 0 },
-                        { account: '131 - Phải thu KH', debit: 0, credit: input.collectedAmount },
+                        { account: '111 - Tiền mặt', debit: validated.collectedAmount, credit: 0 },
+                        { account: '131 - Phải thu KH', debit: 0, credit: validated.collectedAmount },
                     ],
                 },
             },

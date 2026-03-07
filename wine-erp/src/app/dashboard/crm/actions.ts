@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { parseOrThrow, CRMActivitySchema, CRMContactSchema, CRMComplaintSchema, CRMTastingEventSchema } from '@/lib/validations'
 
 export type ActivityType = 'CALL' | 'EMAIL' | 'MEETING' | 'TASTING' | 'DELIVERY' | 'COMPLAINT' | 'OTHER'
 export type OpportunityStage = 'LEAD' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST'
@@ -152,12 +153,13 @@ export async function logCustomerActivity(data: {
     performedBy: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const validated = parseOrThrow(CRMActivitySchema, data)
         await prisma.customerActivity.create({
             data: {
-                customerId: data.customerId,
-                type: data.type,
-                description: data.description,
-                performedBy: data.performedBy,
+                customerId: validated.customerId,
+                type: validated.type,
+                description: validated.description,
+                performedBy: validated.performedBy,
             },
         })
         revalidateCache('crm')
@@ -336,20 +338,21 @@ export async function createCustomerContact(input: {
     isPrimary?: boolean
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        if (input.isPrimary) {
+        const validated = parseOrThrow(CRMContactSchema, input)
+        if (validated.isPrimary) {
             await prisma.customerContact.updateMany({
-                where: { customerId: input.customerId, isPrimary: true },
+                where: { customerId: validated.customerId, isPrimary: true },
                 data: { isPrimary: false },
             })
         }
         await prisma.customerContact.create({
             data: {
-                customerId: input.customerId,
-                name: input.name,
-                title: input.title ?? null,
-                phone: input.phone ?? null,
-                email: input.email ?? null,
-                isPrimary: input.isPrimary ?? false,
+                customerId: validated.customerId,
+                name: validated.name,
+                title: validated.title ?? null,
+                phone: validated.phone ?? null,
+                email: validated.email ?? null,
+                isPrimary: validated.isPrimary ?? false,
             },
         })
         revalidateCache('crm')
@@ -607,15 +610,16 @@ export async function createTastingEvent(input: {
     maxGuests: number
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const validated = parseOrThrow(CRMTastingEventSchema, input)
         await prisma.tastingEvent.create({
             data: {
-                name: input.name,
-                eventDate: new Date(input.date),
-                date: new Date(input.date),
-                location: input.venue,
-                venue: input.venue,
-                description: input.description ?? null,
-                maxGuests: input.maxGuests,
+                name: validated.name,
+                eventDate: new Date(validated.date),
+                date: new Date(validated.date),
+                location: validated.venue,
+                venue: validated.venue,
+                description: validated.description ?? null,
+                maxGuests: validated.maxGuests,
                 status: 'PLANNED',
             },
         })

@@ -156,6 +156,38 @@ export const PipelineDealSchema = z.object({
     notes: z.string().max(1000).optional(),
 })
 
+export const CRMActivitySchema = z.object({
+    customerId: idSchema,
+    type: z.enum(['CALL', 'EMAIL', 'MEETING', 'TASTING', 'DELIVERY', 'COMPLAINT', 'OTHER']),
+    description: z.string().min(1, 'Chưa nhập mô tả').max(1000),
+    performedBy: z.string().min(1),
+})
+
+export const CRMContactSchema = z.object({
+    customerId: idSchema,
+    name: z.string().min(1, 'Chưa nhập tên').max(200),
+    title: z.string().max(100).optional(),
+    phone: z.string().max(20).optional(),
+    email: z.string().email().optional().or(z.literal('')),
+    isPrimary: z.boolean().optional(),
+})
+
+export const CRMComplaintSchema = z.object({
+    customerId: idSchema,
+    subject: z.string().min(1, 'Chưa nhập tiêu đề').max(300),
+    description: z.string().min(1).max(2000),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+    assignedTo: z.string().optional(),
+})
+
+export const CRMTastingEventSchema = z.object({
+    name: z.string().min(1).max(200),
+    date: z.string().min(1),
+    venue: z.string().min(1).max(300),
+    maxGuests: z.number().int().positive().max(500),
+    description: z.string().max(2000).optional(),
+})
+
 // ═══════════════════════════════════════════════════
 // POS MODULE
 // ═══════════════════════════════════════════════════
@@ -169,6 +201,100 @@ export const POSPaymentSchema = z.object({
         qty: z.number().int().positive(),
         unitPrice: positiveNumber,
     })).min(1, 'Giỏ hàng trống'),
+})
+
+// ═══════════════════════════════════════════════════
+// CONTRACT MODULE
+// ═══════════════════════════════════════════════════
+
+export const ContractTypeSchema = z.enum(['PURCHASE', 'SALES', 'CONSIGNMENT', 'LOGISTICS', 'WAREHOUSE'])
+export const ContractStatusSchema = z.enum(['ACTIVE', 'EXPIRED', 'TERMINATED'])
+
+export const ContractCreateSchema = z.object({
+    contractNo: z.string().min(1, 'Chưa nhập số hợp đồng').max(50),
+    type: ContractTypeSchema,
+    supplierId: idSchema.optional(),
+    customerId: idSchema.optional(),
+    value: positiveNumber,
+    currency: z.enum(['VND', 'USD', 'EUR']).default('VND'),
+    startDate: z.string().min(1, 'Chưa chọn ngày bắt đầu'),
+    endDate: z.string().min(1, 'Chưa chọn ngày kết thúc'),
+    paymentTerm: z.string().max(100).optional(),
+    incoterms: z.string().max(20).optional(),
+}).refine(d => d.supplierId || d.customerId, {
+    message: 'Phải chọn nhà cung cấp hoặc khách hàng',
+})
+
+export const ContractAmendmentSchema = z.object({
+    contractId: idSchema,
+    newEndDate: z.string().optional(),
+    newValue: positiveNumber.optional(),
+    reason: z.string().min(1, 'Chưa nhập lý do').max(500),
+    fileUrl: z.string().url().optional(),
+})
+
+export const DigitalSignatureSchema = z.object({
+    contractId: idSchema,
+    signerId: z.string().min(1),
+    signerRole: z.string().min(1),
+    signatureDataUrl: z.string().min(1, 'Chưa ký'),
+    ipAddress: z.string().optional(),
+})
+
+// ═══════════════════════════════════════════════════
+// DELIVERY MODULE
+// ═══════════════════════════════════════════════════
+
+export const DeliveryRouteCreateSchema = z.object({
+    routeDate: z.string().min(1, 'Chưa chọn ngày giao'),
+    driverId: idSchema,
+    vehicleId: idSchema,
+})
+
+export const DeliveryRouteStatusSchema = z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])
+
+export const EPODSchema = z.object({
+    stopId: idSchema,
+    confirmedBy: z.string().min(1),
+    notes: z.string().max(500).optional(),
+    signatureUrl: z.string().optional(),
+    photoUrl: z.string().optional(),
+})
+
+export const DeliveryFailureSchema = z.object({
+    stopId: idSchema,
+    reason: z.enum(['CUSTOMER_ABSENT', 'WRONG_ADDRESS', 'REFUSED', 'DAMAGED', 'OTHER']),
+    notes: z.string().max(500).optional(),
+})
+
+export const CODSyncSchema = z.object({
+    stopId: idSchema,
+    codAmount: positiveNumber,
+    collectedBy: z.string().min(1),
+    notes: z.string().max(500).optional(),
+})
+
+// ═══════════════════════════════════════════════════
+// FINANCE EXTENDED
+// ═══════════════════════════════════════════════════
+
+export const APPaymentSchema = z.object({
+    invoiceId: idSchema,
+    amount: positiveNumber,
+    method: z.string().min(1),
+    reference: z.string().max(200).optional(),
+})
+
+export const CODCollectionSchema = z.object({
+    soId: idSchema,
+    collectedAmount: positiveNumber,
+    collectedBy: z.string().min(1),
+    notes: z.string().max(500).optional(),
+})
+
+export const BadDebtWriteOffSchema = z.object({
+    invoiceId: idSchema,
+    reason: z.string().min(1, 'Chưa nhập lý do').max(500),
 })
 
 // ═══════════════════════════════════════════════════

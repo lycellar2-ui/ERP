@@ -3,6 +3,8 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { parseOrThrow, ContractCreateSchema, ContractAmendmentSchema, DigitalSignatureSchema } from '@/lib/validations'
+import { uploadToStorage } from '@/lib/supabase-storage'
 
 export interface ContractRow {
     id: string
@@ -122,22 +124,20 @@ export async function getCounterparties() {
 // ── Create contract ───────────────────────────────
 export async function createContract(input: ContractCreateInput): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
-        if (!input.supplierId && !input.customerId) {
-            return { success: false, error: 'Phải chọn nhà cung cấp hoặc khách hàng' }
-        }
+        const validated = parseOrThrow(ContractCreateSchema, input)
 
         const contract = await prisma.contract.create({
             data: {
-                contractNo: input.contractNo,
-                type: input.type as any,
-                supplierId: input.supplierId ?? null,
-                customerId: input.customerId ?? null,
-                value: input.value,
-                currency: input.currency,
-                startDate: new Date(input.startDate),
-                endDate: new Date(input.endDate),
-                paymentTerm: input.paymentTerm ?? null,
-                incoterms: input.incoterms ?? null,
+                contractNo: validated.contractNo,
+                type: validated.type as any,
+                supplierId: validated.supplierId ?? null,
+                customerId: validated.customerId ?? null,
+                value: validated.value,
+                currency: validated.currency,
+                startDate: new Date(validated.startDate),
+                endDate: new Date(validated.endDate),
+                paymentTerm: validated.paymentTerm ?? null,
+                incoterms: validated.incoterms ?? null,
                 status: 'ACTIVE',
             },
         })
@@ -341,35 +341,35 @@ export async function createContractAmendment(input: {
     fileUrl?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const validated = parseOrThrow(ContractAmendmentSchema, input)
+
         const contract = await prisma.contract.findUnique({
-            where: { id: input.contractId },
+            where: { id: validated.contractId },
             include: { amendments: { select: { amendNo: true }, orderBy: { amendNo: 'desc' }, take: 1 } }
         })
         if (!contract) return { success: false, error: 'Hợp đồng không tồn tại' }
 
         const nextAmendNo = (contract.amendments[0]?.amendNo ?? 0) + 1
         const updateData: any = {}
-        if (input.newEndDate) updateData.endDate = new Date(input.newEndDate)
-        if (input.newValue != null) updateData.value = input.newValue
+        if (validated.newEndDate) updateData.endDate = new Date(validated.newEndDate)
+        if (validated.newValue != null) updateData.value = validated.newValue
 
         await prisma.$transaction(async (tx) => {
-            // 1. Create amendment record
             await tx.contractAmendment.create({
                 data: {
-                    contractId: input.contractId,
+                    contractId: validated.contractId,
                     amendNo: nextAmendNo,
-                    description: input.reason,
+                    description: validated.reason,
                     signedDate: new Date(),
-                    fileUrl: input.fileUrl ?? null,
+                    fileUrl: validated.fileUrl ?? null,
                 },
             })
 
-            // 2. Update the contract itself
             await tx.contract.update({
-                where: { id: input.contractId },
+                where: { id: validated.contractId },
                 data: {
                     ...updateData,
-                    status: 'ACTIVE', // Re-activate if was expired
+                    status: 'ACTIVE',
                 },
             })
         })
@@ -390,15 +390,23 @@ export async function getContractAmendments(contractId: string) {
     })
 }
 
-// ── Upload/Get Contract Documents ─────────────────
-import { uploadFile } from '@/lib/storage'
+// ── Upload/Get Contract Documents (Supabase Storage — Private) ──
 
 export async function uploadContractDocument(contractId: string, formData: FormData) {
     try {
         const file = formData.get('file') as File
-        if (!file) return { success: false, error: 'Chưa chọn file hợp đồng' }
+        if (!file || file.size === 0) return { success: false, error: 'Chưa chọn file hợp đồng' }
+        if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (tối đa 10MB)' }
 
-        const uploadRes = await uploadFile(formData, 'contracts')
+        const contract = await prisma.contract.findUnique({
+            where: { id: contractId },
+            select: { contractNo: true },
+        })
+
+        const filePath = `${contract?.contractNo ?? contractId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const uploadRes = await uploadToStorage('contracts', filePath, buffer, file.type)
+
         if (!uploadRes.success || !uploadRes.url) {
             return { success: false, error: uploadRes.error ?? 'Upload failed' }
         }
@@ -408,6 +416,7 @@ export async function uploadContractDocument(contractId: string, formData: FormD
                 contractId,
                 name: file.name,
                 fileUrl: uploadRes.url,
+                storagePath: uploadRes.path,
             }
         })
 
@@ -448,38 +457,38 @@ export async function signContractInternal(input: {
     contractId: string
     signerId: string
     signerRole: string
-    signatureDataUrl: string // base64 canvas signature
+    signatureDataUrl: string
     ipAddress?: string
 }): Promise<{ success: boolean; signatureHash?: string; error?: string }> {
     try {
-        const contract = await prisma.contract.findUnique({ where: { id: input.contractId } })
+        const validated = parseOrThrow(DigitalSignatureSchema, input)
+
+        const contract = await prisma.contract.findUnique({ where: { id: validated.contractId } })
         if (!contract) return { success: false, error: 'Hợp đồng không tồn tại' }
         if (contract.status === 'ACTIVE') return { success: false, error: 'Hợp đồng đã được ký' }
 
-        // Generate hash for verification
         const encoder = new TextEncoder()
-        const data = encoder.encode(`${input.contractId}:${input.signerId}:${Date.now()}`)
+        const data = encoder.encode(`${validated.contractId}:${validated.signerId}:${Date.now()}`)
         const hashBuffer = await crypto.subtle.digest('SHA-256', data)
         const hashArray = Array.from(new Uint8Array(hashBuffer))
         const signatureHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
         await prisma.contract.update({
-            where: { id: input.contractId },
+            where: { id: validated.contractId },
             data: {
-                signatureUrl: input.signatureDataUrl,
+                signatureUrl: validated.signatureDataUrl,
                 status: 'ACTIVE',
             },
         })
 
-        // Log audit for signature (stores signedBy, signatureHash, etc.)
         const { logAudit } = await import('@/lib/audit')
         await logAudit({
-            userId: input.signerId,
+            userId: validated.signerId,
             action: 'SIGN',
             entityType: 'Contract',
-            entityId: input.contractId,
-            description: `Ký nội bộ HĐ ${contract.contractNo} — ${input.signerRole}`,
-            newValue: { signatureHash, signedBy: input.signerId, signedAt: new Date().toISOString(), signerRole: input.signerRole, ip: input.ipAddress },
+            entityId: validated.contractId,
+            description: `Ký nội bộ HĐ ${contract.contractNo} — ${validated.signerRole}`,
+            newValue: { signatureHash, signedBy: validated.signerId, signedAt: new Date().toISOString(), signerRole: validated.signerRole, ip: validated.ipAddress },
         })
 
         revalidateCache('contracts')

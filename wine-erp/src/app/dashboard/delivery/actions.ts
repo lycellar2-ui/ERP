@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { uploadFile } from '@/lib/storage'
 import { cached, revalidateCache } from '@/lib/cache'
+import { parseOrThrow, DeliveryRouteCreateSchema, EPODSchema, DeliveryFailureSchema, CODSyncSchema } from '@/lib/validations'
 
 export interface DeliveryRouteRow {
     id: string
@@ -117,11 +118,12 @@ export async function createDeliveryRoute(data: {
     vehicleId: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        const validated = parseOrThrow(DeliveryRouteCreateSchema, data)
         const route = await prisma.deliveryRoute.create({
             data: {
-                routeDate: new Date(data.routeDate),
-                driverId: data.driverId,
-                vehicleId: data.vehicleId,
+                routeDate: new Date(validated.routeDate),
+                driverId: validated.driverId,
+                vehicleId: validated.vehicleId,
                 status: 'PLANNED',
             },
         })
@@ -142,27 +144,28 @@ export async function recordEPOD(data: {
     photoUrl?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const validated = parseOrThrow(EPODSchema, data)
         await prisma.$transaction([
             prisma.proofOfDelivery.upsert({
-                where: { stopId: data.stopId },
+                where: { stopId: validated.stopId },
                 create: {
-                    stopId: data.stopId,
-                    confirmedBy: data.confirmedBy,
-                    notes: data.notes,
-                    signatureUrl: data.signatureUrl,
-                    photoUrl: data.photoUrl,
+                    stopId: validated.stopId,
+                    confirmedBy: validated.confirmedBy,
+                    notes: validated.notes,
+                    signatureUrl: validated.signatureUrl,
+                    photoUrl: validated.photoUrl,
                     confirmedAt: new Date(),
                 },
                 update: {
-                    confirmedBy: data.confirmedBy,
-                    notes: data.notes,
-                    signatureUrl: data.signatureUrl,
-                    photoUrl: data.photoUrl,
+                    confirmedBy: validated.confirmedBy,
+                    notes: validated.notes,
+                    signatureUrl: validated.signatureUrl,
+                    photoUrl: validated.photoUrl,
                     confirmedAt: new Date(),
                 },
             }),
             prisma.deliveryStop.update({
-                where: { id: data.stopId },
+                where: { id: validated.stopId },
                 data: { status: 'DELIVERED', podSignedAt: new Date() },
             }),
         ])
@@ -231,22 +234,22 @@ export async function recordDeliveryFailure(input: {
     notes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const validated = parseOrThrow(DeliveryFailureSchema, input)
         await prisma.deliveryStop.update({
-            where: { id: input.stopId },
+            where: { id: validated.stopId },
             data: {
                 status: 'FAILED',
                 pod: {
                     upsert: {
-                        create: { confirmedBy: 'SYSTEM', notes: `[Lý do: ${input.reason}] ${input.notes ?? ''}`.trim() },
-                        update: { notes: `[Lý do: ${input.reason}] ${input.notes ?? ''}`.trim() }
+                        create: { confirmedBy: 'SYSTEM', notes: `[Lý do: ${validated.reason}] ${validated.notes ?? ''}`.trim() },
+                        update: { notes: `[Lý do: ${validated.reason}] ${validated.notes ?? ''}`.trim() }
                     }
                 }
             },
         })
 
-        // Check if all stops in the route are done
         const stop = await prisma.deliveryStop.findUnique({
-            where: { id: input.stopId },
+            where: { id: validated.stopId },
             select: { routeId: true },
         })
         if (stop) {
@@ -382,8 +385,10 @@ export async function syncCODToAR(input: {
     notes?: string
 }): Promise<{ success: boolean; paymentId?: string; error?: string }> {
     try {
+        const validated = parseOrThrow(CODSyncSchema, input)
+
         const stop = await prisma.deliveryStop.findUnique({
-            where: { id: input.stopId },
+            where: { id: validated.stopId },
             include: {
                 do: {
                     select: {
@@ -404,7 +409,6 @@ export async function syncCODToAR(input: {
         const invoice = stop.do.so.arInvoices[0]
         if (!invoice) return { success: false, error: 'No outstanding AR invoice for this SO' }
 
-        // Create AR Payment
         const paymentCount = await prisma.aRPayment.count()
         const paymentNo = `COD-${String(paymentCount + 1).padStart(6, '0')}`
 
@@ -412,21 +416,19 @@ export async function syncCODToAR(input: {
             data: {
                 paymentNo,
                 invoiceId: invoice.id,
-                amount: input.codAmount,
+                amount: validated.codAmount,
                 paymentDate: new Date(),
                 method: 'COD',
-                reference: `COD from stop ${stop.sequence} | Driver: ${input.collectedBy}`,
-                notes: input.notes ?? `Auto-created from COD delivery ${stop.id}`,
+                reference: `COD from stop ${stop.sequence} | Driver: ${validated.collectedBy}`,
+                notes: validated.notes ?? `Auto-created from COD delivery ${stop.id}`,
             },
         })
 
-        // Update stop COD status
         await prisma.deliveryStop.update({
-            where: { id: input.stopId },
+            where: { id: validated.stopId },
             data: { codCollected: true, codStatus: 'COLLECTED_CASH' },
         })
 
-        // Check if invoice is fully paid
         const totalPaid = await prisma.aRPayment.aggregate({
             where: { invoiceId: invoice.id },
             _sum: { amount: true },
