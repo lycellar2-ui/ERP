@@ -62,8 +62,8 @@ export async function middleware(request: NextRequest) {
     const isAgencyPath = request.nextUrl.pathname.startsWith('/portal')
     const isApiPath = request.nextUrl.pathname.startsWith('/api')
 
-    // Redirect unauthenticated users to login
-    if (!user && !isPublic && !isAgencyPath) {
+    // Redirect unauthenticated users to login (skip API + public + agency paths)
+    if (!user && !isPublic && !isAgencyPath && !isApiPath) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         url.searchParams.set('redirect', request.nextUrl.pathname)
