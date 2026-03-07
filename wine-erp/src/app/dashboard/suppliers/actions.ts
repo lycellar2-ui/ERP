@@ -63,6 +63,50 @@ export async function getSuppliers(params?: {
     }
 }
 
+// ─── Supplier Stats (aggregated from DB) ──────────
+export type SupplierStats = {
+    total: number
+    active: number
+    countries: number
+    avgLeadTime: number
+    topTypes: { type: string; label: string; count: number }[]
+}
+
+export async function getSupplierStats(): Promise<SupplierStats> {
+    return cached('suppliers:stats', async () => {
+        const typeLabels: Record<string, string> = {
+            WINERY: 'Winery', NEGOCIANT: 'Négociant', DISTRIBUTOR: 'Distributor',
+            LOGISTICS: 'Logistics', FORWARDER: 'Forwarder', CUSTOMS_BROKER: 'Customs Broker',
+        }
+        const where = { deletedAt: null } as const
+
+        const [total, active, leadTimeAgg, countriesRaw, typeCounts] = await Promise.all([
+            prisma.supplier.count({ where }),
+            prisma.supplier.count({ where: { ...where, status: 'ACTIVE' } }),
+            prisma.supplier.aggregate({ where, _avg: { leadTimeDays: true } }),
+            prisma.supplier.findMany({ where, select: { country: true }, distinct: ['country'] }),
+            prisma.supplier.groupBy({
+                by: ['type'],
+                where,
+                _count: { id: true },
+                orderBy: { _count: { id: 'desc' } },
+            }),
+        ])
+
+        return {
+            total,
+            active,
+            countries: countriesRaw.length,
+            avgLeadTime: Math.round(leadTimeAgg._avg.leadTimeDays ?? 45),
+            topTypes: typeCounts.map(t => ({
+                type: t.type,
+                label: typeLabels[t.type] ?? t.type,
+                count: t._count.id,
+            })),
+        }
+    }, 30_000)
+}
+
 const supplierSchema = z.object({
     code: z.string().min(3, 'Mã NCC bắt buộc'),
     name: z.string().min(2, 'Tên NCC bắt buộc'),

@@ -103,6 +103,59 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
     }) // end cached
 }
 
+// ─── Product Stats (aggregated from DB) ───────────
+export type ProductStats = {
+    total: number
+    active: number
+    outOfStock: number
+    topTypes: { type: string; label: string; count: number }[]
+}
+
+export async function getProductStats(): Promise<ProductStats> {
+    return cached('products:stats', async () => {
+        const [total, active, wineTypeCounts, productsWithStock] = await Promise.all([
+            prisma.product.count({ where: { deletedAt: null } }),
+            prisma.product.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
+            prisma.product.groupBy({
+                by: ['wineType'],
+                where: { deletedAt: null, status: 'ACTIVE' },
+                _count: { id: true },
+                orderBy: { _count: { id: 'desc' } },
+            }),
+            // Products with zero stock (active only)
+            prisma.product.findMany({
+                where: { deletedAt: null, status: 'ACTIVE' },
+                select: {
+                    id: true,
+                    stockLots: {
+                        where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                        select: { qtyAvailable: true },
+                    },
+                },
+            }),
+        ])
+
+        const outOfStock = productsWithStock.filter(
+            p => p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0) === 0
+        ).length
+
+        const typeLabels: Record<string, string> = {
+            RED: 'Đỏ', WHITE: 'Trắng', ROSE: 'Rosé',
+            SPARKLING: 'Sâm panh', FORTIFIED: 'Fortified', DESSERT: 'Dessert',
+        }
+
+        const topTypes = wineTypeCounts
+            .slice(0, 3)
+            .map(t => ({
+                type: t.wineType,
+                label: typeLabels[t.wineType] ?? t.wineType,
+                count: t._count.id,
+            }))
+
+        return { total, active, outOfStock, topTypes }
+    }, 30_000) // 30s cache
+}
+
 // ─── Schema ───────────────────────────────────────
 const productSchema = z.object({
     skuCode: z.string().min(3, 'SKU tối thiểu 3 ký tự'),

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Plus, Building2, Globe, Clock, X, Save, Loader2, AlertCircle, Award, Copy, Upload } from 'lucide-react'
-import { SupplierRow, SupplierInput, createSupplier, getSuppliers, getAllSupplierScorecards, detectDuplicates, bulkImportSuppliers, type SupplierScorecard, type DuplicateCandidate } from './actions'
+import { SupplierRow, SupplierInput, SupplierStats, createSupplier, getSuppliers, getAllSupplierScorecards, detectDuplicates, bulkImportSuppliers, type SupplierScorecard, type DuplicateCandidate } from './actions'
 import { formatVND } from '@/lib/utils'
 import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
@@ -267,7 +267,7 @@ function AddSupplierDrawer({ open, onClose, onSaved }: {
 }
 
 // ── Main ───────────────────────────────────────────────────
-export function SuppliersClient({ initialRows, initialTotal }: { initialRows: SupplierRow[]; initialTotal: number }) {
+export function SuppliersClient({ initialRows, initialTotal, stats }: { initialRows: SupplierRow[]; initialTotal: number; stats: SupplierStats }) {
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [search, setSearch] = useState('')
@@ -354,10 +354,10 @@ export function SuppliersClient({ initialRows, initialTotal }: { initialRows: Su
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: 'Tổng NCC', value: total, icon: Building2, accent: '#87CBB9' },
-                    { label: 'Trang hiện tại', value: rows.length, icon: Globe, accent: '#5BA88A' },
-                    { label: 'Quốc gia', value: [...new Set(rows.map(r => r.country))].length, icon: Globe, accent: '#4A8FAB' },
-                    { label: 'Avg Lead Time', value: rows.length ? `${Math.round(rows.reduce((s, r) => s + r.leadTimeDays, 0) / rows.length)} ngày` : '—', icon: Clock, accent: '#87CBB9' },
+                    { label: 'Tổng NCC', value: stats.total, icon: Building2, accent: '#87CBB9' },
+                    { label: 'Hoạt động', value: stats.active, icon: Globe, accent: '#5BA88A' },
+                    { label: 'Quốc gia', value: stats.countries, icon: Globe, accent: '#4A8FAB' },
+                    { label: 'Avg Lead Time', value: `${stats.avgLeadTime} ngày`, icon: Clock, accent: '#87CBB9' },
                 ].map(s => (
                     <div key={s.label} className="flex items-center gap-4 p-4 rounded-xl"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>

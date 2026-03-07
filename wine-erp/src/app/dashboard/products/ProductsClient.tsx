@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload } from 'lucide-react'
-import { ProductRow, ProductFilters, bulkImportProducts } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
@@ -63,9 +63,10 @@ function StatCard({ label, value, icon: Icon, accent }: {
 interface ProductsClientProps {
     initialRows: ProductRow[]
     initialTotal: number
+    stats: ProductStats
 }
 
-export function ProductsClient({ initialRows, initialTotal }: ProductsClientProps) {
+export function ProductsClient({ initialRows, initialTotal, stats }: ProductsClientProps) {
     const [rows, setRows] = useState<ProductRow[]>(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -77,8 +78,8 @@ export function ProductsClient({ initialRows, initialTotal }: ProductsClientProp
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
 
-    const activeCount = rows.filter(r => r.status === 'ACTIVE').length
-    const outOfStock = rows.filter(r => r.totalStock === 0 && r.status === 'ACTIVE').length
+    // Use server-aggregated stats (counts all products, not just current page)
+    const topTypeLabel = stats.topTypes.map(t => `${t.count} ${t.label}`).join(' / ') || 'N/A'
 
     const applyFilter = useCallback(async (newFilters: Partial<ProductFilters>) => {
         const merged = { ...filters, ...newFilters, page: 1 }
@@ -129,12 +130,12 @@ export function ProductsClient({ initialRows, initialTotal }: ProductsClientProp
                 </div>
             </div>
 
-            {/* Stats */}
+            {/* Stats — aggregated from all products (server) */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard label="Tổng sản phẩm" value={total} icon={Wine} accent="#87CBB9" />
-                <StatCard label="Đang kinh doanh" value={activeCount} icon={Package} accent="#5BA88A" />
-                <StatCard label="Hết hàng (cần nhập)" value={outOfStock} icon={AlertCircle} accent="#8B1A2E" />
-                <StatCard label="Loại nổi bật" value={`${rows.filter(r => r.wineType === 'RED').length} Đỏ / ${rows.filter(r => r.wineType === 'SPARKLING').length} Sâm panh`} icon={TrendingUp} accent="#4A8FAB" />
+                <StatCard label="Tổng sản phẩm" value={stats.total} icon={Wine} accent="#87CBB9" />
+                <StatCard label="Đang kinh doanh" value={stats.active} icon={Package} accent="#5BA88A" />
+                <StatCard label="Hết hàng (cần nhập)" value={stats.outOfStock} icon={AlertCircle} accent="#8B1A2E" />
+                <StatCard label="Loại nổi bật" value={topTypeLabel} icon={TrendingUp} accent="#4A8FAB" />
             </div>
 
             {/* Filters */}

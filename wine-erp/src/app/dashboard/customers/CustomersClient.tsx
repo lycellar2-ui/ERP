@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle, Upload } from 'lucide-react'
-import { CustomerRow, CustomerInput, createCustomer, getCustomers, bulkImportCustomers } from './actions'
+import { CustomerRow, CustomerInput, CustomerStats, createCustomer, getCustomers, bulkImportCustomers } from './actions'
 import { formatVND } from '@/lib/utils'
 import { DataPagination } from '@/components/DataPagination'
 import { FilterBar } from '@/components/FilterBar'
@@ -246,7 +246,7 @@ function AddCustomerDrawer({ open, onClose, onSaved }: {
     )
 }
 
-export function CustomersClient({ initialRows, initialTotal }: { initialRows: CustomerRow[]; initialTotal: number }) {
+export function CustomersClient({ initialRows, initialTotal, stats }: { initialRows: CustomerRow[]; initialTotal: number; stats: CustomerStats }) {
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [search, setSearch] = useState('')
@@ -268,7 +268,7 @@ export function CustomersClient({ initialRows, initialTotal }: { initialRows: Cu
         setTotal(result.total)
     }, [search, typeFilter, statusFilter, page])
 
-    const totalCredit = rows.reduce((s, r) => s + r.creditLimit, 0)
+    // Stats from server (all customers, not just current page)
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
@@ -301,10 +301,10 @@ export function CustomersClient({ initialRows, initialTotal }: { initialRows: Cu
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: 'Tổng KH', value: total, icon: Users, accent: '#87CBB9' },
-                    { label: 'Trang hiện tại', value: rows.length, icon: Building2, accent: '#5BA88A' },
-                    { label: 'Hạn mức cao', value: rows.filter(r => r.creditLimit > 0).length, icon: ShoppingBag, accent: '#4A8FAB' },
-                    { label: 'Tổng hạn mức', value: formatVND(totalCredit), icon: CreditCard, accent: '#87CBB9' },
+                    { label: 'Tổng KH', value: stats.total, icon: Users, accent: '#87CBB9' },
+                    { label: 'Hoạt động', value: stats.active, icon: Building2, accent: '#5BA88A' },
+                    { label: 'Có hạn mức', value: stats.withCredit, icon: ShoppingBag, accent: '#4A8FAB' },
+                    { label: 'Tổng hạn mức', value: formatVND(stats.totalCreditLimit), icon: CreditCard, accent: '#87CBB9' },
                 ].map(s => (
                     <div key={s.label} className="flex items-center gap-4 p-4 rounded-xl"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>

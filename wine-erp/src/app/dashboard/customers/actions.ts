@@ -68,6 +68,49 @@ export async function getCustomers(params?: {
     }
 }
 
+// ─── Customer Stats (aggregated from DB) ──────────
+export type CustomerStats = {
+    total: number
+    active: number
+    withCredit: number
+    totalCreditLimit: number
+    topTypes: { type: string; label: string; count: number }[]
+}
+
+export async function getCustomerStats(): Promise<CustomerStats> {
+    return cached('customers:stats', async () => {
+        const typeLabels: Record<string, string> = {
+            HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Phân Phối',
+            VIP_RETAIL: 'VIP Retail', INDIVIDUAL: 'Cá Nhân',
+        }
+
+        const [total, active, withCredit, creditSum, typeCounts] = await Promise.all([
+            prisma.customer.count({ where: { deletedAt: null } }),
+            prisma.customer.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
+            prisma.customer.count({ where: { deletedAt: null, creditLimit: { gt: 0 } } }),
+            prisma.customer.aggregate({ where: { deletedAt: null }, _sum: { creditLimit: true } }),
+            prisma.customer.groupBy({
+                by: ['customerType'],
+                where: { deletedAt: null },
+                _count: { id: true },
+                orderBy: { _count: { id: 'desc' } },
+            }),
+        ])
+
+        return {
+            total,
+            active,
+            withCredit,
+            totalCreditLimit: Number(creditSum._sum.creditLimit ?? 0),
+            topTypes: typeCounts.map(t => ({
+                type: t.customerType,
+                label: typeLabels[t.customerType] ?? t.customerType,
+                count: t._count.id,
+            })),
+        }
+    }, 30_000)
+}
+
 const customerSchema = z.object({
     code: z.string().min(3, 'Mã KH bắt buộc'),
     name: z.string().min(2, 'Tên KH bắt buộc'),

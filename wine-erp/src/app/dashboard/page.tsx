@@ -89,6 +89,10 @@ export default async function DashboardPage() {
     const _waterfall = Array.isArray(waterfall) ? { bars: [] as WaterfallBar[], revenue: 0, cogs: 0, totalExpenses: 0, netProfit: 0 } : waterfall
     const _yoy = yoy ?? { thisYear: new Date().getFullYear(), lastYear: new Date().getFullYear() - 1, current: [] as { month: number; label: string; revenue: number }[], previous: [] as { month: number; label: string; revenue: number }[], totalCurrent: 0, totalPrevious: 0, yoyGrowth: 0 }
 
+    // Use P&L (accounting TK 511) as primary revenue source for consistency
+    // Falls back to SO-based stats.revenue when P&L is unavailable
+    const primaryRevenue = _plSummary.revenue > 0 ? _plSummary.revenue : stats.revenue
+    const revenueSource = _plSummary.revenue > 0 ? 'Từ sổ kế toán (TK 511)' : 'Từ đơn hàng (SO)'
     const maxBar = Math.max(...monthlyRevenue.map(m => m.revenue), 1)
     const arMax = _arAging.buckets.length > 0 ? Math.max(..._arAging.buckets.map(b => b.amount), 1) : 1
 
@@ -134,8 +138,8 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <KpiCard
                     label="DOANH THU THÁNG"
-                    value={`${(stats.revenue / 1e9).toFixed(2)}T`}
-                    sub={formatVND(stats.revenue)}
+                    value={`${(primaryRevenue / 1e9).toFixed(2)}T`}
+                    sub={`${formatVND(primaryRevenue)} · ${revenueSource}`}
                     trend={stats.revenueGrowth !== 0
                         ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% so tháng trước`
                         : 'Chưa có dữ liệu tháng trước'}
