@@ -21,7 +21,11 @@ export async function GET(req: NextRequest) {
 
     // Simple protection
     if (secret !== SETUP_SECRET) {
-        return NextResponse.json({ error: 'Invalid secret' }, { status: 403 })
+        return NextResponse.json({
+            error: 'Invalid secret',
+            hint: `Expected length: ${SETUP_SECRET.length}, received: ${secret?.length ?? 0}`,
+            envSet: !!process.env.TELEGRAM_SETUP_SECRET,
+        }, { status: 403 })
     }
 
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET ?? ''
