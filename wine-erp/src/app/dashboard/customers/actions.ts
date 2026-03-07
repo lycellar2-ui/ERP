@@ -216,7 +216,10 @@ export async function getCustomerChannels(): Promise<{ channel: string; count: n
 
 export async function getSalesRepList(): Promise<{ id: string; name: string }[]> {
     const users = await prisma.user.findMany({
-        where: { role: { in: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'] } },
+        where: {
+            status: 'ACTIVE',
+            roles: { some: { role: { name: { in: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'] } } } },
+        },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
     })
