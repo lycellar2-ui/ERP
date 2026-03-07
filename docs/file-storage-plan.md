@@ -1,7 +1,8 @@
 # 📁 File Storage Implementation Plan — Wine ERP
 
 > **Ngày tạo:** 2026-03-07
-> **Trạng thái:** 📋 Chờ triển khai
+> **Cập nhật:** 2026-03-07 (đã triển khai ImgBB + Media Library)
+> **Trạng thái:** ✅ Đã triển khai (ImgBB) · 📋 Chờ triển khai (Supabase Storage)
 > **Phương án:** ImgBB (ảnh) + Supabase Storage (chứng từ)
 
 ---
@@ -435,24 +436,34 @@ Vào **Vercel Dashboard** → **Settings** → **Environment Variables**, thêm:
 ## Phần 5: Checklist Triển Khai
 
 ### Bước 1: Setup (15 phút)
-- [ ] Đăng ký ImgBB API key tại https://api.imgbb.com/
-- [ ] Thêm `IMGBB_API_KEY` vào `.env.local`
+- [x] Đăng ký ImgBB API key tại https://api.imgbb.com/
+- [x] Thêm `IMGBB_API_KEY` vào `.env.local`
 - [ ] Tạo Supabase Storage buckets (`contracts`, `invoices`, `documents`)
 - [ ] Setup RLS policies cho buckets
 - [ ] Thêm `SUPABASE_SERVICE_ROLE_KEY` vào `.env.local`
 
 ### Bước 2: Code Service Layer (20 phút)
-- [ ] Tạo `src/lib/imgbb.ts`
-- [ ] Tạo `src/lib/supabase-storage.ts`
+- [x] Tạo `src/lib/imgbb.ts`
+- [x] Tạo `src/lib/supabase-storage.ts`
 - [ ] Cập nhật schema nếu cần (`imageUrl` fields)
 - [ ] Chạy `npx prisma migrate dev`
 
 ### Bước 3: Tích Hợp Products (30 phút)
-- [ ] Tạo `uploadProductImage()` server action
-- [ ] Tạo `ImageUploader` component
-- [ ] Thêm uploader vào Product Drawer (tạo/sửa SP)
-- [ ] Hiển thị ảnh trong Product Table
-- [ ] Test upload + hiển thị
+- [x] Tạo `uploadProductImage()` server action
+- [x] Tạo `ImageUploader` component
+- [x] Thêm uploader vào Product Drawer (tạo/sửa SP)
+- [x] Multi-image gallery grid (set primary, delete)
+- [x] Upload qua ImgBB API — TESTED ✅
+
+### Bước 3b: Marketing Module — Media Library
+- [x] Tạo `/dashboard/media` page
+- [x] Sidebar: Marketing > Thư Viện Ảnh
+- [x] Stats: tổng ảnh, SP có/chưa có ảnh, loại ảnh
+- [x] Grid gallery + search + filter by type
+- [x] Upload modal (chọn SP + loại ảnh)
+- [x] Lightbox viewer
+- [x] Select / bulk delete
+- [x] Pagination
 
 ### Bước 4: Tích Hợp Contracts (20 phút)
 - [ ] Cập nhật `uploadContractDocument()` dùng Supabase Storage
@@ -460,8 +471,8 @@ Vào **Vercel Dashboard** → **Settings** → **Environment Variables**, thêm:
 - [ ] Test signed URL expiration
 
 ### Bước 5: Deploy (10 phút)
-- [ ] Thêm env vars vào Vercel
-- [ ] Push code
+- [x] Thêm `IMGBB_API_KEY` vào Vercel ⚠️ (cần làm)
+- [x] Push code
 - [ ] Test trên production
 
 ---
