@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
+import { parseOrThrow, POSSaleSchema, POSVATInvoiceSchema, LoyaltyEarnSchema, LoyaltyRedeemSchema } from '@/lib/validations'
 
 // ═══════════════════════════════════════════════════
 // POS — Point of Sale for Showroom
@@ -115,12 +116,10 @@ export async function processPOSSale(input: {
     error?: string
 }> {
     try {
-        if (input.items.length === 0) {
-            return { success: false, error: 'Giỏ hàng trống' }
-        }
+        const validated = parseOrThrow(POSSaleSchema, input)
 
         // Calculate total
-        const totalAmount = input.items.reduce((sum, item) => {
+        const totalAmount = validated.items.reduce((sum, item) => {
             const lineTotal = item.qty * item.unitPrice
             const discount = lineTotal * (item.discountPct / 100)
             return sum + lineTotal - discount
@@ -128,8 +127,8 @@ export async function processPOSSale(input: {
 
         // Validate cash payment
         let change = 0
-        if (input.paymentMethod === 'CASH') {
-            const received = input.cashReceived ?? 0
+        if (validated.paymentMethod === 'CASH') {
+            const received = validated.cashReceived ?? 0
             if (received < totalAmount) {
                 return { success: false, error: `Tiền nhận (${received.toLocaleString()}) nhỏ hơn tổng tiền (${totalAmount.toLocaleString()})` }
             }
@@ -144,7 +143,7 @@ export async function processPOSSale(input: {
         const soNo = `POS-${yy}${mm}-${String(count + 1).padStart(4, '0')}`
 
         // Use walk-in customer or specified customer
-        let customerId = input.customerId
+        let customerId = validated.customerId
         if (!customerId) {
             const walkIn = await prisma.customer.findFirst({
                 where: { code: 'WALK-IN' },
@@ -183,7 +182,7 @@ export async function processPOSSale(input: {
                     totalAmount,
                     status: 'PAID' as any, // POS is immediate
                     lines: {
-                        create: input.items.map(item => ({
+                        create: validated.items.map(item => ({
                             productId: item.productId,
                             qtyOrdered: item.qty,
                             unitPrice: item.unitPrice,
@@ -194,7 +193,7 @@ export async function processPOSSale(input: {
             })
 
             // Deduct stock FIFO per item
-            for (const item of input.items) {
+            for (const item of validated.items) {
                 let remaining = item.qty
                 const lots = await tx.stockLot.findMany({
                     where: {
@@ -229,8 +228,8 @@ export async function processPOSSale(input: {
             action: 'CREATE',
             entityType: 'SalesOrder',
             entityId: so.id,
-            description: `POS Sale ${soNo} — ${input.paymentMethod}`,
-            newValue: { soNo, totalAmount, paymentMethod: input.paymentMethod },
+            description: `POS Sale ${soNo} — ${validated.paymentMethod}`,
+            newValue: { soNo, totalAmount, paymentMethod: validated.paymentMethod },
         }).catch(() => { })
 
         revalidateCache('pos')
@@ -242,7 +241,7 @@ export async function processPOSSale(input: {
             success: true,
             soNo,
             totalAmount,
-            change: input.paymentMethod === 'CASH' ? change : undefined,
+            change: validated.paymentMethod === 'CASH' ? change : undefined,
         }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -335,8 +334,9 @@ export async function generatePOSVATInvoice(input: {
     customerAddress?: string
 }): Promise<{ success: boolean; invoiceNo?: string; error?: string }> {
     try {
+        const validated = parseOrThrow(POSVATInvoiceSchema, input)
         const so = await prisma.salesOrder.findFirst({
-            where: { soNo: input.soNo },
+            where: { soNo: validated.soNo },
             include: {
                 customer: { select: { id: true, name: true } },
                 lines: {
@@ -345,13 +345,13 @@ export async function generatePOSVATInvoice(input: {
             },
         })
 
-        if (!so) return { success: false, error: `Không tìm thấy đơn ${input.soNo}` }
+        if (!so) return { success: false, error: `Không tìm thấy đơn ${validated.soNo}` }
 
         // Check if VAT invoice already exists
         const existing = await prisma.aRInvoice.findFirst({
             where: { soId: so.id },
         })
-        if (existing) return { success: false, error: `Đơn ${input.soNo} đã có hóa đơn ${existing.invoiceNo}` }
+        if (existing) return { success: false, error: `Đơn ${validated.soNo} đã có hóa đơn ${existing.invoiceNo}` }
 
         // Generate VAT invoice number
         const now = new Date()
@@ -447,15 +447,16 @@ export async function earnLoyaltyPoints(input: {
     orderAmount: number
     soNo: string
 }): Promise<{ success: boolean; pointsEarned: number }> {
-    const points = Math.floor(input.orderAmount / 10000) * POINTS_PER_10K
+    const validated = parseOrThrow(LoyaltyEarnSchema, input)
+    const points = Math.floor(validated.orderAmount / 10000) * POINTS_PER_10K
     if (points <= 0) return { success: true, pointsEarned: 0 }
 
     await prisma.loyaltyTransaction.create({
         data: {
-            customerId: input.customerId,
+            customerId: validated.customerId,
             type: 'EARN',
             points,
-            description: `Tích điểm từ đơn ${input.soNo}`,
+            description: `Tích điểm từ đơn ${validated.soNo}`,
         },
     })
     return { success: true, pointsEarned: points }
@@ -465,20 +466,21 @@ export async function redeemLoyaltyPoints(input: {
     customerId: string
     points: number
 }): Promise<{ success: boolean; discountAmount: number; error?: string }> {
-    const info = await getLoyaltyInfo(input.customerId)
+    const validated = parseOrThrow(LoyaltyRedeemSchema, input)
+    const info = await getLoyaltyInfo(validated.customerId)
     if (!info) return { success: false, discountAmount: 0, error: 'Không tìm thấy KH' }
-    if (info.pointsBalance < input.points) {
+    if (info.pointsBalance < validated.points) {
         return { success: false, discountAmount: 0, error: `Không đủ điểm (còn ${info.pointsBalance})` }
     }
 
     await prisma.loyaltyTransaction.create({
         data: {
-            customerId: input.customerId,
+            customerId: validated.customerId,
             type: 'REDEEM',
-            points: -input.points,
-            description: `Đổi ${input.points} điểm = ${(input.points * POINT_VALUE_VND).toLocaleString()}đ`,
+            points: -validated.points,
+            description: `Đổi ${validated.points} điểm = ${(validated.points * POINT_VALUE_VND).toLocaleString()}đ`,
         },
     })
 
-    return { success: true, discountAmount: input.points * POINT_VALUE_VND }
+    return { success: true, discountAmount: validated.points * POINT_VALUE_VND }
 }

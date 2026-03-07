@@ -298,6 +298,63 @@ export const BadDebtWriteOffSchema = z.object({
 })
 
 // ═══════════════════════════════════════════════════
+// POS MODULE
+// ═══════════════════════════════════════════════════
+
+export const POSCartItemSchema = z.object({
+    productId: z.string().min(1),
+    skuCode: z.string().min(1),
+    productName: z.string().min(1),
+    qty: z.number().int().positive('SL phải > 0'),
+    unitPrice: nonNegativeNumber,
+    discountPct: percentSchema.default(0),
+})
+
+export const POSSaleSchema = z.object({
+    items: z.array(POSCartItemSchema).min(1, 'Giỏ hàng trống'),
+    paymentMethod: z.enum(['CASH', 'BANK_TRANSFER', 'QR']),
+    cashReceived: nonNegativeNumber.optional(),
+    customerId: z.string().optional(),
+    cashierName: z.string().max(100).optional(),
+})
+
+export const POSVATInvoiceSchema = z.object({
+    soNo: z.string().min(1, 'Thiếu số SO'),
+    customerName: z.string().min(1, 'Thiếu tên khách'),
+    customerTaxCode: z.string().max(20).optional(),
+    customerAddress: z.string().max(500).optional(),
+})
+
+export const LoyaltyEarnSchema = z.object({
+    customerId: z.string().min(1),
+    orderAmount: positiveNumber,
+    soNo: z.string().min(1),
+})
+
+export const LoyaltyRedeemSchema = z.object({
+    customerId: z.string().min(1),
+    points: z.number().int().positive('Điểm phải > 0'),
+})
+
+// ═══════════════════════════════════════════════════
+// WAREHOUSE MODULE
+// ═══════════════════════════════════════════════════
+
+export const GoodsReceiptLineSchema = z.object({
+    productId: z.string().min(1),
+    qtyReceived: z.number().int().positive('SL nhận phải > 0'),
+    locationId: z.string().min(1),
+    unitLandedCost: nonNegativeNumber.optional(),
+})
+
+export const GoodsReceiptCreateSchema = z.object({
+    poId: z.string().min(1, 'Thiếu PO'),
+    warehouseId: z.string().min(1, 'Thiếu kho'),
+    shipmentId: z.string().optional(),
+    lines: z.array(GoodsReceiptLineSchema).min(1, 'Cần ít nhất 1 dòng nhập'),
+})
+
+// ═══════════════════════════════════════════════════
 // HELPER: Parse and throw
 // ═══════════════════════════════════════════════════
 

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
+import { parseOrThrow, GoodsReceiptCreateSchema } from '@/lib/validations'
 
 // ─── Types ────────────────────────────────────────
 export type WarehouseRow = {
@@ -387,11 +388,8 @@ export async function createGoodsReceipt(input: {
     lines: GRLineInput[]
 }): Promise<{ success: boolean; grId?: string; grNo?: string; error?: string }> {
     try {
-        const { poId, warehouseId, shipmentId, lines } = input
-
-        if (lines.length === 0) {
-            return { success: false, error: 'Cần ít nhất 1 dòng nhập kho' }
-        }
+        const validated = parseOrThrow(GoodsReceiptCreateSchema, input)
+        const { poId, warehouseId, shipmentId, lines } = validated
 
         // Get PO to validate
         const po = await prisma.purchaseOrder.findUnique({
