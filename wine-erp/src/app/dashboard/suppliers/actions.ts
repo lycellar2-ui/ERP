@@ -5,6 +5,10 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 
+// ═══════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════
+
 export type SupplierRow = {
     id: string
     code: string
@@ -20,50 +24,219 @@ export type SupplierRow = {
     leadTimeDays: number
     status: string
     poCount: number
+    contactName: string | null
+    contactEmail: string | null
     createdAt: Date
 }
 
-export async function getSuppliers(params?: {
-    search?: string; type?: string; status?: string; country?: string; page?: number; pageSize?: number
-}): Promise<{ rows: SupplierRow[]; total: number }> {
-    const { search, type, status, country, page = 1, pageSize = 25 } = params ?? {}
+export type SupplierFilters = {
+    search?: string
+    type?: string
+    status?: string
+    country?: string
+    page?: number
+    pageSize?: number
+    sortBy?: 'name' | 'poCount' | 'leadTimeDays' | 'createdAt'
+    sortDir?: 'asc' | 'desc'
+}
+
+// ═══════════════════════════════════════════════════
+// LIST — with expanded search, sort, country filter
+// ═══════════════════════════════════════════════════
+
+export async function getSuppliers(params?: SupplierFilters): Promise<{ rows: SupplierRow[]; total: number }> {
+    const { search, type, status, country, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
     const where: any = { deletedAt: null }
+
     if (search) {
         where.OR = [
             { name: { contains: search, mode: 'insensitive' } },
             { code: { contains: search, mode: 'insensitive' } },
+            { taxId: { contains: search, mode: 'insensitive' } },
+            {
+                contacts: {
+                    some: {
+                        OR: [
+                            { email: { contains: search, mode: 'insensitive' } },
+                            { phone: { contains: search, mode: 'insensitive' } },
+                            { name: { contains: search, mode: 'insensitive' } },
+                        ]
+                    }
+                }
+            },
         ]
     }
     if (type) where.type = type
     if (status) where.status = status
     if (country) where.country = country
 
+    let orderBy: any = { name: 'asc' }
+    if (sortBy === 'leadTimeDays') orderBy = { leadTimeDays: sortDir }
+    else if (sortBy === 'createdAt') orderBy = { createdAt: sortDir }
+    else if (sortBy === 'name') orderBy = { name: sortDir }
+
     const [items, total] = await Promise.all([
         prisma.supplier.findMany({
             where,
-            include: { purchaseOrders: { select: { id: true } } },
-            orderBy: { name: 'asc' },
+            include: {
+                purchaseOrders: { select: { id: true } },
+                contacts: { where: { isPrimary: true }, take: 1 },
+            },
+            orderBy,
             skip: (page - 1) * pageSize,
             take: pageSize,
         }),
         prisma.supplier.count({ where }),
     ])
 
+    let rows: SupplierRow[] = items.map(s => ({
+        id: s.id, code: s.code, name: s.name, type: s.type,
+        country: s.country, taxId: s.taxId,
+        tradeAgreement: s.tradeAgreement, coFormType: s.coFormType,
+        paymentTerm: s.paymentTerm, defaultCurrency: s.defaultCurrency,
+        incoterms: s.incoterms, leadTimeDays: s.leadTimeDays ?? 45,
+        status: s.status, poCount: s.purchaseOrders.length,
+        contactName: s.contacts[0]?.name ?? null,
+        contactEmail: s.contacts[0]?.email ?? null,
+        createdAt: s.createdAt,
+    }))
+
+    if (sortBy === 'poCount') {
+        rows.sort((a, b) => sortDir === 'asc' ? a.poCount - b.poCount : b.poCount - a.poCount)
+    }
+
+    return { rows, total }
+}
+
+// ═══════════════════════════════════════════════════
+// GET BY ID — for Edit mode + Detail view
+// ═══════════════════════════════════════════════════
+
+export async function getSupplierById(id: string) {
+    const s = await prisma.supplier.findUnique({
+        where: { id },
+        include: {
+            contacts: { where: { isPrimary: true }, take: 1 },
+            addresses: { where: { isDefault: true }, take: 1 },
+        },
+    })
+    if (!s) return null
+
+    const contact = s.contacts[0]
+    const addr = s.addresses[0]
+
     return {
-        rows: items.map(s => ({
-            id: s.id, code: s.code, name: s.name, type: s.type,
-            country: s.country, taxId: s.taxId,
-            tradeAgreement: s.tradeAgreement, coFormType: s.coFormType,
-            paymentTerm: s.paymentTerm, defaultCurrency: s.defaultCurrency,
-            incoterms: s.incoterms, leadTimeDays: s.leadTimeDays ?? 45,
-            status: s.status, poCount: s.purchaseOrders.length,
-            createdAt: s.createdAt,
-        })),
-        total,
+        id: s.id, code: s.code, name: s.name, type: s.type,
+        country: s.country, taxId: s.taxId,
+        tradeAgreement: s.tradeAgreement, coFormType: s.coFormType,
+        paymentTerm: s.paymentTerm, defaultCurrency: s.defaultCurrency,
+        incoterms: s.incoterms, leadTimeDays: s.leadTimeDays,
+        status: s.status, website: s.website, notes: s.notes,
+        contactName: contact?.name ?? null,
+        contactTitle: contact?.title ?? null,
+        contactEmail: contact?.email ?? null,
+        contactPhone: contact?.phone ?? null,
+        addressLabel: addr?.label ?? null,
+        address: addr?.address ?? null,
+        city: addr?.city ?? null,
+        region: addr?.region ?? null,
+        addressCountry: addr?.country ?? null,
     }
 }
 
-// ─── Supplier Stats (aggregated from DB) ──────────
+// ═══════════════════════════════════════════════════
+// DETAIL — full 360° data for detail drawer
+// ═══════════════════════════════════════════════════
+
+export type SupplierDetail = {
+    supplier: NonNullable<Awaited<ReturnType<typeof getSupplierById>>>
+    contacts: { id: string; name: string; title: string | null; phone: string | null; email: string | null; isPrimary: boolean }[]
+    addresses: { id: string; label: string; address: string; city: string | null; region: string | null; country: string | null; isDefault: boolean }[]
+    poSummary: { total: number; totalValue: number; statuses: { status: string; count: number }[] }
+    apSummary: { totalInvoices: number; totalAmount: number; unpaidAmount: number }
+    contractCount: number
+    shipmentCount: number
+    productCount: number
+}
+
+export async function getSupplierDetail(id: string): Promise<SupplierDetail | null> {
+    const supplier = await getSupplierById(id)
+    if (!supplier) return null
+
+    const [contacts, addresses, pos, apInvoices, contractCount, shipmentCount] = await Promise.all([
+        prisma.supplierContact.findMany({
+            where: { supplierId: id },
+            orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
+        }),
+        prisma.supplierAddress.findMany({
+            where: { supplierId: id },
+            orderBy: [{ isDefault: 'desc' }],
+        }),
+        prisma.purchaseOrder.findMany({
+            where: { supplierId: id },
+            include: { lines: { select: { qtyOrdered: true, unitPrice: true } } },
+        }),
+        prisma.aPInvoice.findMany({
+            where: { supplierId: id },
+            select: { amount: true, status: true, currency: true },
+        }),
+        prisma.contract.count({ where: { supplierId: id } }),
+        prisma.shipment.count({ where: { po: { supplierId: id } } }),
+    ])
+
+    // PO summary
+    let totalPOValue = 0
+    const statusMap: Record<string, number> = {}
+    for (const po of pos) {
+        statusMap[po.status] = (statusMap[po.status] ?? 0) + 1
+        for (const line of po.lines) {
+            totalPOValue += Number(line.qtyOrdered) * Number(line.unitPrice) * Number(po.exchangeRate)
+        }
+    }
+
+    // AP summary
+    let totalAPAmount = 0
+    let unpaidAPAmount = 0
+    for (const inv of apInvoices) {
+        const amt = Number(inv.amount)
+        totalAPAmount += amt
+        if (inv.status === 'OVERDUE' || inv.status === 'PARTIALLY_PAID') unpaidAPAmount += amt
+    }
+
+    // Unique products
+    const productIds = new Set<string>()
+    for (const po of pos) {
+        const poLines = await prisma.purchaseOrderLine.findMany({
+            where: { poId: po.id },
+            select: { productId: true },
+        })
+        poLines.forEach(l => productIds.add(l.productId))
+    }
+
+    return {
+        supplier,
+        contacts: contacts.map(c => ({ id: c.id, name: c.name, title: c.title, phone: c.phone, email: c.email, isPrimary: c.isPrimary })),
+        addresses: addresses.map(a => ({ id: a.id, label: a.label, address: a.address, city: a.city, region: a.region, country: a.country, isDefault: a.isDefault })),
+        poSummary: {
+            total: pos.length,
+            totalValue: Math.round(totalPOValue),
+            statuses: Object.entries(statusMap).map(([status, count]) => ({ status, count })),
+        },
+        apSummary: {
+            totalInvoices: apInvoices.length,
+            totalAmount: Math.round(totalAPAmount),
+            unpaidAmount: Math.round(unpaidAPAmount),
+        },
+        contractCount,
+        shipmentCount,
+        productCount: productIds.size,
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// STATS (aggregated, cached)
+// ═══════════════════════════════════════════════════
+
 export type SupplierStats = {
     total: number
     active: number
@@ -107,6 +280,47 @@ export async function getSupplierStats(): Promise<SupplierStats> {
     }, 30_000)
 }
 
+// ═══════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════
+
+export async function exportSuppliersData() {
+    const items = await prisma.supplier.findMany({
+        where: { deletedAt: null },
+        include: {
+            contacts: { where: { isPrimary: true }, take: 1 },
+            addresses: { where: { isDefault: true }, take: 1 },
+            purchaseOrders: { select: { id: true } },
+        },
+        orderBy: { name: 'asc' },
+    })
+
+    return items.map(s => ({
+        'Mã NCC': s.code,
+        'Tên NCC': s.name,
+        'Loại': s.type,
+        'Quốc Gia': s.country,
+        'MST': s.taxId ?? '',
+        'Hiệp Định': s.tradeAgreement ?? '',
+        'C/O Form': s.coFormType ?? '',
+        'Thanh Toán': s.paymentTerm ?? '',
+        'Tiền Tệ': s.defaultCurrency,
+        'Incoterms': s.incoterms ?? '',
+        'Lead Time': s.leadTimeDays,
+        'Trạng Thái': s.status,
+        'Số PO': s.purchaseOrders.length,
+        'Người liên hệ': s.contacts[0]?.name ?? '',
+        'SĐT': s.contacts[0]?.phone ?? '',
+        'Email': s.contacts[0]?.email ?? '',
+        'Địa chỉ': s.addresses[0]?.address ?? '',
+        'Website': s.website ?? '',
+    }))
+}
+
+// ═══════════════════════════════════════════════════
+// CREATE + UPDATE
+// ═══════════════════════════════════════════════════
+
 const supplierSchema = z.object({
     code: z.string().min(3, 'Mã NCC bắt buộc'),
     name: z.string().min(2, 'Tên NCC bắt buộc'),
@@ -120,39 +334,159 @@ const supplierSchema = z.object({
     incoterms: z.string().nullable().optional(),
     leadTimeDays: z.number().int().default(45),
     status: z.enum(['ACTIVE', 'INACTIVE', 'BLACKLISTED']).default('ACTIVE'),
+    website: z.string().nullable().optional(),
+    notes: z.string().nullable().optional(),
+    // Flattened contact fields
+    contactName: z.string().nullable().optional(),
+    contactTitle: z.string().nullable().optional(),
+    contactEmail: z.string().nullable().optional(),
+    contactPhone: z.string().nullable().optional(),
+    // Flattened address fields
+    address: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    region: z.string().nullable().optional(),
 })
 
 export type SupplierInput = z.infer<typeof supplierSchema>
 
 export async function createSupplier(input: SupplierInput) {
-    const data = supplierSchema.parse(input)
-    await prisma.supplier.create({
-        data: {
-            code: data.code,
-            name: data.name,
-            type: data.type,
-            country: data.country,
-            taxId: data.taxId ?? null,
-            tradeAgreement: data.tradeAgreement ?? null,
-            coFormType: data.coFormType ?? null,
-            paymentTerm: data.paymentTerm ?? null,
-            defaultCurrency: data.defaultCurrency,
-            incoterms: data.incoterms ?? null,
-            leadTimeDays: data.leadTimeDays,
-            status: data.status,
-        },
-    })
-    revalidatePath('/dashboard/suppliers')
-    return { success: true }
+    try {
+        const data = supplierSchema.parse(input)
+        const supplier = await prisma.supplier.create({
+            data: {
+                code: data.code,
+                name: data.name,
+                type: data.type,
+                country: data.country,
+                taxId: data.taxId ?? null,
+                tradeAgreement: data.tradeAgreement ?? null,
+                coFormType: data.coFormType ?? null,
+                paymentTerm: data.paymentTerm ?? null,
+                defaultCurrency: data.defaultCurrency,
+                incoterms: data.incoterms ?? null,
+                leadTimeDays: data.leadTimeDays,
+                status: data.status,
+                website: data.website ?? null,
+                notes: data.notes ?? null,
+            },
+        })
+
+        const hasContact = data.contactName || data.contactEmail || data.contactPhone
+        if (hasContact) {
+            await prisma.supplierContact.create({
+                data: {
+                    supplierId: supplier.id,
+                    name: data.contactName || data.name,
+                    title: data.contactTitle ?? null,
+                    email: data.contactEmail ?? null,
+                    phone: data.contactPhone ?? null,
+                    isPrimary: true,
+                },
+            })
+        }
+
+        if (data.address) {
+            await prisma.supplierAddress.create({
+                data: {
+                    supplierId: supplier.id,
+                    label: 'Trụ sở chính',
+                    address: data.address,
+                    city: data.city ?? null,
+                    region: data.region ?? null,
+                    country: data.country,
+                    isDefault: true,
+                },
+            })
+        }
+
+        revalidateCache('suppliers')
+        revalidatePath('/dashboard/suppliers')
+        return { success: true }
+    } catch (err: any) {
+        if (err?.code === 'P2002') throw new Error('Mã NCC đã tồn tại. Vui lòng chọn mã khác.')
+        if (err?.issues) {
+            const msgs = err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')
+            throw new Error(`Validation: ${msgs}`)
+        }
+        throw new Error(err.message ?? 'Lỗi tạo NCC')
+    }
 }
 
 export async function updateSupplier(id: string, input: Partial<SupplierInput>) {
-    await prisma.supplier.update({ where: { id }, data: input as any })
-    revalidatePath('/dashboard/suppliers')
-    return { success: true }
+    try {
+        const { contactName, contactTitle, contactEmail, contactPhone, address, city, region, ...supplierData } = input
+
+        await prisma.supplier.update({
+            where: { id },
+            data: supplierData as any,
+        })
+
+        // Update primary contact if provided
+        if (contactName || contactEmail || contactPhone) {
+            const existing = await prisma.supplierContact.findFirst({
+                where: { supplierId: id, isPrimary: true },
+            })
+            if (existing) {
+                await prisma.supplierContact.update({
+                    where: { id: existing.id },
+                    data: {
+                        name: contactName || undefined,
+                        title: contactTitle ?? undefined,
+                        email: contactEmail ?? undefined,
+                        phone: contactPhone ?? undefined,
+                    },
+                })
+            } else {
+                await prisma.supplierContact.create({
+                    data: {
+                        supplierId: id,
+                        name: contactName || 'Liên hệ chính',
+                        title: contactTitle ?? null,
+                        email: contactEmail ?? null,
+                        phone: contactPhone ?? null,
+                        isPrimary: true,
+                    },
+                })
+            }
+        }
+
+        // Update default address if provided
+        if (address) {
+            const existingAddr = await prisma.supplierAddress.findFirst({
+                where: { supplierId: id, isDefault: true },
+            })
+            if (existingAddr) {
+                await prisma.supplierAddress.update({
+                    where: { id: existingAddr.id },
+                    data: { address, city: city ?? undefined, region: region ?? undefined },
+                })
+            } else {
+                await prisma.supplierAddress.create({
+                    data: {
+                        supplierId: id,
+                        label: 'Trụ sở chính',
+                        address,
+                        city: city ?? null,
+                        region: region ?? null,
+                        country: (supplierData as any).country ?? null,
+                        isDefault: true,
+                    },
+                })
+            }
+        }
+
+        revalidateCache('suppliers')
+        revalidatePath('/dashboard/suppliers')
+        return { success: true }
+    } catch (err: any) {
+        throw new Error(err.message ?? 'Lỗi cập nhật NCC')
+    }
 }
 
-// ── Soft delete supplier ──────────────────────────
+// ═══════════════════════════════════════════════════
+// DELETE (soft-delete with PO check)
+// ═══════════════════════════════════════════════════
+
 export async function deleteSupplier(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         const activePOs = await prisma.purchaseOrder.count({
@@ -174,7 +508,10 @@ export async function deleteSupplier(id: string): Promise<{ success: boolean; er
     }
 }
 
-// ── Bulk import from Excel ──────────────────────────
+// ═══════════════════════════════════════════════════
+// BULK IMPORT (from Excel)
+// ═══════════════════════════════════════════════════
+
 export type ImportResult = {
     success: number
     errors: { row: number; message: string }[]
@@ -215,7 +552,7 @@ export async function bulkImportSuppliers(rows: Record<string, any>[]): Promise<
             const existing = await prisma.supplier.findFirst({ where: { code, deletedAt: null } })
             if (existing) { result.errors.push({ row: i + 2, message: `Mã NCC '${code}' đã tồn tại — bỏ qua` }); continue }
 
-            await prisma.supplier.create({
+            const supplier = await prisma.supplier.create({
                 data: {
                     code,
                     name,
@@ -227,9 +564,20 @@ export async function bulkImportSuppliers(rows: Record<string, any>[]): Promise<
                     defaultCurrency: r['Tiền Tệ'] ?? r['currency'] ?? 'USD',
                     incoterms: r['Incoterms'] ?? r['incoterms'] ?? null,
                     leadTimeDays: Number(r['Lead Time'] ?? r['leadTimeDays'] ?? 45),
+                    website: r['Website'] ?? r['website'] ?? null,
                     status: 'ACTIVE',
                 },
             })
+
+            const contactNameVal = r['Người Liên Hệ'] ?? r['contactName'] ?? null
+            const emailVal = r['Email'] ?? r['email'] ?? null
+            const phoneVal = r['SĐT'] ?? r['phone'] ?? null
+            if (contactNameVal || emailVal || phoneVal) {
+                await prisma.supplierContact.create({
+                    data: { supplierId: supplier.id, name: contactNameVal || name, email: emailVal, phone: phoneVal, isPrimary: true },
+                })
+            }
+
             result.success++
         } catch (err: any) {
             result.errors.push({ row: i + 2, message: err.message ?? 'Lỗi không xác định' })
@@ -237,13 +585,235 @@ export async function bulkImportSuppliers(rows: Record<string, any>[]): Promise<
     }
 
     if (result.success > 0) {
+        revalidateCache('suppliers')
         revalidatePath('/dashboard/suppliers')
     }
     return result
 }
 
 // ═══════════════════════════════════════════════════
-// #31 — SUPPLIER SCORECARD
+// SUPPLIER PO HISTORY
+// ═══════════════════════════════════════════════════
+
+export type SupplierPO = {
+    id: string; poNo: string; status: string; currency: string
+    totalValue: number; linesCount: number; createdAt: Date
+    estimatedDelivery: Date | null; receivedAt: Date | null
+}
+
+export async function getSupplierPOs(supplierId: string): Promise<SupplierPO[]> {
+    const pos = await prisma.purchaseOrder.findMany({
+        where: { supplierId },
+        include: { lines: { select: { qtyOrdered: true, unitPrice: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+    })
+
+    return pos.map(po => ({
+        id: po.id,
+        poNo: po.poNo,
+        status: po.status,
+        currency: po.currency,
+        totalValue: po.lines.reduce((sum, l) => sum + Number(l.qtyOrdered) * Number(l.unitPrice), 0),
+        linesCount: po.lines.length,
+        createdAt: po.createdAt,
+        estimatedDelivery: po.estimatedDelivery,
+        receivedAt: po.receivedAt,
+    }))
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER AP INVOICES
+// ═══════════════════════════════════════════════════
+
+export type SupplierAPInvoice = {
+    id: string; invoiceNo: string; poNo: string
+    amount: number; currency: string; dueDate: Date
+    status: string; createdAt: Date
+}
+
+export async function getSupplierAPInvoices(supplierId: string): Promise<SupplierAPInvoice[]> {
+    const invoices = await prisma.aPInvoice.findMany({
+        where: { supplierId },
+        include: { po: { select: { poNo: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+    })
+
+    return invoices.map(inv => ({
+        id: inv.id,
+        invoiceNo: inv.invoiceNo,
+        poNo: inv.po.poNo,
+        amount: Number(inv.amount),
+        currency: inv.currency,
+        dueDate: inv.dueDate,
+        status: inv.status,
+        createdAt: inv.createdAt,
+    }))
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER CONTRACTS
+// ═══════════════════════════════════════════════════
+
+export type SupplierContract = {
+    id: string; contractNo: string; type: string; value: number
+    currency: string; startDate: Date; endDate: Date; status: string
+}
+
+export async function getSupplierContracts(supplierId: string): Promise<SupplierContract[]> {
+    const contracts = await prisma.contract.findMany({
+        where: { supplierId },
+        orderBy: { startDate: 'desc' },
+        take: 50,
+    })
+
+    return contracts.map(c => ({
+        id: c.id, contractNo: c.contractNo, type: c.type,
+        value: Number(c.value), currency: c.currency,
+        startDate: c.startDate, endDate: c.endDate, status: c.status,
+    }))
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER SHIPMENTS
+// ═══════════════════════════════════════════════════
+
+export type SupplierShipment = {
+    id: string; billOfLading: string; poNo: string
+    vesselName: string | null; eta: Date | null
+    cifAmount: number; status: string; createdAt: Date
+}
+
+export async function getSupplierShipments(supplierId: string): Promise<SupplierShipment[]> {
+    const shipments = await prisma.shipment.findMany({
+        where: { po: { supplierId } },
+        include: { po: { select: { poNo: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+    })
+
+    return shipments.map(s => ({
+        id: s.id, billOfLading: s.billOfLading, poNo: s.po.poNo,
+        vesselName: s.vesselName, eta: s.eta,
+        cifAmount: Number(s.cifAmount), status: s.status, createdAt: s.createdAt,
+    }))
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER PRODUCTS (via PO lines)
+// ═══════════════════════════════════════════════════
+
+export type SupplierProduct = {
+    id: string; skuCode: string; productName: string
+    totalQty: number; avgUnitPrice: number; lastOrderDate: Date
+    orderCount: number
+}
+
+export async function getSupplierProducts(supplierId: string): Promise<SupplierProduct[]> {
+    const poLines = await prisma.purchaseOrderLine.findMany({
+        where: { po: { supplierId } },
+        include: {
+            product: { select: { id: true, skuCode: true, productName: true } },
+            po: { select: { createdAt: true } },
+        },
+    })
+
+    const productMap = new Map<string, {
+        id: string; skuCode: string; productName: string
+        totalQty: number; totalValue: number; lastOrderDate: Date; orderCount: number
+    }>()
+
+    for (const line of poLines) {
+        const pid = line.product.id
+        const existing = productMap.get(pid)
+        const qty = Number(line.qtyOrdered)
+        const value = qty * Number(line.unitPrice)
+
+        if (existing) {
+            existing.totalQty += qty
+            existing.totalValue += value
+            existing.orderCount++
+            if (line.po.createdAt > existing.lastOrderDate) existing.lastOrderDate = line.po.createdAt
+        } else {
+            productMap.set(pid, {
+                id: pid, skuCode: line.product.skuCode, productName: line.product.productName,
+                totalQty: qty, totalValue: value, lastOrderDate: line.po.createdAt, orderCount: 1,
+            })
+        }
+    }
+
+    return Array.from(productMap.values())
+        .map(p => ({
+            ...p,
+            avgUnitPrice: p.orderCount > 0 ? Math.round(p.totalValue / p.totalQty * 100) / 100 : 0,
+        }))
+        .sort((a, b) => b.totalQty - a.totalQty)
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER PRICING HISTORY (from PO lines)
+// ═══════════════════════════════════════════════════
+
+export type PricingPoint = {
+    date: Date; poNo: string; productName: string
+    unitPrice: number; currency: string; qty: number
+}
+
+export async function getSupplierPricingHistory(supplierId: string): Promise<PricingPoint[]> {
+    const poLines = await prisma.purchaseOrderLine.findMany({
+        where: { po: { supplierId } },
+        include: {
+            product: { select: { productName: true } },
+            po: { select: { poNo: true, createdAt: true, currency: true } },
+        },
+        orderBy: { po: { createdAt: 'desc' } },
+        take: 100,
+    })
+
+    return poLines.map(l => ({
+        date: l.po.createdAt,
+        poNo: l.po.poNo,
+        productName: l.product.productName,
+        unitPrice: Number(l.unitPrice),
+        currency: l.po.currency,
+        qty: Number(l.qtyOrdered),
+    }))
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER ACTIVITY LOG
+// ═══════════════════════════════════════════════════
+
+export async function getSupplierActivities(supplierId: string) {
+    return prisma.supplierActivity.findMany({
+        where: { supplierId },
+        orderBy: { occurredAt: 'desc' },
+        take: 50,
+    })
+}
+
+export async function createSupplierActivity(input: {
+    supplierId: string; type: string; description: string; performedBy?: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await prisma.supplierActivity.create({
+            data: {
+                supplierId: input.supplierId,
+                type: input.type,
+                description: input.description,
+                performedBy: input.performedBy ?? null,
+            },
+        })
+        revalidatePath('/dashboard/suppliers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER SCORECARD
 // ═══════════════════════════════════════════════════
 
 export type SupplierScorecard = {
@@ -289,7 +859,6 @@ export async function getSupplierScorecard(supplierId: string): Promise<Supplier
     const onTimeRate = totalPOs > 0 ? (onTime / totalPOs) * 100 : 0
     const avgLeadTimeDays = totalPOs > 0 ? Math.round(totalLeadDays / totalPOs) : supplier.leadTimeDays
 
-    // Quality: based on complaint tickets linked to products from this supplier
     const complaints = await prisma.complaintTicket.count({
         where: { type: 'QUALITY' },
     })
@@ -327,7 +896,7 @@ export async function getAllSupplierScorecards(): Promise<SupplierScorecard[]> {
 }
 
 // ═══════════════════════════════════════════════════
-// #32 — DUPLICATE DETECTION
+// DUPLICATE DETECTION
 // ═══════════════════════════════════════════════════
 
 export type DuplicateCandidate = {
@@ -344,7 +913,6 @@ function strSimilarity(a: string, b: string): number {
     if (aLow === bLow) return 100
     if (aLow.includes(bLow) || bLow.includes(aLow)) return 85
 
-    // Simple Dice coefficient on bigrams
     const bigrams = (s: string) => {
         const set = new Set<string>()
         for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2))
@@ -376,7 +944,6 @@ export async function detectDuplicates(): Promise<DuplicateCandidate[]> {
     const dupes: DuplicateCandidate[] = []
     const threshold = 75
 
-    // Check products
     for (let i = 0; i < products.length; i++) {
         for (let j = i + 1; j < products.length; j++) {
             const a = products[i], b = products[j]
@@ -386,8 +953,7 @@ export async function detectDuplicates(): Promise<DuplicateCandidate[]> {
                     type: 'PRODUCT',
                     itemA: { id: a.id, code: a.skuCode, name: a.productName },
                     itemB: { id: b.id, code: b.skuCode, name: b.productName },
-                    similarity: nameSim,
-                    field: 'productName',
+                    similarity: nameSim, field: 'productName',
                 })
             }
             const codeSim = strSimilarity(a.skuCode, b.skuCode)
@@ -396,14 +962,12 @@ export async function detectDuplicates(): Promise<DuplicateCandidate[]> {
                     type: 'PRODUCT',
                     itemA: { id: a.id, code: a.skuCode, name: a.productName },
                     itemB: { id: b.id, code: b.skuCode, name: b.productName },
-                    similarity: codeSim,
-                    field: 'skuCode',
+                    similarity: codeSim, field: 'skuCode',
                 })
             }
         }
     }
 
-    // Check customers
     for (let i = 0; i < customers.length; i++) {
         for (let j = i + 1; j < customers.length; j++) {
             const a = customers[i], b = customers[j]
@@ -413,14 +977,12 @@ export async function detectDuplicates(): Promise<DuplicateCandidate[]> {
                     type: 'CUSTOMER',
                     itemA: { id: a.id, code: a.code, name: a.name },
                     itemB: { id: b.id, code: b.code, name: b.name },
-                    similarity: nameSim,
-                    field: 'name',
+                    similarity: nameSim, field: 'name',
                 })
             }
         }
     }
 
-    // Check suppliers
     for (let i = 0; i < suppliers.length; i++) {
         for (let j = i + 1; j < suppliers.length; j++) {
             const a = suppliers[i], b = suppliers[j]
@@ -430,8 +992,7 @@ export async function detectDuplicates(): Promise<DuplicateCandidate[]> {
                     type: 'SUPPLIER',
                     itemA: { id: a.id, code: a.code, name: a.name },
                     itemB: { id: b.id, code: b.code, name: b.name },
-                    similarity: nameSim,
-                    field: 'name',
+                    similarity: nameSim, field: 'name',
                 })
             }
         }

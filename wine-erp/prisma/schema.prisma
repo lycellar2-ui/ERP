@@ -299,8 +299,8 @@ model PriceListLine {
 }
 
 model Supplier {
-  id              String          @id @default(cuid())
-  code            String          @unique
+  id              String             @id @default(cuid())
+  code            String             @unique
   name            String
   type            SupplierType
   country         String
@@ -308,18 +308,64 @@ model Supplier {
   tradeAgreement  String? // EVFTA, MFN, AANZFTA...
   coFormType      String? // EUR.1, Form AANZ...
   paymentTerm     String?
-  defaultCurrency String          @default("USD")
+  defaultCurrency String             @default("USD")
   incoterms       String?
-  leadTimeDays    Int             @default(45)
-  status          SupplierStatus  @default(ACTIVE)
+  leadTimeDays    Int                @default(45)
+  status          SupplierStatus     @default(ACTIVE)
+  website         String?
+  notes           String?
   purchaseOrders  PurchaseOrder[]
   contracts       Contract[]
   apInvoices      APInvoice[]
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  contacts        SupplierContact[]
+  addresses       SupplierAddress[]
+  activities      SupplierActivity[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
   deletedAt       DateTime?
 
   @@map("suppliers")
+}
+
+model SupplierContact {
+  id         String   @id @default(cuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  name       String
+  title      String?  // "Export Manager", "Sales Director"
+  phone      String?
+  email      String?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("supplier_contacts")
+}
+
+model SupplierAddress {
+  id         String   @id @default(cuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  label      String   // "Headquarter", "Warehouse", "Winery"
+  address    String
+  city       String?
+  region     String?
+  country    String?
+  postalCode String?
+  isDefault  Boolean  @default(false)
+
+  @@map("supplier_addresses")
+}
+
+model SupplierActivity {
+  id          String   @id @default(cuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  type        String   // "NOTE", "CALL", "EMAIL", "VISIT", "PO_CREATED", "CONTRACT_SIGNED"
+  description String
+  performedBy String?
+  occurredAt  DateTime @default(now())
+
+  @@map("supplier_activities")
 }
 
 model Customer {
