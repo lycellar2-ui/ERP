@@ -60,19 +60,24 @@ export default async function DashboardPage() {
     const dashConfig = await getDashboardConfig(roles)
     const has = (s: DashboardSection) => dashConfig.sections.includes(s)
 
-    const [stats, monthlyRevenue, plSummary, cashPosition, arAging, kpiSummary, pendingApprovalReqs, waterfall, yoy] = await Promise.all([
+    // Batch 1: Core KPIs (max 5 concurrent queries)
+    const [stats, monthlyRevenue, plSummary, cashPosition, kpiSummary] = await Promise.all([
         getDashboardStats('month'),
         getMonthlyRevenue(),
         has('pl_summary') ? getPLSummary() : null,
         has('cash_position') ? getCashPosition() : null,
-        has('ar_aging') ? getARAgingChart() : null,
         has('kpi_targets') ? getKpiSummary() : null,
+    ])
+
+    // Batch 2: Secondary widgets (max 5 concurrent queries)
+    const [arAging, pendingApprovalReqs, waterfall, yoy] = await Promise.all([
+        has('ar_aging') ? getARAgingChart() : null,
         has('pending_approvals') ? getPendingApprovalDetails() : [],
         has('cost_waterfall') ? getCostWaterfall() : [],
         has('revenue_yoy') ? getRevenueYoY() : null,
     ])
 
-    // Role-specific data
+    // Batch 3: Role-specific data (sequential to avoid pool exhaustion)
     const mySales = has('my_sales') && user ? await getMySales(user.id) : null
     const warehouseData = has('warehouse_summary') ? await getWarehouseDashboard() : null
     const realtimeChannels = getRealtimeChannels(roles)
