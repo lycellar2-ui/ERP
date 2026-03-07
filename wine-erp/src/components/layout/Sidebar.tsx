@@ -9,7 +9,7 @@ import {
     ChevronRight, Building2, FileSignature, Globe, Briefcase,
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
-    Image as ImageIcon, Megaphone
+    Image as ImageIcon, Megaphone, Ship
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -32,6 +32,7 @@ const NAV_GROUPS = [
         label: 'Mua Hàng',
         items: [
             { href: '/dashboard/procurement', icon: ShoppingCart, label: 'Đơn Mua Hàng' },
+            { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng' },
             { href: '/dashboard/agency', icon: Globe, label: 'Agency Portal' },
             { href: '/dashboard/tax', icon: Layers, label: 'Tra Cứu Thuế' },
             { href: '/dashboard/costing', icon: Calculator, label: 'Tính Giá Vốn (CST)' },
