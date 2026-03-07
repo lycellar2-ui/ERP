@@ -367,10 +367,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         )
     }
 
-    const refresh = async () => {
+    const refresh = async (overrides?: { search?: string; status?: string }) => {
+        const s = overrides?.search ?? search
+        const st = overrides?.status ?? statusFilter
         setLoading(true)
         try {
-            const result = await getPurchaseOrders({ search: search || undefined, status: statusFilter || undefined })
+            const result = await getPurchaseOrders({ search: s || undefined, status: st || undefined })
             setRows(result.rows)
             setTotal(result.total)
         } finally {
@@ -378,10 +380,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         }
     }
 
-    const filtered = rows.filter(r =>
-        (!search || r.poNo.toLowerCase().includes(search.toLowerCase()) || r.supplierName.toLowerCase().includes(search.toLowerCase())) &&
-        (!statusFilter || r.status === statusFilter)
-    )
+    const filtered = rows
 
     const statCards = [
         { label: 'Tổng PO', value: stats.total, icon: ShoppingCart, accent: '#87CBB9' },
@@ -450,13 +449,13 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 <div className="relative flex-1 max-w-sm">
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input placeholder="Tìm PO No, NCC..." value={search}
-                        onChange={e => { setSearch(e.target.value); refresh() }}
+                        onChange={e => { const v = e.target.value; setSearch(v); refresh({ search: v }) }}
                         className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                         onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                 </div>
-                <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); refresh() }}
+                <select value={statusFilter} onChange={e => { const v = e.target.value; setStatusFilter(v); refresh({ status: v }) }}
                     className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
                     <option value="">Tất cả trạng thái</option>
