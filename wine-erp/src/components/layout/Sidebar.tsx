@@ -8,7 +8,8 @@ import {
     Truck, DollarSign, FileText, BarChart3, Settings, ChevronLeft,
     ChevronRight, Building2, FileSignature, Globe, Briefcase,
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
-    ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode
+    ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
+    Image as ImageIcon, Megaphone
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -64,6 +65,12 @@ const NAV_GROUPS = [
             { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo' },
             { href: '/dashboard/market-price', icon: TrendingUp, label: 'Giá Thị Trường' },
             { href: '/dashboard/kpi', icon: Target, label: 'KPI Chỉ Tiêu' },
+        ]
+    },
+    {
+        label: 'Marketing',
+        items: [
+            { href: '/dashboard/media', icon: ImageIcon, label: 'Thư Viện Ảnh' },
         ]
     },
     {
