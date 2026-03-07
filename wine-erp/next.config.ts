@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
       static: 300,   // static pages: browser caches 5min
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: '/report',
+        destination: '/report.html',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
