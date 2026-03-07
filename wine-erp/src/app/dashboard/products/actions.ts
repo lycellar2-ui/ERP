@@ -35,6 +35,10 @@ export type ProductFilters = {
     wineType?: string
     status?: string
     country?: string
+    vintage?: number
+    producerId?: string
+    sortBy?: 'name' | 'vintage' | 'abv' | 'stock' | 'created'
+    sortDir?: 'asc' | 'desc'
     page?: number
     pageSize?: number
 }
@@ -44,8 +48,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
     rows: ProductRow[]
     total: number
 }> {
-    const { search, wineType, status, country, page = 1, pageSize = 20 } = filters
-    const cacheKey = `products:list:${page}:${pageSize}:${search ?? ''}:${wineType ?? ''}:${status ?? ''}:${country ?? ''}`
+    const { search, wineType, status, country, vintage, producerId, sortBy, sortDir, page = 1, pageSize = 20 } = filters
+    const cacheKey = `products:list:${page}:${pageSize}:${search ?? ''}:${wineType ?? ''}:${status ?? ''}:${country ?? ''}:${vintage ?? ''}:${producerId ?? ''}:${sortBy ?? ''}:${sortDir ?? ''}`
     return cached(cacheKey, async () => {
 
         const where: any = { deletedAt: null }
@@ -53,11 +57,24 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
             where.OR = [
                 { skuCode: { contains: search, mode: 'insensitive' } },
                 { productName: { contains: search, mode: 'insensitive' } },
+                { barcodeEan: { contains: search, mode: 'insensitive' } },
+                { producer: { name: { contains: search, mode: 'insensitive' } } },
             ]
         }
         if (wineType) where.wineType = wineType
         if (status) where.status = status
         if (country) where.country = country
+        if (vintage) where.vintage = vintage
+        if (producerId) where.producerId = producerId
+
+        // Dynamic sort
+        const sortMap: Record<string, any> = {
+            name: { productName: sortDir ?? 'asc' },
+            vintage: { vintage: sortDir ?? 'desc' },
+            abv: { abvPercent: sortDir ?? 'desc' },
+            created: { createdAt: sortDir ?? 'desc' },
+        }
+        const orderBy = sortBy && sortBy !== 'stock' ? sortMap[sortBy] ?? { createdAt: 'desc' } : { createdAt: 'desc' }
 
         const [items, total] = await Promise.all([
             prisma.product.findMany({
@@ -68,7 +85,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
                     media: { select: { id: true, url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
                     stockLots: { select: { qtyAvailable: true }, where: { status: 'AVAILABLE' } },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy,
                 skip: (page - 1) * pageSize,
                 take: pageSize,
             }),
@@ -155,6 +172,104 @@ export async function getProductStats(): Promise<ProductStats> {
     }, 30_000) // 30s cache
 }
 
+// ─── Get product by ID (for edit mode) ────────────
+export async function getProductById(id: string) {
+    const p = await prisma.product.findUnique({
+        where: { id },
+        include: {
+            producer: { select: { id: true, name: true } },
+            appellation: { select: { id: true, name: true } },
+        },
+    })
+    if (!p) return null
+    return {
+        id: p.id,
+        skuCode: p.skuCode,
+        productName: p.productName,
+        producerId: p.producerId,
+        vintage: p.vintage,
+        appellationId: p.appellationId,
+        country: p.country,
+        abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
+        volumeMl: p.volumeMl,
+        format: p.format,
+        packagingType: p.packagingType,
+        unitsPerCase: p.unitsPerCase,
+        hsCode: p.hsCode,
+        barcodeEan: p.barcodeEan,
+        wineType: p.wineType,
+        storageTempMin: p.storageTempMin ? Number(p.storageTempMin) : null,
+        storageTempMax: p.storageTempMax ? Number(p.storageTempMax) : null,
+        isAllocationEligible: p.isAllocationEligible,
+        classification: p.classification,
+        tastingNotes: p.tastingNotes,
+        status: p.status,
+    }
+}
+
+// ─── Get unique countries from products ───────────
+export async function getProductCountries(): Promise<{ code: string; count: number }[]> {
+    const result = await prisma.product.groupBy({
+        by: ['country'],
+        where: { deletedAt: null },
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+    })
+    return result.map(r => ({ code: r.country, count: r._count.id }))
+}
+
+// ─── Get unique vintages from products ────────────
+export async function getProductVintages(): Promise<number[]> {
+    const result = await prisma.product.groupBy({
+        by: ['vintage'],
+        where: { deletedAt: null, vintage: { not: null } },
+        orderBy: { vintage: 'desc' },
+    })
+    return result.map(r => r.vintage!).filter(Boolean)
+}
+
+// ─── Create producer inline ───────────────────────
+export async function createProducerInline(name: string, country: string): Promise<{ id: string; name: string }> {
+    const producer = await prisma.producer.create({
+        data: { name, country },
+        select: { id: true, name: true },
+    })
+    return producer
+}
+
+// ─── Export products to JSON (for Excel conversion) ─
+export async function exportProductsData() {
+    const products = await prisma.product.findMany({
+        where: { deletedAt: null },
+        include: {
+            producer: { select: { name: true, country: true } },
+            appellation: { select: { name: true } },
+            stockLots: { select: { qtyAvailable: true }, where: { status: 'AVAILABLE' } },
+            awards: { select: { source: true, score: true, medal: true }, orderBy: { source: 'asc' } },
+        },
+        orderBy: { productName: 'asc' },
+    })
+    return products.map(p => ({
+        SKU: p.skuCode,
+        'Tên SP': p.productName,
+        'Nhà SX': p.producer.name,
+        Vintage: p.vintage ?? '',
+        Loại: p.wineType,
+        'Quốc Gia': p.country,
+        ABV: p.abvPercent ? Number(p.abvPercent) : '',
+        'Dung Tích': p.volumeMl,
+        'Đóng Gói': p.packagingType,
+        'Chai/Thùng': p.unitsPerCase,
+        Barcode: p.barcodeEan ?? '',
+        Classification: p.classification ?? '',
+        'HS Code': p.hsCode,
+        'Vùng': p.appellation?.name ?? '',
+        'Tồn Kho': p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
+        'Trạng Thái': p.status,
+        'Giải Thưởng': p.awards.map(a => `${a.source}${a.score ? ` ${a.score}pt` : ''}${a.medal ? ` ${a.medal}` : ''}`).join('; '),
+    }))
+}
+
 // ─── Schema ───────────────────────────────────────
 const productSchema = z.object({
     skuCode: z.string().min(3, 'SKU tối thiểu 3 ký tự'),
@@ -168,11 +283,12 @@ const productSchema = z.object({
     format: z.enum(['STANDARD', 'MAGNUM', 'JEROBOAM', 'METHUSELAH']).default('STANDARD'),
     packagingType: z.enum(['OWC', 'CARTON']).default('CARTON'),
     unitsPerCase: z.number().int().min(1).max(24).default(12),
-    hsCode: z.string().optional().default('2204211000'),
+    hsCode: z.string().min(1, 'HS Code bắt buộc').default('2204211000'),
     barcodeEan: z.string().nullable().optional(),
     wineType: z.enum(['RED', 'WHITE', 'ROSE', 'SPARKLING', 'FORTIFIED', 'DESSERT']),
     classification: z.string().nullable().optional(),
     tastingNotes: z.string().nullable().optional(),
+    isAllocationEligible: z.boolean().optional().default(false),
     status: z.enum(['ACTIVE', 'DISCONTINUED', 'ALLOCATION_ONLY']).default('ACTIVE'),
 })
 
@@ -195,11 +311,12 @@ export async function createProduct(input: ProductInput) {
                 format: data.format,
                 packagingType: data.packagingType,
                 unitsPerCase: data.unitsPerCase ?? 12,
-                hsCode: data.hsCode ?? '2204211000',
+                hsCode: data.hsCode,
                 barcodeEan: data.barcodeEan ?? null,
                 wineType: data.wineType,
                 classification: data.classification ?? null,
                 tastingNotes: data.tastingNotes ?? null,
+                isAllocationEligible: data.isAllocationEligible ?? false,
                 status: data.status,
             },
         })
@@ -239,6 +356,8 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
             ...(input.wineType && { wineType: input.wineType }),
             ...(input.classification !== undefined && { classification: input.classification }),
             ...(input.tastingNotes !== undefined && { tastingNotes: input.tastingNotes }),
+            ...(input.isAllocationEligible !== undefined && { isAllocationEligible: input.isAllocationEligible }),
+            ...(input.hsCode && { hsCode: input.hsCode }),
             ...(input.status && { status: input.status }),
         },
     })

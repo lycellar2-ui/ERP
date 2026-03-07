@@ -1,14 +1,12 @@
-﻿export const revalidate = 45
-
-import { Suspense } from 'react'
-import { getProducts, getProductStats } from './actions'
+﻿import { Suspense } from 'react'
+import { getProducts, getProductStats, getProductCountries, getProductVintages } from './actions'
 import { ProductsClient } from './ProductsClient'
 
 export const metadata = { title: 'Danh Mục Sản Phẩm | Wine ERP' }
 
 export default async function ProductsPage() {
-    // Server-side: fetch paginated rows + aggregated stats in parallel
-    const [{ rows, total }, stats] = await Promise.all([
+    // Server-side: fetch paginated rows + aggregated stats + filter options in parallel
+    const [{ rows, total }, stats, countries, vintages] = await Promise.all([
         getProducts({ page: 1, pageSize: 20 }).catch(() => ({
             rows: [] as any[],
             total: 0,
@@ -16,12 +14,20 @@ export default async function ProductsPage() {
         getProductStats().catch(() => ({
             total: 0, active: 0, outOfStock: 0, topTypes: [] as any[],
         })),
+        getProductCountries().catch(() => []),
+        getProductVintages().catch(() => []),
     ])
 
     return (
         <div>
             <Suspense fallback={<ProductsPageSkeleton />}>
-                <ProductsClient initialRows={rows} initialTotal={total} stats={stats} />
+                <ProductsClient
+                    initialRows={rows}
+                    initialTotal={total}
+                    stats={stats}
+                    countries={countries}
+                    vintages={vintages}
+                />
             </Suspense>
         </div>
     )

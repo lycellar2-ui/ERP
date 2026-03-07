@@ -1,13 +1,14 @@
 ﻿'use client'
 
 import { useState } from 'react'
-import { Edit2, ChevronLeft, ChevronRight, ImageOff } from 'lucide-react'
-import { ProductRow } from './actions'
+import { Edit2, ChevronLeft, ChevronRight, ImageOff, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ProductRow, ProductFilters } from './actions'
 import { WineTypeBadge, StatusBadge } from './ProductsClient'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
     US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
+    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
 }
 
 function EmptyState() {
@@ -23,7 +24,7 @@ function EmptyState() {
     )
 }
 
-function ProductTableRow({ row, onEdit }: { row: ProductRow; onEdit: () => void }) {
+function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: () => void; onDelete: () => void }) {
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
 
@@ -98,16 +99,34 @@ function ProductTableRow({ row, onEdit }: { row: ProductRow; onEdit: () => void 
 
             {/* Actions */}
             <td className="px-3 py-3">
-                <button onClick={onEdit}
-                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                    style={{ color: '#8AAEBB' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}>
-                    <Edit2 size={14} />
-                </button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={onEdit}
+                        className="p-1.5 rounded-lg transition-all"
+                        style={{ color: '#8AAEBB' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}
+                        title="Chỉnh sửa">
+                        <Edit2 size={14} />
+                    </button>
+                    <button onClick={onDelete}
+                        className="p-1.5 rounded-lg transition-all"
+                        style={{ color: '#4A6A7A' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#4A6A7A' }}
+                        title="Xóa">
+                        <Trash2 size={14} />
+                    </button>
+                </div>
             </td>
         </tr>
     )
+}
+
+function SortIcon({ column, sortBy, sortDir }: { column: string; sortBy?: string; sortDir?: string }) {
+    if (sortBy !== column) return <ArrowUpDown size={11} style={{ color: '#2A4355' }} />
+    return sortDir === 'asc'
+        ? <ArrowUp size={11} style={{ color: '#87CBB9' }} />
+        : <ArrowDown size={11} style={{ color: '#87CBB9' }} />
 }
 
 interface ProductTableProps {
@@ -116,24 +135,42 @@ interface ProductTableProps {
     loading: boolean
     page: number
     pageSize: number
+    sortBy?: ProductFilters['sortBy']
+    sortDir?: ProductFilters['sortDir']
     onPageChange: (p: number) => void
+    onSort: (sortBy: ProductFilters['sortBy']) => void
     onEdit: (id: string) => void
+    onDelete: (id: string, name: string) => void
     onRefresh: () => void
 }
 
-export function ProductTable({ rows, total, loading, page, pageSize, onPageChange, onEdit }: ProductTableProps) {
+export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete }: ProductTableProps) {
     const totalPages = Math.ceil(total / pageSize)
-    const headers = [
-        { label: 'Sản phẩm', cls: 'px-4 py-3 w-[300px]' },
-        { label: 'Vintage', cls: 'px-3 py-3 w-[70px] text-center' },
-        { label: 'Loại', cls: 'px-3 py-3 w-[100px]' },
-        { label: 'Nhà SX / Vùng', cls: 'px-3 py-3 w-[220px]' },
-        { label: 'ABV', cls: 'px-3 py-3 w-[60px] text-center' },
-        { label: 'Đóng gói', cls: 'px-3 py-3 w-[110px] text-center' },
-        { label: 'Tồn kho', cls: 'px-3 py-3 w-[80px] text-center' },
-        { label: 'Trạng thái', cls: 'px-3 py-3 w-[120px]' },
-        { label: '', cls: 'px-3 py-3 w-[44px]' },
+
+    const sortableHeaders = [
+        { key: 'name' as const, label: 'Sản phẩm', cls: 'px-4 py-3 w-[300px]', sortable: true },
+        { key: 'vintage' as const, label: 'Vintage', cls: 'px-3 py-3 w-[70px] text-center', sortable: true },
+        { key: undefined, label: 'Loại', cls: 'px-3 py-3 w-[100px]', sortable: false },
+        { key: undefined, label: 'Nhà SX / Vùng', cls: 'px-3 py-3 w-[220px]', sortable: false },
+        { key: 'abv' as const, label: 'ABV', cls: 'px-3 py-3 w-[60px] text-center', sortable: true },
+        { key: undefined, label: 'Đóng gói', cls: 'px-3 py-3 w-[110px] text-center', sortable: false },
+        { key: 'stock' as const, label: 'Tồn kho', cls: 'px-3 py-3 w-[80px] text-center', sortable: false },
+        { key: undefined, label: 'Trạng thái', cls: 'px-3 py-3 w-[120px]', sortable: false },
+        { key: undefined, label: '', cls: 'px-3 py-3 w-[70px]', sortable: false },
     ]
+
+    // Smart pagination: show 1, ..., currentPage±1, ..., last
+    const getPageNumbers = () => {
+        if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
+        const pages: (number | '...')[] = [1]
+        if (page > 3) pages.push('...')
+        for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+            pages.push(i)
+        }
+        if (page < totalPages - 2) pages.push('...')
+        if (totalPages > 1) pages.push(totalPages)
+        return pages
+    }
 
     return (
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
@@ -141,9 +178,16 @@ export function ProductTable({ rows, total, loading, page, pageSize, onPageChang
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                            {headers.map(h => (
-                                <th key={h.label} className={`${h.cls} text-xs uppercase tracking-wider font-semibold`}
-                                    style={{ color: '#4A6A7A' }}>{h.label}</th>
+                            {sortableHeaders.map((h, i) => (
+                                <th key={i}
+                                    className={`${h.cls} text-xs uppercase tracking-wider font-semibold ${h.sortable ? 'cursor-pointer select-none' : ''}`}
+                                    style={{ color: h.sortable && sortBy === h.key ? '#87CBB9' : '#4A6A7A' }}
+                                    onClick={() => h.sortable && h.key && onSort(h.key)}>
+                                    <span className="inline-flex items-center gap-1.5">
+                                        {h.label}
+                                        {h.sortable && h.key && <SortIcon column={h.key} sortBy={sortBy} sortDir={sortDir} />}
+                                    </span>
+                                </th>
                             ))}
                         </tr>
                     </thead>
@@ -151,7 +195,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, onPageChang
                         {loading
                             ? Array.from({ length: 6 }).map((_, i) => (
                                 <tr key={i} style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}>
-                                    {headers.map((_, j) => (
+                                    {sortableHeaders.map((_, j) => (
                                         <td key={j} className="px-4 py-4">
                                             <div className="h-4 rounded animate-pulse"
                                                 style={{ background: '#1B2E3D', width: j === 0 ? '80%' : '55%' }} />
@@ -162,7 +206,12 @@ export function ProductTable({ rows, total, loading, page, pageSize, onPageChang
                             : rows.length === 0
                                 ? <tr><td colSpan={9}><EmptyState /></td></tr>
                                 : rows.map(row => (
-                                    <ProductTableRow key={row.id} row={row} onEdit={() => onEdit(row.id)} />
+                                    <ProductTableRow
+                                        key={row.id}
+                                        row={row}
+                                        onEdit={() => onEdit(row.id)}
+                                        onDelete={() => onDelete(row.id, row.productName)}
+                                    />
                                 ))
                         }
                     </tbody>
@@ -183,13 +232,17 @@ export function ProductTable({ rows, total, loading, page, pageSize, onPageChang
                             onMouseLeave={e => (e.currentTarget.style.background = '')}>
                             <ChevronLeft size={16} />
                         </button>
-                        {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
-                            <button key={p} onClick={() => onPageChange(p)}
-                                className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                style={{ background: p === page ? '#87CBB9' : 'transparent', color: p === page ? '#0A1926' : '#8AAEBB' }}>
-                                {p}
-                            </button>
-                        ))}
+                        {getPageNumbers().map((p, i) =>
+                            p === '...' ? (
+                                <span key={`dots-${i}`} className="px-1 text-xs" style={{ color: '#4A6A7A' }}>…</span>
+                            ) : (
+                                <button key={p} onClick={() => onPageChange(p as number)}
+                                    className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
+                                    style={{ background: p === page ? '#87CBB9' : 'transparent', color: p === page ? '#0A1926' : '#8AAEBB' }}>
+                                    {p}
+                                </button>
+                            )
+                        )}
                         <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
                             className="p-1.5 rounded-lg disabled:opacity-30"
                             style={{ color: '#8AAEBB' }}

@@ -7,6 +7,7 @@ import {
     ProductInput, createProduct, updateProduct, getProducers, getRegions,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
     getProductAwards, addProductAward, deleteProductAward,
+    getProductById, createProducerInline,
     type ProductMediaRow, type ProductAwardRow,
 } from './actions'
 
@@ -83,6 +84,8 @@ interface ProductFormState {
     peakDrinkEnd?: number | null
     classification?: string | null
     tastingNotes?: string | null
+    hsCode?: string
+    isAllocationEligible?: boolean
     status?: string
 }
 
@@ -99,11 +102,12 @@ function formToInput(f: ProductFormState): ProductInput {
         format: (f.format ?? 'STANDARD') as any,
         packagingType: (f.packagingType ?? 'CARTON') as any,
         unitsPerCase: f.bottlesPerCase ?? 12,
-        hsCode: '2204211000',
+        hsCode: f.hsCode ?? '2204211000',
         barcodeEan: f.barcodeEan ?? null,
         wineType: (f.wineType ?? 'RED') as any,
         classification: f.classification ?? null,
         tastingNotes: f.tastingNotes ?? null,
+        isAllocationEligible: f.isAllocationEligible ?? false,
         status: (f.status ?? 'ACTIVE') as any,
     }
 }
@@ -135,15 +139,23 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     const [generatingAI, setGeneratingAI] = useState(false)
     const [aiDescription, setAiDescription] = useState<{ vi: string; en: string } | null>(null)
 
+    // Inline producer creation
+    const [showNewProducer, setShowNewProducer] = useState(false)
+    const [newProducerName, setNewProducerName] = useState('')
+    const [newProducerCountry, setNewProducerCountry] = useState('FR')
+    const [creatingProducer, setCreatingProducer] = useState(false)
+
     const [form, setForm] = useState<ProductFormState>({
         status: 'ACTIVE',
         format: 'STANDARD',
         packagingType: 'CARTON',
         bottlesPerCase: 12,
         volumeMl: 750,
+        hsCode: '2204211000',
+        isAllocationEligible: false,
     })
 
-    // Load reference data once
+    // Load reference data + product data for edit
     useEffect(() => {
         if (!open) return
         Promise.all([getProducers(), getRegions()]).then(([p, r]) => {
@@ -153,6 +165,31 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
         if (editingId) {
             getProductMedia(editingId).then(setMediaList)
             getProductAwards(editingId).then(setAwards)
+            // Load product data for edit form
+            getProductById(editingId).then(data => {
+                if (!data) return
+                setForm({
+                    sku: data.skuCode,
+                    name: data.productName,
+                    vintage: data.vintage,
+                    abv: data.abvPercent,
+                    wineType: data.wineType,
+                    volumeMl: data.volumeMl,
+                    format: data.format,
+                    packagingType: data.packagingType,
+                    bottlesPerCase: data.unitsPerCase,
+                    barcodeEan: data.barcodeEan,
+                    countryCode: data.country,
+                    producerId: data.producerId,
+                    regionId: data.appellationId,
+                    classification: data.classification,
+                    tastingNotes: data.tastingNotes,
+                    hsCode: data.hsCode,
+                    isAllocationEligible: data.isAllocationEligible,
+                    status: data.status,
+                })
+                setLoading(false)
+            })
         } else {
             setMediaList([])
             setAwards([])
@@ -162,7 +199,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     // Reset form when opening for new
     useEffect(() => {
         if (open && !editingId) {
-            setForm({ status: 'ACTIVE', format: 'STANDARD', packagingType: 'CARTON', bottlesPerCase: 12, volumeMl: 750 })
+            setForm({ status: 'ACTIVE', format: 'STANDARD', packagingType: 'CARTON', bottlesPerCase: 12, volumeMl: 750, hsCode: '2204211000', isAllocationEligible: false })
             setErrors({})
         }
     }, [open, editingId])
@@ -369,15 +406,81 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                     <option value="AR">🇦🇷 Argentina</option>
                                     <option value="CL">🇨🇱 Chile</option>
                                     <option value="ZA">🇿🇦 Nam Phi</option>
+                                    <option value="GE">🇬🇪 Georgia</option>
+                                    <option value="HU">🇭🇺 Hungary</option>
+                                    <option value="GR">🇬🇷 Hy Lạp</option>
+                                    <option value="AT">🇦🇹 Áo</option>
+                                    <option value="RO">🇷🇴 Romania</option>
+                                    <option value="MX">🇲🇽 Mexico</option>
+                                    <option value="JP">🇯🇵 Nhật Bản</option>
                                 </Select>
                             </Field>
                             <Field label="Nhà sản xuất">
-                                <Select value={form.producerId ?? ''} onChange={e => set('producerId', e.target.value || null)}>
-                                    <option value="">— Chọn hoặc nhập thủ công —</option>
-                                    {producers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </Select>
+                                <div className="flex gap-1.5">
+                                    <Select className="flex-1" value={form.producerId ?? ''} onChange={e => set('producerId', e.target.value || null)}>
+                                        <option value="">— Chọn nhà SX —</option>
+                                        {producers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </Select>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewProducer(true)}
+                                        className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors"
+                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#87CBB9' }}
+                                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                        title="Tạo nhà SX mới">
+                                        +
+                                    </button>
+                                </div>
                             </Field>
                         </div>
+
+                        {/* Inline producer creation */}
+                        {showNewProducer && (
+                            <div className="p-3 rounded-lg space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>Tạo Nhà SX Mới</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Input
+                                        value={newProducerName}
+                                        onChange={e => setNewProducerName(e.target.value)}
+                                        placeholder="Tên nhà sản xuất"
+                                    />
+                                    <Select value={newProducerCountry} onChange={e => setNewProducerCountry(e.target.value)}>
+                                        <option value="FR">🇫🇷 Pháp</option>
+                                        <option value="IT">🇮🇹 Ý</option>
+                                        <option value="ES">🇪🇸 TBN</option>
+                                        <option value="US">🇺🇸 Mỹ</option>
+                                        <option value="AU">🇦🇺 Úc</option>
+                                        <option value="CL">🇨🇱 Chile</option>
+                                        <option value="AR">🇦🇷 Argentina</option>
+                                    </Select>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <button onClick={() => setShowNewProducer(false)} className="text-xs px-2 py-1" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                    <button
+                                        disabled={!newProducerName.trim() || creatingProducer}
+                                        onClick={async () => {
+                                            setCreatingProducer(true)
+                                            try {
+                                                const p = await createProducerInline(newProducerName.trim(), newProducerCountry)
+                                                setProducers(prev => [...prev, p])
+                                                set('producerId', p.id)
+                                                setShowNewProducer(false)
+                                                setNewProducerName('')
+                                                toast.success(`Đã tạo nhà SX "${p.name}"`)
+                                            } catch {
+                                                toast.error('Không thể tạo nhà SX')
+                                            }
+                                            setCreatingProducer(false)
+                                        }}
+                                        className="text-xs px-3 py-1 rounded font-semibold disabled:opacity-50"
+                                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                        {creatingProducer ? 'Đang tạo...' : 'Tạo'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <Field label="Vùng / Appellation">
                             <Select value={form.regionId ?? ''} onChange={e => set('regionId', e.target.value || null)}>
                                 <option value="">— Chọn vùng —</option>
@@ -390,11 +493,19 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                         </Field>
                     </div>
 
-                    {/* Section: Giá & Trạng thái */}
+                    {/* Section: HS Code, Giá & Trạng thái */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
-                            ── Giá & Trạng Thái
+                            ── Giá, Phân Loại & Trạng Thái
                         </p>
+                        <Field label="HS Code (Mã thuế hải quan)">
+                            <Input
+                                value={form.hsCode ?? '2204211000'}
+                                onChange={e => set('hsCode', e.target.value)}
+                                placeholder="2204211000"
+                                style={{ fontFamily: '"DM Mono", monospace' }}
+                            />
+                        </Field>
                         <div className="grid grid-cols-2 gap-4">
                             <Field label="Giá bán lẻ (VND)">
                                 <Input
@@ -413,6 +524,22 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                 </Select>
                             </Field>
                         </div>
+                        {/* Allocation Eligible checkbox */}
+                        <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                            <input
+                                type="checkbox"
+                                checked={form.isAllocationEligible ?? false}
+                                onChange={e => set('isAllocationEligible', e.target.checked)}
+                                className="w-4 h-4 rounded accent-emerald-500"
+                            />
+                            <div>
+                                <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>Allocation Eligible</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Cho phép phân bổ quota cho SKU này (rượu khan hiếm)</p>
+                            </div>
+                        </label>
                     </div>
 
                     {/* Section: Drinking window */}
@@ -805,4 +932,5 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
 const COUNTRY_FLAGS_MINI: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
     US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
+    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
 }

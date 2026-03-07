@@ -1,15 +1,23 @@
 ﻿'use client'
 
 import { useState, useCallback } from 'react'
-import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts } from './actions'
+import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2 } from 'lucide-react'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
+import { toast } from 'sonner'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
     US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
+    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
+}
+
+const COUNTRY_NAMES: Record<string, string> = {
+    FR: 'Pháp', IT: 'Ý', ES: 'TBN', PT: 'BĐN', DE: 'Đức',
+    US: 'Mỹ', AU: 'Úc', NZ: 'NZ', AR: 'Argentina', CL: 'Chile', ZA: 'Nam Phi',
+    GE: 'Georgia', HU: 'Hungary', GR: 'Hy Lạp', AT: 'Áo', RO: 'Romania', MX: 'Mexico', JP: 'Nhật',
 }
 
 const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -64,9 +72,11 @@ interface ProductsClientProps {
     initialRows: ProductRow[]
     initialTotal: number
     stats: ProductStats
+    countries: { code: string; count: number }[]
+    vintages: number[]
 }
 
-export function ProductsClient({ initialRows, initialTotal, stats }: ProductsClientProps) {
+export function ProductsClient({ initialRows, initialTotal, stats, countries, vintages }: ProductsClientProps) {
     const [rows, setRows] = useState<ProductRow[]>(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -77,12 +87,15 @@ export function ProductsClient({ initialRows, initialTotal, stats }: ProductsCli
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
+    const [countryFilter, setCountryFilter] = useState('')
+    const [vintageFilter, setVintageFilter] = useState('')
+    const [exporting, setExporting] = useState(false)
 
     // Use server-aggregated stats (counts all products, not just current page)
     const topTypeLabel = stats.topTypes.map(t => `${t.count} ${t.label}`).join(' / ') || 'N/A'
 
     const applyFilter = useCallback(async (newFilters: Partial<ProductFilters>) => {
-        const merged = { ...filters, ...newFilters, page: 1 }
+        const merged = { ...filters, ...newFilters, page: newFilters.page ?? 1 }
         setFilters(merged)
         setLoading(true)
         try {
@@ -94,6 +107,53 @@ export function ProductsClient({ initialRows, initialTotal, stats }: ProductsCli
             setLoading(false)
         }
     }, [filters])
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Xóa sản phẩm "${name}"?\n\nSản phẩm sẽ bị ẩn khỏi danh sách (soft delete).`)) return
+        try {
+            await deleteProduct(id)
+            toast.success(`Đã xóa "${name}"`)
+            applyFilter({})
+        } catch {
+            toast.error('Không thể xóa sản phẩm')
+        }
+    }
+
+    const handleExport = async () => {
+        setExporting(true)
+        try {
+            const data = await exportProductsData()
+            // Convert to CSV
+            if (data.length === 0) { toast.error('Chưa có sản phẩm để xuất'); return }
+            const headers = Object.keys(data[0])
+            const csvRows = [
+                headers.join(','),
+                ...data.map(row =>
+                    headers.map(h => {
+                        const val = String((row as any)[h] ?? '')
+                        return val.includes(',') || val.includes('"') ? `"${val.replace(/"/g, '""')}"` : val
+                    }).join(',')
+                )
+            ]
+            const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `danh_muc_san_pham_${new Date().toISOString().slice(0, 10)}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+            toast.success(`Đã xuất ${data.length} sản phẩm`)
+        } catch {
+            toast.error('Lỗi xuất Excel')
+        } finally {
+            setExporting(false)
+        }
+    }
+
+    const handleSort = (sortBy: ProductFilters['sortBy']) => {
+        const newDir = filters.sortBy === sortBy && filters.sortDir === 'asc' ? 'desc' : 'asc'
+        applyFilter({ sortBy, sortDir: newDir })
+    }
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
@@ -109,6 +169,16 @@ export function ProductsClient({ initialRows, initialTotal, stats }: ProductsCli
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleExport}
+                        disabled={exporting}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                        style={{ background: '#1B2E3D', color: '#5BA88A', border: '1px solid #2A4355' }}
+                        onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#5BA88A' } }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
+                    >
+                        <Download size={16} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
+                    </button>
                     <button
                         onClick={() => setImportOpen(true)}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
@@ -144,7 +214,7 @@ export function ProductsClient({ initialRows, initialTotal, stats }: ProductsCli
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input
                         type="text"
-                        placeholder="Tìm theo tên hoặc SKU..."
+                        placeholder="Tìm theo tên, SKU, barcode, nhà SX..."
                         value={search}
                         onChange={e => { setSearch(e.target.value); applyFilter({ search: e.target.value || undefined }) }}
                         className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
@@ -174,10 +244,32 @@ export function ProductsClient({ initialRows, initialTotal, stats }: ProductsCli
                     <option value="DISCONTINUED">Ngừng KD</option>
                     <option value="ALLOCATION_ONLY">Allocation</option>
                 </select>
-                {(search || typeFilter || statusFilter) && (
+                {/* Country filter — dynamic from DB */}
+                <select value={countryFilter}
+                    onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
+                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: countryFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                    <option value="">Tất cả quốc gia</option>
+                    {countries.map(c => (
+                        <option key={c.code} value={c.code}>
+                            {COUNTRY_FLAGS[c.code] ?? '🌍'} {COUNTRY_NAMES[c.code] ?? c.code} ({c.count})
+                        </option>
+                    ))}
+                </select>
+                {/* Vintage filter — dynamic from DB */}
+                <select value={vintageFilter}
+                    onChange={e => { setVintageFilter(e.target.value); applyFilter({ vintage: e.target.value ? Number(e.target.value) : undefined }) }}
+                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: vintageFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                    <option value="">Tất cả vintage</option>
+                    {vintages.map(v => (
+                        <option key={v} value={v}>{v}</option>
+                    ))}
+                </select>
+                {(search || typeFilter || statusFilter || countryFilter || vintageFilter) && (
                     <button onClick={() => {
-                        setSearch(''); setTypeFilter(''); setStatusFilter('')
-                        applyFilter({ search: undefined, wineType: undefined, status: undefined })
+                        setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setVintageFilter('')
+                        applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, vintage: undefined })
                     }} className="px-3 py-2.5 rounded-lg text-sm"
                         style={{ color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.3)' }}>
                         Xóa filter
@@ -188,8 +280,11 @@ export function ProductsClient({ initialRows, initialTotal, stats }: ProductsCli
             <ProductTable
                 rows={rows} total={total} loading={loading}
                 page={filters.page ?? 1} pageSize={filters.pageSize ?? 20}
+                sortBy={filters.sortBy} sortDir={filters.sortDir}
                 onPageChange={p => applyFilter({ page: p })}
+                onSort={handleSort}
                 onEdit={id => { setEditingId(id); setDrawerOpen(true) }}
+                onDelete={handleDelete}
                 onRefresh={() => applyFilter({})}
             />
 
