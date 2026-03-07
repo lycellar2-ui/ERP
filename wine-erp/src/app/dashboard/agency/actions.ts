@@ -352,3 +352,166 @@ export async function getSubmissionDocuments(submissionId: string): Promise<Agen
         uploadedAt: d.uploadedAt,
     }))
 }
+
+// ═══════════════════════════════════════════════════
+// SHIPMENT ASSIGNMENT WORKFLOW
+// ═══════════════════════════════════════════════════
+
+export async function assignShipmentToPartner(
+    shipmentId: string,
+    partnerId: string,
+    role: 'FORWARDER' | 'CUSTOMS_BROKER'
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Grant access
+        await prisma.partnerShipmentAccess.upsert({
+            where: { partnerId_shipmentId: { partnerId, shipmentId } },
+            create: { partnerId, shipmentId },
+            update: {},
+        })
+
+        // Update shipment with the partner role
+        const data = role === 'FORWARDER'
+            ? { forwarderId: partnerId }
+            : { customsBrokerId: partnerId }
+        await prisma.shipment.update({ where: { id: shipmentId }, data })
+
+        revalidatePath('/dashboard/agency')
+        revalidatePath('/dashboard/procurement')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Partner's assigned shipments (richer view) ────
+export type PartnerAssignment = {
+    shipmentId: string; billOfLading: string; poNo: string; supplierName: string
+    vesselName: string | null; containerNo: string | null
+    portOfLoading: string | null; portOfDischarge: string | null
+    etd: Date | null; eta: Date | null; status: string
+    incoterms: string | null; role: string
+    milestones: { id: string; milestone: string; label: string; completedAt: Date | null; sortOrder: number }[]
+    submissionCount: number
+}
+
+export async function getPartnerAssignments(partnerId: string): Promise<PartnerAssignment[]> {
+    const accesses = await prisma.partnerShipmentAccess.findMany({
+        where: { partnerId },
+        select: { shipmentId: true },
+    })
+
+    if (!accesses.length) return []
+
+    const shipments = await prisma.shipment.findMany({
+        where: { id: { in: accesses.map(a => a.shipmentId) } },
+        include: {
+            po: { include: { supplier: { select: { name: true } } } },
+            milestones: { orderBy: { sortOrder: 'asc' } },
+            agencySubmissions: { where: { partnerId }, select: { id: true } },
+        },
+        orderBy: { eta: 'desc' },
+    })
+
+    return shipments.map(s => ({
+        shipmentId: s.id, billOfLading: s.billOfLading, poNo: s.po.poNo,
+        supplierName: s.po.supplier.name, vesselName: s.vesselName,
+        containerNo: s.containerNo, portOfLoading: s.portOfLoading,
+        portOfDischarge: s.portOfDischarge, etd: s.etd, eta: s.eta,
+        status: s.status, incoterms: s.incoterms,
+        role: s.forwarderId === partnerId ? 'FORWARDER' : 'CUSTOMS_BROKER',
+        milestones: s.milestones.map(m => ({
+            id: m.id, milestone: m.milestone, label: m.label,
+            completedAt: m.completedAt, sortOrder: m.sortOrder,
+        })),
+        submissionCount: s.agencySubmissions.length,
+    }))
+}
+
+// ── Partner updates vessel/ETA info ───────────────
+export async function partnerUpdateShipmentInfo(
+    partnerId: string, shipmentId: string,
+    input: {
+        vesselName?: string; voyageNo?: string; containerNo?: string
+        containerType?: string; etd?: string; eta?: string; ata?: string
+    }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Verify partner has access
+        const access = await prisma.partnerShipmentAccess.findUnique({
+            where: { partnerId_shipmentId: { partnerId, shipmentId } },
+        })
+        if (!access) return { success: false, error: 'Không có quyền truy cập lô hàng này' }
+
+        const data: any = {}
+        if (input.vesselName !== undefined) data.vesselName = input.vesselName
+        if (input.voyageNo !== undefined) data.voyageNo = input.voyageNo
+        if (input.containerNo !== undefined) data.containerNo = input.containerNo
+        if (input.containerType !== undefined) data.containerType = input.containerType
+        if (input.etd) data.etd = new Date(input.etd)
+        if (input.eta) data.eta = new Date(input.eta)
+        if (input.ata) data.ata = new Date(input.ata)
+
+        await prisma.shipment.update({ where: { id: shipmentId }, data })
+        revalidatePath('/dashboard/agency')
+        revalidatePath('/dashboard/procurement')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Partner completes a milestone ─────────────────
+export async function partnerUpdateMilestone(
+    partnerId: string, milestoneId: string, notes?: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const milestone = await prisma.shipmentMilestone.findUnique({
+            where: { id: milestoneId },
+            select: { shipmentId: true },
+        })
+        if (!milestone) return { success: false, error: 'Milestone không tồn tại' }
+
+        // Verify access
+        const access = await prisma.partnerShipmentAccess.findUnique({
+            where: { partnerId_shipmentId: { partnerId, shipmentId: milestone.shipmentId } },
+        })
+        if (!access) return { success: false, error: 'Không có quyền' }
+
+        await prisma.shipmentMilestone.update({
+            where: { id: milestoneId },
+            data: { completedAt: new Date(), completedBy: partnerId, notes: notes ?? null },
+        })
+        revalidatePath('/dashboard/agency')
+        revalidatePath('/dashboard/procurement')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Partner's cost summary (what they've invoiced) ─
+export async function getPartnerCostSummary(partnerId: string) {
+    const accesses = await prisma.partnerShipmentAccess.findMany({
+        where: { partnerId },
+        select: { shipmentId: true },
+    })
+    if (!accesses.length) return { totalCostsVND: 0, shipmentCount: 0, items: [] }
+
+    const costItems = await prisma.shipmentCostItem.findMany({
+        where: { shipmentId: { in: accesses.map(a => a.shipmentId) } },
+        include: { shipment: { select: { billOfLading: true } } },
+        orderBy: { createdAt: 'desc' },
+    })
+
+    return {
+        totalCostsVND: costItems.reduce((s, c) => s + Number(c.amountVND), 0),
+        shipmentCount: accesses.length,
+        items: costItems.map(c => ({
+            id: c.id, shipmentBol: c.shipment.billOfLading,
+            category: c.category, description: c.description,
+            amount: Number(c.amount), currency: c.currency,
+            amountVND: Number(c.amountVND), paidAt: c.paidAt,
+        })),
+    }
+}
