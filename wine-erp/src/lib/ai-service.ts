@@ -113,9 +113,9 @@ export async function generateProductDescription(
         pSku = product.skuCode
         wType = product.wineType ?? 'N/A'
         pVintage = product.vintage ?? 'N/A'
-        pAbv = product.abvPercent ?? 'N/A'
+        pAbv = product.abvPercent ? Number(product.abvPercent) : 'N/A'
         pClassification = product.classification ?? 'N/A'
-        pVolume = product.volumeMl ?? 'N/A'
+        pVolume = product.volumeMl ? Number(product.volumeMl) : 'N/A'
         pRegion = product.appellation?.name ?? product.country ?? 'N/A'
     } else if (formData) {
         pName = formData.name
