@@ -16,6 +16,8 @@
 7. [BUG-007: Stat Cards Tính Sai — Chỉ Đếm Page Hiện Tại](#bug-007-stat-cards-tính-sai--chỉ-đếm-page-hiện-tại)
 8. [BUG-008: Git Commit Message Dài Gây Treo Terminal](#bug-008-git-commit-message-dài-gây-treo-terminal)
 9. [BUG-009: Build Fail — Many-to-Many Relation Query Sai](#bug-009-build-fail--many-to-many-relation-query-sai)
+10. [BUG-010: Quotation Drawer Infinite Loading — Prisma Decimal Serialization](#bug-010-quotation-drawer-infinite-loading--prisma-decimal-serialization)
+11. [BUG-011: Vercel Production Crash — Module-Level SDK Init Without API Key](#bug-011-vercel-production-crash--module-level-sdk-init-without-api-key)
 
 ---
 
@@ -400,6 +402,9 @@ page: '/dashboard/allocation'
 | 17 | **Git commit message NGẮN GỌN** (< 72 chars), không dùng body dài | Git Workflow |
 | 18 | Enum values PHẢI khớp Prisma schema (check trước khi dùng) | Schema |
 | 19 | **Many-to-many relation phải query qua pivot table** | Prisma Query |
+| 20 | **Server Actions trả Prisma data PHẢI serialize bằng `JSON.parse(JSON.stringify())`** | Serialization |
+| 21 | **Server Actions nên return `{ success, data/error }` thay vì throw** | Error Handling |
+| 22 | **KHÔNG khởi tạo SDK ở module-level nếu env var có thể missing** | SDK Init |
 
 ---
 
@@ -493,3 +498,86 @@ prisma.user.findMany({
 > LUÔN check Prisma schema trước khi viết where clause.
 > `User.roles` → `UserRole[]` → phải dùng `roles: { some: { role: { name: ... } } }`.
 
+---
+
+## BUG-010: Quotation Drawer Infinite Loading — Prisma Decimal Serialization
+
+**Ngày:** 2026-03-08
+**Severity:** 🔴 Critical — Drawer không load, UX bị chặn hoàn toàn
+
+### Triệu chứng
+- Click mở drawer Chi Tiết Báo Giá → loading spinner vô hạn
+- Console: "Decimal objects are not supported" (dev) hoặc "QT: undefined" (prod)
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Prisma Decimal type** | `totalAmount`, `orderDiscount`, `qtyOrdered`, `unitPrice`, `lineDiscountPct` là `Decimal` |
+| **Next.js serialization** | Server Actions → Client Components chỉ chấp nhận plain objects |
+| **`...raw` spread không đủ** | Prisma model instances chứa non-enumerable internal properties |
+| **Thiếu try-catch** | `openDetail()` không catch → `setDetailLoading(false)` không chạy |
+
+### Cách fix
+
+```typescript
+// ✅ ĐÚNG — JSON serialize rồi convert Decimal fields
+const plain = JSON.parse(JSON.stringify(raw))
+plain.totalAmount = Number(raw.totalAmount)
+return { success: true, data: plain }
+
+// ❌ SAI — Prisma instance spread vẫn chứa Decimal
+return { ...raw, totalAmount: Number(raw.totalAmount) }
+```
+
+### Bài học
+
+> ⚠️ **RULE 20: Server Actions trả Prisma data PHẢI serialize bằng `JSON.parse(JSON.stringify())`.**
+> `{...raw}` không đủ — Prisma objects chứa internal metadata không serializable.
+
+> ⚠️ **RULE 21: Server Actions nên return `{ success, data/error }` thay vì throw.**
+> Vercel production redact error messages. Structured response cho phép hiển thị lỗi cụ thể.
+
+---
+
+## BUG-011: Vercel Production Crash — Module-Level SDK Init Without API Key
+
+**Ngày:** 2026-03-08
+**Severity:** 🔴 Critical — Node.js exit 128, toàn bộ page crash
+
+### Triệu chứng
+```
+Error: Missing API key. Pass it to the constructor `new Resend("re_123")`
+Node.js process exited with exit status: 128
+```
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Module-level init** | `const resend = new Resend(process.env.RESEND_API_KEY)` chạy khi module evaluate |
+| **Constructor throws** | Resend throw Error nếu API key là `undefined` |
+| **Fatal crash** | Module evaluation error → kill toàn bộ Node.js process |
+| **Env var missing trên Vercel** | `.env.local` có key locally, nhưng Vercel chưa set |
+
+### Cách fix
+
+```typescript
+// ❌ SAI — Crash khi key missing
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+// ✅ ĐÚNG — Lazy init
+let _resend: Resend | null = null
+function getResend() {
+    if (!_resend && process.env.RESEND_API_KEY) {
+        _resend = new Resend(process.env.RESEND_API_KEY)
+    }
+    return _resend
+}
+```
+
+### Bài học
+
+> ⚠️ **RULE 22: KHÔNG BAO GIỜ khởi tạo SDK ở module-level nếu env var có thể missing.**
+> Constructor throw = crash toàn bộ process. Dùng lazy init.
+> Áp dụng cho: Resend, Stripe, Twilio, SendGrid, và mọi third-party SDK.

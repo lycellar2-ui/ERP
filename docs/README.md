@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 19 Rules rút ra từ 9 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 22 Rules rút ra từ 11 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -227,4 +227,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-08 14:00 | Wine ERP v6.0 — 26 modules, 111 models, 33 routes*
+*Last updated: 2026-03-08 20:00 | Wine ERP v6.0 — 26 modules, 111 models, 33 routes*

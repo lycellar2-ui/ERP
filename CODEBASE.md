@@ -40,7 +40,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **Auth** | `src/lib/session.ts` | `getCurrentUser()`, `hasPermission()`, `hasRole()` |
 | **RBAC Middleware** | `src/middleware.ts` | Route → Permission mapping, redirect unauthenticated |
 | **Approval Workflow** | `settings/actions.ts` | Template CRUD → Submit → Multi-step Approve/Reject → Audit trail |
-| **Notification** | `src/lib/notifications.ts` | 4 email templates via Resend (SO Approval, Invoice Overdue, Shipment, Low Stock) |
+| **Notification** | `src/lib/notifications.ts` | 5 email templates via Resend (**lazy init** — không crash khi missing API key) + Telegram |
 | **Excel Export** | `src/lib/excel.ts` | Generic engine + 4 pre-built templates (AR Aging, Stock, Sales, Costing) |
 | **File Upload** | `src/lib/storage.ts` | Supabase Storage: uploadFile, deleteFile, listFiles |
 | **Tax Engine** | `tax/actions.ts` | CIF → NK → TTĐB → VAT auto-calc by HS Code + Country |
@@ -81,6 +81,12 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 ### Server Actions
 - Mọi exported function trong file `'use server'` PHẢI là `async` — kể cả không cần await
 - Nếu function không cần server, tách ra file riêng không có `'use server'` directive
+- **Prisma data trả về client PHẢI serialize bằng `JSON.parse(JSON.stringify(raw))`** — `{...raw}` không đủ
+- **Server Actions nên return `{ success, data/error }`** thay vì throw — Vercel redact error messages
+
+### SDK Initialization
+- **KHÔNG khởi tạo third-party SDK ở module-level** nếu env var có thể missing (Resend, Stripe, Twilio...)
+- Dùng lazy init: `let _client = null; function getClient() { if (!_client && key) _client = new SDK(key); return _client }`
 
 ## 7. 📝 BẮT BUỘC CẬP NHẬT DOCS SAU MỖI THAY ĐỔI CODE
 
