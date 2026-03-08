@@ -82,13 +82,27 @@ export async function createOpportunity(input: {
 }
 
 // ── Move stage ───────────────────────────────────
-export async function moveOpportunityStage(id: string, stage: OppStage): Promise<{ success: boolean; error?: string }> {
+export async function moveOpportunityStage(id: string, stage: OppStage, lostReason?: string): Promise<{ success: boolean; error?: string }> {
     try {
         const prob: Record<OppStage, number> = { LEAD: 10, QUALIFIED: 30, PROPOSAL: 50, NEGOTIATION: 70, WON: 100, LOST: 0 }
-        await prisma.salesOpportunity.update({
-            where: { id },
-            data: { stage: stage as any, probability: prob[stage] },
-        })
+        const current = await prisma.salesOpportunity.findUnique({ where: { id }, select: { stage: true, notes: true } })
+        if (!current) return { success: false, error: 'Opportunity not found' }
+
+        const updateData: any = {
+            stage: stage as any,
+            probability: prob[stage],
+            previousStage: current.stage,
+            stageChangedAt: new Date(),
+        }
+        if (stage === 'LOST' && lostReason) {
+            updateData.notes = lostReason
+        }
+        if (stage === 'WON' || stage === 'LOST') {
+            updateData.closeDate = new Date()
+        }
+
+        await prisma.salesOpportunity.update({ where: { id }, data: updateData })
+        revalidateCache('pipeline')
         revalidatePath('/dashboard/pipeline')
         return { success: true }
     } catch (err: any) {
@@ -124,9 +138,92 @@ export async function getPipelineStats() {
 export async function deleteOpportunity(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         await prisma.salesOpportunity.delete({ where: { id } })
+        revalidateCache('pipeline')
         revalidatePath('/dashboard/pipeline')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
 }
+
+// ── Get single opportunity detail ────────────────
+export type OpportunityDetail = {
+    id: string
+    name: string
+    customerId: string
+    customerName: string
+    customerCode: string
+    customerType: string
+    stage: OppStage
+    previousStage: OppStage | null
+    expectedValue: number
+    probability: number
+    assigneeName: string
+    assigneeId: string
+    closeDate: Date | null
+    stageChangedAt: Date
+    notes: string | null
+    createdAt: Date
+    updatedAt: Date
+    daysInStage: number
+    totalAge: number
+}
+
+export async function getOpportunityDetail(id: string): Promise<OpportunityDetail | null> {
+    const opp = await prisma.salesOpportunity.findUnique({
+        where: { id },
+        include: {
+            customer: { select: { name: true, code: true, customerType: true } },
+            assignee: { select: { name: true } },
+        },
+    })
+    if (!opp) return null
+    const now = new Date()
+    return {
+        id: opp.id,
+        name: opp.name,
+        customerId: opp.customerId,
+        customerName: opp.customer.name,
+        customerCode: opp.customer.code,
+        customerType: opp.customer.customerType,
+        stage: opp.stage as OppStage,
+        previousStage: (opp.previousStage as OppStage) ?? null,
+        expectedValue: Number(opp.expectedValue),
+        probability: opp.probability,
+        assigneeName: opp.assignee.name,
+        assigneeId: opp.assignedTo,
+        closeDate: opp.closeDate,
+        stageChangedAt: opp.stageChangedAt,
+        notes: opp.notes,
+        createdAt: opp.createdAt,
+        updatedAt: opp.updatedAt,
+        daysInStage: Math.round((now.getTime() - opp.stageChangedAt.getTime()) / (1000 * 60 * 60 * 24)),
+        totalAge: Math.round((now.getTime() - opp.createdAt.getTime()) / (1000 * 60 * 60 * 24)),
+    }
+}
+
+// ── Update opportunity ───────────────────────────
+export async function updateOpportunity(id: string, input: {
+    name?: string
+    expectedValue?: number
+    assignedTo?: string
+    closeDate?: string | null
+    notes?: string | null
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const data: any = {}
+        if (input.name !== undefined) data.name = input.name
+        if (input.expectedValue !== undefined) data.expectedValue = input.expectedValue
+        if (input.assignedTo !== undefined) data.assignedTo = input.assignedTo
+        if (input.closeDate !== undefined) data.closeDate = input.closeDate ? new Date(input.closeDate) : null
+        if (input.notes !== undefined) data.notes = input.notes
+
+        await prisma.salesOpportunity.update({ where: { id }, data })
+        revalidateCache('pipeline')
+        revalidatePath('/dashboard/pipeline')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Loader2, RefreshCw, TrendingUp, Target, Users, AlertTriangle, Trophy, XCircle } from 'lucide-react'
+import { Sparkles, Loader2, RefreshCw, TrendingUp, Target, Users, AlertTriangle, Trophy, XCircle, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Stats {
     totalDeals: number
@@ -20,6 +20,7 @@ export function AIPipelineAnalysis() {
     const [stats, setStats] = useState<Stats | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [collapsed, setCollapsed] = useState(true)
 
     async function handleGenerate() {
         setLoading(true)
@@ -74,107 +75,112 @@ export function AIPipelineAnalysis() {
                         <><Sparkles size={13} /> 🔍 Phân Tích Pipeline</>
                     )}
                 </button>
+                <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md transition-all" style={{ color: '#4A6A7A' }}>
+                    {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                </button>
             </div>
 
-            {/* Stats Row */}
-            {stats && !loading && (
-                <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 px-5 pt-4">
-                    <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                        <div className="flex items-center justify-center gap-1 mb-0.5"><Target size={11} style={{ color: '#87CBB9' }} /></div>
-                        <p className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{stats.activeDeals}</p>
-                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Active Deals</p>
+            {!collapsed && <>
+                {/* Stats Row */}
+                {stats && !loading && (
+                    <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 px-5 pt-4">
+                        <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><Target size={11} style={{ color: '#87CBB9' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{stats.activeDeals}</p>
+                            <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Active Deals</p>
+                        </div>
+                        <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#D4A853' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: '#D4A853', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.pipelineValue)}</p>
+                            <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Pipeline Value</p>
+                        </div>
+                        <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                            <p className="text-lg font-bold" style={{ color: '#4A8FAB', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.weightedValue)}</p>
+                            <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Weighted Value</p>
+                        </div>
+                        <div className="text-center p-2 rounded" style={{ background: 'rgba(91,168,138,0.06)' }}>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><Trophy size={11} style={{ color: '#5BA88A' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: '#5BA88A', fontFamily: 'var(--font-mono)' }}>{stats.winRate}%</p>
+                            <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Win Rate</p>
+                        </div>
+                        <div className="text-center p-2 rounded" style={{ background: stats.staleDeals > 0 ? 'rgba(224,82,82,0.06)' : '#142433' }}>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.staleDeals > 0 ? '#E05252' : '#4A6A7A' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: stats.staleDeals > 0 ? '#E05252' : '#4A6A7A', fontFamily: 'var(--font-mono)' }}>{stats.staleDeals}</p>
+                            <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Stale Deals</p>
+                        </div>
+                        <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
+                            <div className="flex items-center justify-center gap-1 mb-0.5"><XCircle size={11} style={{ color: '#8B1A2E' }} /></div>
+                            <p className="text-lg font-bold" style={{ color: '#8B1A2E', fontFamily: 'var(--font-mono)' }}>{stats.lostDeals}</p>
+                            <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Lost</p>
+                        </div>
                     </div>
-                    <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                        <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#D4A853' }} /></div>
-                        <p className="text-lg font-bold" style={{ color: '#D4A853', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.pipelineValue)}</p>
-                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Pipeline Value</p>
-                    </div>
-                    <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                        <p className="text-lg font-bold" style={{ color: '#4A8FAB', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.weightedValue)}</p>
-                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Weighted Value</p>
-                    </div>
-                    <div className="text-center p-2 rounded" style={{ background: 'rgba(91,168,138,0.06)' }}>
-                        <div className="flex items-center justify-center gap-1 mb-0.5"><Trophy size={11} style={{ color: '#5BA88A' }} /></div>
-                        <p className="text-lg font-bold" style={{ color: '#5BA88A', fontFamily: 'var(--font-mono)' }}>{stats.winRate}%</p>
-                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Win Rate</p>
-                    </div>
-                    <div className="text-center p-2 rounded" style={{ background: stats.staleDeals > 0 ? 'rgba(224,82,82,0.06)' : '#142433' }}>
-                        <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.staleDeals > 0 ? '#E05252' : '#4A6A7A' }} /></div>
-                        <p className="text-lg font-bold" style={{ color: stats.staleDeals > 0 ? '#E05252' : '#4A6A7A', fontFamily: 'var(--font-mono)' }}>{stats.staleDeals}</p>
-                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Stale Deals</p>
-                    </div>
-                    <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                        <div className="flex items-center justify-center gap-1 mb-0.5"><XCircle size={11} style={{ color: '#8B1A2E' }} /></div>
-                        <p className="text-lg font-bold" style={{ color: '#8B1A2E', fontFamily: 'var(--font-mono)' }}>{stats.lostDeals}</p>
-                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Lost</p>
-                    </div>
-                </div>
-            )}
+                )}
 
-            {/* Loading */}
-            {loading && (
-                <div className="px-5 py-8 flex flex-col items-center gap-3">
-                    <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                        style={{ borderColor: '#2A4355', borderTopColor: '#D4A853' }} />
-                    <p className="text-xs animate-pulse" style={{ color: '#4A6A7A' }}>
-                        AI đang phân tích {'{'}pipeline, win rate, deal velocity, coaching...{'}'}
-                    </p>
-                </div>
-            )}
-
-            {/* Error */}
-            {error && !loading && (
-                <div className="px-5 py-4">
-                    <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(224,82,82,0.06)', border: '1px solid rgba(224,82,82,0.2)' }}>
-                        <p className="text-xs" style={{ color: '#E05252' }}>❌ {error}</p>
+                {/* Loading */}
+                {loading && (
+                    <div className="px-5 py-8 flex flex-col items-center gap-3">
+                        <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
+                            style={{ borderColor: '#2A4355', borderTopColor: '#D4A853' }} />
+                        <p className="text-xs animate-pulse" style={{ color: '#4A6A7A' }}>
+                            AI đang phân tích {'{'}pipeline, win rate, deal velocity, coaching...{'}'}
+                        </p>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* AI Analysis */}
-            {analysis && !loading && (
-                <div className="px-5 py-4">
-                    <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-2">
-                        {analysis.split('\n').filter(Boolean).map((line, i) => {
-                            const isHeading = line.startsWith('#') || line.startsWith('**')
-                            const isHighlight = line.includes('🔥') || line.includes('⚠️') || line.includes('🎯') || line.includes('📊') || line.includes('💡') || line.includes('📈')
-                            const isUrgent = line.includes('🔴') || line.includes('cảnh báo') || line.includes('rủi ro')
-                            const isPositive = line.includes('🟢') || line.includes('tốt') || line.includes('mạnh')
-
-                            let color = '#8AAEBB'
-                            if (isHeading || isHighlight) color = '#E8F1F2'
-                            if (isUrgent) color = '#E05252'
-                            if (isPositive) color = '#5BA88A'
-
-                            return (
-                                <p key={i} className="text-[13px] leading-relaxed" style={{
-                                    color,
-                                    fontWeight: isHeading || isHighlight ? 700 : 400,
-                                    fontSize: isHeading ? '14px' : '13px',
-                                    marginLeft: line.startsWith('- ') || line.startsWith('* ') ? '12px' : '0',
-                                    paddingTop: isHeading ? '8px' : '0',
-                                }}>
-                                    {line.replace(/^#+\s*/, '').replace(/\*\*/g, '')}
-                                </p>
-                            )
-                        })}
+                {/* Error */}
+                {error && !loading && (
+                    <div className="px-5 py-4">
+                        <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(224,82,82,0.06)', border: '1px solid rgba(224,82,82,0.2)' }}>
+                            <p className="text-xs" style={{ color: '#E05252' }}>❌ {error}</p>
+                        </div>
                     </div>
-                    <p className="text-[10px] mt-3 text-right" style={{ color: '#4A6A7A' }}>
-                        🕐 Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Sales Director AI
-                    </p>
-                </div>
-            )}
+                )}
 
-            {/* Empty State */}
-            {!analysis && !loading && !error && (
-                <div className="px-5 py-6 flex flex-col items-center gap-2">
-                    <TrendingUp size={20} style={{ color: '#2A4355' }} />
-                    <p className="text-xs text-center" style={{ color: '#4A6A7A' }}>
-                        Nhấn <strong>&quot;🔍 Phân Tích Pipeline&quot;</strong> để nhận<br />
-                        đánh giá pipeline, coaching, dự báo doanh thu từ AI
-                    </p>
-                </div>
-            )}
+                {/* AI Analysis */}
+                {analysis && !loading && (
+                    <div className="px-5 py-4">
+                        <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-2">
+                            {analysis.split('\n').filter(Boolean).map((line, i) => {
+                                const isHeading = line.startsWith('#') || line.startsWith('**')
+                                const isHighlight = line.includes('🔥') || line.includes('⚠️') || line.includes('🎯') || line.includes('📊') || line.includes('💡') || line.includes('📈')
+                                const isUrgent = line.includes('🔴') || line.includes('cảnh báo') || line.includes('rủi ro')
+                                const isPositive = line.includes('🟢') || line.includes('tốt') || line.includes('mạnh')
+
+                                let color = '#8AAEBB'
+                                if (isHeading || isHighlight) color = '#E8F1F2'
+                                if (isUrgent) color = '#E05252'
+                                if (isPositive) color = '#5BA88A'
+
+                                return (
+                                    <p key={i} className="text-[13px] leading-relaxed" style={{
+                                        color,
+                                        fontWeight: isHeading || isHighlight ? 700 : 400,
+                                        fontSize: isHeading ? '14px' : '13px',
+                                        marginLeft: line.startsWith('- ') || line.startsWith('* ') ? '12px' : '0',
+                                        paddingTop: isHeading ? '8px' : '0',
+                                    }}>
+                                        {line.replace(/^#+\s*/, '').replace(/\*\*/g, '')}
+                                    </p>
+                                )
+                            })}
+                        </div>
+                        <p className="text-[10px] mt-3 text-right" style={{ color: '#4A6A7A' }}>
+                            🕐 Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Sales Director AI
+                        </p>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {!analysis && !loading && !error && (
+                    <div className="px-5 py-4 flex flex-col items-center gap-2">
+                        <TrendingUp size={20} style={{ color: '#2A4355' }} />
+                        <p className="text-xs text-center" style={{ color: '#4A6A7A' }}>
+                            Nhấn <strong>&quot;🔍 Phân Tích Pipeline&quot;</strong> để nhận<br />
+                            đánh giá pipeline, coaching, dự báo doanh thu từ AI
+                        </p>
+                    </div>
+                )}
+            </>}
         </div>
     )
 }

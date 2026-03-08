@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect } from 'react'
 import {
     Users, Search, Phone, Mail, Handshake, Wine,
     Package, AlertCircle, TrendingUp, ChevronRight, MessageSquarePlus,
-    ShoppingCart, Clock, CheckCircle2, Loader2, Crown, Calendar, AlertTriangle
+    ShoppingCart, Clock, CheckCircle2, Loader2, Crown, Calendar, AlertTriangle,
+    ArrowUpDown, ArrowDown, ArrowUp, Gem
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions, recalcAllCustomerTiers } from './actions'
@@ -31,8 +32,24 @@ const ACTIVITY_ICONS: Record<ActivityType, React.FC<any>> = {
     OTHER: MessageSquarePlus,
 }
 
+const TIER_CFG: Record<string, { label: string; color: string; icon: string }> = {
+    PLATINUM: { label: 'Platinum', color: '#E8F1F2', icon: '💎' },
+    GOLD: { label: 'Gold', color: '#D4A853', icon: '🥇' },
+    SILVER: { label: 'Silver', color: '#8AAEBB', icon: '🥈' },
+    BRONZE: { label: 'Bronze', color: '#87685A', icon: '🥉' },
+}
+
+function getTierFromRevenue(revenue: number): string {
+    if (revenue >= 5_000_000_000) return 'PLATINUM'
+    if (revenue >= 2_000_000_000) return 'GOLD'
+    if (revenue >= 500_000_000) return 'SILVER'
+    return 'BRONZE'
+}
+
 function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSelect: () => void; isSelected: boolean }) {
     const typeCfg = TYPE_CFG[row.channel ?? ''] ?? { label: row.customerType, color: '#8AAEBB', bg: 'rgba(138,174,187,0.1)' }
+    const tier = getTierFromRevenue(row.totalRevenue)
+    const tierCfg = TIER_CFG[tier]
 
     return (
         <button onClick={onSelect} className="w-full text-left p-4 rounded-md transition-all duration-150"
@@ -46,9 +63,15 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
         >
             <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                         <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold"
                             style={{ color: typeCfg.color, background: typeCfg.bg }}>{typeCfg.label}</span>
+                        {tier !== 'BRONZE' && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                                style={{ color: tierCfg.color, background: `${tierCfg.color}15` }}>
+                                {tierCfg.icon} {tierCfg.label}
+                            </span>
+                        )}
                         {row.openComplaints > 0 && (
                             <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold"
                                 style={{ color: '#8B1A2E', background: 'rgba(139,26,46,0.15)' }}>
@@ -173,6 +196,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     const [txOpen, setTxOpen] = useState(false)
     const [tierRecalcing, setTierRecalcing] = useState(false)
     const [crmTab, setCrmTab] = useState<'customers' | 'events' | 'complaints'>('customers')
+    const [sortBy, setSortBy] = useState<'revenue' | 'orders' | 'name'>('revenue')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
     const reload = useCallback(async (s?: string, t?: string) => {
         setLoading(true)
@@ -187,6 +212,27 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     }, [search, typeFilter])
 
     const selectedCustomer = rows.find(r => r.id === selectedId)
+
+    // Sort rows client-side
+    const sortedRows = [...rows].sort((a, b) => {
+        const dir = sortDir === 'desc' ? -1 : 1
+        switch (sortBy) {
+            case 'revenue': return (a.totalRevenue - b.totalRevenue) * dir
+            case 'orders': return (a.totalOrders - b.totalOrders) * dir
+            case 'name': return a.name.localeCompare(b.name) * dir
+            default: return 0
+        }
+    })
+
+    const toggleSort = (field: typeof sortBy) => {
+        if (sortBy === field) setSortDir(d => d === 'desc' ? 'asc' : 'desc')
+        else { setSortBy(field); setSortDir('desc') }
+    }
+
+    // CRM summary stats for empty state
+    const topCustomers = [...rows].sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5)
+    const totalRevAll = rows.reduce((s, r) => s + r.totalRevenue, 0)
+    const tierDist = rows.reduce((acc, r) => { const t = getTierFromRevenue(r.totalRevenue); acc[t] = (acc[t] || 0) + 1; return acc }, {} as Record<string, number>)
 
     useEffect(() => {
         if (!selectedId) { setProfile(null); setTxHistory(null); setTxOpen(false); return }
@@ -317,15 +363,31 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                             </select>
                         </div>
 
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
-                            {total} Khách Hàng
-                        </p>
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
+                                {total} Khách Hàng
+                            </p>
+                            <div className="flex gap-1">
+                                {([['revenue', 'Revenue'], ['orders', 'Đơn'], ['name', 'Tên']] as const).map(([key, label]) => (
+                                    <button key={key} onClick={() => toggleSort(key)}
+                                        className="flex items-center gap-0.5 px-2 py-1 text-[10px] font-semibold rounded transition-all"
+                                        style={{
+                                            background: sortBy === key ? 'rgba(135,203,185,0.15)' : 'transparent',
+                                            color: sortBy === key ? '#87CBB9' : '#4A6A7A',
+                                            border: `1px solid ${sortBy === key ? 'rgba(135,203,185,0.3)' : 'transparent'}`,
+                                        }}>
+                                        {label}
+                                        {sortBy === key && (sortDir === 'desc' ? <ArrowDown size={9} /> : <ArrowUp size={9} />)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         {/* Customer cards */}
                         <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                             {loading ? (
                                 <div className="text-center py-8" style={{ color: '#4A6A7A' }}>Đang tải...</div>
-                            ) : rows.map(row => (
+                            ) : sortedRows.map(row => (
                                 <CustomerCard key={row.id} row={row} isSelected={selectedId === row.id} onSelect={() => setSelectedId(row.id)} />
                             ))}
                         </div>
@@ -334,11 +396,76 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     {/* Right: 360° profile */}
                     <div className="col-span-12 lg:col-span-7 space-y-4">
                         {!selectedCustomer ? (
-                            <div className="flex flex-col items-center justify-center py-20 rounded-md"
-                                style={{ border: '1px dashed #2A4355' }}>
-                                <Users size={36} style={{ color: '#2A4355' }} />
-                                <p className="text-sm mt-3" style={{ color: '#4A6A7A' }}>
-                                    Chọn một khách hàng để xem hồ sơ 360°
+                            <div className="space-y-4">
+                                {/* CRM Summary Dashboard */}
+                                <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                                        <TrendingUp size={15} style={{ color: '#87CBB9' }} />
+                                        Tổng Quan CRM
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
+                                            <p className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                                {totalRevAll >= 1e9 ? `${(totalRevAll / 1e9).toFixed(1)}T` : formatVND(totalRevAll)}
+                                            </p>
+                                            <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Tổng Doanh Số</p>
+                                        </div>
+                                        <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
+                                            <p className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                                {rows.reduce((s, r) => s + r.totalOrders, 0)}
+                                            </p>
+                                            <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Tổng Đơn Hàng</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Tier Distribution */}
+                                    <div className="mb-4">
+                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Phân Bổ Tier</p>
+                                        <div className="flex gap-2">
+                                            {(['PLATINUM', 'GOLD', 'SILVER', 'BRONZE'] as const).map(tier => {
+                                                const cfg = TIER_CFG[tier]
+                                                const count = tierDist[tier] || 0
+                                                return (
+                                                    <div key={tier} className="flex-1 text-center p-2 rounded" style={{ background: `${cfg.color}08` }}>
+                                                        <p className="text-xs">{cfg.icon}</p>
+                                                        <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: cfg.color }}>{count}</p>
+                                                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Top 5 Customers */}
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>🏆 Top 5 Khách Hàng</p>
+                                        <div className="space-y-1">
+                                            {topCustomers.map((c, i) => {
+                                                const tier = getTierFromRevenue(c.totalRevenue)
+                                                const cfg = TIER_CFG[tier]
+                                                return (
+                                                    <button key={c.id} onClick={() => setSelectedId(c.id)}
+                                                        className="w-full flex items-center justify-between py-2 px-3 rounded transition-all hover:bg-opacity-80"
+                                                        style={{ background: '#142433' }}>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#4A6A7A' }}>#{i + 1}</span>
+                                                            <div className="text-left">
+                                                                <p className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{c.name}</p>
+                                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{cfg.icon} {cfg.label} · {c.totalOrders} đơn</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                                            {c.totalRevenue >= 1e9 ? `${(c.totalRevenue / 1e9).toFixed(2)} tỷ` : formatVND(c.totalRevenue)}
+                                                        </span>
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="text-xs text-center" style={{ color: '#4A6A7A' }}>
+                                    ← Chọn một khách hàng để xem hồ sơ 360°
                                 </p>
                             </div>
                         ) : (
