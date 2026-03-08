@@ -210,6 +210,22 @@ graph LR
 - [x] Duplicate: `duplicateQuotation()` — clone báo giá + 30 ngày hạn mới
 - → **Verify:** ✅ Trang Báo Giá load đúng, create drawer, convert to SO hoạt động.
 
+#### 4.2.1 Professional Quotation Enhancement ✅ DONE (08/03/2026)
+- [x] **Schema**: +12 trường mới (publicToken, viewCount, sentAt, sentMethod, customerEmail, companyName, deliveryTerms, vatIncluded, pdfStyle...)
+- [x] **PDF Export**: `/api/export/quotation-pdf?id=xxx&style=professional|elegant` — 2 styles tối ưu in ấn
+  - Ảnh sản phẩm, vintage, appellation, region, awards, tasting notes
+  - Header công ty: Logo, MST, địa chỉ, SĐT, email
+  - VAT tách riêng 10%, chiết khấu tổng, điều khoản giao hàng
+  - System fonts (Segoe UI/Consolas) — crisp rendering, toggle Trắng↔Tối
+- [x] **Public Viewer**: `/verify/quotation/[publicToken]` — KH xem online, không cần login
+  - View tracking: viewCount++, firstViewedAt, lastViewedAt
+  - Accept/Reject online + nhập lý do từ chối
+  - Dark theme premium UI, responsive mobile
+- [x] **Send Drawer**: 3 kênh gửi — Email (Resend HTML), Copy Link (Zalo/WhatsApp), In/PDF
+- [x] **View Tracking**: Badge 👁️ trên list + detail drawer, lần đầu xem, tổng lượt xem
+- [x] **Email Notification**: `notifyQuotationSent()` — Branded HTML email + Telegram notify
+- → **Verify:** ✅ PDF render rõ ràng, Send Drawer 3 kênh hoạt động, public viewer với tracking.
+
 ### 4.3 Allocation Engine ✅ PARTIALLY DONE
 - [x] `/dashboard/allocation` page route — dedicated Allocation Engine UI
 - [x] Campaign List: Cards với progress bars (Sold/Total), status badge, SKU info

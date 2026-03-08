@@ -26,14 +26,40 @@ PAID / CLOSED
 
 ---
 
-## 2. Báo Giá (Quotation)
+## 2. Báo Giá (Quotation) — Professional System
 
+### Tạo & Quản lý
 - Tạo Quotation gửi cho KH trước khi chốt đơn
 - Chọn KH → Hệ thống tự load bảng giá đúng kênh (HORECA / Đại lý / VIP)
 - Thêm dòng sản phẩm → Check tồn kho real-time + Check Allocation Quota
-- Có thể Export PDF gửi mail cho KH
 - Quotation có Ngày hết hạn (Expiry Date) — sau ngày này giá không còn hiệu lực
 - Chuyển Quotation → SO chỉ 1 click
+- Duplicate quotation — clone + 30 ngày hạn mới
+- Auto-expire: DRAFT/SENT quá validUntil → EXPIRED
+
+### Gửi Báo Giá (Multi-channel Delivery)
+- **📧 Email**: Gửi HTML email chuyên nghiệp qua Resend + Telegram notification
+- **🔗 Copy Link Zalo/WhatsApp**: Copy public URL → paste vào tin nhắn
+- **🖨️ In/Tải PDF**: Mở tab dạng web → browser Print/Save PDF
+
+### PDF Export (3 Styles)
+- **Professional** (nền trắng) — tối ưu cho in giấy
+- **Elegant** (dark theme) — gửi digital, KH cao cấp
+- Nội dung: Logo + header công ty, MST, ảnh sản phẩm, thông tin wine (vintage, appellation, awards, tasting notes), VAT tách riêng 10%, chiết khấu, điều khoản
+
+### Public Quotation Viewer
+- **URL**: `/verify/quotation/[publicToken]` — KH xem trực tuyến không cần login
+- **View Tracking**: viewCount, firstViewedAt, lastViewedAt → Sale thấy badge 👁️ trên list
+- **Accept/Reject online**: KH bấm chấp nhận/từ chối + nhập lý do
+
+### Schema Additions
+- `publicToken` (UUID) — unique public URL
+- `customerEmail`, `customerPhone` — contact info for delivery
+- `companyName`, `contactPerson` — display on PDF
+- `sentAt`, `sentMethod` — tracking khi gửi (EMAIL/LINK/PRINT)
+- `viewCount`, `firstViewedAt`, `lastViewedAt` — view tracking
+- `rejectedReason` — lý do KH từ chối
+- `deliveryTerms`, `vatIncluded`, `pdfStyle` — PDF customization
 
 ---
 
@@ -143,7 +169,8 @@ Màu sắc: Xanh (Còn nhiều) → Vàng (Sắp hết) → Đỏ (Hết quota)
 ## 7. Database Design
 
 ```
-SalesQuotation { quo_no, customer_id, expiry, status, total_amount }
+SalesQuotation { quo_no, customer_id, expiry, status, total_amount, public_token, view_count, sent_at, sent_method, customer_email, vat_included, pdf_style, delivery_terms }
+SalesQuotationLine { quotation_id, product_id, qty, unit_price, discount }
 SalesOrder { so_no, customer_id, contract_id, status, payment_term, channel, sales_rep_id }
 SalesOrderLine { so_id, sku, qty, unit_price, discount, allocation_campaign_id }
 AllocationCampaign { camp_no, sku, total_qty, start_date, end_date, unit }
@@ -174,16 +201,29 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Allocation Engine | `actions.ts` | Campaign + quota per rep/customer/channel |
 | Price List auto-load | `getProductPricesForChannel` | Load giá theo kênh KH |
 | SO Detail Drawer | `SODetailDrawer.tsx` | Xem chi tiết SO + lines |
-| **CEO Approve SO** | `approveSalesOrder` | ✅ **MỚI** — Nút "✓ Duyệt" cho PENDING_APPROVAL |
-| **CEO Reject SO** | `rejectSalesOrder` | ✅ **MỚI** — Nút "✗ Từ Chối" cho PENDING_APPROVAL |
+| **Quotation CRUD** | `quotations/actions.ts` | ✅ Tạo, sửa DRAFT, xóa, status transitions |
+| **Quotation UI** | `QuotationClient.tsx` | ✅ List + 5 stat cards + search/filter + detail drawer |
+| **Send Drawer** | `QuotationClient.tsx` | ✅ **MỚI** — 3 kênh: Email, Copy Link Zalo, In PDF |
+| **PDF Export** | `api/export/quotation-pdf/route.ts` | ✅ **MỚI** — 2 styles (Professional/Elegant), ảnh SP, wine info, VAT |
+| **Public Viewer** | `verify/quotation/[token]/` | ✅ **MỚI** — KH xem online, accept/reject, view tracking |
+| **View Tracking** | `actions.ts`, `QuotationClient.tsx` | ✅ **MỚI** — Badge 👁️, viewCount, firstViewedAt |
+| **Email Notification** | `lib/notifications.ts` | ✅ **MỚI** — Branded HTML email via Resend + Telegram |
+| Convert to SO | `actions.ts:convertToSO` | ✅ 1-click tạo SO từ QT, copy lines |
+| Duplicate | `actions.ts:duplicateQuotation` | ✅ Clone + 30 ngày hạn mới |
+| Auto-expire | `actions.ts:autoExpireQuotations` | ✅ DRAFT/SENT quá hạn → EXPIRED |
+| Export Excel | `actions.ts:exportQuotationExcel` | ✅ File báo giá Excel |
+| Credit Limit Check | `createSalesOrder` | Check công nợ + SO mới vs credit limit |
+| Allocation Engine | `actions.ts` | Campaign + quota per rep/customer/channel |
+| Price List auto-load | `getProductPricesForChannel` | Load giá theo kênh KH |
+| SO Detail Drawer | `SODetailDrawer.tsx` | Xem chi tiết SO + lines |
+| **CEO Approve SO** | `approveSalesOrder` | ✅ Nút "✓ Duyệt" cho PENDING_APPROVAL |
+| **CEO Reject SO** | `rejectSalesOrder` | ✅ Nút "✗ Từ Chối" cho PENDING_APPROVAL |
 
 ### ❌ Chưa triển khai
 
 | Tính năng | Ưu tiên |
 |---|---|
-| Quotation (Báo giá) | 🟡 P2 |
 | Return Order + Credit Note | 🟡 P2 |
-| Export PDF Quotation | 🟢 P3 |
 | Dynamic SO threshold từ ApprovalConfig DB | 🟢 P3 |
 
-*Last updated: 2026-03-08 | Wine ERP v5.2*
+*Last updated: 2026-03-08 | Wine ERP v5.3*

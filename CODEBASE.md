@@ -22,7 +22,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **System/Admin**: `src/app/dashboard/settings` (User/Role/Permission CRUD + **Approval Workflow Engine**), `src/app/login`
 - **Master Data**: `src/app/dashboard/products` (**Media Upload Gallery**), `src/app/dashboard/customers` (**Address CRUD**, soft-delete), `src/app/dashboard/suppliers` (soft-delete)
 - **Warehouse**: `src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO)
-- **Sales & Allocation**: `src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**), `src/app/dashboard/quotations`, `src/app/dashboard/price-list`, `src/app/dashboard/allocation`, `src/app/dashboard/returns` (Credit Note + WMS Quarantine)
+- **Sales & Allocation**: `src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**), `src/app/dashboard/quotations` (**Professional PDF Export**, **Send Drawer Email/Zalo**, **View Tracking**), `src/app/dashboard/price-list`, `src/app/dashboard/allocation`, `src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `src/app/dashboard/pipeline`
 - **Finance & Tem**: `src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `src/app/dashboard/stamps`
 - **Procurement & Operations**: `src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**, **Multi-currency VND**), `src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `src/app/dashboard/agency`
@@ -32,6 +32,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **AI & Features**: `src/app/dashboard/ai` (Demand Forecast, Smart Pricing)
 - **POS & QR**: `src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `src/app/dashboard/pos/loyalty`, `src/app/dashboard/qr-codes` (Anti-counterfeit)
 - **External Portal**: `src/app/partner-login` (**External Partner Login & Portal**)
+- **Public Pages**: `src/app/verify/quotation/[token]` (**Public Quotation Viewer** — KH xem, accept/reject, view tracking), `src/app/api/export/quotation-pdf` (**PDF Export API** — Professional/Elegant styles)
 
 ## 4. CROSS-CUTTING ENGINES (Shared Libraries)
 | Engine | Path | Mô tả |
