@@ -125,7 +125,7 @@ Yêu cầu:
             prompt,
             systemPrompt: 'You are a wine inventory management specialist. Provide actionable purchase recommendations based on data.',
             temperature: 0.4,
-            maxTokens: 4096,
+            maxTokens: 8192,
         })
 
         return NextResponse.json({
