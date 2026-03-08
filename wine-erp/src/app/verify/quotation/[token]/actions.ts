@@ -25,7 +25,7 @@ export async function getQuotationByToken(token: string) {
                             format: true,
                             packagingType: true,
                             producer: { select: { name: true } },
-                            appellation: { select: { name: true, region: true } },
+                            appellation: { select: { name: true, region: { select: { name: true } } } },
                             media: {
                                 where: { isPrimary: true },
                                 select: { url: true, thumbnailUrl: true },

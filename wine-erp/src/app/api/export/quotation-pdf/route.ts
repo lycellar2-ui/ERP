@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
                             vintage: true, country: true, abvPercent: true, tastingNotes: true,
                             classification: true,
                             producer: { select: { name: true } },
-                            appellation: { select: { name: true, region: true } },
+                            appellation: { select: { name: true, region: { select: { name: true } } } },
                             media: { where: { isPrimary: true }, select: { url: true }, take: 1 },
                             awards: { select: { source: true, score: true, medal: true }, take: 2 },
                         },
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
             <td class="cell-product">
                 <div class="product-name">${l.product.productName}</div>
                 <div class="product-detail">
-                    ${l.product.vintage ? `<strong>${l.product.vintage}</strong> · ` : ''}${l.product.appellation?.name || ''}${l.product.appellation?.region ? ` · ${l.product.appellation.region}` : ''} · ${l.product.country}
+                    ${l.product.vintage ? `<strong>${l.product.vintage}</strong> · ` : ''}${l.product.appellation?.name || ''}${l.product.appellation?.region?.name ? ` · ${l.product.appellation.region.name}` : ''} · ${l.product.country}
                 </div>
                 <div class="product-meta">
                     ${l.product.skuCode} · ${l.product.wineType} · ${l.product.volumeMl}ml · ${Number(l.product.abvPercent)}% ABV${l.product.classification ? ` · ${l.product.classification}` : ''}

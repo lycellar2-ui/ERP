@@ -63,7 +63,7 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
                 classification: l.product.classification,
                 producerName: l.product.producer?.name,
                 appellationName: l.product.appellation?.name,
-                regionName: l.product.appellation?.region,
+                regionName: l.product.appellation?.region?.name,
                 imageUrl: l.product.media?.[0]?.url || l.product.media?.[0]?.thumbnailUrl || null,
                 awards: l.product.awards?.map(a => ({
                     source: a.source,

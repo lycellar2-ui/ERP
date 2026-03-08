@@ -92,7 +92,7 @@ export async function getQuotationDetail(id: string) {
                             skuCode: true, productName: true, wineType: true, volumeMl: true,
                             vintage: true, country: true, abvPercent: true, tastingNotes: true, classification: true,
                             producer: { select: { name: true } },
-                            appellation: { select: { name: true, region: true } },
+                            appellation: { select: { name: true, region: { select: { name: true } } } },
                             media: { where: { isPrimary: true }, select: { url: true, thumbnailUrl: true }, take: 1 },
                             awards: { select: { source: true, score: true, medal: true }, take: 3 },
                         },
