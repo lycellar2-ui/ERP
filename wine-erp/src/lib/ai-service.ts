@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db'
 // Key Resolution: DB Vault (AES-256) → env fallback
 // ═══════════════════════════════════════════════════
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent'
 
 export interface AIGenerateOptions {
     prompt: string
@@ -107,13 +107,13 @@ async function logRunSafe(
     error?: string,
 ) {
     try {
-        // Gemini 2.0 Flash pricing: ~$0.10/1M input, ~$0.40/1M output
+        // Gemini 2.5 Flash pricing: ~$0.15/1M input, ~$0.60/1M output
         const costUsd = (inputTokens * 0.0000001) + (outputTokens * 0.0000004)
 
         await prisma.aiPromptRun.create({
             data: {
                 provider: 'gemini',
-                model: 'gemini-2.0-flash',
+                model: 'gemini-3.1-pro-preview',
                 inputTokens,
                 outputTokens,
                 costUsd,
