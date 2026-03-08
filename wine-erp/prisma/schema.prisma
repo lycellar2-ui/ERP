@@ -70,6 +70,8 @@ model User {
   expensesCreated        Expense[]          @relation("ExpenseCreator")
   expensesApproved       Expense[]          @relation("ExpenseApprover")
   kpiTargets             KpiTarget[]        @relation("KpiTargetSalesRep")
+  regDocsAssigned        RegulatedDocument[] @relation("RegDocAssigned")
+  regDocsCreated         RegulatedDocument[] @relation("RegDocCreator")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -238,6 +240,7 @@ model Product {
   returnOrderLines     ReturnOrderLine[]
   transferOrderLines   TransferOrderLine[]
   qrCodes              QRCode[]
+  regulatedDocs        RegulatedDocument[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -316,6 +319,7 @@ model Supplier {
   notes           String?
   purchaseOrders  PurchaseOrder[]
   contracts       Contract[]
+  regulatedDocs   RegulatedDocument[] @relation("SupplierRegDocs")
   apInvoices      APInvoice[]
   contacts        SupplierContact[]
   addresses       SupplierAddress[]
@@ -393,6 +397,7 @@ model Customer {
   consignments  ConsignmentAgreement[]
   arInvoices    ARInvoice[]
   contracts     Contract[]
+  regulatedDocs RegulatedDocument[] @relation("CustomerRegDocs")
   returnOrders  ReturnOrder[]
   creditNotes   CreditNote[]
   winePreference WinePreference?
@@ -590,7 +595,8 @@ model Contract {
   documents      ContractDocument[]
   purchaseOrders PurchaseOrder[]
   salesOrders    SalesOrder[]
-  consignments   ConsignmentAgreement[]
+  consignments     ConsignmentAgreement[]
+  regulatedDocs    RegulatedDocument[]
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
@@ -620,6 +626,102 @@ model ContractDocument {
   uploadedAt  DateTime @default(now())
 
   @@map("contract_documents")
+}
+
+// ── Regulated Documents (Giấy tờ pháp lý có hạn) ─
+// Quản lý GP KDKR, VSATTP, PCCC, C/O, Phiếu KN...
+// Theo NĐ 105/2017, NĐ 17/2020, NĐ 136/2020, NĐ 50/2024
+
+model RegulatedDocument {
+  id               String              @id @default(cuid())
+  docNo            String              @unique           // Số giấy tờ: "GP-2025-001"
+
+  // ── Phân loại ──
+  category         RegDocCategory                        // COMPANY_LICENSE, IMPORT_DOC, etc.
+  type             RegDocType                            // DISTRIBUTION_LICENSE, FOOD_SAFETY...
+  name             String                                // "Giấy phép KD rượu"
+  description      String?                               // Ghi chú chi tiết
+
+  // ── Thời hạn ──
+  issueDate        DateTime                              // Ngày cấp
+  effectiveDate    DateTime?                             // Ngày hiệu lực
+  expiryDate       DateTime?                             // Ngày hết hạn (null = vô thời hạn)
+
+  // ── Cơ quan cấp ──
+  issuingAuthority String?                               // "Sở Công Thương HCM"
+  referenceNo      String?                               // Số tham chiếu phụ
+
+  // ── Liên kết đa chiều ──
+  scope            RegDocScope         @default(COMPANY)  // COMPANY, SUPPLIER, PRODUCT, SHIPMENT, LOT
+  contractId       String?                                // Liên kết hợp đồng
+  contract         Contract?           @relation(fields: [contractId], references: [id])
+  supplierId       String?
+  supplier         Supplier?           @relation("SupplierRegDocs", fields: [supplierId], references: [id])
+  customerId       String?
+  customer         Customer?           @relation("CustomerRegDocs", fields: [customerId], references: [id])
+  productId        String?
+  product          Product?            @relation(fields: [productId], references: [id])
+  shipmentId       String?
+  shipment         Shipment?           @relation(fields: [shipmentId], references: [id])
+  stockLotId       String?
+  stockLot         StockLot?           @relation(fields: [stockLotId], references: [id])
+
+  // ── Trạng thái ──
+  status           RegDocStatus        @default(ACTIVE)
+  assignedToId     String?
+  assignedTo       User?               @relation("RegDocAssigned", fields: [assignedToId], references: [id])
+
+  // ── Cấu hình cảnh báo ──
+  alertDays        Int[]               @default([90, 60, 30, 7]) // Nhắc trước N ngày
+  lastAlertSent    DateTime?
+
+  // ── Gia hạn ──
+  renewedFromId    String?             // Link tới giấy tờ cũ khi gia hạn
+  renewedFrom      RegulatedDocument?  @relation("RegDocRenewal", fields: [renewedFromId], references: [id])
+  renewedTo        RegulatedDocument[] @relation("RegDocRenewal")
+  version          Int                 @default(1)
+
+  // ── Sub-models ──
+  files            RegDocFile[]
+  alerts           RegDocAlert[]
+
+  // ── Audit ──
+  createdBy        String?
+  creator          User?               @relation("RegDocCreator", fields: [createdBy], references: [id])
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([category, status])
+  @@index([expiryDate])
+  @@index([scope, supplierId])
+  @@index([scope, productId])
+  @@index([scope, shipmentId])
+  @@map("regulated_documents")
+}
+
+model RegDocFile {
+  id           String              @id @default(cuid())
+  regDocId     String
+  regDoc       RegulatedDocument   @relation(fields: [regDocId], references: [id], onDelete: Cascade)
+  name         String              // "GP_KD_Ruou_2025.pdf"
+  fileUrl      String
+  storagePath  String?
+  version      Int                 @default(1)
+  uploadedAt   DateTime            @default(now())
+
+  @@map("reg_doc_files")
+}
+
+model RegDocAlert {
+  id               String              @id @default(cuid())
+  regDocId         String
+  regDoc           RegulatedDocument   @relation(fields: [regDocId], references: [id], onDelete: Cascade)
+  alertType        String              // EMAIL, TELEGRAM, IN_APP
+  daysBeforeExpiry Int                 // 90, 60, 30, 7
+  sentAt           DateTime
+  sentTo           String              // Recipient email or user ID
+
+  @@map("reg_doc_alerts")
 }
 
 // =============================================================
@@ -751,6 +853,7 @@ model Shipment {
   goodsReceipts     GoodsReceipt[]
   stockLots         StockLot[]
   stampUsages       WineStampUsage[]
+  regulatedDocs     RegulatedDocument[]
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
@@ -986,6 +1089,7 @@ model StockLot {
   grLines        GoodsReceiptLine[]
   doLines        DeliveryOrderLine[]
   stampUsages    WineStampUsage[]
+  regulatedDocs  RegulatedDocument[]
 
   @@index([productId, status])
   @@map("stock_lots")
@@ -1809,6 +1913,73 @@ enum ContractStatus {
   ACTIVE
   EXPIRED
   TERMINATED
+}
+
+// ── Regulated Document Enums ──
+
+enum RegDocCategory {
+  COMPANY_LICENSE       // Giấy phép doanh nghiệp
+  IMPORT_DOCUMENT       // Chứng từ nhập khẩu (per Shipment/PO)
+  PRODUCT_CERTIFICATION // Chứng nhận sản phẩm (per SKU)
+  FACILITY_COMPLIANCE   // Kho bãi, PCCC, Môi trường
+  TRADE_AGREEMENT       // Hợp đồng thương mại
+}
+
+enum RegDocType {
+  // ── Company Licenses (NĐ 105/2017, NĐ 17/2020) ──
+  DISTRIBUTION_LICENSE      // GP phân phối rượu (Bộ Công Thương, 5 năm)
+  WHOLESALE_LICENSE         // GP bán buôn rượu (Sở CT, 5 năm)
+  RETAIL_LICENSE            // GP bán lẻ rượu (UBND Quận, 5 năm)
+  IMPORT_LICENSE            // GP nhập khẩu tự động (Bộ CT, 1 năm/per lô)
+  BUSINESS_REGISTRATION     // ĐKKD + MST (Sở KH-ĐT, vô hạn)
+  FOOD_SAFETY_CERT          // ATTP / VSATTP (Sở Y tế, 3 năm)
+  ADVERTISING_PERMIT        // GP quảng cáo rượu (Sở VH-TT, 1 năm)
+
+  // ── Facility & Safety (NĐ 136/2020, NĐ 50/2024, Luật PCCC 2024) ──
+  FIRE_SAFETY_CERT          // Giấy CN đủ ĐK PCCC (Cảnh sát PCCC, 1 năm/kiểm tra)
+  FIRE_DESIGN_APPROVAL      // Văn bản thẩm duyệt thiết kế PCCC (1 lần cho công trình)
+  FIRE_INSPECTION_CERT      // Biên bản kiểm tra nghiệm thu PCCC
+  WAREHOUSE_LICENSE         // GP hoạt động kho bãi (Sở CT/UBND)
+  ENVIRONMENT_CERT          // Giấy CN đạt tiêu chuẩn Môi trường
+  WAREHOUSE_LEASE           // HĐ thuê kho (thời hạn thuê)
+  TEMPERATURE_CALIBRATION   // Giấy CN hiệu chuẩn thiết bị đo nhiệt độ kho
+
+  // ── Import Documents (per Shipment/PO) ──
+  CERTIFICATE_OF_ORIGIN     // C/O (EUR.1, Form D, Form AK...)
+  QUALITY_TEST_REPORT       // Phiếu kiểm nghiệm CL (VNATEST, Quatest)
+  CUSTOMS_DECLARATION_CERT  // Tờ khai HQ đã thông quan
+  FOOD_SAFETY_LOT           // Kết quả kiểm tra ATTP per lô (TT 15/2024/BYT)
+  INSURANCE_POLICY_DOC      // Chứng nhận bảo hiểm hàng hóa
+  WINE_STAMP_CERT           // Giấy xác nhận tem rượu (Chi cục Thuế)
+  HEALTH_CERTIFICATE        // Health Certificate từ nước xuất khẩu
+  FREE_SALE_CERTIFICATE     // Certificate of Free Sale
+  PHYTOSANITARY_CERT        // Giấy kiểm dịch thực vật (nếu có)
+
+  // ── Product Certifications (per SKU) ──
+  QUALITY_DECLARATION       // Tự công bố CL sản phẩm (NĐ 15/2018, 5 năm)
+  VIETNAMESE_LABEL          // Nhãn phụ tiếng Việt đã phê duyệt
+  STANDARDS_COMPLIANCE      // Phù hợp QCVN (QCVN:2010/BYT)
+
+  // ── Other ──
+  OTHER
+}
+
+enum RegDocScope {
+  COMPANY    // Cấp công ty (GP chung)
+  SUPPLIER   // Gắn NCC
+  CUSTOMER   // Gắn khách hàng
+  PRODUCT    // Gắn sản phẩm (per SKU)
+  SHIPMENT   // Gắn lô hàng nhập (per Shipment)
+  LOT        // Gắn stock lot
+}
+
+enum RegDocStatus {
+  DRAFT       // Nháp
+  ACTIVE      // Đang hiệu lực
+  EXPIRING    // Sắp hết hạn
+  EXPIRED     // Đã hết hạn
+  RENEWED     // Đã gia hạn (version cũ)
+  REVOKED     // Bị thu hồi
 }
 
 enum POStatus {

@@ -593,7 +593,7 @@ export type DashboardSection =
     | 'kpi_cards' | 'revenue_chart' | 'pending_approvals' | 'pl_summary'
     | 'cash_position' | 'ar_aging' | 'cost_waterfall' | 'revenue_yoy'
     | 'shipment_tracker' | 'kpi_targets' | 'stock_alerts' | 'recent_orders'
-    | 'my_sales' | 'warehouse_summary'
+    | 'my_sales' | 'warehouse_summary' | 'legal_compliance'
 
 export type DashboardConfig = {
     greeting: string
@@ -607,12 +607,13 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
         sections: [
             'kpi_cards', 'revenue_chart', 'pl_summary', 'cash_position',
             'ar_aging', 'cost_waterfall', 'revenue_yoy', 'pending_approvals',
-            'shipment_tracker', 'kpi_targets',
+            'shipment_tracker', 'kpi_targets', 'legal_compliance',
         ],
         quickLinks: [
             { label: 'Báo cáo', href: '/dashboard/reports', icon: 'BarChart3' },
             { label: 'Phê duyệt', href: '/dashboard/settings?tab=approvals', icon: 'ClipboardCheck' },
             { label: 'Tài chính', href: '/dashboard/finance', icon: 'DollarSign' },
+            { label: 'Pháp lý', href: '/dashboard/contracts', icon: 'Shield' },
         ],
     },
     SALES_MGR: {
@@ -659,7 +660,7 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
     },
     THU_MUA: {
         greeting: 'Mua Hàng — Nhập Khẩu',
-        sections: ['kpi_cards', 'shipment_tracker', 'pending_approvals', 'stock_alerts'],
+        sections: ['kpi_cards', 'shipment_tracker', 'pending_approvals', 'stock_alerts', 'legal_compliance'],
         quickLinks: [
             { label: 'Đơn mua', href: '/dashboard/procurement', icon: 'Ship' },
             { label: 'NCC', href: '/dashboard/suppliers', icon: 'Users' },

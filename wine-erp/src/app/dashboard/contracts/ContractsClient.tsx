@@ -293,15 +293,8 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-start justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
-                        Quản Lý Hợp Đồng (CNT)
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>Hợp đồng mua hàng, bán hàng, ký gửi và logistics</p>
-                </div>
+        <div className="space-y-6">
+            <div className="flex items-center justify-end">
                 <button onClick={() => setDrawerOpen(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
                     style={{ background: '#87CBB9', color: '#0A1926' }}

@@ -7,12 +7,14 @@ import {
     getDashboardConfig, type DashboardSection, getMySales, getWarehouseDashboard,
     getRealtimeChannels,
 } from './actions'
+import { getComplianceWarnings, type ComplianceWarning } from './contracts/reg-doc-actions'
+import { REG_DOC_TYPE_LABELS } from './contracts/reg-doc-constants'
 import { getKpiSummary } from './kpi/actions'
 import { getCurrentUser } from '@/lib/session'
 import {
     TrendingUp, TrendingDown, AlertCircle, Ship, Package, CheckCircle2,
     ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck, Download,
-    Link as LinkIcon
+    Link as LinkIcon, Shield, AlertTriangle,
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
 import Link from 'next/link'
@@ -80,6 +82,7 @@ export default async function DashboardPage() {
     // Batch 3: Role-specific data (sequential to avoid pool exhaustion)
     const mySales = has('my_sales') && user ? await getMySales(user.id) : null
     const warehouseData = has('warehouse_summary') ? await getWarehouseDashboard() : null
+    const complianceWarnings = has('legal_compliance') ? await getComplianceWarnings() : []
     const realtimeChannels = getRealtimeChannels(roles)
 
     const _kpiSummary = kpiSummary ?? []
@@ -677,13 +680,13 @@ export default async function DashboardPage() {
                 )}
             </div>
 
-            {/* ── Quick Links (Role-based) ─────────────── */}
+            {/* Row 4 — Quick Links */}
             {dashConfig.quickLinks.length > 0 && (
                 <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                     <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#4A6A7A' }}>
                         Truy Cập Nhanh
                     </p>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
                         {dashConfig.quickLinks.map(link => (
                             <Link key={link.href} href={link.href}
                                 className="flex items-center gap-3 p-3 rounded-md transition-all hover:scale-[1.01]"
@@ -694,6 +697,66 @@ export default async function DashboardPage() {
                                 <span className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{link.label}</span>
                             </Link>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Row 4.5 — Legal & Compliance Widget */}
+            {complianceWarnings.length > 0 && (
+                <div className="rounded-md p-6" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <Shield size={16} style={{ color: '#D4A853' }} />
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Cảnh Báo Tuân Thủ</h3>
+                            <span className="px-2 py-0.5 text-xs font-bold rounded-full"
+                                style={{
+                                    background: complianceWarnings.some(w => w.severity === 'critical')
+                                        ? 'rgba(224,82,82,0.2)' : 'rgba(212,168,83,0.2)',
+                                    color: complianceWarnings.some(w => w.severity === 'critical')
+                                        ? '#E05252' : '#D4A853',
+                                }}>
+                                {complianceWarnings.length} giấy tờ
+                            </span>
+                        </div>
+                        <Link href="/dashboard/contracts" className="text-xs font-medium px-3 py-1.5 rounded"
+                            style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                            Xem tất cả →
+                        </Link>
+                    </div>
+                    <div className="space-y-2">
+                        {complianceWarnings.slice(0, 8).map(w => {
+                            const sevStyle = w.severity === 'critical'
+                                ? { bg: 'rgba(224,82,82,0.06)', border: 'rgba(224,82,82,0.2)', iconColor: '#E05252' }
+                                : w.severity === 'warning'
+                                    ? { bg: 'rgba(212,168,83,0.06)', border: 'rgba(212,168,83,0.2)', iconColor: '#D4A853' }
+                                    : { bg: 'rgba(135,203,185,0.06)', border: 'rgba(135,203,185,0.2)', iconColor: '#87CBB9' }
+                            return (
+                                <div key={w.id} className="flex items-center justify-between p-3 rounded-md"
+                                    style={{ background: sevStyle.bg, border: `1px solid ${sevStyle.border}` }}>
+                                    <div className="flex items-center gap-3">
+                                        <AlertTriangle size={14} style={{ color: sevStyle.iconColor }} />
+                                        <div>
+                                            <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>
+                                                {w.name}
+                                            </p>
+                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                {REG_DOC_TYPE_LABELS[w.type] ?? w.type} · {w.docNo}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-bold" style={{ color: sevStyle.iconColor, fontFamily: 'var(--font-mono)' }}>
+                                            {w.daysRemaining !== null && w.daysRemaining <= 0
+                                                ? `Quá hạn ${Math.abs(w.daysRemaining)} ngày`
+                                                : `Còn ${w.daysRemaining} ngày`}
+                                        </p>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                                            {w.message}
+                                        </p>
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             )}

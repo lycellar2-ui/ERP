@@ -242,6 +242,75 @@ export const DigitalSignatureSchema = z.object({
 })
 
 // ═══════════════════════════════════════════════════
+// REGULATED DOCUMENTS MODULE
+// ═══════════════════════════════════════════════════
+
+export const RegDocCategorySchema = z.enum([
+    'COMPANY_LICENSE', 'IMPORT_DOCUMENT', 'PRODUCT_CERTIFICATION',
+    'FACILITY_COMPLIANCE', 'TRADE_AGREEMENT',
+])
+
+export const RegDocTypeSchema = z.enum([
+    'DISTRIBUTION_LICENSE', 'WHOLESALE_LICENSE', 'RETAIL_LICENSE',
+    'IMPORT_LICENSE', 'BUSINESS_REGISTRATION', 'FOOD_SAFETY_CERT',
+    'ADVERTISING_PERMIT', 'FIRE_SAFETY_CERT', 'FIRE_DESIGN_APPROVAL',
+    'FIRE_INSPECTION_CERT', 'WAREHOUSE_LICENSE', 'ENVIRONMENT_CERT',
+    'WAREHOUSE_LEASE', 'TEMPERATURE_CALIBRATION',
+    'CERTIFICATE_OF_ORIGIN', 'QUALITY_TEST_REPORT',
+    'CUSTOMS_DECLARATION_CERT', 'FOOD_SAFETY_LOT', 'INSURANCE_POLICY_DOC',
+    'WINE_STAMP_CERT', 'HEALTH_CERTIFICATE', 'FREE_SALE_CERTIFICATE',
+    'PHYTOSANITARY_CERT', 'QUALITY_DECLARATION', 'VIETNAMESE_LABEL',
+    'STANDARDS_COMPLIANCE', 'OTHER',
+])
+
+export const RegDocScopeSchema = z.enum([
+    'COMPANY', 'SUPPLIER', 'CUSTOMER', 'PRODUCT', 'SHIPMENT', 'LOT',
+])
+
+export const RegDocCreateSchema = z.object({
+    docNo: z.string().min(1, 'Chưa nhập số giấy tờ').max(50),
+    category: RegDocCategorySchema,
+    type: RegDocTypeSchema,
+    name: z.string().min(1, 'Chưa nhập tên giấy tờ').max(300),
+    description: z.string().max(2000).optional(),
+    issueDate: z.string().min(1, 'Chưa chọn ngày cấp'),
+    effectiveDate: z.string().optional(),
+    expiryDate: z.string().optional(),
+    issuingAuthority: z.string().max(200).optional(),
+    referenceNo: z.string().max(100).optional(),
+    scope: RegDocScopeSchema.default('COMPANY'),
+    contractId: z.string().optional(),
+    supplierId: z.string().optional(),
+    customerId: z.string().optional(),
+    productId: z.string().optional(),
+    shipmentId: z.string().optional(),
+    stockLotId: z.string().optional(),
+    assignedToId: z.string().optional(),
+    alertDays: z.array(z.number().int().positive()).optional(),
+})
+
+export const RegDocUpdateSchema = z.object({
+    id: z.string().min(1),
+    name: z.string().min(1).max(300).optional(),
+    description: z.string().max(2000).optional(),
+    expiryDate: z.string().optional(),
+    issuingAuthority: z.string().max(200).optional(),
+    referenceNo: z.string().max(100).optional(),
+    status: z.enum(['DRAFT', 'ACTIVE', 'EXPIRING', 'EXPIRED', 'RENEWED', 'REVOKED']).optional(),
+    assignedToId: z.string().optional(),
+    alertDays: z.array(z.number().int().positive()).optional(),
+})
+
+export const RegDocRenewSchema = z.object({
+    originalDocId: z.string().min(1, 'Thiếu ID giấy tờ gốc'),
+    newDocNo: z.string().min(1, 'Chưa nhập số mới').max(50),
+    issueDate: z.string().min(1),
+    expiryDate: z.string().optional(),
+    issuingAuthority: z.string().max(200).optional(),
+    keepHistory: z.boolean().default(true),
+})
+
+// ═══════════════════════════════════════════════════
 // DELIVERY MODULE
 // ═══════════════════════════════════════════════════
 

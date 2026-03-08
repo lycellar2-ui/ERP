@@ -85,9 +85,9 @@ Contract (HĐ Bán Hàng)
 
 ## 6. Implementation Status (Trạng Thái Triển Khai)
 
-> Cập nhật 07/03/2026 — **Hoàn thiện 100%**
+> Cập nhật 08/03/2026 — **Hoàn thiện 100%**
 
-### ✅ Đã triển khai
+### ✅ Đã triển khai — Module HĐ gốc
 
 | Tính năng | File code | Ghi chú |
 |---|---|---|
@@ -103,4 +103,43 @@ Contract (HĐ Bán Hàng)
 | **Document Upload** | `uploadContractDocument` | Upload PDF/scan → Supabase Storage |
 | **Digital Signature** | `signContractInternal` | Chữ ký số nội bộ + hash verification |
 
-*Last updated: 2026-03-07 | Wine ERP v5.0*
+### ✅ Đã triển khai — Regulated Documents (Giấy Tờ Có Hạn)
+
+> Phiên bản CNT v2. Triển khai ngày 08/03/2026.
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **3 Models mới** | `schema.prisma` | `RegulatedDocument`, `RegDocFile`, `RegDocAlert` |
+| **27 loại giấy tờ** | `RegDocType` enum | GP, PCCC, VSATTP, C/O, Phiếu KN, Tem rượu... |
+| **5 nhóm** | `RegDocCategory` enum | DN, NK, SP, Kho&PCCC, HĐ TM |
+| **6 phạm vi** | `RegDocScope` enum | Công ty, NCC, KH, SP, Shipment, Lot |
+| **CRUD + Renewal** | `reg-doc-actions.ts` | Tạo, sửa, xóa, gia hạn (giữ lịch sử tùy chọn) |
+| **File Upload** | `uploadRegDocFile` | Upload file đính kèm per version |
+| **Compliance Warnings** | `getComplianceWarnings` | Auto severity: critical/warning/info |
+| **Auto-Expire** | `autoExpireRegDocs` | Update ACTIVE→EXPIRING→EXPIRED |
+| **Linked Entities** | FK polymorphic | Link to Supplier, Customer, Product, Shipment, StockLot |
+| **CEO Dashboard Widget** | `page.tsx` | "Cảnh Báo Tuân Thủ" — badge count + severity rows |
+| **2-Tab Layout** | `ContractsPage.tsx` | "Hợp Đồng" + "Giấy Tờ Có Hạn" with badge counts |
+| **Zod Validations** | `validations.ts` | `RegDocCreateSchema`, `RegDocUpdateSchema`, `RegDocRenewSchema` |
+
+### 📋 Danh Mục 27 Loại Giấy Tờ Theo Luật VN
+
+| Nhóm | Loại | Pháp lý |
+|---|---|---|
+| **GP Doanh nghiệp** | GP Phân phối, Bán buôn, Bán lẻ rượu | NĐ 105/2017 sđbs NĐ 17/2020 |
+| | GP Nhập khẩu tự động | TT 12/2024/TT-BCT |
+| | ĐKKD + MST | Luật DN 2020 |
+| | VSATTP | NĐ 15/2018 |
+| | GP Quảng cáo rượu | Luật Phòng chống tác hại rượu bia |
+| **Kho bãi & PCCC** | PCCC — Đủ ĐK, Thẩm duyệt TK, Nghiệm thu | Luật PCCC sđbs 2013 |
+| | GP Kho bãi | NĐ 68/2017 |
+| | CN Môi trường | Luật BVMT 2020 |
+| | HĐ Thuê kho | — |
+| | Hiệu chuẩn nhiệt kế kho | TCVN/ISO |
+| **Chứng từ NK** | C/O, Phiếu kiểm nghiệm CL, Tờ khai HQ | — |
+| | KT ATTP per lô, Health Cert, Free Sale Cert | — |
+| | Bảo hiểm hàng hóa, Xác nhận tem rượu | NĐ 105/2017 |
+| **Chứng nhận SP** | Tự CBCL SP, Nhãn phụ tiếng Việt, QCVN | NĐ 15/2018 |
+
+*Last updated: 2026-03-08 | Wine ERP v6.0*
+
