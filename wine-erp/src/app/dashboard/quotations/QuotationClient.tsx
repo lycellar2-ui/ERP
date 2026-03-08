@@ -348,7 +348,7 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {detail.lines.map(l => {
+                                                {detail.lines.map((l: any) => {
                                                     const total = Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100)
                                                     return (
                                                         <tr key={l.id} style={{ borderTop: '1px solid #2A4355' }}>
