@@ -216,15 +216,49 @@ export async function createPurchaseOrder(input: CreatePOInput) {
     return { success: true, id: po.id, poNo: po.poNo }
 }
 
-// ─── Update PO status ─────────────────────────────
+// ─── Update PO status (with validation + audit) ───
+// Manual transitions: DRAFT→PENDING_APPROVAL, PENDING_APPROVAL→APPROVED/CANCELLED
+// Auto transitions (called by GR/Shipment hooks): APPROVED→IN_TRANSIT, IN_TRANSIT→PARTIALLY_RECEIVED/RECEIVED
 export async function updatePOStatus(id: string, status: string) {
+    const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+        DRAFT: ['PENDING_APPROVAL', 'CANCELLED'],
+        PENDING_APPROVAL: ['APPROVED', 'CANCELLED'],
+        APPROVED: ['IN_TRANSIT', 'CANCELLED'],
+        IN_TRANSIT: ['PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'],
+        PARTIALLY_RECEIVED: ['RECEIVED', 'CANCELLED'],
+    }
+
+    const po = await prisma.purchaseOrder.findUnique({
+        where: { id },
+        select: { status: true, poNo: true },
+    })
+    if (!po) throw new Error('PO không tồn tại')
+
+    const allowed = ALLOWED_TRANSITIONS[po.status]
+    if (!allowed || !allowed.includes(status)) {
+        throw new Error(`Không thể chuyển PO từ ${po.status} → ${status}`)
+    }
+
     await prisma.purchaseOrder.update({
         where: { id },
         data: { status: status as any },
     })
+
+    try {
+        const { logAudit } = await import('@/lib/audit')
+        await logAudit({
+            action: 'STATUS_CHANGE',
+            entityType: 'PurchaseOrder',
+            entityId: id,
+            description: `PO ${po.poNo}: ${po.status} → ${status}`,
+            newValue: { from: po.status, to: status },
+        })
+    } catch { /* silent */ }
+
     revalidatePath('/dashboard/procurement')
     return { success: true }
 }
+
 
 // ─── Stats for dashboard ──────────────────────────
 export async function getPOStats() {

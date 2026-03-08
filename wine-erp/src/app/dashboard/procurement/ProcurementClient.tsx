@@ -248,22 +248,21 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     )
 }
 
-// ── Status stepper ─────────────────────────────────
-const STATUS_FLOW = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'IN_TRANSIT', 'RECEIVED']
-
+// ── PO Action Buttons ──────────────────────────────
+// Only role-appropriate actions:
+// - DRAFT: Submit for approval, Cancel
+// - PENDING_APPROVAL: Approve, Reject (Manager/CEO)
+// - APPROVED/IN_TRANSIT/RECEIVED: No manual advance — status updates via Shipment & GR events
 function StatusStepper({ current, poId, onUpdate }: { current: string; poId: string; onUpdate: () => void }) {
     const [updating, setUpdating] = useState(false)
-    const currentIdx = STATUS_FLOW.indexOf(current)
-    const nextStatus = STATUS_FLOW[currentIdx + 1]
 
-    if (!nextStatus || current === 'CANCELLED' || current === 'RECEIVED') return null
+    // No actions for terminal or downstream-managed statuses
+    if (['CANCELLED', 'RECEIVED', 'PARTIALLY_RECEIVED', 'APPROVED', 'IN_TRANSIT'].includes(current)) return null
 
-    const next = PO_STATUS[nextStatus]
-
-    const handleAdvance = async (target?: string) => {
+    const handleAction = async (target: string) => {
         setUpdating(true)
         toast.promise(
-            updatePOStatus(poId, target ?? nextStatus).then(() => onUpdate()),
+            updatePOStatus(poId, target).then(() => onUpdate()),
             {
                 loading: 'Đang cập nhật...',
                 success: 'Đã chuyển trạng thái',
@@ -274,24 +273,46 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
     }
 
     const handleCancel = async () => {
-        if (!confirm('Từ chối PO này? Đơn hàng sẽ bị huỷ.')) return
+        if (!confirm('Huỷ PO này?')) return
         setUpdating(true)
         toast.promise(
             updatePOStatus(poId, 'CANCELLED').then(() => onUpdate()),
             {
-                loading: 'Đang từ chối...',
-                success: 'Đã từ chối PO',
+                loading: 'Đang huỷ...',
+                success: 'Đã huỷ PO',
                 error: 'Lỗi',
                 finally: () => setUpdating(false)
             }
         )
     }
 
-    // Special layout for PENDING_APPROVAL — prominent Approve + Reject
+    // DRAFT → Submit for approval
+    if (current === 'DRAFT') {
+        return (
+            <div className="flex items-center gap-1.5">
+                <button onClick={() => handleAction('PENDING_APPROVAL')} disabled={updating}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-[5px] text-xs font-bold"
+                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.28)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.15)')}>
+                    {updating ? <Loader2 size={11} className="animate-spin" /> : <>Gửi Duyệt</>}
+                </button>
+                <button onClick={handleCancel} disabled={updating}
+                    className="px-2 py-1.5 rounded-[5px] text-xs font-bold"
+                    style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.2)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.1)')}>
+                    Huỷ
+                </button>
+            </div>
+        )
+    }
+
+    // PENDING_APPROVAL → Approve / Reject (Manager/CEO only)
     if (current === 'PENDING_APPROVAL') {
         return (
             <div className="flex items-center gap-1.5">
-                <button onClick={() => handleAdvance('APPROVED')} disabled={updating}
+                <button onClick={() => handleAction('APPROVED')} disabled={updating}
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-[5px] text-xs font-bold"
                     style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.35)')}
@@ -309,16 +330,7 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
         )
     }
 
-    return (
-        <button onClick={() => handleAdvance()} disabled={updating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-            style={{ color: next?.color ?? '#8AAEBB', border: `1px solid ${next?.color ?? '#8AAEBB'}33` }}
-            onMouseEnter={e => (e.currentTarget.style.background = next?.bg ?? '')}
-            onMouseLeave={e => (e.currentTarget.style.background = '')}>
-            {updating ? <Loader2 size={11} className="animate-spin" /> : <ArrowRight size={11} />}
-            → {next?.label}
-        </button>
-    )
+    return null
 }
 
 // ── Main ──────────────────────────────────────────

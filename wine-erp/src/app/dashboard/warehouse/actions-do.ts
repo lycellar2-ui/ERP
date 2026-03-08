@@ -147,7 +147,7 @@ export async function createDeliveryOrder(input: {
     }
 }
 
-// ── Confirm DO — Mark as shipped ──────────────────
+// ── Confirm DO — Mark as shipped + AUTO-UPDATE SO status ──
 export async function confirmDeliveryOrder(
     doId: string,
     _confirmerId?: string
@@ -163,7 +163,33 @@ export async function confirmDeliveryOrder(
             }
             const deliveryOrder = await tx.deliveryOrder.update({ where: { id: doId }, data: { status: 'SHIPPED' } })
             doNo = deliveryOrder.doNo
-            await tx.salesOrder.update({ where: { id: deliveryOrder.soId }, data: { status: 'DELIVERED' } })
+
+            // ── EVENT-DRIVEN: Auto-derive SO status from delivery reality ──
+            // Check total ordered vs total shipped across ALL confirmed DOs for this SO
+            const soId = deliveryOrder.soId
+            const soLines = await tx.salesOrderLine.findMany({
+                where: { soId },
+                select: { qtyOrdered: true },
+            })
+            const totalOrdered = soLines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
+
+            const shippedDOs = await tx.deliveryOrder.findMany({
+                where: { soId, status: 'SHIPPED' },
+                select: { id: true },
+            })
+            const shippedDOIds = shippedDOs.map(d => d.id)
+
+            const allDOLines = shippedDOIds.length > 0
+                ? await tx.deliveryOrderLine.findMany({
+                    where: { doId: { in: shippedDOIds } },
+                    select: { qtyShipped: true },
+                })
+                : []
+            const totalShipped = allDOLines.reduce((s, l) => s + Number(l.qtyShipped), 0)
+
+            // Determine correct SO status
+            const newSOStatus = totalShipped >= totalOrdered ? 'DELIVERED' : 'PARTIALLY_DELIVERED'
+            await tx.salesOrder.update({ where: { id: soId }, data: { status: newSOStatus } })
         })
 
         logAudit({ userId: confirmerId, action: 'CONFIRM', entityType: 'DeliveryOrder', entityId: doId, description: `Xuất kho ${doNo}` })
@@ -171,6 +197,7 @@ export async function confirmDeliveryOrder(
         generateDeliveryOrderCOGSJournal(doId, confirmerId).catch(() => { })
 
         revalidateCache('wms')
+        revalidateCache('sales')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/finance')
@@ -179,6 +206,7 @@ export async function confirmDeliveryOrder(
         return { success: false, error: err.message }
     }
 }
+
 
 // ── DO Detail ──────────────────────────────────────
 export async function getDODetail(doId: string) {

@@ -162,7 +162,7 @@ export async function getARAgingBuckets() {
     }) // end cached
 }
 
-// ── Record AR payment ────────────────────────────
+// ── Record AR payment + AUTO-UPDATE SO status ────
 export async function recordARPayment(invoiceId: string, amount: number, method: string): Promise<{ success: boolean; error?: string }> {
     try {
         const inv = await prisma.aRInvoice.findUnique({ where: { id: invoiceId }, include: { payments: true } })
@@ -176,6 +176,16 @@ export async function recordARPayment(invoiceId: string, amount: number, method:
             prisma.aRInvoice.update({ where: { id: invoiceId }, data: { status: newStatus } }),
         ])
 
+        // ── EVENT-DRIVEN: Auto-update SO status when fully paid ──
+        if (newStatus === 'PAID' && inv.soId) {
+            await prisma.salesOrder.update({
+                where: { id: inv.soId },
+                data: { status: 'PAID' },
+            })
+            revalidateCache('sales')
+            revalidatePath('/dashboard/sales')
+        }
+
         revalidateCache('finance')
         revalidatePath('/dashboard/finance')
         return { success: true }
@@ -183,6 +193,7 @@ export async function recordARPayment(invoiceId: string, amount: number, method:
         return { success: false, error: err.message }
     }
 }
+
 
 // ── COD Collection — Thu tiền tại giao ────────────
 export async function collectCODPayment(input: {

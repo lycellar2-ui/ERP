@@ -590,8 +590,11 @@ export async function rejectSalesOrder(id: string): Promise<{ success: boolean; 
     }
 }
 
-// ── Advance SO status ────────────────────────────
-// Valid transitions: CONFIRMED→PARTIALLY_DELIVERED→DELIVERED→INVOICED→PAID
+// ── Internal: Advance SO status (called by event hooks, NOT by UI) ──
+// Used by: confirmDeliveryOrder → PARTIALLY_DELIVERED/DELIVERED
+//          createARInvoice → INVOICED
+//          recordPayment → PAID
+// DO NOT expose this to client components directly.
 export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): Promise<{ success: boolean; error?: string }> {
     const allowed: Record<string, SOStatus[]> = {
         CONFIRMED: ['PARTIALLY_DELIVERED', 'DELIVERED'],
@@ -600,12 +603,23 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
         INVOICED: ['PAID'],
     }
     try {
-        const so = await prisma.salesOrder.findUnique({ where: { id }, select: { status: true } })
+        const so = await prisma.salesOrder.findUnique({ where: { id }, select: { status: true, soNo: true } })
         if (!so) return { success: false, error: 'Không tìm thấy SO' }
         if (!allowed[so.status]?.includes(toStatus)) {
             return { success: false, error: `Không thể chuyển từ ${so.status} → ${toStatus}` }
         }
         await prisma.salesOrder.update({ where: { id }, data: { status: toStatus } })
+
+        try {
+            await logAudit({
+                action: 'STATUS_CHANGE',
+                entityType: 'SalesOrder',
+                entityId: id,
+                description: `SO ${so.soNo}: ${so.status} → ${toStatus} (auto)`,
+                newValue: { from: so.status, to: toStatus, trigger: 'event_driven' },
+            })
+        } catch { /* silent */ }
+
         revalidatePath('/dashboard/sales')
         revalidateCache('sales')
         revalidateCache('dashboard')
@@ -614,6 +628,7 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
         return { success: false, error: err.message }
     }
 }
+
 
 // ── Cancel SO — also releases allocation quotas ─
 export async function cancelSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {

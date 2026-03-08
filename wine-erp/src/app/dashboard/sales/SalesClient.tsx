@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, ChevronRight, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil } from 'lucide-react'
+import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, advanceSalesOrderStatus, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder } from './actions'
+import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { CreateSODrawer } from './CreateSODrawer'
 import { EditSODrawer } from './EditSODrawer'
@@ -55,12 +55,6 @@ function SOStatCard({ label, value, sub, accent }: { label: string; value: strin
     )
 }
 
-const SO_NEXT_STATUS: Partial<Record<SOStatus, { status: SOStatus; label: string; color: string }>> = {
-    CONFIRMED: { status: 'DELIVERED', label: '→ Đã Giao', color: '#87CBB9' },
-    PARTIALLY_DELIVERED: { status: 'DELIVERED', label: '→ Đã Giao', color: '#87CBB9' },
-    DELIVERED: { status: 'INVOICED', label: '→ Xuất HĐ', color: '#A5DED0' },
-    INVOICED: { status: 'PAID', label: '→ Thu Tiền', color: '#5BA88A' },
-}
 
 // ── SO Detail Drawer ─────────────────────────────
 type DetailType = Awaited<ReturnType<typeof getSalesOrderDetailWithMargin>>['detail']
@@ -310,18 +304,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId }: Props)
         )
     }
 
-    const handleAdvance = async (id: string, toStatus: SOStatus) => {
-        setActionLoading(id)
-        toast.promise(
-            advanceSalesOrderStatus(id, toStatus).then(() => reload()),
-            {
-                loading: 'Đang cập nhật trạng thái...',
-                success: 'Đã cập nhật trạng thái!',
-                error: 'Lỗi cập nhật trạng thái',
-                finally: () => setActionLoading(null)
-            }
-        )
-    }
+
 
     const handleCancel = async (id: string) => {
         if (!confirm('Huỷ đơn hàng này?')) return
@@ -537,20 +520,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId }: Props)
                                                 <Pencil size={11} /> Sửa
                                             </button>
                                         )}
-                                        {/* Advance status */}
-                                        {SO_NEXT_STATUS[row.status] && (() => {
-                                            const next = SO_NEXT_STATUS[row.status]!
-                                            return (
-                                                <button onClick={() => handleAdvance(row.id, next.status)} disabled={actionLoading === row.id}
-                                                    className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
-                                                    style={{ background: `${next.color}18`, color: next.color, border: `1px solid ${next.color}40`, borderRadius: '4px' }}
-                                                    onMouseEnter={e => (e.currentTarget.style.background = `${next.color}28`)}
-                                                    onMouseLeave={e => (e.currentTarget.style.background = `${next.color}18`)}
-                                                >
-                                                    {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><ChevronRight size={11} />{next.label}</>}
-                                                </button>
-                                            )
-                                        })()}
+
                                         {/* Cancel */}
                                         {['DRAFT', 'CONFIRMED'].includes(row.status) && (
                                             <button onClick={() => handleCancel(row.id)} disabled={actionLoading === row.id}
