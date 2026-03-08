@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, ChevronRight, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, advanceSalesOrderStatus, getSalesOrderDetailWithMargin, SOMarginData } from './actions'
+import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, advanceSalesOrderStatus, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { CreateSODrawer } from './CreateSODrawer'
 import { EditSODrawer } from './EditSODrawer'
@@ -337,6 +337,33 @@ export function SalesClient({ initialRows, initialTotal, stats, userId }: Props)
         )
     }
 
+    const handleApprove = async (id: string) => {
+        setActionLoading(id)
+        toast.promise(
+            approveSalesOrder(id).then(() => reload()),
+            {
+                loading: 'Đang phê duyệt...',
+                success: 'Đã phê duyệt đơn hàng!',
+                error: 'Không thể phê duyệt',
+                finally: () => setActionLoading(null)
+            }
+        )
+    }
+
+    const handleReject = async (id: string) => {
+        if (!confirm('Từ chối đơn hàng này? SO sẽ bị huỷ.')) return
+        setActionLoading(id)
+        toast.promise(
+            rejectSalesOrder(id).then(() => reload()),
+            {
+                loading: 'Đang từ chối...',
+                success: 'Đã từ chối đơn hàng!',
+                error: 'Không thể từ chối',
+                finally: () => setActionLoading(null)
+            }
+        )
+    }
+
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Header */}
@@ -466,6 +493,28 @@ export function SalesClient({ initialRows, initialTotal, stats, userId }: Props)
                                             onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.1)')}>
                                             <Eye size={13} />
                                         </button>
+                                        {/* CEO Approve */}
+                                        {row.status === 'PENDING_APPROVAL' && (
+                                            <button onClick={() => handleApprove(row.id)} disabled={actionLoading === row.id}
+                                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)', borderRadius: '5px' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.35)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.2)')}
+                                            >
+                                                {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><CheckCircle2 size={12} /> Duyệt</>}
+                                            </button>
+                                        )}
+                                        {/* CEO Reject */}
+                                        {row.status === 'PENDING_APPROVAL' && (
+                                            <button onClick={() => handleReject(row.id)} disabled={actionLoading === row.id}
+                                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)', borderRadius: '5px' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.28)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.15)')}
+                                            >
+                                                {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><XCircle size={12} /> Từ Chối</>}
+                                            </button>
+                                        )}
                                         {/* Confirm */}
                                         {row.status === 'DRAFT' && (
                                             <button onClick={() => handleConfirm(row.id)} disabled={actionLoading === row.id}

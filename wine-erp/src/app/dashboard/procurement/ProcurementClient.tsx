@@ -260,10 +260,10 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
 
     const next = PO_STATUS[nextStatus]
 
-    const handleAdvance = async () => {
+    const handleAdvance = async (target?: string) => {
         setUpdating(true)
         toast.promise(
-            updatePOStatus(poId, nextStatus).then(() => onUpdate()),
+            updatePOStatus(poId, target ?? nextStatus).then(() => onUpdate()),
             {
                 loading: 'Đang cập nhật...',
                 success: 'Đã chuyển trạng thái',
@@ -273,8 +273,44 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
         )
     }
 
+    const handleCancel = async () => {
+        if (!confirm('Từ chối PO này? Đơn hàng sẽ bị huỷ.')) return
+        setUpdating(true)
+        toast.promise(
+            updatePOStatus(poId, 'CANCELLED').then(() => onUpdate()),
+            {
+                loading: 'Đang từ chối...',
+                success: 'Đã từ chối PO',
+                error: 'Lỗi',
+                finally: () => setUpdating(false)
+            }
+        )
+    }
+
+    // Special layout for PENDING_APPROVAL — prominent Approve + Reject
+    if (current === 'PENDING_APPROVAL') {
+        return (
+            <div className="flex items-center gap-1.5">
+                <button onClick={() => handleAdvance('APPROVED')} disabled={updating}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-[5px] text-xs font-bold"
+                    style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.35)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.2)')}>
+                    {updating ? <Loader2 size={11} className="animate-spin" /> : <><CheckCircle2 size={12} /> Duyệt</>}
+                </button>
+                <button onClick={handleCancel} disabled={updating}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-[5px] text-xs font-bold"
+                    style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.28)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.15)')}>
+                    {updating ? <Loader2 size={11} className="animate-spin" /> : <><X size={12} /> Từ Chối</>}
+                </button>
+            </div>
+        )
+    }
+
     return (
-        <button onClick={handleAdvance} disabled={updating}
+        <button onClick={() => handleAdvance()} disabled={updating}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
             style={{ color: next?.color ?? '#8AAEBB', border: `1px solid ${next?.color ?? '#8AAEBB'}33` }}
             onMouseEnter={e => (e.currentTarget.style.background = next?.bg ?? '')}

@@ -546,6 +546,50 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
     }
 }
 
+// ── CEO Approve PENDING_APPROVAL → CONFIRMED ─────
+export async function approveSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const so = await prisma.salesOrder.findUnique({
+            where: { id },
+            select: { status: true, soNo: true, salesRepId: true, totalAmount: true },
+        })
+        if (!so) return { success: false, error: 'SO not found' }
+        if (so.status !== 'PENDING_APPROVAL') return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
+
+        await prisma.salesOrder.update({ where: { id }, data: { status: 'CONFIRMED' } })
+        await logAudit({ action: 'APPROVE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CONFIRMED', soNo: so.soNo, amount: Number(so.totalAmount) } }).catch(() => { })
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── CEO Reject PENDING_APPROVAL → CANCELLED ──────
+export async function rejectSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const so = await prisma.salesOrder.findUnique({
+            where: { id },
+            select: { status: true, soNo: true, totalAmount: true },
+        })
+        if (!so) return { success: false, error: 'SO not found' }
+        if (so.status !== 'PENDING_APPROVAL') return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
+
+        await prisma.salesOrder.update({ where: { id }, data: { status: 'CANCELLED' } })
+        await logAudit({ action: 'REJECT', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CANCELLED', soNo: so.soNo, amount: Number(so.totalAmount) } }).catch(() => { })
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
 // ── Advance SO status ────────────────────────────
 // Valid transitions: CONFIRMED→PARTIALLY_DELIVERED→DELIVERED→INVOICED→PAID
 export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): Promise<{ success: boolean; error?: string }> {
