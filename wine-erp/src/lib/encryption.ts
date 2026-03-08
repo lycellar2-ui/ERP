@@ -7,7 +7,7 @@ const ALGORITHM = 'aes-256-gcm'
 function deriveKey(): Buffer {
     const key = process.env.ENCRYPTION_KEY
     if (!key) {
-        throw new Error('[Encryption] ENCRYPTION_KEY env var is required. Cannot encrypt/decrypt without it.')
+        throw new Error('ENCRYPTION_KEY chưa được cấu hình. Vui lòng thêm vào Environment Variables (Vercel Settings hoặc .env.local)')
     }
     const salt = process.env.ENCRYPTION_SALT ?? 'lyscellars-erp-2026'
     return crypto.scryptSync(key, salt, 32)
