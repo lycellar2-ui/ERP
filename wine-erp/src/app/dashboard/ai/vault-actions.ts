@@ -72,15 +72,15 @@ export async function saveApiKey(input: {
 }
 
 export async function toggleApiKey(id: string): Promise<{ success: boolean }> {
-    const key = await prisma.aiApiKey.findUnique({ where: { id } })
+    const key = await withRetry(() => prisma.aiApiKey.findUnique({ where: { id } }))
     if (!key) return { success: false }
-    await prisma.aiApiKey.update({ where: { id }, data: { isActive: !key.isActive } })
+    await withRetry(() => prisma.aiApiKey.update({ where: { id }, data: { isActive: !key.isActive } }))
     revalidatePath('/dashboard/ai')
     return { success: true }
 }
 
 export async function deleteApiKey(id: string): Promise<{ success: boolean }> {
-    await prisma.aiApiKey.delete({ where: { id } })
+    await withRetry(() => prisma.aiApiKey.delete({ where: { id } }))
     revalidatePath('/dashboard/ai')
     return { success: true }
 }
