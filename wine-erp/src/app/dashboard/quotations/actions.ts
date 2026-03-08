@@ -79,41 +79,46 @@ export async function getQuotations(filters: { search?: string; status?: string 
 }
 
 // ── Get detail ───────────────────────────────────
-export async function getQuotationDetail(id: string) {
-    const raw = await prisma.salesQuotation.findUnique({
-        where: { id },
-        include: {
-            customer: { select: { id: true, name: true, code: true, channel: true, paymentTerm: true, contacts: { select: { email: true, phone: true }, take: 1 } } },
-            salesRep: { select: { name: true, email: true } },
-            lines: {
-                include: {
-                    product: {
-                        select: {
-                            skuCode: true, productName: true, wineType: true, volumeMl: true,
-                            vintage: true, country: true, abvPercent: true, tastingNotes: true, classification: true,
-                            producer: { select: { name: true } },
-                            appellation: { select: { name: true, region: { select: { name: true } } } },
-                            media: { where: { isPrimary: true }, select: { url: true, thumbnailUrl: true }, take: 1 },
-                            awards: { select: { source: true, score: true, medal: true }, take: 3 },
+export async function getQuotationDetail(id: string): Promise<{ success: true; data: any } | { success: false; error: string }> {
+    try {
+        const raw = await prisma.salesQuotation.findUnique({
+            where: { id },
+            include: {
+                customer: { select: { id: true, name: true, code: true, channel: true, paymentTerm: true, contacts: { select: { email: true, phone: true }, take: 1 } } },
+                salesRep: { select: { name: true, email: true } },
+                lines: {
+                    include: {
+                        product: {
+                            select: {
+                                skuCode: true, productName: true, wineType: true, volumeMl: true,
+                                vintage: true, country: true, abvPercent: true, tastingNotes: true, classification: true,
+                                producer: { select: { name: true } },
+                                appellation: { select: { name: true, region: { select: { name: true } } } },
+                                media: { where: { isPrimary: true }, select: { url: true, thumbnailUrl: true }, take: 1 },
+                                awards: { select: { source: true, score: true, medal: true }, take: 3 },
+                            },
                         },
                     },
                 },
             },
-        },
-    })
-    if (!raw) return null
+        })
+        if (!raw) return { success: false, error: 'Không tìm thấy báo giá' }
 
-    // Force-serialize to plain object (Prisma Decimal → string via JSON, then convert to number)
-    const plain = JSON.parse(JSON.stringify(raw))
-    plain.totalAmount = Number(raw.totalAmount)
-    plain.orderDiscount = Number(raw.orderDiscount)
-    plain.lines = plain.lines.map((l: any, i: number) => ({
-        ...l,
-        qtyOrdered: Number(raw.lines[i].qtyOrdered),
-        unitPrice: Number(raw.lines[i].unitPrice),
-        lineDiscountPct: Number(raw.lines[i].lineDiscountPct),
-    }))
-    return plain
+        // Force-serialize to plain object (Prisma Decimal → string via JSON, then convert to number)
+        const plain = JSON.parse(JSON.stringify(raw))
+        plain.totalAmount = Number(raw.totalAmount)
+        plain.orderDiscount = Number(raw.orderDiscount)
+        plain.lines = plain.lines.map((l: any, i: number) => ({
+            ...l,
+            qtyOrdered: Number(raw.lines[i].qtyOrdered),
+            unitPrice: Number(raw.lines[i].unitPrice),
+            lineDiscountPct: Number(raw.lines[i].lineDiscountPct),
+        }))
+        return { success: true, data: plain }
+    } catch (err: any) {
+        console.error('getQuotationDetail error:', err)
+        return { success: false, error: err.message || 'Lỗi server' }
+    }
 }
 
 // ── Create quotation ────────────────────────────

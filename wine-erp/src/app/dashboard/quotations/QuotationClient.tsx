@@ -28,7 +28,7 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const [loading, setLoading] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
-    const [detail, setDetail] = useState<Awaited<ReturnType<typeof getQuotationDetail>>>(null)
+    const [detail, setDetail] = useState<any>(null)
     const [detailLoading, setDetailLoading] = useState(false)
     const [createOpen, setCreateOpen] = useState(false)
 
@@ -53,9 +53,15 @@ export function QuotationClient({ initialRows, stats }: Props) {
         setDetailId(id)
         setDetailLoading(true)
         try {
-            const d = await getQuotationDetail(id)
-            setDetail(d)
-        } catch (err) {
+            const res = await getQuotationDetail(id)
+            if (res.success) {
+                setDetail(res.data)
+            } else {
+                toast.error(`Lỗi tải báo giá: ${res.error}`)
+                setDetail(null)
+            }
+        } catch (err: any) {
+            toast.error(`Lỗi: ${err.message || 'Không thể kết nối server'}`)
             console.error('Failed to load quotation detail:', err)
             setDetail(null)
         } finally {
