@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Loader2, Building2, Package, DollarSign, FileText, Ship, MessageSquare, Clock, TrendingUp, Award, Globe, Phone, Mail, MapPin, ExternalLink } from 'lucide-react'
+import { X, Loader2, Building2, Package, DollarSign, FileText, Ship, MessageSquare, Clock, TrendingUp, Award, Globe, Phone, Mail, MapPin, ExternalLink, Shield, AlertTriangle } from 'lucide-react'
 import {
     getSupplierDetail, getSupplierPOs, getSupplierAPInvoices, getSupplierContracts,
     getSupplierShipments, getSupplierProducts, getSupplierPricingHistory,
@@ -9,6 +9,8 @@ import {
     type SupplierDetail, type SupplierPO, type SupplierAPInvoice, type SupplierContract,
     type SupplierShipment, type SupplierProduct, type PricingPoint, type SupplierScorecard,
 } from './actions'
+import { getSupplierRegDocs } from '../contracts/reg-doc-xmodule'
+import { REG_DOC_TYPE_LABELS, REG_DOC_STATUS_LABELS } from '../contracts/reg-doc-constants'
 import { formatVND } from '@/lib/utils'
 
 const PO_STATUS_COLOR: Record<string, { color: string; bg: string }> = {
@@ -31,7 +33,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
     NOTE: '📝', CALL: '📞', EMAIL: '✉️', VISIT: '🤝', PO_CREATED: '📦', CONTRACT_SIGNED: '📜',
 }
 
-type Tab = 'overview' | 'orders' | 'finance' | 'contracts' | 'shipments' | 'notes'
+type Tab = 'overview' | 'orders' | 'finance' | 'contracts' | 'shipments' | 'docs' | 'notes'
 
 function InfoRow({ label, value, accent }: { label: string; value: React.ReactNode; accent?: string }) {
     return (
@@ -73,11 +75,12 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
     const [newNote, setNewNote] = useState('')
     const [noteType, setNoteType] = useState('NOTE')
     const [savingNote, setSavingNote] = useState(false)
+    const [regDocs, setRegDocs] = useState<any[] | null>(null)
 
     useEffect(() => {
         if (!open || !supplierId) { setDetail(null); setTab('overview'); return }
         setLoading(true)
-        setPOs(null); setInvoices(null); setContracts(null); setShipments(null); setProducts(null); setPricing(null); setActivities(null)
+        setPOs(null); setInvoices(null); setContracts(null); setShipments(null); setProducts(null); setPricing(null); setActivities(null); setRegDocs(null)
         Promise.all([
             getSupplierDetail(supplierId),
             getSupplierScorecard(supplierId),
@@ -91,6 +94,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
         if (t === 'finance' && !invoices) setInvoices(await getSupplierAPInvoices(supplierId))
         if (t === 'contracts' && !contracts) setContracts(await getSupplierContracts(supplierId))
         if (t === 'shipments' && !shipments) setShipments(await getSupplierShipments(supplierId))
+        if (t === 'docs' && !regDocs) setRegDocs(await getSupplierRegDocs(supplierId))
         if (t === 'notes' && !activities) setActivities(await getSupplierActivities(supplierId))
     }
 
@@ -112,6 +116,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
         { key: 'finance', label: 'Tài Chính', icon: DollarSign },
         { key: 'contracts', label: 'Hợp Đồng', icon: FileText },
         { key: 'shipments', label: 'Lô Hàng', icon: Ship },
+        { key: 'docs', label: 'Giấy Tờ', icon: Shield },
         { key: 'notes', label: 'Ghi Chú', icon: MessageSquare },
     ]
 
@@ -400,6 +405,70 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                     </div>
                                                 </div>
                                             ))
+                                        )}
+                                </div>
+                            )}
+
+                            {/* ── REGULATED DOCS ── */}
+                            {tab === 'docs' && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Giấy Tờ Pháp Lý</p>
+                                        <a href={`/dashboard/contracts`} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                            Quản lý →
+                                        </a>
+                                    </div>
+                                    {!regDocs ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :
+                                        regDocs.length === 0 ? (
+                                            <div className="text-center py-10">
+                                                <Shield size={28} className="mx-auto mb-2" style={{ color: '#2A4355' }} />
+                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có giấy tờ pháp lý nào gắn với NCC này</p>
+                                                <p className="text-[10px] mt-1" style={{ color: '#4A6A7A' }}>Vào Trung tâm Pháp lý → Thêm Giấy Tờ → Phạm vi: Nhà cung cấp</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {regDocs.map((d: any) => {
+                                                    const isExpired = d.status === 'EXPIRED' || d.status === 'REVOKED'
+                                                    const isExpiring = d.daysRemaining !== null && d.daysRemaining <= 30 && d.daysRemaining > 0
+                                                    const borderColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : '#2A4355'
+                                                    const statusColor = isExpired ? '#E05252' : isExpiring ? '#D4A853' : d.status === 'ACTIVE' ? '#5BA88A' : '#4A6A7A'
+                                                    return (
+                                                        <div key={d.id} className="p-4 rounded-lg" style={{ background: '#142433', border: `1px solid ${borderColor}` }}>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    {(isExpired || isExpiring) && <AlertTriangle size={12} style={{ color: borderColor }} />}
+                                                                    <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{d.name}</span>
+                                                                </div>
+                                                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ color: statusColor, background: `${statusColor}18` }}>
+                                                                    {REG_DOC_STATUS_LABELS[d.status] ?? d.status}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
+                                                                <span>{REG_DOC_TYPE_LABELS[d.type] ?? d.type}</span>
+                                                                <span style={{ fontFamily: '"DM Mono"', color: '#4A6A7A' }}>{d.docNo}</span>
+                                                                {d.expiryDate && (
+                                                                    <span style={{ color: statusColor, fontFamily: '"DM Mono"' }}>
+                                                                        {d.daysRemaining !== null && d.daysRemaining <= 0
+                                                                            ? `Quá hạn ${Math.abs(d.daysRemaining)}d`
+                                                                            : d.daysRemaining !== null
+                                                                                ? `Còn ${d.daysRemaining}d`
+                                                                                : fmtDate(d.expiryDate)}
+                                                                    </span>
+                                                                )}
+                                                                {d.issuingAuthority && <span style={{ color: '#4A6A7A' }}>{d.issuingAuthority}</span>}
+                                                            </div>
+                                                            {d.latestFile && (
+                                                                <div className="mt-2">
+                                                                    <a href={d.latestFile.fileUrl} target="_blank" rel="noopener noreferrer"
+                                                                        className="text-[10px] flex items-center gap-1" style={{ color: '#4A8FAB' }}>
+                                                                        <ExternalLink size={10} /> {d.latestFile.name}
+                                                                    </a>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
                                         )}
                                 </div>
                             )}

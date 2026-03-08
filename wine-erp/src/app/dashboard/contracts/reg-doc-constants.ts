@@ -9,6 +9,15 @@ export const REG_DOC_CATEGORY_LABELS: Record<string, string> = {
     TRADE_AGREEMENT: 'HĐ Thương mại',
 }
 
+export const REG_DOC_STATUS_LABELS: Record<string, string> = {
+    ACTIVE: 'Hiệu Lực',
+    EXPIRING: 'Sắp Hết Hạn',
+    EXPIRED: 'Hết Hạn',
+    REVOKED: 'Thu Hồi',
+    RENEWAL_PENDING: 'Chờ Gia Hạn',
+    DRAFT: 'Nháp',
+}
+
 export const REG_DOC_TYPE_LABELS: Record<string, string> = {
     // Company Licenses
     DISTRIBUTION_LICENSE: 'GP Phân phối rượu',
