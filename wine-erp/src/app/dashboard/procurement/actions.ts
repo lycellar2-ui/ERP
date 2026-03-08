@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ─── Types ────────────────────────────────────────
 export type PORow = {
@@ -182,6 +183,7 @@ export type CreatePOInput = z.infer<typeof createPOSchema>
 
 // ─── Create PO ────────────────────────────────────
 export async function createPurchaseOrder(input: CreatePOInput) {
+    await requireAuth()
     const data = createPOSchema.parse(input)
     const userId = await getOrCreateSystemUser()
 
@@ -220,6 +222,7 @@ export async function createPurchaseOrder(input: CreatePOInput) {
 // Manual transitions: DRAFT→PENDING_APPROVAL, PENDING_APPROVAL→APPROVED/CANCELLED
 // Auto transitions (called by GR/Shipment hooks): APPROVED→IN_TRANSIT, IN_TRANSIT→PARTIALLY_RECEIVED/RECEIVED
 export async function updatePOStatus(id: string, status: string) {
+    await requireAuth()
     const ALLOWED_TRANSITIONS: Record<string, string[]> = {
         DRAFT: ['PENDING_APPROVAL', 'CANCELLED'],
         PENDING_APPROVAL: ['APPROVED', 'CANCELLED'],
@@ -232,11 +235,11 @@ export async function updatePOStatus(id: string, status: string) {
         where: { id },
         select: { status: true, poNo: true },
     })
-    if (!po) throw new Error('PO không tồn tại')
+    if (!po) return { success: false, error: 'PO không tồn tại' }
 
     const allowed = ALLOWED_TRANSITIONS[po.status]
     if (!allowed || !allowed.includes(status)) {
-        throw new Error(`Không thể chuyển PO từ ${po.status} → ${status}`)
+        return { success: false, error: `Không thể chuyển PO từ ${po.status} → ${status}` }
     }
 
     await prisma.purchaseOrder.update({

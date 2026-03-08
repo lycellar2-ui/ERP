@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { serialize } from '@/lib/serialize'
 
 // ═══════════════════════════════════════════════════
 // AGENCY PORTAL — External Partner Integration
@@ -202,7 +203,7 @@ export async function reviewAgencySubmission(
 
 // ─── Get active shipments for dropdown ────────────
 export async function getActiveShipments() {
-    return prisma.shipment.findMany({
+    const raw = await prisma.shipment.findMany({
         where: { status: { in: ['BOOKED', 'ON_VESSEL', 'ARRIVED_PORT'] } },
         select: {
             id: true,
@@ -213,6 +214,7 @@ export async function getActiveShipments() {
         },
         orderBy: { eta: 'asc' },
     })
+    return serialize(raw)
 }
 
 // ═══════════════════════════════════════════════════

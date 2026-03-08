@@ -2,9 +2,10 @@
 
 import { prisma } from '@/lib/db'
 import { cached, revalidateCache } from '@/lib/cache'
+import { serialize } from '@/lib/serialize'
 
 export async function getStampPurchases() {
-    return prisma.wineStampPurchase.findMany({
+    const raw = await prisma.wineStampPurchase.findMany({
         include: {
             usages: {
                 select: {
@@ -20,6 +21,7 @@ export async function getStampPurchases() {
         },
         orderBy: { purchaseDate: 'desc' },
     })
+    return serialize(raw)
 }
 
 export async function createStampPurchase(data: {
@@ -59,14 +61,15 @@ export async function recordStampUsage(data: {
     })
 
     if (!purchase) {
-        throw new Error('Không tìm thấy lô tem.')
+        return { success: false, error: 'Không tìm thấy lô tem.' }
     }
 
     const totalAfter = purchase.usedQty + data.qtyUsed + data.qtyDamaged
     if (totalAfter > purchase.totalQty) {
-        throw new Error(
-            `Vượt quá số lượng tem khả dụng! Tồn kho tem: ${purchase.totalQty - purchase.usedQty}, yêu cầu: ${data.qtyUsed + data.qtyDamaged}`
-        )
+        return {
+            success: false,
+            error: `Vượt quá số lượng tem khả dụng! Tồn kho tem: ${purchase.totalQty - purchase.usedQty}, yêu cầu: ${data.qtyUsed + data.qtyDamaged}`,
+        }
     }
 
     // Transaction: tạo usage + cập nhật usedQty

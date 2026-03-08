@@ -368,6 +368,7 @@ async function getOrCreatePeriod(year: number, month: number) {
         })
     }
     if (period.isClosed) {
+        // This throw is caught by the caller's try/catch which returns { success: false, error }
         throw new Error(`Kỳ kế toán ${month}/${year} đã đóng`)
     }
     return period
@@ -515,10 +516,11 @@ export async function generatePaymentInJournal(
 // ═══════════════════════════════════════════════════
 
 export async function getAccountingPeriods() {
-    return prisma.accountingPeriod.findMany({
+    const raw = await prisma.accountingPeriod.findMany({
         include: { _count: { select: { entries: true } } },
         orderBy: [{ year: 'desc' }, { month: 'desc' }],
     })
+    return JSON.parse(JSON.stringify(raw))
 }
 
 export async function closeAccountingPeriod(

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, ContractCreateSchema, ContractAmendmentSchema, DigitalSignatureSchema } from '@/lib/validations'
 import { uploadToStorage } from '@/lib/supabase-storage'
+import { serialize } from '@/lib/serialize'
 
 export interface ContractRow {
     id: string
@@ -384,10 +385,11 @@ export async function createContractAmendment(input: {
 
 // ── List Contract Amendments ──────────────────────
 export async function getContractAmendments(contractId: string) {
-    return prisma.contractAmendment.findMany({
+    const raw = await prisma.contractAmendment.findMany({
         where: { contractId },
         orderBy: { amendNo: 'desc' },
     })
+    return serialize(raw)
 }
 
 // ── Upload/Get Contract Documents (Supabase Storage — Private) ──
@@ -429,10 +431,11 @@ export async function uploadContractDocument(contractId: string, formData: FormD
 }
 
 export async function getContractDocuments(contractId: string) {
-    return prisma.contractDocument.findMany({
+    const raw = await prisma.contractDocument.findMany({
         where: { contractId },
         orderBy: { uploadedAt: 'desc' }
     })
+    return serialize(raw)
 }
 
 export async function signContract(contractId: string, signatureUrl: string) {

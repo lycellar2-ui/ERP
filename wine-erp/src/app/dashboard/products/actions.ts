@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ─── Types ────────────────────────────────────────
 export type ProductRow = {
@@ -297,6 +298,7 @@ export type ProductInput = z.infer<typeof productSchema>
 // ─── Create ───────────────────────────────────────
 export async function createProduct(input: ProductInput) {
     try {
+        await requireAuth()
         const data = productSchema.parse(input)
         const product = await prisma.product.create({
             data: {
@@ -324,16 +326,14 @@ export async function createProduct(input: ProductInput) {
         revalidatePath('/dashboard/products')
         return { success: true, id: product.id }
     } catch (err: any) {
-        // Extract meaningful error message
         if (err?.issues) {
-            // Zod validation error
             const msgs = err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')
-            throw new Error(`Validation: ${msgs}`)
+            return { success: false, error: `Validation: ${msgs}` }
         }
         if (err?.code === 'P2002') {
-            throw new Error('SKU đã tồn tại. Vui lòng chọn mã SKU khác.')
+            return { success: false, error: 'SKU đã tồn tại. Vui lòng chọn mã SKU khác.' }
         }
-        throw new Error(err.message ?? 'Lỗi tạo sản phẩm không xác định')
+        return { success: false, error: err.message ?? 'Lỗi tạo sản phẩm không xác định' }
     }
 }
 

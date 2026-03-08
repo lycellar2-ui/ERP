@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
+import { serialize } from '@/lib/serialize'
 
 // ═══════════════════════════════════════════════════
 // SETTINGS — RBAC, Users, System Config
@@ -176,9 +177,10 @@ export async function createRole(input: {
 
 // ─── List Permissions ─────────────────────────────
 export async function getPermissions() {
-    return prisma.permission.findMany({
+    const raw = await prisma.permission.findMany({
         orderBy: [{ module: 'asc' }, { action: 'asc' }],
     })
+    return serialize(raw)
 }
 
 // ─── Update Role Permissions ──────────────────────
@@ -220,13 +222,14 @@ export async function getSettingsStats() {
 
 // ── Get approval templates ────────────────────────
 export async function getApprovalTemplates() {
-    return prisma.approvalTemplate.findMany({
+    const raw = await prisma.approvalTemplate.findMany({
         include: {
             steps: { orderBy: { stepOrder: 'asc' } },
             _count: { select: { requests: true } },
         },
         orderBy: { name: 'asc' },
     })
+    return serialize(raw)
 }
 
 // ── Create approval template with steps ───────────

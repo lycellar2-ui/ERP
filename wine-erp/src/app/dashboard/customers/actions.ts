@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // TYPES
@@ -290,6 +291,7 @@ export type CustomerInput = z.infer<typeof customerSchema>
 
 export async function createCustomer(input: CustomerInput) {
     try {
+        await requireAuth()
         const data = customerSchema.parse(input)
         const customer = await prisma.customer.create({
             data: {
@@ -337,12 +339,12 @@ export async function createCustomer(input: CustomerInput) {
         revalidatePath('/dashboard/customers')
         return { success: true }
     } catch (err: any) {
-        if (err?.code === 'P2002') throw new Error('Mã KH đã tồn tại. Vui lòng chọn mã khác.')
+        if (err?.code === 'P2002') return { success: false, error: 'Mã KH đã tồn tại. Vui lòng chọn mã khác.' }
         if (err?.issues) {
             const msgs = err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')
-            throw new Error(`Validation: ${msgs}`)
+            return { success: false, error: `Validation: ${msgs}` }
         }
-        throw new Error(err.message ?? 'Lỗi tạo khách hàng')
+        return { success: false, error: err.message ?? 'Lỗi tạo khách hàng' }
     }
 }
 
@@ -415,7 +417,7 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         revalidatePath('/dashboard/customers')
         return { success: true }
     } catch (err: any) {
-        throw new Error(err.message ?? 'Lỗi cập nhật KH')
+        return { success: false, error: err.message ?? 'Lỗi cập nhật KH' }
     }
 }
 

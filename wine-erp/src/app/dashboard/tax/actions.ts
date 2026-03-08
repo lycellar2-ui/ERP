@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { serialize } from '@/lib/serialize'
 
 // ─── Types ────────────────────────────────────────
 export interface TaxRateRow {
@@ -349,7 +350,7 @@ export async function createMarketPrice(input: {
 
 // Get price history for a product (for chart)
 export async function getProductPriceHistory(productId: string) {
-    return prisma.marketPrice.findMany({
+    const raw = await prisma.marketPrice.findMany({
         where: { productId },
         select: {
             price: true,
@@ -360,6 +361,7 @@ export async function getProductPriceHistory(productId: string) {
         orderBy: { priceDate: 'asc' },
         take: 100,
     })
+    return serialize(raw)
 }
 
 // Suggest minimum sell price based on landed cost + target margin

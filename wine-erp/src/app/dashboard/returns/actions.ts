@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { serialize } from '@/lib/serialize'
 
 export type ReturnOrderRow = {
     id: string; returnNo: string; soNo: string; soId: string
@@ -173,17 +174,18 @@ export async function getReturnStats() {
 
 // ── SO options ────────────────────────────────────
 export async function getSOOptionsForReturn() {
-    return prisma.salesOrder.findMany({
+    const raw = await prisma.salesOrder.findMany({
         where: { status: { in: ['DELIVERED', 'INVOICED', 'PAID'] } },
         select: { id: true, soNo: true, customerId: true, customer: { select: { name: true } } },
         orderBy: { createdAt: 'desc' },
         take: 50,
     })
+    return serialize(raw)
 }
 
 // ── Product options from SO lines ─────────────────
 export async function getSOLinesForReturn(soId: string) {
-    return prisma.salesOrderLine.findMany({
+    const raw = await prisma.salesOrderLine.findMany({
         where: { soId },
         select: {
             productId: true,
@@ -192,4 +194,5 @@ export async function getSOLinesForReturn(soId: string) {
             product: { select: { skuCode: true, productName: true } },
         },
     })
+    return serialize(raw)
 }

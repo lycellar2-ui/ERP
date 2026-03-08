@@ -7,6 +7,8 @@ import { generateSoNo } from '@/lib/utils'
 import { logAudit } from '@/lib/audit'
 import { submitForApproval } from '@/lib/approval'
 import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
+import { serialize } from '@/lib/serialize'
+import { requireAuth } from '@/lib/session'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL'
@@ -111,7 +113,7 @@ export async function getSalesOrders(filters: {
 
 // ── Fetch single SO detail ───────────────────────
 export async function getSalesOrderDetail(id: string) {
-    return prisma.salesOrder.findUnique({
+    const raw = await prisma.salesOrder.findUnique({
         where: { id },
         include: {
             customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
@@ -126,6 +128,7 @@ export async function getSalesOrderDetail(id: string) {
             arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true } },
         },
     })
+    return serialize(raw)
 }
 
 // ── Combined detail + margin (single server action, 2 queries instead of N+1) ──
@@ -198,10 +201,10 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     const totalMargin = totalRevenue - totalCOGS
     const totalMarginPct = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0
 
-    return {
+    return serialize({
         detail,
         margin: { lines: marginLines, totalRevenue, totalCOGS, totalMargin, totalMarginPct, hasNegativeMargin },
-    }
+    })
 }
 
 // ── Customers for dropdown ───────────────────────
@@ -305,6 +308,7 @@ export async function getSalesReps() {
 // ── Create Sales Order ───────────────────────────
 export async function createSalesOrder(input: SOCreateInput): Promise<{ success: boolean; soId?: string; soNo?: string; error?: string; quotaWarnings?: string[] }> {
     try {
+        await requireAuth()
         // --- 0. Validate input ---
         parseOrThrow(SOCreateSchema, input)
 
@@ -442,6 +446,7 @@ export interface SOUpdateInput {
 
 export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id: input.soId },
             select: { status: true, salesRepId: true, soNo: true },
@@ -511,6 +516,7 @@ const DISCOUNT_APPROVAL_THRESHOLD = 15 // > 15% discount → cần CEO duyệt
 
 export async function confirmSalesOrder(id: string): Promise<{ success: boolean; error?: string; needsApproval?: boolean }> {
     try {
+        await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
             select: { totalAmount: true, salesRepId: true, soNo: true, status: true, orderDiscount: true, lines: { select: { qtyOrdered: true, unitPrice: true, lineDiscountPct: true } } },
@@ -562,6 +568,7 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
 // ── CEO Approve PENDING_APPROVAL → CONFIRMED ─────
 export async function approveSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
             select: { status: true, soNo: true, salesRepId: true, totalAmount: true },
@@ -584,6 +591,7 @@ export async function approveSalesOrder(id: string): Promise<{ success: boolean;
 // ── CEO Reject PENDING_APPROVAL → CANCELLED ──────
 export async function rejectSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
             select: { status: true, soNo: true, totalAmount: true },
@@ -646,6 +654,7 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
 // ── Cancel SO — also releases allocation quotas ─
 export async function cancelSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         // Release allocation quotas linked to this SO
         const soLines = await prisma.salesOrderLine.findMany({
             where: { soId: id },

@@ -7,6 +7,7 @@ import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, GoodsReceiptCreateSchema } from '@/lib/validations'
 import { getCurrentUser } from '@/lib/session'
+import { serialize } from '@/lib/serialize'
 
 // ─── Types ────────────────────────────────────────
 export type WarehouseRow = {
@@ -391,7 +392,7 @@ export async function getGoodsReceipts(filters: {
 
 // ── Get POs ready for receiving ───────────────────
 export async function getPOsForReceiving() {
-    return prisma.purchaseOrder.findMany({
+    const raw = await prisma.purchaseOrder.findMany({
         where: { status: { in: ['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'] } },
         select: {
             id: true,
@@ -408,6 +409,7 @@ export async function getPOsForReceiving() {
         },
         orderBy: { createdAt: 'desc' },
     })
+    return serialize(raw)
 }
 
 // ── Create Goods Receipt from PO ──────────────────
@@ -640,7 +642,7 @@ export async function getDeliveryOrders(filters: {
 
 // ── Get SOs ready for delivery ────────────────────
 export async function getSOsForDelivery() {
-    return prisma.salesOrder.findMany({
+    const raw = await prisma.salesOrder.findMany({
         where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED'] } },
         select: {
             id: true,
@@ -657,6 +659,7 @@ export async function getSOsForDelivery() {
         },
         orderBy: { createdAt: 'desc' },
     })
+    return serialize(raw)
 }
 
 // ── Create Delivery Order from SO ─────────────────
@@ -869,12 +872,13 @@ export async function getStockCountSessions(warehouseId?: string) {
     const where: any = {}
     if (warehouseId) where.warehouseId = warehouseId
 
-    return prisma.stockCountSession.findMany({
+    const raw = await prisma.stockCountSession.findMany({
         where,
         include: { _count: { select: { lines: true } } },
         orderBy: { createdAt: 'desc' },
         take: 50,
     })
+    return serialize(raw)
 }
 
 export async function createStockCountSession(input: {
@@ -1075,7 +1079,7 @@ export async function moveToQuarantine(input: {
 }
 
 export async function getQuarantinedLots() {
-    return prisma.stockLot.findMany({
+    const raw = await prisma.stockLot.findMany({
         where: { status: 'QUARANTINE', qtyAvailable: { gt: 0 } },
         include: {
             product: { select: { skuCode: true, productName: true } },
@@ -1083,6 +1087,7 @@ export async function getQuarantinedLots() {
         },
         orderBy: { receivedDate: 'desc' },
     })
+    return serialize(raw)
 }
 
 export async function releaseFromQuarantine(

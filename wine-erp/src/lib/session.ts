@@ -98,3 +98,29 @@ export function canAccessReport(user: SessionUser, reportCode: string): boolean 
 export function getAccessibleReports(user: SessionUser): string[] {
     return Object.keys(REPORT_ROLE_MAP).filter(code => canAccessReport(user, code))
 }
+
+/**
+ * Auth guard for server actions — returns user or throws.
+ * 
+ * Usage at the TOP of any mutation server action:
+ *   const user = await requireAuth()
+ * 
+ * The throw is caught by the action's try/catch → returns { success: false, error }
+ */
+export async function requireAuth(): Promise<SessionUser> {
+    const user = await getCurrentUser()
+    if (!user) throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.')
+    return user
+}
+
+/**
+ * Permission guard — checks a specific module:action permission.
+ * Throws if user doesn't have the required permission.
+ */
+export async function requirePermission(module: string, action: string): Promise<SessionUser> {
+    const user = await requireAuth()
+    if (!hasPermission(user, module, action)) {
+        throw new Error(`Bạn không có quyền ${module}:${action}`)
+    }
+    return user
+}

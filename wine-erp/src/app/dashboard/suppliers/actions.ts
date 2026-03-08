@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // TYPES
@@ -351,6 +352,7 @@ export type SupplierInput = z.infer<typeof supplierSchema>
 
 export async function createSupplier(input: SupplierInput) {
     try {
+        await requireAuth()
         const data = supplierSchema.parse(input)
         const supplier = await prisma.supplier.create({
             data: {
@@ -403,12 +405,12 @@ export async function createSupplier(input: SupplierInput) {
         revalidatePath('/dashboard/suppliers')
         return { success: true }
     } catch (err: any) {
-        if (err?.code === 'P2002') throw new Error('Mã NCC đã tồn tại. Vui lòng chọn mã khác.')
+        if (err?.code === 'P2002') return { success: false, error: 'Mã NCC đã tồn tại. Vui lòng chọn mã khác.' }
         if (err?.issues) {
             const msgs = err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')
-            throw new Error(`Validation: ${msgs}`)
+            return { success: false, error: `Validation: ${msgs}` }
         }
-        throw new Error(err.message ?? 'Lỗi tạo NCC')
+        return { success: false, error: err.message ?? 'Lỗi tạo NCC' }
     }
 }
 
@@ -479,7 +481,7 @@ export async function updateSupplier(id: string, input: Partial<SupplierInput>) 
         revalidatePath('/dashboard/suppliers')
         return { success: true }
     } catch (err: any) {
-        throw new Error(err.message ?? 'Lỗi cập nhật NCC')
+        return { success: false, error: err.message ?? 'Lỗi cập nhật NCC' }
     }
 }
 
