@@ -1,5 +1,3 @@
-﻿export const revalidate = 60
-
 import { getContracts, getContractStats } from './actions'
 import { getRegulatedDocs, getRegDocStats } from './reg-doc-actions'
 import { ContractsPage } from './ContractsPage'

@@ -1,5 +1,3 @@
-﻿export const revalidate = 45
-
 import { getPurchaseOrders, getPOStats } from './actions'
 import { ProcurementClient } from './ProcurementClient'
 

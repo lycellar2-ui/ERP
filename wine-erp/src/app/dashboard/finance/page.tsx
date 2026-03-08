@@ -1,5 +1,3 @@
-﻿export const revalidate = 45
-
 import { getARInvoices, getAPInvoices, getFinanceStats, getARAgingBuckets } from './actions'
 import { FinanceClient } from './FinanceClient'
 import { getCurrentUser } from '@/lib/session'

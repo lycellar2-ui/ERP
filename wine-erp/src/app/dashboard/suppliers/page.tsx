@@ -1,5 +1,3 @@
-﻿export const revalidate = 60
-
 import { getSuppliers, getSupplierStats } from './actions'
 import { SuppliersClient } from './SuppliersClient'
 

@@ -18,12 +18,10 @@ const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET ?? ''
  * Receives updates from Telegram Bot API and routes to handlers.
  */
 export async function POST(req: NextRequest) {
-    // ── Verify webhook secret ──────────────────────
-    if (WEBHOOK_SECRET) {
-        const secretHeader = req.headers.get('x-telegram-bot-api-secret-token')
-        if (secretHeader !== WEBHOOK_SECRET) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-        }
+    // ── Verify webhook secret (always required) ──────────
+    const secretHeader = req.headers.get('x-telegram-bot-api-secret-token')
+    if (!WEBHOOK_SECRET || secretHeader !== WEBHOOK_SECRET) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     let update: TelegramUpdate

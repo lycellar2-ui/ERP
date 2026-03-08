@@ -1,8 +1,5 @@
-﻿import { getPriceLists } from './actions'
+import { getPriceLists } from './actions'
 import { PriceListClient } from './PriceListClient'
-
-export const revalidate = 90
-
 
 export const metadata = {
     title: 'Bảng Giá | Wine ERP',

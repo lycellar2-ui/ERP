@@ -1,4 +1,4 @@
-﻿﻿export const revalidate = 30
+
 
 import {
     getDashboardStats, getMonthlyRevenue, approveSO, rejectSO,
@@ -88,11 +88,13 @@ export default async function DashboardPage() {
         has('pl_summary') ? getTopProducts() : [],
         has('revenue_chart') ? getRevenueByChannel() : null,
     ])
-    // Batch 3
-    const mySales = has('my_sales') && user ? await getMySales(user.id) : null
-    const warehouseData = has('warehouse_summary') ? await getWarehouseDashboard() : null
-    const complianceWarnings = has('legal_compliance') ? await getComplianceWarnings() : []
-    const pendingProposals = has('pending_approvals') ? await getPendingProposalsForCEO() : []
+    // Batch 3 (parallelized — was sequential, 4x ~100ms = ~400ms waste)
+    const [mySales, warehouseData, complianceWarnings, pendingProposals] = await Promise.all([
+        has('my_sales') && user ? getMySales(user.id) : null,
+        has('warehouse_summary') ? getWarehouseDashboard() : null,
+        has('legal_compliance') ? getComplianceWarnings() : [],
+        has('pending_approvals') ? getPendingProposalsForCEO() : [],
+    ])
 
     // Defaults
     const pl = plSummary ?? { revenue: 0, cogs: 0, grossProfit: 0, expenses: 0, netProfit: 0, grossMargin: 0 }

@@ -1,5 +1,4 @@
-﻿export const revalidate = 45
-
+﻿
 import { getSalesOrders, getSalesStats, getSOStatusCounts } from './actions'
 import { SalesClient } from './SalesClient'
 import { getCurrentUser } from '@/lib/session'

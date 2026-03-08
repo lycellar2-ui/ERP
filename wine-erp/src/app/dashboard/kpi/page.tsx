@@ -1,5 +1,3 @@
-﻿export const revalidate = 60
-
 import { getKpiSummary } from './actions'
 import { KpiClient } from './KpiClient'
 

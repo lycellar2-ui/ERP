@@ -3,10 +3,14 @@
 import crypto from 'crypto'
 
 const ALGORITHM = 'aes-256-gcm'
-const KEY = process.env.ENCRYPTION_KEY || 'wine-erp-default-key-32-bytes!!'
 
 function deriveKey(): Buffer {
-    return crypto.scryptSync(KEY, 'wine-erp-salt', 32)
+    const key = process.env.ENCRYPTION_KEY
+    if (!key) {
+        throw new Error('[Encryption] ENCRYPTION_KEY env var is required. Cannot encrypt/decrypt without it.')
+    }
+    const salt = process.env.ENCRYPTION_SALT ?? 'lyscellars-erp-2026'
+    return crypto.scryptSync(key, salt, 32)
 }
 
 export async function encryptApiKey(plainKey: string): Promise<{ encrypted: string; iv: string }> {

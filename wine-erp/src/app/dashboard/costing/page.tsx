@@ -1,5 +1,3 @@
-﻿export const revalidate = 90
-
 import { getCostingProducts } from './actions'
 import { CostingClient } from './CostingClient'
 

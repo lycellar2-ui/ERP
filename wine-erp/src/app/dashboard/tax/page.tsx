@@ -1,5 +1,3 @@
-﻿export const revalidate = 90
-
 import { getTaxRates } from './actions'
 import { TaxClient } from './TaxClient'
 

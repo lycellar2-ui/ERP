@@ -1,5 +1,3 @@
-﻿export const revalidate = 90
-
 import { Brain } from 'lucide-react'
 import { AnomalyWidget, DemandForecastWidget, PricingWidget } from './AIWidgets'
 import { OCRUploadWidget } from './OCRWidget'

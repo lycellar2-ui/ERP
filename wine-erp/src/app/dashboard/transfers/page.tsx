@@ -1,5 +1,3 @@
-﻿export const revalidate = 90
-
 import { getTransferOrders, getTransferStats } from './actions'
 import { TransfersClient } from './TransfersClient'
 

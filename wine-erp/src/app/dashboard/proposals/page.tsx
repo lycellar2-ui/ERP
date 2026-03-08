@@ -1,5 +1,3 @@
-export const revalidate = 30
-
 import { getProposals, getProposalStats } from './actions'
 import { getCurrentUser } from '@/lib/session'
 import ProposalsClient from './ProposalsClient'

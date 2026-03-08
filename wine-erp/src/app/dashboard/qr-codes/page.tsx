@@ -1,8 +1,5 @@
-﻿import { QRCodeClient } from './QRCodeClient'
+import { QRCodeClient } from './QRCodeClient'
 import { getQRCodes, getQRStats } from './actions'
-
-export const revalidate = 90
-
 
 export default async function QRCodePage() {
     let data = { rows: [] as any[], total: 0 }

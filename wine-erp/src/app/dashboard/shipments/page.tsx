@@ -1,5 +1,3 @@
-export const revalidate = 45
-
 import { getShipments, getShipmentStats } from '../procurement/shipment-actions'
 import { ShipmentsClient } from './ShipmentsClient'
 

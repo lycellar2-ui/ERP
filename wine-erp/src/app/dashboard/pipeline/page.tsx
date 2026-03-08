@@ -1,8 +1,5 @@
-﻿import { getOpportunities, getPipelineStats } from './actions'
+import { getOpportunities, getPipelineStats } from './actions'
 import { PipelineClient } from './PipelineClient'
-
-export const revalidate = 60
-
 
 export const metadata = { title: 'Sales Pipeline | Wine ERP' }
 

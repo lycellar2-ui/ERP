@@ -3,10 +3,34 @@ import { exportARAgingReport, exportSalesReport, exportCostingReport } from '@/l
 import { getARInvoices } from '@/app/dashboard/finance/actions'
 import { getSalesOrders } from '@/app/dashboard/sales/actions'
 import { getCostingProducts } from '@/app/dashboard/costing/actions'
+import { getCurrentUser, hasPermission } from '@/lib/session'
+
+// Permission mapping for each report type
+const REPORT_PERMISSIONS: Record<string, { module: string; action: string }> = {
+    'ar-aging': { module: 'FIN', action: 'READ' },
+    'sales': { module: 'SLS', action: 'READ' },
+    'costing': { module: 'FIN', action: 'READ' },
+}
 
 export async function GET(request: NextRequest) {
+    // ── Auth Check ──────────────────────────
+    const user = await getCurrentUser()
+    if (!user) {
+        return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const report = searchParams.get('report')
+
+    if (!report || !REPORT_PERMISSIONS[report]) {
+        return NextResponse.json({ error: 'Report không hợp lệ' }, { status: 400 })
+    }
+
+    // ── RBAC Check ──────────────────────────
+    const perm = REPORT_PERMISSIONS[report]
+    if (!hasPermission(user, perm.module, perm.action)) {
+        return NextResponse.json({ error: 'Không có quyền xuất report này' }, { status: 403 })
+    }
 
     try {
         let buffer: Buffer
@@ -51,6 +75,8 @@ export async function GET(request: NextRequest) {
             },
         })
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
+        console.error('[Export API Error]', err.message)
+        return NextResponse.json({ error: 'Lỗi xuất báo cáo' }, { status: 500 })
     }
 }
+

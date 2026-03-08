@@ -34,11 +34,22 @@ function validateEnv() {
         NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     })
 
+    // Crash early on critical failures (not during build/CI where env may be absent)
+    const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build'
+
     if (!serverResult.success) {
-        console.error('❌ Server env validation failed:', serverResult.error.flatten().fieldErrors)
+        const errors = serverResult.error.flatten().fieldErrors
+        console.error('❌ Server env validation failed:', errors)
+        if (!isBuildTime && errors.DATABASE_URL) {
+            throw new Error('[ENV] DATABASE_URL is required. App cannot start without it.')
+        }
     }
     if (!clientResult.success) {
-        console.error('❌ Client env validation failed:', clientResult.error.flatten().fieldErrors)
+        const errors = clientResult.error.flatten().fieldErrors
+        console.error('❌ Client env validation failed:', errors)
+        if (!isBuildTime) {
+            throw new Error('[ENV] Supabase env vars are required. App cannot start without them.')
+        }
     }
 
     return {
