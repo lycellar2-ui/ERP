@@ -811,3 +811,146 @@ export async function getRealtimeChannels(roles: string[]): Promise<RealtimeChan
 
     return channels
 }
+
+// ═══════════════════════════════════════════════════
+// TOP CUSTOMERS & PRODUCTS & CHANNEL BREAKDOWN
+// ═══════════════════════════════════════════════════
+
+export async function getTopCustomers(limit = 5) {
+    return cached('dashboard:top-customers', async () => {
+        const now = new Date()
+        const from = startOfMonth(now)
+        const to = endOfMonth(now)
+
+        const orders = await prisma.salesOrder.findMany({
+            where: {
+                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                createdAt: { gte: from, lte: to },
+            },
+            select: {
+                totalAmount: true,
+                customer: { select: { id: true, name: true, channel: true } },
+            },
+        })
+
+        const map = new Map<string, { name: string; channel: string | null; revenue: number; orders: number }>()
+        for (const o of orders) {
+            const cid = o.customer?.id ?? 'walk-in'
+            const existing = map.get(cid)
+            if (existing) {
+                existing.revenue += Number(o.totalAmount)
+                existing.orders += 1
+            } else {
+                map.set(cid, {
+                    name: o.customer?.name ?? 'Khách Lẻ',
+                    channel: (o.customer as any)?.channel ?? null,
+                    revenue: Number(o.totalAmount),
+                    orders: 1,
+                })
+            }
+        }
+
+        return Array.from(map.values())
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, limit)
+    }, 60_000)
+}
+
+export async function getTopProducts(limit = 5) {
+    return cached('dashboard:top-products', async () => {
+        const now = new Date()
+        const from = startOfMonth(now)
+        const to = endOfMonth(now)
+
+        const lines = await prisma.salesOrderLine.findMany({
+            where: {
+                so: {
+                    status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                    createdAt: { gte: from, lte: to },
+                },
+            },
+            select: {
+                qtyOrdered: true,
+                unitPrice: true,
+                product: { select: { id: true, skuCode: true, productName: true } },
+            },
+        })
+
+        const map = new Map<string, { sku: string; name: string; qty: number; revenue: number }>()
+        for (const l of lines) {
+            const pid = l.product?.id ?? 'unknown'
+            const existing = map.get(pid)
+            const lineRevenue = Number(l.qtyOrdered) * Number(l.unitPrice)
+            if (existing) {
+                existing.qty += Number(l.qtyOrdered)
+                existing.revenue += lineRevenue
+            } else {
+                map.set(pid, {
+                    sku: l.product?.skuCode ?? '?',
+                    name: l.product?.productName ?? 'Unknown',
+                    qty: Number(l.qtyOrdered),
+                    revenue: lineRevenue,
+                })
+            }
+        }
+
+        return Array.from(map.values())
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, limit)
+    }, 60_000)
+}
+
+export async function getRevenueByChannel() {
+    return cached('dashboard:revenue-channel', async () => {
+        const now = new Date()
+        const from = startOfMonth(now)
+        const to = endOfMonth(now)
+
+        const orders = await prisma.salesOrder.findMany({
+            where: {
+                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                createdAt: { gte: from, lte: to },
+            },
+            select: { channel: true, totalAmount: true },
+        })
+
+        const map: Record<string, number> = {}
+        for (const o of orders) {
+            const ch = o.channel ?? 'OTHER'
+            map[ch] = (map[ch] ?? 0) + Number(o.totalAmount)
+        }
+
+        const total = Object.values(map).reduce((s, v) => s + v, 0)
+
+        const CHANNEL_LABELS: Record<string, string> = {
+            HORECA: 'HORECA',
+            WHOLESALE: 'Đại Lý',
+            VIP_RETAIL: 'VIP Retail',
+            POS: 'POS Showroom',
+            CONSIGNMENT: 'Ký Gửi',
+            OTHER: 'Khác',
+        }
+
+        const CHANNEL_COLORS: Record<string, string> = {
+            HORECA: '#87CBB9',
+            WHOLESALE: '#4A8FAB',
+            VIP_RETAIL: '#D4A853',
+            POS: '#5BA88A',
+            CONSIGNMENT: '#8AAEBB',
+            OTHER: '#4A6A7A',
+        }
+
+        return {
+            total,
+            channels: Object.entries(map)
+                .map(([ch, rev]) => ({
+                    channel: ch,
+                    label: CHANNEL_LABELS[ch] ?? ch,
+                    revenue: rev,
+                    pct: total > 0 ? Math.round((rev / total) * 100) : 0,
+                    color: CHANNEL_COLORS[ch] ?? '#4A6A7A',
+                }))
+                .sort((a, b) => b.revenue - a.revenue),
+        }
+    }, 60_000)
+}

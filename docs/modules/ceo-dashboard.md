@@ -302,8 +302,46 @@ RegulatedDocument (CNT) ────→ ComplianceWidget (DSH)
 | **Cron Auto-Expire** | `/api/cron/compliance` | ✅ Done |
 | Role-based sections | `ROLE_DASHBOARD` config | ✅ 8 roles |
 | Realtime channels | `getRealtimeChannels` | ✅ Done |
-| **Tờ Trình — Đề Xuất** | `getPendingProposalsForCEO` | ✅ **MỚI** |
-| **SO Approve/Reject** | `approveSalesOrder`, `rejectSalesOrder` | ✅ **MỚI** |
-| **PO Approve/Reject** | `updatePOStatus` (enhanced StatusStepper) | ✅ **MỚI** |
-| **Ma Trận Phân Quyền** | `/dashboard/settings/approval-matrix` | ✅ **MỚI** |
+| **Tờ Trình — Đề Xuất** | `getPendingProposalsForCEO` | ✅ Done |
+| **SO Approve/Reject** | `approveSalesOrder`, `rejectSalesOrder` | ✅ Done |
+| **PO Approve/Reject** | `updatePOStatus` (enhanced StatusStepper) | ✅ Done |
+| **Ma Trận Phân Quyền** | `/dashboard/settings/approval-matrix` | ✅ Done |
+| **Top Khách Hàng** | `getTopCustomers` | ✅ **MỚI v2** |
+| **Top Sản Phẩm** | `getTopProducts` | ✅ **MỚI v2** |
+| **Kênh Bán Hàng** | `getRevenueByChannel` | ✅ **MỚI v2** |
 
+---
+
+## Layout v2 — "Command Center" (08/03/2026)
+
+Dashboard được redesign từ 11 sections dọc → **5 layers logic**, giảm ~50% scroll:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║ LAYER 1: HEADLINE — 6 KPI Cards                            ║
+║ Doanh Thu | Lãi Gộp | Dòng Tiền | Tồn Kho | Công Nợ | Duyệt║
+╠══════════════════════════════════════════════════════════════╣
+║ LAYER 2: FINANCIAL PULSE — 2 cột                           ║
+║ [P&L Tháng]              | [Vị Thế Tiền Mặt]              ║
+╠══════════════════════════════════════════════════════════════╣
+║ LAYER 3: OPERATIONS — 3 cột                                ║
+║ [Container Tracker] | [AR Aging] | [Top KH + Top SP]       ║
+╠══════════════════════════════════════════════════════════════╣
+║ LAYER 4: CEO ACTION — Unified Approval Hub                  ║
+║ Tờ trình + Approval Engine + Pending SOs                    ║
+╠══════════════════════════════════════════════════════════════╣
+║ LAYER 5: DEEP ANALYSIS                                      ║
+║ [KPI Targets] + [Kênh Bán Hàng]                            ║
+║ [Revenue YoY] + [Cost Waterfall]                            ║
+║ [Cảnh Báo Tuân Thủ]                                        ║
+║ [Quick Links] (cuối trang)                                  ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### Thay đổi chính so với v1:
+- **4 → 6 KPI Cards**: Thêm Lãi Gộp, Dòng Tiền Ròng, Công Nợ Phải Thu
+- **P&L + Cash**: 2 cột ngang thay vì 3 cột (bỏ AR Aging ra riêng)
+- **Top KH/SP**: Widget mới — Top 5 Khách Hàng + Top 5 Sản Phẩm bán chạy
+- **Kênh Bán Hàng**: Breakdown doanh thu HORECA/Wholesale/VIP Retail
+- **Quick Links**: Di chuyển xuống cuối trang (không gây gián đoạn flow)
+- **Deep Analysis**: Gom YoY, Cost Waterfall, KPI, Legal vào 1 section
