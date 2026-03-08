@@ -124,6 +124,23 @@ Rượu vang cao cấp cần hình ảnh chuyên nghiệp cho Sales đem chào K
 - Tỷ lệ hàng bể vỡ / chất lượng không đạt từ NCC này
 - Điểm đánh giá tổng thể (Rating) → Dùng trong chiến lược đa dạng nguồn hàng
 
+### D. Supplier 360° Detail Drawer ✅ Đã Triển Khai
+
+Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded:
+
+| Tab | Nội dung | Server Action |
+|---|---|---|
+| **Tổng quan** | Scorecard + 4 KPI cards + Info 2 cột + Contacts + Addresses | `getSupplierDetail`, `getSupplierScorecard` |
+| **Đơn Hàng** | Danh sách PO + Sản phẩm NCC + Lịch sử giá | `getSupplierPOs`, `getSupplierProducts`, `getSupplierPricingHistory` |
+| **Tài Chính** | 3 AP stats + Danh sách AP Invoice | `getSupplierAPInvoices` |
+| **Hợp Đồng** | Danh sách contracts với NCC | `getSupplierContracts` |
+| **Lô Hàng** | Danh sách shipments: B/L, vessel, ETA, CIF | `getSupplierShipments` |
+| **Giấy Tờ** | Giấy tờ pháp lý gắn NCC (scope=SUPPLIER) — từ CNT module | `getSupplierRegDocs` (reg-doc-xmodule) |
+| **Ghi Chú** | CRM notes + Activity timeline | `getSupplierActivities`, `createSupplierActivity` |
+
+> **Cross-module:** Tab "Giấy Tờ" đọc dữ liệu từ CNT module (`RegulatedDocument` where `scope=SUPPLIER`).
+> NCC thiếu giấy tờ sẽ hiện cảnh báo khi tạo PO (via `checkSupplierCompliance()`).
+
 ---
 
 ## 3. 👤 Khách Hàng (Customer — Basic Profile)

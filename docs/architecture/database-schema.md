@@ -1,5 +1,5 @@
 # Database ERD — Wine ERP System
-**Phase 3 — Architecture Design** | 2026-03-04
+**Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-03-08
 
 > ERD này thể hiện toàn bộ mô hình dữ liệu của 14 module. Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
@@ -74,6 +74,7 @@ graph TB
     SLS -->|"Revenue"| DSH
     AGN -->|"ETA In-transit"| DSH
     FIN -->|"AR/AP"| DSH
+    CNT -->|"Compliance Warnings"| DSH
 ```
 
 ---
@@ -571,6 +572,50 @@ erDiagram
     %% CNT
     Contract }o--o| Supplier : "với NCC"
     Contract }o--o| Customer : "với KH"
+    RegulatedDocument ||--o{ RegDocFile : "có file"
+    RegulatedDocument ||--o{ RegDocAlert : "có cảnh báo"
+    RegulatedDocument }o--o| Supplier : "scope=NCC"
+    RegulatedDocument }o--o| Customer : "scope=KH"
+    RegulatedDocument }o--o| Product : "scope=SP"
+    RegulatedDocument }o--o| Shipment : "scope=Shipment"
+    RegulatedDocument }o--o| StockLot : "scope=Lot"
+    RegulatedDocument }o--o| Contract : "gắn HĐ"
+
+    RegulatedDocument {
+        id              uuid PK
+        doc_no          string UK
+        category        enum
+        type            enum
+        name            string
+        scope           enum
+        issue_date      date
+        expiry_date     date
+        issuing_authority string
+        status          enum
+        version         int
+        alert_days      int_array
+        supplier_id     uuid FK
+        customer_id     uuid FK
+        product_id      uuid FK
+        shipment_id     uuid FK
+        stock_lot_id    uuid FK
+        contract_id     uuid FK
+        renewed_from_id uuid FK
+    }
+    RegDocFile {
+        id              uuid PK
+        reg_doc_id      uuid FK
+        name            string
+        file_url        string
+        version         int
+    }
+    RegDocAlert {
+        id              uuid PK
+        reg_doc_id      uuid FK
+        alert_type      string
+        scheduled_at    datetime
+        sent_at         datetime
+    }
 
     %% TAX
     MarketPrice }o--|| Product : "giá của"
@@ -680,6 +725,10 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `mediatype` | PRODUCT_MAIN, LABEL_FRONT, LABEL_BACK, LIFESTYLE, GROUP, OWC_CASE, AWARD, WINERY |
 | `doc_type (approval)` | PURCHASE_ORDER, SALES_ORDER, WRITE_OFF, DISCOUNT_OVERRIDE, TAX_DECLARATION |
 | `journal_entry doc_type` | GOODS_RECEIPT, GOODS_ISSUE, SALES_INVOICE, PURCHASE_INVOICE, PAYMENT_IN, PAYMENT_OUT, ADJUSTMENT |
+| `reg_doc.category` | COMPANY_LICENSE, IMPORT_DOCUMENT, PRODUCT_CERTIFICATION, FACILITY_COMPLIANCE, TRADE_AGREEMENT |
+| `reg_doc.type` | 27 loại: DISTRIBUTION_LICENSE, FIRE_SAFETY_CERT, CERTIFICATE_OF_ORIGIN... (xem đặc tả CNT) |
+| `reg_doc.scope` | COMPANY, SUPPLIER, CUSTOMER, PRODUCT, SHIPMENT, LOT |
+| `reg_doc.status` | ACTIVE, EXPIRING, EXPIRED, REVOKED, RENEWAL_PENDING, DRAFT |
 
 ### D. Indexes Quan Trọng
 ```sql

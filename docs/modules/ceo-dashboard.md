@@ -38,6 +38,15 @@ ROW 4 — Action Required (CEO phải làm gì)
 │  • Write-off #W-042 — 3 chai bể vỡ              │
 │                              [Xem tất cả →]     │
 └─────────────────────────────────────────────────┘
+
+ROW 5 — Legal & Compliance (Cảnh báo tuân thủ pháp lý)
+┌─────────────────────────────────────────────────┐
+│ 🛡️ Cảnh Báo Tuân Thủ                    (3 GT) │
+│  🔴 PCCC - GCN Đủ ĐK        Quá hạn 5 ngày     │
+│  🟡 GP Phân phối rượu        Còn 22 ngày        │
+│  🟢 VSATTP                   Còn 87 ngày        │
+│                        [Xem tất cả →]            │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -231,4 +240,65 @@ Volume       ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  68%  
 KH Mới       ▓▓▓▓▓▓▓▓░░░░░░░░░░░░  40%   2 KH / KH 5
 ```
 
-*Last updated: 2026-03-04 | Wine ERP v4.0*
+*Last updated: 2026-03-08 | Wine ERP v6.0*
+
+---
+
+## 13. Legal & Compliance Widget (Row 5)
+
+> Triển khai 08/03/2026. Nằm sau Quick Links, trước My Sales.
+
+### Thiết kế
+- **Header:** Biểu tượng Shield + "Cảnh Báo Tuân Thủ" + badge `{count} giấy tờ`
+- **Badge color:** Đỏ nếu có item severity=critical, Vàng nếu chỉ có warning
+- **Action:** Nút "Xem tất cả →" dẫn về `/dashboard/contracts` (tab Giấy Tờ Có Hạn)
+- **Max hiển thị:** 8 items (sort by `expiryDate ASC`)
+
+### Mỗi row cảnh báo
+- **Icon:** ⚠️ AlertTriangle với màu theo severity
+- **Severity levels:**
+  - 🔴 **critical:** Đã quá hạn (daysRemaining ≤ 0) hoặc ≤ 7 ngày
+  - 🟡 **warning:** Còn 8-30 ngày
+  - 🟢 **info:** Còn 31-60 ngày  
+- **Thông tin:** Tên giấy tờ, loại (labels VN), mã số, ngày còn lại, message
+- **Color coding:** Border + icon + text color matching severity
+
+### Data Source
+- Server action: `getComplianceWarnings()` from `reg-doc-actions.ts`
+- Fetch condition: chỉ khi `dashConfig.sections` chứa `'legal_compliance'`
+- Auto-expire cron: `/api/cron/compliance` — chạy 1 AM hàng ngày
+- Roles được thấy: `CEO`, `THU_MUA`
+
+### Liên kết Module
+```
+RegulatedDocument (CNT) ────→ ComplianceWidget (DSH)
+         ↑                              ↑
+    reg-doc-actions.ts           page.tsx (dashboard)
+    reg-doc-constants.ts         actions.ts (DashboardSection)
+```
+
+---
+
+## 14. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 08/03/2026 — **Hoàn thiện 100%**
+
+| Widget / Tính năng | Server Action | Trạng thái |
+|---|---|---|
+| KPI Cards (4 cards) | `getDashboardStats` | ✅ Done |
+| Revenue Chart + YoY | `getMonthlyRevenue`, `getRevenueYoY` | ✅ Done |
+| P&L Summary | `getPLSummary` | ✅ Done |
+| Cash Position | `getCashPosition` | ✅ Done |
+| AR Aging Chart | `getARAgingChart` | ✅ Done |
+| Cost Waterfall | `getCostWaterfall` | ✅ Done |
+| Pending Approvals | `getPendingApprovalDetails` | ✅ Done |
+| Shipment Tracker | Inline in `page.tsx` | ✅ Done |
+| KPI Targets Progress | `getKpiSummary` | ✅ Done |
+| Quick Links (Role-based) | `getDashboardConfig` | ✅ Done |
+| Export Excel | `exportDashboardExcel` | ✅ Done |
+| My Sales (Sales Rep) | `getMySales` | ✅ Done |
+| Warehouse Summary | `getWarehouseDashboard` | ✅ Done |
+| **Legal & Compliance** | `getComplianceWarnings` | ✅ Done |
+| **Cron Auto-Expire** | `/api/cron/compliance` | ✅ Done |
+| Role-based sections | `ROLE_DASHBOARD` config | ✅ 8 roles |
+| Realtime channels | `getRealtimeChannels` | ✅ Done |

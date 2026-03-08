@@ -11,7 +11,7 @@ Mỗi module đều có "chủ quyền" đối với các bảng nhất định 
 | **SYS** | User, Role, Department, Approval Flow | MDM, PRC, WMS, SLS, FIN (Đọc quyền & duyệt) |
 | **MDM** | Product, Producer, Customer, Supplier, PriceList | PRC, WMS, SLS, CRM, CSG, TAX (Đọc Master Data) |
 | **TAX** | TaxRate, MarketPrice | PRC (Tính năng Landed Cost), SLS (Suggest Giá) |
-| **CNT** | Contract, ContractAmendment | PRC, SLS (Ràng buộc hợp đồng Mua/Bán) |
+| **CNT** | Contract, ContractAmendment, RegulatedDocument, RegDocFile, RegDocAlert | PRC, SLS (Ràng buộc hợp đồng Mua/Bán), DSH (Compliance Warnings), MDM (Supplier/Product docs tab) |
 | **PRC** | PurchaseOrder, PO Line, Shipment, Landed Cost | WMS (Tạo GR), FIN (Tạo AP Invoice) |
 | **WMS** | Warehouse, Location, StockLot, GR, DO | SLS (Kiểm tra tồn kho), FIN (Giá vốn hàng bán - COGS) |
 | **SLS** | SalesOrder, SO Line, Allocation Campaign/Quota | TRS (Giao hàng), FIN (Tạo AR Invoice), WMS (Xuất Kho) |
