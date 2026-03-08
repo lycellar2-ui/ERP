@@ -2590,3 +2590,18 @@ enum ProposalStatus {
   CLOSED
   CANCELLED
 }
+
+// =============================================================
+// SYS — Approval Configuration (Ma Trận Phân Quyền)
+// =============================================================
+
+model ApprovalConfig {
+  id        String   @id @default(cuid())
+  configKey String   @unique        // e.g., "proposal.BUDGET_REQUEST", "so.amount_threshold"
+  value     Json                    // Flexible JSON: { levels: [1,2,3] } or { threshold: 100000000 }
+  label     String?                // Human-readable description
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("approval_configs")
+}

@@ -9,7 +9,7 @@ import {
     ChevronRight, Building2, FileSignature, Globe, Briefcase,
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
-    Image as ImageIcon, Megaphone, Ship, ClipboardCheck
+    Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -79,6 +79,7 @@ const NAV_GROUPS = [
         label: 'Hệ Thống',
         items: [
             { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt' },
+            { href: '/dashboard/settings/approval-matrix', icon: Shield, label: 'Ma Trận Phân Quyền' },
             { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC' },
         ]
     }
