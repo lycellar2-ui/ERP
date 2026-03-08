@@ -114,44 +114,65 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
             {keys.length === 0 ? (
                 <p className="text-xs text-center py-6" style={{ color: '#4A6A7A' }}>Chưa có API Key. Nhấn "Thêm Key" để bắt đầu.</p>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
+                    <p className="text-[10px] uppercase font-semibold" style={{ color: '#4A6A7A' }}>
+                        {keys.length} KEY{keys.length > 1 ? 'S' : ''} ĐANG LƯU TRỮ
+                    </p>
                     {keys.map(k => {
                         const prov = PROVIDERS.find(p => p.value === k.provider)
                         return (
-                            <div key={k.id} className="rounded-md"
-                                style={{ background: '#142433', border: '1px solid #2A4355', opacity: k.isActive ? 1 : 0.5 }}>
-                                <div className="flex items-center gap-3 p-3">
-                                    <div className="w-2 h-2 rounded-full" style={{ background: k.isActive ? '#5BA88A' : '#E05252' }} />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold" style={{ color: prov?.color || '#E8F1F2' }}>{k.label}</p>
-                                        <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{k.maskedKey}</p>
+                            <div key={k.id} className="rounded-lg overflow-hidden"
+                                style={{ background: '#142433', border: `1px solid ${k.isActive ? '#2A4355' : 'rgba(224,82,82,0.3)'}` }}>
+
+                                {/* Key Info Row */}
+                                <div className="p-4">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                            style={{ background: k.isActive ? '#5BA88A' : '#E05252' }} />
+                                        <span className="text-sm font-bold" style={{ color: prov?.color || '#E8F1F2' }}>
+                                            {k.label}
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full"
+                                            style={{
+                                                background: k.isActive ? 'rgba(91,168,138,0.15)' : 'rgba(224,82,82,0.15)',
+                                                color: k.isActive ? '#5BA88A' : '#E05252',
+                                            }}>
+                                            {k.isActive ? '● Active' : '○ Inactive'}
+                                        </span>
                                     </div>
-                                    {k.monthlyBudget && (
-                                        <div className="text-right">
-                                            <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Budget</p>
-                                            <p className="text-[10px] font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#E05252' : '#87CBB9' }}>
-                                                ${k.usedThisMonth.toFixed(2)} / ${k.monthlyBudget}
+
+                                    <div className="grid grid-cols-2 gap-3 text-[11px]">
+                                        <div>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>API Key</p>
+                                            <p className="font-mono" style={{ color: '#8AAEBB' }}>{k.maskedKey || '••••••••••••'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Provider</p>
+                                            <p style={{ color: '#8AAEBB' }}>{k.provider}</p>
+                                        </div>
+                                        {k.monthlyBudget != null && (
+                                            <div>
+                                                <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Budget Tháng</p>
+                                                <p className="font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#E05252' : '#87CBB9' }}>
+                                                    ${k.usedThisMonth.toFixed(2)} / ${k.monthlyBudget}
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Lần Test Cuối</p>
+                                            <p style={{ color: '#8AAEBB' }}>
+                                                {k.lastTestedAt
+                                                    ? new Date(k.lastTestedAt).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                                    : 'Chưa test'}
                                             </p>
                                         </div>
-                                    )}
-                                    <div className="flex gap-1">
-                                        <button onClick={() => handleTest(k.id)} title="Test API Key" disabled={loading === k.id}
-                                            className="p-1.5 rounded" style={{ color: '#87CBB9' }}>
-                                            {loading === k.id ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                                        </button>
-                                        <button onClick={() => handleToggle(k.id)} title="Toggle"
-                                            className="p-1.5 rounded" style={{ color: k.isActive ? '#5BA88A' : '#4A6A7A' }}>
-                                            {k.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                                        </button>
-                                        <button onClick={() => handleDelete(k.id)} title="Delete"
-                                            className="p-1.5 rounded" style={{ color: '#E05252' }}>
-                                            <Trash2 size={12} />
-                                        </button>
                                     </div>
                                 </div>
+
+                                {/* Test Result */}
                                 {testResult && testResult.id === k.id && (
-                                    <div className="px-3 pb-2">
-                                        <p className="text-[10px] px-2 py-1 rounded" style={{
+                                    <div className="px-4 pb-2">
+                                        <p className="text-xs px-3 py-2 rounded" style={{
                                             background: testResult.ok ? 'rgba(91,168,138,0.1)' : 'rgba(224,82,82,0.1)',
                                             color: testResult.ok ? '#5BA88A' : '#E05252',
                                             border: `1px solid ${testResult.ok ? 'rgba(91,168,138,0.3)' : 'rgba(224,82,82,0.3)'}`,
@@ -160,6 +181,26 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                         </p>
                                     </div>
                                 )}
+
+                                {/* Action Buttons */}
+                                <div className="flex border-t" style={{ borderColor: '#2A4355' }}>
+                                    <button onClick={() => handleTest(k.id)} disabled={loading === k.id}
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
+                                        style={{ color: '#87CBB9', borderRight: '1px solid #2A4355' }}>
+                                        {loading === k.id ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+                                        Test Key
+                                    </button>
+                                    <button onClick={() => handleToggle(k.id)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
+                                        style={{ color: k.isActive ? '#D4A853' : '#5BA88A', borderRight: '1px solid #2A4355' }}>
+                                        {k.isActive ? <><ToggleRight size={14} /> Tắt</> : <><ToggleLeft size={14} /> Bật</>}
+                                    </button>
+                                    <button onClick={() => handleDelete(k.id)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
+                                        style={{ color: '#E05252' }}>
+                                        <Trash2 size={13} /> Xóa
+                                    </button>
+                                </div>
                             </div>
                         )
                     })}
