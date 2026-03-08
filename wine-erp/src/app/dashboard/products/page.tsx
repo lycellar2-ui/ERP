@@ -1,6 +1,7 @@
 ﻿import { Suspense } from 'react'
 import { getProducts, getProductStats, getProductCountries, getProductVintages } from './actions'
 import { ProductsClient } from './ProductsClient'
+import { AICatalogAnalysis } from './AICatalogAnalysis'
 
 export const metadata = { title: 'Danh Mục Sản Phẩm | Wine ERP' }
 
@@ -20,6 +21,7 @@ export default async function ProductsPage() {
 
     return (
         <div>
+            <AICatalogAnalysis />
             <Suspense fallback={<ProductsPageSkeleton />}>
                 <ProductsClient
                     initialRows={rows}
@@ -32,6 +34,7 @@ export default async function ProductsPage() {
         </div>
     )
 }
+
 
 function ProductsPageSkeleton() {
     return (

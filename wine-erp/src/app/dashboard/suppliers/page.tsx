@@ -1,5 +1,6 @@
 import { getSuppliers, getSupplierStats } from './actions'
 import { SuppliersClient } from './SuppliersClient'
+import { AICatalogAnalysis } from '../products/AICatalogAnalysis'
 
 export const metadata = { title: 'Nhà Cung Cấp | Wine ERP' }
 
@@ -10,5 +11,10 @@ export default async function SuppliersPage() {
             total: 0, active: 0, countries: 0, avgLeadTime: 45, topTypes: [] as any[],
         })),
     ])
-    return <SuppliersClient initialRows={data.rows} initialTotal={data.total} stats={stats} />
+    return (
+        <>
+            <AICatalogAnalysis />
+            <SuppliersClient initialRows={data.rows} initialTotal={data.total} stats={stats} />
+        </>
+    )
 }
