@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { withRetry } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { encryptApiKey, maskApiKey } from '@/lib/encryption'
 
@@ -20,7 +21,7 @@ export type ApiKeyRow = {
 }
 
 export async function getApiKeys(): Promise<ApiKeyRow[]> {
-    const keys = await prisma.aiApiKey.findMany({ orderBy: { provider: 'asc' } })
+    const keys = await withRetry(() => prisma.aiApiKey.findMany({ orderBy: { provider: 'asc' } }))
     const rows: ApiKeyRow[] = []
     for (const k of keys) {
         rows.push({
@@ -45,7 +46,7 @@ export async function saveApiKey(input: {
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const { encrypted, iv } = await encryptApiKey(input.apiKey)
-        await prisma.aiApiKey.upsert({
+        await withRetry(() => prisma.aiApiKey.upsert({
             where: { provider: input.provider },
             create: {
                 provider: input.provider,
@@ -61,10 +62,11 @@ export async function saveApiKey(input: {
                 monthlyBudget: input.monthlyBudget ?? null,
                 lastTestedAt: null,
             },
-        })
+        }))
         revalidatePath('/dashboard/ai')
         return { success: true }
     } catch (err: any) {
+        console.error('[AI Vault] saveApiKey error:', err.message)
         return { success: false, error: err.message }
     }
 }
@@ -84,10 +86,38 @@ export async function deleteApiKey(id: string): Promise<{ success: boolean }> {
 }
 
 export async function testApiKey(id: string): Promise<{ success: boolean; error?: string }> {
-    // Mark as tested (real test would call the API)
-    await prisma.aiApiKey.update({ where: { id }, data: { lastTestedAt: new Date() } })
-    revalidatePath('/dashboard/ai')
-    return { success: true }
+    try {
+        const key = await withRetry(() => prisma.aiApiKey.findUnique({ where: { id } }))
+        if (!key) return { success: false, error: 'Key not found' }
+
+        const { decryptApiKey } = await import('@/lib/encryption')
+        const plainKey = await decryptApiKey(key.encryptedKey, key.iv)
+
+        // Actually test via API call
+        if (key.provider === 'gemini') {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${plainKey}`
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: 'Reply with exactly: OK' }] }],
+                    generationConfig: { maxOutputTokens: 10 },
+                }),
+            })
+            if (!response.ok) {
+                const errText = await response.text()
+                console.error('[AI Vault] testApiKey API error:', response.status, errText.slice(0, 200))
+                return { success: false, error: `API Error ${response.status}: ${errText.slice(0, 200)}` }
+            }
+        }
+
+        await withRetry(() => prisma.aiApiKey.update({ where: { id }, data: { lastTestedAt: new Date() } }))
+        revalidatePath('/dashboard/ai')
+        return { success: true }
+    } catch (err: any) {
+        console.error('[AI Vault] testApiKey error:', err.message)
+        return { success: false, error: err.message }
+    }
 }
 
 // ═══════════════════════════════════════════════════

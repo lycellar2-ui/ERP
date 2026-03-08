@@ -81,7 +81,9 @@ export async function withRetry<T>(
                 message.includes('Max client connections reached') ||
                 message.includes('connection timeout') ||
                 message.includes('ECONNREFUSED') ||
-                message.includes('too many connections')
+                message.includes('too many connections') ||
+                message.includes('self-signed certificate') ||
+                message.includes('TLS connection')
 
             if (isConnectionError && attempt < retries) {
                 console.warn(

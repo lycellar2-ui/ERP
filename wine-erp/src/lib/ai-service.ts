@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 
 // ═══════════════════════════════════════════════════
 // AI Service — Gemini API Wrapper
+// Key Resolution: DB Vault (AES-256) → env fallback
 // ═══════════════════════════════════════════════════
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
@@ -15,6 +16,23 @@ export interface AIGenerateOptions {
     maxTokens?: number
 }
 
+// ── Resolve API Key from DB (encrypted) or env ────
+async function resolveGeminiKey(): Promise<string | null> {
+    // 1. Try DB vault first (AES-256-GCM encrypted)
+    try {
+        const dbKey = await prisma.aiApiKey.findFirst({
+            where: { provider: 'gemini', isActive: true },
+        })
+        if (dbKey) {
+            const { decryptApiKey } = await import('./encryption')
+            return await decryptApiKey(dbKey.encryptedKey, dbKey.iv)
+        }
+    } catch { /* DB lookup/decrypt failed, try env fallback */ }
+
+    // 2. Fallback to env var (for dev/CI or when DB not available)
+    return process.env.GEMINI_API_KEY || null
+}
+
 // ── Call Gemini API ───────────────────────────────
 export async function callGemini(options: AIGenerateOptions): Promise<{
     success: boolean
@@ -22,11 +40,15 @@ export async function callGemini(options: AIGenerateOptions): Promise<{
     error?: string
     tokensUsed?: number
 }> {
+    const startTime = Date.now()
+
     try {
-        // Get API key from environment or DB
-        const apiKey = process.env.GEMINI_API_KEY
+        const apiKey = await resolveGeminiKey()
         if (!apiKey) {
-            return { success: false, error: 'GEMINI_API_KEY not configured' }
+            return {
+                success: false,
+                error: 'Chưa cấu hình Gemini API Key. Vào AI Settings → API Key Vault → Thêm Key Gemini.',
+            }
         }
 
         const contents = []
@@ -55,18 +77,60 @@ export async function callGemini(options: AIGenerateOptions): Promise<{
         })
 
         if (!response.ok) {
-            const err = await response.text()
-            return { success: false, error: `Gemini API Error: ${response.status} — ${err}` }
+            const errBody = await response.text()
+            await logRunSafe(0, 0, Date.now() - startTime, false, `API ${response.status}: ${errBody.slice(0, 200)}`)
+            return { success: false, error: `Gemini API Error: ${response.status} — ${errBody.slice(0, 300)}` }
         }
 
         const data = await response.json()
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+        const inputTokens = data.usageMetadata?.promptTokenCount ?? 0
+        const outputTokens = data.usageMetadata?.candidatesTokenCount ?? 0
         const tokensUsed = data.usageMetadata?.totalTokenCount ?? 0
+
+        // Log successful run + update budget
+        await logRunSafe(inputTokens, outputTokens, Date.now() - startTime, true)
 
         return { success: true, text, tokensUsed }
     } catch (err: any) {
+        await logRunSafe(0, 0, Date.now() - startTime, false, err.message)
         return { success: false, error: err.message }
     }
+}
+
+// ── Silent usage logger (never throws) ────────────
+async function logRunSafe(
+    inputTokens: number,
+    outputTokens: number,
+    durationMs: number,
+    success: boolean,
+    error?: string,
+) {
+    try {
+        // Gemini 2.0 Flash pricing: ~$0.10/1M input, ~$0.40/1M output
+        const costUsd = (inputTokens * 0.0000001) + (outputTokens * 0.0000004)
+
+        await prisma.aiPromptRun.create({
+            data: {
+                provider: 'gemini',
+                model: 'gemini-2.0-flash',
+                inputTokens,
+                outputTokens,
+                costUsd,
+                durationMs,
+                success,
+                error: error?.slice(0, 500),
+            },
+        })
+
+        // Update monthly budget tracking
+        if (costUsd > 0) {
+            await prisma.aiApiKey.updateMany({
+                where: { provider: 'gemini' },
+                data: { usedThisMonth: { increment: costUsd } },
+            })
+        }
+    } catch { /* never fail on logging */ }
 }
 
 // ── Generate Product Description ──────────────────
@@ -170,7 +234,7 @@ Yêu cầu:
 }
 
 // ── CEO Monthly Summary ───────────────────────────
-export async function generateCEOSummary(): Promise<{
+export async function generateCEONarrative(): Promise<{
     success: boolean
     summary?: string
     error?: string

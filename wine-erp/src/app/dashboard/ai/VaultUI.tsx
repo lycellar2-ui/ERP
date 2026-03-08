@@ -16,20 +16,27 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
     const [showAdd, setShowAdd] = useState(false)
     const [loading, setLoading] = useState('')
     const [form, setForm] = useState({ provider: 'gemini', label: '', apiKey: '', monthlyBudget: '' })
+    const [testResult, setTestResult] = useState<{ id: string; ok: boolean; msg?: string } | null>(null)
+    const [saveError, setSaveError] = useState('')
 
     const refresh = () => window.location.reload()
 
     const handleSave = async () => {
         setLoading('save')
-        await saveApiKey({
+        setSaveError('')
+        const res = await saveApiKey({
             provider: form.provider,
             label: form.label || PROVIDERS.find(p => p.value === form.provider)?.label || form.provider,
             apiKey: form.apiKey,
             monthlyBudget: form.monthlyBudget ? Number(form.monthlyBudget) : undefined,
         })
+        setLoading('')
+        if (!res.success) {
+            setSaveError(res.error || 'Lỗi không xác định khi lưu key')
+            return
+        }
         setForm({ provider: 'gemini', label: '', apiKey: '', monthlyBudget: '' })
         setShowAdd(false)
-        setLoading('')
         refresh()
     }
 
@@ -37,9 +44,11 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
     const handleDelete = async (id: string) => { if (confirm('Xóa API Key?')) { await deleteApiKey(id); refresh() } }
     const handleTest = async (id: string) => {
         setLoading(id)
-        await testApiKey(id)
+        setTestResult(null)
+        const res = await testApiKey(id)
+        setTestResult({ id, ok: res.success, msg: res.error })
         setLoading('')
-        refresh()
+        if (res.success) refresh()
     }
 
     return (
@@ -48,7 +57,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
                     <Key size={16} style={{ color: '#D4A853' }} /> API Key Vault
                 </h3>
-                <button onClick={() => setShowAdd(!showAdd)}
+                <button onClick={() => { setShowAdd(!showAdd); setSaveError('') }}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
                     style={{ background: '#87CBB9', color: '#0A1926' }}>
                     <Plus size={12} /> Thêm Key
@@ -82,6 +91,14 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                             className="w-full px-3 py-2 text-xs rounded outline-none font-mono"
                             style={{ background: '#0A1926', border: '1px solid #2A4355', color: '#E8F1F2' }} />
                     </div>
+                    {saveError && (
+                        <div className="text-xs p-2 rounded" style={{
+                            background: 'rgba(224,82,82,0.1)', color: '#E05252',
+                            border: '1px solid rgba(224,82,82,0.3)',
+                        }}>
+                            ❌ {saveError}
+                        </div>
+                    )}
                     <div className="flex gap-2 justify-end">
                         <button onClick={() => setShowAdd(false)} className="text-xs px-4 py-2" style={{ color: '#4A6A7A' }}>Hủy</button>
                         <button onClick={handleSave} disabled={!form.apiKey || loading === 'save'}
@@ -101,35 +118,48 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                     {keys.map(k => {
                         const prov = PROVIDERS.find(p => p.value === k.provider)
                         return (
-                            <div key={k.id} className="flex items-center gap-3 p-3 rounded-md"
+                            <div key={k.id} className="rounded-md"
                                 style={{ background: '#142433', border: '1px solid #2A4355', opacity: k.isActive ? 1 : 0.5 }}>
-                                <div className="w-2 h-2 rounded-full" style={{ background: k.isActive ? '#5BA88A' : '#E05252' }} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold" style={{ color: prov?.color || '#E8F1F2' }}>{k.label}</p>
-                                    <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{k.maskedKey}</p>
+                                <div className="flex items-center gap-3 p-3">
+                                    <div className="w-2 h-2 rounded-full" style={{ background: k.isActive ? '#5BA88A' : '#E05252' }} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold" style={{ color: prov?.color || '#E8F1F2' }}>{k.label}</p>
+                                        <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{k.maskedKey}</p>
+                                    </div>
+                                    {k.monthlyBudget && (
+                                        <div className="text-right">
+                                            <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Budget</p>
+                                            <p className="text-[10px] font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#E05252' : '#87CBB9' }}>
+                                                ${k.usedThisMonth.toFixed(2)} / ${k.monthlyBudget}
+                                            </p>
+                                        </div>
+                                    )}
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleTest(k.id)} title="Test API Key" disabled={loading === k.id}
+                                            className="p-1.5 rounded" style={{ color: '#87CBB9' }}>
+                                            {loading === k.id ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                                        </button>
+                                        <button onClick={() => handleToggle(k.id)} title="Toggle"
+                                            className="p-1.5 rounded" style={{ color: k.isActive ? '#5BA88A' : '#4A6A7A' }}>
+                                            {k.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                                        </button>
+                                        <button onClick={() => handleDelete(k.id)} title="Delete"
+                                            className="p-1.5 rounded" style={{ color: '#E05252' }}>
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
                                 </div>
-                                {k.monthlyBudget && (
-                                    <div className="text-right">
-                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Budget</p>
-                                        <p className="text-[10px] font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#E05252' : '#87CBB9' }}>
-                                            ${k.usedThisMonth.toFixed(2)} / ${k.monthlyBudget}
+                                {testResult && testResult.id === k.id && (
+                                    <div className="px-3 pb-2">
+                                        <p className="text-[10px] px-2 py-1 rounded" style={{
+                                            background: testResult.ok ? 'rgba(91,168,138,0.1)' : 'rgba(224,82,82,0.1)',
+                                            color: testResult.ok ? '#5BA88A' : '#E05252',
+                                            border: `1px solid ${testResult.ok ? 'rgba(91,168,138,0.3)' : 'rgba(224,82,82,0.3)'}`,
+                                        }}>
+                                            {testResult.ok ? '✅ API Key hoạt động!' : `❌ ${testResult.msg}`}
                                         </p>
                                     </div>
                                 )}
-                                <div className="flex gap-1">
-                                    <button onClick={() => handleTest(k.id)} title="Test" disabled={loading === k.id}
-                                        className="p-1.5 rounded" style={{ color: '#87CBB9' }}>
-                                        {loading === k.id ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                                    </button>
-                                    <button onClick={() => handleToggle(k.id)} title="Toggle"
-                                        className="p-1.5 rounded" style={{ color: k.isActive ? '#5BA88A' : '#4A6A7A' }}>
-                                        {k.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                                    </button>
-                                    <button onClick={() => handleDelete(k.id)} title="Delete"
-                                        className="p-1.5 rounded" style={{ color: '#E05252' }}>
-                                        <Trash2 size={12} />
-                                    </button>
-                                </div>
                             </div>
                         )
                     })}
