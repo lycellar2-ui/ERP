@@ -18,6 +18,8 @@
 9. [BUG-009: Build Fail — Many-to-Many Relation Query Sai](#bug-009-build-fail--many-to-many-relation-query-sai)
 10. [BUG-010: Quotation Drawer Infinite Loading — Prisma Decimal Serialization](#bug-010-quotation-drawer-infinite-loading--prisma-decimal-serialization)
 11. [BUG-011: Vercel Production Crash — Module-Level SDK Init Without API Key](#bug-011-vercel-production-crash--module-level-sdk-init-without-api-key)
+12. [BUG-012: Unauthenticated Server Actions — Data Mutation Without Auth Check](#bug-012-unauthenticated-server-actions--data-mutation-without-auth-check)
+13. [BUG-013: Prisma Decimal Serialization Across All Modules](#bug-013-prisma-decimal-serialization-across-all-modules)
 
 ---
 
@@ -379,31 +381,6 @@ page: '/dashboard/allocation'
 
 ---
 
-## Quick Reference — All Rules
-
-| # | Rule | Context |
-|---|------|---------|
-| 1 | Không chạy đồng thời dev + seed + prisma CLI | Connection pool |
-| 2 | Check zombie processes trước khi debug | Connection pool |
-| 3 | `pg.Pool({ max: 5 })` + pgBouncer (port 6543) | Connection pool |
-| 4 | Mọi `/dashboard/*` PHẢI có `loading.tsx` | Navigation UX |
-| 5 | Layout = Server Component, state = tách Client | Architecture |
-| 6 | READ functions → `cached()` từ `@/lib/cache` | Performance |
-| 7 | `staleTimes` trong next.config.ts là bắt buộc | Performance |
-| 8 | Không dùng `Set-Content`, dùng `WriteAllText` UTF-8 | Encoding |
-| 9 | Check encoding sau khi sửa file bằng PowerShell | Encoding |
-| 10 | Vercel PHẢI dùng Transaction Pooler (6543+pgBouncer) | Connection pool |
-| 11 | Test `npx next build` sau thay đổi page config | Build |
-| 12 | Mọi export trong `'use server'` file PHẢI là `async` | Server Actions |
-| 13 | SWR background refresh phải có dedup guard | Performance |
-| 14 | ISR revalidation intervals phải stagger (30/45/60/90s) | Performance |
-| 15 | Stat cards KHÔNG tính từ `rows` — dùng `get{Module}Stats()` | Data Accuracy |
-| 16 | Module mới có stat cards → tạo `get{Module}Stats()` từ đầu | Data Accuracy |
-| 17 | **Git commit message NGẮN GỌN** (< 72 chars), không dùng body dài | Git Workflow |
-| 18 | Enum values PHẢI khớp Prisma schema (check trước khi dùng) | Schema |
-| 19 | **Many-to-many relation phải query qua pivot table** | Prisma Query |
-| 20 | **Server Actions trả Prisma data PHẢI serialize bằng `JSON.parse(JSON.stringify())`** | Serialization |
-| 21 | **Server Actions nên return `{ success, data/error }` thay vì throw** | Error Handling |
 | 22 | **KHÔNG khởi tạo SDK ở module-level nếu env var có thể missing** | SDK Init |
 
 ---
@@ -581,3 +558,147 @@ function getResend() {
 > ⚠️ **RULE 22: KHÔNG BAO GIỜ khởi tạo SDK ở module-level nếu env var có thể missing.**
 > Constructor throw = crash toàn bộ process. Dùng lazy init.
 > Áp dụng cho: Resend, Stripe, Twilio, SendGrid, và mọi third-party SDK.
+
+---
+
+## BUG-012: Unauthenticated Server Actions — Data Mutation Without Auth Check
+
+**Ngày:** 2026-03-08
+**Severity:** 🔴 Critical — Bảo mật
+
+### Triệu chứng
+- Server Actions (create, update, delete) không kiểm tra user session
+- Bất kỳ ai gửi POST request đến endpoint cũng có thể tạo/sửa/xóa dữ liệu
+- Phát hiện trong deep audit: 30+ mutation functions thiếu auth guard
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Không có auth middleware** | Next.js App Router không auto-verify session cho Server Actions |
+| **Copy-paste pattern** | Mọi module đều copy cùng pattern: `try { ... } catch` mà không thêm auth |
+| **Giả định sai** | Nghĩ rằng Supabase Auth middleware đã bảo vệ mọi route |
+
+### Cách fix
+
+```typescript
+// src/lib/session.ts — Tạo auth guard helper
+export async function requireAuth(): Promise<SessionUser> {
+    const user = await getCurrentUser()
+    if (!user) throw new Error('Bạn chưa đăng nhập.')
+    return user
+}
+
+// Áp dụng ở đầu mỗi mutation:
+export async function createSalesOrder(input: SOCreateInput) {
+    try {
+        await requireAuth()  // ← Thêm dòng này
+        // ... business logic
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+```
+
+### Files đã sửa
+- `src/lib/session.ts` — thêm `requireAuth()`, `requirePermission()`
+- 5 module actions: sales, procurement, suppliers, customers, products
+
+### Bài học
+
+> ⚠️ **RULE 23: MỌI mutation Server Action PHẢI gọi `await requireAuth()` ở đầu try block.**
+> Pattern: `throw` → caught by `try/catch` → `return { success: false, error }`.
+> Không bao giờ dùng Supabase Auth middleware thay thế cho application-level auth.
+
+---
+
+## BUG-013: Prisma Decimal Serialization Across All Modules
+
+**Ngày:** 2026-03-08
+**Severity:** 🟠 Medium — Gây crash khi truyền data Server→Client
+
+### Triệu chứng
+- Nhiều trang crash khi render do `Decimal` objects không serializable
+- Chỉ xảy ra với models có Decimal fields: `unitPrice`, `qtyOrdered`, `totalAmount`, etc.
+- Lỗi first thấy ở Quotation drawer (BUG-010), nhưng pattern tồn tại ở 30+ functions
+
+### Nguyên nhân gốc rễ
+
+`return prisma.model.findMany(...)` trả raw Prisma objects chứa `Decimal` instances.
+Next.js không thể serialize `Decimal` → crash hoặc data loss.
+
+### Cách fix — Centralized Utility
+
+```typescript
+// src/lib/serialize.ts
+export function serialize<T>(data: T): T {
+    return JSON.parse(JSON.stringify(data, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+    ))
+}
+
+// Usage pattern:
+export async function getStockLots() {
+    const raw = await prisma.stockLot.findMany({ ... })
+    return serialize(raw)    // ← Safe for Server→Client
+}
+```
+
+### Files đã sửa (10 files, 15+ functions)
+
+| Module | Functions |
+|--------|-----------|
+| sales | `getSalesOrderDetail`, `getSalesOrderDetailWithMargin` |
+| warehouse | `getPOsForReceiving`, `getSOsForDelivery`, `getStockCountSessions`, `getQuarantinedLots` |
+| finance | `getAccountingPeriods` |
+| returns | `getSOOptionsForReturn`, `getSOLinesForReturn` |
+| contracts | `getContractAmendments`, `getContractDocuments` |
+| tax | `getProductPriceHistory` |
+| settings | `getPermissions`, `getApprovalTemplates` |
+| agency | `getActiveShipments` |
+| stamps | `getStampPurchases` |
+
+### Bài học
+
+> ⚠️ **RULE 24: Tất cả `return prisma.*` trong server actions PHẢI wrap trong `serialize()`.**
+> Import `serialize` từ `@/lib/serialize`. Pattern:
+> ```typescript
+> const raw = await prisma.model.findMany({...})
+> return serialize(raw)
+> ```
+
+> ⚠️ **RULE 25: Khi functions đã `.map()` với `Number()` conversion, KHÔNG cần serialize thêm.**
+> Ví dụ: `getContracts()` đã có `value: Number(c.value)` → OK.
+> Chỉ cần serialize khi return raw Prisma objects trực tiếp.
+
+---
+
+## Quick Reference — All Rules (Updated)
+
+| # | Rule | Context |
+|---|------|---------| 
+| 1 | Không chạy đồng thời dev + seed + prisma CLI | Connection pool |
+| 2 | Check zombie processes trước khi debug | Connection pool |
+| 3 | `pg.Pool({ max: 5 })` + pgBouncer (port 6543) | Connection pool |
+| 4 | Mọi `/dashboard/*` PHẢI có `loading.tsx` | Navigation UX |
+| 5 | Layout = Server Component, state = tách Client | Architecture |
+| 6 | READ functions → `cached()` từ `@/lib/cache` | Performance |
+| 7 | `staleTimes` trong next.config.ts là bắt buộc | Performance |
+| 8 | Không dùng `Set-Content`, dùng `WriteAllText` UTF-8 | Encoding |
+| 9 | Check encoding sau khi sửa file bằng PowerShell | Encoding |
+| 10 | Vercel PHẢI dùng Transaction Pooler (6543+pgBouncer) | Connection pool |
+| 11 | Test `npx next build` sau thay đổi page config | Build |
+| 12 | Mọi export trong `'use server'` file PHẢI là `async` | Server Actions |
+| 13 | SWR background refresh phải có dedup guard | Performance |
+| 14 | ISR revalidation intervals phải stagger (30/45/60/90s) | Performance |
+| 15 | Stat cards KHÔNG tính từ `rows` — dùng `get{Module}Stats()` | Data Accuracy |
+| 16 | Module mới có stat cards → tạo `get{Module}Stats()` từ đầu | Data Accuracy |
+| 17 | **Git commit message NGẮN GỌN** (< 72 chars), không dùng body dài | Git Workflow |
+| 18 | Enum values PHẢI khớp Prisma schema (check trước khi dùng) | Schema |
+| 19 | **Many-to-many relation phải query qua pivot table** | Prisma Query |
+| 20 | **Server Actions trả Prisma data PHẢI serialize bằng `serialize()` từ `@/lib/serialize`** | Serialization |
+| 21 | **Server Actions nên return `{ success, data/error }` thay vì throw** | Error Handling |
+| 22 | **KHÔNG khởi tạo SDK ở module-level nếu env var có thể missing** | SDK Init |
+| 23 | **MỌI mutation Server Action PHẢI gọi `await requireAuth()`** | Security |
+| 24 | **`return prisma.*` PHẢI wrap trong `serialize()`** | Serialization |
+| 25 | **Functions có `.map()` + `Number()` conversion thì KHÔNG cần serialize thêm** | Serialization |

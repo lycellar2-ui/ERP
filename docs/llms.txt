@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-03-08 20:00
+> Last updated: 2026-03-08 23:20
 > Status: Production — 26 modules, 111 DB models, 33 dashboard routes
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 22 rules from 11 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 25 rules from 13 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
 
 ## Tech Stack (Verified)
@@ -46,6 +46,10 @@ PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
 - pgBouncer Transaction mode (port 6543) for Vercel serverless
 - ISR stagger: Dashboard 30s, frequent 45s, normal 60s, rare 90s
 - Server-side LRU cache (500 entries max) with module-prefix invalidation
+- Auth Guards: requireAuth() + requirePermission() for all mutations
+- Serialization: serialize() utility (src/lib/serialize.ts) for Prisma Decimal/BigInt
+- Structured error returns: { success, data/error } — never throw from Server Actions
+- Env validation: crash-early if critical vars missing (src/lib/env.ts)
 
 ## Documentation Update Rules
 When making code changes, AI agents MUST update:

@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 22 Rules rút ra từ 11 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 25 Rules rút ra từ 13 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -102,8 +102,8 @@
 | Phase 1 | Phân tích Nghiệp vụ (Business Analysis) | ✅ Hoàn thành |
 | Phase 2 | Lập Kế hoạch & Task Breakdown | ✅ Hoàn thành |
 | Phase 3 | Architecture & Database Schema | ✅ Hoàn thành |
-| Phase 4 | Implementation (8 sub-phases) | ✅ ~99% |
-| Phase 5 | Testing & Production Hardening | ✅ Hoàn thành |
+| Phase 4 | Implementation (8 sub-phases) | ✅ Hoàn thành |
+| Phase 5 | Testing, Security Audit & Production Hardening | ✅ Hoàn thành |
 
 ---
 
@@ -142,6 +142,8 @@
 | **Connection Pool** | pgBouncer Transaction mode (port 6543), `max: 5` |
 | **Caching** | 4-layer: Router Cache + ISR (stagger 30/45/60/90s) + SWR + Server-side LRU |
 | **Validation** | Zod 23+ schemas cho 7+ modules |
+| **Auth Guards** | `requireAuth()` + `requirePermission()` cho mọi mutation |
+| **Serialization** | `serialize()` utility cho Prisma Decimal/BigInt |
 | **Mobile** | PWA + Responsive sidebar, Camera scanner for WMS |
 | **Realtime** | Supabase Realtime — role-based channels |
 | **Kiến trúc** | Modular-first: Mỗi module độc lập |
@@ -176,7 +178,7 @@ docs/
 ├── wine-erp-testing.md            ← Kết quả unit test
 ├── wine-erp-performance-test-plan.md ← Kế hoạch test performance
 ├── file-storage-plan.md           ← ImgBB + Supabase Storage
-├── bug-fix-lessons.md             ← 19 Rules từ 9 bugs
+├── bug-fix-lessons.md             ← 25 Rules từ 13 bugs
 ├── llms.txt                       ← AI context index
 │
 ├── architecture/
@@ -227,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-08 21:40 | Wine ERP v6.1 — 26 modules, 111 models, 33 routes*
+*Last updated: 2026-03-08 23:20 | Wine ERP v6.2 — 26 modules, 111 models, 33 routes, 25 dev rules*
