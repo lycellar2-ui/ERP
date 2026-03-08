@@ -1,5 +1,5 @@
 import { prisma, withRetry } from '@/lib/db'
-import { callGemini } from '@/lib/ai-service'
+import { callGemini, resolvePromptTemplate } from '@/lib/ai-service'
 import { NextResponse } from 'next/server'
 import { isModuleAiEnabled } from '@/app/dashboard/ai/ai-actions'
 
@@ -404,11 +404,32 @@ Yêu cầu:
 - Với sản phẩm CHƯA CÓ DATA BÁN HÀNG: dùng kiến thức thị trường + đặc tính sản phẩm để đánh giá tiềm năng
 - Tone: chiến lược, data-driven nhưng kết hợp market intuition`
 
+        // ── Resolve prompt from DB or fallback ──
+        const dbPrompt = await resolvePromptTemplate('catalog-analysis')
+
+        const DEFAULT_SYSTEM = 'You are a Wine Portfolio Director and market analyst with deep expertise in the Vietnamese wine import market and global wine industry trends. Analyze product catalogs and suppliers with both data-driven insights and market intelligence. Write in Vietnamese for a CEO audience.'
+
+        let finalPrompt: string
+        let finalSystem: string
+        let finalTemp = 0.5
+        let finalMax = 8192
+
+        if (dbPrompt) {
+            finalSystem = dbPrompt.systemPrompt
+            finalPrompt = dbPrompt.userTemplate
+                .replace('{{data}}', `===== DANH MỤC SẢN PHẨM (${totalProducts}) =====\n${productList}\n\n===== NHÀ CUNG CẤP (${totalSuppliers}) =====\n${supplierList}\n\n===== NHÀ SẢN XUẤT =====\n${producerList}\n\n===== VÙNG & APPELLATION =====\n${regionList}\n\n===== THỐNG KÊ =====\nProducts: ${totalProducts} | Revenue: ${totalProductRevenue.toLocaleString()} VND | Stock: ${totalStock} | Suppliers: ${totalSuppliers} | Spending: ${totalSpending.toLocaleString()} VND`)
+            finalTemp = dbPrompt.temperature
+            finalMax = dbPrompt.maxTokens
+        } else {
+            finalSystem = DEFAULT_SYSTEM
+            finalPrompt = prompt
+        }
+
         const result = await callGemini({
-            prompt,
-            systemPrompt: 'You are a Wine Portfolio Director and market analyst with deep expertise in the Vietnamese wine import market and global wine industry trends. Analyze product catalogs and suppliers with both data-driven insights and market intelligence. Write in Vietnamese for a CEO audience.',
-            temperature: 0.5,
-            maxTokens: 8192,
+            prompt: finalPrompt,
+            systemPrompt: finalSystem,
+            temperature: finalTemp,
+            maxTokens: finalMax,
         })
 
         return NextResponse.json({

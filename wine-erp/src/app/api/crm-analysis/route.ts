@@ -1,5 +1,5 @@
 import { prisma, withRetry } from '@/lib/db'
-import { callGemini } from '@/lib/ai-service'
+import { callGemini, resolvePromptTemplate } from '@/lib/ai-service'
 import { NextResponse } from 'next/server'
 import { isModuleAiEnabled } from '@/app/dashboard/ai/ai-actions'
 
@@ -284,11 +284,32 @@ Yêu cầu:
 - Tone: chiến lược, data-driven, actionable
 - Nêu bật rủi ro → đề xuất giải pháp ngay`
 
+        // ── Resolve prompt from DB or fallback ──
+        const dbPrompt = await resolvePromptTemplate('crm-analysis')
+
+        const DEFAULT_SYSTEM = 'You are a Chief Revenue Officer analyzing CRM data for a luxury wine import company CEO. Be strategic, data-driven, and provide actionable insights with specific customer names and numbers.'
+
+        let finalPrompt: string
+        let finalSystem: string
+        let finalTemp = 0.4
+        let finalMax = 8192
+
+        if (dbPrompt) {
+            finalSystem = dbPrompt.systemPrompt
+            finalPrompt = dbPrompt.userTemplate
+                .replace('{{data}}', `${customerList}\n\n=== CƠ HỘI BÁN HÀNG ĐANG MỞ ===\n${oppList || 'Không có cơ hội nào'}\n\n===== THỐNG KÊ TỔNG HỢP =====\n- Tổng doanh thu tích lũy: ${totalRevenue.toLocaleString()} VND\n- Doanh thu tháng này: ${totalMonthRev.toLocaleString()} VND\n- Công nợ quá hạn: ${totalOverdue.toLocaleString()} VND\n- Churning: ${churning.length}\n- Complaints mở: ${complaintsTotal}`)
+            finalTemp = dbPrompt.temperature
+            finalMax = dbPrompt.maxTokens
+        } else {
+            finalSystem = DEFAULT_SYSTEM
+            finalPrompt = prompt
+        }
+
         const result = await callGemini({
-            prompt,
-            systemPrompt: 'You are a Chief Revenue Officer analyzing CRM data for a luxury wine import company CEO. Be strategic, data-driven, and provide actionable insights with specific customer names and numbers.',
-            temperature: 0.4,
-            maxTokens: 8192,
+            prompt: finalPrompt,
+            systemPrompt: finalSystem,
+            temperature: finalTemp,
+            maxTokens: finalMax,
         })
 
         return NextResponse.json({

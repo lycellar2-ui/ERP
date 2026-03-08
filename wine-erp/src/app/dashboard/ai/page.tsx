@@ -1,10 +1,11 @@
 import { Brain } from 'lucide-react'
 import { AnomalyWidget, DemandForecastWidget, PricingWidget } from './AIWidgets'
 import { OCRUploadWidget } from './OCRWidget'
-import { ApiKeyVault, PromptLibrary, AiUsageCard } from './VaultUI'
+import { ApiKeyVault, AiUsageCard } from './VaultUI'
 import { AiTogglePanel, AiReportsPanel } from './AIManagementUI'
-import { getApiKeys, getPromptTemplates, getAiUsageStats } from './vault-actions'
-import { getAiConfig, getAiReports, getAiUsageStats as getUsageStatsV2 } from './ai-actions'
+import { ActivePromptEditor } from './ActivePromptEditor'
+import { getApiKeys, getAiUsageStats } from './vault-actions'
+import { getAiConfig, getAiReports, getPromptTemplates } from './ai-actions'
 
 export const metadata = { title: 'AI Features | Wine ERP' }
 
@@ -65,11 +66,13 @@ export default async function AIPage() {
     let usageStats = { totalRuns: 0, monthRuns: 0, failedRuns: 0, monthTokens: 0, monthCostUsd: 0, avgDurationMs: 0 }
     let aiConfig = { aiEnabled: true, allowedModules: ['pipeline', 'crm', 'catalog', 'ceo', 'product-desc'], defaultTemperature: 0.5, defaultMaxTokens: 4096 }
     let reports: any[] = []
+    let promptTemplates: any[] = []
     try {
-        ;[apiKeys, templates, usageStats, aiConfig, reports] = await Promise.all([
-            getApiKeys(), getPromptTemplates(), getAiUsageStats(),
+        ;[apiKeys, usageStats, aiConfig, reports, promptTemplates] = await Promise.all([
+            getApiKeys(), getAiUsageStats(),
             getAiConfig(),
             getAiReports(undefined, 50),
+            getPromptTemplates(),
         ])
     } catch { }
     return (
@@ -123,16 +126,16 @@ export default async function AIPage() {
                 <PricingWidget />
             </div>
 
+            {/* ═══ Prompt Editor ═══ */}
+            <ActivePromptEditor prompts={promptTemplates} />
+
             {/* ═══ AI Reports History ═══ */}
             <AiReportsPanel initialReports={reports} />
 
             {/* AI Infrastructure */}
             <AiUsageCard stats={usageStats} />
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <ApiKeyVault initialKeys={apiKeys} />
-                <PromptLibrary initialTemplates={templates} />
-            </div>
+            <ApiKeyVault initialKeys={apiKeys} />
         </div>
     )
 }

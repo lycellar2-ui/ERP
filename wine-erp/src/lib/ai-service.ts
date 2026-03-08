@@ -33,6 +33,30 @@ async function resolveGeminiKey(): Promise<string | null> {
     return process.env.GEMINI_API_KEY || null
 }
 
+// ── Resolve Prompt Template from DB ───────────────
+export interface ResolvedPrompt {
+    systemPrompt: string
+    userTemplate: string
+    temperature: number
+    maxTokens: number
+}
+
+export async function resolvePromptTemplate(slug: string): Promise<ResolvedPrompt | null> {
+    try {
+        const template = await prisma.aiPromptTemplate.findUnique({
+            where: { slug },
+            select: { systemPrompt: true, userTemplate: true, temperature: true, maxTokens: true },
+        })
+        if (!template) return null
+        return {
+            systemPrompt: template.systemPrompt,
+            userTemplate: template.userTemplate,
+            temperature: template.temperature,
+            maxTokens: template.maxTokens,
+        }
+    } catch { return null }
+}
+
 // ── Call Gemini API ───────────────────────────────
 export async function callGemini(options: AIGenerateOptions): Promise<{
     success: boolean

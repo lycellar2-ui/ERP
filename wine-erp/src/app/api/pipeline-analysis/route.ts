@@ -1,5 +1,5 @@
 import { prisma, withRetry } from '@/lib/db'
-import { callGemini } from '@/lib/ai-service'
+import { callGemini, resolvePromptTemplate } from '@/lib/ai-service'
 import { NextResponse } from 'next/server'
 import { isModuleAiEnabled } from '@/app/dashboard/ai/ai-actions'
 
@@ -114,11 +114,32 @@ Yêu cầu:
 - Cụ thể tên deal, tên khách hàng, tên sales rep
 - Tone: quyết đoán, data-driven, actionable`
 
+        // ── Resolve prompt from DB or fallback ──
+        const dbPrompt = await resolvePromptTemplate('pipeline-analysis')
+
+        const DEFAULT_SYSTEM = 'You are a senior Sales Director analyzing CRM pipeline data for a luxury wine import company CEO. Be data-driven, specific, and actionable.'
+
+        let finalPrompt: string
+        let finalSystem: string
+        let finalTemp = 0.4
+        let finalMax = 8192
+
+        if (dbPrompt) {
+            finalSystem = dbPrompt.systemPrompt
+            finalPrompt = dbPrompt.userTemplate
+                .replace('{{data}}', `${dealList}\n\n===== THỐNG KÊ =====\n- Tổng giá trị pipeline (active): ${totalPipelineValue.toLocaleString()} VND\n- Giá trị weighted: ${totalWeightedValue.toLocaleString()} VND\n- Win rate: ${winRate.toFixed(1)}%\n- Avg deal size: ${avgDealSize.toLocaleString()} VND\n- Deals stale (>14 ngày không chuyển stage): ${stale.length}\n- Active deals: ${active.length} | Won: ${won.length} | Lost: ${lost.length}\n- Pipeline velocity: ${velocitySummary}`)
+            finalTemp = dbPrompt.temperature
+            finalMax = dbPrompt.maxTokens
+        } else {
+            finalSystem = DEFAULT_SYSTEM
+            finalPrompt = prompt
+        }
+
         const result = await callGemini({
-            prompt,
-            systemPrompt: 'You are a senior Sales Director analyzing CRM pipeline data for a luxury wine import company CEO. Be data-driven, specific, and actionable.',
-            temperature: 0.4,
-            maxTokens: 8192,
+            prompt: finalPrompt,
+            systemPrompt: finalSystem,
+            temperature: finalTemp,
+            maxTokens: finalMax,
         })
 
         return NextResponse.json({
