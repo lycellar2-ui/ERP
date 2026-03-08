@@ -9,7 +9,7 @@ import {
     ChevronRight, Building2, FileSignature, Globe, Briefcase,
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
-    Image as ImageIcon, Megaphone, Ship
+    Image as ImageIcon, Megaphone, Ship, ClipboardCheck
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -17,6 +17,7 @@ const NAV_GROUPS = [
         label: 'Tổng Quan',
         items: [
             { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard CEO' },
+            { href: '/dashboard/proposals', icon: ClipboardCheck, label: 'Tờ Trình — Đề Xuất' },
         ]
     },
     {

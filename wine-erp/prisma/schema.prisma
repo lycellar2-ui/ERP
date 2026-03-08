@@ -25,6 +25,7 @@ model Department {
   children  Department[] @relation("DeptParent")
   users     User[]
   roles     Role[]
+  proposals Proposal[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
@@ -72,6 +73,9 @@ model User {
   kpiTargets             KpiTarget[]        @relation("KpiTargetSalesRep")
   regDocsAssigned        RegulatedDocument[] @relation("RegDocAssigned")
   regDocsCreated         RegulatedDocument[] @relation("RegDocCreator")
+  proposalsCreated       Proposal[]         @relation("ProposalCreator")
+  proposalComments       ProposalComment[]  @relation("ProposalCommentAuthor")
+  proposalApprovals      ProposalApprovalLog[] @relation("ProposalApprover")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -2453,4 +2457,136 @@ model LoyaltyTransaction {
 
   @@index([customerId])
   @@map("loyalty_transactions")
+}
+
+// =============================================================
+// PRO — Tờ Trình (Proposals / Submissions)
+// =============================================================
+
+model Proposal {
+  id              String            @id @default(cuid())
+  proposalNo      String            @unique        // TT-2026-001
+
+  // ── Phân loại ──
+  category        ProposalCategory
+  priority        ProposalPriority  @default(NORMAL)
+
+  // ── Nội dung ──
+  title           String                             // "Đề xuất nhập NCC mới"
+  content         String                             // Nội dung chi tiết
+  justification   String?                            // Lý do, phân tích
+  expectedOutcome String?                            // Kết quả kỳ vọng
+
+  // ── Giá trị ──
+  estimatedAmount Decimal?                           // Giá trị ước tính (VND)
+  currency        String            @default("VND")
+
+  // ── Thời hạn ──
+  deadline        DateTime?                          // Hạn xử lý mong muốn
+
+  // ── Người liên quan ──
+  createdBy       String
+  creator         User              @relation("ProposalCreator", fields: [createdBy], references: [id])
+  departmentId    String?
+  department      Department?       @relation(fields: [departmentId], references: [id])
+
+  // ── Trạng thái ──
+  status          ProposalStatus    @default(DRAFT)
+  currentLevel    Int               @default(0)      // 0=draft, 1=dept head, 2=finance, 3=CEO
+
+  // ── Liên kết sau duyệt ──
+  linkedDocType   String?                            // "PurchaseOrder", "Expense"...
+  linkedDocId     String?
+
+  // ── Sub-models ──
+  attachments     ProposalAttachment[]
+  comments        ProposalComment[]
+  approvalLogs    ProposalApprovalLog[]
+
+  // ── Audit ──
+  submittedAt     DateTime?
+  resolvedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([status, createdBy])
+  @@index([category, status])
+  @@map("proposals")
+}
+
+model ProposalAttachment {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  name        String
+  fileUrl     String
+  storagePath String?
+  uploadedAt  DateTime @default(now())
+
+  @@map("proposal_attachments")
+}
+
+model ProposalComment {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User     @relation("ProposalCommentAuthor", fields: [authorId], references: [id])
+  content     String
+  isInternal  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("proposal_comments")
+}
+
+model ProposalApprovalLog {
+  id          String          @id @default(cuid())
+  proposalId  String
+  proposal    Proposal        @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  level       Int
+  action      ApprovalAction
+  approvedBy  String
+  approver    User            @relation("ProposalApprover", fields: [approvedBy], references: [id])
+  comment     String?
+  createdAt   DateTime        @default(now())
+
+  @@map("proposal_approval_logs")
+}
+
+enum ProposalCategory {
+  BUDGET_REQUEST
+  CAPITAL_EXPENDITURE
+  PRICE_ADJUSTMENT
+  NEW_SUPPLIER
+  NEW_PRODUCT
+  POLICY_CHANGE
+  STAFF_REQUISITION
+  PAYMENT_SCHEDULE
+  PROMOTION_CAMPAIGN
+  SPECIAL_EVENT
+  LICENSE_RENEWAL
+  CONTRACT_SIGNING
+  DEBT_WRITE_OFF
+  OTHER
+}
+
+enum ProposalPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWING
+  RETURNED
+  APPROVED_L1
+  APPROVED_L2
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  CLOSED
+  CANCELLED
 }

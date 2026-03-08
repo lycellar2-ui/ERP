@@ -10,11 +10,13 @@ import {
 import { getComplianceWarnings, type ComplianceWarning } from './contracts/reg-doc-actions'
 import { REG_DOC_TYPE_LABELS } from './contracts/reg-doc-constants'
 import { getKpiSummary } from './kpi/actions'
+import { getPendingProposalsForCEO } from './proposals/actions'
+import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS } from './proposals/constants'
 import { getCurrentUser } from '@/lib/session'
 import {
     TrendingUp, TrendingDown, AlertCircle, Ship, Package, CheckCircle2,
     ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck, Download,
-    Link as LinkIcon, Shield, AlertTriangle,
+    Link as LinkIcon, Shield, AlertTriangle, FileText, Send,
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
 import Link from 'next/link'
@@ -83,6 +85,7 @@ export default async function DashboardPage() {
     const mySales = has('my_sales') && user ? await getMySales(user.id) : null
     const warehouseData = has('warehouse_summary') ? await getWarehouseDashboard() : null
     const complianceWarnings = has('legal_compliance') ? await getComplianceWarnings() : []
+    const pendingProposals = has('pending_approvals') ? await getPendingProposalsForCEO() : []
     const realtimeChannels = getRealtimeChannels(roles)
 
     const _kpiSummary = kpiSummary ?? []
@@ -163,8 +166,8 @@ export default async function DashboardPage() {
                 />
                 <KpiCard
                     label="CHỜ CEO DUYỆT"
-                    value={String(stats.pendingApprovals + stats.pendingSOs.length)}
-                    sub={`${stats.pendingApprovals} approval requests`}
+                    value={String(stats.pendingApprovals + stats.pendingSOs.length + pendingProposals.length)}
+                    sub={`${pendingProposals.length} tờ trình · ${stats.pendingApprovals} approval · ${stats.pendingSOs.length} SO`}
                     accentColor="#8B1A2E"
                 />
             </div>
@@ -590,26 +593,84 @@ export default async function DashboardPage() {
                 )
             })()}
 
-            {/* Row 4 — Pending approvals */}
+            {/* Row 4 — Pending approvals (Unified Hub) */}
             <div className="rounded-md p-6" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
                         <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Chờ CEO Duyệt</h3>
                         <span className="px-2 py-0.5 text-xs font-bold rounded-full"
                             style={{ background: 'rgba(139,26,46,0.2)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.3)' }}>
-                            {stats.pendingSOs.length + pendingApprovalReqs.length}
+                            {pendingProposals.length + stats.pendingSOs.length + pendingApprovalReqs.length}
                         </span>
+                        {pendingProposals.length > 0 && (
+                            <span className="px-2 py-0.5 text-[10px] font-bold rounded-full"
+                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}>
+                                {pendingProposals.length} tờ trình
+                            </span>
+                        )}
                     </div>
+                    <Link href="/dashboard/proposals" className="text-xs font-medium px-3 py-1.5 rounded-md"
+                        style={{ background: 'rgba(135,203,185,0.08)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.15)' }}>
+                        Xem tất cả →
+                    </Link>
                 </div>
 
-                {stats.pendingSOs.length === 0 && pendingApprovalReqs.length === 0 ? (
+                {pendingProposals.length === 0 && stats.pendingSOs.length === 0 && pendingApprovalReqs.length === 0 ? (
                     <div className="flex flex-col items-center py-8 gap-2">
                         <CheckCircle2 size={28} style={{ color: '#5BA88A' }} />
                         <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có mục nào chờ duyệt</p>
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {/* Approval Engine Requests */}
+                        {/* ====== TỜ TRÌNH (Proposals) — Highest priority ====== */}
+                        {pendingProposals.map(p => {
+                            const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                            return (
+                                <div key={p.id} className="flex items-center justify-between py-3 px-4"
+                                    style={{ background: 'rgba(212,168,83,0.03)', border: '1px solid rgba(212,168,83,0.15)', borderRadius: '6px', borderLeft: `3px solid ${prioCfg.color}` }}>
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <FileText size={16} style={{ color: '#D4A853' }} className="flex-shrink-0" />
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <span className="text-xs px-1.5 py-0.5 rounded font-bold"
+                                                    style={{ background: prioCfg.bg, color: prioCfg.color }}>
+                                                    {prioCfg.label}
+                                                </span>
+                                                <span className="text-xs px-1.5 py-0.5 rounded font-medium"
+                                                    style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
+                                                    {CATEGORY_LABELS[p.category] ?? p.category}
+                                                </span>
+                                                <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>
+                                                    {p.proposalNo}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>{p.title}</p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>{p.creatorName}</span>
+                                                {p.previousApprovals.length > 0 && (
+                                                    <span className="text-xs" style={{ color: '#5BA88A' }}>
+                                                        ✓ {p.previousApprovals.map(a => a.level === 1 ? 'TP' : a.level === 2 ? 'KT' : 'CEO').join(' → ')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 flex-shrink-0">
+                                        {p.estimatedAmount && (
+                                            <p className="text-sm font-bold text-right" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>
+                                                {formatVND(p.estimatedAmount)}
+                                            </p>
+                                        )}
+                                        <Link href="/dashboard/proposals" className="px-3 py-1.5 text-xs font-semibold rounded"
+                                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                            Xem & Duyệt
+                                        </Link>
+                                    </div>
+                                </div>
+                            )
+                        })}
+
+                        {/* ====== Approval Engine Requests ====== */}
                         {pendingApprovalReqs.map(ar => (
                             <div key={ar.id} className="flex items-center justify-between py-3 px-4"
                                 style={{ background: '#142433', border: '1px solid #2A4355', borderRadius: '6px' }}>
@@ -630,7 +691,7 @@ export default async function DashboardPage() {
                             </div>
                         ))}
 
-                        {/* Pending SOs */}
+                        {/* ====== Pending SOs ====== */}
                         {stats.pendingSOs.map(so => (
                             <div key={so.id} className="flex items-center justify-between py-3 px-4"
                                 style={{ background: '#142433', border: '1px solid #2A4355', borderRadius: '6px' }}>
