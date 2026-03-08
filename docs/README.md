@@ -227,4 +227,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-08 20:00 | Wine ERP v6.0 — 26 modules, 111 models, 33 routes*
+*Last updated: 2026-03-08 21:40 | Wine ERP v6.1 — 26 modules, 111 models, 33 routes*

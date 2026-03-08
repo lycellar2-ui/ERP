@@ -185,7 +185,7 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 
 ## 8. Implementation Status (Trạng Thái Triển Khai)
 
-> Cập nhật 08/03/2026 — **Hoàn thiện 97%**
+> Cập nhật 08/03/2026 21:40 — **Hoàn thiện 99%**
 
 ### ✅ Đã triển khai
 
@@ -193,31 +193,59 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 |---|---|---|
 | Sales Order CRUD | `sales/actions.ts`, `SalesClient.tsx` | Tạo, xem, xác nhận, hủy SO |
 | CreateSODrawer | `CreateSODrawer.tsx` | Full drawer: chọn KH, kênh, sản phẩm, check tồn kho |
-| **EditSODrawer** | `EditSODrawer.tsx` | ✨ **MỚI** — Sửa DRAFT SO: KH, kênh, sản phẩm, discount |
-| **Sales Rep Auth** | `page.tsx` → `SalesClient` | ✨ Sales rep từ auth context (không còn hardcode) |
-| **Discount Approval** | `actions.ts:confirmSalesOrder` | ✨ CK > 15% → PENDING_APPROVAL + audit log với reason |
-| **FIFO Pick Suggestion** | `actions.ts:suggestPickListForSO` | ✨ Gợi ý pick list FIFO cho SO confirmed |
+| **EditSODrawer** | `EditSODrawer.tsx` | Sửa DRAFT SO: KH, kênh, sản phẩm, discount |
+| **Sales Rep Auth** | `page.tsx` → `SalesClient` | Sales rep từ auth context (không còn hardcode) |
+| **Discount Approval** | `actions.ts:confirmSalesOrder` | CK > 15% → PENDING_APPROVAL + audit log |
+| **FIFO Pick Suggestion** | `actions.ts:suggestPickListForSO` | Gợi ý pick list FIFO cho SO confirmed |
 | Credit Limit Check | `createSalesOrder` | Check công nợ + SO mới vs credit limit |
 | Allocation Engine | `actions.ts` | Campaign + quota per rep/customer/channel |
 | Price List auto-load | `getProductPricesForChannel` | Load giá theo kênh KH |
-| SO Detail Drawer | `SODetailDrawer.tsx` | Xem chi tiết SO + lines |
 | **Quotation CRUD** | `quotations/actions.ts` | ✅ Tạo, sửa DRAFT, xóa, status transitions |
 | **Quotation UI** | `QuotationClient.tsx` | ✅ List + 5 stat cards + search/filter + detail drawer |
-| **Send Drawer** | `QuotationClient.tsx` | ✅ **MỚI** — 3 kênh: Email, Copy Link Zalo, In PDF |
-| **PDF Export** | `api/export/quotation-pdf/route.ts` | ✅ **MỚI** — 2 styles (Professional/Elegant), ảnh SP, wine info, VAT |
-| **Public Viewer** | `verify/quotation/[token]/` | ✅ **MỚI** — KH xem online, accept/reject, view tracking |
-| **View Tracking** | `actions.ts`, `QuotationClient.tsx` | ✅ **MỚI** — Badge 👁️, viewCount, firstViewedAt |
-| **Email Notification** | `lib/notifications.ts` | ✅ **MỚI** — Branded HTML email via Resend + Telegram |
+| **Send Drawer** | `QuotationClient.tsx` | ✅ 3 kênh: Email, Copy Link Zalo, In PDF |
+| **PDF Export** | `api/export/quotation-pdf/route.ts` | ✅ 2 styles (Professional/Elegant), ảnh SP, wine info, VAT |
+| **Public Viewer** | `verify/quotation/[token]/` | ✅ KH xem online, accept/reject, view tracking |
+| **View Tracking** | `actions.ts`, `QuotationClient.tsx` | ✅ Badge 👁️, viewCount, firstViewedAt |
+| **Email Notification** | `lib/notifications.ts` | ✅ Branded HTML email via Resend + Telegram |
 | Convert to SO | `actions.ts:convertToSO` | ✅ 1-click tạo SO từ QT, copy lines |
-| Duplicate | `actions.ts:duplicateQuotation` | ✅ Clone + 30 ngày hạn mới |
+| Duplicate Quotation | `actions.ts:duplicateQuotation` | ✅ Clone + 30 ngày hạn mới |
 | Auto-expire | `actions.ts:autoExpireQuotations` | ✅ DRAFT/SENT quá hạn → EXPIRED |
-| Export Excel | `actions.ts:exportQuotationExcel` | ✅ File báo giá Excel |
-| Credit Limit Check | `createSalesOrder` | Check công nợ + SO mới vs credit limit |
-| Allocation Engine | `actions.ts` | Campaign + quota per rep/customer/channel |
-| Price List auto-load | `getProductPricesForChannel` | Load giá theo kênh KH |
-| SO Detail Drawer | `SODetailDrawer.tsx` | Xem chi tiết SO + lines |
+| Export Excel QT | `actions.ts:exportQuotationExcel` | ✅ File báo giá Excel |
 | **CEO Approve SO** | `approveSalesOrder` | ✅ Nút "✓ Duyệt" cho PENDING_APPROVAL |
 | **CEO Reject SO** | `rejectSalesOrder` | ✅ Nút "✗ Từ Chối" cho PENDING_APPROVAL |
+
+#### 🆕 Session 8 — Refactor & Enhancement (08/03/2026)
+
+**Segregation of Duties (SoD) — Event-Driven Status:**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Xoá nút advance status thủ công** | `SalesClient.tsx` | Sale admin KHÔNG tự nhấn "→ Đã Giao", "→ Thu Tiền" |
+| **Event-driven SO status: DO → SO** | `warehouse/actions-do.ts` | `confirmDeliveryOrder` → auto set `PARTIALLY_DELIVERED` / `DELIVERED` |
+| **Event-driven SO status: Payment → SO** | `finance/actions.ts` | `recordARPayment` → auto set `PAID` khi invoice fully paid |
+| **Audit logging cho status changes** | `sales/actions.ts` | Mọi thay đổi status đều ghi AuditLog |
+
+**Enhanced SO UI:**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Quick Filter Tabs** | `SalesClient.tsx` | Tabs ngang: Tất cả / Nháp / Chờ Duyệt / Đã XN / Đã Giao... với badge count |
+| **Sortable Columns** | `SalesClient.tsx` + `actions.ts` | Click header Số SO / Doanh Số / Ngày Tạo để sort ↑↓ |
+| **Date Range Filter** | `SalesClient.tsx` + `actions.ts` | DatePicker "Từ ngày → Đến ngày" |
+| **SO Detail Drawer 4 Tabs** | `SalesClient.tsx` | Tổng Quan / Sản Phẩm / Giao Hàng & Tài Chính / Lịch Sử |
+| **Status Progress Stepper** | `SalesClient.tsx` | Thanh tiến trình Draft → Confirm → Deliver → Invoice → Paid |
+| **Audit Timeline** | `actions.ts:getSOTimeline` | Tab Lịch Sử — query AuditLog, hiển thị timeline |
+| **Clone / Duplicate SO** | `actions.ts:cloneSalesOrder` | Nút Clone trong drawer → DRAFT mới với cùng lines |
+| **Export CSV** | `actions.ts:exportSalesOrdersCSV` | Nút "Excel" → download CSV với filter hiện tại |
+| **Status Counts API** | `actions.ts:getSOStatusCounts` | `groupBy status` cho quick filter tabs |
+
+**Role-Based Margin Visibility:**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Phân quyền xem Margin** | `SalesClient.tsx`, `page.tsx` | Chỉ `CEO`, `KE_TOAN`, `SALES_MGR` xem Giá Vốn, Lãi Gộp, Biên % |
+| **Sale Admin/Rep: ẩn margin** | `SalesClient.tsx` | Hiển thị "🔒 Chỉ Ban Giám Đốc" thay cho cột COGS/Margin |
+| **Negative Margin Warning** | `SalesClient.tsx` | Chỉ CEO/Finance thấy cảnh báo biên âm |
 
 ### ❌ Chưa triển khai
 
@@ -225,5 +253,8 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 |---|---|
 | Return Order + Credit Note | 🟡 P2 |
 | Dynamic SO threshold từ ApprovalConfig DB | 🟢 P3 |
+| Shipment → PO status hook (IN_TRANSIT) | 🟡 P2 |
+| RBAC middleware cho server actions | 🟡 P2 |
 
-*Last updated: 2026-03-08 | Wine ERP v5.3*
+*Last updated: 2026-03-08 21:40 | Wine ERP v6.1*
+
