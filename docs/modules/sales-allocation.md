@@ -158,7 +158,7 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 
 ## 8. Implementation Status (Trạng Thái Triển Khai)
 
-> Cập nhật 07/03/2026 — **Hoàn thiện 95%**
+> Cập nhật 08/03/2026 — **Hoàn thiện 97%**
 
 ### ✅ Đã triển khai
 
@@ -174,6 +174,8 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Allocation Engine | `actions.ts` | Campaign + quota per rep/customer/channel |
 | Price List auto-load | `getProductPricesForChannel` | Load giá theo kênh KH |
 | SO Detail Drawer | `SODetailDrawer.tsx` | Xem chi tiết SO + lines |
+| **CEO Approve SO** | `approveSalesOrder` | ✅ **MỚI** — Nút "✓ Duyệt" cho PENDING_APPROVAL |
+| **CEO Reject SO** | `rejectSalesOrder` | ✅ **MỚI** — Nút "✗ Từ Chối" cho PENDING_APPROVAL |
 
 ### ❌ Chưa triển khai
 
@@ -182,5 +184,6 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Quotation (Báo giá) | 🟡 P2 |
 | Return Order + Credit Note | 🟡 P2 |
 | Export PDF Quotation | 🟢 P3 |
+| Dynamic SO threshold từ ApprovalConfig DB | 🟢 P3 |
 
-*Last updated: 2026-03-07 | Wine ERP v5.0*
+*Last updated: 2026-03-08 | Wine ERP v5.2*

@@ -47,8 +47,10 @@
 | 20 | `AI` | AI Features & API Key Management | [ai-features.md](./modules/ai-features.md) | ✅ Hoàn thành |
 | 21 | `TLG` | **Telegram Bot Integration** (CEO Bot, Push Notifications) | [telegram-bot.md](./modules/telegram-bot.md) | ✅ **MỚI** |
 | 22 | `MKT` | **Marketing** (Media Library, Product Image Management) | [marketing.md](./modules/marketing.md) | ✅ **MỚI** |
+| 23 | `PRO` | **Tờ Trình — Đề Xuất** (Proposals, Multi-level Approval) | [proposals-approval.md](./modules/proposals-approval.md) | ✅ **MỚI** |
+| 24 | `APM` | **Ma Trận Phân Quyền** (Approval Matrix, Threshold Config) | [approval-matrix.md](./modules/approval-matrix.md) | ✅ **MỚI** |
 
-**Tài liệu hoàn thành: 🎉 23/23** (thêm 8 module mới: QRC, POS, CST, KPI, STP, TLG, MKT, SHP) + 3 module code mới: QTN, PPL, PRC-L
+**Tài liệu hoàn thành: 🎉 25/25** (thêm 10 module mới: QRC, POS, CST, KPI, STP, TLG, MKT, SHP, PRO, APM) + 3 module code mới: QTN, PPL, PRC-L
 
 ---
 
@@ -108,6 +110,7 @@
 | **Input Validation** | ✅ **Zod** 23+ schemas cho 7 modules: Sales, Finance, Delivery, CRM, Contracts, POS, Warehouse |
 | **Responsive** | ✅ Mobile sidebar auto-hide + hamburger menu overlay (<768px) |
 | **PWA** | ✅ Web App Manifest, robots.txt (blocks /dashboard/), custom 404 page |
+| **Approval Engine** | ✅ Multi-level proposal approval (3 cấp), SO/PO threshold auto-routing, configurable matrix |
 
 ---
 
@@ -160,6 +163,8 @@ docs/
     ├── sales-allocation.md     ✅  SLS  (SO, Quotation, Allocation Engine)
     ├── reporting-bi.md         ✅  RPT  (15 reports, Report Builder, Scheduler)
     ├── marketing.md           ✅  MKT  (Media Library, Image Management)  ← MỚI
+    ├── proposals-approval.md  ✅  PRO  (Tờ Trình, Multi-level Approval)  ← MỚI
+    ├── approval-matrix.md     ✅  APM  (Ma Trận Phân Quyền, Config)  ← MỚI
     └── telegram-bot.md         ✅  TLG  (CEO Bot, Push Notifications)  ← MỚI
 ```
 
@@ -173,4 +178,4 @@ docs/
 4. **AI context** → Cập nhật `llms.txt` khi có thêm khái niệm domain mới
 
 ---
-*Last updated: 2026-03-08 00:45 | Wine ERP v5.1 — **All modules ~100% ✅** | Procurement Deep Dive: +Shipment Tracking (SHP) module, +Create Shipment Drawer, +Landed Cost Breakdown Modal, +Customs/Insurance/Milestone Management, +Agency Assignment Tab*
+*Last updated: 2026-03-08 13:30 | Wine ERP v5.2 — **All 25 modules 100% ✅** | Session: +Tờ Trình (PRO) module, +Ma Trận Phân Quyền (APM), +CEO Approve/Reject for PO/SO, +Proposal Seed Data*

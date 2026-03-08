@@ -302,3 +302,8 @@ RegulatedDocument (CNT) ────→ ComplianceWidget (DSH)
 | **Cron Auto-Expire** | `/api/cron/compliance` | ✅ Done |
 | Role-based sections | `ROLE_DASHBOARD` config | ✅ 8 roles |
 | Realtime channels | `getRealtimeChannels` | ✅ Done |
+| **Tờ Trình — Đề Xuất** | `getPendingProposalsForCEO` | ✅ **MỚI** |
+| **SO Approve/Reject** | `approveSalesOrder`, `rejectSalesOrder` | ✅ **MỚI** |
+| **PO Approve/Reject** | `updatePOStatus` (enhanced StatusStepper) | ✅ **MỚI** |
+| **Ma Trận Phân Quyền** | `/dashboard/settings/approval-matrix` | ✅ **MỚI** |
+
