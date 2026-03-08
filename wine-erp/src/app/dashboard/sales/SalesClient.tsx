@@ -105,7 +105,7 @@ function SortHeader({ label, field, current, dir, onSort }: { label: string; fie
 // ── SO Detail Drawer (Enhanced with Tabs) ────────
 type DetailType = Awaited<ReturnType<typeof getSalesOrderDetailWithMargin>>['detail']
 
-function SODetailDrawer({ soId, onClose, onClone }: { soId: string; onClose: () => void; onClone: (id: string) => void }) {
+function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string; onClose: () => void; onClone: (id: string) => void; canSeeMargin: boolean }) {
     const [detail, setDetail] = useState<DetailType>(null)
     const [marginData, setMarginData] = useState<SOMarginData | null>(null)
     const [timeline, setTimeline] = useState<SOTimelineEvent[]>([])
@@ -196,7 +196,7 @@ function SODetailDrawer({ soId, onClose, onClone }: { soId: string; onClose: () 
                         {/* ── TAB: Overview ── */}
                         {activeTab === 'overview' && (
                             <>
-                                {marginData?.hasNegativeMargin && (
+                                {marginData?.hasNegativeMargin && canSeeMargin && (
                                     <div className="flex items-center gap-3 px-4 py-3 rounded-md"
                                         style={{ background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.35)' }}>
                                         <AlertTriangle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
@@ -218,7 +218,7 @@ function SODetailDrawer({ soId, onClose, onClone }: { soId: string; onClose: () 
                                         </div>
                                     ))}
                                 </div>
-                                {marginData && (
+                                {marginData && canSeeMargin && (
                                     <div className="grid grid-cols-4 gap-2">
                                         <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                             <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu</p>
@@ -242,6 +242,17 @@ function SODetailDrawer({ soId, onClose, onClone }: { soId: string; onClose: () 
                                                 </p>
                                             </div>
                                             {marginData.totalMarginPct >= 0 ? <TrendingUp size={14} style={{ color: '#5BA88A' }} /> : <TrendingDown size={14} style={{ color: '#EF4444' }} />}
+                                        </div>
+                                    </div>
+                                )}
+                                {marginData && !canSeeMargin && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                            <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu</p>
+                                            <p className="text-xs font-bold mt-1" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalRevenue)}</p>
+                                        </div>
+                                        <div className="p-3 rounded-md flex items-center gap-2" style={{ background: 'rgba(74,106,122,0.08)', border: '1px dashed #2A4355' }}>
+                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>🔒 Chi phí & biên lợi nhuận chỉ hiển thị cho Ban Giám Đốc</span>
                                         </div>
                                     </div>
                                 )}
@@ -282,12 +293,12 @@ function SODetailDrawer({ soId, onClose, onClone }: { soId: string; onClose: () 
                         {/* ── TAB: Products ── */}
                         {activeTab === 'products' && (
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Sản Phẩm & Biên Lợi Nhuận ({detail.lines.length} dòng)</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Sản Phẩm {canSeeMargin ? '& Biên Lợi Nhuận' : ''} ({detail.lines.length} dòng)</p>
                                 <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                                     <div style={{ overflowX: 'auto' }}>
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
                                             <thead><tr style={{ background: '#142433' }}>
-                                                {['SKU', 'SL', 'Giá Bán', 'Thành Tiền', 'Giá Vốn TB', 'Margin', 'Biên %'].map(h => (
+                                                {(canSeeMargin ? ['SKU', 'SL', 'Giá Bán', 'Thành Tiền', 'Giá Vốn TB', 'Margin', 'Biên %'] : ['SKU', 'SL', 'Giá Bán', 'Thành Tiền']).map(h => (
                                                     <th key={h} className="px-2.5 py-2 text-left font-semibold whitespace-nowrap" style={{ color: '#4A6A7A' }}>{h}</th>
                                                 ))}
                                             </tr></thead>
@@ -306,23 +317,29 @@ function SODetailDrawer({ soId, onClose, onClone }: { soId: string; onClose: () 
                                                         <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{ml.qty}</td>
                                                         <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(ml.unitPrice)}</td>
                                                         <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(ml.revenue)}</td>
-                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
-                                                            {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#2A4355' }}>—</span>}
-                                                        </td>
-                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#4A6A7A', fontFamily: '"DM Mono"' }}>
-                                                            {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatVND(Math.abs(ml.margin)) : '—'}
-                                                        </td>
-                                                        <td className="px-2.5 py-2 text-right">
-                                                            {ml.avgCost > 0 ? (
-                                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
-                                                                    background: ml.marginPct >= 20 ? 'rgba(91,168,138,0.15)' : ml.marginPct >= 0 ? 'rgba(212,168,83,0.15)' : 'rgba(220,38,38,0.15)',
-                                                                    color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444',
-                                                                }}>
-                                                                    {ml.marginPct >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
-                                                                    {ml.marginPct.toFixed(1)}%
-                                                                </span>
-                                                            ) : <span style={{ color: '#2A4355' }}>—</span>}
-                                                        </td>
+                                                        {canSeeMargin && (
+                                                            <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                                                {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                            </td>
+                                                        )}
+                                                        {canSeeMargin && (
+                                                            <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                                {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatVND(Math.abs(ml.margin)) : '—'}
+                                                            </td>
+                                                        )}
+                                                        {canSeeMargin && (
+                                                            <td className="px-2.5 py-2 text-right">
+                                                                {ml.avgCost > 0 ? (
+                                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
+                                                                        background: ml.marginPct >= 20 ? 'rgba(91,168,138,0.15)' : ml.marginPct >= 0 ? 'rgba(212,168,83,0.15)' : 'rgba(220,38,38,0.15)',
+                                                                        color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444',
+                                                                    }}>
+                                                                        {ml.marginPct >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
+                                                                        {ml.marginPct.toFixed(1)}%
+                                                                    </span>
+                                                                ) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -406,15 +423,20 @@ function SODetailDrawer({ soId, onClose, onClone }: { soId: string; onClose: () 
 }
 
 // ── Main Component ───────────────────────────────
+// Roles allowed to see cost/margin data
+const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'SALES_MGR']
+
 interface Props {
     initialRows: SalesOrderRow[]
     initialTotal: number
     stats: { monthRevenue: number; monthOrders: number; pendingApproval: number; draft: number; confirmed: number }
     userId: string
+    userRoles: string[]
     statusCounts: Record<string, number>
 }
 
-export function SalesClient({ initialRows, initialTotal, stats, userId, statusCounts }: Props) {
+export function SalesClient({ initialRows, initialTotal, stats, userId, userRoles, statusCounts }: Props) {
+    const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -708,7 +730,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, statusCo
             )}
 
             <CreateSODrawer open={createOpen} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); reload() }} userId={userId} />
-            {detailId && <SODetailDrawer soId={detailId} onClose={() => setDetailId(null)} onClone={handleClone} />}
+            {detailId && <SODetailDrawer soId={detailId} onClose={() => setDetailId(null)} onClone={handleClone} canSeeMargin={canSeeMargin} />}
             {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} />}
         </div>
     )

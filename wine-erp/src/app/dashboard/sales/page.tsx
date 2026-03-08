@@ -17,5 +17,16 @@ export default async function SalesPage() {
         getSOStatusCounts(),
     ])
 
-    return <SalesClient initialRows={rows} initialTotal={total} stats={stats} userId={user?.id ?? ''} statusCounts={statusCounts} />
+    const userRoles = user?.roles ?? []
+
+    return (
+        <SalesClient
+            initialRows={rows}
+            initialTotal={total}
+            stats={stats}
+            userId={user?.id ?? ''}
+            userRoles={userRoles}
+            statusCounts={statusCounts}
+        />
+    )
 }
