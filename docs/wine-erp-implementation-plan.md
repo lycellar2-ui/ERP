@@ -1,6 +1,6 @@
 ﻿# Wine ERP — Kế Hoạch Triển Khai Toàn Bộ
 > Kế hoạch triển khai toàn bộ features. Dựa trên Audit ngày 05/03/2026.
-> **Last Updated:** 08/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 33 routes
+> **Last Updated:** 09/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 33 routes, 6 AI features live
 
 ## Mục Tiêu
 Hoàn thiện toàn bộ tính năng còn thiếu của Wine ERP theo đúng 19 file đặc tả, chia thành 8 Phase thực thi tuần tự. Mỗi Phase có output rõ ràng, có thể verify ngay.
@@ -447,14 +447,17 @@ graph LR
 > Sau khi toàn bộ core system đã chạy ổn với data thực.
 
 ### 8.1 AI Infrastructure ✅ DONE
-- [x] `lib/ai-service.ts`: `callGemini()` — Gemini API wrapper (generic prompt, systemPrompt, temperature, maxTokens)
+- [x] `lib/ai-service.ts`: `callGemini()` — Gemini API wrapper + `resolvePromptTemplate(slug)` — DB-driven prompts with `{{data}}` placeholder, fallback to hardcoded
 - [x] `lib/encryption.ts`: `encryptApiKey()`, `decryptApiKey()`, `maskApiKey()` — AES-256-GCM + scrypt key derivation
-- [x] Schema: `AiApiKey` (encrypted storage), `AiPromptTemplate` (reusable prompts), `AiPromptRun` (usage logging)
+- [x] Schema: `AiApiKey` (encrypted storage), `AiPromptTemplate` (reusable prompts), `AiPromptRun` (usage logging), `AiReport` (saved reports), `AiSystemConfig` (admin toggle)
 - [x] API Key Vault UI: Nhập key, encrypt AES-256, lưu DB, test connection, monthly budget tracking
-- [x] Prompt Library UI: CRUD prompt templates (slug, system prompt, user template, variables, temperature)
+- [x] Active Prompt Editor UI: Inline editor cho 3 AI features (Pipeline/CRM/Catalog) — edit systemPrompt, userTemplate, temperature, maxTokens trực tiếp trên web
+- [x] AI System Toggle: Master ON/OFF + per-module whitelist (Pipeline, CRM, Catalog, CEO, Product Desc) — dual-layer: client `useAiStatus()` hook + server `isModuleAiEnabled()` → 403
+- [x] AI Reports History: Save/pin/archive/delete + filter by module + expand inline viewer
 - [x] AI Usage Stats: Total runs, monthly runs, failed, tokens, cost, avg speed
-- [x] Server actions: `vault-actions.ts` — getApiKeys, saveApiKey, toggleApiKey, testApiKey, getPromptTemplates, createPromptTemplate, logAiRun
-- → **Verify:** ✅ AI page hiện đầy đủ Key Vault + Prompt Library + Usage Stats + Anomaly + Forecast + Pricing widgets.
+- [x] Server actions: `vault-actions.ts` + `ai-actions.ts` — full CRUD for keys, prompts, reports, config
+- [x] Seed: POST `/api/ai/seed-prompts` — 3 default prompt templates (pipeline, crm, catalog)
+- → **Verify:** ✅ AI page: Toggle + Prompt Editor + Reports + Key Vault + Usage Stats + Feature cards.
 
 ### 8.2 OCR Features (A1, A2) ✅ PARTIALLY DONE
 - [x] OCR Tờ Khai: `ocrCustomsDeclaration()` — Gemini AI parse → Extract số tờ khai, thuế NK/SCT/VAT, CIF, HS Code
@@ -482,6 +485,15 @@ graph LR
 - [x] Export Dashboard data: `exportDashboardExcel()` — KPI Summary Excel
 - [ ] Cost Structure Waterfall Chart
 - → **Verify:** Dashboard export Excel hoạt động. Cần Realtime subscription + Role-based layout.
+
+### 8.6 AI Analysis Features ✅ DONE (09/03/2026)
+- [x] **Pipeline Analysis** (`/api/pipeline-analysis`): SalesOpportunity data → 7-section Sales Director report (Health score, Top 5 deals, Velocity, Cảnh báo, Coaching, Dự báo, Hành động)
+- [x] **CRM Analysis** (`/api/crm-analysis`): Customer profiles + revenue + AR + complaints → 7-section CRM Director report (CRM Health, Top KH, Churning, Công nợ, Xu hướng, Chiến lược, Wine Prefs)
+- [x] **Catalog Intelligence** (`/api/catalog-analysis`): Product + Supplier + Region + Producer → 7-section Wine Portfolio Director report (Portfolio Health, Performers, New products, Market research, NCC, Pricing, Strategy)
+- [x] 3 AI panels integrated: `AIPipelineAnalysis.tsx`, `AICRMAnalysis.tsx`, `AICatalogAnalysis.tsx` — each with Save Report + useAiStatus toggle
+- [x] Server-side AI checks: All 3 routes call `isModuleAiEnabled()` → 403 when disabled
+- [x] DB-driven prompts: All 3 routes call `resolvePromptTemplate(slug)` → read from AiPromptTemplate or fallback hardcoded
+- → **Verify:** ✅ Pipeline/CRM/Catalog AI analysis live with admin toggle + prompt editor + report saving.
 
 ---
 
@@ -586,4 +598,5 @@ Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Test
 ---
 
 *Created: 05/03/2026 | Based on: wine-erp-audit-05-03.md (archived)*
-*Updated: 08/03/2026 — **P1-P8 ~99% ✅** | 26 modules fully implemented*
+*Updated: 09/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live*
+

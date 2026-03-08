@@ -1,6 +1,6 @@
 ﻿# Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-03-08 23:20
-> Status: Production — 26 modules, 111 DB models, 33 dashboard routes
+> Last updated: 2026-03-09 04:00
+> Status: Production — 26 modules, 113 DB models, 33 dashboard routes, 6 AI features live
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
@@ -26,7 +26,7 @@ WMS (Warehouse + Transfers + StockCount) | QRC (QR Traceability)
 SLS (Sales + Quotations[PDF/Email/ViewTracking] + PriceList + Allocation) | POS (Showroom Retail)
 CSG (Consignment HORECA) | TRS (Delivery + E-POD) | FIN (Finance + Declarations)
 STP (Wine Stamps) | RPT (Reports + BI) | DSH (CEO Dashboard) | KPI (Targets)
-AI (Prompt Library + OCR) | TLG (Telegram Bot) | MKT (Media Library)
+AI (6 live: Pipeline/CRM/Catalog Analysis + CEO Briefing + Admin Toggle + Prompt Editor) | TLG (Telegram Bot) | MKT (Media Library)
 PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
 
 ## Wine-Specific Concepts
@@ -50,6 +50,9 @@ PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
 - Serialization: serialize() utility (src/lib/serialize.ts) for Prisma Decimal/BigInt
 - Structured error returns: { success, data/error } — never throw from Server Actions
 - Env validation: crash-early if critical vars missing (src/lib/env.ts)
+- AI Management: AiSystemConfig singleton (aiEnabled + allowedModules), AiReport (save/pin/archive), AiPromptTemplate (DB-driven prompts with {{data}} placeholder)
+- AI Toggle: useAiStatus('module') client hook + isModuleAiEnabled() server check → 403 when disabled
+- AI Prompt Resolution: resolvePromptTemplate(slug) → DB template or hardcoded fallback
 
 ## Documentation Update Rules
 When making code changes, AI agents MUST update:

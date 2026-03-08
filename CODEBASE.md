@@ -45,9 +45,10 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **File Upload** | `src/lib/storage.ts` | Supabase Storage: uploadFile, deleteFile, listFiles |
 | **Tax Engine** | `tax/actions.ts` | CIF → NK → TTĐB → VAT auto-calc by HS Code + Country |
 | **SignaturePad** | `src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
-| **AI Service** | `src/lib/ai-service.ts` | Gemini 3.1 Pro API: CEO Narrative, OCR, Forecast. Key from DB vault |
-| **AI Toggle** | `src/lib/useAiStatus.ts` | Client hook: check AI enabled + module whitelist — panels auto-hide |
-| **AI Management** | `src/app/dashboard/ai/ai-actions.ts` | System config toggle, prompt CRUD, report save/list/pin/archive, usage stats |
+| **AI Service** | `src/lib/ai-service.ts` | Gemini 3.1 Pro API: `callGemini()` + `resolvePromptTemplate(slug)` → DB-driven prompts with `{{data}}` placeholder, fallback to hardcoded |
+| **AI Toggle** | `src/lib/useAiStatus.ts` | Client hook: `useAiStatus('module')` → auto-hide AI panels. Server: `isModuleAiEnabled()` → 403 |
+| **AI Management** | `src/app/dashboard/ai/ai-actions.ts` | Config toggle, prompt CRUD, report save/pin/archive, usage stats |
+| **AI Prompt Editor** | `src/app/dashboard/ai/ActivePromptEditor.tsx` | Inline editor cho 3 prompts (Pipeline/CRM/Catalog) — systemPrompt, userTemplate, temperature, maxTokens |
 | **Encryption** | `src/lib/encryption.ts` | AES-256-GCM key vault for API keys (ENCRYPTION_KEY env var) |
 | **Server Cache** | `src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
 | **Realtime Hook** | `src/lib/useRealtimeDashboard.ts` | Supabase Realtime subscriptions — role-based channel management |

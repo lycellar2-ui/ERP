@@ -558,7 +558,7 @@ ENCRYPTION_SECRET=32-char-random-hex-string-here
 | **Phase 4E** | Sinh Mô Tả Sản Phẩm (C1) + Prompt Library UI | 🟡 |
 | **Phase 5** | Smart Search pgvector (C2) + Demand Forecast (B3) + Price AI (B4) | 🟢 Nâng cao |
 
-*Last updated: 2026-03-09 01:50 | Wine ERP v6.3 — Google Gemini 3.1 Pro Primary*
+*Last updated: 2026-03-09 04:00 | Wine ERP v6.4 — Google Gemini 3.1 Pro Primary — 6 AI features live*
 
 ---
 
@@ -571,7 +571,12 @@ ENCRYPTION_SECRET=32-char-random-hex-string-here
 | 1 | **AI CEO Briefing** | ✅ Live | Gemini 3.1 Pro | `/api/ceo-summary` | `dashboard/AICeoSummary.tsx` |
 | 2 | **AI Purchase Suggestion** | ✅ Live | Gemini 3.1 Pro | `/api/purchase-suggestion` | `procurement/AIPurchaseSuggestion.tsx` |
 | 3 | **AI Pipeline Analysis** | ✅ Live | Gemini 3.1 Pro | `/api/pipeline-analysis` | `pipeline/AIPipelineAnalysis.tsx` |
-| 4 | **API Key Vault** | ✅ Live | - | `/api/ai/keys` | `ai/page.tsx` |
+| 4 | **AI CRM Analysis** | ✅ Live | Gemini 3.1 Pro | `/api/crm-analysis` | `crm/AICRMAnalysis.tsx` |
+| 5 | **AI Catalog Intelligence** | ✅ Live | Gemini 3.1 Pro | `/api/catalog-analysis` | `products/AICatalogAnalysis.tsx` |
+| 6 | **API Key Vault** | ✅ Live | - | `/api/ai/keys` | `ai/VaultUI.tsx` |
+| 7 | **AI Admin Toggle** | ✅ Live | - | `/api/ai/config`, `/api/ai/status` | `ai/AIManagementUI.tsx` |
+| 8 | **AI Reports History** | ✅ Live | - | `/api/ai/reports` | `ai/AIManagementUI.tsx` |
+| 9 | **Active Prompt Editor** | ✅ Live | - | `/api/ai/prompts`, `/api/ai/seed-prompts` | `ai/ActivePromptEditor.tsx` |
 
 ### Chi tiết kỹ thuật:
 
@@ -586,31 +591,99 @@ ENCRYPTION_SECRET=32-char-random-hex-string-here
 - **Phân tích**: Sales velocity, weeks of supply, landed cost
 - **Output**: Báo cáo 4 tier urgency (🔴 Cần nhập ngay, 🟡 Sắp hết, 🟢 Đủ, ⚠️ Tồn cao)
 - **maxTokens**: 8192 | **temperature**: 0.4
-- **Hiển thị**: Trang Đơn Mua Hàng
 
 #### 3. AI Pipeline Analysis (`/api/pipeline-analysis`)
 - **Data sources**: SalesOpportunity (all stages) + Customer + User
 - **Phân tích**: Pipeline health score, velocity per stage, stale deals, win rate, concentration risk
 - **Output**: 7-section report (Tổng quan, Top 5 deals, Velocity, Cảnh báo, Coaching, Dự báo, Hành động)
 - **maxTokens**: 8192 | **temperature**: 0.4
-- **Schema mới**: `stageChangedAt` + `previousStage` trên `SalesOpportunity`
-- **Hiển thị**: Trang Sales Pipeline
+- **DB Prompt slug**: `pipeline-analysis`
 
-#### 4. API Key Vault (`/dashboard/ai`)
-- **Encryption**: AES-256-GCM với `ENCRYPTION_KEY` env var
-- **DB model**: `AiApiKey` (Prisma) — lưu encrypted key, IV, preview
-- **UI**: Add/Delete/Test key, masked display
-- **Security**: Server-only decryption, key never exposed to client
+#### 4. AI CRM Analysis (`/api/crm-analysis`)
+- **Data sources**: Customer (full profile) + SalesOrder (revenue) + AR (công nợ) + Complaints + Opportunities + Activities
+- **Phân tích**: CRM Health Score, Customer tier (PLATINUM/GOLD/SILVER/BRONZE), churning detection (>60 ngày không mua), revenue MoM growth, AR risk concentration
+- **Output**: 7-section CRM Director report (Sức khỏe CRM, Top KH, Churning/Rủi ro, Công nợ, Xu hướng, Chiến lược, Wine Preference Insights)
+- **maxTokens**: 8192 | **temperature**: 0.4
+- **DB Prompt slug**: `crm-analysis`
+
+#### 5. AI Catalog Intelligence (`/api/catalog-analysis`)
+- **Data sources**: Product (enriched: sales/stock/pricing/quotations/awards) + Supplier (enriched: spending/PO/contracts/AP) + Producer + Region + Appellation
+- **Phân tích**: Portfolio Health Score, top performers, sản phẩm chưa bán, nghiên cứu thị trường VN, supplier concentration, pricing/margin insights
+- **Output**: 7-section Wine Portfolio Director report (Tổng quan, Top Performers, Sản phẩm mới, Thị trường, NCC, Pricing, Chiến lược)
+- **maxTokens**: 8192 | **temperature**: 0.5
+- **DB Prompt slug**: `catalog-analysis`
+- **Đặc biệt**: Kết hợp dữ liệu có & không có sales data, market intelligence từ AI knowledge
+
+#### 6. AI Admin System (3 components)
+
+**6a. AI System Toggle (`/api/ai/config` + `/api/ai/status`)**
+- **Model DB**: `AiSystemConfig` (singleton) — `aiEnabled`, `allowedModules` JSON array
+- **Client hook**: `useAiStatus('module')` → auto-hide AI panels khi disabled
+- **Server check**: `isModuleAiEnabled('pipeline|crm|catalog')` → 403 khi disabled
+- **UI**: Master ON/OFF toggle + 5 module cards (Pipeline, CRM, Catalog, CEO, Product Desc) với green dot indicators
+- **Dual-layer protection**: Client hides UI + Server rejects API calls
+
+**6b. AI Reports History (`/api/ai/reports`)**
+- **Model DB**: `AiReport` — module, title, analysis (Text), stats (JSON), isPinned, isArchived
+- **Actions**: Save (từ 3 AI panels) → Pin → Archive → Delete
+- **UI**: Scrollable list, filter by module tabs, expand inline viewer, pinned reports sort lên đầu
+
+**6c. Active Prompt Editor (`/api/ai/prompts` + `/api/ai/seed-prompts`)**
+- **Model DB**: `AiPromptTemplate` — slug (unique), systemPrompt, userTemplate, temperature, maxTokens
+- **Flow**: `resolvePromptTemplate(slug)` → DB template hoặc hardcoded fallback
+- **Template variable**: `{{data}}` — hệ thống tự thay bằng dữ liệu thực (pipeline deals, customer profiles, product catalog)
+- **Seed**: POST `/api/ai/seed-prompts` → tạo 3 prompt mặc định (idempotent upsert)
+- **UI**: 3 AI feature cards với inline expand/collapse editor cho systemPrompt, userTemplate, temperature, maxTokens
+
+### API Routes Reference (11 routes):
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| POST | `/api/pipeline-analysis` | Run pipeline analysis |
+| POST | `/api/crm-analysis` | Run CRM analysis |
+| POST | `/api/catalog-analysis` | Run catalog analysis |
+| POST | `/api/ceo-summary` | CEO briefing |
+| POST | `/api/purchase-suggestion` | Purchase suggestions |
+| GET | `/api/ai/status` | Check AI enabled + allowed modules |
+| PUT | `/api/ai/config` | Update AI system config |
+| POST | `/api/ai/reports` | Save AI report |
+| PUT | `/api/ai/reports/[id]/pin` | Toggle pin |
+| PUT | `/api/ai/reports/[id]/archive` | Archive report |
+| DELETE | `/api/ai/reports/[id]` | Delete report |
+| POST | `/api/ai/seed-prompts` | Seed default prompt templates |
+| PUT | `/api/ai/prompts` | Update prompt template |
 
 ### Schema changes (Session 2026-03-09):
 ```prisma
+model AiReport {
+    id         String   @id @default(cuid())
+    module     String
+    title      String
+    analysis   String   @db.Text
+    stats      Json?
+    isPinned   Boolean  @default(false)
+    isArchived Boolean  @default(false)
+    createdAt  DateTime @default(now())
+}
+
+model AiSystemConfig {
+    id                 String   @id @default("singleton")
+    aiEnabled          Boolean  @default(true)
+    allowedModules     Json     @default("[\"pipeline\",\"crm\",\"catalog\",\"ceo\",\"product-desc\"]")
+    defaultTemperature Float    @default(0.5)
+    defaultMaxTokens   Int      @default(4096)
+    updatedAt          DateTime @updatedAt
+}
+
 model SalesOpportunity {
-  // ... existing fields ...
-  previousStage  OpportunityStage?  // Track pipeline direction
-  stageChangedAt DateTime @default(now()) // For velocity calculation
+    // ... existing fields ...
+    previousStage  OpportunityStage?  // Track pipeline direction
+    stageChangedAt DateTime @default(now()) // For velocity calculation
 }
 ```
 
 ### Seed scripts:
 - `scripts/seed-pipeline.ts` — 24 pipeline deals with stage timing data
+- POST `/api/ai/seed-prompts` — 3 default prompt templates (pipeline, crm, catalog)
+
 
