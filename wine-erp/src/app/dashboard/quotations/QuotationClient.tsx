@@ -52,9 +52,15 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const openDetail = async (id: string) => {
         setDetailId(id)
         setDetailLoading(true)
-        const d = await getQuotationDetail(id)
-        setDetail(d)
-        setDetailLoading(false)
+        try {
+            const d = await getQuotationDetail(id)
+            setDetail(d)
+        } catch (err) {
+            console.error('Failed to load quotation detail:', err)
+            setDetail(null)
+        } finally {
+            setDetailLoading(false)
+        }
     }
 
     const handleConvert = async (id: string) => {

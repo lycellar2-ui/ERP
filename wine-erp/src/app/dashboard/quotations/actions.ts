@@ -80,7 +80,7 @@ export async function getQuotations(filters: { search?: string; status?: string 
 
 // ── Get detail ───────────────────────────────────
 export async function getQuotationDetail(id: string) {
-    return prisma.salesQuotation.findUnique({
+    const raw = await prisma.salesQuotation.findUnique({
         where: { id },
         include: {
             customer: { select: { id: true, name: true, code: true, channel: true, paymentTerm: true, contacts: { select: { email: true, phone: true }, take: 1 } } },
@@ -101,6 +101,28 @@ export async function getQuotationDetail(id: string) {
             },
         },
     })
+    if (!raw) return null
+
+    // Serialize all Decimal fields to plain numbers for Client Component compatibility
+    return {
+        ...raw,
+        totalAmount: Number(raw.totalAmount),
+        orderDiscount: Number(raw.orderDiscount),
+        lines: raw.lines.map(l => ({
+            ...l,
+            qtyOrdered: Number(l.qtyOrdered),
+            unitPrice: Number(l.unitPrice),
+            lineDiscountPct: Number(l.lineDiscountPct),
+            product: l.product ? {
+                ...l.product,
+                abvPercent: l.product.abvPercent != null ? Number(l.product.abvPercent) : null,
+                awards: l.product.awards.map(a => ({
+                    ...a,
+                    score: a.score != null ? Number(a.score) : null,
+                })),
+            } : l.product,
+        })),
+    }
 }
 
 // ── Create quotation ────────────────────────────
