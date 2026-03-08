@@ -271,3 +271,74 @@ export async function notifyContractExpiring(input: {
         telegramMsg,
     )
 }
+
+export async function notifyQuotationSent(input: {
+    quotationNo: string
+    customerName: string
+    totalAmount: number
+    salesRepName: string
+    recipientEmail: string
+    publicUrl: string
+    validUntil: string
+}) {
+    const telegramMsg = `📄 <b>Báo giá đã gửi cho khách hàng</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số BG: <b>${input.quotationNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Tổng tiền: <b>${formatVND(input.totalAmount)}</b>
+🧑‍💼 NV Bán hàng: ${input.salesRepName}
+📧 Gửi đến: ${input.recipientEmail}`
+
+    return sendNotification(
+        {
+            to: input.recipientEmail,
+            subject: `🍷 Báo Giá ${input.quotationNo} — LY's Cellars`,
+            html: `
+            <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
+                <div style="background: #0A1926; padding: 28px 24px; border-radius: 8px 8px 0 0; text-align: center;">
+                    <div style="display: inline-flex; align-items: center; gap: 12px;">
+                        <svg width="36" height="36" viewBox="0 0 40 48" fill="none">
+                            <path d="M8 4 Q8 20 20 26 Q32 20 32 4 Z" stroke="#87CBB9" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="20" y1="26" x2="20" y2="40" stroke="#87CBB9" stroke-width="1.8" stroke-linecap="round" />
+                            <line x1="13" y1="40" x2="27" y2="40" stroke="#87CBB9" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                        <div style="text-align: left;">
+                            <div style="font-size: 22px; font-weight: 700; color: #E8F1F2; font-family: Georgia, serif;">LY's Cellars</div>
+                            <div style="font-size: 10px; letter-spacing: 0.15em; color: #4A6A7A;">FINE WINE SPECIALIST</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="background: #1B2E3D; padding: 28px 24px; color: #E8F1F2;">
+                    <h2 style="color: #87CBB9; margin: 0 0 16px; font-size: 20px;">Báo Giá Rượu Vang</h2>
+                    <p style="color: #8AAEBB; font-size: 14px; margin: 0 0 20px; line-height: 1.6;">
+                        Kính chào <strong style="color: #E8F1F2;">${input.customerName}</strong>,<br/>
+                        Cảm ơn quý khách đã quan tâm đến sản phẩm của LY's Cellars. Chúng tôi xin gửi báo giá chi tiết:
+                    </p>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <tr><td style="padding: 10px; color: #8AAEBB; border-bottom: 1px solid #2A4355;">Số báo giá:</td><td style="padding: 10px; font-weight: bold; border-bottom: 1px solid #2A4355;">${input.quotationNo}</td></tr>
+                        <tr><td style="padding: 10px; color: #8AAEBB; border-bottom: 1px solid #2A4355;">Tổng giá trị:</td><td style="padding: 10px; font-weight: bold; color: #87CBB9; font-size: 18px; border-bottom: 1px solid #2A4355;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
+                        <tr><td style="padding: 10px; color: #8AAEBB; border-bottom: 1px solid #2A4355;">Hiệu lực đến:</td><td style="padding: 10px; font-weight: bold; border-bottom: 1px solid #2A4355;">${input.validUntil}</td></tr>
+                        <tr><td style="padding: 10px; color: #8AAEBB;">Nhân viên:</td><td style="padding: 10px;">${input.salesRepName}</td></tr>
+                    </table>
+                    <div style="text-align: center; margin: 24px 0;">
+                        <a href="${input.publicUrl}"
+                           style="display: inline-block; background: linear-gradient(135deg, #87CBB9, #5EADA0); color: #0A1926; padding: 14px 40px;
+                                  border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px;">
+                            🍷 Xem Chi Tiết Báo Giá
+                        </a>
+                    </div>
+                    <p style="color: #4A6A7A; font-size: 12px; text-align: center; margin: 16px 0 0;">
+                        Quý khách có thể xem chi tiết sản phẩm, ảnh, và chấp nhận báo giá trực tuyến.
+                    </p>
+                </div>
+                <div style="background: #142433; padding: 16px 24px; border-radius: 0 0 8px 8px; text-align: center;">
+                    <p style="color: #4A6A7A; font-size: 11px; margin: 0;">
+                        © ${new Date().getFullYear()} LY's Cellars · 123 Đường Pasteur, Q.1, TP.HCM · 028 1234 5678
+                    </p>
+                </div>
+            </div>
+        `,
+        },
+        telegramMsg,
+    )
+}

@@ -1232,6 +1232,23 @@ model SalesQuotation {
   status          QuotationStatus     @default(DRAFT)
   convertedSoId   String?             // Link to converted SO
   lines           SalesQuotationLine[]
+
+  // ── Public link & tracking ──
+  publicToken     String?             @unique  // UUID for public URL
+  customerEmail   String?                      // Email to send quotation
+  customerPhone   String?                      // Phone for Zalo/WhatsApp
+  companyName     String?                      // Company name on PDF
+  contactPerson   String?                      // Contact person name
+  sentAt          DateTime?                    // When sent
+  sentMethod      String?                      // EMAIL, ZALO, WHATSAPP, PRINT
+  firstViewedAt   DateTime?                    // First customer view
+  viewCount       Int                 @default(0)
+  lastViewedAt    DateTime?
+  rejectedReason  String?                      // Why customer rejected
+  deliveryTerms   String?                      // Delivery conditions
+  vatIncluded     Boolean             @default(false) // Prices include VAT?
+  pdfStyle        String              @default("professional") // professional, elegant, minimal
+
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 

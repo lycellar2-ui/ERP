@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw } from 'lucide-react'
+import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw, Download, Link2, Copy, ExternalLink, Printer, Mail } from 'lucide-react'
 import { toast } from 'sonner'
-import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation } from './actions'
+import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation, sendQuotation, duplicateQuotation, exportQuotationExcel } from './actions'
 import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/actions'
 import { formatVND, formatDate } from '@/lib/utils'
 
@@ -39,6 +39,8 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const [formData, setFormData] = useState({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '' })
     const [formLines, setFormLines] = useState<{ productId: string; qty: number; price: number; discount: number }[]>([])
     const [saving, setSaving] = useState(false)
+    const [sendDrawerOpen, setSendDrawerOpen] = useState<string | null>(null)
+    const [sendLoading, setSendLoading] = useState(false)
 
     const reload = useCallback(async () => {
         setLoading(true)
@@ -241,25 +243,32 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                                 style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
                                                 <Eye size={13} />
                                             </button>
-                                            {row.status === 'DRAFT' && (
-                                                <button onClick={() => handleStatusChange(row.id, 'SENT')} disabled={actionLoading === row.id}
+                                            {/* PDF Preview */}
+                                            <button onClick={() => window.open(`/api/export/quotation-pdf?id=${row.id}&style=professional`, '_blank')}
+                                                className="p-1.5 rounded" title="Xem PDF"
+                                                style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB' }}>
+                                                <Printer size={13} />
+                                            </button>
+                                            {/* Send */}
+                                            {['DRAFT', 'SENT'].includes(row.status) && (
+                                                <button onClick={() => setSendDrawerOpen(row.id)}
                                                     className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
                                                     style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}>
-                                                    {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><Send size={10} /> Gửi</>}
+                                                    <Send size={10} /> Gửi
                                                 </button>
+                                            )}
+                                            {/* View tracking */}
+                                            {row.viewCount > 0 && (
+                                                <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" title={`KH đã xem ${row.viewCount} lần${row.lastViewedAt ? ` · Lần cuối: ${formatDate(row.lastViewedAt)}` : ''}`}
+                                                    style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}>
+                                                    <Eye size={9} /> {row.viewCount}
+                                                </span>
                                             )}
                                             {['SENT', 'ACCEPTED'].includes(row.status) && (
                                                 <button onClick={() => handleConvert(row.id)} disabled={actionLoading === row.id}
                                                     className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
                                                     style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)', borderRadius: '4px' }}>
                                                     {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><ArrowRight size={10} /> → SO</>}
-                                                </button>
-                                            )}
-                                            {['DRAFT', 'SENT'].includes(row.status) && (
-                                                <button onClick={() => handleStatusChange(row.id, 'CANCELLED')} disabled={actionLoading === row.id}
-                                                    className="px-2 py-1 text-xs font-semibold"
-                                                    style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '4px' }}>
-                                                    Huỷ
                                                 </button>
                                             )}
                                         </div>
@@ -351,23 +360,64 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                     </div>
                                 </div>
 
+                                {/* View tracking */}
+                                {(detail as any).viewCount > 0 && (
+                                    <div className="p-3 rounded-md" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                                        <div className="flex items-center gap-2">
+                                            <Eye size={14} style={{ color: '#22C55E' }} />
+                                            <span className="text-xs font-semibold" style={{ color: '#22C55E' }}>KH đã xem {(detail as any).viewCount} lần</span>
+                                            {(detail as any).firstViewedAt && (
+                                                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>· Lần đầu: {formatDate((detail as any).firstViewedAt)}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Actions */}
-                                {!['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(detail.status) && (
-                                    <div className="flex gap-2 pt-2">
-                                        {detail.status === 'DRAFT' && (
-                                            <button onClick={() => { handleStatusChange(detail.id, 'SENT'); setDetailId(null) }}
-                                                className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold"
-                                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '6px' }}>
-                                                <Send size={14} /> Gửi Khách
-                                            </button>
-                                        )}
+                                <div className="flex flex-wrap gap-2 pt-2">
+                                    {/* PDF buttons */}
+                                    <button onClick={() => window.open(`/api/export/quotation-pdf?id=${detail.id}&style=professional`, '_blank')}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
+                                        style={{ background: 'rgba(138,174,187,0.12)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)', borderRadius: '6px' }}>
+                                        <Printer size={13} /> PDF Trắng
+                                    </button>
+                                    <button onClick={() => window.open(`/api/export/quotation-pdf?id=${detail.id}&style=elegant`, '_blank')}
+                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
+                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)', borderRadius: '6px' }}>
+                                        <Printer size={13} /> PDF Dark
+                                    </button>
+
+                                    {/* Copy link */}
+                                    {(detail as any).publicToken && (
+                                        <button onClick={() => {
+                                            const url = `${window.location.origin}/verify/quotation/${(detail as any).publicToken}`
+                                            navigator.clipboard.writeText(url)
+                                            toast.success('Đã copy link báo giá!')
+                                        }}
+                                            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
+                                            style={{ background: 'rgba(59,130,246,0.12)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '6px' }}>
+                                            <Copy size={13} /> Copy Link
+                                        </button>
+                                    )}
+
+                                    {/* Send email */}
+                                    {['DRAFT', 'SENT'].includes(detail.status) && (
+                                        <button onClick={() => { setSendDrawerOpen(detail.id); setDetailId(null) }}
+                                            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
+                                            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '6px' }}>
+                                            <Mail size={13} /> Gửi Email
+                                        </button>
+                                    )}
+
+                                    {/* Convert to SO */}
+                                    {!['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(detail.status) && (
                                         <button onClick={() => { handleConvert(detail.id); setDetailId(null) }}
                                             className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold"
                                             style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
                                             <ArrowRight size={14} /> Chuyển → SO
                                         </button>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -459,6 +509,106 @@ export function QuotationClient({ initialRows, stats }: Props) {
                     </div>
                 </>
             )}
+
+            {/* Send Drawer */}
+            {sendDrawerOpen && (
+                <>
+                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setSendDrawerOpen(null)} />
+                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(420px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+                        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>Gửi Báo Giá</h3>
+                            <button onClick={() => setSendDrawerOpen(null)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                            <p className="text-sm" style={{ color: '#8AAEBB' }}>Chọn phương thức gửi báo giá cho khách hàng:</p>
+
+                            {/* Send via Email */}
+                            <button onClick={async () => {
+                                setSendLoading(true)
+                                const res = await sendQuotation(sendDrawerOpen, 'EMAIL')
+                                setSendLoading(false)
+                                if (res.success) {
+                                    toast.success('Đã gửi báo giá qua Email!')
+                                    if (res.publicUrl) {
+                                        navigator.clipboard.writeText(res.publicUrl)
+                                        toast.info('Link đã được copy vào clipboard')
+                                    }
+                                    setSendDrawerOpen(null)
+                                    reload()
+                                } else toast.error(res.error || 'Lỗi gửi email')
+                            }} disabled={sendLoading}
+                                className="w-full p-4 rounded-lg text-left transition-all"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
+                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#D4A853')}
+                                onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.15)' }}>
+                                        <Mail size={18} style={{ color: '#D4A853' }} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>📧 Gửi qua Email</p>
+                                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Gửi email HTML đẹp + link xem báo giá online</p>
+                                    </div>
+                                </div>
+                            </button>
+
+                            {/* Copy Link */}
+                            <button onClick={async () => {
+                                setSendLoading(true)
+                                const res = await sendQuotation(sendDrawerOpen, 'LINK')
+                                setSendLoading(false)
+                                if (res.success && res.publicUrl) {
+                                    navigator.clipboard.writeText(res.publicUrl)
+                                    toast.success('Đã copy link! Paste vào Zalo/WhatsApp để gửi')
+                                    setSendDrawerOpen(null)
+                                    reload()
+                                } else toast.error(res.error || 'Lỗi tạo link')
+                            }} disabled={sendLoading}
+                                className="w-full p-4 rounded-lg text-left transition-all"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
+                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B82F6')}
+                                onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)' }}>
+                                        <Link2 size={18} style={{ color: '#3B82F6' }} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>🔗 Copy Link Gửi Zalo / WhatsApp</p>
+                                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Copy link → paste vào tin nhắn. KH bấm xem trực tuyến</p>
+                                    </div>
+                                </div>
+                            </button>
+
+                            {/* PDF Download */}
+                            <button onClick={() => {
+                                window.open(`/api/export/quotation-pdf?id=${sendDrawerOpen}&style=professional`, '_blank')
+                            }}
+                                className="w-full p-4 rounded-lg text-left transition-all"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
+                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                                onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.15)' }}>
+                                        <Printer size={18} style={{ color: '#87CBB9' }} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>🖨️ In / Tải PDF</p>
+                                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Mở báo giá dạng web → In hoặc lưu PDF</p>
+                                    </div>
+                                </div>
+                            </button>
+
+                            {sendLoading && (
+                                <div className="flex items-center justify-center gap-2 py-4">
+                                    <Loader2 size={16} className="animate-spin" style={{ color: '#87CBB9' }} />
+                                    <span className="text-sm" style={{ color: '#8AAEBB' }}>Đang xử lý...</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
+
