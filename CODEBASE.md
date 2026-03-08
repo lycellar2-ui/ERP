@@ -29,7 +29,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Tax & Market Data**: `src/app/dashboard/tax`, `src/app/dashboard/costing`, `src/app/dashboard/market-price`
 - **Logistics**: `src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `src/app/dashboard/consignment`, `src/app/dashboard/transfers`, `src/app/dashboard/returns`, `src/app/dashboard/stock-count`
 - **CEO Board**: `src/app/dashboard` (**AI CEO Briefing**), `src/app/dashboard/kpi`, `src/app/dashboard/reports`
-- **AI & Features**: `src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro), `src/app/api/ceo-summary` (**AI CEO Briefing**), `src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `src/app/api/pipeline-analysis` (**AI Pipeline Analysis**)
+- **AI & Features**: `src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro, **Prompt Template CRUD**, **AI Reports History**), `src/app/api/ceo-summary` (**AI CEO Briefing**), `src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `src/app/api/pipeline-analysis` (**AI Pipeline Analysis**), `src/app/api/crm-analysis` (**AI CRM Analysis**), `src/app/api/catalog-analysis` (**AI Catalog & Market Intelligence**), `src/app/api/ai/status` (**AI Toggle Check**), `src/app/api/ai/reports` (**AI Report Save**)
 - **POS & QR**: `src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `src/app/dashboard/pos/loyalty`, `src/app/dashboard/qr-codes` (Anti-counterfeit)
 - **External Portal**: `src/app/partner-login` (**External Partner Login & Portal**)
 - **Public Pages**: `src/app/verify/quotation/[token]` (**Public Quotation Viewer** — KH xem, accept/reject, view tracking), `src/app/api/export/quotation-pdf` (**PDF Export API** — Professional/Elegant styles)
@@ -46,6 +46,8 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **Tax Engine** | `tax/actions.ts` | CIF → NK → TTĐB → VAT auto-calc by HS Code + Country |
 | **SignaturePad** | `src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
 | **AI Service** | `src/lib/ai-service.ts` | Gemini 3.1 Pro API: CEO Narrative, OCR, Forecast. Key from DB vault |
+| **AI Toggle** | `src/lib/useAiStatus.ts` | Client hook: check AI enabled + module whitelist — panels auto-hide |
+| **AI Management** | `src/app/dashboard/ai/ai-actions.ts` | System config toggle, prompt CRUD, report save/list/pin/archive, usage stats |
 | **Encryption** | `src/lib/encryption.ts` | AES-256-GCM key vault for API keys (ENCRYPTION_KEY env var) |
 | **Server Cache** | `src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
 | **Realtime Hook** | `src/lib/useRealtimeDashboard.ts` | Supabase Realtime subscriptions — role-based channel management |
@@ -119,7 +121,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 
 | Metric | Giá trị | Nơi ghi nhận |
 |---|---|---|
-| Prisma models | **111** | README.md, llms.txt, tech-stack.md |
+| Prisma models | **113** | README.md, llms.txt, tech-stack.md |
 | Prisma enums | **71** | README.md, llms.txt |
 | Dashboard routes | **33** | README.md, wine-erp-plan.md |
 | Server Action files | **38** | README.md |

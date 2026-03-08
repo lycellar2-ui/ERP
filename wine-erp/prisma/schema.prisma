@@ -2461,6 +2461,34 @@ model AiPromptRun {
   @@map("ai_prompt_runs")
 }
 
+model AiReport {
+  id         String   @id @default(cuid())
+  module     String   // pipeline, crm, catalog
+  title      String
+  analysis   String   // Full AI text
+  stats      Json?    // KPI stats snapshot
+  prompt     String?  // Prompt used (for reproducibility)
+  isPinned   Boolean  @default(false)
+  isArchived Boolean  @default(false)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  @@index([module, createdAt])
+  @@map("ai_reports")
+}
+
+model AiSystemConfig {
+  id                String   @id @default("singleton")
+  aiEnabled         Boolean  @default(true)
+  allowedModules    Json     @default("[\"pipeline\",\"crm\",\"catalog\",\"ceo\",\"product-desc\"]")
+  defaultTemperature Float   @default(0.5)
+  defaultMaxTokens  Int      @default(4096)
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+
+  @@map("ai_system_config")
+}
+
 // ═══════════════════════════════════════════════════
 // POS — Loyalty Program
 // ═══════════════════════════════════════════════════

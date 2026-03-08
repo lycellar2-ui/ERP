@@ -4,8 +4,9 @@ import { useState } from 'react'
 import {
     Sparkles, Loader2, RefreshCw, TrendingUp, Users, AlertTriangle,
     DollarSign, XCircle, ChevronDown, ChevronUp, ShieldAlert,
-    Crown, Gem, UserX, CreditCard
+    Crown, Gem, UserX, CreditCard, Save, CheckCircle
 } from 'lucide-react'
+import { useAiStatus } from '@/lib/useAiStatus'
 
 interface CRMStats {
     totalCustomers: number
@@ -24,11 +25,27 @@ interface CRMStats {
 }
 
 export function AICRMAnalysis() {
+    const aiStatus = useAiStatus('crm')
     const [analysis, setAnalysis] = useState<string | null>(null)
     const [stats, setStats] = useState<CRMStats | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [collapsed, setCollapsed] = useState(true)
+    const [saved, setSaved] = useState(false)
+
+    if (aiStatus.loading) return null
+    if (!aiStatus.enabled) return null
+
+    async function handleSaveReport() {
+        if (!analysis) return
+        const res = await fetch('/api/ai/reports', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ module: 'crm', title: `CRM Analysis — ${new Date().toLocaleDateString('vi-VN')}`, analysis, stats }),
+        })
+        const data = await res.json()
+        if (data.success) { setSaved(true); setTimeout(() => setSaved(false), 3000) }
+    }
 
     async function handleGenerate() {
         setLoading(true)
@@ -206,6 +223,11 @@ export function AICRMAnalysis() {
                         <p className="text-[10px] mt-3 text-right" style={{ color: '#4A6A7A' }}>
                             🕐 Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · CRM Director AI
                         </p>
+                        <button onClick={handleSaveReport} disabled={saved}
+                            className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
+                            style={{ background: saved ? 'rgba(91,168,138,0.1)' : 'rgba(138,174,187,0.08)', color: saved ? '#5BA88A' : '#8AAEBB', border: `1px solid ${saved ? 'rgba(91,168,138,0.3)' : 'rgba(138,174,187,0.15)'}` }}>
+                            {saved ? <><CheckCircle size={10} /> Đã lưu</> : <><Save size={10} /> Lưu Báo Cáo</>}
+                        </button>
                     </div>
                 )}
 
