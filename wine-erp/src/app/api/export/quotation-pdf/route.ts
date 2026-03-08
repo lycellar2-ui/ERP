@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-// GET /api/export/quotation-pdf?id=xxx&style=professional|elegant|minimal
 export async function GET(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id')
     const style = req.nextUrl.searchParams.get('style') || 'professional'
@@ -47,26 +46,38 @@ export async function GET(req: NextRequest) {
     const vatAmount = qt.vatIncluded ? 0 : afterDiscount * 0.1
     const grandTotal = afterDiscount + vatAmount
 
-    // Style themes
-    const themes: Record<string, { bg: string; headerBg: string; headerColor: string; accentColor: string; textColor: string; mutedColor: string; borderColor: string; tableBg: string; tableAltBg: string }> = {
-        professional: {
-            bg: '#FFFFFF', headerBg: '#1B2E3D', headerColor: '#FFFFFF', accentColor: '#87CBB9',
-            textColor: '#1A1A1A', mutedColor: '#666666', borderColor: '#E5E7EB',
-            tableBg: '#FFFFFF', tableAltBg: '#F9FAFB',
-        },
-        elegant: {
-            bg: '#0A1926', headerBg: '#142433', headerColor: '#E8F1F2', accentColor: '#87CBB9',
-            textColor: '#E8F1F2', mutedColor: '#8AAEBB', borderColor: '#2A4355',
-            tableBg: '#142433', tableAltBg: '#1B2E3D',
-        },
-        minimal: {
-            bg: '#FFFFFF', headerBg: '#FFFFFF', headerColor: '#111827', accentColor: '#0D9488',
-            textColor: '#111827', mutedColor: '#9CA3AF', borderColor: '#E5E7EB',
-            tableBg: '#FFFFFF', tableAltBg: '#F3F4F6',
-        },
-    }
+    const isDark = style === 'elegant'
 
-    const t = themes[style] || themes.professional
+    // Theme colors — optimized for PRINT readability
+    const t = isDark ? {
+        pageBg: '#0F1F2E',
+        cardBg: '#162736',
+        headerBg: '#0B1924',
+        text: '#F0F4F7',
+        textStrong: '#FFFFFF',
+        textMuted: '#94B3C8',
+        accent: '#6EC5B0',
+        accentDark: '#4A9E8B',
+        border: '#2C4558',
+        tableBg: '#162736',
+        tableAlt: '#1A2F40',
+        awardBg: 'rgba(234,179,8,0.2)',
+        awardText: '#F5CC50',
+    } : {
+        pageBg: '#FFFFFF',
+        cardBg: '#FFFFFF',
+        headerBg: '#1A2D3D',
+        text: '#1A1A1A',
+        textStrong: '#000000',
+        textMuted: '#555555',
+        accent: '#1A7A66',
+        accentDark: '#135E4F',
+        border: '#D0D5DB',
+        tableBg: '#FFFFFF',
+        tableAlt: '#F5F7F9',
+        awardBg: '#FFF8E1',
+        awardText: '#B8860B',
+    }
 
     const productRows = qt.lines.map((l, i) => {
         const qty = Number(l.qtyOrdered)
@@ -74,116 +85,418 @@ export async function GET(req: NextRequest) {
         const disc = Number(l.lineDiscountPct)
         const lineTotal = qty * price * (1 - disc / 100)
         const imgUrl = l.product.media?.[0]?.url
-        const awards = l.product.awards?.map(a => `${a.source} ${a.score ? Number(a.score) : a.medal?.replace('_', ' ') || ''}`).join(', ')
+        const awards = l.product.awards?.map(a =>
+            `${a.source} ${a.score ? Number(a.score) : (a.medal?.replace('_', ' ') || '')}`
+        ).join(' · ')
 
         return `
-            <tr style="background:${i % 2 === 0 ? t.tableBg : t.tableAltBg}">
-                <td style="padding:12px 8px;color:${t.mutedColor};font-size:12px;text-align:center;border-bottom:1px solid ${t.borderColor}">${i + 1}</td>
-                <td style="padding:12px 8px;border-bottom:1px solid ${t.borderColor};width:60px">
-                    ${imgUrl ? `<img src="${imgUrl}" style="width:50px;height:70px;object-fit:cover;border-radius:4px" />` : '<div style="width:50px;height:70px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px">🍷</div>'}
-                </td>
-                <td style="padding:12px 8px;border-bottom:1px solid ${t.borderColor}">
-                    <div style="color:${t.textColor};font-weight:600;font-size:13px">${l.product.productName}</div>
-                    <div style="color:${t.mutedColor};font-size:11px;margin-top:2px">
-                        ${l.product.vintage ? `<strong>${l.product.vintage}</strong> · ` : ''}${l.product.appellation?.name || ''} ${l.product.appellation?.region ? `· ${l.product.appellation.region}` : ''} · ${l.product.country}
-                    </div>
-                    <div style="color:${t.mutedColor};font-size:10px;margin-top:2px">
-                        ${l.product.skuCode} · ${l.product.wineType} · ${l.product.volumeMl}ml · ABV ${Number(l.product.abvPercent)}%${l.product.classification ? ` · ${l.product.classification}` : ''}
-                    </div>
-                    ${awards ? `<div style="color:#EAB308;font-size:10px;margin-top:3px">🏅 ${awards}</div>` : ''}
-                    ${l.product.tastingNotes ? `<div style="color:${t.mutedColor};font-size:10px;font-style:italic;margin-top:3px">${l.product.tastingNotes.slice(0, 100)}${l.product.tastingNotes.length > 100 ? '…' : ''}</div>` : ''}
-                </td>
-                <td style="padding:12px 8px;text-align:center;color:${t.textColor};font-size:13px;border-bottom:1px solid ${t.borderColor}">${qty}</td>
-                <td style="padding:12px 8px;text-align:right;color:${t.textColor};font-size:13px;border-bottom:1px solid ${t.borderColor}">${fmt(price)}</td>
-                <td style="padding:12px 8px;text-align:center;color:${disc > 0 ? t.accentColor : t.mutedColor};font-size:13px;border-bottom:1px solid ${t.borderColor}">${disc > 0 ? `${disc}%` : '—'}</td>
-                <td style="padding:12px 8px;text-align:right;color:${t.textColor};font-weight:600;font-size:13px;border-bottom:1px solid ${t.borderColor}">${fmt(lineTotal)}</td>
-            </tr>
-        `
+        <tr class="${i % 2 === 1 ? 'alt' : ''}">
+            <td class="cell-center cell-num">${i + 1}</td>
+            <td class="cell-img">
+                ${imgUrl
+                ? `<img src="${imgUrl}" alt="" class="product-img" />`
+                : `<div class="product-img-placeholder">🍷</div>`
+            }
+            </td>
+            <td class="cell-product">
+                <div class="product-name">${l.product.productName}</div>
+                <div class="product-detail">
+                    ${l.product.vintage ? `<strong>${l.product.vintage}</strong> · ` : ''}${l.product.appellation?.name || ''}${l.product.appellation?.region ? ` · ${l.product.appellation.region}` : ''} · ${l.product.country}
+                </div>
+                <div class="product-meta">
+                    ${l.product.skuCode} · ${l.product.wineType} · ${l.product.volumeMl}ml · ${Number(l.product.abvPercent)}% ABV${l.product.classification ? ` · ${l.product.classification}` : ''}
+                </div>
+                ${awards ? `<div class="product-awards">🏅 ${awards}</div>` : ''}
+                ${l.product.tastingNotes ? `<div class="product-notes">${l.product.tastingNotes.slice(0, 120)}${l.product.tastingNotes.length > 120 ? '…' : ''}</div>` : ''}
+            </td>
+            <td class="cell-center cell-qty">${qty}</td>
+            <td class="cell-right cell-price">${fmt(price)}</td>
+            <td class="cell-center cell-disc">${disc > 0 ? `${disc}%` : '—'}</td>
+            <td class="cell-right cell-total">${fmt(lineTotal)}</td>
+        </tr>`
     }).join('')
 
     const html = `<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Báo Giá ${qt.quotationNo} — LY's Cellars</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap');
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',system-ui,sans-serif; background:${t.bg}; color:${t.textColor}; }
+        /* ═══════════ RESET & BASE ═══════════ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @page {
+            size: A4;
+            margin: 12mm 14mm;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: ${t.text};
+            background: ${t.pageBg};
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* ═══════════ HEADER ═══════════ */
+        .header {
+            background: ${t.headerBg};
+            color: #FFFFFF;
+            padding: 22px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .header-logo {
+            width: 44px;
+            height: 44px;
+            border: 2px solid ${t.accent};
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .header-name {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .header-sub {
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            opacity: 0.7;
+            margin-top: 1px;
+        }
+        .header-info {
+            text-align: right;
+            font-size: 11.5px;
+            line-height: 1.7;
+            opacity: 0.85;
+        }
+        .header-info strong {
+            display: block;
+            font-size: 12.5px;
+            opacity: 1;
+        }
+
+        /* ═══════════ TITLE BAR ═══════════ */
+        .title-bar {
+            padding: 18px 28px;
+            border-bottom: 3px solid ${t.accent};
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            background: ${t.cardBg};
+        }
+        .title-text {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            color: ${t.textStrong};
+        }
+        .title-no {
+            font-size: 16px;
+            font-weight: 700;
+            color: ${t.accent};
+            margin-top: 2px;
+        }
+        .title-dates {
+            text-align: right;
+            font-size: 13px;
+            color: ${t.textMuted};
+            line-height: 1.8;
+        }
+        .title-dates strong {
+            color: ${t.textStrong};
+        }
+
+        /* ═══════════ CUSTOMER INFO ═══════════ */
+        .info-grid {
+            display: flex;
+            gap: 24px;
+            padding: 18px 28px;
+            border-bottom: 1px solid ${t.border};
+            background: ${t.cardBg};
+        }
+        .info-box {
+            flex: 1;
+        }
+        .info-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            color: ${t.textMuted};
+            margin-bottom: 6px;
+        }
+        .info-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: ${t.textStrong};
+        }
+        .info-detail {
+            font-size: 12.5px;
+            color: ${t.textMuted};
+            margin-top: 3px;
+            line-height: 1.6;
+        }
+
+        /* ═══════════ TABLE ═══════════ */
+        .table-wrap {
+            padding: 12px 28px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead th {
+            padding: 10px 8px;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            color: ${isDark ? '#94B3C8' : '#666666'};
+            border-bottom: 2px solid ${t.border};
+            text-align: left;
+        }
+        thead th.th-center { text-align: center; }
+        thead th.th-right { text-align: right; }
+
+        tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid ${isDark ? '#223344' : '#E8EAED'};
+            vertical-align: top;
+            font-size: 12.5px;
+        }
+        tr.alt { background: ${t.tableAlt}; }
+
+        .cell-center { text-align: center; }
+        .cell-right { text-align: right; }
+        .cell-num { color: ${t.textMuted}; font-size: 12px; width: 28px; }
+        .cell-img { width: 54px; }
+        .cell-qty { width: 40px; font-weight: 600; color: ${t.textStrong}; }
+        .cell-price { width: 100px; font-family: 'Consolas', 'Courier New', monospace; color: ${t.textStrong}; }
+        .cell-disc { width: 48px; color: ${t.accent}; font-weight: 600; }
+        .cell-total { width: 115px; font-family: 'Consolas', 'Courier New', monospace; font-weight: 700; color: ${t.textStrong}; font-size: 13px; }
+
+        .product-img {
+            width: 48px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid ${t.border};
+        }
+        .product-img-placeholder {
+            width: 48px;
+            height: 64px;
+            border-radius: 4px;
+            background: ${isDark ? '#1A2F40' : '#F0F0F0'};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 1px solid ${t.border};
+        }
+        .product-name {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: ${t.textStrong};
+            margin-bottom: 2px;
+        }
+        .product-detail {
+            font-size: 12px;
+            color: ${t.textMuted};
+        }
+        .product-detail strong {
+            color: ${t.accent};
+            font-weight: 700;
+        }
+        .product-meta {
+            font-size: 10.5px;
+            color: ${isDark ? '#6B8A9E' : '#999999'};
+            margin-top: 2px;
+        }
+        .product-awards {
+            font-size: 11px;
+            color: ${t.awardText};
+            background: ${t.awardBg};
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .product-notes {
+            font-size: 10.5px;
+            color: ${isDark ? '#6B8A9E' : '#999999'};
+            font-style: italic;
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        /* ═══════════ TOTALS ═══════════ */
+        .totals-wrap {
+            padding: 8px 28px 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .totals-box {
+            width: 300px;
+        }
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 13.5px;
+        }
+        .totals-row .label { color: ${t.textMuted}; }
+        .totals-row .value { color: ${t.textStrong}; font-family: 'Consolas', 'Courier New', monospace; }
+        .totals-row.discount .value { color: ${t.accent}; }
+        .totals-grand {
+            border-top: 3px solid ${t.accent};
+            margin-top: 8px;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .totals-grand .label {
+            font-size: 15px;
+            font-weight: 700;
+            color: ${t.textStrong};
+        }
+        .totals-grand .value {
+            font-size: 22px;
+            font-weight: 800;
+            color: ${t.accent};
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .vat-note {
+            text-align: right;
+            font-size: 11px;
+            color: ${t.textMuted};
+            margin-top: 4px;
+        }
+
+        /* ═══════════ TERMS ═══════════ */
+        .terms-section {
+            padding: 16px 28px;
+            border-top: 1px solid ${t.border};
+            margin: 0;
+        }
+        .terms-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            color: ${t.textMuted};
+            margin-bottom: 6px;
+        }
+        .terms-content {
+            font-size: 12.5px;
+            color: ${t.text};
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+
+        /* ═══════════ FOOTER ═══════════ */
+        .footer {
+            padding: 14px 28px;
+            border-top: 1px solid ${t.border};
+            text-align: center;
+            font-size: 10.5px;
+            color: ${t.textMuted};
+            margin-top: 12px;
+        }
+
+        /* ═══════════ PRINT BUTTON ═══════════ */
+        .no-print { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; gap: 8px; }
+        .btn-print {
+            padding: 12px 28px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .btn-print-primary { background: ${t.accent}; color: ${isDark ? '#0A1926' : '#FFFFFF'}; }
+        .btn-print-secondary { background: ${isDark ? '#2C4558' : '#E5E7EB'}; color: ${isDark ? '#E8F1F2' : '#333'}; }
+
         @media print {
-            body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-            .no-print { display:none !important; }
-            @page { margin:10mm; size:A4; }
+            .no-print { display: none !important; }
+            body { background: ${t.pageBg} !important; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div style="background:${t.headerBg};padding:28px 32px;display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:16px">
-            <svg width="42" height="42" viewBox="0 0 40 48" fill="none">
-                <path d="M8 4 Q8 20 20 26 Q32 20 32 4 Z" stroke="${t.accentColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                <line x1="20" y1="26" x2="20" y2="40" stroke="${t.accentColor}" stroke-width="1.8" stroke-linecap="round" />
-                <line x1="13" y1="40" x2="27" y2="40" stroke="${t.accentColor}" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-brand">
+            <div class="header-logo">🍷</div>
             <div>
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;font-weight:700;color:${t.headerColor}">LY's Cellars</div>
-                <div style="font-size:10px;letter-spacing:0.15em;color:${t.mutedColor}">FINE WINE SPECIALIST</div>
+                <div class="header-name">LY's Cellars</div>
+                <div class="header-sub">FINE WINE SPECIALIST</div>
             </div>
         </div>
-        <div style="text-align:right;color:${style === 'elegant' ? t.mutedColor : t.mutedColor};font-size:12px;line-height:1.8">
-            <div>CÔNG TY TNHH LY'S CELLARS</div>
-            <div>MST: 0312345678</div>
-            <div>📍 123 Đường Pasteur, Q.1, TP.HCM</div>
-            <div>📞 028 1234 5678 | 📧 info@lyscellars.com</div>
+        <div class="header-info">
+            <strong>CÔNG TY TNHH LY'S CELLARS</strong>
+            MST: 0312345678<br/>
+            123 Đường Pasteur, Quận 1, TP. Hồ Chí Minh<br/>
+            ☎ 028 1234 5678 &nbsp;|&nbsp; ✉ info@lyscellars.com
         </div>
     </div>
 
-    <!-- Title -->
-    <div style="padding:24px 32px;border-bottom:2px solid ${t.accentColor}">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:700;color:${t.textColor}">BÁO GIÁ / QUOTATION</div>
-                <div style="font-size:14px;color:${t.accentColor};font-weight:600;margin-top:2px">${qt.quotationNo}</div>
-            </div>
-            <div style="text-align:right;font-size:13px;color:${t.mutedColor};line-height:1.8">
-                <div>Ngày: <strong style="color:${t.textColor}">${fmtDate(qt.createdAt)}</strong></div>
-                <div>Hiệu lực đến: <strong style="color:${t.accentColor}">${fmtDate(qt.validUntil)}</strong></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customer info -->
-    <div style="padding:20px 32px;display:flex;gap:32px;border-bottom:1px solid ${t.borderColor}">
-        <div style="flex:1">
-            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:${t.mutedColor};margin-bottom:6px">KÍNH GỬI</div>
-            <div style="font-size:16px;font-weight:600;color:${t.textColor}">${qt.contactPerson || qt.customer.name}</div>
-            ${qt.companyName ? `<div style="font-size:13px;color:${t.mutedColor};margin-top:2px">${qt.companyName}</div>` : ''}
-            <div style="font-size:12px;color:${t.mutedColor};margin-top:2px">Mã KH: ${qt.customer.code} · Kênh: ${qt.channel}</div>
-        </div>
+    <!-- TITLE BAR -->
+    <div class="title-bar">
         <div>
-            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:${t.mutedColor};margin-bottom:6px">ĐIỀU KHOẢN</div>
-            <div style="font-size:13px;color:${t.textColor};line-height:1.8">
-                <div>Thanh toán: <strong>${qt.paymentTerm}</strong></div>
-                <div>NV phụ trách: <strong>${qt.salesRep.name}</strong></div>
-                ${qt.salesRep.email ? `<div style="color:${t.accentColor};font-size:12px">${qt.salesRep.email}</div>` : ''}
+            <div class="title-text">BÁO GIÁ / QUOTATION</div>
+            <div class="title-no">${qt.quotationNo}</div>
+        </div>
+        <div class="title-dates">
+            Ngày lập: <strong>${fmtDate(qt.createdAt)}</strong><br/>
+            Hiệu lực đến: <strong style="color: ${t.accent}">${fmtDate(qt.validUntil)}</strong>
+        </div>
+    </div>
+
+    <!-- CUSTOMER INFO -->
+    <div class="info-grid">
+        <div class="info-box">
+            <div class="info-label">Kính gửi</div>
+            <div class="info-value">${qt.contactPerson || qt.customer.name}</div>
+            ${qt.companyName ? `<div class="info-detail">${qt.companyName}</div>` : ''}
+            <div class="info-detail">Mã KH: ${qt.customer.code} &nbsp;·&nbsp; Kênh: ${qt.channel}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-label">Điều khoản</div>
+            <div class="info-detail" style="margin-top:0">
+                Thanh toán: <strong style="color:${t.textStrong}">${qt.paymentTerm}</strong><br/>
+                NV phụ trách: <strong style="color:${t.textStrong}">${qt.salesRep.name}</strong><br/>
+                ${qt.salesRep.email ? `<span style="color:${t.accent}">${qt.salesRep.email}</span>` : ''}
             </div>
         </div>
     </div>
 
-    <!-- Product table -->
-    <div style="padding:16px 32px">
-        <table style="width:100%;border-collapse:collapse">
+    <!-- PRODUCT TABLE -->
+    <div class="table-wrap">
+        <table>
             <thead>
-                <tr style="border-bottom:2px solid ${t.borderColor}">
-                    <th style="padding:10px 8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};width:30px">#</th>
-                    <th style="padding:10px 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};width:60px"></th>
-                    <th style="padding:10px 8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor}">Sản Phẩm</th>
-                    <th style="padding:10px 8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};width:50px">SL</th>
-                    <th style="padding:10px 8px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};width:110px">Đơn Giá (₫)</th>
-                    <th style="padding:10px 8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};width:50px">CK</th>
-                    <th style="padding:10px 8px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};width:130px">Thành Tiền (₫)</th>
+                <tr>
+                    <th class="th-center">#</th>
+                    <th></th>
+                    <th>Sản Phẩm</th>
+                    <th class="th-center">SL</th>
+                    <th class="th-right">Đơn Giá (₫)</th>
+                    <th class="th-center">CK</th>
+                    <th class="th-right">Thành Tiền (₫)</th>
                 </tr>
             </thead>
             <tbody>
@@ -192,58 +505,66 @@ export async function GET(req: NextRequest) {
         </table>
     </div>
 
-    <!-- Totals -->
-    <div style="padding:0 32px 24px;display:flex;justify-content:flex-end">
-        <div style="width:320px">
-            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px">
-                <span style="color:${t.mutedColor}">Tạm tính</span>
-                <span style="color:${t.textColor}">${fmt(subtotal)} ₫</span>
+    <!-- TOTALS -->
+    <div class="totals-wrap">
+        <div class="totals-box">
+            <div class="totals-row">
+                <span class="label">Tạm tính (${qt.lines.length} sản phẩm)</span>
+                <span class="value">${fmt(subtotal)}</span>
             </div>
             ${Number(qt.orderDiscount) > 0 ? `
-            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px">
-                <span style="color:${t.accentColor}">Chiết khấu (${qt.orderDiscount}%)</span>
-                <span style="color:${t.accentColor}">−${fmt(discountAmount)} ₫</span>
+            <div class="totals-row discount">
+                <span class="label">Chiết khấu ${qt.orderDiscount}%</span>
+                <span class="value">−${fmt(discountAmount)}</span>
             </div>` : ''}
             ${!qt.vatIncluded ? `
-            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px">
-                <span style="color:${t.mutedColor}">VAT (10%)</span>
-                <span style="color:${t.textColor}">${fmt(vatAmount)} ₫</span>
+            <div class="totals-row">
+                <span class="label">VAT 10%</span>
+                <span class="value">${fmt(vatAmount)}</span>
             </div>` : ''}
-            <div style="border-top:2px solid ${t.accentColor};margin-top:8px;padding-top:12px;display:flex;justify-content:space-between;align-items:center">
-                <span style="font-size:16px;font-weight:600">TỔNG CỘNG</span>
-                <span style="font-size:24px;font-weight:700;color:${t.accentColor};font-family:'Cormorant Garamond',Georgia,serif">${fmt(grandTotal)} ₫</span>
+            <div class="totals-grand">
+                <span class="label">TỔNG CỘNG</span>
+                <span class="value">${fmt(grandTotal)} ₫</span>
             </div>
-            ${qt.vatIncluded ? `<div style="text-align:right;font-size:11px;color:${t.mutedColor};margin-top:4px">Giá đã bao gồm VAT</div>` : `<div style="text-align:right;font-size:11px;color:${t.mutedColor};margin-top:4px">Giá chưa bao gồm VAT</div>`}
+            <div class="vat-note">${qt.vatIncluded ? 'Giá đã bao gồm VAT' : 'Giá chưa bao gồm VAT 10%'}</div>
         </div>
     </div>
 
-    <!-- Terms -->
-    ${(qt.terms || qt.deliveryTerms || qt.notes) ? `
-    <div style="padding:16px 32px;margin:0 32px;border-top:1px solid ${t.borderColor}">
-        ${qt.terms ? `<div style="margin-bottom:12px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};margin-bottom:4px">Điều Khoản & Điều Kiện</div><div style="font-size:13px;color:${t.textColor};line-height:1.7;white-space:pre-line">${qt.terms}</div></div>` : ''}
-        ${qt.deliveryTerms ? `<div style="margin-bottom:12px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};margin-bottom:4px">Giao Hàng</div><div style="font-size:13px;color:${t.textColor}">${qt.deliveryTerms}</div></div>` : ''}
-        ${qt.notes ? `<div><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:${t.mutedColor};margin-bottom:4px">Ghi Chú</div><div style="font-size:13px;color:${t.textColor};white-space:pre-line">${qt.notes}</div></div>` : ''}
+    <!-- TERMS & NOTES -->
+    ${qt.terms ? `
+    <div class="terms-section">
+        <div class="terms-title">Điều khoản & Điều kiện</div>
+        <div class="terms-content">${qt.terms}</div>
+    </div>` : ''}
+    ${qt.deliveryTerms ? `
+    <div class="terms-section">
+        <div class="terms-title">Giao hàng</div>
+        <div class="terms-content">${qt.deliveryTerms}</div>
+    </div>` : ''}
+    ${qt.notes ? `
+    <div class="terms-section">
+        <div class="terms-title">Ghi chú</div>
+        <div class="terms-content">${qt.notes}</div>
     </div>` : ''}
 
-    <!-- Footer -->
-    <div style="padding:20px 32px;margin-top:16px;border-top:1px solid ${t.borderColor};text-align:center">
-        <div style="font-size:11px;color:${t.mutedColor}">
-            Báo giá được tạo tự động bởi LY's Cellars ERP · © ${new Date().getFullYear()} LY's Cellars
-        </div>
+    <!-- FOOTER -->
+    <div class="footer">
+        Báo giá được tạo bởi hệ thống LY's Cellars ERP &nbsp;·&nbsp; © ${new Date().getFullYear()} LY's Cellars
     </div>
 
-    <!-- Print button (no-print) -->
-    <div class="no-print" style="position:fixed;bottom:24px;right:24px;display:flex;gap:8px">
-        <button onclick="window.print()" style="padding:12px 24px;border-radius:8px;background:${t.accentColor};color:#0A1926;border:none;font-weight:600;cursor:pointer;font-size:14px">
-            🖨️ In / Tải PDF
+    <!-- PRINT BUTTONS -->
+    <div class="no-print">
+        <button class="btn-print btn-print-secondary" onclick="location.href=location.href.replace('style=${style}','style=${style === 'elegant' ? 'professional' : 'elegant'}')">
+            ${style === 'elegant' ? '☀️ Bản Trắng' : '🌙 Bản Tối'}
+        </button>
+        <button class="btn-print btn-print-primary" onclick="window.print()">
+            🖨️ In / Lưu PDF
         </button>
     </div>
 </body>
 </html>`
 
     return new NextResponse(html, {
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
 }
