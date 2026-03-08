@@ -3,7 +3,13 @@
 import { Resend } from 'resend'
 import { notifyTelegram, formatVND } from '@/lib/telegram'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend() {
+    if (!_resend && process.env.RESEND_API_KEY) {
+        _resend = new Resend(process.env.RESEND_API_KEY)
+    }
+    return _resend
+}
 const FROM = process.env.EMAIL_FROM ?? "LY's Cellars ERP <noreply@lyscellars.com>"
 
 export type EmailPayload = {
@@ -20,7 +26,7 @@ async function sendEmail(payload: EmailPayload): Promise<{ success: boolean; id?
     }
 
     try {
-        const { data, error } = await resend.emails.send({
+        const { data, error } = await getResend()!.emails.send({
             from: FROM,
             to: Array.isArray(payload.to) ? payload.to : [payload.to],
             subject: payload.subject,
