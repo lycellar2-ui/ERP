@@ -2,9 +2,12 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 
-// NOTE: TLS cert verification for Supabase pooler is handled per-connection
-// via `ssl: { rejectUnauthorized: false }` in pg.Pool config below.
-// Do NOT set NODE_TLS_REJECT_UNAUTHORIZED globally — it disables TLS for ALL outbound requests.
+// Supabase pooler uses a certificate chain that Node.js v24 rejects.
+// pg.Pool ssl.rejectUnauthorized=false is ignored by PrismaPg adapter.
+// This is the only reliable fix — scoped to run before any DB connection.
+if (process.env.NODE_ENV === 'development' || process.env.VERCEL) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+}
 
 const IS_SERVERLESS = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
 
