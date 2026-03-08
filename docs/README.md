@@ -83,7 +83,7 @@
 | 18 | `RPT` | Reporting & Business Intelligence | [reporting-bi.md](./modules/reporting-bi.md) | `/reports` |
 | 19 | `DSH` | CEO Executive Dashboard | [ceo-dashboard.md](./modules/ceo-dashboard.md) | `/dashboard` (root) |
 | 20 | `KPI` | KPI Target Management | [kpi-targets.md](./modules/kpi-targets.md) | `/kpi` |
-| 21 | `AI` | AI Features & Prompt Library | [ai-features.md](./modules/ai-features.md) | `/ai` |
+| 21 | `AI` | AI Features (CEO Briefing, Purchase Suggestion, Pipeline Analysis) | [ai-features.md](./modules/ai-features.md) | `/ai`, `/api/ceo-summary`, `/api/purchase-suggestion`, `/api/pipeline-analysis` |
 | 22 | `TLG` | Telegram Bot (CEO Bot) | [telegram-bot.md](./modules/telegram-bot.md) | `/settings/telegram` |
 | 23 | `MKT` | Marketing (Media Library) | [marketing.md](./modules/marketing.md) | `/media` |
 | 24 | `PRO` | Tờ Trình — Đề Xuất | [proposals-approval.md](./modules/proposals-approval.md) | `/proposals` |
@@ -123,7 +123,7 @@
 | **Document Storage** | **Supabase Storage** (private) | - |
 | **Email** | Resend | - |
 | **Telegram** | Telegram Bot API (webhook) | - |
-| **AI** | Google Gemini 2.0 Flash / 1.5 Pro | - |
+| **AI** | Google Gemini 3.1 Pro Preview | - |
 | **Deploy** | Vercel + GitHub CI/CD | - |
 
 ---
@@ -137,7 +137,7 @@
 | **File Storage** | **ImgBB** (ảnh sản phẩm, public) + **Supabase Storage** (hợp đồng/chứng từ, private) |
 | **Deployment** | Vercel — Auto-deploy khi merge `main`, Preview URLs per PR |
 | **Source Control** | GitHub — PR workflow |
-| **AI LLM** | Google Gemini 2.0 Flash / 1.5 Pro — OCR, báo cáo CEO, dự báo |
+| **AI LLM** | Google Gemini 3.1 Pro — CEO Briefing, Purchase Suggestion, Pipeline Analysis (velocity tracking) |
 | **API Pattern** | Server Actions (KHÔNG dùng tRPC) |
 | **Connection Pool** | pgBouncer Transaction mode (port 6543), `max: 5` |
 | **Caching** | 4-layer: Router Cache + ISR (stagger 30/45/60/90s) + SWR + Server-side LRU |
@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-08 23:20 | Wine ERP v6.2 — 26 modules, 111 models, 33 routes, 25 dev rules*
+*Last updated: 2026-03-09 01:50 | Wine ERP v6.3 — 26 modules, 111 models, 33 routes, 3 AI features live*

@@ -558,4 +558,59 @@ ENCRYPTION_SECRET=32-char-random-hex-string-here
 | **Phase 4E** | Sinh Mô Tả Sản Phẩm (C1) + Prompt Library UI | 🟡 |
 | **Phase 5** | Smart Search pgvector (C2) + Demand Forecast (B3) + Price AI (B4) | 🟢 Nâng cao |
 
-*Last updated: 2026-03-04 | Wine ERP v4.0 — Google Gemini Primary*
+*Last updated: 2026-03-09 01:50 | Wine ERP v6.3 — Google Gemini 3.1 Pro Primary*
+
+---
+
+## 11. 🚀 Implementation Status (2026-03-09)
+
+### Đã triển khai & đang live:
+
+| # | Feature | Status | Model | API Route | Component |
+|---|---|---|---|---|---|
+| 1 | **AI CEO Briefing** | ✅ Live | Gemini 3.1 Pro | `/api/ceo-summary` | `dashboard/AICeoSummary.tsx` |
+| 2 | **AI Purchase Suggestion** | ✅ Live | Gemini 3.1 Pro | `/api/purchase-suggestion` | `procurement/AIPurchaseSuggestion.tsx` |
+| 3 | **AI Pipeline Analysis** | ✅ Live | Gemini 3.1 Pro | `/api/pipeline-analysis` | `pipeline/AIPipelineAnalysis.tsx` |
+| 4 | **API Key Vault** | ✅ Live | - | `/api/ai/keys` | `ai/page.tsx` |
+
+### Chi tiết kỹ thuật:
+
+#### 1. AI CEO Briefing (`/api/ceo-summary`)
+- **Data sources**: Revenue, P&L, SO count, Margin, AR Aging, Top SKU
+- **Output**: Executive summary tiếng Việt cho CEO dashboard
+- **maxTokens**: 4096 | **temperature**: 0.4
+- **Hiển thị**: Chỉ CEO role, trên dashboard chính
+
+#### 2. AI Purchase Suggestion (`/api/purchase-suggestion`)
+- **Data sources**: StockLot (tồn kho) + SalesOrderLine (3 tháng gần nhất)
+- **Phân tích**: Sales velocity, weeks of supply, landed cost
+- **Output**: Báo cáo 4 tier urgency (🔴 Cần nhập ngay, 🟡 Sắp hết, 🟢 Đủ, ⚠️ Tồn cao)
+- **maxTokens**: 8192 | **temperature**: 0.4
+- **Hiển thị**: Trang Đơn Mua Hàng
+
+#### 3. AI Pipeline Analysis (`/api/pipeline-analysis`)
+- **Data sources**: SalesOpportunity (all stages) + Customer + User
+- **Phân tích**: Pipeline health score, velocity per stage, stale deals, win rate, concentration risk
+- **Output**: 7-section report (Tổng quan, Top 5 deals, Velocity, Cảnh báo, Coaching, Dự báo, Hành động)
+- **maxTokens**: 8192 | **temperature**: 0.4
+- **Schema mới**: `stageChangedAt` + `previousStage` trên `SalesOpportunity`
+- **Hiển thị**: Trang Sales Pipeline
+
+#### 4. API Key Vault (`/dashboard/ai`)
+- **Encryption**: AES-256-GCM với `ENCRYPTION_KEY` env var
+- **DB model**: `AiApiKey` (Prisma) — lưu encrypted key, IV, preview
+- **UI**: Add/Delete/Test key, masked display
+- **Security**: Server-only decryption, key never exposed to client
+
+### Schema changes (Session 2026-03-09):
+```prisma
+model SalesOpportunity {
+  // ... existing fields ...
+  previousStage  OpportunityStage?  // Track pipeline direction
+  stageChangedAt DateTime @default(now()) // For velocity calculation
+}
+```
+
+### Seed scripts:
+- `scripts/seed-pipeline.ts` — 24 pipeline deals with stage timing data
+
