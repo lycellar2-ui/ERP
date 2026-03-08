@@ -106,7 +106,7 @@ export async function checkSupplierCompliance(supplierId: string) {
         'CN_VSATTP',
     ]
 
-    const existingTypes = new Set(docs.map(d => d.type))
+    const existingTypes = new Set<string>(docs.map(d => d.type))
     const missing = requiredTypes.filter(t => !existingTypes.has(t))
 
     const expiring = docs
