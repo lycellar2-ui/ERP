@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, GoodsReceiptCreateSchema } from '@/lib/validations'
+import { getCurrentUser } from '@/lib/session'
 
 // ─── Types ────────────────────────────────────────
 export type WarehouseRow = {
@@ -16,6 +17,7 @@ export type WarehouseRow = {
     locationCount: number
     lotCount: number
     totalStock: number // bottles
+    totalValue: number // VND
     createdAt: Date
 }
 
@@ -59,8 +61,8 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
                 locations: {
                     include: {
                         stockLots: {
-                            where: { status: 'AVAILABLE' },
-                            select: { qtyAvailable: true },
+                            where: { status: { in: ['AVAILABLE', 'RESERVED'] } },
+                            select: { qtyAvailable: true, unitLandedCost: true },
                         },
                     },
                 },
@@ -78,6 +80,7 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
                 locationCount: w.locations.length,
                 lotCount: lots.length,
                 totalStock: lots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
+                totalValue: lots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0),
                 createdAt: w.createdAt,
             }
         })
@@ -276,19 +279,46 @@ export async function getLocationHeatmap(warehouseId: string) {
 // ─── WMS Stats ────────────────────────────────────
 export async function getWMSStats() {
     return cached('wms:stats', async () => {
-        const [warehouses, totalLots, availableBottles, reservedBottles, grCount] = await Promise.all([
+        const now180 = new Date(Date.now() - 180 * 86400000)
+        const [
+            warehouseCount, totalLots,
+            availableAgg, reservedAgg,
+            quarantinedCount, slowMovingCount,
+            lowStockProducts, grCount,
+            availableLots,
+        ] = await Promise.all([
             prisma.warehouse.count(),
             prisma.stockLot.count({ where: { status: 'AVAILABLE' } }),
             prisma.stockLot.aggregate({ where: { status: 'AVAILABLE' }, _sum: { qtyAvailable: true } }),
             prisma.stockLot.aggregate({ where: { status: 'RESERVED' }, _sum: { qtyAvailable: true } }),
+            prisma.stockLot.count({ where: { status: 'QUARANTINE', qtyAvailable: { gt: 0 } } }),
+            prisma.stockLot.count({ where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 }, receivedDate: { lt: now180 } } }),
+            prisma.stockLot.groupBy({
+                by: ['productId'],
+                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                _sum: { qtyAvailable: true },
+                having: { qtyAvailable: { _sum: { lt: 12 } } },
+            }),
             prisma.goodsReceipt.count(),
+            prisma.stockLot.findMany({
+                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                select: { qtyAvailable: true, unitLandedCost: true },
+            }),
         ])
 
+        const inventoryValue = availableLots.reduce(
+            (s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0
+        )
+
         return {
-            warehouses,
+            warehouses: warehouseCount,
             totalLots,
-            availableBottles: Number(availableBottles._sum.qtyAvailable ?? 0),
-            reservedBottles: Number(reservedBottles._sum.qtyAvailable ?? 0),
+            availableBottles: Number(availableAgg._sum.qtyAvailable ?? 0),
+            reservedBottles: Number(reservedAgg._sum.qtyAvailable ?? 0),
+            inventoryValue,
+            quarantinedCount,
+            lowStockCount: lowStockProducts.length,
+            slowMovingCount,
             grCount,
         }
     }) // end cached
@@ -401,12 +431,18 @@ export async function createGoodsReceipt(input: {
             return { success: false, error: `PO status ${po.status} không cho phép nhập kho` }
         }
 
-        // Generate GR number: GR-YYMM-NNNN
+        // Generate GR number: GR-YYMM-NNNN (atomic — collision-safe)
         const now = new Date()
         const yy = String(now.getFullYear()).slice(-2)
         const mm = String(now.getMonth() + 1).padStart(2, '0')
-        const count = await prisma.goodsReceipt.count()
-        const grNo = `GR-${yy}${mm}-${String(count + 1).padStart(4, '0')}`
+        const prefix = `GR-${yy}${mm}-`
+        const lastGR = await prisma.goodsReceipt.findFirst({
+            where: { grNo: { startsWith: prefix } },
+            orderBy: { grNo: 'desc' },
+            select: { grNo: true },
+        })
+        const nextSeq = lastGR ? parseInt(lastGR.grNo.slice(-4)) + 1 : 1
+        const grNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
 
         // Create GR + Lines + StockLots in a transaction
         const result = await prisma.$transaction(async (tx) => {
@@ -425,9 +461,13 @@ export async function createGoodsReceipt(input: {
                 const poLine = po.lines.find(l => l.productId === line.productId)
                 const qtyExpected = poLine ? Number(poLine.qtyOrdered) : line.qtyReceived
 
-                // Generate unique lot number
-                const lotCount = await tx.stockLot.count()
-                const lotNo = `LOT-${yy}${mm}-${String(lotCount + 1).padStart(5, '0')}`
+                // Generate unique lot number (atomic — collision-safe)
+                const lastLot = await tx.stockLot.findFirst({
+                    orderBy: { lotNo: 'desc' },
+                    select: { lotNo: true },
+                })
+                const nextLotSeq = lastLot ? parseInt(lastLot.lotNo.replace(/\D/g, '').slice(-5)) + 1 : 1
+                const lotNo = `LOT-${yy}${mm}-${String(nextLotSeq).padStart(5, '0')}`
 
                 // Create StockLot
                 const lot = await tx.stockLot.create({
@@ -472,8 +512,11 @@ export async function createGoodsReceipt(input: {
 // ── Confirm Goods Receipt ─────────────────────────
 export async function confirmGoodsReceipt(
     grId: string,
-    confirmerId: string
+    _confirmerId?: string,
 ): Promise<{ success: boolean; error?: string }> {
+    // Resolve confirmer from session — fallback to param for backward compat
+    const user = await getCurrentUser()
+    const confirmerId = user?.id ?? _confirmerId ?? 'system'
     try {
         let grNo = ''
         await prisma.$transaction(async (tx) => {
@@ -636,12 +679,18 @@ export async function createDeliveryOrder(input: {
             return { success: false, error: `SO status ${so.status} không cho phép xuất kho` }
         }
 
-        // Generate DO number
+        // Generate DO number (atomic — collision-safe)
         const now = new Date()
         const yy = String(now.getFullYear()).slice(-2)
         const mm = String(now.getMonth() + 1).padStart(2, '0')
-        const count = await prisma.deliveryOrder.count()
-        const doNo = `DO-${yy}${mm}-${String(count + 1).padStart(4, '0')}`
+        const doPrefix = `DO-${yy}${mm}-`
+        const lastDO = await prisma.deliveryOrder.findFirst({
+            where: { doNo: { startsWith: doPrefix } },
+            orderBy: { doNo: 'desc' },
+            select: { doNo: true },
+        })
+        const nextDOSeq = lastDO ? parseInt(lastDO.doNo.slice(-4)) + 1 : 1
+        const doNo = `${doPrefix}${String(nextDOSeq).padStart(4, '0')}`
 
         const result = await prisma.$transaction(async (tx) => {
             const deliveryOrder = await tx.deliveryOrder.create({
@@ -690,8 +739,10 @@ export async function createDeliveryOrder(input: {
 // ── Confirm DO — Mark as shipped ──────────────────
 export async function confirmDeliveryOrder(
     doId: string,
-    confirmerId?: string
+    _confirmerId?: string
 ): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser()
+    const confirmerId = user?.id ?? _confirmerId ?? 'system'
     try {
         let doNo = ''
         await prisma.$transaction(async (tx) => {
@@ -1526,6 +1577,109 @@ export async function getGRVarianceReport(filters: {
         })
 
         return { success: true, rows }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── GR Detail (view lines + variance) ──────────────
+export async function getGRDetail(grId: string) {
+    const gr = await prisma.goodsReceipt.findUnique({
+        where: { id: grId },
+        include: {
+            po: { select: { poNo: true, supplier: { select: { name: true } } } },
+            warehouse: { select: { name: true } },
+            confirmer: { select: { name: true } },
+            lines: {
+                include: {
+                    product: { select: { productName: true, skuCode: true } },
+                    lot: { select: { lotNo: true, location: { select: { locationCode: true } } } },
+                },
+            },
+        },
+    })
+    if (!gr) return null
+    return {
+        id: gr.id,
+        grNo: gr.grNo,
+        poNo: gr.po.poNo,
+        supplierName: gr.po.supplier.name,
+        warehouseName: gr.warehouse.name,
+        status: gr.status,
+        confirmedBy: gr.confirmer?.name ?? null,
+        confirmedAt: gr.confirmedAt,
+        createdAt: gr.createdAt,
+        lines: gr.lines.map(l => ({
+            id: l.id,
+            productName: l.product.productName,
+            skuCode: l.product.skuCode,
+            lotNo: l.lot?.lotNo ?? '—',
+            locationCode: l.lot?.location?.locationCode ?? '—',
+            qtyExpected: Number(l.qtyExpected),
+            qtyReceived: Number(l.qtyReceived),
+            variance: Number(l.variance),
+        })),
+    }
+}
+
+// ─── DO Detail (view lines + lots picked) ─────────────
+export async function getDODetail(doId: string) {
+    const d = await prisma.deliveryOrder.findUnique({
+        where: { id: doId },
+        include: {
+            so: { select: { soNo: true, customer: { select: { name: true } } } },
+            warehouse: { select: { name: true } },
+            lines: {
+                include: {
+                    product: { select: { productName: true, skuCode: true } },
+                    lot: { select: { lotNo: true } },
+                    location: { select: { locationCode: true } },
+                },
+            },
+        },
+    })
+    if (!d) return null
+    return {
+        id: d.id,
+        doNo: d.doNo,
+        soNo: d.so.soNo,
+        customerName: d.so.customer.name,
+        warehouseName: d.warehouse.name,
+        status: d.status,
+        createdAt: d.createdAt,
+        lines: d.lines.map(l => ({
+            id: l.id,
+            productName: l.product.productName,
+            skuCode: l.product.skuCode,
+            lotNo: l.lot.lotNo,
+            locationCode: l.location.locationCode,
+            qtyPicked: Number(l.qtyPicked),
+            qtyShipped: Number(l.qtyShipped),
+        })),
+    }
+}
+
+// ─── Edit Warehouse ─────────────────────────────────
+export async function editWarehouse(id: string, input: { name?: string; address?: string }) {
+    try {
+        await prisma.warehouse.update({ where: { id }, data: input })
+        revalidateCache('wms')
+        revalidatePath('/dashboard/warehouse')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── Delete Warehouse ───────────────────────────────
+export async function deleteWarehouse(id: string) {
+    try {
+        const locCount = await prisma.location.count({ where: { warehouseId: id } })
+        if (locCount > 0) return { success: false, error: 'Kho còn locations, không thể xóa. Hãy xóa hết locations trước.' }
+        await prisma.warehouse.delete({ where: { id } })
+        revalidateCache('wms')
+        revalidatePath('/dashboard/warehouse')
+        return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
     }

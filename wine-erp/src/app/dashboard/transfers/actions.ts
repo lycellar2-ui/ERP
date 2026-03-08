@@ -60,8 +60,10 @@ export async function createTransferOrder(input: {
         if (input.fromWarehouseId === input.toWarehouseId)
             return { success: false, error: 'Kho xuất và kho nhận phải khác nhau' }
 
+        const now = new Date()
+        const prefix = `TO-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}`
         const count = await prisma.transferOrder.count()
-        const transferNo = `TO-${String(count + 1).padStart(6, '0')}`
+        const transferNo = `${prefix}-${String(count + 1).padStart(4, '0')}`
 
         await prisma.transferOrder.create({
             data: {
@@ -140,6 +142,21 @@ export async function advanceTransferStatus(id: string): Promise<{ success: bool
             if (!destLocation) return { success: false, error: 'Kho nhận chưa có location' }
 
             for (const line of to.lines) {
+                // Get the source lots used for FIFO picking and their costs
+                const sourceLots = await prisma.stockLot.findMany({
+                    where: {
+                        productId: line.productId,
+                        status: 'AVAILABLE',
+                        qtyAvailable: { gt: 0 },
+                        location: { warehouseId: to.fromWarehouseId },
+                    },
+                    orderBy: { receivedDate: 'asc' },
+                    take: 1,
+                })
+                const avgLandedCost = sourceLots.length > 0
+                    ? Number(sourceLots[0].unitLandedCost)
+                    : 0
+
                 const lotCount = await prisma.stockLot.count()
                 await prisma.stockLot.create({
                     data: {
@@ -148,6 +165,7 @@ export async function advanceTransferStatus(id: string): Promise<{ success: bool
                         locationId: destLocation.id,
                         qtyReceived: line.qtyTransferred,
                         qtyAvailable: line.qtyTransferred,
+                        unitLandedCost: avgLandedCost,
                         receivedDate: new Date(),
                         status: 'AVAILABLE',
                     },
@@ -177,4 +195,54 @@ export async function getTransferOptions() {
         ])
         return { warehouses, products }
     }) // end cached
+}
+
+// ── Cancel ──────────────────────────────────────
+export async function cancelTransferOrder(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const to = await prisma.transferOrder.findUnique({ where: { id } })
+        if (!to) return { success: false, error: 'Not found' }
+        if (to.status !== 'DRAFT') return { success: false, error: 'Chỉ có thể hủy lệnh ở trạng thái Nháp' }
+        await prisma.transferOrder.update({ where: { id }, data: { status: 'CANCELLED' } })
+        revalidateCache('transfers')
+        revalidatePath('/dashboard/transfers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Detail ─────────────────────────────────────
+export async function getTransferDetail(id: string) {
+    const to = await prisma.transferOrder.findUnique({
+        where: { id },
+        include: {
+            fromWarehouse: { select: { name: true, code: true } },
+            toWarehouse: { select: { name: true, code: true } },
+            lines: {
+                include: {
+                    product: { select: { productName: true, skuCode: true } },
+                },
+            },
+        },
+    })
+    if (!to) return null
+    return {
+        id: to.id,
+        transferNo: to.transferNo,
+        fromWarehouse: `${to.fromWarehouse.code} — ${to.fromWarehouse.name}`,
+        toWarehouse: `${to.toWarehouse.code} — ${to.toWarehouse.name}`,
+        status: to.status,
+        notes: to.notes,
+        confirmedAt: to.confirmedAt,
+        receivedAt: to.receivedAt,
+        createdAt: to.createdAt,
+        lines: to.lines.map(l => ({
+            id: l.id,
+            productName: l.product.productName,
+            skuCode: l.product.skuCode,
+            qtyTransferred: Number(l.qtyTransferred),
+            qtyReceived: Number(l.qtyReceived),
+        })),
+    }
 }
