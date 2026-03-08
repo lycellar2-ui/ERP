@@ -15,8 +15,10 @@ export async function POST() {
                     name: true,
                     expectedValue: true,
                     stage: true,
+                    previousStage: true,
                     probability: true,
                     closeDate: true,
+                    stageChangedAt: true,
                     notes: true,
                     createdAt: true,
                     customer: { select: { name: true, customerType: true, channel: true } },
@@ -47,16 +49,31 @@ export async function POST() {
         const winRate = won.length + lost.length > 0 ? (won.length / (won.length + lost.length)) * 100 : 0
         const avgDealSize = active.length > 0 ? totalPipelineValue / active.length : 0
 
-        // Stale deals (no update for 20+ days)
+        // Stale deals (in same stage for 14+ days without progress)
         const stale = active.filter(o => {
-            const daysSinceCreated = (now.getTime() - new Date(o.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-            return daysSinceCreated > 20 && ['LEAD', 'QUALIFIED'].includes(o.stage)
+            const daysInStage = (now.getTime() - new Date(o.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24)
+            return daysInStage > 14 && ['LEAD', 'QUALIFIED'].includes(o.stage)
         })
 
-        // 3. Build AI prompt
-        const dealList = opportunities.map(o =>
-            `${o.name} | ${o.customer.name} (${o.customer.customerType}) | Stage: ${o.stage} | Value: ${Number(o.expectedValue).toLocaleString()}đ | Prob: ${o.probability}% | Sales: ${o.assignee.name} | Close: ${o.closeDate ? new Date(o.closeDate).toLocaleDateString('vi-VN') : 'N/A'} | Age: ${Math.round((now.getTime() - new Date(o.createdAt).getTime()) / (1000 * 60 * 60 * 24))}d`
-        ).join('\n')
+        // Calculate velocity per stage (avg days deals spend in each active stage)
+        const velocityMap = new Map<string, number[]>()
+        for (const o of active) {
+            const daysInStage = Math.round((now.getTime() - new Date(o.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24))
+            const arr = velocityMap.get(o.stage) ?? []
+            arr.push(daysInStage)
+            velocityMap.set(o.stage, arr)
+        }
+        const velocitySummary = [...velocityMap.entries()].map(([stage, days]) => {
+            const avg = Math.round(days.reduce((a, b) => a + b, 0) / days.length)
+            return `${stage}: avg ${avg} ngày (${days.length} deals)`
+        }).join(' | ')
+
+        // 3. Build AI prompt with velocity data
+        const dealList = opportunities.map(o => {
+            const daysInStage = Math.round((now.getTime() - new Date(o.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24))
+            const totalAge = Math.round((now.getTime() - new Date(o.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+            return `${o.name} | ${o.customer.name} (${o.customer.customerType}) | Stage: ${o.stage} (${daysInStage}d in stage${o.previousStage ? ', from ' + o.previousStage : ''}) | Value: ${Number(o.expectedValue).toLocaleString()}đ | Prob: ${o.probability}% | Sales: ${o.assignee.name} | Close: ${o.closeDate ? new Date(o.closeDate).toLocaleDateString('vi-VN') : 'N/A'} | Total age: ${totalAge}d`
+        }).join('\n')
 
         const prompt = `Bạn là Sales Director / CRM Manager cho LY's Cellars, công ty nhập khẩu rượu vang cao cấp tại Việt Nam.
 
@@ -69,20 +86,25 @@ ${dealList}
 - Giá trị weighted: ${totalWeightedValue.toLocaleString()} VND
 - Win rate: ${winRate.toFixed(1)}%
 - Avg deal size: ${avgDealSize.toLocaleString()} VND
-- Deals stale (>20 ngày không chuyển stage): ${stale.length}
+- Deals stale (>14 ngày không chuyển stage): ${stale.length}
 - Active deals: ${active.length} | Won: ${won.length} | Lost: ${lost.length}
+- Pipeline velocity: ${velocitySummary}
 
 Hãy viết BÁO CÁO PHÂN TÍCH PIPELINE CHO CEO bao gồm:
 
-1. **📊 TỔNG QUAN PIPELINE** — Health score (1-10), pipeline velocity, conversion funnel
+1. **📊 TỔNG QUAN PIPELINE** — Health score (1-10), pipeline velocity analysis (dựa trên dữ liệu "d in stage" thực tế cho từng deal), conversion funnel
 2. **🔥 TOP 5 DEAL QUAN TRỌNG NHẤT** — Deal value cao hoặc probability cao, cần CEO chú ý
-3. **⚠️ CẢNH BÁO & RỦI RO**:
+3. **⏱️ PIPELINE VELOCITY** — Phân tích tốc độ di chuyển qua từng stage:
+   - Stage nào có deal bị "kẹt" lâu nhất?
+   - Deal nào ở stage hiện tại quá lâu (>14 ngày)?
+   - So sánh tốc độ giữa các sales rep
+4. **⚠️ CẢNH BÁO & RỦI RO**:
    - Deals bị stale (cần push hoặc disqualify)
-   - Pipeline concentration risk (phụ thuộc vào 1-2 deal lớn)
+   - Pipeline concentration risk
    - Deals sắp đến close date nhưng probability thấp
-4. **🎯 COACHING GỢI Ý** — Gợi ý cho từng sales rep cụ thể
-5. **📈 DỰ BÁO DOANH THU** — Projected revenue cho tháng tới (dựa trên weighted pipeline)
-6. **💡 HÀNH ĐỘNG NGAY** — Top 3 actions CEO nên yêu cầu team thực hiện
+5. **🎯 COACHING GỢI Ý** — Gợi ý cho từng sales rep dựa trên velocity và win rate
+6. **📈 DỰ BÁO DOANH THU** — Projected revenue (dựa trên weighted pipeline + velocity)
+7. **💡 HÀNH ĐỘNG NGAY** — Top 3 actions CEO nên yêu cầu team thực hiện
 
 Yêu cầu:
 - Viết bằng tiếng Việt, phong cách Sales Director briefing

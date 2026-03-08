@@ -474,19 +474,21 @@ model CustomerActivity {
 }
 
 model SalesOpportunity {
-  id            String           @id @default(cuid())
-  customerId    String
-  customer      Customer         @relation(fields: [customerId], references: [id])
-  name          String
-  expectedValue Decimal
-  stage         OpportunityStage
-  probability   Int              @default(50)
-  assignedTo    String
-  assignee      User             @relation("OppAssignedTo", fields: [assignedTo], references: [id])
-  closeDate     DateTime?
-  notes         String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  customerId     String
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  name           String
+  expectedValue  Decimal
+  stage          OpportunityStage
+  previousStage  OpportunityStage?
+  probability    Int              @default(50)
+  assignedTo     String
+  assignee       User             @relation("OppAssignedTo", fields: [assignedTo], references: [id])
+  closeDate      DateTime?
+  stageChangedAt DateTime         @default(now())
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   @@map("sales_opportunities")
 }
