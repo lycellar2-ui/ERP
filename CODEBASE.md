@@ -80,3 +80,47 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 ### Server Actions
 - Mọi exported function trong file `'use server'` PHẢI là `async` — kể cả không cần await
 - Nếu function không cần server, tách ra file riêng không có `'use server'` directive
+
+## 7. 📝 BẮT BUỘC CẬP NHẬT DOCS SAU MỖI THAY ĐỔI CODE
+
+> 🔴 **MANDATORY**: AI Agent khi thay đổi code PHẢI cập nhật docs tương ứng.
+> Quy tắc này có cùng mức ưu tiên với data-flow constraints.
+
+### Mapping: Thay đổi code → Docs phải cập nhật
+
+| Thay đổi code | File docs PHẢI cập nhật |
+|---|---|
+| **Thêm module mới** (route + actions.ts) | ① Tạo `docs/modules/<tên>.md` ② Thêm vào bảng Module trong `docs/README.md` ③ Cập nhật `docs/llms.txt` |
+| **Thêm Prisma model/enum** | ① `docs/architecture/database-schema.md` (ERD) ② `docs/architecture/module-dependencies.md` (nếu domain mới) |
+| **Thay đổi tech stack** (dependency, service) | ① `docs/architecture/tech-stack.md` ② Bảng "Quyết Định Kỹ Thuật" trong `docs/README.md` |
+| **Thêm tính năng vào module có sẵn** | ① Spec file: `docs/modules/<module>.md` (thêm mô tả implementation) |
+| **Fix bug quan trọng** | ① `docs/bug-fix-lessons.md` (theo template BUG-XXX) |
+| **Thay đổi Auth/Storage/DB config** | ① `docs/architecture/tech-stack.md` |
+| **Kết thúc phiên làm việc** | ① `Last updated` ở cuối `docs/README.md` và `docs/llms.txt` |
+
+### Checklist cuối phiên (PHẢI hoàn thành trước khi kết thúc)
+
+```
+□ docs/README.md → "Last updated" = ngày hôm nay?
+□ Module spec file(s) đã cập nhật nếu thêm tính năng?
+□ Số liệu (models, routes, modules) trong README.md vẫn chính xác?
+□ docs/llms.txt phản ánh đúng hiện trạng?
+□ Bug fix đã bổ sung vào bug-fix-lessons.md?
+```
+
+### Số liệu hiện tại cần đồng nhất (2026-03-08)
+
+| Metric | Giá trị | Nơi ghi nhận |
+|---|---|---|
+| Prisma models | **111** | README.md, llms.txt, tech-stack.md |
+| Prisma enums | **71** | README.md, llms.txt |
+| Dashboard routes | **33** | README.md, wine-erp-plan.md |
+| Server Action files | **38** | README.md |
+| Module spec files | **24** | README.md |
+| Total modules (codes) | **26** | README.md, llms.txt, wine-erp-plan.md |
+| Next.js version | **16.1.6** | tech-stack.md, wine-erp-plan.md |
+| Auth | **Supabase Auth** | tech-stack.md, wine-erp-plan.md |
+| Image storage | **ImgBB** | tech-stack.md, file-storage-plan.md |
+| Doc storage | **Supabase Storage** | tech-stack.md, file-storage-plan.md |
+
+> ⚠️ Khi bất kỳ số liệu nào ở trên thay đổi → CẬP NHẬT TẤT CẢ CÁC FILE trong cột "Nơi ghi nhận".

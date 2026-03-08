@@ -1,5 +1,5 @@
 # Tech Stack & Infrastructure — Wine ERP
-**Phiên bản:** 2.0 | **Cập nhật:** 2026-03-04
+**Phiên bản:** 3.0 | **Cập nhật:** 2026-03-08
 
 ---
 
@@ -35,14 +35,16 @@
 ### 🖥️ Frontend & Framework
 | Công nghệ | Version | Mục đích |
 |---|---|---|
-| **Next.js** | 15 (App Router) | Framework chính — SSR, API Routes, Server Actions |
+| **Next.js** | **16.1.6** (App Router) | Framework chính — SSR, Server Actions, Turbopack |
 | **TypeScript** | 5.x | Type safety end-to-end |
-| **TailwindCSS** | 4.x | Styling utility-first |
+| **React** | **19.2.3** | Server Components, Suspense streaming |
+| **TailwindCSS** | **v4** | Styling CSS-first configuration |
 | **Shadcn UI** | latest | Component library (xây trên Radix UI) |
-| **Recharts / ECharts** | latest | Biểu đồ cho CEO Dashboard & RPT |
-| **React Hook Form + Zod** | latest | Form validation với schema |
+| **Recharts** | latest | Biểu đồ cho CEO Dashboard & RPT |
+| **React Hook Form + Zod** | latest | Form validation với schema (23+ Zod schemas) |
 | **Tanstack Table** | v8 | Bảng dữ liệu lớn (Inventory, Allocation Matrix) |
 | **ExcelJS** | latest | Parse & xuất Excel (import/export toàn hệ thống) |
+| **Prisma** | **7.4.2** | ORM — 111 models, 71 enums |
 
 ### 🗄️ Database — Supabase PostgreSQL
 | Công nghệ | Ghi chú |
@@ -99,21 +101,25 @@ Request → middleware.ts (check Supabase session)
         └── No permission → redirect /unauthorized
 ```
 
-### 📦 File Storage — Supabase Storage
-Thay Cloudflare R2, dùng Supabase Storage cho đơn giản (cùng 1 platform):
+### 📦 File Storage
 
+**Ảnh sản phẩm:** Dùng **ImgBB** (free API, public CDN):
+```typescript
+// src/lib/imgbb.ts — Server Action upload ảnh lên ImgBB
+export async function uploadToImgBB(base64Image: string, name?: string): Promise<ImgBBResponse>
+export async function uploadFileToImgBB(file: File): Promise<ImgBBResponse>
+```
+
+**Hợp đồng & Chứng từ:** Dùng **Supabase Storage** (private, Signed URL):
 | Bucket | Nội dung | Access |
 |---|---|---|
-| `product-media` | Ảnh sản phẩm, nhãn chai | Public (CDN) |
-| `product-awards` | Ảnh chứng chỉ, huy chương | Public |
 | `contracts` | PDF hợp đồng scan | Private (Signed URL) |
-| `agency-docs` | Tờ khai hải quan, hóa đơn | Private (Signed URL) |
-| `reports` | File Excel/PDF báo cáo xuất ra | Private (Signed URL) |
-| `epod-photos` | Ảnh E-POD giao hàng | Private (Signed URL) |
+| `invoices` | Hóa đơn logistics | Private (Signed URL) |
+| `documents` | Tài liệu chung | Private (Signed URL) |
 
-> **Tự động resize ảnh:** Supabase Storage có `transform` API — Tự tạo thumbnail ngay khi request mà không cần Lambda:
-> ```
-> /storage/v1/render/image/public/product-media/bottle.jpg?width=200&height=200&quality=80
+> **Env var cần có:**
+> ```env
+> IMGBB_API_KEY=[imgbb_api_key]
 > ```
 
 ### 🔄 Real-time — Supabase Realtime
@@ -226,16 +232,17 @@ git init && git remote add origin [github-repo-url]
 
 ## 6. Supabase Project Setup Checklist
 
-- [ ] Tạo Supabase project mới tại [supabase.com](https://supabase.com)
-- [ ] Copy `Project URL` và `anon key` vào `.env.local`
-- [ ] Copy `service_role key` vào `.env.local` (⚠️ Không commit lên Git)
-- [ ] Tạo các Storage buckets (product-media, contracts, agency-docs, reports, epod-photos)
-- [ ] Cấu hình Storage policies (Public cho ảnh sản phẩm, Private cho contracts)
-- [ ] Bật Supabase Realtime cho bảng cần live update (sales_orders, approval_requests)
-- [ ] Lưu environment variables vào Vercel Dashboard
+- [x] Tạo Supabase project tại [supabase.com](https://supabase.com)
+- [x] Copy `Project URL` và `anon key` vào `.env.local`
+- [x] Copy `service_role key` vào `.env.local` (⚠️ Không commit lên Git)
+- [x] Tạo các Storage buckets (contracts, invoices, documents)
+- [x] Cấu hình Storage policies
+- [x] Bật Supabase Realtime cho bảng cần live update
+- [x] Lưu environment variables vào Vercel Dashboard
+- [x] Cài ImgBB API key vào Vercel + `.env.local`
 
 ---
-*Last updated: 2026-03-04 | Tech Stack v3.0 — Supabase + Vercel + GitHub + PWA Mobile*
+*Last updated: 2026-03-08 | Tech Stack v3.0 — Next.js 16.1.6 + Supabase + ImgBB + Vercel + GitHub*
 
 ---
 

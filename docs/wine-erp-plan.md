@@ -1,5 +1,7 @@
 # Wine ERP — Master Plan Tổng Thể
-**Phiên Bản:** v3.1 (Full Suite + QR Traceability) | **Ngày:** 2026-03-05
+**Phiên Bản:** v6.0 | **Cập nhật:** 2026-03-08
+
+> ⚠️ **Lưu ý:** File này là Master Plan gốc. Số liệu thực tế xem tại [README.md](./README.md).
 
 ---
 
@@ -10,7 +12,7 @@
 | **Tên dự án** | Wine ERP — Hệ thống Quản trị Doanh nghiệp Nhập khẩu Rượu Vang |
 | **Loại** | WEB App (Desktop-first, Shipper & Kho dùng Responsive Mobile) |
 | **Người dùng** | Nội bộ (CEO, Kế toán, Kho, Thu mua, Sales, Shipper, IT Admin) + External (Agency Hải quan/Logistics) |
-| **Phạm vi** | Full ERP Suite (13 Module cốt lõi) |
+| **Phạm vi** | Full ERP Suite (26 Module — xem README.md cho danh sách đầy đủ) |
 | **Xuất dữ liệu** | Excel-first (Công ty đang dùng Excel) — Mọi báo cáo đều xuất được Excel/CSV |
 | **Tuân thủ PL** | Thuế NK (EVFTA/MFN/AANZFTA...), Thuế TTĐB 35%/65%, VAT 10%, Tờ khai Hải quan |
 
@@ -29,23 +31,30 @@
 
 ---
 
-## 2. Danh Sách 13 Phân Hệ
+## 2. Danh Sách Phân Hệ
 
-| # | Phân hệ | Mã | Người dùng | Ưu tiên | Tài liệu |
+> **Danh sách đầy đủ 26 modules và routes:** xem [README.md](./README.md#-danh-sách-module--tài-liệu)
+
+**13 Core Modules (Plan gốc — tất cả ✅ hoàn thành):**
+
+| # | Phân hệ | Mã | Ưu tiên | Tài liệu | Trạng thái |
 |---|---|---|---|---|---|
-| 1 | **System Admin, RBAC & Workflow** | `SYS` | IT Admin, CEO | 🔴 P0 | `admin-auth-workflow.md` |
-| 2 | **Master Data & Partner** | `MDM` | Admin, Thu mua, Sales | 🔴 P0 | *(cần tạo)* |
-| 3 | **Contract Management** | `CNT` | Thu mua, Kế toán, CEO | 🔴 P0 | `contract-management.md` |
-| 4 | **Tax Reference & Market Price** | `TAX` | Thu mua, Kế toán, Sales | 🟠 P1 | `market-price-tax-lookup.md` |
-| 5 | **Procurement & Import** | `PRC` | Thu mua, Kế toán | 🟠 P1 | `tax-and-landed-cost.md` |
-| 6 | **Import Agency Portal** | `AGN` | Agency Hải quan (External) | 🟠 P1 | `import-agency-portal.md` |
-| 7 | **WMS & Inventory** | `WMS` | Thủ kho | 🟠 P1 | *(cần tạo)* |
-| 8 | **Sales & Allocation** | `SLS` | Sales | 🟠 P1 | *(cần tạo)* |
-| 9 | **Consignment Management** | `CSG` | Sales, Kế toán | 🟡 P2 | `consignment.md` |
-| 10 | **Transportation & Delivery** | `TRS` | Điều phối, Shipper | 🟡 P2 | `transport-delivery.md` |
-| 11 | **Finance, Accounting & Legal** | `FIN` | Kế toán | 🟡 P2 | `finance-accounting.md` |
-| 12 | **Reporting & BI** | `RPT` | Tất cả | 🟡 P2 | *(cần tạo)* |
-| 13 | **CEO Executive Dashboard** | `DSH` | CEO | 🟢 P3 | `ceo-dashboard.md` |
+| 1 | System Admin, RBAC & Workflow | `SYS` | 🔴 P0 | `admin-auth-workflow.md` | ✅ |
+| 2 | Master Data & Partner | `MDM` | 🔴 P0 | `master-data.md` | ✅ |
+| 3 | Contract Management | `CNT` | 🔴 P0 | `contract-management.md` | ✅ |
+| 4 | Tax Reference & Market Price | `TAX` | 🟠 P1 | `market-price-tax-lookup.md` | ✅ |
+| 5 | Procurement & Import | `PRC` | 🟠 P1 | `tax-and-landed-cost.md` | ✅ |
+| 6 | Import Agency Portal | `AGN` | 🟠 P1 | `import-agency-portal.md` | ✅ |
+| 7 | WMS & Inventory | `WMS` | 🟠 P1 | `wms-inventory.md` | ✅ |
+| 8 | Sales & Allocation | `SLS` | 🟠 P1 | `sales-allocation.md` | ✅ |
+| 9 | Consignment Management | `CSG` | 🟡 P2 | `consignment.md` | ✅ |
+| 10 | Transportation & Delivery | `TRS` | 🟡 P2 | `transport-delivery.md` | ✅ |
+| 11 | Finance, Accounting & Legal | `FIN` | 🟡 P2 | `finance-accounting.md` | ✅ |
+| 12 | Reporting & BI | `RPT` | 🟡 P2 | `reporting-bi.md` | ✅ |
+| 13 | CEO Executive Dashboard | `DSH` | 🟢 P3 | `ceo-dashboard.md` | ✅ |
+
+**13 Modules mở rộng (thêm sau Plan gốc — tất cả ✅):**
+`SHP` (Shipment) · `CST` (Costing) · `QRC` (QR) · `POS` (Retail) · `STP` (Stamps) · `KPI` (Targets) · `AI` (Prompt) · `TLG` (Telegram) · `MKT` (Marketing) · `PRO` (Proposals) · `APM` (Approval Matrix) · `RTN` (Returns) · `CRM` (full module)
 
 ---
 
@@ -149,16 +158,17 @@
 
 | Layer | Technology | Lý do |
 |---|---|---|
-| **Framework** | Next.js 15 (App Router) | Module routing tự nhiên, Server Actions nhanh |
-| **UI** | Shadcn UI + TailwindCSS | Đẹp, linh hoạt, không vendor lock-in |
-| **Charts** | Recharts / ECharts | Phong phú cho CEO Dashboard & RPT |
+| **Framework** | Next.js **16.1.6** (App Router) | Module routing tự nhiên, Server Actions, Turbopack |
+| **UI** | Shadcn UI + TailwindCSS **v4** | Đẹp, linh hoạt, CSS-first config |
+| **React** | React **19.2.3** | Server Components, Suspense streaming |
 | **Type Safety** | TypeScript end-to-end | Giảm bug nghiệp vụ tài chính |
 | **Forms** | React Hook Form + Zod | Validation an toàn, type-safe |
 | **Tables** | Tanstack Table v8 | Bảng lớn: Inventory, Allocation Matrix |
-| **ORM** | Prisma + PostgreSQL | Migration an toàn, query type-safe |
+| **ORM** | Prisma **7.4.2** + PostgreSQL | 111 models, 71 enums |
 | **Database** | **Supabase PostgreSQL** | Managed DB, built-in Dashboard, RLS |
-| **Auth** | **Supabase Auth** + `@supabase/ssr` | JWT, Session, Email login, External Partner |
-| **File Storage** | **Supabase Storage** | Ảnh sản phẩm (CDN), PDF HĐ/tờ khai (Private) |
+| **Auth** | **Supabase Auth** + `@supabase/ssr` | JWT, Email login, External Partner |
+| **Image Storage** | **ImgBB** (free API) | Ảnh sản phẩm (public CDN) |
+| **Doc Storage** | **Supabase Storage** | Hợp đồng, chứng từ (private, Signed URL) |
 | **Realtime** | **Supabase Realtime** | Live KPI Dashboard, Approval notifications |
 | **Email** | Resend | Approval notification, báo cáo scheduled |
 | **Excel** | ExcelJS | Parse & xuất Excel (import/export toàn hệ thống) |
@@ -175,7 +185,7 @@
 | ID | Task | Agent | INPUT | OUTPUT | VERIFY |
 |---|---|---|---|---|---|
 | 1.1 | Database Schema toàn hệ thống | `database-architect` | 13 module docs | `schema.prisma` với đầy đủ domain | `npx prisma validate` pass |
-| 1.2 | Authentication + Session | `backend-specialist` | Schema User/Session | NextAuth v5, JWT, Middleware route guard | Đăng nhập → Redirect đúng role |
+| 1.2 | Authentication + Session | `backend-specialist` | Schema User/Session | ✅ Supabase Auth, JWT, Middleware route guard | Đăng nhập → Redirect đúng role |
 | 1.3 | RBAC Admin UI | `frontend-specialist` | User/Role/Permission schema | Màn hình quản lý tổ chức, gán quyền | NV Kho không thấy màn Giá vốn |
 | 1.4 | Workflow Designer (Approval) | `backend-specialist` | ApprovalTemplate schema | API State Machine duyệt đa cấp | PO tạo → Tự sinh luồng chờ duyệt |
 | 1.5 | Notification Engine | `backend-specialist` | WorkflowStep + Email config | Gửi alert khi đến lượt duyệt | Nhận email nhắc trong 5 phút |
@@ -252,56 +262,61 @@
 ## 6. File Structure (Cấu Trúc Thư Mục Dự Án)
 
 ```
-lyruou/
-├── docs/                           # Tài liệu dự án (AI-readable)
-│   ├── wine-erp-plan.md            # ← File này (Master Plan)
-│   ├── llms.txt                    # AI index file
-│   ├── README.md
-│   ├── architecture/               # ← Sơ đồ kỹ thuật (cần tạo Phase 3)
-│   │   ├── database-schema.md      # ERD tổng thể
-│   │   ├── module-dependencies.md  # Sơ đồ quan hệ giữa modules
-│   │   ├── api-design.md
-│   │   └── data-flow.md            # Luồng dữ liệu mua → kho → bán → kế toán
-│   └── modules/                    # Đặc tả nghiệp vụ (13 files)
-│       ├── admin-auth-workflow.md  ✅
-│       ├── master-data.md          ⬜ cần tạo
-│       ├── contract-management.md  ✅
-│       ├── market-price-tax-lookup.md ✅
-│       ├── tax-and-landed-cost.md  ✅
-│       ├── import-agency-portal.md ✅
-│       ├── wms-inventory.md        ⬜ cần tạo
-│       ├── sales-allocation.md     ⬜ cần tạo
-│       ├── consignment.md          ✅
-│       ├── transport-delivery.md   ✅
-│       ├── finance-accounting.md   ✅
-│       ├── reporting-bi.md         ⬜ cần tạo
-│       └── ceo-dashboard.md        ✅
-│
-└── src/                            # ← Mã nguồn (Phase 4)
-    ├── app/
-    │   ├── (auth)/                 # Login, Reset password
-    │   └── (modules)/             # ← Mỗi module = 1 folder
-    │       ├── sys/               # SYS — Admin & RBAC
-    │       ├── mdm/               # MDM — Master Data
-    │       ├── cnt/               # CNT — Contracts
-    │       ├── tax/               # TAX — Tax + Market Price
-    │       ├── prc/               # PRC — Procurement
-    │       ├── agn/               # AGN — Agency Portal
-    │       ├── wms/               # WMS — Warehouse
-    │       ├── sls/               # SLS — Sales
-    │       ├── csg/               # CSG — Consignment
-    │       ├── trs/               # TRS — Transport
-    │       ├── fin/               # FIN — Finance
-    │       ├── rpt/               # RPT — Reports
-    │       └── dsh/               # DSH — Dashboard
-    ├── components/                 # Shared UI components
-    ├── lib/
-    │   ├── tax-engine.ts          # Tax calculation logic
-    │   ├── excel.ts               # Excel parse & export (ExcelJS)
-    │   └── notifications.ts       # Alert & Email logic
-    ├── server/                    # tRPC routers (1 per module)
-    └── prisma/
-        └── schema.prisma          # Database Schema (13 domain schemas)
+wine-erp/
+├── prisma/schema.prisma              # 111 models, 71 enums
+├── src/
+│   ├── app/
+│   │   ├── login/                    # Supabase Auth login
+│   │   ├── partner-login/            # External partner login
+│   │   ├── verify/                   # QR verification public
+│   │   ├── api/                      # API routes (cron, telegram, export, qr-print)
+│   │   └── dashboard/               # 33 route folders
+│   │       ├── page.tsx              # CEO Dashboard (DSH)
+│   │       ├── actions.ts            # Shared dashboard actions
+│   │       ├── products/             # MDM — Products
+│   │       ├── suppliers/            # MDM — Suppliers
+│   │       ├── customers/            # MDM — Customers
+│   │       ├── contracts/            # CNT
+│   │       ├── procurement/          # PRC
+│   │       ├── shipments/            # SHP
+│   │       ├── agency/               # AGN
+│   │       ├── tax/                  # TAX
+│   │       ├── costing/              # CST
+│   │       ├── warehouse/            # WMS
+│   │       ├── transfers/            # WMS — Transfer Orders
+│   │       ├── stock-count/          # WMS — Stock Count
+│   │       ├── sales/                # SLS
+│   │       ├── quotations/           # SLS — Quotations
+│   │       ├── price-list/           # SLS — Price Lists
+│   │       ├── allocation/           # SLS — Allocation Engine
+│   │       ├── crm/                  # CRM
+│   │       ├── pipeline/             # CRM — Sales Pipeline
+│   │       ├── consignment/          # CSG
+│   │       ├── delivery/             # TRS
+│   │       ├── returns/              # RTN
+│   │       ├── pos/                  # POS
+│   │       ├── qr-codes/             # QRC
+│   │       ├── finance/              # FIN
+│   │       ├── declarations/         # FIN — Tax Declarations
+│   │       ├── stamps/               # STP
+│   │       ├── reports/              # RPT
+│   │       ├── market-price/         # TAX — Market Price
+│   │       ├── kpi/                  # KPI
+│   │       ├── ai/                   # AI
+│   │       ├── media/                # MKT
+│   │       ├── proposals/            # PRO
+│   │       └── settings/             # SYS (RBAC, Telegram, Approval Matrix)
+│   ├── components/                   # Shared: DataPagination, ImageUploader, etc.
+│   └── lib/                          # Shared libs (19 files)
+│       ├── db.ts                     # Prisma + pg.Pool singleton
+│       ├── cache.ts                  # Server-side LRU cache
+│       ├── session.ts                # Supabase session helper
+│       ├── supabase.ts               # Supabase client
+│       ├── imgbb.ts                  # ImgBB image upload
+│       ├── notifications.ts          # Email + Telegram push
+│       ├── telegram.ts               # Telegram Bot API
+│       ├── validations.ts            # Zod schemas (23+)
+│       └── ...                       # excel, approval, ai-service, etc.
 ```
 
 ---
@@ -323,11 +338,11 @@ lyruou/
 | Giai đoạn | Trạng thái | Ghi chú |
 |---|---|---|
 | ✅ Phase 0: Khởi động & Thu thập | HOÀN TẤT | |
-| ✅ Phase 1: Phân tích Nghiệp vụ | HOÀN TẤT | 9/13 module đã có tài liệu |
-| ✅ Phase 2: Lập Kế hoạch | HOÀN TẤT | Master Plan v3.0 |
-| ✅ Phase 3: Architecture & Database Design | HOÀN TẤT | ERD + Prisma Schema |
-| ✅ Phase 4: Implementation (8 Phases) | **P1—P7 ✅ 100%** \| **P8 ~75%** | AI Vault+OCR+QR Print+Dashboard Export+Prompt Library ✅ |
-| ⏳ Phase 5: Testing & Go-live | — | |
+| ✅ Phase 1: Phân tích Nghiệp vụ | HOÀN TẤT | 24/24 module specs hoàn thành |
+| ✅ Phase 2: Lập Kế hoạch | HOÀN TẤT | Master Plan v6.0 |
+| ✅ Phase 3: Architecture & Database Design | HOÀN TẤT | 111 models, 71 enums |
+| ✅ Phase 4: Implementation (8 sub-phases) | **P1—P8 ✅ ~99%** | 33 routes, 38 action files, 26 modules |
+| ✅ Phase 5: Testing & Production Hardening | HOÀN TẤT | Build validation, E2E tests, Zod validation, Mobile responsive |
 
 ---
-*Cập nhật lần cuối: 2026-03-05 17:55 | **P1-P7 100% ✅** | **P8 ~75%** | @project-planner*
+*Cập nhật lần cuối: 2026-03-08 14:00 | v6.0 — 26 modules ✅ | @project-planner*
