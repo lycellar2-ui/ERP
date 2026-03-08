@@ -12,6 +12,8 @@ import {
     type ShipmentDetail, type CostItemRow, type MilestoneRow,
 } from './shipment-actions'
 import { COST_CATEGORIES } from './shipment-constants'
+import { getShipmentDocChecklist, toggleShipmentDocRequired, activateShipmentDoc } from '../contracts/reg-doc-xmodule'
+import { REG_DOC_TYPE_LABELS } from '../contracts/reg-doc-constants'
 import { toast } from 'sonner'
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
@@ -412,6 +414,141 @@ function InsuranceSection({ insurance, shipmentId, onRefresh }: {
     )
 }
 
+// ═════════════════════════════════════════════════════
+// DOC CHECKLIST SECTION (In-context for Shipment)
+// ═════════════════════════════════════════════════════
+function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
+    const [items, setItems] = useState<any[] | null>(null)
+    const [editingDoc, setEditingDoc] = useState<string | null>(null)
+    const [form, setForm] = useState<any>({})
+    const [saving, setSaving] = useState(false)
+
+    const load = useCallback(async () => {
+        setItems(await getShipmentDocChecklist(shipmentId))
+    }, [shipmentId])
+
+    useEffect(() => { load() }, [load])
+
+    const handleToggle = async (docType: string, checked: boolean) => {
+        await toggleShipmentDocRequired(shipmentId, docType, checked)
+        load()
+    }
+
+    const handleActivate = async (docId: string) => {
+        if (!form.name?.trim()) { toast.error('Nhập tên giấy tờ'); return }
+        setSaving(true)
+        try {
+            await activateShipmentDoc(docId, form)
+            toast.success('Đã kích hoạt giấy tờ')
+            setEditingDoc(null); setForm({})
+            load()
+        } catch { toast.error('Lỗi') }
+        finally { setSaving(false) }
+    }
+
+    if (!items) return <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} />
+
+    const uploaded = items.filter(i => i.status === 'ACTIVE').length
+    const required = items.filter(i => i.checked).length
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Bộ Chứng Từ NK</p>
+                <span className="text-xs font-bold" style={{ color: uploaded === required && required > 0 ? '#5BA88A' : '#D4A853', fontFamily: '"DM Mono"' }}>
+                    {uploaded}/{required} hoàn tất
+                </span>
+            </div>
+            <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Tích chọn loại giấy tờ cần cho lô hàng này. Điền thông tin → Kích hoạt.</p>
+            {/* Progress bar */}
+            {required > 0 && (
+                <div className="h-1.5 rounded-full" style={{ background: '#2A4355' }}>
+                    <div className="h-full rounded-full transition-all" style={{ background: uploaded === required ? '#5BA88A' : '#D4A853', width: `${(uploaded / required) * 100}%` }} />
+                </div>
+            )}
+            <div className="space-y-2">
+                {items.map(item => {
+                    const label = REG_DOC_TYPE_LABELS[item.type] ?? item.type
+                    const isActive = item.status === 'ACTIVE'
+                    const isDraft = item.status === 'DRAFT'
+                    const isEditing = editingDoc === item.docId
+
+                    return (
+                        <div key={item.type} className="rounded-lg" style={{ background: '#142433', border: `1px solid ${isActive ? '#5BA88A30' : item.checked ? '#2A4355' : '#1B2E3D'}` }}>
+                            {/* Row: checkbox + label + status */}
+                            <div className="flex items-center gap-3 px-3 py-2.5">
+                                <button onClick={() => handleToggle(item.type, !item.checked)} disabled={isActive}
+                                    className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all"
+                                    style={{
+                                        background: isActive ? '#5BA88A' : item.checked ? 'rgba(135,203,185,0.2)' : '#1B2E3D',
+                                        border: `2px solid ${isActive ? '#5BA88A' : item.checked ? '#87CBB9' : '#2A4355'}`,
+                                        cursor: isActive ? 'default' : 'pointer',
+                                    }}>
+                                    {isActive && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
+                                    {isDraft && <div className="w-2 h-2 rounded-sm" style={{ background: '#87CBB9' }} />}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm" style={{ color: item.checked ? '#E8F1F2' : '#4A6A7A' }}>{label}</p>
+                                    {isActive && item.name && (
+                                        <p className="text-[10px] mt-0.5" style={{ color: '#5BA88A' }}>✓ {item.name} {item.docNo && `— ${item.docNo}`}</p>
+                                    )}
+                                </div>
+                                {isDraft && !isEditing && (
+                                    <button onClick={() => { setEditingDoc(item.docId); setForm({ name: label }) }}
+                                        className="text-[10px] px-2 py-1 rounded font-semibold" style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}>
+                                        Điền thông tin
+                                    </button>
+                                )}
+                                {isActive && item.latestFile && (
+                                    <a href={item.latestFile.fileUrl} target="_blank" rel="noopener noreferrer"
+                                        className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
+                                        📄 File
+                                    </a>
+                                )}
+                            </div>
+                            {/* Inline edit form when DRAFT */}
+                            {isEditing && (
+                                <div className="px-3 pb-3 space-y-2" style={{ borderTop: '1px solid #2A4355' }}>
+                                    <div className="grid grid-cols-2 gap-2 pt-2">
+                                        <div>
+                                            <label className="text-[10px] block mb-1" style={{ color: '#4A6A7A' }}>Tên giấy tờ *</label>
+                                            <input className="w-full px-2 py-1.5 rounded text-xs outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                value={form.name ?? ''} onChange={e => setForm((f: any) => ({ ...f, name: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] block mb-1" style={{ color: '#4A6A7A' }}>Số giấy tờ</label>
+                                            <input className="w-full px-2 py-1.5 rounded text-xs outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                value={form.docNo ?? ''} onChange={e => setForm((f: any) => ({ ...f, docNo: e.target.value }))} placeholder="VD: EUR.1-2024-001" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] block mb-1" style={{ color: '#4A6A7A' }}>Cơ quan cấp</label>
+                                            <input className="w-full px-2 py-1.5 rounded text-xs outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                value={form.issuingAuthority ?? ''} onChange={e => setForm((f: any) => ({ ...f, issuingAuthority: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] block mb-1" style={{ color: '#4A6A7A' }}>Ngày hết hạn</label>
+                                            <input type="date" className="w-full px-2 py-1.5 rounded text-xs outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                value={form.expiryDate ?? ''} onChange={e => setForm((f: any) => ({ ...f, expiryDate: e.target.value }))} />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-2">
+                                        <button onClick={() => { setEditingDoc(null); setForm({}) }} className="px-3 py-1.5 text-xs rounded" style={{ color: '#4A6A7A' }}>Huỷ</button>
+                                        <button onClick={() => handleActivate(item.docId!)} disabled={saving}
+                                            className="px-3 py-1.5 text-xs rounded font-semibold flex items-center gap-1"
+                                            style={{ background: '#5BA88A', color: '#fff' }}>
+                                            {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />} Kích hoạt
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
 // ═══════════════════════════════════════════════════
 // MAIN DRAWER
 // ═══════════════════════════════════════════════════
@@ -420,7 +557,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
 }) {
     const [data, setData] = useState<ShipmentDetail | null>(null)
     const [loading, setLoading] = useState(false)
-    const [tab, setTab] = useState<'overview' | 'costs' | 'customs' | 'insurance'>('overview')
+    const [tab, setTab] = useState<'overview' | 'costs' | 'customs' | 'insurance' | 'docs'>('overview')
 
     const load = useCallback(async () => {
         if (!shipmentId) return
@@ -478,6 +615,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                         { key: 'costs', label: 'Chi Phí', icon: DollarSign },
                         { key: 'customs', label: 'Hải Quan', icon: FileCheck },
                         { key: 'insurance', label: 'Bảo Hiểm', icon: Shield },
+                        { key: 'docs', label: 'Chứng Từ', icon: ClipboardCheck },
                     ] as const).map(t => (
                         <button key={t.key} onClick={() => setTab(t.key)}
                             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all"
@@ -560,6 +698,10 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
 
                         {tab === 'insurance' && (
                             <InsuranceSection insurance={data.insurance} shipmentId={data.id} onRefresh={load} />
+                        )}
+
+                        {tab === 'docs' && (
+                            <DocChecklistSection shipmentId={data.id} />
                         )}
                     </>)}
                 </div>

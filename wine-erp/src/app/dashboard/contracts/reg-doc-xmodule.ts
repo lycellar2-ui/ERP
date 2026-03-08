@@ -126,3 +126,109 @@ export async function checkSupplierCompliance(supplierId: string) {
         totalActiveDocs: docs.length,
     }
 }
+
+// ═══════════════════════════════════════════════════
+// SHIPMENT DOC CHECKLIST (In-context)
+// ═══════════════════════════════════════════════════
+
+const IMPORT_DOC_TYPES = [
+    'CERTIFICATE_OF_ORIGIN',
+    'QUALITY_TEST_REPORT',
+    'CUSTOMS_DECLARATION_CERT',
+    'FOOD_SAFETY_LOT',
+    'INSURANCE_POLICY_DOC',
+    'WINE_STAMP_CERT',
+    'HEALTH_CERTIFICATE',
+    'FREE_SALE_CERTIFICATE',
+    'PHYTOSANITARY_CERT',
+] as const
+
+/**
+ * Get the doc checklist for a shipment.
+ * Returns all IMPORT_DOCUMENT types with their upload status.
+ */
+export async function getShipmentDocChecklist(shipmentId: string) {
+    const docs = await prisma.regulatedDocument.findMany({
+        where: { shipmentId, scope: 'SHIPMENT' },
+        include: {
+            files: { orderBy: { version: 'desc' }, take: 1 },
+        },
+    })
+
+    const docMap = new Map(docs.map(d => [d.type, d]))
+
+    return IMPORT_DOC_TYPES.map(type => {
+        const doc = docMap.get(type)
+        return {
+            type,
+            checked: !!doc,
+            status: doc?.status ?? null,
+            docId: doc?.id ?? null,
+            docNo: doc?.docNo ?? null,
+            name: doc?.name ?? null,
+            expiryDate: doc?.expiryDate ?? null,
+            latestFile: doc?.files[0] ?? null,
+        }
+    })
+}
+
+/**
+ * Toggle a doc type as required for a shipment.
+ * If checked=true → create a DRAFT RegulatedDocument placeholder.
+ * If checked=false → delete the DRAFT placeholder (only if DRAFT).
+ */
+export async function toggleShipmentDocRequired(shipmentId: string, docType: string, checked: boolean) {
+    if (checked) {
+        const existing = await prisma.regulatedDocument.findFirst({
+            where: { shipmentId, scope: 'SHIPMENT', type: docType as any },
+        })
+        if (existing) return existing.id
+
+        const count = await prisma.regulatedDocument.count()
+        const doc = await prisma.regulatedDocument.create({
+            data: {
+                docNo: `RD-${Date.now().toString(36).toUpperCase()}`,
+                category: 'IMPORT_DOCUMENT',
+                type: docType as any,
+                name: docType,
+                scope: 'SHIPMENT',
+                shipmentId,
+                issueDate: new Date(),
+                status: 'DRAFT',
+                version: 1,
+                alertDays: [30, 7],
+            },
+        })
+        return doc.id
+    } else {
+        // Only delete if DRAFT (not yet uploaded)
+        await prisma.regulatedDocument.deleteMany({
+            where: { shipmentId, scope: 'SHIPMENT', type: docType as any, status: 'DRAFT' },
+        })
+        return null
+    }
+}
+
+/**
+ * Mark a shipment doc as uploaded (DRAFT → ACTIVE) with metadata.
+ */
+export async function activateShipmentDoc(docId: string, data: {
+    name: string
+    docNo?: string
+    issuingAuthority?: string
+    issueDate?: string
+    expiryDate?: string
+}) {
+    const doc = await prisma.regulatedDocument.update({
+        where: { id: docId },
+        data: {
+            name: data.name,
+            docNo: data.docNo || undefined,
+            issuingAuthority: data.issuingAuthority || undefined,
+            issueDate: data.issueDate ? new Date(data.issueDate) : new Date(),
+            expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined,
+            status: 'ACTIVE',
+        },
+    })
+    return doc
+}
