@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
 import Link from 'next/link'
+import { AICeoSummary } from './AICeoSummary'
 
 /* ─── Reusable KPI Card ──────────────────────────── */
 function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#87CBB9' }: {
@@ -155,6 +156,9 @@ export default async function DashboardPage() {
                     sub={`${pendingProposals.length} tờ trình · ${stats.pendingSOs.length} SO`}
                     accentColor="#8B1A2E" />
             </div>
+
+            {/* ═══ AI CEO BRIEFING ═══ */}
+            {roles.includes('CEO') && <AICeoSummary />}
 
             {/* ═══ LAYER 2 — FINANCIAL PULSE (2 cols) ═══ */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
