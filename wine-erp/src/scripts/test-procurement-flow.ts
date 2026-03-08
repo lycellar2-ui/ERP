@@ -143,7 +143,7 @@ async function main() {
     // ── 10. Goods Receipt ──
     console.log('Step 10: Goods Receipt')
     let wh = await prisma.warehouse.findFirst()
-    if (!wh) wh = await prisma.warehouse.create({ data: { name: 'Kho HCM', code: 'WH-HCM', type: 'MAIN', status: 'ACTIVE' } })
+    if (!wh) wh = await prisma.warehouse.create({ data: { name: 'Kho HCM', code: 'WH-HCM' } })
     const gr = await prisma.goodsReceipt.create({
         data: {
             grNo: 'GR-E2E-' + Date.now().toString(36).toUpperCase(),
