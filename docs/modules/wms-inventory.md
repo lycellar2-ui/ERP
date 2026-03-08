@@ -304,13 +304,13 @@ Cần thiết vì kho có thể có vùng mù sóng.
 
 ## 10. Implementation Status (Trạng Thái Triển Khai)
 
-> Cập nhật 07/03/2026 — **Hoàn thiện 100%**
+> Cập nhật 08/03/2026 — **Hoàn thiện 100% (32/32 gaps resolved)**
 
-### ✅ Đã triển khai
+### ✅ Core Features (Đã triển khai từ trước)
 
 | Tính năng | File code | Ghi chú |
 |---|---|---|
-| Warehouse CRUD | `warehouse/actions.ts` | Tạo, xem warehouses + locations |
+| Warehouse CRUD | `warehouse/actions.ts` | Tạo, sửa, xóa warehouses + locations |
 | Location Heatmap | `getLocationHeatmap` | Occupancy per zone |
 | Stock Inventory | `getStockInventory` | Lot view: filter by warehouse, wine type, status |
 | Goods Receipt | `createGoodsReceipt`, `confirmGoodsReceipt` | GR từ PO → StockLot auto-create |
@@ -323,8 +323,62 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Stock Adjustment** | `adjustStockFromCount` | From cycle count variance |
 | **Barcode Scanner** | `scanBarcode` | Scan PRODUCT / LOT / LOCATION |
 | **Quick Stock Check** | `quickStockCheck` | Product → all lots + locations + days in stock |
-| **GR Variance Report** | `getGRVarianceReport` | ✨ **MỚI** — PO ordered vs GR received per-product |
+| **GR Variance Report** | `getGRVarianceReport` | PO ordered vs GR received per-product |
 | WMS Full Stats | `getWMSFullStats` | 9 KPIs: qty, value, SKUs, quarantine, low-stock alerts |
+
+### ✅ Deep Dive Enhancements (08/03/2026 — 32 gaps xử lý)
+
+#### Phase 1: WMS Dashboard & Stock Table
+
+| Tính năng | File | Ghi chú |
+|---|---|---|
+| 6 enhanced stat cards | `WarehouseClient.tsx`, `getWMSStats` | +Giá trị kho VND, cảnh báo tồn thấp, hàng nằm lâu >180d |
+| Vintage column | `StockTable` component | Hiện năm sản xuất hoặc "NV" |
+| Days-in-Stock badge | `DaysInStockBadge` | <90d xanh, 90-180d vàng, >180d đỏ |
+| Lot Value column | `StockTable` | qty × unitLandedCost (VND) |
+| Sortable stock table | All column headers | Click to sort asc/desc |
+| 30+ country flags | `COUNTRY_FLAGS` map | FR, IT, ES, US, AU, AR, CL, ZA... |
+| Fixed LOT_STATUS colors | `LOT_STATUS` config | 5 unique: AVAILABLE(xanh), RESERVED(xanh dương), QUARANTINE(vàng), CONSUMED(xám), DAMAGED(đỏ) |
+| Warehouse value display | `WarehouseCard` | Tổng giá trị tồn VND trên mỗi card |
+| Quarantine auto-load | `handleTabChange` | Tự load data khi mở tab Cách Ly |
+| Wine type +2 | Filter dropdown | +Fortified, +Dessert |
+| **CSV Export** | `WarehouseClient.tsx` | Nút "↓ Export CSV" — 10 cột, BOM cho Excel |
+
+#### Phase 2: GR & DO Detail Drawers
+
+| Tính năng | File | Ghi chú |
+|---|---|---|
+| GR confirmer columns | `GoodsReceiptTab.tsx` | +Người XN, +Ngày XN trên bảng |
+| GR detail drawer | `getGRDetail` + tab UI | Click row → drawer chi tiết: lines + variance |
+| DO detail drawer | `getDODetail` + tab UI | Click row → drawer: lots picked + qty shipped |
+| Create GR drawer | `CreateGRDrawer` | PO selection + qty + location input |
+| Create DO drawer | `CreateDODrawer` | SO selection + lot + qty input |
+
+#### Phase 3: Transfer Order Improvements
+
+| Tính năng | File | Ghi chú |
+|---|---|---|
+| Preserve unitLandedCost | `transfers/actions.ts` | 🔥 Critical fix — giá vốn không bị mất khi transfer |
+| Transfer detail drawer | `getTransferDetail` + UI | Click row → lines with SKU, qty transferred/received |
+| Cancel transfer | `cancelTransferOrder` | Hủy lệnh DRAFT |
+| TO number format | `createTransferOrder` | TO-YYMM-NNNN (thay vì TO-000001) |
+
+#### Phase 4: Wine Intelligence
+
+| Tính năng | File | Ghi chú |
+|---|---|---|
+| Aging color code | `DaysInStockBadge` | Tự đổi màu theo ngày tồn kho |
+| Slow-moving stat | `getWMSStats` | slowMovingCount (>180 days) |
+| Low-stock alert | `getWMSStats` | lowStockCount (<12 chai/SKU) |
+
+#### Technical Fixes
+
+| Fix | Chi tiết |
+|---|---|
+| **Modular code split** | `actions.ts` → tách ra `actions-gr.ts` (~250 dòng), `actions-do.ts` (~200 dòng) |
+| **Atomic numbering** | GR/DO/Lot numbers: `findFirst({orderBy: 'desc'})` thay `count()+1` — no collision |
+| **Session auth** | `confirmGoodsReceipt` + `confirmDeliveryOrder` dùng `getCurrentUser()` thay hardcode `'user-admin'` |
+| **Edit/Delete warehouse** | `editWarehouse`, `deleteWarehouse` actions (kiểm tra location trước khi xóa) |
 
 ### Chi tiết GR Variance Report
 
@@ -336,4 +390,5 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-03-07 | Wine ERP v5.0*
+*Last updated: 2026-03-08 | Wine ERP v5.1 — WMS Deep Dive Complete*
+

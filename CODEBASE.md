@@ -21,7 +21,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 ## 3. PHÂN BỔ MODULES (APP ROUTER)
 - **System/Admin**: `src/app/dashboard/settings` (User/Role/Permission CRUD + **Approval Workflow Engine**), `src/app/login`
 - **Master Data**: `src/app/dashboard/products` (**Media Upload Gallery**), `src/app/dashboard/customers` (**Address CRUD**, soft-delete), `src/app/dashboard/suppliers` (soft-delete)
-- **Warehouse**: `src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats)
+- **Warehouse**: `src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO)
 - **Sales & Allocation**: `src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**), `src/app/dashboard/quotations`, `src/app/dashboard/price-list`, `src/app/dashboard/allocation`, `src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `src/app/dashboard/pipeline`
 - **Finance & Tem**: `src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `src/app/dashboard/stamps`
