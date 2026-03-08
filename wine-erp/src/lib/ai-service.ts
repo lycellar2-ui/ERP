@@ -284,8 +284,9 @@ Yêu cầu:
 
     return callGemini({
         prompt,
-        systemPrompt: 'You are a business analyst writing executive summaries for a wine import CEO.',
+        systemPrompt: 'You are a business analyst writing executive summaries for a wine import CEO. Write in Vietnamese.',
         temperature: 0.5,
+        maxTokens: 4096,
     }).then(r => ({
         success: r.success,
         summary: r.text,
