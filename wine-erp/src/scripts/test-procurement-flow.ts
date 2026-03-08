@@ -172,7 +172,7 @@ async function main() {
     let loc = await prisma.location.findFirst()
     if (!loc) {
         loc = await prisma.location.create({
-            data: { warehouseId: wh.id, zone: 'A', rack: '01', bin: '001', type: 'STORAGE', status: 'ACTIVE' }
+            data: { warehouseId: wh.id, zone: 'A', rack: '01', bin: '001', locationCode: 'A-01-001', type: 'STORAGE' }
         })
     }
     const lot = await prisma.stockLot.create({
