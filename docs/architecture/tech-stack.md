@@ -1,4 +1,4 @@
-# Tech Stack & Infrastructure — Wine ERP
+﻿# Tech Stack & Infrastructure — Wine ERP
 **Phiên bản:** 3.0 | **Cập nhật:** 2026-03-08
 
 ---
@@ -44,7 +44,7 @@
 | **React Hook Form + Zod** | latest | Form validation với schema (23+ Zod schemas) |
 | **Tanstack Table** | v8 | Bảng dữ liệu lớn (Inventory, Allocation Matrix) |
 | **ExcelJS** | latest | Parse & xuất Excel (import/export toàn hệ thống) |
-| **Prisma** | **7.4.2** | ORM — 111 models, 71 enums |
+| **Prisma** | **7.4.2** | ORM — 113 models, 71 enums |
 
 ### 🗄️ Database — Supabase PostgreSQL
 | Công nghệ | Ghi chú |

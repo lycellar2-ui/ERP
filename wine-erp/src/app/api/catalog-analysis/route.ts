@@ -1,9 +1,12 @@
 import { prisma, withRetry } from '@/lib/db'
 import { callGemini } from '@/lib/ai-service'
 import { NextResponse } from 'next/server'
+import { isModuleAiEnabled } from '@/app/dashboard/ai/ai-actions'
 
 export async function POST() {
     try {
+        const aiOk = await isModuleAiEnabled('catalog')
+        if (!aiOk) return NextResponse.json({ success: false, error: 'AI đã bị tắt bởi Admin' }, { status: 403 })
         const now = new Date()
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
         const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)

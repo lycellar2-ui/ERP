@@ -2,7 +2,9 @@ import { Brain } from 'lucide-react'
 import { AnomalyWidget, DemandForecastWidget, PricingWidget } from './AIWidgets'
 import { OCRUploadWidget } from './OCRWidget'
 import { ApiKeyVault, PromptLibrary, AiUsageCard } from './VaultUI'
+import { AiTogglePanel, AiReportsPanel } from './AIManagementUI'
 import { getApiKeys, getPromptTemplates, getAiUsageStats } from './vault-actions'
+import { getAiConfig, getAiReports, getAiUsageStats as getUsageStatsV2 } from './ai-actions'
 
 export const metadata = { title: 'AI Features | Wine ERP' }
 
@@ -61,9 +63,13 @@ export default async function AIPage() {
     let apiKeys: any[] = []
     let templates: any[] = []
     let usageStats = { totalRuns: 0, monthRuns: 0, failedRuns: 0, monthTokens: 0, monthCostUsd: 0, avgDurationMs: 0 }
+    let aiConfig = { aiEnabled: true, allowedModules: ['pipeline', 'crm', 'catalog', 'ceo', 'product-desc'], defaultTemperature: 0.5, defaultMaxTokens: 4096 }
+    let reports: any[] = []
     try {
-        ;[apiKeys, templates, usageStats] = await Promise.all([
+        ;[apiKeys, templates, usageStats, aiConfig, reports] = await Promise.all([
             getApiKeys(), getPromptTemplates(), getAiUsageStats(),
+            getAiConfig(),
+            getAiReports(undefined, 50),
         ])
     } catch { }
     return (
@@ -74,9 +80,12 @@ export default async function AIPage() {
                     AI Features & Phân Tích Thông Minh
                 </h2>
                 <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                    Anomaly Detection • Demand Forecast • Smart Pricing • OCR Ready
+                    Anomaly Detection • Demand Forecast • Smart Pricing • OCR Ready • Admin Control
                 </p>
             </div>
+
+            {/* ═══ AI System Toggle ═══ */}
+            <AiTogglePanel initialConfig={aiConfig} />
 
             {/* Feature Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -114,6 +123,9 @@ export default async function AIPage() {
                 <PricingWidget />
             </div>
 
+            {/* ═══ AI Reports History ═══ */}
+            <AiReportsPanel initialReports={reports} />
+
             {/* AI Infrastructure */}
             <AiUsageCard stats={usageStats} />
 
@@ -124,3 +136,4 @@ export default async function AIPage() {
         </div>
     )
 }
+

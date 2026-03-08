@@ -1,4 +1,4 @@
-# Wine Import & Distribution ERP — AI Context Index
+﻿# Wine Import & Distribution ERP — AI Context Index
 > Last updated: 2026-03-08 23:20
 > Status: Production — 26 modules, 111 DB models, 33 dashboard routes
 
@@ -11,7 +11,7 @@
 
 ## Tech Stack (Verified)
 - Next.js 16.1.6 (App Router) + React 19.2.3 + TypeScript
-- Prisma 7.4.2 + Supabase PostgreSQL (111 models, 71 enums)
+- Prisma 7.4.2 + Supabase PostgreSQL (113 models, 71 enums)
 - TailwindCSS v4 + Shadcn UI (Radix)
 - Supabase Auth (@supabase/ssr) — NOT NextAuth
 - ImgBB (product images) + Supabase Storage (private docs)

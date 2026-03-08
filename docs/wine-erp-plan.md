@@ -1,4 +1,4 @@
-# Wine ERP — Master Plan Tổng Thể
+﻿# Wine ERP — Master Plan Tổng Thể
 **Phiên Bản:** v6.0 | **Cập nhật:** 2026-03-08
 
 > ⚠️ **Lưu ý:** File này là Master Plan gốc. Số liệu thực tế xem tại [README.md](./README.md).
@@ -164,7 +164,7 @@
 | **Type Safety** | TypeScript end-to-end | Giảm bug nghiệp vụ tài chính |
 | **Forms** | React Hook Form + Zod | Validation an toàn, type-safe |
 | **Tables** | Tanstack Table v8 | Bảng lớn: Inventory, Allocation Matrix |
-| **ORM** | Prisma **7.4.2** + PostgreSQL | 111 models, 71 enums |
+| **ORM** | Prisma **7.4.2** + PostgreSQL | 113 models, 71 enums |
 | **Database** | **Supabase PostgreSQL** | Managed DB, built-in Dashboard, RLS |
 | **Auth** | **Supabase Auth** + `@supabase/ssr` | JWT, Email login, External Partner |
 | **Image Storage** | **ImgBB** (free API) | Ảnh sản phẩm (public CDN) |
@@ -263,7 +263,7 @@
 
 ```
 wine-erp/
-├── prisma/schema.prisma              # 111 models, 71 enums
+├── prisma/schema.prisma              # 113 models, 71 enums
 ├── src/
 │   ├── app/
 │   │   ├── login/                    # Supabase Auth login
@@ -340,7 +340,7 @@ wine-erp/
 | ✅ Phase 0: Khởi động & Thu thập | HOÀN TẤT | |
 | ✅ Phase 1: Phân tích Nghiệp vụ | HOÀN TẤT | 24/24 module specs hoàn thành |
 | ✅ Phase 2: Lập Kế hoạch | HOÀN TẤT | Master Plan v6.0 |
-| ✅ Phase 3: Architecture & Database Design | HOÀN TẤT | 111 models, 71 enums |
+| ✅ Phase 3: Architecture & Database Design | HOÀN TẤT | 113 models, 71 enums |
 | ✅ Phase 4: Implementation (8 sub-phases) | **P1—P8 ✅ ~99%** | 33 routes, 38 action files, 26 modules |
 | ✅ Phase 5: Testing & Production Hardening | HOÀN TẤT | Build validation, E2E tests, Zod validation, Mobile responsive |
 

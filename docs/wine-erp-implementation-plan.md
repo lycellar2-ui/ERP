@@ -1,6 +1,6 @@
-# Wine ERP — Kế Hoạch Triển Khai Toàn Bộ
+﻿# Wine ERP — Kế Hoạch Triển Khai Toàn Bộ
 > Kế hoạch triển khai toàn bộ features. Dựa trên Audit ngày 05/03/2026.
-> **Last Updated:** 08/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 111 models, 33 routes
+> **Last Updated:** 08/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 33 routes
 
 ## Mục Tiêu
 Hoàn thiện toàn bộ tính năng còn thiếu của Wine ERP theo đúng 19 file đặc tả, chia thành 8 Phase thực thi tuần tự. Mỗi Phase có output rõ ràng, có thể verify ngay.
