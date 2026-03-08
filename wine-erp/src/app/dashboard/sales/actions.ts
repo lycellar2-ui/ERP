@@ -23,6 +23,7 @@ export interface SalesOrderRow {
     paymentTerm: string
     salesRepName: string
     lineCount: number
+    notes: string | null
     createdAt: Date
 }
 
@@ -44,14 +45,18 @@ export interface SOCreateInput {
     lines: SOLineCreate[]
 }
 
-// ── Fetch list ────────────────────────────────────
+// ── Fetch list (with sort, date range) ────────────
 export async function getSalesOrders(filters: {
     status?: SOStatus
     search?: string
     page?: number
     pageSize?: number
+    sortBy?: 'createdAt' | 'totalAmount' | 'soNo'
+    sortDir?: 'asc' | 'desc'
+    dateFrom?: string
+    dateTo?: string
 } = {}): Promise<{ rows: SalesOrderRow[]; total: number }> {
-    const { status, search, page = 1, pageSize = 20 } = filters
+    const { status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', dateFrom, dateTo } = filters
     const skip = (page - 1) * pageSize
 
     const where: any = {}
@@ -63,11 +68,18 @@ export async function getSalesOrders(filters: {
             { customer: { code: { contains: search, mode: 'insensitive' } } },
         ]
     }
+    if (dateFrom || dateTo) {
+        where.createdAt = {}
+        if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+        if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+    }
+
+    const orderBy: any = sortBy === 'soNo' ? { soNo: sortDir } : { [sortBy]: sortDir }
 
     const [orders, total] = await Promise.all([
         prisma.salesOrder.findMany({
             where, skip, take: pageSize,
-            orderBy: { createdAt: 'desc' },
+            orderBy,
             include: {
                 customer: { select: { name: true, code: true } },
                 salesRep: { select: { name: true } },
@@ -90,6 +102,7 @@ export async function getSalesOrders(filters: {
             paymentTerm: o.paymentTerm,
             salesRepName: o.salesRep.name,
             lineCount: o._count.lines,
+            notes: (o as any).notes ?? null,
             createdAt: o.createdAt,
         })),
         total,
@@ -1177,4 +1190,165 @@ export async function suggestPickListForSO(soId: string): Promise<{ success: boo
     } catch (err: any) {
         return { success: false, error: err.message }
     }
+}
+
+// ═══════════════════════════════════════════════════
+// ENHANCED SO FEATURES — Timeline, Clone, Export
+// ═══════════════════════════════════════════════════
+
+// ── SO Timeline (audit trail) ─────────────────────
+export type SOTimelineEvent = {
+    id: string
+    action: string
+    description: string | null
+    userName: string | null
+    createdAt: Date
+}
+
+export async function getSOTimeline(soId: string): Promise<SOTimelineEvent[]> {
+    const so = await prisma.salesOrder.findUnique({ where: { id: soId }, select: { soNo: true } })
+    if (!so) return []
+
+    const logs = await prisma.auditLog.findMany({
+        where: {
+            OR: [
+                { entityType: 'SalesOrder', entityId: soId },
+            ],
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: { id: true, action: true, userName: true, createdAt: true, newValue: true },
+    })
+
+    return logs.map(l => {
+        const nv = l.newValue as Record<string, any> | null
+        const desc = nv?.description ?? nv?.trigger ?? `${l.action} ${so.soNo}`
+        return {
+            id: l.id,
+            action: l.action,
+            description: typeof desc === 'string' ? desc : JSON.stringify(desc),
+            userName: l.userName,
+            createdAt: l.createdAt,
+        }
+    })
+}
+
+// ── Clone SO (create DRAFT copy) ──────────────────
+export async function cloneSalesOrder(sourceId: string): Promise<{ success: boolean; soId?: string; soNo?: string; error?: string }> {
+    try {
+        const source = await prisma.salesOrder.findUnique({
+            where: { id: sourceId },
+            include: { lines: true },
+        })
+        if (!source) return { success: false, error: 'SO không tồn tại' }
+
+        // Generate unique SO number
+        const now = new Date()
+        const yy = String(now.getFullYear()).slice(-2)
+        const mm = String(now.getMonth() + 1).padStart(2, '0')
+        const prefix = `SO-${yy}${mm}-`
+        const last = await prisma.salesOrder.findFirst({
+            where: { soNo: { startsWith: prefix } },
+            orderBy: { soNo: 'desc' },
+            select: { soNo: true },
+        })
+        const seq = last ? parseInt(last.soNo.slice(-4)) + 1 : 1
+        const soNo = `${prefix}${String(seq).padStart(4, '0')}`
+
+        const newSO = await prisma.salesOrder.create({
+            data: {
+                soNo,
+                customerId: source.customerId,
+                salesRepId: source.salesRepId,
+                channel: source.channel,
+                paymentTerm: source.paymentTerm,
+                shippingAddressId: source.shippingAddressId,
+                orderDiscount: source.orderDiscount,
+                totalAmount: source.totalAmount,
+                status: 'DRAFT',
+                lines: {
+                    create: source.lines.map(l => ({
+                        productId: l.productId,
+                        qtyOrdered: l.qtyOrdered,
+                        unitPrice: l.unitPrice,
+                        lineDiscountPct: l.lineDiscountPct,
+                    })),
+                },
+            },
+        })
+
+        logAudit({
+            action: 'CREATE',
+            entityType: 'SalesOrder',
+            entityId: newSO.id,
+            description: `Clone ${source.soNo} → ${soNo}`,
+        })
+
+        revalidatePath('/dashboard/sales')
+        revalidateCache('sales')
+        return { success: true, soId: newSO.id, soNo }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Export SO list (CSV data) ─────────────────────
+export async function exportSalesOrdersCSV(filters: {
+    status?: SOStatus
+    dateFrom?: string
+    dateTo?: string
+} = {}): Promise<{ csv: string }> {
+    const { status, dateFrom, dateTo } = filters
+    const where: any = {}
+    if (status) where.status = status
+    if (dateFrom || dateTo) {
+        where.createdAt = {}
+        if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+        if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+    }
+
+    const orders = await prisma.salesOrder.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 5000,
+        include: {
+            customer: { select: { name: true, code: true } },
+            salesRep: { select: { name: true } },
+            _count: { select: { lines: true } },
+        },
+    })
+
+    const header = 'Số SO,Khách Hàng,Mã KH,Kênh,Doanh Số,CK %,Thanh Toán,Sales Rep,Trạng Thái,Sp,Ngày Tạo'
+    const rows = orders.map(o => {
+        const cols = [
+            o.soNo,
+            `"${o.customer.name}"`,
+            o.customer.code,
+            o.channel,
+            Number(o.totalAmount),
+            Number(o.orderDiscount),
+            o.paymentTerm,
+            `"${o.salesRep.name}"`,
+            o.status,
+            o._count.lines,
+            o.createdAt.toISOString().split('T')[0],
+        ]
+        return cols.join(',')
+    })
+
+    return { csv: [header, ...rows].join('\n') }
+}
+
+// ── Status counts for quick filter tabs ───────────
+export async function getSOStatusCounts(): Promise<Record<string, number>> {
+    const counts = await prisma.salesOrder.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+    })
+    const result: Record<string, number> = { ALL: 0 }
+    for (const c of counts) {
+        result[c.status] = c._count._all
+        result.ALL += c._count._all
+    }
+    return result
 }

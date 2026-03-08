@@ -1,6 +1,6 @@
 ﻿export const revalidate = 45
 
-import { getSalesOrders, getSalesStats } from './actions'
+import { getSalesOrders, getSalesStats, getSOStatusCounts } from './actions'
 import { SalesClient } from './SalesClient'
 import { getCurrentUser } from '@/lib/session'
 
@@ -10,11 +10,12 @@ export const metadata = {
 }
 
 export default async function SalesPage() {
-    const [{ rows, total }, stats, user] = await Promise.all([
+    const [{ rows, total }, stats, user, statusCounts] = await Promise.all([
         getSalesOrders({ page: 1, pageSize: 20 }),
         getSalesStats(),
         getCurrentUser(),
+        getSOStatusCounts(),
     ])
 
-    return <SalesClient initialRows={rows} initialTotal={total} stats={stats} userId={user?.id ?? ''} />
+    return <SalesClient initialRows={rows} initialTotal={total} stats={stats} userId={user?.id ?? ''} statusCounts={statusCounts} />
 }
