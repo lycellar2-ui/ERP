@@ -103,26 +103,17 @@ export async function getQuotationDetail(id: string) {
     })
     if (!raw) return null
 
-    // Serialize all Decimal fields to plain numbers for Client Component compatibility
-    return {
-        ...raw,
-        totalAmount: Number(raw.totalAmount),
-        orderDiscount: Number(raw.orderDiscount),
-        lines: raw.lines.map(l => ({
-            ...l,
-            qtyOrdered: Number(l.qtyOrdered),
-            unitPrice: Number(l.unitPrice),
-            lineDiscountPct: Number(l.lineDiscountPct),
-            product: l.product ? {
-                ...l.product,
-                abvPercent: l.product.abvPercent != null ? Number(l.product.abvPercent) : null,
-                awards: l.product.awards.map(a => ({
-                    ...a,
-                    score: a.score != null ? Number(a.score) : null,
-                })),
-            } : l.product,
-        })),
-    }
+    // Force-serialize to plain object (Prisma Decimal → string via JSON, then convert to number)
+    const plain = JSON.parse(JSON.stringify(raw))
+    plain.totalAmount = Number(raw.totalAmount)
+    plain.orderDiscount = Number(raw.orderDiscount)
+    plain.lines = plain.lines.map((l: any, i: number) => ({
+        ...l,
+        qtyOrdered: Number(raw.lines[i].qtyOrdered),
+        unitPrice: Number(raw.lines[i].unitPrice),
+        lineDiscountPct: Number(raw.lines[i].lineDiscountPct),
+    }))
+    return plain
 }
 
 // ── Create quotation ────────────────────────────
