@@ -17,7 +17,11 @@ import {
     exportARAgingExcel,
     exportVATDeclarationExcel,
     exportSCTDeclarationExcel,
+    TrialBalanceData, getTrialBalance,
+    AccountLedgerData, getAccountLedger,
+    createManualJournal,
 } from './actions'
+import { VAS_ACCOUNTS } from '@/lib/finance-integration'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const card: React.CSSProperties = { background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '8px' }
@@ -49,6 +53,17 @@ export function JournalEntryTab() {
     const [loading, setLoading] = useState(false)
     const [docFilter, setDocFilter] = useState('')
 
+    // Export panel state
+    const [showExport, setShowExport] = useState(false)
+    const now = new Date()
+    const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+    const today = now.toISOString().slice(0, 10)
+    const [exportFrom, setExportFrom] = useState(firstOfMonth)
+    const [exportTo, setExportTo] = useState(today)
+    const [exportStats, setExportStats] = useState<any>(null)
+    const [statsLoading, setStatsLoading] = useState(false)
+    const [exporting, setExporting] = useState(false)
+
     const loadEntries = useCallback(async (docType?: string) => {
         setLoading(true)
         const data = await getJournalEntries({ docType: docType || undefined, pageSize: 100 })
@@ -59,6 +74,47 @@ export function JournalEntryTab() {
     }, [])
 
     if (!loaded && !loading) loadEntries()
+
+    const loadExportStats = async () => {
+        setStatsLoading(true)
+        const { getJournalExportStats } = await import('./actions')
+        const stats = await getJournalExportStats(new Date(exportFrom), new Date(exportTo + 'T23:59:59'))
+        setExportStats(stats)
+        setStatsLoading(false)
+    }
+
+    const handleExportExcel = async () => {
+        setExporting(true)
+        try {
+            const { exportJournalsForAccounting } = await import('./actions')
+            const base64 = await exportJournalsForAccounting(new Date(exportFrom), new Date(exportTo + 'T23:59:59'))
+            const blob = new Blob([Uint8Array.from(atob(base64), c => c.charCodeAt(0))],
+                { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url; a.download = `ButToan_${exportFrom}_${exportTo}.xlsx`; a.click()
+            URL.revokeObjectURL(url)
+            toast.success(`Đã xuất ${exportStats?.count ?? 0} bút toán Excel`)
+        } catch (err: any) {
+            toast.error(`Lỗi: ${err.message}`)
+        } finally { setExporting(false) }
+    }
+
+    const handleExportJSON = async () => {
+        setExporting(true)
+        try {
+            const { exportJournalsJSON } = await import('./actions')
+            const json = await exportJournalsJSON(new Date(exportFrom), new Date(exportTo + 'T23:59:59'))
+            const blob = new Blob([json], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url; a.download = `ButToan_${exportFrom}_${exportTo}.json`; a.click()
+            URL.revokeObjectURL(url)
+            toast.success('Đã xuất JSON')
+        } catch (err: any) {
+            toast.error(`Lỗi: ${err.message}`)
+        } finally { setExporting(false) }
+    }
 
     return (
         <div className="space-y-4">
@@ -76,8 +132,124 @@ export function JournalEntryTab() {
                             <option key={k} value={k}>{v}</option>
                         ))}
                     </select>
+                    <button onClick={() => { setShowExport(!showExport); if (!showExport && !exportStats) loadExportStats() }}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-semibold transition-all"
+                        style={{
+                            background: showExport ? 'rgba(212,168,83,0.15)' : 'transparent',
+                            border: '1px solid #2A4355', color: '#D4A853',
+                        }}>
+                        <Download size={12} />
+                        Xuất Kế Toán
+                    </button>
                 </div>
             </div>
+
+            {/* Export Panel */}
+            {showExport && (
+                <div className="p-4 rounded-md space-y-4" style={{ background: '#142433', border: '1px solid rgba(212,168,83,0.3)' }}>
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <h4 className="text-sm font-bold" style={{ color: '#D4A853' }}>
+                                📤 Xuất Bút Toán cho PM Kế Toán
+                            </h4>
+                            <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>
+                                Xuất file Excel/JSON để import vào MISA, Fast, Bravo hoặc PM kế toán khác
+                            </p>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}>
+                            Export-Only Mode
+                        </span>
+                    </div>
+
+                    {/* Date range */}
+                    <div className="flex items-end gap-3">
+                        <div>
+                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Từ ngày</label>
+                            <input type="date" value={exportFrom} onChange={e => setExportFrom(e.target.value)}
+                                className="px-3 py-2 text-sm outline-none rounded"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Đến ngày</label>
+                            <input type="date" value={exportTo} onChange={e => setExportTo(e.target.value)}
+                                className="px-3 py-2 text-sm outline-none rounded"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                        </div>
+                        <button onClick={loadExportStats} disabled={statsLoading}
+                            className="px-3 py-2 text-xs font-semibold rounded"
+                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            {statsLoading ? '...' : 'Xem Trước'}
+                        </button>
+                    </div>
+
+                    {/* Stats preview */}
+                    {exportStats && (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <p className="text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>Số bút toán</p>
+                                    <p className="text-xl font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                        {exportStats.count}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <p className="text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>Tổng Nợ (Debit)</p>
+                                    <p className="text-lg font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>
+                                        {formatVND(exportStats.totalDebit)}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <p className="text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>Tổng Có (Credit)</p>
+                                    <p className="text-lg font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>
+                                        {formatVND(exportStats.totalCredit)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Doc type breakdown */}
+                            {Object.keys(exportStats.docTypes).length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(exportStats.docTypes as Record<string, number>).map(([type, count]) => (
+                                        <span key={type} className="text-xs px-2 py-1 rounded"
+                                            style={{ background: `${DOC_TYPE_COLOR[type] ?? '#4A6A7A'}20`, color: DOC_TYPE_COLOR[type] ?? '#8AAEBB' }}>
+                                            {DOC_TYPE_LABEL[type] ?? type}: {count}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Balance check */}
+                            {Math.abs(exportStats.totalDebit - exportStats.totalCredit) > 1 && (
+                                <div className="flex items-center gap-2 p-2 rounded text-xs"
+                                    style={{ background: 'rgba(224,82,82,0.1)', border: '1px solid rgba(224,82,82,0.3)', color: '#E05252' }}>
+                                    <AlertTriangle size={14} />
+                                    ⚠️ Nợ ≠ Có — Chênh lệch {formatVND(Math.abs(exportStats.totalDebit - exportStats.totalCredit))}
+                                </div>
+                            )}
+
+                            {/* Export buttons */}
+                            <div className="flex gap-3 pt-2">
+                                <button onClick={handleExportExcel} disabled={exporting || exportStats.count === 0}
+                                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md transition-all"
+                                    style={{
+                                        background: exportStats.count > 0 ? '#D4A853' : '#2A4355',
+                                        color: exportStats.count > 0 ? '#0A1926' : '#4A6A7A',
+                                        cursor: exportStats.count > 0 ? 'pointer' : 'not-allowed',
+                                    }}>
+                                    <Download size={14} />
+                                    {exporting ? 'Đang xuất...' : `Xuất Excel (${exportStats.count} bút toán)`}
+                                </button>
+                                <button onClick={handleExportJSON} disabled={exporting || exportStats.count === 0}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md"
+                                    style={{ border: '1px solid #2A4355', color: '#8AAEBB', cursor: exportStats.count > 0 ? 'pointer' : 'not-allowed' }}>
+                                    <Download size={14} />
+                                    {exporting ? '...' : 'JSON (API-ready)'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
@@ -178,9 +350,14 @@ export function ProfitLossTab() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
-                    Báo Cáo Lãi / Lỗ (P&L)
-                </h3>
+                <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                        Báo Cáo Lãi / Lỗ (P&L)
+                    </h3>
+                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.2)' }}>
+                        ước tính vận hành
+                    </span>
+                </div>
                 <div className="flex gap-2">
                     <select value={month} onChange={e => { setMonth(Number(e.target.value)); setData(null) }}
                         className="text-xs px-3 py-1.5 rounded"
@@ -442,6 +619,11 @@ export function ExpenseTab({ userId }: { userId: string }) {
                                 placeholder="Tiền thuê VP tháng 3..." className="w-full px-3 py-2 text-sm outline-none" style={input} />
                         </div>
                     </div>
+                    <div>
+                        <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Link chứng từ / Hóa đơn (tùy chọn)</label>
+                        <input type="url" placeholder="https://drive.google.com/... hoặc link hình ảnh hóa đơn"
+                            className="w-full px-3 py-2 text-sm outline-none" style={input} />
+                    </div>
                     {Number(amount) > 5_000_000 && (
                         <p className="text-xs flex items-center gap-1" style={{ color: '#D4A853' }}>
                             <AlertTriangle size={12} /> Chi phí {'>'} 5.000.000₫ cần CEO phê duyệt
@@ -679,9 +861,14 @@ export function BalanceSheetTab() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
-                    Bảng Cân Đối Kế Toán (VAS)
-                </h3>
+                <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                        Bảng Cân Đối Kế Toán (VAS)
+                    </h3>
+                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.2)' }}>
+                        ước tính vận hành
+                    </span>
+                </div>
                 <div className="flex gap-2">
                     <select value={month} onChange={e => { setMonth(Number(e.target.value)); setData(null) }}
                         className="text-xs px-3 py-1.5 rounded"
@@ -701,6 +888,23 @@ export function BalanceSheetTab() {
                         style={{ background: '#87CBB9', color: '#0A1926' }}>
                         Xem
                     </button>
+                    {data && (
+                        <button onClick={async () => {
+                            try {
+                                const base64 = await exportBalanceSheetExcel()
+                                const blob = new Blob([Uint8Array.from(atob(base64), c => c.charCodeAt(0))],
+                                    { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url; a.download = `CDKT_T${month}_${year}.xlsx`; a.click()
+                                URL.revokeObjectURL(url)
+                                toast.success('Đã xuất CĐKT Excel')
+                            } catch { toast.error('Lỗi xuất Excel') }
+                        }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
+                            style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                            <Download size={12} /> CĐKT Excel
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -1033,26 +1237,6 @@ export function CashFlowTab() {
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Vị Thế Tiền Mặt</h3>
                             <div className="flex gap-2">
-                                <button onClick={async () => {
-                                    setBsExporting(true)
-                                    try {
-                                        const base64 = await exportBalanceSheetExcel()
-                                        await downloadExcel(base64, `CDKT_${new Date().toISOString().slice(0, 7)}.xlsx`)
-                                    } finally { setBsExporting(false) }
-                                }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
-                                    style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
-                                    <Download size={12} /> {bsExporting ? '...' : 'CĐKT Excel'}
-                                </button>
-                                <button onClick={async () => {
-                                    setArExporting(true)
-                                    try {
-                                        const base64 = await exportARAgingExcel()
-                                        await downloadExcel(base64, `AR_Aging_${new Date().toISOString().slice(0, 10)}.xlsx`)
-                                    } finally { setArExporting(false) }
-                                }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
-                                    style={{ border: '1px solid #2A4355', color: '#D4A853' }}>
-                                    <Download size={12} /> {arExporting ? '...' : 'AR Aging Excel'}
-                                </button>
                                 <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
                                     style={{ background: '#87CBB9', color: '#0A1926' }}>Làm Mới</button>
                                 <button onClick={async () => {
@@ -1294,6 +1478,264 @@ export function CashFlowTab() {
                         )}
                     </div>
                 </>
+            ) : null}
+        </div>
+    )
+}
+
+// ── Trial Balance Tab — Bảng Cân Đối Phát Sinh ──
+export function TrialBalanceTab() {
+    const now = new Date()
+    const [year, setYear] = useState(now.getFullYear())
+    const [month, setMonth] = useState(now.getMonth() + 1)
+    const [data, setData] = useState<TrialBalanceData | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    const load = useCallback(async () => {
+        setLoading(true)
+        const result = await getTrialBalance({ year, month })
+        setData(result)
+        setLoading(false)
+    }, [year, month])
+
+    if (!data && !loading) load()
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                        Bảng Cân Đối Phát Sinh (CĐPS)
+                    </h3>
+                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.2)' }}>
+                        ước tính vận hành
+                    </span>
+                </div>
+                <div className="flex gap-2">
+                    <select value={month} onChange={e => { setMonth(Number(e.target.value)); setData(null) }}
+                        className="text-xs px-3 py-1.5 rounded"
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                        {Array.from({ length: 12 }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                        ))}
+                    </select>
+                    <select value={year} onChange={e => { setYear(Number(e.target.value)); setData(null) }}
+                        className="text-xs px-3 py-1.5 rounded"
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                        {[2024, 2025, 2026].map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                    <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}>Tải lại</button>
+                </div>
+            </div>
+
+            {loading ? (
+                <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+            ) : data ? (
+                <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #2A4355' }}>
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                <th rowSpan={2} className="px-3 py-2 text-xs uppercase font-semibold" style={{ color: '#4A6A7A', borderRight: '1px solid #2A4355' }}>Tài Khoản</th>
+                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#4A6A7A', borderRight: '1px solid #2A4355', borderBottom: '1px solid #2A4355' }}>Số Dư Đầu Kỳ</th>
+                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#4A6A7A', borderRight: '1px solid #2A4355', borderBottom: '1px solid #2A4355' }}>Phát Sinh Trong Kỳ</th>
+                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#4A6A7A' }}>Số Dư Cuối Kỳ</th>
+                            </tr>
+                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#5BA88A' }}>Nợ</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#E05252', borderRight: '1px solid #2A4355' }}>Có</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#5BA88A' }}>Nợ</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#E05252', borderRight: '1px solid #2A4355' }}>Có</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#5BA88A' }}>Nợ</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#E05252' }}>Có</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.rows.map(r => (
+                                <tr key={r.accountCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    <td className="px-3 py-2" style={{ borderRight: '1px solid #2A4355' }}>
+                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.accountCode}</span>
+                                        <span className="text-xs ml-2" style={{ color: '#8AAEBB' }}>{r.accountName}</span>
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-xs" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{r.openingDebit > 0 ? formatVND(r.openingDebit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{r.openingCredit > 0 ? formatVND(r.openingCredit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{r.periodDebit > 0 ? formatVND(r.periodDebit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{r.periodCredit > 0 ? formatVND(r.periodCredit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{r.closingDebit > 0 ? formatVND(r.closingDebit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>{r.closingCredit > 0 ? formatVND(r.closingCredit) : ''}</td>
+                                </tr>
+                            ))}
+                            {/* Totals row */}
+                            <tr style={{ background: 'rgba(135,203,185,0.08)', borderTop: '2px solid #2A4355' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold uppercase" style={{ color: '#E8F1F2', borderRight: '1px solid #2A4355' }}>Tổng Cộng</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.openingDebit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{formatVND(data.totals.openingCredit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.periodDebit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{formatVND(data.totals.periodCredit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.closingDebit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.closingCredit)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            ) : null}
+        </div>
+    )
+}
+
+// ── Account Ledger Tab — Sổ Chi Tiết Tài Khoản ──
+export function AccountLedgerTab() {
+    const now = new Date()
+    const [year, setYear] = useState(now.getFullYear())
+    const [month, setMonth] = useState(now.getMonth() + 1)
+    const [accountCode, setAccountCode] = useState('131')
+    const [data, setData] = useState<AccountLedgerData | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    const load = useCallback(async () => {
+        setLoading(true)
+        const result = await getAccountLedger(accountCode, { year, month })
+        setData(result)
+        setLoading(false)
+    }, [accountCode, year, month])
+
+    if (!data && !loading) load()
+
+    const accountOptions = Object.entries(VAS_ACCOUNTS).sort(([a], [b]) => a.localeCompare(b))
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+                <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                    Sổ Chi Tiết Tài Khoản
+                </h3>
+                <div className="flex gap-2 flex-wrap">
+                    <select value={accountCode} onChange={e => { setAccountCode(e.target.value); setData(null) }}
+                        className="text-xs px-3 py-1.5 rounded"
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                        {accountOptions.map(([code, name]) => (
+                            <option key={code} value={code}>{code} - {name}</option>
+                        ))}
+                    </select>
+                    <select value={month} onChange={e => { setMonth(Number(e.target.value)); setData(null) }}
+                        className="text-xs px-3 py-1.5 rounded"
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                        {Array.from({ length: 12 }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                        ))}
+                    </select>
+                    <select value={year} onChange={e => { setYear(Number(e.target.value)); setData(null) }}
+                        className="text-xs px-3 py-1.5 rounded"
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                        {[2024, 2025, 2026].map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                    <button onClick={load} className="text-xs px-3 py-1.5 rounded font-semibold"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}>Xem</button>
+                </div>
+            </div>
+
+            {loading ? (
+                <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+            ) : data ? (
+                <div className="space-y-3">
+                    {/* Account info */}
+                    <div className="flex items-center gap-4 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        <div>
+                            <span className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{data.accountCode}</span>
+                            <span className="text-sm ml-2" style={{ color: '#8AAEBB' }}>{data.accountName}</span>
+                        </div>
+                        <div className="ml-auto flex gap-6">
+                            <div className="text-right">
+                                <p className="text-xs uppercase" style={{ color: '#4A6A7A' }}>Dư đầu kỳ</p>
+                                <p className="text-sm font-bold" style={{ color: data.openingBalance >= 0 ? '#5BA88A' : '#E05252', fontFamily: '"DM Mono"' }}>
+                                    {formatVND(Math.abs(data.openingBalance))} {data.openingBalance >= 0 ? 'Nợ' : 'Có'}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs uppercase" style={{ color: '#4A6A7A' }}>Dư cuối kỳ</p>
+                                <p className="text-sm font-bold" style={{ color: data.closingBalance >= 0 ? '#5BA88A' : '#E05252', fontFamily: '"DM Mono"' }}>
+                                    {formatVND(Math.abs(data.closingBalance))} {data.closingBalance >= 0 ? 'Nợ' : 'Có'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Ledger table */}
+                    {data.entries.length === 0 ? (
+                        <div className="text-center py-12 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
+                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có phát sinh trong kỳ {month}/{year}</p>
+                        </div>
+                    ) : (
+                        <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #2A4355' }}>
+                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        {['Ngày', 'Số CT', 'Loại', 'Diễn giải', 'Nợ', 'Có', 'Số Dư'].map(h => (
+                                            <th key={h} className="px-3 py-2.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {/* Opening balance row */}
+                                    <tr style={{ background: 'rgba(135,203,185,0.05)', borderBottom: '1px solid #2A4355' }}>
+                                        <td colSpan={4} className="px-3 py-2 text-xs font-bold italic" style={{ color: '#4A6A7A' }}>
+                                            Số dư đầu kỳ
+                                        </td>
+                                        <td className="px-3 py-2 text-right text-xs" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}></td>
+                                        <td className="px-3 py-2 text-right text-xs" style={{ fontFamily: '"DM Mono"', color: '#E05252' }}></td>
+                                        <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: data.openingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
+                                            {formatVND(Math.abs(data.openingBalance))}
+                                        </td>
+                                    </tr>
+                                    {data.entries.map((e, i) => (
+                                        <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
+                                            onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                            onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
+                                            <td className="px-3 py-2 text-xs" style={{ color: '#8AAEBB' }}>{formatDate(e.date)}</td>
+                                            <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{e.entryNo}</td>
+                                            <td className="px-3 py-2">
+                                                <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: '#D4A853', background: 'rgba(212,168,83,0.15)' }}>
+                                                    {DOC_TYPE_LABEL[e.docType] ?? e.docType}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-xs max-w-[250px] truncate" style={{ color: '#E8F1F2' }}>{e.description || '—'}</td>
+                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>
+                                                {e.debit > 0 ? formatVND(e.debit) : ''}
+                                            </td>
+                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E05252' }}>
+                                                {e.credit > 0 ? formatVND(e.credit) : ''}
+                                            </td>
+                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: e.balance >= 0 ? '#5BA88A' : '#E05252' }}>
+                                                {formatVND(Math.abs(e.balance))}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {/* Closing balance */}
+                                    <tr style={{ background: 'rgba(135,203,185,0.08)', borderTop: '2px solid #2A4355' }}>
+                                        <td colSpan={4} className="px-3 py-2.5 text-xs font-bold uppercase" style={{ color: '#E8F1F2' }}>
+                                            Số dư cuối kỳ
+                                        </td>
+                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>
+                                            {formatVND(data.entries.reduce((s, e) => s + e.debit, 0))}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E05252' }}>
+                                            {formatVND(data.entries.reduce((s, e) => s + e.credit, 0))}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: data.closingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
+                                            {formatVND(Math.abs(data.closingBalance))}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             ) : null}
         </div>
     )

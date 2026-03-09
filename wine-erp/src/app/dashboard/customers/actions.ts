@@ -4,7 +4,8 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, getCurrentUser } from '@/lib/session'
+import { logAudit, logAuditWithDiff } from '@/lib/audit'
 
 // ═══════════════════════════════════════════════════
 // TYPES
@@ -337,6 +338,8 @@ export async function createCustomer(input: CustomerInput) {
 
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Customer', entityId: customer.id, newValue: { code: data.code, name: data.name, customerType: data.customerType, creditLimit: Number(data.creditLimit), paymentTerm: data.paymentTerm } })
         return { success: true }
     } catch (err: any) {
         if (err?.code === 'P2002') return { success: false, error: 'Mã KH đã tồn tại. Vui lòng chọn mã khác.' }
@@ -351,7 +354,7 @@ export async function createCustomer(input: CustomerInput) {
 export async function updateCustomer(id: string, input: Partial<CustomerInput>) {
     try {
         const { contactName, email, phone, address, ward, district, city, ...customerData } = input
-
+        const oldCustomer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true, paymentTerm: true, channel: true, salesRepId: true, status: true, shortName: true } })
         await prisma.customer.update({
             where: { id },
             data: {
@@ -415,6 +418,9 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
 
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
+        const user = await getCurrentUser().catch(() => null)
+        const oldPlain = oldCustomer ? JSON.parse(JSON.stringify(oldCustomer)) : null
+        logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Customer', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...customerData } })
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message ?? 'Lỗi cập nhật KH' }
@@ -427,6 +433,7 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
 
 export async function deleteCustomer(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const customer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true } })
         const activeSOs = await prisma.salesOrder.count({
             where: { customerId: id, status: { notIn: ['PAID', 'CANCELLED'] } },
         })
@@ -438,6 +445,8 @@ export async function deleteCustomer(id: string): Promise<{ success: boolean; er
             where: { id },
             data: { deletedAt: new Date(), status: 'INACTIVE' },
         })
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'Customer', entityId: id, oldValue: { code: customer?.code, name: customer?.name, customerType: customer?.customerType, creditLimit: customer ? Number(customer.creditLimit) : null } })
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
         return { success: true }

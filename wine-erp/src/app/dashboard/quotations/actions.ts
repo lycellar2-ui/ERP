@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { randomUUID } from 'crypto'
+import { logAudit } from '@/lib/audit'
 
 export type QuotationStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'CONVERTED' | 'EXPIRED' | 'CANCELLED'
 
@@ -183,6 +184,7 @@ export async function createQuotation(input: {
             },
         })
 
+        logAudit({ userId: input.salesRepId, action: 'CREATE', entityType: 'Quotation', entityId: qt.id, newValue: { quotationNo: qt.quotationNo, customerId: input.customerId, totalAmount: finalAmount, lineCount: input.lines.length, channel: input.channel } })
         revalidateCache('quotations')
         revalidatePath('/dashboard/quotations')
         return { success: true, id: qt.id, quotationNo: qt.quotationNo }
@@ -251,6 +253,7 @@ export async function updateQuotation(id: string, input: {
 
         await prisma.salesQuotation.update({ where: { id }, data: updateData })
 
+        logAudit({ userId: qt.salesRepId, action: 'UPDATE', entityType: 'Quotation', entityId: id, oldValue: { totalAmount: Number(qt.totalAmount), orderDiscount: Number(qt.orderDiscount), quotationNo: qt.quotationNo }, newValue: { totalAmount: updateData.totalAmount ? Number(updateData.totalAmount) : Number(qt.totalAmount), lineCount: input.lines?.length } })
         revalidateCache('quotations')
         revalidatePath('/dashboard/quotations')
         return { success: true }
@@ -262,7 +265,9 @@ export async function updateQuotation(id: string, input: {
 // ── Update status ────────────────────────────────
 export async function updateQuotationStatus(id: string, status: QuotationStatus): Promise<{ success: boolean; error?: string }> {
     try {
+        const qt = await prisma.salesQuotation.findUnique({ where: { id }, select: { status: true, quotationNo: true, salesRepId: true } })
         await prisma.salesQuotation.update({ where: { id }, data: { status: status as any } })
+        logAudit({ userId: qt?.salesRepId ?? undefined, action: 'STATUS_CHANGE', entityType: 'Quotation', entityId: id, oldValue: { status: qt?.status, quotationNo: qt?.quotationNo }, newValue: { status } })
         revalidateCache('quotations')
         revalidatePath('/dashboard/quotations')
         return { success: true }
@@ -322,6 +327,7 @@ export async function sendQuotation(id: string, method: 'EMAIL' | 'LINK' | 'ZALO
             }
         }
 
+        logAudit({ userId: qt.salesRepId, action: 'UPDATE', entityType: 'Quotation', entityId: id, newValue: { action: 'SEND', method, quotationNo: qt.quotationNo, publicUrl, customerName: qt.customer.name } })
         revalidateCache('quotations')
         revalidatePath('/dashboard/quotations')
         return { success: true, publicUrl }
@@ -372,6 +378,7 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
             data: { status: 'CONVERTED', convertedSoId: so.id },
         })
 
+        logAudit({ userId: qt.salesRepId, action: 'STATUS_CHANGE', entityType: 'Quotation', entityId: quotationId, oldValue: { status: qt.status, quotationNo: qt.quotationNo }, newValue: { status: 'CONVERTED', soNo: so.soNo, totalAmount: Number(qt.totalAmount) } })
         revalidatePath('/dashboard/quotations')
         revalidatePath('/dashboard/sales')
         return { success: true, soNo: so.soNo }

@@ -5,7 +5,8 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, getCurrentUser } from '@/lib/session'
+import { logAudit, logAuditWithDiff } from '@/lib/audit'
 
 // ─── Types ────────────────────────────────────────
 export type ProductRow = {
@@ -322,6 +323,8 @@ export async function createProduct(input: ProductInput) {
                 status: data.status,
             },
         })
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Product', entityId: product.id, newValue: { skuCode: data.skuCode, productName: data.productName, wineType: data.wineType, country: data.country, status: data.status } })
         revalidateCache('products')
         revalidatePath('/dashboard/products')
         return { success: true, id: product.id }
@@ -339,6 +342,7 @@ export async function createProduct(input: ProductInput) {
 
 // ─── Update ───────────────────────────────────────
 export async function updateProduct(id: string, input: Partial<ProductInput>) {
+    const oldProduct = await prisma.product.findUnique({ where: { id }, select: { skuCode: true, productName: true, status: true, abvPercent: true, volumeMl: true, wineType: true, country: true, classification: true, isAllocationEligible: true, hsCode: true } })
     await prisma.product.update({
         where: { id },
         data: {
@@ -361,6 +365,9 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
             ...(input.status && { status: input.status }),
         },
     })
+    const user = await getCurrentUser().catch(() => null)
+    const oldPlain = oldProduct ? JSON.parse(JSON.stringify(oldProduct)) : null
+    logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Product', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...input } })
     revalidateCache('products')
     revalidatePath('/dashboard/products')
     return { success: true }
@@ -368,10 +375,13 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
 
 // ─── Soft delete ──────────────────────────────────
 export async function deleteProduct(id: string) {
+    const product = await prisma.product.findUnique({ where: { id }, select: { skuCode: true, productName: true, status: true } })
     await prisma.product.update({
         where: { id },
         data: { deletedAt: new Date() },
     })
+    const user = await getCurrentUser().catch(() => null)
+    logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'Product', entityId: id, oldValue: { skuCode: product?.skuCode, productName: product?.productName, status: product?.status } })
     revalidatePath('/dashboard/products')
 }
 

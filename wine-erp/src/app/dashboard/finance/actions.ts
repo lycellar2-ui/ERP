@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/session'
 import { cached, revalidateCache } from '@/lib/cache'
-import { parseOrThrow, ARPaymentCreateSchema, ExpenseCreateSchema, JournalEntrySchema, CODCollectionSchema, BadDebtWriteOffSchema } from '@/lib/validations'
+import { parseOrThrow, ARPaymentCreateSchema, APPaymentSchema, ExpenseCreateSchema, JournalEntrySchema, CODCollectionSchema, BadDebtWriteOffSchema } from '@/lib/validations'
 
 export interface ARRow {
     id: string; invoiceNo: string; customerName: string; customerCode: string
@@ -14,7 +14,8 @@ export interface ARRow {
 
 export interface APRow {
     id: string; invoiceNo: string; supplierName: string; supplierCode: string
-    poNo: string | null; amount: number; currency: string; paidAmount: number; outstanding: number
+    poNo: string | null; amount: number; currency: string; exchangeRate: number; amountVND: number
+    paidAmount: number; outstanding: number; outstandingVND: number
     dueDate: Date; status: string; isOverdue: boolean; createdAt: Date
 }
 
@@ -95,12 +96,16 @@ export async function getAPInvoices(filters: {
         rows: invoices.map(inv => {
             const paidAmount = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
             const outstanding = Number(inv.amount) - paidAmount
+            const exRate = Number(inv.exchangeRate)
+            const amountVND = Number(inv.amount) * exRate
+            const outstandingVND = outstanding * exRate
             return {
                 id: inv.id, invoiceNo: inv.invoiceNo,
                 supplierName: inv.supplier.name, supplierCode: inv.supplier.code,
                 poNo: inv.po?.poNo ?? null,
                 amount: Number(inv.amount), currency: inv.currency,
-                paidAmount, outstanding,
+                exchangeRate: exRate, amountVND,
+                paidAmount, outstanding, outstandingVND,
                 dueDate: inv.dueDate, status: inv.status,
                 isOverdue: inv.dueDate < now && !['PAID'].includes(inv.status),
                 createdAt: inv.createdAt,
@@ -165,16 +170,31 @@ export async function getARAgingBuckets() {
 // ── Record AR payment + AUTO-UPDATE SO status ────
 export async function recordARPayment(invoiceId: string, amount: number, method: string): Promise<{ success: boolean; error?: string }> {
     try {
+        // ── Zod validation ──
+        parseOrThrow(ARPaymentCreateSchema.pick({ invoiceId: true, amount: true, method: true }), { invoiceId, amount, method })
+
+        // ── Closed period check ──
+        const now = new Date()
+        await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
+
         const inv = await prisma.aRInvoice.findUnique({ where: { id: invoiceId }, include: { payments: true } })
         if (!inv) return { success: false, error: 'Không tìm thấy hóa đơn' }
 
         const totalPaid = inv.payments.reduce((s, p) => s + Number(p.amount), 0) + amount
-        const newStatus = totalPaid >= Number(inv.amount) ? 'PAID' : 'PARTIALLY_PAID'
+        const invAmount = Number(inv.totalAmount ?? inv.amount)
+        const newStatus = totalPaid >= invAmount ? 'PAID' : 'PARTIALLY_PAID'
 
-        await prisma.$transaction([
-            prisma.aRPayment.create({ data: { invoiceId, amount, method: method as any, paidAt: new Date() } }),
-            prisma.aRInvoice.update({ where: { id: invoiceId }, data: { status: newStatus } }),
+        const [payment] = await prisma.$transaction([
+            prisma.aRPayment.create({ data: { invoiceId, amount, method: method as any, paidAt: now } }),
+            prisma.aRInvoice.update({ where: { id: invoiceId }, data: { status: newStatus, paidAmount: totalPaid } }),
         ])
+
+        // ── Auto Journal: DR 112 (Tiền gửi NH) / CR 131 (Phải thu KH) ──
+        const user = await getCurrentUser()
+        const userId = user?.id ?? (await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } }))?.id
+        if (userId) {
+            await generatePaymentInJournal(payment.id, amount, inv.invoiceNo, userId)
+        }
 
         // ── EVENT-DRIVEN: Auto-update SO status when fully paid ──
         if (newStatus === 'PAID' && inv.soId) {
@@ -270,24 +290,38 @@ export async function collectCODPayment(input: {
 // ── Record AP payment ────────────────────────────
 export async function recordAPPayment(invoiceId: string, amount: number, method: string, reference?: string): Promise<{ success: boolean; error?: string }> {
     try {
-        const inv = await prisma.aPInvoice.findUnique({ where: { id: invoiceId }, include: { payments: true } })
+        // ── Zod validation ──
+        parseOrThrow(APPaymentSchema, { invoiceId, amount, method, reference })
+
+        // ── Closed period check ──
+        const now = new Date()
+        await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
+
+        const inv = await prisma.aPInvoice.findUnique({ where: { id: invoiceId }, include: { payments: true, supplier: { select: { name: true } } } })
         if (!inv) return { success: false, error: 'Không tìm thấy hóa đơn AP' }
 
         const totalPaid = inv.payments.reduce((s, p) => s + Number(p.amount), 0) + amount
         const newStatus = totalPaid >= Number(inv.amount) ? 'PAID' : 'PARTIALLY_PAID'
 
-        await prisma.$transaction([
+        const [payment] = await prisma.$transaction([
             prisma.aPPayment.create({
                 data: {
                     invoiceId,
                     amount,
                     method: method as any,
                     reference: reference ?? null,
-                    paidAt: new Date(),
+                    paidAt: now,
                 },
             }),
             prisma.aPInvoice.update({ where: { id: invoiceId }, data: { status: newStatus } }),
         ])
+
+        // ── Auto Journal: DR 331 (Phải trả NCC) / CR 112 (Tiền gửi NH) ──
+        const user = await getCurrentUser()
+        const userId = user?.id ?? (await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } }))?.id
+        if (userId) {
+            await generateAPPaymentJournal(payment.id, amount, inv.invoiceNo, inv.supplier?.name ?? 'NCC', userId)
+        }
 
         revalidateCache('finance')
         revalidatePath('/dashboard/finance')
@@ -354,6 +388,247 @@ export async function getJournalEntries(filters: {
             lineCount: e.lines.length,
         })),
         total,
+    }
+}
+
+// ── Create Manual Journal Entry (Adjusting) ───────
+export type ManualJournalLine = {
+    account: string   // e.g., "642 - Chi phí QLDN"
+    debit: number
+    credit: number
+    description?: string
+}
+
+export async function createManualJournal(input: {
+    description: string
+    lines: ManualJournalLine[]
+    postedAt?: Date
+}): Promise<{ success: boolean; entryId?: string; error?: string }> {
+    try {
+        const { description, lines, postedAt } = input
+        if (!description?.trim()) return { success: false, error: 'Thiếu diễn giải' }
+        if (!lines || lines.length < 2) return { success: false, error: 'Cần ít nhất 2 dòng bút toán' }
+
+        const totalDebit = lines.reduce((s, l) => s + (l.debit || 0), 0)
+        const totalCredit = lines.reduce((s, l) => s + (l.credit || 0), 0)
+        if (Math.abs(totalDebit - totalCredit) > 0.01) {
+            return { success: false, error: `Nợ (${totalDebit.toLocaleString()}) ≠ Có (${totalCredit.toLocaleString()})` }
+        }
+
+        const date = postedAt ?? new Date()
+        const period = await getOrCreatePeriod(date.getFullYear(), date.getMonth() + 1)
+        const user = await getCurrentUser()
+        const entryNo = await nextEntryNo('JE-MAN')
+
+        const entry = await prisma.journalEntry.create({
+            data: {
+                entryNo,
+                docType: 'ADJUSTMENT',
+                docId: `MAN-${entryNo}`,
+                description,
+                periodId: period.id,
+                createdBy: user?.id ?? 'system',
+                postedAt: date,
+                lines: {
+                    create: lines.map(l => ({
+                        account: l.account,
+                        debit: l.debit || 0,
+                        credit: l.credit || 0,
+                        description: l.description || '',
+                    })),
+                },
+            },
+        })
+
+        revalidateCache('finance')
+        revalidatePath('/dashboard/finance')
+        return { success: true, entryId: entry.id }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// TRIAL BALANCE — Bảng Cân Đối Phát Sinh
+// ═══════════════════════════════════════════════════
+
+export type TrialBalanceRow = {
+    accountCode: string
+    accountName: string
+    openingDebit: number
+    openingCredit: number
+    periodDebit: number
+    periodCredit: number
+    closingDebit: number
+    closingCredit: number
+}
+
+export type TrialBalanceData = {
+    year: number
+    month: number
+    rows: TrialBalanceRow[]
+    totals: {
+        openingDebit: number; openingCredit: number
+        periodDebit: number; periodCredit: number
+        closingDebit: number; closingCredit: number
+    }
+}
+
+export async function getTrialBalance(filters: {
+    year?: number; month?: number
+} = {}): Promise<TrialBalanceData> {
+    const now = new Date()
+    const year = filters.year ?? now.getFullYear()
+    const month = filters.month ?? (now.getMonth() + 1)
+
+    const periodStart = new Date(year, month - 1, 1)
+    const periodEnd = new Date(year, month, 0, 23, 59, 59)
+    const openingEnd = new Date(year, month - 1, 0, 23, 59, 59) // Last day of previous month
+
+    // Opening balances: all lines before this period
+    const openingLines = await prisma.journalLine.findMany({
+        where: { entry: { postedAt: { lte: openingEnd } } },
+        select: { account: true, debit: true, credit: true },
+    })
+
+    // Period movements: lines within this period
+    const periodLines = await prisma.journalLine.findMany({
+        where: { entry: { postedAt: { gte: periodStart, lte: periodEnd } } },
+        select: { account: true, debit: true, credit: true },
+    })
+
+    // Aggregate
+    const accounts = new Map<string, { openDr: number; openCr: number; perDr: number; perCr: number }>()
+
+    const ensure = (acct: string) => {
+        if (!accounts.has(acct)) accounts.set(acct, { openDr: 0, openCr: 0, perDr: 0, perCr: 0 })
+        return accounts.get(acct)!
+    }
+
+    for (const l of openingLines) {
+        const a = ensure(extractAccountCode(l.account))
+        a.openDr += Number(l.debit)
+        a.openCr += Number(l.credit)
+    }
+
+    for (const l of periodLines) {
+        const a = ensure(extractAccountCode(l.account))
+        a.perDr += Number(l.debit)
+        a.perCr += Number(l.credit)
+    }
+
+    // Build rows sorted by account code
+    const rows: TrialBalanceRow[] = [...accounts.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([code, v]) => {
+            const closingDr = v.openDr + v.perDr
+            const closingCr = v.openCr + v.perCr
+            return {
+                accountCode: code,
+                accountName: VAS_ACCOUNTS[code] ?? code,
+                openingDebit: v.openDr,
+                openingCredit: v.openCr,
+                periodDebit: v.perDr,
+                periodCredit: v.perCr,
+                closingDebit: closingDr,
+                closingCredit: closingCr,
+            }
+        })
+
+    const totals = rows.reduce((t, r) => ({
+        openingDebit: t.openingDebit + r.openingDebit,
+        openingCredit: t.openingCredit + r.openingCredit,
+        periodDebit: t.periodDebit + r.periodDebit,
+        periodCredit: t.periodCredit + r.periodCredit,
+        closingDebit: t.closingDebit + r.closingDebit,
+        closingCredit: t.closingCredit + r.closingCredit,
+    }), { openingDebit: 0, openingCredit: 0, periodDebit: 0, periodCredit: 0, closingDebit: 0, closingCredit: 0 })
+
+    return { year, month, rows, totals }
+}
+
+// ═══════════════════════════════════════════════════
+// ACCOUNT LEDGER — Sổ Chi Tiết Tài Khoản
+// ═══════════════════════════════════════════════════
+
+export type AccountLedgerEntry = {
+    entryNo: string
+    date: Date
+    docType: string
+    description: string
+    debit: number
+    credit: number
+    balance: number
+}
+
+export type AccountLedgerData = {
+    accountCode: string
+    accountName: string
+    year: number
+    month: number
+    openingBalance: number
+    entries: AccountLedgerEntry[]
+    closingBalance: number
+}
+
+export async function getAccountLedger(
+    accountCode: string,
+    filters: { year?: number; month?: number } = {}
+): Promise<AccountLedgerData> {
+    const now = new Date()
+    const year = filters.year ?? now.getFullYear()
+    const month = filters.month ?? (now.getMonth() + 1)
+
+    const periodStart = new Date(year, month - 1, 1)
+    const periodEnd = new Date(year, month, 0, 23, 59, 59)
+    const openingEnd = new Date(year, month - 1, 0, 23, 59, 59)
+
+    // Opening balance
+    const openingLines = await prisma.journalLine.findMany({
+        where: {
+            account: { startsWith: accountCode },
+            entry: { postedAt: { lte: openingEnd } },
+        },
+        select: { debit: true, credit: true },
+    })
+    const openingBalance = openingLines.reduce((s, l) => s + Number(l.debit) - Number(l.credit), 0)
+
+    // Period entries
+    const periodLines = await prisma.journalLine.findMany({
+        where: {
+            account: { startsWith: accountCode },
+            entry: { postedAt: { gte: periodStart, lte: periodEnd } },
+        },
+        include: {
+            entry: { select: { entryNo: true, docType: true, description: true, postedAt: true } },
+        },
+        orderBy: { entry: { postedAt: 'asc' } },
+    })
+
+    let runningBalance = openingBalance
+    const entries: AccountLedgerEntry[] = periodLines.map(l => {
+        const dr = Number(l.debit)
+        const cr = Number(l.credit)
+        runningBalance += dr - cr
+        return {
+            entryNo: l.entry.entryNo,
+            date: l.entry.postedAt,
+            docType: l.entry.docType,
+            description: l.entry.description ?? l.description ?? '',
+            debit: dr,
+            credit: cr,
+            balance: runningBalance,
+        }
+    })
+
+    return {
+        accountCode,
+        accountName: VAS_ACCOUNTS[accountCode] ?? accountCode,
+        year,
+        month,
+        openingBalance,
+        entries,
+        closingBalance: runningBalance,
     }
 }
 
@@ -511,6 +786,44 @@ export async function generatePaymentInJournal(
     }
 }
 
+// ── Auto-generate: AP Payment → DR 331 / CR 112
+export async function generateAPPaymentJournal(
+    paymentId: string,
+    amount: number,
+    invoiceNo: string,
+    supplierName: string,
+    createdBy: string
+): Promise<{ success: boolean; entryId?: string; error?: string }> {
+    try {
+        const now = new Date()
+        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
+        const entryNo = await nextEntryNo('JE-PO')
+
+        const entry = await prisma.journalEntry.create({
+            data: {
+                entryNo,
+                docType: 'PAYMENT_OUT',
+                docId: paymentId,
+                periodId: period.id,
+                description: `Thanh toán NCC ${supplierName} — ${invoiceNo}`,
+                createdBy,
+                lines: {
+                    create: [
+                        { account: '331 - Phải trả NCC', debit: amount, credit: 0 },
+                        { account: '112 - Tiền gửi NH', debit: 0, credit: amount },
+                    ],
+                },
+            },
+        })
+
+        revalidateCache('finance')
+        revalidatePath('/dashboard/finance')
+        return { success: true, entryId: entry.id }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
 // ═══════════════════════════════════════════════════
 // ACCOUNTING PERIOD — Period closing
 // ═══════════════════════════════════════════════════
@@ -651,6 +964,155 @@ export async function generateWriteOffJournal(
 }
 
 // ═══════════════════════════════════════════════════
+// JOURNAL EXPORT — For External Accounting Software
+// ═══════════════════════════════════════════════════
+
+import { extractAccountCode, VAS_ACCOUNTS, type JournalExportEntry, type ExportResult } from '@/lib/finance-integration'
+
+export type JournalExportStats = {
+    count: number
+    totalDebit: number
+    totalCredit: number
+    dateFrom: string
+    dateTo: string
+    docTypes: Record<string, number>
+}
+
+/** Get export statistics for a date range */
+export async function getJournalExportStats(from: Date, to: Date): Promise<JournalExportStats> {
+    const entries = await prisma.journalEntry.findMany({
+        where: { postedAt: { gte: from, lte: to } },
+        include: { lines: { select: { debit: true, credit: true } } },
+    })
+
+    const docTypes: Record<string, number> = {}
+    let totalDebit = 0
+    let totalCredit = 0
+
+    for (const e of entries) {
+        docTypes[e.docType] = (docTypes[e.docType] ?? 0) + 1
+        for (const l of e.lines) {
+            totalDebit += Number(l.debit)
+            totalCredit += Number(l.credit)
+        }
+    }
+
+    return {
+        count: entries.length,
+        totalDebit,
+        totalCredit,
+        dateFrom: from.toISOString().slice(0, 10),
+        dateTo: to.toISOString().slice(0, 10),
+        docTypes,
+    }
+}
+
+/** Export journals as Excel for import into accounting software */
+export async function exportJournalsForAccounting(
+    from: Date,
+    to: Date,
+): Promise<string> {
+    const { generateExcelBuffer } = await import('@/lib/excel')
+
+    const entries = await prisma.journalEntry.findMany({
+        where: { postedAt: { gte: from, lte: to } },
+        orderBy: { postedAt: 'asc' },
+        include: {
+            lines: { select: { account: true, debit: true, credit: true, description: true } },
+            period: { select: { year: true, month: true } },
+        },
+    })
+
+    type ExcelRow = {
+        entryNo: string
+        date: string
+        docType: string
+        accountCode: string
+        accountName: string
+        debit: number
+        credit: number
+        description: string
+        period: string
+        sourceRef: string
+    }
+
+    const rows: ExcelRow[] = []
+    for (const e of entries) {
+        for (const line of e.lines) {
+            const code = extractAccountCode(line.account)
+            rows.push({
+                entryNo: e.entryNo,
+                date: e.postedAt.toISOString().slice(0, 10),
+                docType: e.docType,
+                accountCode: code,
+                accountName: VAS_ACCOUNTS[code] ?? line.account.replace(/^\d+\s*-\s*/, ''),
+                debit: Number(line.debit),
+                credit: Number(line.credit),
+                description: line.description || e.description || '',
+                period: e.period ? `T${e.period.month}/${e.period.year}` : '',
+                sourceRef: e.docId ?? '',
+            })
+        }
+    }
+
+    const buffer = await generateExcelBuffer({
+        sheetName: 'Journal Entries',
+        title: `Bút toán kế toán — ${from.toISOString().slice(0, 10)} → ${to.toISOString().slice(0, 10)}`,
+        columns: [
+            { header: 'Số chứng từ', key: 'entryNo', width: 16 },
+            { header: 'Ngày', key: 'date', width: 12 },
+            { header: 'Loại CT', key: 'docType', width: 16 },
+            { header: 'Mã TK', key: 'accountCode', width: 10 },
+            { header: 'Tên tài khoản', key: 'accountName', width: 28 },
+            { header: 'Nợ', key: 'debit', width: 18, numFmt: '#,##0' },
+            { header: 'Có', key: 'credit', width: 18, numFmt: '#,##0' },
+            { header: 'Diễn giải', key: 'description', width: 40 },
+            { header: 'Kỳ', key: 'period', width: 10 },
+            { header: 'Chứng từ gốc', key: 'sourceRef', width: 20 },
+        ],
+        rows,
+    })
+
+    return Buffer.from(buffer).toString('base64')
+}
+
+/** Export journals as JSON for API integration or structured import */
+export async function exportJournalsJSON(from: Date, to: Date): Promise<string> {
+    const entries = await prisma.journalEntry.findMany({
+        where: { postedAt: { gte: from, lte: to } },
+        orderBy: { postedAt: 'asc' },
+        include: {
+            lines: { select: { account: true, debit: true, credit: true, description: true } },
+        },
+    })
+
+    const exportEntries: JournalExportEntry[] = entries.map(e => ({
+        entryNo: e.entryNo,
+        postedAt: e.postedAt.toISOString(),
+        docType: e.docType,
+        description: e.description ?? '',
+        lines: e.lines.map(l => ({
+            account: l.account,
+            accountCode: extractAccountCode(l.account),
+            debit: Number(l.debit),
+            credit: Number(l.credit),
+            description: l.description || '',
+        })),
+        sourceRef: e.docId ?? '',
+        totalDebit: e.lines.reduce((s, l) => s + Number(l.debit), 0),
+        totalCredit: e.lines.reduce((s, l) => s + Number(l.credit), 0),
+    }))
+
+    return JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        source: 'Wine ERP - Ly\'s Cellars',
+        dateRange: { from: from.toISOString(), to: to.toISOString() },
+        entryCount: exportEntries.length,
+        entries: exportEntries,
+    }, null, 2)
+}
+
+// ═══════════════════════════════════════════════════
 // P&L — Profit & Loss Statement
 // ═══════════════════════════════════════════════════
 
@@ -693,42 +1155,145 @@ export async function getProfitLoss(filters: {
         accountTotals[line.account].credit += Number(line.credit)
     }
 
-    // Revenue (Credit side of 511)
-    const revenue = (accountTotals['511 - Doanh thu']?.credit ?? 0)
+    // Helper: sum credit-balance accounts by prefix
+    const creditBal = (prefix: string): number => {
+        let total = 0
+        for (const [acct, t] of Object.entries(accountTotals)) {
+            if (acct.startsWith(prefix)) total += t.credit - t.debit
+        }
+        return Math.max(total, 0)
+    }
+    // Helper: sum debit-balance accounts by prefix
+    const debitBal = (prefix: string): number => {
+        let total = 0
+        for (const [acct, t] of Object.entries(accountTotals)) {
+            if (acct.startsWith(prefix)) total += t.debit - t.credit
+        }
+        return Math.max(total, 0)
+    }
 
-    // COGS (Debit side of 632)
-    const cogs = (accountTotals['632 - Giá vốn hàng bán']?.debit ?? 0)
+    // ═══ VAS P&L Structure ═══
 
+    // 1. Doanh thu gộp (Gross Revenue - TK 511)
+    const grossRevenue = creditBal('511')
+
+    // 2. Giảm trừ doanh thu (Revenue deductions)
+    const tradeDiscounts = debitBal('521')   // Chiết khấu thương mại
+    const salesReturns = debitBal('531')     // Hàng bán bị trả lại
+
+    // 3. Doanh thu thuần (Net Revenue)
+    const revenue = grossRevenue - tradeDiscounts - salesReturns
+
+    // 4. Giá vốn hàng bán (COGS - TK 632)
+    const cogs = debitBal('632')
+
+    // 5. Lợi nhuận gộp (Gross Profit)
     const grossProfit = revenue - cogs
 
-    // Expenses (Debit side of 641, 642, 635, 811)
-    const expenseAccounts = ['641', '642', '635', '811']
-    let expenses = 0
-    for (const [account, totals] of Object.entries(accountTotals)) {
-        if (expenseAccounts.some(ea => account.startsWith(ea))) {
-            expenses += totals.debit - totals.credit
-        }
-    }
+    // 6. Chi phí bán hàng (Selling expenses - TK 641)
+    const sellingExp = debitBal('641')
 
-    const netProfit = grossProfit - expenses
+    // 7. Chi phí QLDN (Admin expenses - TK 642)
+    const adminExp = debitBal('642')
 
+    // 8. LN thuần từ HĐKD (Operating Profit)
+    const operatingProfit = grossProfit - sellingExp - adminExp
+
+    // 9. Doanh thu tài chính (Financial income - TK 515)
+    const financialIncome = creditBal('515')
+
+    // 10. Chi phí tài chính (Financial expense - TK 635)
+    const financialExpense = debitBal('635')
+
+    // 11. Thu nhập khác (Other income - TK 711)
+    const otherIncome = creditBal('711')
+
+    // 12. Chi phí khác (Other expense - TK 811)
+    const otherExpense = debitBal('811')
+
+    // 13. Tổng LN trước thuế (Profit before tax)
+    const profitBeforeTax = operatingProfit + financialIncome - financialExpense + otherIncome - otherExpense
+
+    // 14. Thuế TNDN ước tính 20% (Corporate Income Tax)
+    const incomeTax = profitBeforeTax > 0 ? Math.round(profitBeforeTax * 0.2) : 0
+
+    // 15. LN sau thuế (Net Profit after tax)
+    const netProfit = profitBeforeTax - incomeTax
+
+    // Total expenses for backward compatibility
+    const expenses = sellingExp + adminExp + financialExpense + otherExpense + incomeTax
+
+    // Build rows for UI
     const rows: PLRow[] = [
-        { account: '511', label: 'Doanh thu bán hàng', amount: revenue, type: 'revenue' },
-        { account: '632', label: 'Giá vốn hàng bán (COGS)', amount: -cogs, type: 'cogs' },
-        { account: 'GP', label: 'Lợi nhuận gộp', amount: grossProfit, type: 'summary' },
+        // Section 1: Revenue
+        { account: '511', label: 'Doanh thu bán hàng (gộp)', amount: grossRevenue, type: 'revenue' },
     ]
 
-    // Add individual expense accounts
+    // Only show deductions if they exist
+    if (tradeDiscounts > 0) {
+        rows.push({ account: '521', label: '  Chiết khấu thương mại', amount: -tradeDiscounts, type: 'revenue' })
+    }
+    if (salesReturns > 0) {
+        rows.push({ account: '531', label: '  Hàng bán bị trả lại', amount: -salesReturns, type: 'revenue' })
+    }
+    if (tradeDiscounts > 0 || salesReturns > 0) {
+        rows.push({ account: 'NR', label: 'Doanh thu thuần', amount: revenue, type: 'summary' })
+    }
+
+    // Section 2: COGS + Gross Profit
+    rows.push(
+        { account: '632', label: 'Giá vốn hàng bán (COGS)', amount: -cogs, type: 'cogs' },
+        { account: 'GP', label: 'Lợi nhuận gộp', amount: grossProfit, type: 'summary' },
+    )
+
+    // Section 3: Operating Expenses
+    if (sellingExp > 0) {
+        rows.push({ account: '641', label: '  Chi phí bán hàng', amount: -sellingExp, type: 'expense' })
+    }
+    if (adminExp > 0) {
+        rows.push({ account: '642', label: '  Chi phí quản lý DN', amount: -adminExp, type: 'expense' })
+    }
+
+    // Add individual expense sub-accounts dynamically
     for (const [account, totals] of Object.entries(accountTotals)) {
-        if (expenseAccounts.some(ea => account.startsWith(ea))) {
-            const net = totals.debit - totals.credit
-            if (net > 0) {
-                rows.push({ account: account.split(' - ')[0], label: account, amount: -net, type: 'expense' })
-            }
+        const net = totals.debit - totals.credit
+        if (net > 0 && (account.startsWith('641') || account.startsWith('642')) && account.length > 3) {
+            rows.push({ account: account.split(' - ')[0], label: `    ↳ ${account}`, amount: -net, type: 'expense' })
         }
     }
 
-    rows.push({ account: 'NP', label: 'Lợi nhuận ròng', amount: netProfit, type: 'summary' })
+    rows.push({ account: 'OP', label: 'LN thuần từ HĐKD', amount: operatingProfit, type: 'summary' })
+
+    // Section 4: Financial activities
+    if (financialIncome > 0 || financialExpense > 0) {
+        if (financialIncome > 0) {
+            rows.push({ account: '515', label: '  Doanh thu tài chính', amount: financialIncome, type: 'revenue' })
+        }
+        if (financialExpense > 0) {
+            rows.push({ account: '635', label: '  Chi phí tài chính', amount: -financialExpense, type: 'expense' })
+        }
+    }
+
+    // Section 5: Other activities
+    if (otherIncome > 0 || otherExpense > 0) {
+        if (otherIncome > 0) {
+            rows.push({ account: '711', label: '  Thu nhập khác', amount: otherIncome, type: 'revenue' })
+        }
+        if (otherExpense > 0) {
+            rows.push({ account: '811', label: '  Chi phí khác', amount: -otherExpense, type: 'expense' })
+        }
+    }
+
+    // Section 6: Profit before tax
+    rows.push({ account: 'PBT', label: 'Lợi nhuận trước thuế', amount: profitBeforeTax, type: 'summary' })
+
+    // Section 7: Tax
+    if (incomeTax > 0) {
+        rows.push({ account: '821', label: '  Thuế TNDN (20%)', amount: -incomeTax, type: 'expense' })
+    }
+
+    // Section 8: Net Profit
+    rows.push({ account: 'NP', label: 'Lợi nhuận sau thuế', amount: netProfit, type: 'summary' })
 
     return { rows, revenue, cogs, grossProfit, expenses, netProfit }
 }
@@ -856,7 +1421,7 @@ export async function getBalanceSheet(filters: {
     const month = filters.month ?? (now.getMonth() + 1)
     const asOf = new Date(year, month, 0, 23, 59, 59) // Last day of month
 
-    // Get ALL journal lines up to end of period (cumulative)
+    // ── Trial Balance: ALL journal lines up to end of period (cumulative) ──
     const allLines = await prisma.journalLine.findMany({
         where: {
             entry: {
@@ -866,95 +1431,131 @@ export async function getBalanceSheet(filters: {
         select: { account: true, debit: true, credit: true },
     })
 
-    // Aggregate by account prefix
-    const balances: Record<string, number> = {}
+    // Aggregate by account → Trial Balance
+    const trialBalance: Record<string, number> = {}
     for (const line of allLines) {
         const acct = line.account
-        if (!balances[acct]) balances[acct] = 0
-        // Assets (1xx): debit increases, credit decreases
-        // Liabilities (3xx): credit increases, debit decreases
-        // Revenue (5xx): credit increases
-        // Expenses (6xx, 8xx): debit increases
-        balances[acct] += Number(line.debit) - Number(line.credit)
+        if (!trialBalance[acct]) trialBalance[acct] = 0
+        // All accounts: debit - credit (natural balance)
+        // Assets (1xx): positive = debit balance
+        // Liabilities (3xx): negative = credit balance → abs for display
+        // Revenue (5xx): negative = credit balance
+        // Expenses (6xx, 8xx): positive = debit balance
+        trialBalance[acct] += Number(line.debit) - Number(line.credit)
     }
 
-    // Helper: sum accounts matching prefix
+    // Helper: sum accounts matching prefix (debit-balance = positive)
     const sumAcct = (prefix: string): number => {
         let total = 0
-        for (const [acct, bal] of Object.entries(balances)) {
+        for (const [acct, bal] of Object.entries(trialBalance)) {
             if (acct.startsWith(prefix)) total += bal
         }
         return total
     }
 
-    // ── ASSETS ──
-    const cash = sumAcct('112')           // Tiền gửi ngân hàng
-    const ar = sumAcct('131')             // Phải thu khách hàng
-    const inventory = sumAcct('156')      // Hàng tồn kho
+    // ═══ ASSETS (TK 1xx — debit balance, positive) ═══
+    const pettyCash = Math.max(sumAcct('111'), 0)    // Tiền mặt tại quỹ
+    const bankDeposit = Math.max(sumAcct('112'), 0)  // Tiền gửi ngân hàng
+    const totalCash = pettyCash + bankDeposit
 
-    // Also fetch real-time inventory value for accuracy
-    const stockValue = await prisma.stockLot.aggregate({
-        where: { status: { in: ['AVAILABLE', 'QUARANTINE', 'RESERVED'] } },
-        _sum: { qtyAvailable: true },
-    })
+    const arTrade = Math.max(sumAcct('131'), 0)      // Phải thu khách hàng
+    const vatInput = Math.max(sumAcct('133'), 0)     // VAT đầu vào được khấu trừ
+    const otherReceivables = Math.max(sumAcct('138'), 0) // Phải thu khác
 
-    // Real-time AR outstanding
-    const arRealtime = await prisma.aRInvoice.aggregate({
-        where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
-        _sum: { totalAmount: true },
-    })
+    const inventory = Math.max(sumAcct('156'), 0)    // Hàng tồn kho
 
-    // Real-time AP outstanding
-    const apRealtime = await prisma.aPInvoice.aggregate({
-        where: { status: { in: ['UNPAID', 'PARTIALLY_PAID'] } },
-        _sum: { amount: true },
-    })
+    const totalCurrentAssets = totalCash + arTrade + vatInput + otherReceivables + inventory
 
-    const cashFinal = Math.abs(cash) || 0
-    const arFinal = Math.max(ar, Number(arRealtime._sum?.totalAmount ?? 0))
-    const inventoryFinal = Math.abs(inventory) || 0
+    const prepaidExpenses = Math.max(sumAcct('242'), 0) // Chi phí trả trước dài hạn
+    const totalLongTermAssets = prepaidExpenses
 
-    const totalCurrentAssets = cashFinal + arFinal + inventoryFinal
-    const totalAssets = totalCurrentAssets
+    const totalAssets = totalCurrentAssets + totalLongTermAssets
 
-    // ── LIABILITIES ──
-    const ap = Math.abs(sumAcct('331'))   // Phải trả NCC
-    const vatPayable = Math.abs(sumAcct('3331')) // VAT đầu ra phải nộp
-    const apFinal = Math.max(ap, Number(apRealtime._sum?.amount ?? 0))
+    // ═══ LIABILITIES (TK 3xx — credit balance, abs) ═══
+    const apTrade = Math.abs(Math.min(sumAcct('331'), 0))    // Phải trả NCC
+    const vatOutput = Math.abs(Math.min(sumAcct('3331'), 0)) // VAT đầu ra phải nộp
+    const otherTaxes = Math.abs(Math.min(sumAcct('3334'), 0) + Math.min(sumAcct('3338'), 0)) // Thuế khác
+    const otherPayables = Math.abs(Math.min(sumAcct('338'), 0)) // Phải trả khác
 
-    const totalCurrentLiabilities = apFinal + vatPayable
-    const totalLiabilities = totalCurrentLiabilities
+    const totalCurrentLiabilities = apTrade + vatOutput + otherTaxes + otherPayables
 
-    // ── EQUITY ── (Lợi nhuận chưa phân phối = cumulative net profit)
-    const revenue = Math.abs(sumAcct('511'))
-    const cogs = Math.abs(sumAcct('632'))
-    const sellingExp = Math.abs(sumAcct('641'))
-    const adminExp = Math.abs(sumAcct('642'))
-    const finExp = Math.abs(sumAcct('635'))
-    const otherExp = Math.abs(sumAcct('811'))
-    const retainedEarnings = revenue - cogs - sellingExp - adminExp - finExp - otherExp
+    const longTermDebt = Math.abs(Math.min(sumAcct('341'), 0)) // Vay dài hạn
+    const totalLongTermLiabilities = longTermDebt
+
+    const totalLiabilities = totalCurrentLiabilities + totalLongTermLiabilities
+
+    // ═══ EQUITY (derived from P&L accounts in trial balance) ═══
+    // Retained earnings = cumulative (Revenue - Expenses)
+    // Revenue accounts (5xx, 7xx): credit balance → negate trial balance
+    const revenue511 = Math.abs(Math.min(sumAcct('511'), 0))
+    const revenue515 = Math.abs(Math.min(sumAcct('515'), 0))
+    const otherIncome711 = Math.abs(Math.min(sumAcct('711'), 0))
+    // Deduction accounts (5xx debit): trade discounts, returns
+    const deductions521 = Math.max(sumAcct('521'), 0)
+    const deductions531 = Math.max(sumAcct('531'), 0)
+    // Expense accounts (6xx, 8xx): debit balance → positive
+    const cogs632 = Math.max(sumAcct('632'), 0)
+    const selling641 = Math.max(sumAcct('641'), 0)
+    const admin642 = Math.max(sumAcct('642'), 0)
+    const finExp635 = Math.max(sumAcct('635'), 0)
+    const otherExp811 = Math.max(sumAcct('811'), 0)
+
+    const retainedEarnings = (revenue511 + revenue515 + otherIncome711)
+        - (deductions521 + deductions531)
+        - (cogs632 + selling641 + admin642 + finExp635 + otherExp811)
 
     const totalEquity = retainedEarnings
     const isBalanced = Math.abs(totalAssets - totalLiabilities - totalEquity) < 1
 
+    // ═══ Build line items for UI ═══
     const lines: BSLineItem[] = [
         // Assets
         { code: 'A', label: 'TÀI SẢN', amount: totalAssets, category: 'summary' },
         { code: 'A1', label: 'Tài sản ngắn hạn', amount: totalCurrentAssets, category: 'summary', indent: 1 },
-        { code: '112', label: 'Tiền gửi ngân hàng', amount: cashFinal, category: 'asset', indent: 2 },
-        { code: '131', label: 'Phải thu khách hàng', amount: arFinal, category: 'asset', indent: 2 },
-        { code: '156', label: 'Hàng tồn kho', amount: inventoryFinal, category: 'asset', indent: 2 },
+        { code: '111', label: 'Tiền mặt tại quỹ', amount: pettyCash, category: 'asset', indent: 2 },
+        { code: '112', label: 'Tiền gửi ngân hàng', amount: bankDeposit, category: 'asset', indent: 2 },
+        { code: '131', label: 'Phải thu khách hàng', amount: arTrade, category: 'asset', indent: 2 },
+        { code: '133', label: 'Thuế GTGT được khấu trừ', amount: vatInput, category: 'asset', indent: 2 },
+        { code: '156', label: 'Hàng tồn kho', amount: inventory, category: 'asset', indent: 2 },
+    ]
 
-        // Liabilities
+    if (otherReceivables > 0) {
+        lines.push({ code: '138', label: 'Phải thu khác', amount: otherReceivables, category: 'asset', indent: 2 })
+    }
+
+    if (totalLongTermAssets > 0) {
+        lines.push(
+            { code: 'A2', label: 'Tài sản dài hạn', amount: totalLongTermAssets, category: 'summary', indent: 1 },
+            { code: '242', label: 'Chi phí trả trước dài hạn', amount: prepaidExpenses, category: 'asset', indent: 2 },
+        )
+    }
+
+    // Liabilities
+    lines.push(
         { code: 'L', label: 'NỢ PHẢI TRẢ', amount: totalLiabilities, category: 'summary' },
         { code: 'L1', label: 'Nợ ngắn hạn', amount: totalCurrentLiabilities, category: 'summary', indent: 1 },
-        { code: '331', label: 'Phải trả nhà cung cấp', amount: apFinal, category: 'liability', indent: 2 },
-        { code: '3331', label: 'Thuế GTGT phải nộp', amount: vatPayable, category: 'liability', indent: 2 },
+        { code: '331', label: 'Phải trả nhà cung cấp', amount: apTrade, category: 'liability', indent: 2 },
+        { code: '3331', label: 'Thuế GTGT phải nộp', amount: vatOutput, category: 'liability', indent: 2 },
+    )
 
-        // Equity
+    if (otherTaxes > 0) {
+        lines.push({ code: '333x', label: 'Thuế khác phải nộp', amount: otherTaxes, category: 'liability', indent: 2 })
+    }
+    if (otherPayables > 0) {
+        lines.push({ code: '338', label: 'Phải trả khác', amount: otherPayables, category: 'liability', indent: 2 })
+    }
+    if (totalLongTermLiabilities > 0) {
+        lines.push(
+            { code: 'L2', label: 'Nợ dài hạn', amount: totalLongTermLiabilities, category: 'summary', indent: 1 },
+            { code: '341', label: 'Vay dài hạn', amount: longTermDebt, category: 'liability', indent: 2 },
+        )
+    }
+
+    // Equity
+    lines.push(
         { code: 'E', label: 'VỐN CHỦ SỞ HỮU', amount: totalEquity, category: 'summary' },
         { code: '421', label: 'Lợi nhuận chưa phân phối', amount: retainedEarnings, category: 'equity', indent: 2 },
-    ]
+    )
 
     return {
         asOf,
@@ -1061,6 +1662,11 @@ export async function createExpense(data: {
     createdBy?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        // ── Zod validation ──
+        parseOrThrow(ExpenseCreateSchema.pick({ category: true, amount: true, description: true }), {
+            category: data.category, amount: data.amount, description: data.description,
+        })
+
         let userId = data.createdBy
         if (!userId) {
             const user = await getCurrentUser()
@@ -1334,6 +1940,9 @@ export async function writeOffBadDebt(input: {
     approvedBy?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        // ── Zod validation ──
+        parseOrThrow(BadDebtWriteOffSchema, { invoiceId: input.invoiceId, reason: input.reason })
+
         let userId = input.approvedBy
         if (!userId) {
             const user = await getCurrentUser()

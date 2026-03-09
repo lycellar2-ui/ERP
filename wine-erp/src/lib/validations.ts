@@ -6,7 +6,7 @@ import { z } from 'zod'
 // SHARED VALIDATORS
 // ═══════════════════════════════════════════════════
 
-export const idSchema = z.string().uuid('ID không hợp lệ')
+export const idSchema = z.string().min(1, 'ID không hợp lệ')
 export const positiveNumber = z.number().positive('Giá trị phải > 0')
 export const nonNegativeNumber = z.number().min(0, 'Giá trị không được âm')
 export const percentSchema = z.number().min(0).max(100, 'Phần trăm phải từ 0-100')

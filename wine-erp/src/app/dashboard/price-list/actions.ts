@@ -2,6 +2,8 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { logAudit } from '@/lib/audit'
+import { getCurrentUser } from '@/lib/session'
 
 export type PriceListRow = {
     id: string
@@ -84,6 +86,8 @@ export async function createPriceList(input: {
                 expiryDate: input.expiryDate ? new Date(input.expiryDate) : null,
             },
         })
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'PriceList', entityId: pl.id, newValue: { name: input.name, channel: input.channel, effectiveDate: input.effectiveDate } })
         revalidatePath('/dashboard/price-list')
         return { success: true, id: pl.id }
     } catch (err: any) {
@@ -103,11 +107,17 @@ export async function upsertPriceListLine(input: {
             where: { priceListId_productId: { priceListId: input.priceListId, productId: input.productId } },
         })
 
+        const user = await getCurrentUser().catch(() => null)
         if (existing) {
+            const oldPrice = Number(existing.unitPrice)
             await prisma.priceListLine.update({
                 where: { id: existing.id },
                 data: { unitPrice: input.unitPrice, currency: input.currency ?? 'VND' },
             })
+            if (oldPrice !== input.unitPrice) {
+                const product = await prisma.product.findUnique({ where: { id: input.productId }, select: { skuCode: true, productName: true } })
+                logAudit({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'PriceListLine', entityId: existing.id, oldValue: { unitPrice: oldPrice, sku: product?.skuCode }, newValue: { unitPrice: input.unitPrice, sku: product?.skuCode, productName: product?.productName } })
+            }
         } else {
             await prisma.priceListLine.create({
                 data: {
@@ -129,7 +139,10 @@ export async function upsertPriceListLine(input: {
 // ── Remove line from price list ──────────────────
 export async function removePriceListLine(lineId: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const line = await prisma.priceListLine.findUnique({ where: { id: lineId }, include: { product: { select: { skuCode: true, productName: true } } } })
         await prisma.priceListLine.delete({ where: { id: lineId } })
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'PriceListLine', entityId: lineId, oldValue: { unitPrice: line ? Number(line.unitPrice) : null, sku: line?.product?.skuCode, productName: line?.product?.productName } })
         revalidatePath('/dashboard/price-list')
         return { success: true }
     } catch (err: any) {
@@ -171,11 +184,14 @@ export async function getProductsForPriceList() {
 // ── Delete Price List ────────────────────────────
 export async function deletePriceList(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const pl = await prisma.priceList.findUnique({ where: { id }, include: { _count: { select: { lines: true } } } })
         // Delete all lines first, then the list
         await prisma.$transaction([
             prisma.priceListLine.deleteMany({ where: { priceListId: id } }),
             prisma.priceList.delete({ where: { id } }),
         ])
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'PriceList', entityId: id, oldValue: { name: pl?.name, channel: pl?.channel, lineCount: pl?._count?.lines } })
         revalidatePath('/dashboard/price-list')
         return { success: true }
     } catch (err: any) {
@@ -208,16 +224,29 @@ export async function getProductPriceHistory(productId: string) {
 // ── Bulk update prices (% increase/decrease) ────
 export async function bulkUpdatePrices(priceListId: string, adjustPct: number): Promise<{ success: boolean; updated: number; error?: string }> {
     try {
-        const lines = await prisma.priceListLine.findMany({ where: { priceListId } })
+        const lines = await prisma.priceListLine.findMany({ where: { priceListId }, include: { product: { select: { skuCode: true } } } })
         const multiplier = 1 + adjustPct / 100
+        const user = await getCurrentUser().catch(() => null)
+        const priceList = await prisma.priceList.findUnique({ where: { id: priceListId }, select: { name: true } })
 
+        const priceChanges: { sku: string; oldPrice: number; newPrice: number }[] = []
         for (const line of lines) {
-            const newPrice = Math.round(Number(line.unitPrice) * multiplier)
+            const oldPrice = Number(line.unitPrice)
+            const newPrice = Math.round(oldPrice * multiplier)
             await prisma.priceListLine.update({
                 where: { id: line.id },
                 data: { unitPrice: newPrice },
             })
+            priceChanges.push({ sku: line.product.skuCode, oldPrice, newPrice })
         }
+
+        // Log bulk price change as a single critical audit event
+        logAudit({
+            userId: user?.id, userName: user?.name,
+            action: 'UPDATE', entityType: 'PriceList_BulkUpdate', entityId: priceListId,
+            oldValue: { priceListName: priceList?.name, adjustPct, totalLines: lines.length, sample: priceChanges.slice(0, 10) },
+            newValue: { adjustPct, multiplier, updatedCount: lines.length, allChanges: priceChanges },
+        })
 
         revalidatePath('/dashboard/price-list')
         return { success: true, updated: lines.length }

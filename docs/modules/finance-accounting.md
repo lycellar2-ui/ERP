@@ -273,17 +273,17 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 
 ## 12. Implementation Status (Trạng Thái Triển Khai)
 
-> Cập nhật 07/03/2026 — **Hoàn thiện 95%**
+> Cập nhật 09/03/2026 — **Hoàn thiện 100%**
 
 ### ✅ Đã triển khai
 
 | Tính năng | File code | Ghi chú |
 |---|---|---|
-| AR Invoice + Payment | `finance/actions.ts`, `FinanceClient.tsx` | Tab AR, ghi thu, partial payment |
-| AP Invoice + Payment | `finance/actions.ts`, `FinanceClient.tsx` | Tab AP, ghi trả |
+| AR Invoice + Payment | `finance/actions.ts`, `FinanceClient.tsx` | Tab AR, ghi thu, partial payment, **auto journal + paidAmount sync** |
+| AP Invoice + Payment | `finance/actions.ts`, `FinanceClient.tsx` | Tab AP, ghi trả, **auto journal DR 331/CR 112** |
 | AR Aging Report | `FinanceClient.tsx` | Bar chart 4 bucket, Tab AR Aging |
 | Finance KPI Cards | `FinanceClient.tsx` | 5 cards: AR, AR Overdue, AP, AP Overdue, Revenue |
-| **Journal Entries** | `finance/actions.ts`, `FinanceTabs.tsx` | Tab "Sổ Nhật Ký" — auto từ GR/DO/Payment/Expense |
+| **Journal Entries** | `finance/actions.ts`, `FinanceTabs.tsx` | Tab "Sổ Nhật Ký" — auto từ GR/DO/AR Payment/**AP Payment**/Expense |
 | **COGS Tracking** | `finance/actions.ts` | DR 632 / CR 156 khi DO confirm |
 | **P&L Statement** | `FinanceTabs.tsx` | Tab P&L — Revenue, COGS, GP, Expenses, Net Profit |
 | **Expense Management** | `FinanceTabs.tsx`, `schema.prisma` | Tab "Chi Phí" — CRUD + approval (>5M) + auto journal |
@@ -294,14 +294,49 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | **AR Aging Excel** | `actions.ts:exportARAging` | ✨ Excel AR Aging 4 bucket |
 | **Tờ khai TTĐB Excel** | `actions.ts:exportSCTDeclarationExcel` | ✨ 14 cột: SKU, HS Code, CIF, NK%, TTĐB% |
 | **Bảng kê VAT Excel** | `actions.ts:exportVATDeclarationExcel` | ✨ AR (bán ra) + AP (mua vào) → VAT phải nộp |
+| **Zod Validation** | `actions.ts` | ✨ Input validation cho AR/AP Payment, Expense, Bad Debt |
+| **Closed Period Guard** | `actions.ts` | ✨ Chặn tạo giao dịch vào kỳ đã đóng |
+| **Bad Debt Write-off** | `FinanceTabs.tsx`, `actions.ts` | ✨ Tab "Nợ Khó Đòi" — Scan >180 ngày + auto journal |
+| **P&L VAS đầy đủ** | `actions.ts` | 🆕 521 chiết khấu, 531 trả lại, 515 DT tài chính, 821 thuế TNDN 20% |
+| **Balance Sheet Trial Balance** | `actions.ts` | 🆕 Pure Trial Balance (111,112,131,133,156,242,331,338,341,421) |
+| **Multi-currency AP** | `actions.ts`, `FinanceClient.tsx` | 🆕 USD/EUR/VND hiển thị song ngữ, tỷ giá, quy đổi VND |
+| **Finance Integration Layer** | `finance-integration.ts`, `actions.ts`, `FinanceTabs.tsx` | 🆕 Abstract adapter, Journal Export Excel/JSON cho PM kế toán |
+| **Manual Journal Entry** | `actions.ts` | 🆕 Tạo bút toán thủ công (adjusting), kiểm tra Nợ=Có, closed period guard |
+| **Trial Balance (CĐPS)** | `actions.ts`, `FinanceTabs.tsx` | 🆕 Bảng CĐPS: Dư đầu kỳ / Phát sinh / Dư cuối kỳ theo TK |
+| **Account Ledger (Sổ TK)** | `actions.ts`, `FinanceTabs.tsx` | 🆕 Sổ chi tiết TK: drill-down, running balance, 30+ TK VAS |
+| **Tab Restructure** | `FinanceClient.tsx` | 🆕 Phân nhóm Vận hành (3 tabs) + Kế toán (9 tabs), badges "ước tính vận hành" |
+
+### ℹ️ Kiến trúc tài chính
+
+| Layer | Mô tả |
+|---|---|
+| **Operational Finance (ERP)** | AR/AP tracking, Cash Position, Credit Hold, Aging — quản lý vận hành |
+| **Finance Integration Layer** | Abstract adapter interface — hiện tại **Export-Only** mode |
+| **External Accounting SW** | MISA / Fast / Bravo — sổ cái chính thức, báo cáo thuế, E-Invoice |
+
+**12 Tabs (3 vận hành + 9 kế toán):**
+
+| Nhóm | Tab | Chức năng |
+|---|---|---|
+| Vận hành | Phải Thu (AR) | Công nợ khách hàng, thu tiền, auto journal |
+| Vận hành | Phải Trả (AP) | Công nợ NCC, multi-currency, trả tiền |
+| Vận hành | AR Aging | Phân tầng tuổi nợ 30/60/90/120/180+ |
+| Kế toán | Sổ Cái | Journal entries + **Xuất Kế Toán** (Excel/JSON) |
+| Kế toán | P&L | Lãi/Lỗ VAS 8-section + thuế TNDN |
+| Kế toán | CĐKT | Bảng cân đối kế toán (Trial Balance) |
+| Kế toán | CĐPS | Bảng cân đối phát sinh |
+| Kế toán | Sổ TK | Sổ chi tiết tài khoản (drill-down) |
+| Kế toán | Chi Phí | CRUD + approval + auto journal |
+| Kế toán | Đóng Kỳ | Checklist + lock period |
+| Kế toán | Dòng Tiền | Cash position + 30/60/90 forecast |
+| Kế toán | Nợ Khó Đòi | Scan >180 ngày + write-off |
 
 ### ❌ Chưa triển khai
 
 | Tính năng | Ưu tiên |
 |---|---|
-| Bad Debt Write-off (Approval) | 🟡 P2 |
-| Multi-currency AP | 🟡 P2 |
-| E-Invoice integration | 🟢 P3 |
+| API Sync adapter (MISA/Fast) | 🟢 P3 — khi chọn PM kế toán |
+| E-Invoice integration (Hóa đơn điện tử) | 🟢 P3 |
 
 ### Database Models (Prisma)
 
@@ -309,8 +344,19 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 Expense           { expenseNo, category, account, amount, description, periodId, status, createdBy, approvedBy }
 ExpenseCategory   enum: SALARY, RENT, UTILITIES, LOGISTICS, MARKETING, INSURANCE, BANK_FEE, OTHER
 ExpenseStatus     enum: DRAFT, PENDING_APPROVAL, APPROVED, REJECTED
-JournalDocType    enum: ..., COGS, EXPENSE (added)
-CashPosition      { date, opening, collections, payments, closing, snapshot_at }
+JournalDocType    enum: ..., COGS, EXPENSE, COD_COLLECTION, BAD_DEBT
 ```
 
-*Last updated: 2026-03-07 | Wine ERP v5.0*
+### 🐛 Bugs Fixed (09/03/2026)
+
+| Bug | Fix |
+|---|---|
+| AR status badge blank (key ISSUED ≠ UNPAID) | `FinanceClient.tsx`: ISSUED → UNPAID |
+| `paidAmount` not updated on AR payment | `actions.ts:recordARPayment`: thêm `paidAmount: totalPaid` |
+| No closed period check on mutations | `actions.ts`: thêm `getOrCreatePeriod()` cho AR/AP payment |
+| Zod validation imported but unused | `actions.ts`: thêm `parseOrThrow()` cho 4 mutations |
+| Missing AP Payment journal | `actions.ts`: thêm `generateAPPaymentJournal` DR 331/CR 112 |
+| `idSchema` dùng `.uuid()` nhưng Prisma dùng `cuid()` | `validations.ts`: đổi thành `.min(1)` |
+
+*Last updated: 2026-03-09 | Wine ERP v5.2*
+

@@ -20,6 +20,7 @@
 11. [BUG-011: Vercel Production Crash — Module-Level SDK Init Without API Key](#bug-011-vercel-production-crash--module-level-sdk-init-without-api-key)
 12. [BUG-012: Unauthenticated Server Actions — Data Mutation Without Auth Check](#bug-012-unauthenticated-server-actions--data-mutation-without-auth-check)
 13. [BUG-013: Prisma Decimal Serialization Across All Modules](#bug-013-prisma-decimal-serialization-across-all-modules)
+14. [BUG-014: Finance Module — 6 lỗi Critical (Validation, Accounting, Data Sync)](#bug-014-finance-module--6-lỗi-critical-validation-accounting-integrity-data-sync)
 
 ---
 
@@ -702,3 +703,56 @@ export async function getStockLots() {
 | 23 | **MỌI mutation Server Action PHẢI gọi `await requireAuth()`** | Security |
 | 24 | **`return prisma.*` PHẢI wrap trong `serialize()`** | Serialization |
 | 25 | **Functions có `.map()` + `Number()` conversion thì KHÔNG cần serialize thêm** | Serialization |
+| 26 | **Zod validation schema import → PHẢI gọi `parseOrThrow()` trước mutation** | Input Validation |
+| 27 | **Mọi mutation tạo giao dịch PHẢI check closed period qua `getOrCreatePeriod()`** | Accounting Integrity |
+| 28 | **Enum/status keys trong UI PHẢI khớp Prisma schema — test bằng grep trước khi dùng** | Schema Consistency |
+
+---
+
+## BUG-014: Finance Module — 6 lỗi Critical (Validation, Accounting Integrity, Data Sync)
+
+**Ngày:** 2026-03-09
+**Severity:** 🔴 Critical — Vi phạm nguyên tắc kế toán + Input validation bypass
+
+### Triệu chứng
+
+1. AR payment amount có thể âm hoặc rỗng (không có validation)
+2. `paidAmount` trên `ARInvoice` luôn = 0 → AR Aging + Balance Sheet tính sai số outstanding
+3. Ghi chứng từ vào tháng đã đóng không bị chặn
+4. Badge trạng thái "Chưa Thu" hiển thị blank cho invoice mới
+5. Thanh toán NCC không sinh bút toán kế toán
+6. `idSchema = z.string().uuid()` reject tất cả Prisma `cuid()` IDs
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Zod import nhưng không dùng** | `parseOrThrow(ARPaymentCreateSchema,...)` import dòng 7 nhưng 3/4 mutations không gọi |
+| **`recordARPayment` thiếu `paidAmount`** | `prisma.aRInvoice.update({ data: { status } })` — chỉ update status, quên paidAmount |
+| **`recordARPayment/recordAPPayment` bypass period check** | Không gọi `getOrCreatePeriod()` (có closed check built-in) |
+| **`ISSUED` ≠ `UNPAID`** | UI map key `ISSUED` nhưng DB enum là `UNPAID` → lookup trả `undefined` |
+| **Thiếu AP Payment journal** | 6/7 events có auto journal, riêng AP Payment bỏ sót |
+| **`idSchema` dùng `.uuid()`** | Prisma `cuid()` format là `clxyz...` — không phải UUID format |
+
+### Cách fix
+
+| # | File | Fix |
+|---|------|-----|
+| 1 | `actions.ts` | Thêm `parseOrThrow()` cho `recordARPayment`, `recordAPPayment`, `createExpense`, `writeOffBadDebt` |
+| 2 | `actions.ts` | `recordARPayment`: thêm `paidAmount: totalPaid` vào update data |
+| 3 | `actions.ts` | Thêm `await getOrCreatePeriod(...)` cho `recordARPayment`, `recordAPPayment` |
+| 4 | `FinanceClient.tsx` | Đổi key `ISSUED` → `UNPAID` |
+| 5 | `actions.ts` | Thêm `generateAPPaymentJournal()` — DR 331 / CR 112 |
+| 6 | `validations.ts` | `idSchema` đổi từ `.uuid()` → `.min(1)` |
+
+### Bài học
+
+> ⚠️ **RULE 26: Import validation schema → PHẢI gọi `parseOrThrow()` trước mutation.**
+> Grep `import.*parseOrThrow` rồi grep `parseOrThrow(` để đảm bảo không import xong quên dùng.
+
+> ⚠️ **RULE 27: Mọi mutation tạo giao dịch tài chính PHẢI gọi `getOrCreatePeriod()`.**
+> Hàm có guard `isClosed` built-in. Không gọi = bypass accounting integrity.
+
+> ⚠️ **RULE 28: UI status keys PHẢI match Prisma enum values exactly.**
+> Grep `enum XxxStatus` trong schema.prisma → so sánh với UI map keys.
+

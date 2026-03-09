@@ -4,7 +4,8 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, getCurrentUser } from '@/lib/session'
+import { logAudit, logAuditWithDiff } from '@/lib/audit'
 
 // ═══════════════════════════════════════════════════
 // TYPES
@@ -403,6 +404,8 @@ export async function createSupplier(input: SupplierInput) {
 
         revalidateCache('suppliers')
         revalidatePath('/dashboard/suppliers')
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Supplier', entityId: supplier.id, newValue: { code: data.code, name: data.name, type: data.type, country: data.country, defaultCurrency: data.defaultCurrency } })
         return { success: true }
     } catch (err: any) {
         if (err?.code === 'P2002') return { success: false, error: 'Mã NCC đã tồn tại. Vui lòng chọn mã khác.' }
@@ -417,6 +420,7 @@ export async function createSupplier(input: SupplierInput) {
 export async function updateSupplier(id: string, input: Partial<SupplierInput>) {
     try {
         const { contactName, contactTitle, contactEmail, contactPhone, address, city, region, ...supplierData } = input
+        const oldSupplier = await prisma.supplier.findUnique({ where: { id }, select: { code: true, name: true, type: true, paymentTerm: true, defaultCurrency: true, incoterms: true, leadTimeDays: true, status: true } })
 
         await prisma.supplier.update({
             where: { id },
@@ -479,6 +483,9 @@ export async function updateSupplier(id: string, input: Partial<SupplierInput>) 
 
         revalidateCache('suppliers')
         revalidatePath('/dashboard/suppliers')
+        const user = await getCurrentUser().catch(() => null)
+        const oldPlain = oldSupplier ? JSON.parse(JSON.stringify(oldSupplier)) : null
+        logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Supplier', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...supplierData } })
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message ?? 'Lỗi cập nhật NCC' }
@@ -491,6 +498,7 @@ export async function updateSupplier(id: string, input: Partial<SupplierInput>) 
 
 export async function deleteSupplier(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const supplier = await prisma.supplier.findUnique({ where: { id }, select: { code: true, name: true, type: true, status: true } })
         const activePOs = await prisma.purchaseOrder.count({
             where: { supplierId: id, status: { notIn: ['RECEIVED', 'CANCELLED'] } },
         })
@@ -502,6 +510,8 @@ export async function deleteSupplier(id: string): Promise<{ success: boolean; er
             where: { id },
             data: { deletedAt: new Date(), status: 'INACTIVE' },
         })
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'Supplier', entityId: id, oldValue: { code: supplier?.code, name: supplier?.name, type: supplier?.type } })
         revalidateCache('suppliers')
         revalidatePath('/dashboard/suppliers')
         return { success: true }

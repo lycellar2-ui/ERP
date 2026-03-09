@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 import { serialize } from '@/lib/serialize'
+import { logAudit } from '@/lib/audit'
+import { getCurrentUser } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // SETTINGS — RBAC, Users, System Config
@@ -79,6 +81,8 @@ export async function createUser(input: UserInput): Promise<{ success: boolean; 
                 },
             },
         })
+        const currentUser = await getCurrentUser().catch(() => null)
+        logAudit({ userId: currentUser?.id, userName: currentUser?.name, action: 'CREATE', entityType: 'User', entityId: user.id, newValue: { email: data.email, name: data.name, roleCount: data.roleIds.length } })
         revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true, id: user.id }
@@ -93,6 +97,7 @@ export async function updateUser(
     input: { name?: string; status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' }
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const oldUser = await prisma.user.findUnique({ where: { id }, select: { name: true, status: true } })
         await prisma.user.update({
             where: { id },
             data: {
@@ -100,6 +105,8 @@ export async function updateUser(
                 ...(input.status && { status: input.status }),
             },
         })
+        const currentUser = await getCurrentUser().catch(() => null)
+        logAudit({ userId: currentUser?.id, userName: currentUser?.name, action: 'UPDATE', entityType: 'User', entityId: id, oldValue: { name: oldUser?.name, status: oldUser?.status }, newValue: { name: input.name ?? oldUser?.name, status: input.status ?? oldUser?.status } })
         revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }
@@ -114,12 +121,16 @@ export async function updateUserRoles(
     roleIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const oldRoles = await prisma.userRole.findMany({ where: { userId }, include: { role: { select: { name: true } } } })
         await prisma.$transaction([
             prisma.userRole.deleteMany({ where: { userId } }),
             ...roleIds.map(roleId =>
                 prisma.userRole.create({ data: { userId, roleId } })
             ),
         ])
+        const newRoles = await prisma.userRole.findMany({ where: { userId }, include: { role: { select: { name: true } } } })
+        const currentUser = await getCurrentUser().catch(() => null)
+        logAudit({ userId: currentUser?.id, userName: currentUser?.name, action: 'UPDATE', entityType: 'UserRole', entityId: userId, oldValue: { roles: oldRoles.map(r => r.role.name) }, newValue: { roles: newRoles.map(r => r.role.name) } })
         revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }
@@ -167,6 +178,8 @@ export async function createRole(input: {
                     : undefined,
             },
         })
+        const currentUser = await getCurrentUser().catch(() => null)
+        logAudit({ userId: currentUser?.id, userName: currentUser?.name, action: 'CREATE', entityType: 'Role', entityId: role.id, newValue: { name: input.name, permissionCount: input.permissionIds?.length ?? 0 } })
         revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true, id: role.id }
@@ -189,12 +202,15 @@ export async function updateRolePermissions(
     permissionIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const oldPerms = await prisma.rolePermission.findMany({ where: { roleId }, include: { permission: { select: { code: true } } } })
         await prisma.$transaction([
             prisma.rolePermission.deleteMany({ where: { roleId } }),
             ...permissionIds.map(permissionId =>
                 prisma.rolePermission.create({ data: { roleId, permissionId } })
             ),
         ])
+        const currentUser = await getCurrentUser().catch(() => null)
+        logAudit({ userId: currentUser?.id, userName: currentUser?.name, action: 'UPDATE', entityType: 'RolePermission', entityId: roleId, oldValue: { permissions: oldPerms.map(p => p.permission.code) }, newValue: { permissionCount: permissionIds.length } })
         revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }
