@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 30 Rules rút ra từ 15 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 32 Rules rút ra từ 16 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -140,7 +140,7 @@
 | **AI LLM** | Google Gemini 3.1 Pro — CEO Briefing, Pipeline Analysis, CRM Analysis, Catalog & Market Intelligence, Product Description, Admin Toggle & Reports |
 | **API Pattern** | Server Actions (KHÔNG dùng tRPC) |
 | **Connection Pool** | pgBouncer Transaction mode (port 6543), `max: 5` |
-| **Caching** | 4-layer: Router Cache + ISR (stagger 30/45/60/90s) + SWR + Server-side LRU |
+| **Caching** | 5-layer: Router Cache (120s) + ISR + SWR + Server-side LRU (`cached()`) + Sidebar Prefetch |
 | **Validation** | Zod 23+ schemas cho 7+ modules |
 | **Auth Guards** | `requireAuth()` + `requirePermission()` cho mọi mutation |
 | **Serialization** | `serialize()` utility cho Prisma Decimal/BigInt |
@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-09 12:16 | Wine ERP v6.5 — 26 modules, 113 models, 40 action files (36 cached), 39 loading.tsx, 6 AI features live*
+*Last updated: 2026-03-09 12:43 | Wine ERP v6.5 — 26 modules, 113 models, 40 action files (36 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live*

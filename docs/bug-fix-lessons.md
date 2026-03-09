@@ -22,6 +22,7 @@
 13. [BUG-013: Prisma Decimal Serialization Across All Modules](#bug-013-prisma-decimal-serialization-across-all-modules)
 14. [BUG-014: Finance Module — 6 lỗi Critical (Validation, Accounting, Data Sync)](#bug-014-finance-module--6-lỗi-critical-validation-accounting-integrity-data-sync)
 15. [BUG-015: Toàn Hệ Thống Chậm — 11 Action Files Thiếu Cache](#bug-015-toàn-hệ-thống-chậm--11-action-files-thiếu-cache--3-pages-thiếu-loadingtsx)
+16. [BUG-016: force-dynamic Trên Layout Giết Router Cache](#bug-016-force-dynamic-trên-layout-giết-router-cache)
 
 ---
 
@@ -709,6 +710,8 @@ export async function getStockLots() {
 | 28 | **Enum/status keys trong UI PHẢI khớp Prisma schema — test bằng grep trước khi dùng** | Schema Consistency |
 | 29 | **Mọi action file READ function PHẢI wrap trong `cached()` — `grep 'from.*cache'` để verify** | Performance |
 | 30 | **Tạo module mới → PHẢI tạo `loading.tsx` cùng lúc (skeleton shimmer)** | Performance UX |
+| 31 | **KHÔNG đặt `force-dynamic` trên layout — chỉ đặt trên page nếu cần** | Router Cache |
+| 32 | **`staleTimes.dynamic` trong next.config PHẢI ≥ 60s cho dashboard** | Router Cache |
 
 ---
 
@@ -825,3 +828,51 @@ export async function getStockLots() {
 > ⚠️ **RULE 30: Tạo module/page mới → PHẢI tạo `loading.tsx` cùng lúc.**
 > Pattern: Copy từ page gần nhất. Không có loading.tsx = user thấy màn hình đứng hình.
 
+---
+
+## BUG-016: force-dynamic Trên Layout Giết Router Cache
+
+**Ngày:** 2026-03-09
+**Severity:** 🔴 Critical — Vô hiệu hóa toàn bộ Router Cache
+
+### Triệu chứng
+- Dù đã thêm `cached()` cho 36/40 action files, trang vẫn chậm ~2s khi navigate
+- Click sidebar → luôn thấy loading skeleton → đợi server xử lý
+- Quay lại trang đã xem: vẫn chậm y hệt lần đầu (không có cache client-side)
+
+### Nguyên nhân gốc rễ
+
+```typescript
+// ❌ dashboard/layout.tsx — dòng này GIẾT toàn bộ Router Cache
+export const dynamic = 'force-dynamic'
+```
+
+**Khi `force-dynamic` đặt ở layout:**
+- Next.js bỏ qua `staleTimes.dynamic` config trong next.config.ts
+- Router Cache (client-side) bị vô hiệu hóa cho TẤT CẢ child pages
+- Mỗi lần click sidebar = full round-trip server MỚI, kể cả trang đã xem trước đó
+- `staleTimes: { dynamic: 30 }` = vô nghĩa khi layout có force-dynamic
+
+### Cách fix
+
+1. **Xóa `export const dynamic = 'force-dynamic'` khỏi `dashboard/layout.tsx`**
+2. Pages tự detect dynamic nhờ gọi `cookies()`/`getCurrentUser()` — KHÔNG cần explicit
+3. Tăng `staleTimes.dynamic: 30 → 120` (2 phút cache client)
+4. Sidebar prefetch ALL links (staggered) thay vì chỉ adjacent
+
+### Kết quả
+
+| Metric | Trước | Sau |
+|--------|-------|-----|
+| Trang đã xem (revisit) | ~2s (full round-trip) | **~0ms** (instant from cache) |
+| Router Cache | ❌ Bị bypass | ✅ Active 120s |
+| Prefetch sidebar | 2-3 tabs adjacent | ALL 34 links staggered |
+
+### Bài học
+
+> ⚠️ **RULE 31: KHÔNG BAO GIỜ đặt `force-dynamic` trên layout.tsx.**
+> Layout-level `force-dynamic` = giết Router Cache cho TOÀN BỘ child pages.
+> Nếu cần dynamic: để Next.js tự detect qua `cookies()`/`headers()` calls.
+
+> ⚠️ **RULE 32: `staleTimes.dynamic` trong next.config PHẢI ≥ 60s cho dashboard.**
+> Giá trị khuyến nghị: 120s. Dashboard data thay đổi theo phút, không theo giây.

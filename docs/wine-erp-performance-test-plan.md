@@ -88,7 +88,11 @@ Hệ thống đang sử dụng **4-layer caching** — cần test trên từng l
 | **Action files có `cached()`** | 36/40 (90%) |
 | **Pages có `loading.tsx`** | 39/39 (100%) |
 | **Files không cần cache** | 4 (AI external API) |
-| **Warm cache response** | < 50ms |
+| **Router Cache (client)** | ✅ Active — `staleTimes.dynamic: 120s` |
+| **`force-dynamic` on layout** | ❌ Đã xóa (nguyên nhân chính bypass cache) |
+| **Sidebar prefetch** | ALL 34 links (staggered) |
+| **Trang đã xem (revisit)** | **~0ms** (instant from Router Cache) |
+| **Warm cache (first visit)** | < 50ms |
 | **Cold start response** | ~500ms |
 
 ---
@@ -668,4 +672,4 @@ Slowest Endpoint: Dashboard (2212ms)
 ---
 
 *Tạo: 06/03/2026 19:00 | @project-planner + @performance-profiling*
-*Cập nhật: 09/03/2026 — Cache audit hoàn tất (36/40 files, 39/39 loading.tsx)*
+*Cập nhật: 09/03/2026 — Cache audit + Router Cache fix hoàn tất (36/40 files, 39/39 loading.tsx, staleTimes 120s)*

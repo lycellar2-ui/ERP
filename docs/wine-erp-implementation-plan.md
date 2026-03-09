@@ -609,15 +609,23 @@ Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Test
 - [x] Audit log — exclude `oldValue`/`newValue` JSON from list, add `getAuditLogDetail()` lazy load
 - [x] Reference data (countries, vintages, producers, regions, appellations) — TTL 60-120s
 
-### Kết Quả
+### Router Cache & Client-side Performance
+- [x] **Xóa `force-dynamic` khỏi `dashboard/layout.tsx`** — đây là nguyên nhân chính khiến trang vẫn chậm dù server cache đã có
+- [x] Tăng `staleTimes.dynamic: 30 → 120` (2 phút Router Cache)
+- [x] Sidebar prefetch ALL 34 links (staggered 100ms/link) thay vì chỉ 2-3 adjacent
+- [x] Pages tự detect dynamic nhờ `cookies()`/`getCurrentUser()` — không cần explicit directive
+- → **Verify:** ✅ Trang đã xem = instant (~0ms). Tham khảo `bug-fix-lessons.md` BUG-016.
+
+### Kết Quả Tổng Hợp
 
 | Metric | Trước | Sau |
 |--------|-------|-----|
+| Trang đã xem (revisit) | ~2s | **~0ms** (instant) |
 | Warm cache navigation | ~2s | **< 50ms** (40x faster) |
 | Cold start | ~2s | ~500ms (4x faster) |
 | DB queries (100 users/min) | ~5000 | ~500 (10x reduction) |
 
-→ **Verify:** ✅ Commit `8ab1466` — 15 files changed. Tham khảo `bug-fix-lessons.md` BUG-015.
+→ **Commits:** `8ab1466` (server cache) + `a7d28e4` (Router Cache). Tham khảo BUG-015, BUG-016.
 
 ---
 
@@ -632,5 +640,6 @@ Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Test
 ---
 
 *Created: 05/03/2026 | Based on: wine-erp-audit-05-03.md (archived)*
-*Updated: 09/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | Performance audit 40 files hoàn tất*
+*Updated: 09/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | Performance: Router Cache + Server Cache hoàn tất*
+
 
