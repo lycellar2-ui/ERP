@@ -13,6 +13,14 @@ import {
 import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS } from './constants'
 import { formatVND } from '@/lib/utils'
 
+function formatCompactVND(amount: number): string {
+    if (amount >= 1_000_000_000) {
+        const val = amount / 1_000_000_000
+        return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)} tỷ`
+    }
+    return formatVND(amount)
+}
+
 type Proposal = Awaited<ReturnType<typeof import('./actions').getProposals>>[number]
 type ProposalDetail = NonNullable<Awaited<ReturnType<typeof import('./actions').getProposalDetail>>>
 
@@ -155,133 +163,163 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
             {/* Proposals Table */}
             <div className="rounded-md overflow-hidden" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                {/* Table Header */}
-                <div className="grid grid-cols-12 gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: '#4A6A7A', borderBottom: '1px solid #2A4355' }}>
-                    <div className="col-span-1">Mã</div>
-                    <div className="col-span-3">Tiêu đề</div>
-                    <div className="col-span-1">Loại</div>
-                    <div className="col-span-1">Ưu tiên</div>
-                    <div className="col-span-1 text-right">Giá trị</div>
-                    <div className="col-span-1">Người trình</div>
-                    <div className="col-span-1">Trạng thái</div>
-                    <div className="col-span-1">Ngày trình</div>
-                    <div className="col-span-2 text-right">Thao tác</div>
-                </div>
+                <div className="overflow-x-auto">
+                    <table style={{ width: '100%', minWidth: '1440px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                        <colgroup>
+                            <col style={{ width: '115px' }} />
+                            <col />
+                            <col style={{ width: '130px' }} />
+                            <col style={{ width: '100px' }} />
+                            <col style={{ width: '150px' }} />
+                            <col style={{ width: '130px' }} />
+                            <col style={{ width: '125px' }} />
+                            <col style={{ width: '95px' }} />
+                            <col style={{ width: '260px' }} />
+                        </colgroup>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid #2A4355' }}>
+                                {[
+                                    { label: 'Mã', align: 'left' as const },
+                                    { label: 'Tiêu đề', align: 'left' as const },
+                                    { label: 'Loại', align: 'left' as const },
+                                    { label: 'Ưu tiên', align: 'left' as const },
+                                    { label: 'Giá trị', align: 'right' as const },
+                                    { label: 'Người trình', align: 'left' as const },
+                                    { label: 'Trạng thái', align: 'left' as const },
+                                    { label: 'Ngày trình', align: 'left' as const },
+                                    { label: 'Thao tác', align: 'right' as const },
+                                ].map(col => (
+                                    <th key={col.label}
+                                        className="px-3 py-3 text-xs font-semibold uppercase tracking-wider"
+                                        style={{ color: '#4A6A7A', textAlign: col.align, whiteSpace: 'nowrap' }}>
+                                        {col.label}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan={9}>
+                                        <div className="flex flex-col items-center py-12 gap-2">
+                                            <FileText size={32} style={{ color: '#2A4355' }} />
+                                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tờ trình nào</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filtered.map(p => {
+                                    const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
+                                    const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                                    const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
+                                    const isCEOLevel = p.currentLevel === 3
 
-                {filtered.length === 0 ? (
-                    <div className="flex flex-col items-center py-12 gap-2">
-                        <FileText size={32} style={{ color: '#2A4355' }} />
-                        <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tờ trình nào</p>
-                    </div>
-                ) : (
-                    filtered.map(p => {
-                        const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
-                        const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
-                        const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
-                        const isCEOLevel = p.currentLevel === 3
-
-                        return (
-                            <div key={p.id}
-                                className="grid grid-cols-12 gap-2 px-4 py-3 items-center transition-all"
-                                style={{
-                                    borderBottom: '1px solid #2A4355',
-                                    background: isPending && isCEOLevel ? 'rgba(212,168,83,0.03)' : 'transparent',
-                                }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
-                                onMouseLeave={e => e.currentTarget.style.background = isPending && isCEOLevel ? 'rgba(212,168,83,0.03)' : 'transparent'}
-                            >
-                                <div className="col-span-1">
-                                    <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>
-                                        {p.proposalNo}
-                                    </span>
-                                </div>
-                                <div className="col-span-3">
-                                    <p className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>{p.title}</p>
-                                    {p.attachmentCount > 0 && (
-                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>
-                                            <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="col-span-1">
-                                    <span className="text-xs px-2 py-0.5 rounded-full"
-                                        style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
-                                        {CATEGORY_LABELS[p.category]?.substring(0, 12) ?? p.category}
-                                    </span>
-                                </div>
-                                <div className="col-span-1">
-                                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                                        style={{ background: prioCfg.bg, color: prioCfg.color }}>
-                                        {prioCfg.label}
-                                    </span>
-                                </div>
-                                <div className="col-span-1 text-right">
-                                    <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>
-                                        {p.estimatedAmount ? formatVND(p.estimatedAmount) : '—'}
-                                    </span>
-                                </div>
-                                <div className="col-span-1">
-                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>{p.creatorName}</span>
-                                </div>
-                                <div className="col-span-1">
-                                    <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                                        style={{ background: statusCfg.bg, color: statusCfg.color }}>
-                                        {statusCfg.label}
-                                    </span>
-                                </div>
-                                <div className="col-span-1">
-                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
-                                        {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString('vi-VN') : '—'}
-                                    </span>
-                                </div>
-                                <div className="col-span-2 flex justify-end gap-2">
-                                    <button onClick={() => openDetail(p.id)}
-                                        className="px-2.5 py-1.5 text-xs font-medium rounded transition-all"
-                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
-                                        <Eye size={12} className="inline mr-1" />Chi tiết
-                                    </button>
-                                    {isPending && isCEOLevel && isCEO && (
-                                        <>
-                                            <button
-                                                onClick={() => handleApproval(p.id, 'APPROVE')}
-                                                disabled={actionLoading === p.id}
-                                                className="px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
-                                                {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
-                                                Duyệt
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    const reason = prompt('Lý do từ chối:')
-                                                    if (reason) handleApproval(p.id, 'REJECT', reason)
-                                                }}
-                                                className="px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
-                                                <XCircle size={12} className="inline mr-1" />Từ chối
-                                            </button>
-                                        </>
-                                    )}
-                                    {p.status === 'DRAFT' && p.creatorName && (
-                                        <button
-                                            onClick={async () => {
-                                                setActionLoading(p.id)
-                                                await submitProposal(p.id, userId)
-                                                await refreshList()
-                                                setActionLoading(null)
+                                    return (
+                                        <tr key={p.id}
+                                            className="transition-all"
+                                            style={{
+                                                borderBottom: '1px solid #2A4355',
+                                                background: isPending && isCEOLevel ? 'rgba(212,168,83,0.03)' : 'transparent',
                                             }}
-                                            disabled={actionLoading === p.id}
-                                            className="px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
-                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
-                                            {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
-                                            Trình
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })
-                )}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                            onMouseLeave={e => e.currentTarget.style.background = isPending && isCEOLevel ? 'rgba(212,168,83,0.03)' : 'transparent'}
+                                        >
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9', whiteSpace: 'nowrap' }}>
+                                                    {p.proposalNo}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle', maxWidth: '280px' }}>
+                                                <p className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>{p.title}</p>
+                                                {p.attachmentCount > 0 && (
+                                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                        <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-xs px-2 py-0.5 rounded-full inline-block truncate"
+                                                    style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB', maxWidth: '100%', display: 'block' }}>
+                                                    {CATEGORY_LABELS[p.category] ?? p.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-xs px-2 py-0.5 rounded-full font-bold inline-block whitespace-nowrap"
+                                                    style={{ background: prioCfg.bg, color: prioCfg.color }}>
+                                                    {prioCfg.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3 text-right" style={{ verticalAlign: 'middle', overflow: 'hidden' }}>
+                                                <span className="text-sm font-bold block truncate" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>
+                                                    {p.estimatedAmount ? formatCompactVND(p.estimatedAmount) : '—'}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle', overflow: 'hidden' }}>
+                                                <span className="text-xs truncate block" style={{ color: '#8AAEBB' }}>{p.creatorName}</span>
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap"
+                                                    style={{ background: statusCfg.bg, color: statusCfg.color }}>
+                                                    {statusCfg.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>
+                                                    {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString('vi-VN') : '—'}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <div className="flex justify-end gap-1.5 flex-nowrap">
+                                                    <button onClick={() => openDetail(p.id)}
+                                                        className="px-2 py-1.5 text-xs font-medium rounded transition-all whitespace-nowrap"
+                                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                        <Eye size={12} className="inline mr-1" />Chi tiết
+                                                    </button>
+                                                    {isPending && isCEOLevel && isCEO && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApproval(p.id, 'APPROVE')}
+                                                                disabled={actionLoading === p.id}
+                                                                className="px-2 py-1.5 text-xs font-semibold rounded transition-all whitespace-nowrap"
+                                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                                {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
+                                                                Duyệt
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const reason = prompt('Lý do từ chối:')
+                                                                    if (reason) handleApproval(p.id, 'REJECT', reason)
+                                                                }}
+                                                                className="px-2 py-1.5 text-xs font-semibold rounded transition-all whitespace-nowrap"
+                                                                style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
+                                                                <XCircle size={12} className="inline mr-1" />Từ chối
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {p.status === 'DRAFT' && p.creatorName && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                setActionLoading(p.id)
+                                                                await submitProposal(p.id, userId)
+                                                                await refreshList()
+                                                                setActionLoading(null)
+                                                            }}
+                                                            disabled={actionLoading === p.id}
+                                                            className="px-2 py-1.5 text-xs font-semibold rounded transition-all whitespace-nowrap"
+                                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                                                            {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
+                                                            Trình
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Create Proposal Drawer */}
