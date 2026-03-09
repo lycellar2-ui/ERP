@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { getCurrentUser } from '@/lib/session'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type PriceListRow = {
     id: string
@@ -26,20 +27,22 @@ export type PriceListLineRow = {
 
 // ── List Price Lists ─────────────────────────────
 export async function getPriceLists(): Promise<PriceListRow[]> {
-    const lists = await prisma.priceList.findMany({
-        include: { _count: { select: { lines: true } } },
-        orderBy: { createdAt: 'desc' },
-    })
+    return cached('priceList:list', async () => {
+        const lists = await prisma.priceList.findMany({
+            include: { _count: { select: { lines: true } } },
+            orderBy: { createdAt: 'desc' },
+        })
 
-    return lists.map(pl => ({
-        id: pl.id,
-        name: pl.name,
-        channel: pl.channel,
-        effectiveDate: pl.effectiveDate,
-        expiryDate: pl.expiryDate,
-        itemCount: pl._count.lines,
-        createdAt: pl.createdAt,
-    }))
+        return lists.map(pl => ({
+            id: pl.id,
+            name: pl.name,
+            channel: pl.channel,
+            effectiveDate: pl.effectiveDate,
+            expiryDate: pl.expiryDate,
+            itemCount: pl._count.lines,
+            createdAt: pl.createdAt,
+        }))
+    }, 60_000) // 60s cache
 }
 
 // ── Get Price List Detail ────────────────────────
@@ -174,11 +177,13 @@ export async function getProductPrice(productId: string, channel: string): Promi
 
 // ── Get products for adding to price list ────────
 export async function getProductsForPriceList() {
-    return prisma.product.findMany({
-        where: { status: 'ACTIVE', deletedAt: null },
-        select: { id: true, skuCode: true, productName: true, wineType: true, volumeMl: true },
-        orderBy: { productName: 'asc' },
-    })
+    return cached('priceList:products', async () => {
+        return prisma.product.findMany({
+            where: { status: 'ACTIVE', deletedAt: null },
+            select: { id: true, skuCode: true, productName: true, wineType: true, volumeMl: true },
+            orderBy: { productName: 'asc' },
+        })
+    }, 120_000) // 120s — reference data
 }
 
 // ── Delete Price List ────────────────────────────

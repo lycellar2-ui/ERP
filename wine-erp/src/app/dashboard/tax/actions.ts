@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { serialize } from '@/lib/serialize'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────
 export interface TaxRateRow {
@@ -30,38 +31,41 @@ export async function getTaxRates(filters: {
     pageSize?: number
 } = {}): Promise<{ rows: TaxRateRow[]; total: number }> {
     const { hsCode, country, agreement, page = 1, pageSize = 50 } = filters
-    const where: any = {}
-    if (hsCode) where.hsCode = { contains: hsCode, mode: 'insensitive' }
-    if (country) where.countryOfOrigin = { contains: country, mode: 'insensitive' }
-    if (agreement) where.tradeAgreement = agreement
+    const cacheKey = `tax:rates:${page}:${pageSize}:${hsCode ?? ''}:${country ?? ''}:${agreement ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = {}
+        if (hsCode) where.hsCode = { contains: hsCode, mode: 'insensitive' }
+        if (country) where.countryOfOrigin = { contains: country, mode: 'insensitive' }
+        if (agreement) where.tradeAgreement = agreement
 
-    const [rates, total] = await Promise.all([
-        prisma.taxRate.findMany({
-            where,
-            orderBy: [{ hsCode: 'asc' }, { tradeAgreement: 'asc' }],
-            skip: (page - 1) * pageSize,
-            take: pageSize,
-        }),
-        prisma.taxRate.count({ where }),
-    ])
+        const [rates, total] = await Promise.all([
+            prisma.taxRate.findMany({
+                where,
+                orderBy: [{ hsCode: 'asc' }, { tradeAgreement: 'asc' }],
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+            }),
+            prisma.taxRate.count({ where }),
+        ])
 
-    return {
-        rows: rates.map(r => ({
-            id: r.id,
-            hsCode: r.hsCode,
-            countryOfOrigin: r.countryOfOrigin,
-            tradeAgreement: r.tradeAgreement,
-            importTaxRate: Number(r.importTaxRate),
-            sctRate: Number(r.sctRate),
-            vatRate: Number(r.vatRate),
-            effectiveDate: r.effectiveDate,
-            expiryDate: r.expiryDate,
-            requiresCo: r.requiresCo,
-            coFormType: r.coFormType,
-            notes: r.notes ?? null,
-        })),
-        total,
-    }
+        return {
+            rows: rates.map(r => ({
+                id: r.id,
+                hsCode: r.hsCode,
+                countryOfOrigin: r.countryOfOrigin,
+                tradeAgreement: r.tradeAgreement,
+                importTaxRate: Number(r.importTaxRate),
+                sctRate: Number(r.sctRate),
+                vatRate: Number(r.vatRate),
+                effectiveDate: r.effectiveDate,
+                expiryDate: r.expiryDate,
+                requiresCo: r.requiresCo,
+                coFormType: r.coFormType,
+                notes: r.notes ?? null,
+            })),
+            total,
+        }
+    }, 60_000) // 60s cache — tax rates rarely change
 }
 
 // ─── Schema validation ────────────────────────────
@@ -142,13 +146,15 @@ export async function deleteTaxRate(id: string): Promise<{ success: boolean; err
 
 // ─── Stats ────────────────────────────────────────
 export async function getTaxStats() {
-    const [total, evfta, mfn, withCo] = await Promise.all([
-        prisma.taxRate.count(),
-        prisma.taxRate.count({ where: { tradeAgreement: 'EVFTA' } }),
-        prisma.taxRate.count({ where: { tradeAgreement: 'MFN' } }),
-        prisma.taxRate.count({ where: { requiresCo: true } }),
-    ])
-    return { total, evfta, mfn, withCo }
+    return cached('tax:stats', async () => {
+        const [total, evfta, mfn, withCo] = await Promise.all([
+            prisma.taxRate.count(),
+            prisma.taxRate.count({ where: { tradeAgreement: 'EVFTA' } }),
+            prisma.taxRate.count({ where: { tradeAgreement: 'MFN' } }),
+            prisma.taxRate.count({ where: { requiresCo: true } }),
+        ])
+        return { total, evfta, mfn, withCo }
+    }, 60_000) // 60s cache
 }
 
 // ═══════════════════════════════════════════════════

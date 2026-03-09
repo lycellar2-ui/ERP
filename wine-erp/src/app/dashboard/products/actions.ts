@@ -131,7 +131,9 @@ export type ProductStats = {
 
 export async function getProductStats(): Promise<ProductStats> {
     return cached('products:stats', async () => {
-        const [total, active, wineTypeCounts, productsWithStock] = await Promise.all([
+        // Count products that have NO available stock lots (efficient subquery)
+        // Instead of loading ALL products + their lots and filtering in JS
+        const [total, active, wineTypeCounts, withStockCount] = await Promise.all([
             prisma.product.count({ where: { deletedAt: null } }),
             prisma.product.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
             prisma.product.groupBy({
@@ -140,22 +142,18 @@ export async function getProductStats(): Promise<ProductStats> {
                 _count: { id: true },
                 orderBy: { _count: { id: 'desc' } },
             }),
-            // Products with zero stock (active only)
-            prisma.product.findMany({
-                where: { deletedAt: null, status: 'ACTIVE' },
-                select: {
-                    id: true,
-                    stockLots: {
-                        where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-                        select: { qtyAvailable: true },
-                    },
+            // Count active products that HAVE at least 1 available stock lot
+            prisma.product.count({
+                where: {
+                    deletedAt: null,
+                    status: 'ACTIVE',
+                    stockLots: { some: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } } },
                 },
             }),
         ])
 
-        const outOfStock = productsWithStock.filter(
-            p => p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0) === 0
-        ).length
+        // outOfStock = active products minus those with stock
+        const outOfStock = active - withStockCount
 
         const typeLabels: Record<string, string> = {
             RED: 'Đỏ', WHITE: 'Trắng', ROSE: 'Rosé',
@@ -211,23 +209,27 @@ export async function getProductById(id: string) {
 
 // ─── Get unique countries from products ───────────
 export async function getProductCountries(): Promise<{ code: string; count: number }[]> {
-    const result = await prisma.product.groupBy({
-        by: ['country'],
-        where: { deletedAt: null },
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-    })
-    return result.map(r => ({ code: r.country, count: r._count.id }))
+    return cached('products:countries', async () => {
+        const result = await prisma.product.groupBy({
+            by: ['country'],
+            where: { deletedAt: null },
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+        })
+        return result.map(r => ({ code: r.country, count: r._count.id }))
+    }, 60_000) // 60s — reference data hiếm thay đổi
 }
 
 // ─── Get unique vintages from products ────────────
 export async function getProductVintages(): Promise<number[]> {
-    const result = await prisma.product.groupBy({
-        by: ['vintage'],
-        where: { deletedAt: null, vintage: { not: null } },
-        orderBy: { vintage: 'desc' },
-    })
-    return result.map(r => r.vintage!).filter(Boolean)
+    return cached('products:vintages', async () => {
+        const result = await prisma.product.groupBy({
+            by: ['vintage'],
+            where: { deletedAt: null, vintage: { not: null } },
+            orderBy: { vintage: 'desc' },
+        })
+        return result.map(r => r.vintage!).filter(Boolean)
+    }, 60_000) // 60s — reference data hiếm thay đổi
 }
 
 // ─── Create producer inline ───────────────────────
@@ -475,25 +477,31 @@ export async function bulkImportProducts(rows: Record<string, any>[]): Promise<I
 
 // ─── Reference data ───────────────────────────────
 export async function getProducers() {
-    return prisma.producer.findMany({
-        select: { id: true, name: true, country: true },
-        orderBy: { name: 'asc' },
-    })
+    return cached('products:producers', async () => {
+        return prisma.producer.findMany({
+            select: { id: true, name: true, country: true },
+            orderBy: { name: 'asc' },
+        })
+    }, 120_000) // 120s — reference data
 }
 
 export async function getRegions() {
-    return prisma.wineRegion.findMany({
-        select: { id: true, name: true, country: true },
-        orderBy: { name: 'asc' },
-    })
+    return cached('products:regions', async () => {
+        return prisma.wineRegion.findMany({
+            select: { id: true, name: true, country: true },
+            orderBy: { name: 'asc' },
+        })
+    }, 120_000) // 120s — reference data
 }
 
 export async function getAppellations(regionId?: string) {
-    return prisma.appellation.findMany({
-        where: regionId ? { regionId } : undefined,
-        select: { id: true, name: true, regionId: true },
-        orderBy: { name: 'asc' },
-    })
+    return cached(`products:appellations:${regionId ?? 'all'}`, async () => {
+        return prisma.appellation.findMany({
+            where: regionId ? { regionId } : undefined,
+            select: { id: true, name: true, regionId: true },
+            orderBy: { name: 'asc' },
+        })
+    }, 120_000) // 120s — reference data
 }
 
 // ═══════════════════════════════════════════════════
@@ -522,19 +530,21 @@ export type PriceListLineRow = {
 
 // ── List price lists ──────────────────────────────
 export async function getPriceLists(): Promise<PriceListRow[]> {
-    const lists = await prisma.priceList.findMany({
-        include: { lines: { select: { id: true } } },
-        orderBy: { effectiveDate: 'desc' },
-    })
-    return lists.map(pl => ({
-        id: pl.id,
-        name: pl.name,
-        channel: pl.channel,
-        effectiveDate: pl.effectiveDate,
-        expiryDate: pl.expiryDate,
-        lineCount: pl.lines.length,
-        createdAt: pl.createdAt,
-    }))
+    return cached('products:priceLists', async () => {
+        const lists = await prisma.priceList.findMany({
+            include: { lines: { select: { id: true } } },
+            orderBy: { effectiveDate: 'desc' },
+        })
+        return lists.map(pl => ({
+            id: pl.id,
+            name: pl.name,
+            channel: pl.channel,
+            effectiveDate: pl.effectiveDate,
+            expiryDate: pl.expiryDate,
+            lineCount: pl.lines.length,
+            createdAt: pl.createdAt,
+        }))
+    }, 60_000) // 60s
 }
 
 // ── Get price list with lines ─────────────────────

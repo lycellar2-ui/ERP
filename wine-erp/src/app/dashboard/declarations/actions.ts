@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────
 export type DeclarationRow = {
@@ -23,36 +24,39 @@ export async function getDeclarations(filters: {
     year?: number
     status?: string
 } = {}): Promise<{ rows: DeclarationRow[]; total: number }> {
-    const where: any = {}
-    if (filters.type) where.type = filters.type
-    if (filters.year) where.periodYear = filters.year
-    if (filters.status) where.status = filters.status
+    const cacheKey = `declarations:list:${filters.type ?? ''}:${filters.year ?? ''}:${filters.status ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = {}
+        if (filters.type) where.type = filters.type
+        if (filters.year) where.periodYear = filters.year
+        if (filters.status) where.status = filters.status
 
-    const [rows, total] = await Promise.all([
-        prisma.taxDeclaration.findMany({
-            where,
-            include: { documents: { orderBy: { uploadedAt: 'desc' } } },
-            orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
-            take: 50,
-        }),
-        prisma.taxDeclaration.count({ where }),
-    ])
+        const [rows, total] = await Promise.all([
+            prisma.taxDeclaration.findMany({
+                where,
+                include: { documents: { orderBy: { uploadedAt: 'desc' } } },
+                orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
+                take: 50,
+            }),
+            prisma.taxDeclaration.count({ where }),
+        ])
 
-    return {
-        rows: rows.map(r => ({
-            id: r.id,
-            type: r.type,
-            periodYear: r.periodYear,
-            periodMonth: r.periodMonth,
-            status: r.status,
-            fileUrl: r.fileUrl,
-            signatureUrl: r.signatureUrl,
-            documents: r.documents,
-            submittedAt: r.submittedAt,
-            createdAt: r.createdAt,
-        })),
-        total,
-    }
+        return {
+            rows: rows.map(r => ({
+                id: r.id,
+                type: r.type,
+                periodYear: r.periodYear,
+                periodMonth: r.periodMonth,
+                status: r.status,
+                fileUrl: r.fileUrl,
+                signatureUrl: r.signatureUrl,
+                documents: r.documents,
+                submittedAt: r.submittedAt,
+                createdAt: r.createdAt,
+            })),
+            total,
+        }
+    }, 30_000) // 30s cache
 }
 
 // ─── Create declaration ───────────────────────────
@@ -72,6 +76,7 @@ export async function createDeclaration(input: {
                 createdBy: input.createdBy,
             },
         })
+        revalidateCache('declarations')
         revalidatePath('/dashboard/declarations')
         return { success: true, id: decl.id }
     } catch (err: any) {
@@ -173,13 +178,15 @@ export async function getDeclarationData(input: {
 
 // ─── Stats ────────────────────────────────────────
 export async function getDeclarationStats() {
-    const [total, draft, submitted, approved] = await Promise.all([
-        prisma.taxDeclaration.count(),
-        prisma.taxDeclaration.count({ where: { status: 'DRAFT' } }),
-        prisma.taxDeclaration.count({ where: { status: 'SUBMITTED' } }),
-        prisma.taxDeclaration.count({ where: { status: 'APPROVED' } }),
-    ])
-    return { total, draft, submitted, approved }
+    return cached('declarations:stats', async () => {
+        const [total, draft, submitted, approved] = await Promise.all([
+            prisma.taxDeclaration.count(),
+            prisma.taxDeclaration.count({ where: { status: 'DRAFT' } }),
+            prisma.taxDeclaration.count({ where: { status: 'SUBMITTED' } }),
+            prisma.taxDeclaration.count({ where: { status: 'APPROVED' } }),
+        ])
+        return { total, draft, submitted, approved }
+    }, 30_000) // 30s cache
 }
 
 // ─── Import Customs Declaration Data (NK) ─────────

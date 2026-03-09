@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ─── Types ───────────────────────────────────────
 export interface ProposalRouteConfig {
@@ -48,28 +49,30 @@ const DEFAULT_THRESHOLDS: ThresholdConfig[] = [
 
 // ─── Load full approval matrix ───────────────────
 export async function getApprovalMatrix(): Promise<ApprovalMatrixData> {
-    const configs = await prisma.approvalConfig.findMany()
-    const configMap = new Map(configs.map(c => [c.configKey, c.value]))
+    return cached('settings:approvalMatrix', async () => {
+        const configs = await prisma.approvalConfig.findMany()
+        const configMap = new Map(configs.map(c => [c.configKey, c.value]))
 
-    // Build proposal routes
-    const proposalRoutes: ProposalRouteConfig[] = Object.entries(DEFAULT_ROUTING).map(([category, defaultLevels]) => {
-        const dbValue = configMap.get(`proposal.${category}`)
-        const levels = dbValue && typeof dbValue === 'object' && 'levels' in (dbValue as any)
-            ? (dbValue as any).levels as number[]
-            : defaultLevels
-        return { category, levels }
-    })
+        // Build proposal routes
+        const proposalRoutes: ProposalRouteConfig[] = Object.entries(DEFAULT_ROUTING).map(([category, defaultLevels]) => {
+            const dbValue = configMap.get(`proposal.${category}`)
+            const levels = dbValue && typeof dbValue === 'object' && 'levels' in (dbValue as any)
+                ? (dbValue as any).levels as number[]
+                : defaultLevels
+            return { category, levels }
+        })
 
-    // Build thresholds
-    const thresholds: ThresholdConfig[] = DEFAULT_THRESHOLDS.map(dt => {
-        const dbValue = configMap.get(dt.key)
-        const value = dbValue && typeof dbValue === 'object' && 'threshold' in (dbValue as any)
-            ? (dbValue as any).threshold as number
-            : dt.value
-        return { ...dt, value }
-    })
+        // Build thresholds
+        const thresholds: ThresholdConfig[] = DEFAULT_THRESHOLDS.map(dt => {
+            const dbValue = configMap.get(dt.key)
+            const value = dbValue && typeof dbValue === 'object' && 'threshold' in (dbValue as any)
+                ? (dbValue as any).threshold as number
+                : dt.value
+            return { ...dt, value }
+        })
 
-    return { proposalRoutes, thresholds }
+        return { proposalRoutes, thresholds }
+    }, 120_000) // 120s — config data hiếm thay đổi
 }
 
 // ─── Save proposal routing ───────────────────────
@@ -84,6 +87,7 @@ export async function saveProposalRoute(
             update: { value: { levels }, updatedAt: new Date() },
             create: { configKey: key, value: { levels }, label: `Tờ trình: ${category}` },
         })
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings/approval-matrix')
         revalidatePath('/dashboard/proposals')
         return { success: true }
@@ -103,6 +107,7 @@ export async function saveThreshold(
             update: { value: { threshold: value }, updatedAt: new Date() },
             create: { configKey: key, value: { threshold: value }, label: key },
         })
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings/approval-matrix')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/procurement')
@@ -125,6 +130,7 @@ export async function saveAllRoutes(
                 create: { configKey: key, value: { levels: r.levels }, label: `Tờ trình: ${r.category}` },
             })
         }
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings/approval-matrix')
         revalidatePath('/dashboard/proposals')
         return { success: true }
@@ -145,6 +151,7 @@ export async function saveAllThresholds(
                 create: { configKey: t.key, value: { threshold: t.value }, label: t.label },
             })
         }
+        revalidateCache('settings')
         revalidatePath('/dashboard/settings/approval-matrix')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/procurement')

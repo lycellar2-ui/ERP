@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { serialize } from '@/lib/serialize'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
 // AGENCY PORTAL — External Partner Integration
@@ -46,42 +47,46 @@ export type AgencyDashboardStats = {
 
 // ─── Dashboard Stats ──────────────────────────────
 export async function getAgencyDashboardStats(): Promise<AgencyDashboardStats> {
-    const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    return cached('agency:stats', async () => {
+        const now = new Date()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    const [totalPartners, pendingSubmissions, approvedThisMonth, activeShipments] = await Promise.all([
-        prisma.externalPartner.count(),
-        prisma.agencySubmission.count({ where: { status: 'PENDING_REVIEW' } }),
-        prisma.agencySubmission.count({
-            where: { status: 'APPROVED', reviewedAt: { gte: startOfMonth } },
-        }),
-        prisma.shipment.count({
-            where: { status: { in: ['BOOKED', 'ON_VESSEL', 'ARRIVED_PORT'] } },
-        }),
-    ])
+        const [totalPartners, pendingSubmissions, approvedThisMonth, activeShipments] = await Promise.all([
+            prisma.externalPartner.count(),
+            prisma.agencySubmission.count({ where: { status: 'PENDING_REVIEW' } }),
+            prisma.agencySubmission.count({
+                where: { status: 'APPROVED', reviewedAt: { gte: startOfMonth } },
+            }),
+            prisma.shipment.count({
+                where: { status: { in: ['BOOKED', 'ON_VESSEL', 'ARRIVED_PORT'] } },
+            }),
+        ])
 
-    return { totalPartners, pendingSubmissions, approvedThisMonth, activeShipments }
+        return { totalPartners, pendingSubmissions, approvedThisMonth, activeShipments }
+    }, 30_000) // 30s cache
 }
 
 // ─── List Partners ────────────────────────────────
 export async function getAgencyPartners(): Promise<AgencyPartnerRow[]> {
-    const partners = await prisma.externalPartner.findMany({
-        include: {
-            submissions: { select: { id: true, status: true } },
-        },
-        orderBy: { name: 'asc' },
-    })
+    return cached('agency:partners', async () => {
+        const partners = await prisma.externalPartner.findMany({
+            include: {
+                submissions: { select: { id: true, status: true } },
+            },
+            orderBy: { name: 'asc' },
+        })
 
-    return partners.map(p => ({
-        id: p.id,
-        code: p.code,
-        name: p.name,
-        type: p.type,
-        email: p.email,
-        status: p.status,
-        submissionCount: p.submissions.length,
-        pendingCount: p.submissions.filter(s => s.status === 'PENDING_REVIEW').length,
-    }))
+        return partners.map(p => ({
+            id: p.id,
+            code: p.code,
+            name: p.name,
+            type: p.type,
+            email: p.email,
+            status: p.status,
+            submissionCount: p.submissions.length,
+            pendingCount: p.submissions.filter(s => s.status === 'PENDING_REVIEW').length,
+        }))
+    }, 30_000) // 30s cache
 }
 
 // ─── Create Partner ───────────────────────────────

@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type MarketPriceRow = {
     id: string
@@ -19,68 +20,72 @@ export type MarketPriceRow = {
 }
 
 export async function getMarketPrices(): Promise<MarketPriceRow[]> {
-    // Get latest market price per product
-    const prices = await prisma.marketPrice.findMany({
-        orderBy: { priceDate: 'desc' },
-        include: {
-            product: {
-                select: {
-                    skuCode: true, productName: true,
-                    priceLines: {
-                        select: { unitPrice: true },
-                        take: 1,
+    return cached('marketPrice:list', async () => {
+        // Get latest market price per product
+        const prices = await prisma.marketPrice.findMany({
+            orderBy: { priceDate: 'desc' },
+            include: {
+                product: {
+                    select: {
+                        skuCode: true, productName: true,
+                        priceLines: {
+                            select: { unitPrice: true },
+                            take: 1,
+                        },
                     },
                 },
             },
-        },
-        take: 200,
-    })
-
-    // Get avg landed cost per product from StockLots
-    const productIds = [...new Set(prices.map(p => p.productId))]
-    const costData = await prisma.stockLot.groupBy({
-        by: ['productId'],
-        where: {
-            productId: { in: productIds },
-            status: 'AVAILABLE',
-            qtyAvailable: { gt: 0 },
-        },
-        _avg: { unitLandedCost: true },
-    })
-    const costMap = new Map(costData.map(c => [c.productId, Number(c._avg.unitLandedCost ?? 0)]))
-
-    // Deduplicate: keep only latest per product
-    const seen = new Set<string>()
-    const result: MarketPriceRow[] = []
-
-    for (const p of prices) {
-        if (seen.has(p.productId)) continue
-        seen.add(p.productId)
-
-        const mp = Number(p.price)
-        const lc = costMap.get(p.productId) ?? null
-        const lp = p.product.priceLines.length > 0 ? Number(p.product.priceLines[0].unitPrice) : null
-        const marginGap = lc && mp > 0 ? ((mp - lc) / mp) * 100 : null
-        const isBelowCost = lc !== null && lp !== null && lp < lc
-
-        result.push({
-            id: p.id,
-            productId: p.productId,
-            skuCode: p.product.skuCode,
-            productName: p.product.productName,
-            marketPrice: mp,
-            currency: p.currency,
-            source: p.source,
-            priceDate: p.priceDate,
-            landedCost: lc,
-            listPrice: lp,
-            marginGap,
-            isBelowCost,
+            take: 200,
         })
-    }
 
-    return result
+        // Get avg landed cost per product from StockLots
+        const productIds = [...new Set(prices.map(p => p.productId))]
+        const costData = await prisma.stockLot.groupBy({
+            by: ['productId'],
+            where: {
+                productId: { in: productIds },
+                status: 'AVAILABLE',
+                qtyAvailable: { gt: 0 },
+            },
+            _avg: { unitLandedCost: true },
+        })
+        const costMap = new Map(costData.map(c => [c.productId, Number(c._avg.unitLandedCost ?? 0)]))
+
+        // Deduplicate: keep only latest per product
+        const seen = new Set<string>()
+        const result: MarketPriceRow[] = []
+
+        for (const p of prices) {
+            if (seen.has(p.productId)) continue
+            seen.add(p.productId)
+
+            const mp = Number(p.price)
+            const lc = costMap.get(p.productId) ?? null
+            const lp = p.product.priceLines.length > 0 ? Number(p.product.priceLines[0].unitPrice) : null
+            const marginGap = lc && mp > 0 ? ((mp - lc) / mp) * 100 : null
+            const isBelowCost = lc !== null && lp !== null && lp < lc
+
+            result.push({
+                id: p.id,
+                productId: p.productId,
+                skuCode: p.product.skuCode,
+                productName: p.product.productName,
+                marketPrice: mp,
+                currency: p.currency,
+                source: p.source,
+                priceDate: p.priceDate,
+                landedCost: lc,
+                listPrice: lp,
+                marginGap,
+                isBelowCost,
+            })
+        }
+
+        return result
+    }, 30_000) // 30s cache
 }
+
+
 
 export async function addMarketPrice(input: {
     productId: string
@@ -101,6 +106,7 @@ export async function addMarketPrice(input: {
                 enteredBy: input.enteredBy,
             },
         })
+        revalidateCache('marketPrice')
         revalidatePath('/dashboard/market-price')
         return { success: true }
     } catch (err: any) {
@@ -109,31 +115,34 @@ export async function addMarketPrice(input: {
 }
 
 export async function getMarketPriceStats() {
-    const [total, belowCost, sources] = await Promise.all([
-        prisma.marketPrice.count(),
-        // Count products where list price < landed cost
-        prisma.product.count({
-            where: {
-                marketPrices: { some: {} },
-            },
-        }),
-        prisma.marketPrice.groupBy({
-            by: ['source'],
-            _count: true,
-        }),
-    ])
+    return cached('marketPrice:stats', async () => {
+        const [total, belowCost, sources] = await Promise.all([
+            prisma.marketPrice.count(),
+            prisma.product.count({
+                where: {
+                    marketPrices: { some: {} },
+                },
+            }),
+            prisma.marketPrice.groupBy({
+                by: ['source'],
+                _count: true,
+            }),
+        ])
 
-    return {
-        totalEntries: total,
-        trackedProducts: belowCost,
-        sourceBreakdown: sources.map(s => ({ source: s.source, count: s._count })),
-    }
+        return {
+            totalEntries: total,
+            trackedProducts: belowCost,
+            sourceBreakdown: sources.map(s => ({ source: s.source, count: s._count })),
+        }
+    }, 30_000) // 30s cache
 }
 
 export async function getProductOptions() {
-    return prisma.product.findMany({
-        select: { id: true, skuCode: true, productName: true },
-        orderBy: { skuCode: 'asc' },
-        take: 200,
-    })
+    return cached('marketPrice:productOptions', async () => {
+        return prisma.product.findMany({
+            select: { id: true, skuCode: true, productName: true },
+            orderBy: { skuCode: 'asc' },
+            take: 200,
+        })
+    }, 120_000) // 120s — reference data
 }

@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export interface CostingProduct {
     id: string
@@ -18,50 +19,54 @@ export interface CostingProduct {
 }
 
 export async function getCostingProducts(): Promise<CostingProduct[]> {
-    const products = await prisma.product.findMany({
-        where: { deletedAt: null, status: 'ACTIVE' },
-        select: {
-            id: true,
-            skuCode: true,
-            productName: true,
-            wineType: true,
-            abvPercent: true,
-            country: true,
-            stockLots: {
-                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-                select: { unitLandedCost: true, qtyAvailable: true },
+    return cached('costing:products', async () => {
+        const products = await prisma.product.findMany({
+            where: { deletedAt: null, status: 'ACTIVE' },
+            select: {
+                id: true,
+                skuCode: true,
+                productName: true,
+                wineType: true,
+                abvPercent: true,
+                country: true,
+                stockLots: {
+                    where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                    select: { unitLandedCost: true, qtyAvailable: true },
+                },
+                priceLines: {
+                    select: { unitPrice: true, currency: true },
+                    orderBy: { unitPrice: 'desc' },
+                    take: 1,
+                },
             },
-            priceLines: {
-                select: { unitPrice: true, currency: true },
-                orderBy: { unitPrice: 'desc' },
-                take: 1,
-            },
-        },
-        orderBy: { productName: 'asc' },
-    })
+            orderBy: { productName: 'asc' },
+        })
 
-    return products.map(p => {
-        const totalQty = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
-        const totalCostValue = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
-        const unitLandedCost = totalQty > 0 ? totalCostValue / totalQty : 0
-        const listPrice = p.priceLines[0] ? Number(p.priceLines[0].unitPrice) : null
-        const marginPct = listPrice && unitLandedCost > 0 ? ((listPrice - unitLandedCost) / listPrice) * 100 : null
+        return products.map(p => {
+            const totalQty = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
+            const totalCostValue = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
+            const unitLandedCost = totalQty > 0 ? totalCostValue / totalQty : 0
+            const listPrice = p.priceLines[0] ? Number(p.priceLines[0].unitPrice) : null
+            const marginPct = listPrice && unitLandedCost > 0 ? ((listPrice - unitLandedCost) / listPrice) * 100 : null
 
-        return {
-            id: p.id,
-            skuCode: p.skuCode,
-            productName: p.productName,
-            wineType: p.wineType,
-            abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
-            country: p.country,
-            unitLandedCost,
-            listPrice,
-            marginPct,
-            stockQty: totalQty,
-            isLoss: marginPct !== null && marginPct < 0,
-        }
-    })
+            return {
+                id: p.id,
+                skuCode: p.skuCode,
+                productName: p.productName,
+                wineType: p.wineType,
+                abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
+                country: p.country,
+                unitLandedCost,
+                listPrice,
+                marginPct,
+                stockQty: totalQty,
+                isLoss: marginPct !== null && marginPct < 0,
+            }
+        })
+    }, 30_000) // 30s cache
 }
+
+
 
 // ═══════════════════════════════════════════════════
 // LANDED COST CAMPAIGN — Container cost proration

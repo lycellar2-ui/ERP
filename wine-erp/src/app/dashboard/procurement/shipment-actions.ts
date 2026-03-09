@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
 // TYPES
@@ -110,51 +111,54 @@ export async function getShipments(filters: {
     status?: string; search?: string; page?: number; pageSize?: number
 } = {}): Promise<{ rows: ShipmentRow[]; total: number }> {
     const { status, search, page = 1, pageSize = 20 } = filters
-    const where: any = {}
-    if (status) where.status = status
-    if (search) {
-        where.OR = [
-            { billOfLading: { contains: search, mode: 'insensitive' } },
-            { vesselName: { contains: search, mode: 'insensitive' } },
-            { containerNo: { contains: search, mode: 'insensitive' } },
-            { po: { poNo: { contains: search, mode: 'insensitive' } } },
-            { po: { supplier: { name: { contains: search, mode: 'insensitive' } } } },
-        ]
-    }
-
-    const [items, total] = await Promise.all([
-        prisma.shipment.findMany({
-            where,
-            include: {
-                po: { include: { supplier: { select: { name: true } } } },
-                costItems: { select: { amountVND: true } },
-                milestones: { select: { completedAt: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-            skip: (page - 1) * pageSize,
-            take: pageSize,
-        }),
-        prisma.shipment.count({ where }),
-    ])
-
-    const rows: ShipmentRow[] = items.map(s => {
-        const totalMilestones = s.milestones.length
-        const completedMilestones = s.milestones.filter(m => m.completedAt).length
-        return {
-            id: s.id, billOfLading: s.billOfLading, poNo: s.po.poNo,
-            supplierName: s.po.supplier.name, vesselName: s.vesselName,
-            containerNo: s.containerNo, portOfLoading: s.portOfLoading,
-            portOfDischarge: s.portOfDischarge, etd: s.etd, eta: s.eta, ata: s.ata,
-            cifAmount: Number(s.cifAmount), cifCurrency: s.cifCurrency,
-            status: s.status, incoterms: s.incoterms,
-            forwarderName: null, // Will be resolved if needed
-            milestoneProgress: totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0,
-            totalCosts: s.costItems.reduce((sum, c) => sum + Number(c.amountVND), 0),
-            createdAt: s.createdAt,
+    const cacheKey = `shipments:list:${page}:${pageSize}:${status ?? ''}:${search ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = {}
+        if (status) where.status = status
+        if (search) {
+            where.OR = [
+                { billOfLading: { contains: search, mode: 'insensitive' } },
+                { vesselName: { contains: search, mode: 'insensitive' } },
+                { containerNo: { contains: search, mode: 'insensitive' } },
+                { po: { poNo: { contains: search, mode: 'insensitive' } } },
+                { po: { supplier: { name: { contains: search, mode: 'insensitive' } } } },
+            ]
         }
-    })
 
-    return { rows, total }
+        const [items, total] = await Promise.all([
+            prisma.shipment.findMany({
+                where,
+                include: {
+                    po: { include: { supplier: { select: { name: true } } } },
+                    costItems: { select: { amountVND: true } },
+                    milestones: { select: { completedAt: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+            }),
+            prisma.shipment.count({ where }),
+        ])
+
+        const rows: ShipmentRow[] = items.map(s => {
+            const totalMilestones = s.milestones.length
+            const completedMilestones = s.milestones.filter(m => m.completedAt).length
+            return {
+                id: s.id, billOfLading: s.billOfLading, poNo: s.po.poNo,
+                supplierName: s.po.supplier.name, vesselName: s.vesselName,
+                containerNo: s.containerNo, portOfLoading: s.portOfLoading,
+                portOfDischarge: s.portOfDischarge, etd: s.etd, eta: s.eta, ata: s.ata,
+                cifAmount: Number(s.cifAmount), cifCurrency: s.cifCurrency,
+                status: s.status, incoterms: s.incoterms,
+                forwarderName: null, // Will be resolved if needed
+                milestoneProgress: totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0,
+                totalCosts: s.costItems.reduce((sum, c) => sum + Number(c.amountVND), 0),
+                createdAt: s.createdAt,
+            }
+        })
+
+        return { rows, total }
+    }, 30_000) // 30s cache
 }
 
 // ═══════════════════════════════════════════════════

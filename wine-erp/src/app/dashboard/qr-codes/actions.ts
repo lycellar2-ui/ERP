@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ── Generate QR codes for a GR (after confirm) ────
 export async function generateQRCodesForGR(grId: string): Promise<{ success: boolean; count: number; error?: string }> {
@@ -67,40 +68,43 @@ export async function getQRCodes(filters: {
     pageSize?: number
 } = {}) {
     const { search, page = 1, pageSize = 50 } = filters
-    const skip = (page - 1) * pageSize
+    const cacheKey = `qrCodes:list:${page}:${pageSize}:${search ?? ''}`
+    return cached(cacheKey, async () => {
+        const skip = (page - 1) * pageSize
 
-    const where: any = {}
-    if (search) {
-        where.OR = [
-            { lotNo: { contains: search, mode: 'insensitive' } },
-            { code: { contains: search, mode: 'insensitive' } },
-        ]
-    }
+        const where: any = {}
+        if (search) {
+            where.OR = [
+                { lotNo: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } },
+            ]
+        }
 
-    const [qrCodes, total] = await Promise.all([
-        prisma.qRCode.findMany({
-            where, skip, take: pageSize,
-            orderBy: { createdAt: 'desc' },
-            include: { product: { select: { skuCode: true, productName: true } } },
-        }),
-        prisma.qRCode.count({ where }),
-    ])
+        const [qrCodes, total] = await Promise.all([
+            prisma.qRCode.findMany({
+                where, skip, take: pageSize,
+                orderBy: { createdAt: 'desc' },
+                include: { product: { select: { skuCode: true, productName: true } } },
+            }),
+            prisma.qRCode.count({ where }),
+        ])
 
-    return {
-        rows: qrCodes.map(qr => ({
-            id: qr.id,
-            code: qr.code,
-            lotNo: qr.lotNo,
-            skuCode: qr.product.skuCode,
-            productName: qr.product.productName,
-            scanCount: qr.scanCount,
-            firstScannedAt: qr.firstScannedAt,
-            lastScannedAt: qr.lastScannedAt,
-            createdAt: qr.createdAt,
-            lotData: qr.lotData as any,
-        })),
-        total,
-    }
+        return {
+            rows: qrCodes.map(qr => ({
+                id: qr.id,
+                code: qr.code,
+                lotNo: qr.lotNo,
+                skuCode: qr.product.skuCode,
+                productName: qr.product.productName,
+                scanCount: qr.scanCount,
+                firstScannedAt: qr.firstScannedAt,
+                lastScannedAt: qr.lastScannedAt,
+                createdAt: qr.createdAt,
+                lotData: qr.lotData as any,
+            })),
+            total,
+        }
+    }, 30_000) // 30s cache
 }
 
 // ── Verify QR (public — used by /verify/[code]) ──
@@ -146,12 +150,14 @@ export async function verifyQRCode(code: string) {
 
 // ── QR Stats ──────────────────────────────────────
 export async function getQRStats() {
-    const [total, scanned, unscanned] = await Promise.all([
-        prisma.qRCode.count(),
-        prisma.qRCode.count({ where: { scanCount: { gt: 0 } } }),
-        prisma.qRCode.count({ where: { scanCount: 0 } }),
-    ])
-    return { total, scanned, unscanned }
+    return cached('qrCodes:stats', async () => {
+        const [total, scanned, unscanned] = await Promise.all([
+            prisma.qRCode.count(),
+            prisma.qRCode.count({ where: { scanCount: { gt: 0 } } }),
+            prisma.qRCode.count({ where: { scanCount: 0 } }),
+        ])
+        return { total, scanned, unscanned }
+    }, 30_000) // 30s cache
 }
 
 // ── Get QR codes for printing ─────────────────────

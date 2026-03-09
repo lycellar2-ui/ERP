@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
+import { cached, revalidateCache } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
 // PRO — TỜ TRÌNH (Proposals / Submissions)
@@ -45,43 +46,46 @@ export async function getProposals(filters?: {
     category?: string
     createdBy?: string
 }) {
-    const where: any = {}
-    if (filters?.status) where.status = filters.status
-    if (filters?.category) where.category = filters.category
-    if (filters?.createdBy) where.createdBy = filters.createdBy
+    const cacheKey = `proposals:list:${filters?.status ?? ''}:${filters?.category ?? ''}:${filters?.createdBy ?? ''}`
+    return cached(cacheKey, async () => {
+        const where: any = {}
+        if (filters?.status) where.status = filters.status
+        if (filters?.category) where.category = filters.category
+        if (filters?.createdBy) where.createdBy = filters.createdBy
 
-    const proposals = await prisma.proposal.findMany({
-        where,
-        include: {
-            creator: { select: { name: true, email: true } },
-            department: { select: { name: true } },
-            _count: { select: { attachments: true, comments: true } },
-        },
-        orderBy: [
-            { priority: 'desc' },
-            { createdAt: 'desc' },
-        ],
-    })
+        const proposals = await prisma.proposal.findMany({
+            where,
+            include: {
+                creator: { select: { name: true, email: true } },
+                department: { select: { name: true } },
+                _count: { select: { attachments: true, comments: true } },
+            },
+            orderBy: [
+                { priority: 'desc' },
+                { createdAt: 'desc' },
+            ],
+        })
 
-    return proposals.map(p => ({
-        id: p.id,
-        proposalNo: p.proposalNo,
-        category: p.category,
-        priority: p.priority,
-        title: p.title,
-        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
-        currency: p.currency,
-        deadline: p.deadline,
-        status: p.status,
-        currentLevel: p.currentLevel,
-        creatorName: p.creator.name ?? p.creator.email,
-        departmentName: p.department?.name ?? null,
-        attachmentCount: p._count.attachments,
-        commentCount: p._count.comments,
-        submittedAt: p.submittedAt,
-        resolvedAt: p.resolvedAt,
-        createdAt: p.createdAt,
-    }))
+        return proposals.map(p => ({
+            id: p.id,
+            proposalNo: p.proposalNo,
+            category: p.category,
+            priority: p.priority,
+            title: p.title,
+            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+            currency: p.currency,
+            deadline: p.deadline,
+            status: p.status,
+            currentLevel: p.currentLevel,
+            creatorName: p.creator.name ?? p.creator.email,
+            departmentName: p.department?.name ?? null,
+            attachmentCount: p._count.attachments,
+            commentCount: p._count.comments,
+            submittedAt: p.submittedAt,
+            resolvedAt: p.resolvedAt,
+            createdAt: p.createdAt,
+        }))
+    }, 30_000) // 30s cache
 }
 
 // ─── Get proposal detail ─────────────────────────
@@ -345,62 +349,66 @@ export async function addProposalComment(input: {
 
 // ─── Stats for proposals page ────────────────────
 export async function getProposalStats() {
-    const [total, pending, approved, rejected, draft] = await Promise.all([
-        prisma.proposal.count(),
-        prisma.proposal.count({ where: { status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] } } }),
-        prisma.proposal.count({ where: { status: 'APPROVED' } }),
-        prisma.proposal.count({ where: { status: 'REJECTED' } }),
-        prisma.proposal.count({ where: { status: 'DRAFT' } }),
-    ])
-    return { total, pending, approved, rejected, draft }
+    return cached('proposals:stats', async () => {
+        const [total, pending, approved, rejected, draft] = await Promise.all([
+            prisma.proposal.count(),
+            prisma.proposal.count({ where: { status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] } } }),
+            prisma.proposal.count({ where: { status: 'APPROVED' } }),
+            prisma.proposal.count({ where: { status: 'REJECTED' } }),
+            prisma.proposal.count({ where: { status: 'DRAFT' } }),
+        ])
+        return { total, pending, approved, rejected, draft }
+    }, 30_000) // 30s cache
 }
 
 // ─── Pending proposals for CEO dashboard ─────────
 export async function getPendingProposalsForCEO() {
-    const proposals = await prisma.proposal.findMany({
-        where: {
-            status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
-            currentLevel: 3, // CEO level
-        },
-        include: {
-            creator: { select: { name: true, email: true } },
-            department: { select: { name: true } },
-            _count: { select: { attachments: true, comments: true } },
-            approvalLogs: {
-                orderBy: { createdAt: 'desc' },
-                take: 3,
-                include: { approver: { select: { name: true } } },
+    return cached('proposals:pendingCEO', async () => {
+        const proposals = await prisma.proposal.findMany({
+            where: {
+                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
+                currentLevel: 3, // CEO level
             },
-        },
-        orderBy: [
-            { priority: 'desc' },
-            { submittedAt: 'asc' },
-        ],
-    })
+            include: {
+                creator: { select: { name: true, email: true } },
+                department: { select: { name: true } },
+                _count: { select: { attachments: true, comments: true } },
+                approvalLogs: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 3,
+                    include: { approver: { select: { name: true } } },
+                },
+            },
+            orderBy: [
+                { priority: 'desc' },
+                { submittedAt: 'asc' },
+            ],
+        })
 
-    return proposals.map(p => ({
-        id: p.id,
-        proposalNo: p.proposalNo,
-        category: p.category,
-        priority: p.priority,
-        title: p.title,
-        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
-        currency: p.currency,
-        deadline: p.deadline,
-        status: p.status,
-        currentLevel: p.currentLevel,
-        creatorName: p.creator.name ?? p.creator.email,
-        departmentName: p.department?.name ?? null,
-        attachmentCount: p._count.attachments,
-        commentCount: p._count.comments,
-        submittedAt: p.submittedAt,
-        previousApprovals: p.approvalLogs.map(l => ({
-            level: l.level,
-            action: l.action,
-            approverName: l.approver.name,
-            createdAt: l.createdAt,
-        })),
-    }))
+        return proposals.map(p => ({
+            id: p.id,
+            proposalNo: p.proposalNo,
+            category: p.category,
+            priority: p.priority,
+            title: p.title,
+            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+            currency: p.currency,
+            deadline: p.deadline,
+            status: p.status,
+            currentLevel: p.currentLevel,
+            creatorName: p.creator.name ?? p.creator.email,
+            departmentName: p.department?.name ?? null,
+            attachmentCount: p._count.attachments,
+            commentCount: p._count.comments,
+            submittedAt: p.submittedAt,
+            previousApprovals: p.approvalLogs.map(l => ({
+                level: l.level,
+                action: l.action,
+                approverName: l.approver.name,
+                createdAt: l.createdAt,
+            })),
+        }))
+    }, 15_000) // 15s cache — realtime-ish
 }
 
 // ─── Mark as in-progress / closed ────────────────
