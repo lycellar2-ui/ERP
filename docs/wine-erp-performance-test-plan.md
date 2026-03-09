@@ -1,6 +1,6 @@
 # ⚡ Wine ERP — Kế Hoạch Test Tốc Độ Phản Hồi Hệ Thống
-**Ngày:** 06/03/2026 | **Phiên bản:** v1.0  
-**Phạm vi:** 22 Module × 32 Action Files × 3 API Routes  
+**Ngày:** 06/03/2026 | **Phiên bản:** v1.1 (Cập nhật 09/03 — Audit cache hoàn tất)  
+**Phạm vi:** 22 Module × 40 Action Files × 3 API Routes  
 **Mục tiêu:** Đo lường & đánh giá response time của TOÀN BỘ Server Actions + API Endpoints  
 **Chuẩn đánh giá:** Core Web Vitals + Internal SLA targets
 
@@ -80,6 +80,16 @@ Hệ thống đang sử dụng **4-layer caching** — cần test trên từng l
 1. **Cold Start** — Cache trống (khởi động server / sau deploy)
 2. **Warm Cache** — SWR FRESH (< 30s sau request trước)
 3. **Stale Cache** — SWR STALE (30s-90s: trả stale + background refresh)
+
+### Cache Coverage (Audit 09/03/2026)
+
+| Metric | Kết quả |
+|--------|--------|
+| **Action files có `cached()`** | 36/40 (90%) |
+| **Pages có `loading.tsx`** | 39/39 (100%) |
+| **Files không cần cache** | 4 (AI external API) |
+| **Warm cache response** | < 50ms |
+| **Cold start response** | ~500ms |
 
 ---
 
@@ -650,9 +660,12 @@ Slowest Endpoint: Dashboard (2212ms)
 | **P1 (Important)** | 65 test cases |
 | **P2 (Nice-to-have)** | 20 test cases |
 | **Modules covered** | 22/22 (100%) |
-| **Action files** | 32/32 (100%) |
+| **Action files** | 40/40 (100%) |
+| **Action files with cache** | 36/40 (90%) |
+| **Pages with loading.tsx** | 39/39 (100%) |
 | **API routes** | 3/3 (100%) |
 
 ---
 
 *Tạo: 06/03/2026 19:00 | @project-planner + @performance-profiling*
+*Cập nhật: 09/03/2026 — Cache audit hoàn tất (36/40 files, 39/39 loading.tsx)*

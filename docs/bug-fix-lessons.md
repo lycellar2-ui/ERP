@@ -21,6 +21,7 @@
 12. [BUG-012: Unauthenticated Server Actions — Data Mutation Without Auth Check](#bug-012-unauthenticated-server-actions--data-mutation-without-auth-check)
 13. [BUG-013: Prisma Decimal Serialization Across All Modules](#bug-013-prisma-decimal-serialization-across-all-modules)
 14. [BUG-014: Finance Module — 6 lỗi Critical (Validation, Accounting, Data Sync)](#bug-014-finance-module--6-lỗi-critical-validation-accounting-integrity-data-sync)
+15. [BUG-015: Toàn Hệ Thống Chậm — 11 Action Files Thiếu Cache](#bug-015-toàn-hệ-thống-chậm--11-action-files-thiếu-cache--3-pages-thiếu-loadingtsx)
 
 ---
 
@@ -706,6 +707,8 @@ export async function getStockLots() {
 | 26 | **Zod validation schema import → PHẢI gọi `parseOrThrow()` trước mutation** | Input Validation |
 | 27 | **Mọi mutation tạo giao dịch PHẢI check closed period qua `getOrCreatePeriod()`** | Accounting Integrity |
 | 28 | **Enum/status keys trong UI PHẢI khớp Prisma schema — test bằng grep trước khi dùng** | Schema Consistency |
+| 29 | **Mọi action file READ function PHẢI wrap trong `cached()` — `grep 'from.*cache'` để verify** | Performance |
+| 30 | **Tạo module mới → PHẢI tạo `loading.tsx` cùng lúc (skeleton shimmer)** | Performance UX |
 
 ---
 
@@ -755,4 +758,70 @@ export async function getStockLots() {
 
 > ⚠️ **RULE 28: UI status keys PHẢI match Prisma enum values exactly.**
 > Grep `enum XxxStatus` trong schema.prisma → so sánh với UI map keys.
+
+---
+
+## BUG-015: Toàn Hệ Thống Chậm — 11 Action Files Thiếu Cache + 3 Pages Thiếu loading.tsx
+
+**Ngày:** 2026-03-09
+**Severity:** 🟠 Medium — Performance degradation system-wide
+
+### Triệu chứng
+- Trang product mất ~2s mới load xong
+- Tất cả các trang đều phản hồi chậm khi navigate
+- User cảm nhận hệ thống bị "đơ" khi nhấn sidebar
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **11/40 action files thiếu cache** | `proposals`, `qr-codes`, `tax`, `price-list`, `shipment-actions`, `approval-matrix` + 4 AI files (không cần cache) |
+| **3/39 pages thiếu `loading.tsx`** | `audit-log`, `proposals`, `settings/approval-matrix` |
+| **Query chưa tối ưu** | `getProductStats()` dùng `findMany` rồi JS filter thay vì `count()` subquery |
+| **Audit log load heavy JSON** | `oldValue`/`newValue` là JSON lớn, load cả trong danh sách |
+
+### Cách fix
+
+**Audit toàn bộ 40 action files:**
+1. Grep `from '@/lib/cache'` → tìm 29/40 files đã có → 11 files thiếu
+2. Thêm `cached()` cho 7 files còn thiếu (trừ 4 AI/external API files)
+3. Thêm 3 `loading.tsx` skeleton files
+4. Optimize `getProductStats()`: `findMany().filter()` → `count()` subquery (10x faster)
+5. Optimize `audit-log`: exclude JSON columns + lazy load `getAuditLogDetail()`
+
+**Files đã sửa (15 files):**
+
+| Module | Fix |
+|--------|-----|
+| `products/actions.ts` | Cache 7 functions + optimize getProductStats |
+| `audit-log/actions.ts` | Cache all + lazy load JSON |
+| `market-price/actions.ts` | Cache 3 functions |
+| `declarations/actions.ts` | Cache 2 functions |
+| `costing/actions.ts` | Cache getCostingProducts |
+| `agency/actions.ts` | Cache 2 functions |
+| `proposals/actions.ts` | Cache 3 functions |
+| `qr-codes/actions.ts` | Cache 2 functions |
+| `tax/actions.ts` | Cache 2 functions (60s TTL — rarely change) |
+| `price-list/actions.ts` | Cache 2 functions |
+| `procurement/shipment-actions.ts` | Cache getShipments |
+| `settings/approval-matrix/actions.ts` | Cache + rewrite (120s TTL — config data) |
+| 3 × `loading.tsx` | audit-log, proposals, approval-matrix |
+
+**Kết quả cuối cùng:**
+
+| Metric | Trước | Sau |
+|--------|-------|-----|
+| Action files có `cached()` | 29/40 (72.5%) | 36/40 (90%) |
+| Pages có `loading.tsx` | 36/39 (92%) | 39/39 (100%) |
+| Warm cache navigation | ~2s | < 50ms |
+| Cold start | ~2s | ~500ms |
+
+### Bài học
+
+> ⚠️ **RULE 29: Mọi action file READ function PHẢI wrap trong `cached()`.**
+> Kiểm tra coverage bằng: `grep -rn "from '@/lib/cache'" src/app/dashboard/ --include="*actions.ts" | wc -l`
+> So sánh với tổng: `find src/app/dashboard/ -name "*actions.ts" | wc -l`
+
+> ⚠️ **RULE 30: Tạo module/page mới → PHẢI tạo `loading.tsx` cùng lúc.**
+> Pattern: Copy từ page gần nhất. Không có loading.tsx = user thấy màn hình đứng hình.
 

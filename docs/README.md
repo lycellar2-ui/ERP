@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 25 Rules rút ra từ 13 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 30 Rules rút ra từ 15 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -55,7 +55,7 @@
 | **Prisma models** | 113 |
 | **Prisma enums** | 71 |
 | **Dashboard routes** | 33 folders |
-| **Server Action files** | 38 files |
+| **Server Action files** | 40 files |
 | **Module spec files** | 24 files |
 | **Sidebar nav items** | 34 items (7 groups) |
 
@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-09 03:25 | Wine ERP v6.4 — 26 modules, 113 models, 33 routes, 6 AI features live (Pipeline, CRM, Catalog, CEO Briefing, Product Desc, Admin Toggle)*
+*Last updated: 2026-03-09 12:16 | Wine ERP v6.5 — 26 modules, 113 models, 40 action files (36 cached), 39 loading.tsx, 6 AI features live*
