@@ -173,30 +173,23 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
         router.prefetch(href)
     }, [router])
 
-    // Auto-prefetch adjacent tabs when current page loads
+    // Auto-prefetch ALL sidebar links after current page loads
+    // This ensures every link click is instant from Router Cache
     useEffect(() => {
         const allHrefs = NAV_GROUPS.flatMap(g => g.items.map(i => i.href))
-        const currentIdx = allHrefs.indexOf(pathname)
-        if (currentIdx === -1) return
 
-        // Prefetch prev + next tabs (most likely navigation targets)
-        const adjacentIdxs = [currentIdx - 1, currentIdx + 1].filter(
-            i => i >= 0 && i < allHrefs.length
-        )
-        // Also prefetch dashboard (most common return target)
-        const toPrefetch = [...adjacentIdxs.map(i => allHrefs[i]), '/dashboard']
+        // Stagger prefetching to avoid thundering herd
+        const timers: ReturnType<typeof setTimeout>[] = []
+        allHrefs.forEach((href, idx) => {
+            if (href === pathname || prefetchedRef.current.has(href)) return
+            const timer = setTimeout(() => {
+                prefetchedRef.current.add(href)
+                router.prefetch(href)
+            }, 500 + idx * 100) // Stagger: 500ms, 600ms, 700ms...
+            timers.push(timer)
+        })
 
-        // Delay slightly to not compete with current page load
-        const timer = setTimeout(() => {
-            toPrefetch.forEach(href => {
-                if (href !== pathname && !prefetchedRef.current.has(href)) {
-                    prefetchedRef.current.add(href)
-                    router.prefetch(href)
-                }
-            })
-        }, 1000)
-
-        return () => clearTimeout(timer)
+        return () => timers.forEach(clearTimeout)
     }, [pathname, router])
 
     return (

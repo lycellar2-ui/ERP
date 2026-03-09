@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     staleTimes: {
-      dynamic: 30,
-      static: 300,
+      dynamic: 120,   // Pages visited within 2min → instant from browser cache
+      static: 600,    // Static pages cached 10min
     },
   },
   async headers() {
