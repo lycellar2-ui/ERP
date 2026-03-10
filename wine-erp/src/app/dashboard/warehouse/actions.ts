@@ -56,7 +56,7 @@ export type LocationRow = {
 
 // ─── Warehouses ───────────────────────────────────
 export async function getWarehouses(): Promise<WarehouseRow[]> {
-    return cached('wms:warehouses', async () => {
+    try {
         const warehouses = await prisma.warehouse.findMany({
             include: {
                 locations: {
@@ -85,7 +85,10 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
                 createdAt: w.createdAt,
             }
         }))
-    }) // end cached
+    } catch (err) {
+        console.error('[WMS] getWarehouses query error:', err)
+        return []
+    }
 }
 
 // ─── Stock inventory view ─────────────────────────
