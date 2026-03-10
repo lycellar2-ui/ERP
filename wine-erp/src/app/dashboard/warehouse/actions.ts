@@ -71,7 +71,7 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
             orderBy: { name: 'asc' },
         })
 
-        return warehouses.map(w => {
+        return serialize(warehouses.map(w => {
             const lots = w.locations.flatMap(l => l.stockLots)
             return {
                 id: w.id,
@@ -84,7 +84,7 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
                 totalValue: lots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0),
                 createdAt: w.createdAt,
             }
-        })
+        }))
     }) // end cached
 }
 
