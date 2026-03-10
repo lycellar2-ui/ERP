@@ -136,6 +136,7 @@ graph LR
 - [x] Backend: `saveWarehouseLayout()` — admin-only batch position save (transaction)
 - [x] Backend: `autoLayoutWarehouse()` — auto-grid by zone (6 cols/zone)
 - [x] Backend: `searchProductLocations()` — SKU → highlighted locationIds
+- [x] Backend: `getWarehouseLayoutConfig()` — load walls/doors/labels + error handling (try-catch)
 - [x] Canvas 2D: Grid background, pan (drag), zoom (scroll wheel 0.3x-3x), reset
 - [x] Location blocks: locationCode, occupancy bar, heat color (xanh→vàng→đỏ)
 - [x] Zone labels tự động hiển thị phía trên nhóm locations
@@ -145,7 +146,12 @@ graph LR
 - [x] Click location → detail panel (Zone/Rack/Bin, loại, % chiếm dụng, SP trong kệ)
 - [x] Legend: 5 mức chiếm dụng + Zone colors
 - [x] `page.tsx` — pass `isAdmin` prop từ `getCurrentUser()` → WarehouseClient
-- → **Verify:** ✅ Canvas 2D interactive, drag-drop admin-only, product search highlight.
+- [x] **Floor Plan Editor Bug Fix** (10/03 commit `e0b0362`): 3 bugs fixed + 1 UX improvement
+  - [x] Fix: Location blocks + Zone labels không chặn wall/door tool clicks (`pointerEvents: 'none'`)
+  - [x] Fix: ESC key hoạt động globally (thay sr-only div bằng `useEffect` keydown listener)
+  - [x] Fix: Space+Drag để pan canvas trong edit mode (như Figma/Photoshop)
+  - [x] UX: Tool hint banners hiển thị khi chọn tool Tường/Cửa
+- → **Verify:** ✅ Canvas 2D interactive, drag-drop admin-only, product search highlight, floor plan drawing tools functional.
 ---
 
 ## PHASE 3 — Tài Chính Core
@@ -668,6 +674,6 @@ Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Test
 ---
 
 *Created: 05/03/2026 | Based on: wine-erp-audit-05-03.md (archived)*
-*Updated: 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | WMS: NXT Report + Professional Floor Plan Editor (walls/doors/labels)*
+*Updated: 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | WMS: NXT Report + Floor Plan Editor (walls/doors/labels) + Drawing Tools Bug Fix (`e0b0362`)*
 
 

@@ -23,6 +23,7 @@
 14. [BUG-014: Finance Module — 6 lỗi Critical (Validation, Accounting, Data Sync)](#bug-014-finance-module--6-lỗi-critical-validation-accounting-integrity-data-sync)
 15. [BUG-015: Toàn Hệ Thống Chậm — 11 Action Files Thiếu Cache](#bug-015-toàn-hệ-thống-chậm--11-action-files-thiếu-cache--3-pages-thiếu-loadingtsx)
 16. [BUG-016: force-dynamic Trên Layout Giết Router Cache](#bug-016-force-dynamic-trên-layout-giết-router-cache)
+17. [BUG-017: Floor Plan Drawing Tools Bị Chặn — pointerEvents + ESC + Pan](#bug-017-floor-plan-drawing-tools-bị-chặn--pointerevents--esc--pan)
 
 ---
 
@@ -712,6 +713,8 @@ export async function getStockLots() {
 | 30 | **Tạo module mới → PHẢI tạo `loading.tsx` cùng lúc (skeleton shimmer)** | Performance UX |
 | 31 | **KHÔNG đặt `force-dynamic` trên layout — chỉ đặt trên page nếu cần** | Router Cache |
 | 32 | **`staleTimes.dynamic` trong next.config PHẢI ≥ 60s cho dashboard** | Router Cache |
+| 33 | **Interactive elements (location blocks, zone labels) PHẢI có `pointerEvents: 'none'` khi drawing tool active** | Canvas Interaction |
+| 34 | **Keyboard handlers cho canvas đặt ở `useEffect` global, KHÔNG trong `sr-only` div** | Event Handling |
 
 ---
 
@@ -876,3 +879,70 @@ export const dynamic = 'force-dynamic'
 
 > ⚠️ **RULE 32: `staleTimes.dynamic` trong next.config PHẢI ≥ 60s cho dashboard.**
 > Giá trị khuyến nghị: 120s. Dashboard data thay đổi theo phút, không theo giây.
+
+---
+
+## BUG-017: Floor Plan Drawing Tools Bị Chặn — pointerEvents + ESC + Pan
+
+**Ngày:** 2026-03-10
+**Severity:** 🟠 Medium — Drawing tools không hoạt động, UX bị block
+**Commit:** `e0b0362`
+
+### Triệu chứng
+- Chọn tool "Tường" hoặc "Cửa" → click trên canvas → **không drawing gì**
+- Phím ESC không hủy vẽ tường
+- Không thể pan canvas khi đang ở edit mode (ngoài middle-click)
+- `getWarehouseLayoutConfig()` throw 500 nếu DB lỗi
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Location blocks chặn click** | Mỗi location block gọi `e.stopPropagation()` bất kể tool nào → event không reach canvas handler |
+| **Zone labels chặn click** | Zone wrapper div (z-index 2) chưa có `pointerEvents: 'none'` → chặn wall/door tool |
+| **ESC trong sr-only div** | Keyboard handler nằm trong `<div className="sr-only">` — element **không bao giờ có focus** → event không capture |
+| **Thiếu pan UX** | Edit mode chỉ có middle-click pan — không tự nhiên như Figma |
+| **Thiếu try-catch** | `getWarehouseLayoutConfig()` throw raw Prisma error → 500 |
+
+### Cách fix (3 bugs + 1 UX + 1 defensive)
+
+| # | File | Fix |
+|---|------|-----|
+| 1 | `WarehouseMapTab.tsx` | Location blocks: `pointerEvents: isDrawingTool ? 'none' : 'auto'` + conditional `stopPropagation` |
+| 2 | `WarehouseMapTab.tsx` | Zone labels: thêm `pointerEvents: isDrawingTool ? 'none' : 'auto'` cho wrapper div |
+| 3 | `WarehouseMapTab.tsx` | ESC: thay `sr-only` div bằng `useEffect(() => { window.addEventListener('keydown', ...) })` |
+| 4 | `WarehouseMapTab.tsx` | Pan: thêm Space+Drag (giữ Space + kéo chuột trái) trong edit mode |
+| 5 | `actions-map.ts` | `getWarehouseLayoutConfig()` bọc try-catch, return default nếu lỗi |
+
+### Pattern quan trọng
+
+```typescript
+// Drawing canvas: Interactive elements PHẢI có pointerEvents bypass
+const isDrawingTool = tool === 'wall' || tool === 'door' || tool === 'label' || tool === 'eraser'
+
+// Location block
+<div style={{
+    pointerEvents: editMode && isDrawingTool ? 'none' : 'auto',  // ← KEY
+    cursor: editMode && isDrawingTool ? 'inherit' : 'pointer',
+}}>
+
+// Global keyboard handler (NOT in sr-only div)
+useEffect(() => {
+    if (!editMode) return
+    const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') { cancelDrawing() }
+        if (e.key === ' ' && !e.repeat) { e.preventDefault(); setPanning(true) }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+}, [editMode])
+```
+
+### Bài học
+
+> ⚠️ **RULE 33: Interactive elements (location blocks, zone labels) PHẢI có `pointerEvents: 'none'` khi drawing tool active.**
+> Nhiều layer HTML/SVG chồng lên nhau trên canvas. Nếu không bypass pointerEvents, event bị nuốt bởi element ở layer trên.
+
+> ⚠️ **RULE 34: Keyboard handlers cho canvas đặt ở `useEffect` global (`window.addEventListener`), KHÔNG trong `sr-only` div.**
+> `sr-only` div không bao giờ có focus → keyboard events không được capture.
+> `useEffect` + `window.addEventListener` hoạt động ở mọi trường hợp.

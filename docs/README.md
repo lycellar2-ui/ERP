@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 32 Rules rút ra từ 16 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 34 Rules rút ra từ 17 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -178,7 +178,7 @@ docs/
 ├── wine-erp-testing.md            ← Kết quả unit test
 ├── wine-erp-performance-test-plan.md ← Kế hoạch test performance
 ├── file-storage-plan.md           ← ImgBB + Supabase Storage
-├── bug-fix-lessons.md             ← 25 Rules từ 13 bugs
+├── bug-fix-lessons.md             ← 34 Rules từ 17 bugs
 ├── llms.txt                       ← AI context index
 │
 ├── architecture/
@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-10 11:17 | Wine ERP v6.7 — 26 modules, 113 models, 42 action files (38 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live, WMS Floor Plan Editor (walls/doors/labels)*
+*Last updated: 2026-03-10 13:34 | Wine ERP v6.8 — 26 modules, 113 models, 42 action files (38 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live, WMS Floor Plan Editor bug fix (commit e0b0362)*
