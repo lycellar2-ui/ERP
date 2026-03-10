@@ -55,7 +55,7 @@
 | **Prisma models** | 113 |
 | **Prisma enums** | 71 |
 | **Dashboard routes** | 33 folders |
-| **Server Action files** | 40 files |
+| **Server Action files** | 42 files |
 | **Module spec files** | 24 files |
 | **Sidebar nav items** | 34 items (7 groups) |
 
@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-09 12:43 | Wine ERP v6.5 — 26 modules, 113 models, 40 action files (36 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live*
+*Last updated: 2026-03-10 09:34 | Wine ERP v6.6 — 26 modules, 113 models, 42 action files (38 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live, WMS NXT + 2D Map*

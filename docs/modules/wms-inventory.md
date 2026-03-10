@@ -21,6 +21,8 @@ Warehouse (Kho)
 - `capacity_cases`: Số thùng tối đa có thể chứa
 - `temperature_controlled`: Boolean — Có kiểm soát nhiệt độ không?
 - `current_occupancy`: % hiện tại đang dùng (Real-time)
+- `posX`, `posY`: Tọa độ hiển thị trên bản đồ 2D (Float)
+- `width`, `height`: Kích thước hiển thị trên bản đồ 2D (Float)
 
 **Kho ảo (Virtual Location):**
 - `IN_TRANSIT`: Hàng trên tàu/xe đang về
@@ -199,6 +201,78 @@ Giao diện tổng quan cho Quản lý Kho:
 
 ---
 
+## 10. Sơ Đồ Kho 2D — Visual Warehouse Map
+
+> **Tab "Sơ Đồ Kho" trong module WMS** — Bản đồ 2D trực quan, hỗ trợ kéo thả sắp xếp (Admin only).
+
+### 10.1 Tính Năng
+
+| Tính năng | Mô tả |
+|---|---|
+| **Canvas 2D** | Grid background, pan (kéo nền), scroll wheel zoom (0.3x–3x), reset view |
+| **Location blocks** | Hiển thị locationCode, occupancy bar, màu theo mức chiếm dụng (xanh→vàng→đỏ) |
+| **Zone labels** | Label tự động hiển thị tên Zone phía trên nhóm locations |
+| **Tìm sản phẩm** | Gõ SKU/tên → highlight vị trí trên bản đồ (pulse glow animation) + hiển thị kết quả |
+| **Chi tiết vị trí** | Click location → panel phải hiển thị: Zone/Rack/Bin, loại, chiếm dụng %, danh sách SP |
+| **Edit mode (Admin)** | CEO/Thủ kho bật "Chỉnh Sửa" → kéo thả từng location block trên canvas |
+| **Auto Grid** | Tự động sắp xếp locations theo lưới nhóm theo Zone (6 cột/zone) |
+| **Batch Save** | Lưu toàn bộ vị trí layout cùng lúc (transaction) |
+| **Chú thích** | Legend: 5 mức chiếm dụng (Trống/Thấp/TB/Cao/Đầy) + Zone colors |
+
+### 10.2 Phân Quyền
+
+| Vai trò | Xem bản đồ | Tìm SP | Kéo thả / Lưu layout |
+|---|---|---|---|
+| CEO | ✅ | ✅ | ✅ |
+| Thủ kho | ✅ | ✅ | ✅ |
+| Các role khác | ✅ | ✅ | ❌ (ẩn nút Chỉnh Sửa) |
+
+### 10.3 Backend (actions-map.ts)
+
+```
+getWarehouseMapData(warehouseId)         → MapWarehouse with locations + stock occupancy
+updateLocationPosition(locationId, pos)  → Admin-only single location update
+saveWarehouseLayout(warehouseId, layouts) → Admin-only batch position save (transaction)
+autoLayoutWarehouse(warehouseId)          → Auto-grid by zone (6 cols, padding, zone gap)
+searchProductLocations(warehouseId, term) → Find product → return locationIds for highlight
+```
+
+---
+
+## 11. Sổ Nhập Xuất Tồn — Stock Movement Report (NXT)
+
+> **Tab "Nhập Xuất Tồn" trong module WMS** — Sổ kho theo từng phiếu cho bất kỳ sản phẩm.
+
+### 11.1 Tính Năng
+
+| Tính năng | Mô tả |
+|---|---|
+| **Tìm sản phẩm** | Search dropdown: SKU, tên sản phẩm → chọn → tải báo cáo |
+| **Bộ lọc** | Kho, Ngày từ/đến, Loại phiếu (Tất cả / Chỉ Nhập / Chỉ Xuất) |
+| **Timeline table** | Mỗi dòng = 1 phiếu GR (nhập) hoặc DO (xuất), hiển thị: Ngày, Loại, Số CT, Kho, Vị trí, Lô, Nhập, Xuất, **Tồn (running balance)**, Tham chiếu |
+| **Summary cards** | 5 KPI: Tổng Nhập, Tổng Xuất, Tồn Hiện Tại, Giá Trị Tồn, Số Phiếu |
+| **Vị trí tồn** | Panel bên phải: danh sách vị trí hiện có tồn kho của SP (location, zone, lô, SL, giá trị) |
+| **Export CSV** | Xuất sổ kho CSV (10 cột) với BOM cho Excel, tên file theo SKU |
+
+### 11.2 Nguồn Dữ Liệu
+
+| Loại | Source | Điều kiện |
+|---|---|---|
+| **Nhập (IN)** | `GoodsReceiptLine` → `GoodsReceipt` | GR status = CONFIRMED |
+| **Xuất (OUT)** | `DeliveryOrderLine` → `DeliveryOrder` | DO status = SHIPPED/DELIVERED |
+
+Được sắp xếp theo ngày → tính toán **running balance** (cộng dồn) cho mỗi dòng.
+
+### 11.3 Backend (actions-nxt.ts)
+
+```
+getProductSearchOptions(search?)          → ProductOption[] (SKU, name, vintage)
+getStockMovements(filters)                → { movements: StockMovementRow[], summary: NXTSummary }
+getProductStockByLocation(productId)      → Current lots with location details
+```
+
+---
+
 ## 8. Database Design
 
 ```
@@ -302,9 +376,9 @@ Cần thiết vì kho có thể có vùng mù sóng.
 
 ---
 
-## 10. Implementation Status (Trạng Thái Triển Khai)
+## 12. Implementation Status (Trạng Thái Triển Khai)
 
-> Cập nhật 08/03/2026 — **Hoàn thiện 100% (32/32 gaps resolved)**
+> Cập nhật 10/03/2026 — **Hoàn thiện 100% + 2 tính năng mới (NXT, 2D Map)**
 
 ### ✅ Core Features (Đã triển khai từ trước)
 
@@ -380,6 +454,21 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Session auth** | `confirmGoodsReceipt` + `confirmDeliveryOrder` dùng `getCurrentUser()` thay hardcode `'user-admin'` |
 | **Edit/Delete warehouse** | `editWarehouse`, `deleteWarehouse` actions (kiểm tra location trước khi xóa) |
 
+#### Phase 5: Stock Movement Report & 2D Map (10/03/2026)
+
+| Tính năng | File | Ghi chú |
+|---|---|---|
+| **Schema: Location posX/posY/width/height** | `schema.prisma` | Tọa độ 2D cho visual warehouse map |
+| **Tab Nhập Xuất Tồn (NXT)** | `StockMovementTab.tsx`, `actions-nxt.ts` | Search SP → timeline GR/DO + running balance + summary + CSV export |
+| **Tab Sơ Đồ Kho 2D** | `WarehouseMapTab.tsx`, `actions-map.ts` | Canvas pan/zoom, drag-drop (admin), occupancy heatmap, product search highlight |
+| **Product Search Options** | `getProductSearchOptions()` | Cached search by SKU/name for NXT tab |
+| **Stock Movement Query** | `getStockMovements()` | GR lines (nhập) + DO lines (xuất) → running balance |
+| **Warehouse Map Data** | `getWarehouseMapData()` | Locations + stock occupancy per location |
+| **Batch Layout Save** | `saveWarehouseLayout()` | Admin-only batch position update (transaction) |
+| **Auto Grid Layout** | `autoLayoutWarehouse()` | Auto-arrange by zone in 6-column grid |
+| **Product Location Search** | `searchProductLocations()` | SKU → highlighted locations on map |
+| **isAdmin prop** | `page.tsx`, `WarehouseClient.tsx` | CEO/THU_KHO role check for map edit controls |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -390,5 +479,4 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-03-08 | Wine ERP v5.1 — WMS Deep Dive Complete*
-
+*Last updated: 2026-03-10 | Wine ERP v6.6 — WMS Deep Dive + NXT Report + 2D Map*

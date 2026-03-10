@@ -1,6 +1,6 @@
 ﻿# Wine ERP — Kế Hoạch Triển Khai Toàn Bộ
 > Kế hoạch triển khai toàn bộ features. Dựa trên Audit ngày 05/03/2026.
-> **Last Updated:** 09/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 33 routes, 6 AI features live
+> **Last Updated:** 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 33 routes, 6 AI features live, WMS NXT + 2D Map
 
 ## Mục Tiêu
 Hoàn thiện toàn bộ tính năng còn thiếu của Wine ERP theo đúng 19 file đặc tả, chia thành 8 Phase thực thi tuần tự. Mỗi Phase có output rõ ràng, có thể verify ngay.
@@ -117,7 +117,35 @@ graph LR
 - [x] Quarantine cần Approval (CEO) qua Approval Engine — write-off >10M VND → `submitForApproval()`
 - → **Verify:** ✅ Write-off → auto journal entry DR 811 / CR 156 với mô tả SKU + lý do.
 
+### 2.6 Sổ Nhập Xuất Tồn — Stock Movement Report (NXT) ✅ DONE (10/03/2026)
+- [x] Tab "Nhập Xuất Tồn" trong WMS module — `StockMovementTab.tsx`
+- [x] Backend: `getStockMovements()` — query GR lines (nhập) + DO lines (xuất) per product → running balance
+- [x] Backend: `getProductSearchOptions()` — cached product search by SKU/name
+- [x] Backend: `getProductStockByLocation()` — current lots with location details
+- [x] UI: Product search dropdown + Bộ lọc (Kho, Ngày từ/đến, Loại phiếu)
+- [x] UI: Timeline table — mỗi dòng 1 phiếu, cột Nhập/Xuất/Tồn (running balance)
+- [x] UI: 5 Summary cards (Tổng Nhập, Tổng Xuất, Tồn Hiện Tại, Giá Trị Tồn, Số Phiếu)
+- [x] UI: Panel vị trí tồn kho hiện tại (location, zone, lô, SL, giá trị)
+- [x] Export CSV — 10 cột, BOM cho Excel, tên file theo SKU
+- → **Verify:** ✅ Search SKU → Timeline với running balance + Summary + Export CSV.
 
+### 2.7 Sơ Đồ Kho 2D — Visual Warehouse Map ✅ DONE (10/03/2026)
+- [x] Schema migrate: `posX`, `posY`, `width`, `height` (Float?) trên model Location
+- [x] Tab "Sơ Đồ Kho" trong WMS module — `WarehouseMapTab.tsx`
+- [x] Backend: `getWarehouseMapData()` — locations + stock occupancy per location
+- [x] Backend: `saveWarehouseLayout()` — admin-only batch position save (transaction)
+- [x] Backend: `autoLayoutWarehouse()` — auto-grid by zone (6 cols/zone)
+- [x] Backend: `searchProductLocations()` — SKU → highlighted locationIds
+- [x] Canvas 2D: Grid background, pan (drag), zoom (scroll wheel 0.3x-3x), reset
+- [x] Location blocks: locationCode, occupancy bar, heat color (xanh→vàng→đỏ)
+- [x] Zone labels tự động hiển thị phía trên nhóm locations
+- [x] Admin-only edit mode: CEO/THU_KHO bật "Chỉnh Sửa" → kéo thả + batch save
+- [x] Auto Grid button: tự động sắp xếp Grid theo zone
+- [x] Product search → highlight (pulse glow) + kết quả panel
+- [x] Click location → detail panel (Zone/Rack/Bin, loại, % chiếm dụng, SP trong kệ)
+- [x] Legend: 5 mức chiếm dụng + Zone colors
+- [x] `page.tsx` — pass `isAdmin` prop từ `getCurrentUser()` → WarehouseClient
+- → **Verify:** ✅ Canvas 2D interactive, drag-drop admin-only, product search highlight.
 ---
 
 ## PHASE 3 — Tài Chính Core
@@ -640,6 +668,6 @@ Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Test
 ---
 
 *Created: 05/03/2026 | Based on: wine-erp-audit-05-03.md (archived)*
-*Updated: 09/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | Performance: Router Cache + Server Cache hoàn tất*
+*Updated: 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | WMS: NXT Report + 2D Map hoàn thành*
 
 
