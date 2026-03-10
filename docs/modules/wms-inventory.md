@@ -469,6 +469,29 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Product Location Search** | `searchProductLocations()` | SKU → highlighted locations on map |
 | **isAdmin prop** | `page.tsx`, `WarehouseClient.tsx` | CEO/THU_KHO role check for map edit controls |
 
+#### Phase 6: Professional Floor Plan Editor (10/03/2026)
+
+| Tính năng | File | Ghi chú |
+|---|---|---|
+| **Schema: Warehouse layoutConfig** | `schema.prisma` | JSON field lưu walls/doors/labels |
+| **Light canvas with dot grid** | `WarehouseMapTab.tsx` | White background, radial-gradient dots, professional look |
+| **Left toolbar (5 tools)** | `WarehouseMapTab.tsx` | Chọn, Tường, Cửa, Nhãn, Xóa — giống Figma |
+| **Wall drawing** | SVG `<line>` elements | Click-to-click vẽ tường, snap-to-grid, preview line |
+| **Door placement** | SVG `<rect>` + arc | Click đặt cửa với biểu tượng arc |
+| **Text labels** | SVG `<text>` | Prompt nhập text, tự do đặt vị trí |
+| **Eraser tool** | Distance-based detection | Click gần element → xóa (threshold 15px) |
+| **Layout config persistence** | `getWarehouseLayoutConfig()`, `saveWarehouseLayoutConfig()` | Lưu/tải walls+doors+labels từ DB |
+| **Zone badges** | Colored badges + dashed border | Badge "ZONE A" với nền dashed bao quanh khu vực |
+| **Occupancy color system** | 5-level heatmap | Trống (gray), Thấp (blue), TB (green), Cao (amber), Đầy (red) |
+
+#### Bug Fixes (10/03/2026)
+
+| Fix | Chi tiết |
+|---|---|
+| **Prisma nested include crash** | `getWarehouses()` + `getWarehouseMapData()` — nested `stockLots` include gây `column (not available)` error trên Vercel. Rewrite thành separate queries |
+| **Missing DB columns** | `prisma db push` chạy trên production để sync `posX/posY/width/height` columns |
+| **Silent error swallowing** | `.catch(() => [])` trong `page.tsx` nuốt mất error. Thay bằng try/catch + console.error |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -479,4 +502,4 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-03-10 | Wine ERP v6.6 — WMS Deep Dive + NXT Report + 2D Map*
+*Last updated: 2026-03-10 | Wine ERP v6.7 — WMS Deep Dive + NXT Report + 2D Floor Plan Editor (walls/doors/labels)*

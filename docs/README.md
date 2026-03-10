@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-10 09:34 | Wine ERP v6.6 — 26 modules, 113 models, 42 action files (38 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live, WMS NXT + 2D Map*
+*Last updated: 2026-03-10 11:17 | Wine ERP v6.7 — 26 modules, 113 models, 42 action files (38 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live, WMS Floor Plan Editor (walls/doors/labels)*

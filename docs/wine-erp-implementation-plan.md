@@ -1,6 +1,6 @@
 ﻿# Wine ERP — Kế Hoạch Triển Khai Toàn Bộ
 > Kế hoạch triển khai toàn bộ features. Dựa trên Audit ngày 05/03/2026.
-> **Last Updated:** 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 33 routes, 6 AI features live, WMS NXT + 2D Map
+> **Last Updated:** 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 33 routes, 6 AI features live, WMS Floor Plan Editor
 
 ## Mục Tiêu
 Hoàn thiện toàn bộ tính năng còn thiếu của Wine ERP theo đúng 19 file đặc tả, chia thành 8 Phase thực thi tuần tự. Mỗi Phase có output rõ ràng, có thể verify ngay.
@@ -668,6 +668,6 @@ Xem file `docs/wine-erp-testing.md` chứa Đặc tả và Kết quả Unit Test
 ---
 
 *Created: 05/03/2026 | Based on: wine-erp-audit-05-03.md (archived)*
-*Updated: 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | WMS: NXT Report + 2D Map hoàn thành*
+*Updated: 10/03/2026 — **P1-P8 ~99% ✅** | 26 modules, 113 models, 6 AI features live | WMS: NXT Report + Professional Floor Plan Editor (walls/doors/labels)*
 
 
