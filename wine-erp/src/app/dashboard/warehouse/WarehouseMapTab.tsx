@@ -70,6 +70,7 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
     const [layoutCfg, setLayoutCfg] = useState<LayoutConfig>({ walls: [], doors: [], labels: [] })
     const [wallDrawing, setWallDrawing] = useState<{ x1: number; y1: number } | null>(null)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+    const [spaceHeld, setSpaceHeld] = useState(false)
 
     // Drag location
     const [dragLoc, setDragLoc] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null)
@@ -111,6 +112,25 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
 
     useEffect(() => { if (selectedWH) loadMap(selectedWH) }, [selectedWH, loadMap])
 
+    // ── Global keyboard listener for ESC + Space ─────
+    useEffect(() => {
+        if (!editMode) return
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') { setWallDrawing(null); setTool('select') }
+            if (e.key === ' ' && !e.repeat) { e.preventDefault(); setSpaceHeld(true) }
+        }
+        const onKeyUp = (e: KeyboardEvent) => {
+            if (e.key === ' ') { setSpaceHeld(false) }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        window.addEventListener('keyup', onKeyUp)
+        return () => {
+            window.removeEventListener('keydown', onKeyDown)
+            window.removeEventListener('keyup', onKeyUp)
+            setSpaceHeld(false)
+        }
+    }, [editMode])
+
     // ── Canvas mouse handlers ──────────────────────────
     const toCanvas = useCallback((clientX: number, clientY: number) => {
         const rect = canvasRef.current?.getBoundingClientRect()
@@ -123,8 +143,11 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
 
     const snap = (v: number, grid = 10) => Math.round(v / grid) * grid
 
+    const isDrawingTool = tool === 'wall' || tool === 'door' || tool === 'label' || tool === 'eraser'
+
     const onCanvasMouseDown = (e: React.MouseEvent) => {
-        if (e.button === 1 || (e.button === 0 && (tool === 'select' && !editMode))) {
+        // Pan: middle-click, or left-click in view mode, or space+left-click in edit mode
+        if (e.button === 1 || (e.button === 0 && (tool === 'select' && !editMode)) || (e.button === 0 && spaceHeld && editMode)) {
             setIsPanning(true)
             panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y }
             return
@@ -390,8 +413,8 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                         backgroundImage: 'radial-gradient(circle, #e2e8f0 1px, transparent 1px)',
                         backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
                         backgroundPosition: `${pan.x}px ${pan.y}px`,
-                        cursor: isPanning ? 'grabbing'
-                            : tool === 'wall' ? (wallDrawing ? 'crosshair' : 'crosshair')
+                        cursor: isPanning || spaceHeld ? 'grabbing'
+                            : tool === 'wall' ? 'crosshair'
                                 : tool === 'door' ? 'crosshair'
                                     : tool === 'label' ? 'text'
                                         : tool === 'eraser' ? 'not-allowed'
@@ -458,7 +481,7 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                                 const maxX = Math.max(...zoneLocs.map(l => l.posX + l.width))
                                 const zColor = ZONE_COLORS[zone] ?? '#6b7280'
                                 return (
-                                    <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX - 8, top: minY - 32, zIndex: 2 }}>
+                                    <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX - 8, top: minY - 32, zIndex: 2, pointerEvents: isDrawingTool ? 'none' : 'auto' }}>
                                         {/* Zone background */}
                                         <div style={{
                                             position: 'absolute', left: 0, top: 28,
@@ -486,12 +509,18 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                                     <div
                                         key={loc.id}
                                         onMouseDown={e => {
-                                            if (editMode && tool === 'select') {
+                                            if (editMode && tool === 'select' && !spaceHeld) {
                                                 e.stopPropagation()
                                                 setDragLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origX: loc.posX, origY: loc.posY })
                                             }
                                         }}
-                                        onClick={e => { e.stopPropagation(); setSelectedLocId(loc.id === selectedLocId ? null : loc.id) }}
+                                        onClick={e => {
+                                            // Only handle location click in select mode — let other tools pass through
+                                            if (!isDrawingTool) {
+                                                e.stopPropagation()
+                                                setSelectedLocId(loc.id === selectedLocId ? null : loc.id)
+                                            }
+                                        }}
                                         className="absolute transition-shadow"
                                         style={{
                                             left: loc.posX, top: loc.posY,
@@ -500,7 +529,8 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                                             border: `2px solid ${isSelected ? '#3b82f6' : isHighlighted ? '#f59e0b' : oc.border}`,
                                             borderRadius: 8,
                                             zIndex: isSelected ? 20 : isHighlighted ? 15 : 10,
-                                            cursor: editMode && tool === 'select' ? 'move' : 'pointer',
+                                            cursor: editMode && isDrawingTool ? 'inherit' : editMode && tool === 'select' ? 'move' : 'pointer',
+                                            pointerEvents: editMode && isDrawingTool ? 'none' : 'auto',
                                             boxShadow: isSelected ? '0 0 0 3px rgba(59,130,246,0.3)' :
                                                 isHighlighted ? '0 0 0 3px rgba(245,158,11,0.3), 0 0 12px rgba(245,158,11,0.2)' :
                                                     '0 1px 3px rgba(0,0,0,0.06)',
@@ -537,11 +567,23 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                         </div>
                     )}
 
-                    {/* Wall drawing helper text */}
+                    {/* Tool hint banners */}
                     {wallDrawing && (
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-xs font-medium z-50"
                             style={{ background: '#3b82f6', color: '#fff', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}>
                             Click để đặt điểm cuối tường • ESC để hủy
+                        </div>
+                    )}
+                    {editMode && tool === 'door' && !wallDrawing && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-xs font-medium z-50"
+                            style={{ background: '#d97706', color: '#fff', boxShadow: '0 2px 8px rgba(217,119,6,0.3)' }}>
+                            Click để đặt cửa • Space+Drag để di chuyển bản đồ
+                        </div>
+                    )}
+                    {editMode && tool === 'wall' && !wallDrawing && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-xs font-medium z-50"
+                            style={{ background: '#334155', color: '#fff', boxShadow: '0 2px 8px rgba(51,65,85,0.3)' }}>
+                            Click để đặt điểm đầu tường • Space+Drag để di chuyển bản đồ
                         </div>
                     )}
                 </div>
@@ -668,13 +710,7 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                 </div>
             </div>
 
-            {/* Keyboard shortcuts for wall tool */}
-            {editMode && (
-                <div className="sr-only" tabIndex={0}
-                    onKeyDown={e => {
-                        if (e.key === 'Escape') { setWallDrawing(null); setTool('select') }
-                    }} />
-            )}
+            {/* Keyboard shortcuts are now handled via global useEffect */}
 
             {/* Toast */}
             {toast && (

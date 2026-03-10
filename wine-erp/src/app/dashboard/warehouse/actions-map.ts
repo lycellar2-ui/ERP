@@ -321,11 +321,16 @@ export async function searchProductLocations(
 
 // ── Get warehouse layout config (walls, doors, labels) ──
 export async function getWarehouseLayoutConfig(warehouseId: string): Promise<any> {
-    const wh = await prisma.warehouse.findUnique({
-        where: { id: warehouseId },
-        select: { layoutConfig: true },
-    })
-    return wh?.layoutConfig ?? { walls: [], doors: [], labels: [] }
+    try {
+        const wh = await prisma.warehouse.findUnique({
+            where: { id: warehouseId },
+            select: { layoutConfig: true },
+        })
+        return wh?.layoutConfig ?? { walls: [], doors: [], labels: [] }
+    } catch (err) {
+        console.error('[WMS-MAP] getWarehouseLayoutConfig error:', err)
+        return { walls: [], doors: [], labels: [] }
+    }
 }
 
 // ── Save warehouse layout config (admin only) ────
