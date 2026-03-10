@@ -16,6 +16,8 @@ import { formatVND, formatDate } from '@/lib/utils'
 import { GoodsReceiptTab } from './GoodsReceiptTab'
 import { DeliveryOrderTab } from './DeliveryOrderTab'
 import { LocationManager } from './LocationManager'
+import { StockMovementTab } from './StockMovementTab'
+import { WarehouseMapTab } from './WarehouseMapTab'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
@@ -384,7 +386,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
 }
 
 // ── Main ──────────────────────────────────────────
-type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine'
+type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map'
 
 interface Props {
     initialWarehouses: WarehouseRow[]
@@ -394,9 +396,10 @@ interface Props {
         inventoryValue: number; quarantinedCount: number
         lowStockCount: number; slowMovingCount: number
     }
+    isAdmin: boolean
 }
 
-export function WarehouseClient({ initialWarehouses, stats }: Props) {
+export function WarehouseClient({ initialWarehouses, stats, isAdmin }: Props) {
     const [warehouses, setWarehouses] = useState(initialWarehouses)
     const [selectedWH, setSelectedWH] = useState<string | null>(null)
     const [lots, setLots] = useState<StockLotRow[]>([])
@@ -416,6 +419,8 @@ export function WarehouseClient({ initialWarehouses, stats }: Props) {
 
     const wmsTabs: { key: WMSTab; label: string; icon: any; badge?: number }[] = [
         { key: 'inventory', label: 'Tồn Kho', icon: Package },
+        { key: 'nxt', label: 'Nhập Xuất Tồn', icon: BarChart3 },
+        { key: 'map', label: 'Sơ Đồ Kho', icon: Layers },
         { key: 'locations', label: 'Vị Trí Kho', icon: MapPin },
         { key: 'gr', label: 'Nhập Kho (GR)', icon: PackagePlus },
         { key: 'do', label: 'Xuất Kho (DO)', icon: Truck },
@@ -548,6 +553,12 @@ export function WarehouseClient({ initialWarehouses, stats }: Props) {
                     )
                 })}
             </div>
+
+            {/* NXT — Stock Movement Report Tab */}
+            {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} />}
+
+            {/* 2D Warehouse Map Tab */}
+            {activeTab === 'map' && <WarehouseMapTab warehouses={warehouseList} isAdmin={isAdmin} />}
 
             {/* GR Tab */}
             {activeTab === 'gr' && <GoodsReceiptTab warehouses={warehouseList} />}

@@ -1071,6 +1071,11 @@ model Location {
   type           LocationType        @default(STORAGE)
   capacityCases  Int?
   tempControlled Boolean             @default(false)
+  // ── 2D Map positioning ──
+  posX           Float?              @default(0)
+  posY           Float?              @default(0)
+  width          Float?              @default(80)
+  height         Float?              @default(60)
   stockLots      StockLot[]
   doLines        DeliveryOrderLine[]
 
