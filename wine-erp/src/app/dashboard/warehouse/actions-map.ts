@@ -318,3 +318,35 @@ export async function searchProductLocations(
         locationIds: Array.from(v.locationIds),
     }))
 }
+
+// ── Get warehouse layout config (walls, doors, labels) ──
+export async function getWarehouseLayoutConfig(warehouseId: string): Promise<any> {
+    const wh = await prisma.warehouse.findUnique({
+        where: { id: warehouseId },
+        select: { layoutConfig: true },
+    })
+    return wh?.layoutConfig ?? { walls: [], doors: [], labels: [] }
+}
+
+// ── Save warehouse layout config (admin only) ────
+export async function saveWarehouseLayoutConfig(
+    warehouseId: string,
+    config: { walls: any[]; doors: any[]; labels: any[] }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await getCurrentUser()
+        if (!user || !hasRole(user, 'CEO', 'THU_KHO')) {
+            return { success: false, error: 'Chỉ Admin/Thủ kho mới được chỉnh sửa sơ đồ kho' }
+        }
+
+        await prisma.warehouse.update({
+            where: { id: warehouseId },
+            data: { layoutConfig: config as any },
+        })
+
+        revalidatePath('/dashboard/warehouse')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}

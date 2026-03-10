@@ -2,311 +2,343 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import {
-    Search, MapPin, Loader2, Save, RotateCcw, Move, Lock, Unlock,
-    Maximize2, Thermometer, Package, ZoomIn, ZoomOut, Grid3x3,
-    X, AlertCircle, CheckCircle2, Eye
+    Search, Loader2, Save, Move, Maximize2, ZoomIn, ZoomOut, Grid3x3,
+    X, Eye, MousePointer2, Minus, DoorOpen, Type, Trash2, RotateCcw,
+    ChevronDown, Box, Layers, Package
 } from 'lucide-react'
 import {
     MapLocation, MapWarehouse,
-    getWarehouseMapData, saveWarehouseLayout, autoLayoutWarehouse, searchProductLocations
+    getWarehouseMapData, saveWarehouseLayout, autoLayoutWarehouse,
+    searchProductLocations, getWarehouseLayoutConfig, saveWarehouseLayoutConfig
 } from './actions-map'
 import { formatNumber } from '@/lib/utils'
 
-interface WarehouseOption {
-    id: string
-    code: string
-    name: string
+interface WarehouseOption { id: string; code: string; name: string }
+
+// ═══════════════════════════════════════════════════════════
+// Types for floor plan elements
+// ═══════════════════════════════════════════════════════════
+interface Wall { id: string; x1: number; y1: number; x2: number; y2: number; thickness: number }
+interface Door { id: string; x: number; y: number; width: number; rotation: number }
+interface Label { id: string; x: number; y: number; text: string; fontSize: number }
+interface LayoutConfig { walls: Wall[]; doors: Door[]; labels: Label[] }
+
+type Tool = 'select' | 'wall' | 'door' | 'label' | 'eraser'
+
+// ═══════════════════════════════════════════════════════════
+// Occupancy helpers
+// ═══════════════════════════════════════════════════════════
+function occColor(pct: number) {
+    if (pct >= 90) return { fill: '#fee2e2', border: '#ef4444', text: '#dc2626', dot: '#ef4444' }
+    if (pct >= 70) return { fill: '#fef3c7', border: '#f59e0b', text: '#d97706', dot: '#f59e0b' }
+    if (pct >= 40) return { fill: '#d1fae5', border: '#10b981', text: '#059669', dot: '#10b981' }
+    if (pct > 0) return { fill: '#dbeafe', border: '#3b82f6', text: '#2563eb', dot: '#3b82f6' }
+    return { fill: '#f3f4f6', border: '#d1d5db', text: '#9ca3af', dot: '#d1d5db' }
 }
 
-// ── Color helpers ─────────────────────────────────
-function getOccupancyColor(pct: number): string {
-    if (pct >= 90) return '#C74B50'
-    if (pct >= 70) return '#D4A853'
-    if (pct >= 40) return '#5BA88A'
-    if (pct > 0) return '#4A8FAB'
-    return '#2A4355'
+const ZONE_COLORS: Record<string, string> = {
+    A: '#3b82f6', B: '#10b981', C: '#f59e0b', D: '#ef4444',
+    E: '#8b5cf6', F: '#ec4899', G: '#14b8a6', H: '#f97316',
 }
 
-function getOccupancyBg(pct: number): string {
-    if (pct >= 90) return 'rgba(199,75,80,0.15)'
-    if (pct >= 70) return 'rgba(212,168,83,0.12)'
-    if (pct >= 40) return 'rgba(91,168,138,0.12)'
-    if (pct > 0) return 'rgba(74,143,171,0.1)'
-    return 'rgba(42,67,85,0.2)'
-}
+let _nextId = 0
+function uid() { return `el-${Date.now()}-${_nextId++}` }
 
-const LOC_TYPE_ICON: Record<string, { emoji: string; label: string }> = {
-    STORAGE: { emoji: '📦', label: 'Kệ' },
-    RECEIVING: { emoji: '📥', label: 'Khu Nhận' },
-    SHIPPING: { emoji: '📤', label: 'Khu Xuất' },
-    QUARANTINE: { emoji: '⚠️', label: 'Cách Ly' },
-    VIRTUAL: { emoji: '☁️', label: 'Ảo' },
-}
-
-export function WarehouseMapTab({
-    warehouses,
-    isAdmin,
-}: {
-    warehouses: WarehouseOption[]
-    isAdmin: boolean
-}) {
+// ═══════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════
+export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: WarehouseOption[]; isAdmin: boolean }) {
+    // ── State ─────────────────────────────────────────
     const [selectedWH, setSelectedWH] = useState('')
     const [mapData, setMapData] = useState<MapWarehouse | null>(null)
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
-    const [editMode, setEditMode] = useState(false)
-    const [searchTerm, setSearchTerm] = useState('')
-    const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set())
-    const [searchResults, setSearchResults] = useState<{ productName: string; skuCode: string; totalQty: number; locationIds: string[] }[]>([])
-    const [hoveredLoc, setHoveredLoc] = useState<MapLocation | null>(null)
-    const [selectedLoc, setSelectedLoc] = useState<MapLocation | null>(null)
-    const [toast, setToast] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null)
 
-    // Canvas pan/zoom
+    // Canvas
     const [zoom, setZoom] = useState(1)
     const [pan, setPan] = useState({ x: 0, y: 0 })
     const [isPanning, setIsPanning] = useState(false)
-    const panStart = useRef({ x: 0, y: 0 })
+    const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
     const canvasRef = useRef<HTMLDivElement>(null)
 
-    // Drag state (edit mode)
-    const [dragging, setDragging] = useState<string | null>(null)
-    const dragOffset = useRef({ x: 0, y: 0 })
+    // Tools
+    const [tool, setTool] = useState<Tool>('select')
+    const [editMode, setEditMode] = useState(false)
+    const [selectedLocId, setSelectedLocId] = useState<string | null>(null)
 
-    // Modified positions (local state before save)
-    const [localPositions, setLocalPositions] = useState<Map<string, { posX: number; posY: number; width: number; height: number }>>(new Map())
+    // Floor plan elements
+    const [layoutCfg, setLayoutCfg] = useState<LayoutConfig>({ walls: [], doors: [], labels: [] })
+    const [wallDrawing, setWallDrawing] = useState<{ x1: number; y1: number } | null>(null)
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+
+    // Drag location
+    const [dragLoc, setDragLoc] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null)
+    const [locations, setLocations] = useState<MapLocation[]>([])
     const [hasChanges, setHasChanges] = useState(false)
 
-    // ── Load warehouse map data ───────────────────
-    const loadMap = async (whId: string) => {
-        setSelectedWH(whId)
+    // Search
+    const [searchTerm, setSearchTerm] = useState('')
+    const [highlightLocs, setHighlightLocs] = useState<string[]>([])
+    const [searchResults, setSearchResults] = useState<{ skuCode: string; productName: string; totalQty: number; locationIds: string[] }[]>([])
+
+    // Toast
+    const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+    const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
+        setToast({ msg, type })
+        setTimeout(() => setToast(null), 3000)
+    }
+
+    // ── Load map data ──────────────────────────────────
+    const loadMap = useCallback(async (whId: string) => {
         setLoading(true)
-        setHighlightedIds(new Set())
+        setSelectedLocId(null)
+        setHighlightLocs([])
         setSearchResults([])
-        setSearchTerm('')
-        setSelectedLoc(null)
-        setLocalPositions(new Map())
-        setHasChanges(false)
         try {
-            const data = await getWarehouseMapData(whId)
+            const [data, cfg] = await Promise.all([
+                getWarehouseMapData(whId),
+                getWarehouseLayoutConfig(whId),
+            ])
             setMapData(data)
-            if (data) {
-                const posMap = new Map<string, { posX: number; posY: number; width: number; height: number }>()
-                data.locations.forEach(loc => {
-                    posMap.set(loc.id, { posX: loc.posX, posY: loc.posY, width: loc.width, height: loc.height })
-                })
-                setLocalPositions(posMap)
-            }
+            setLocations(data?.locations ?? [])
+            setLayoutCfg(cfg ?? { walls: [], doors: [], labels: [] })
+            setPan({ x: 40, y: 40 })
+            setZoom(1)
         } finally {
             setLoading(false)
         }
-    }
-
-    // ── Get effective position ────────────────────
-    const getPos = (loc: MapLocation) => {
-        const local = localPositions.get(loc.id)
-        return local ?? { posX: loc.posX, posY: loc.posY, width: loc.width, height: loc.height }
-    }
-
-    // ── Auto layout ──────────────────────────────
-    const handleAutoLayout = async () => {
-        if (!selectedWH) return
-        setSaving(true)
-        const result = await autoLayoutWarehouse(selectedWH)
-        if (result.success) {
-            await loadMap(selectedWH)
-            showToast('ok', 'Đã tự động sắp xếp sơ đồ kho')
-        } else {
-            showToast('err', result.error || 'Lỗi')
-        }
-        setSaving(false)
-    }
-
-    // ── Save positions ──────────────────────────
-    const handleSave = async () => {
-        if (!selectedWH || !hasChanges) return
-        setSaving(true)
-        const layouts = Array.from(localPositions.entries()).map(([id, pos]) => ({
-            id,
-            posX: pos.posX,
-            posY: pos.posY,
-            width: pos.width,
-            height: pos.height,
-        }))
-        const result = await saveWarehouseLayout(selectedWH, layouts)
-        if (result.success) {
-            setHasChanges(false)
-            showToast('ok', `Đã lưu ${result.updatedCount} vị trí`)
-        } else {
-            showToast('err', result.error || 'Lỗi')
-        }
-        setSaving(false)
-    }
-
-    // ── Drag handlers (edit mode) ────────────────
-    const handleMouseDown = (e: React.MouseEvent, locId: string) => {
-        if (!editMode) return
-        e.preventDefault()
-        e.stopPropagation()
-        const pos = localPositions.get(locId)
-        if (!pos) return
-        setDragging(locId)
-        const canvasRect = canvasRef.current?.getBoundingClientRect()
-        if (!canvasRect) return
-        dragOffset.current = {
-            x: (e.clientX - canvasRect.left) / zoom - pan.x - pos.posX,
-            y: (e.clientY - canvasRect.top) / zoom - pan.y - pos.posY,
-        }
-    }
-
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (dragging && canvasRef.current) {
-            const canvasRect = canvasRef.current.getBoundingClientRect()
-            const newX = (e.clientX - canvasRect.left) / zoom - pan.x - dragOffset.current.x
-            const newY = (e.clientY - canvasRect.top) / zoom - pan.y - dragOffset.current.y
-            setLocalPositions(prev => {
-                const next = new Map(prev)
-                const existing = next.get(dragging)
-                if (existing) {
-                    next.set(dragging, { ...existing, posX: Math.round(newX), posY: Math.round(newY) })
-                }
-                return next
-            })
-            setHasChanges(true)
-        } else if (isPanning && canvasRef.current) {
-            const dx = (e.clientX - panStart.current.x) / zoom
-            const dy = (e.clientY - panStart.current.y) / zoom
-            panStart.current = { x: e.clientX, y: e.clientY }
-            setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }))
-        }
-    }, [dragging, isPanning, zoom, pan.x, pan.y])
-
-    const handleMouseUp = useCallback(() => {
-        setDragging(null)
-        setIsPanning(false)
     }, [])
 
-    useEffect(() => {
-        window.addEventListener('mousemove', handleMouseMove)
-        window.addEventListener('mouseup', handleMouseUp)
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove)
-            window.removeEventListener('mouseup', handleMouseUp)
-        }
-    }, [handleMouseMove, handleMouseUp])
+    useEffect(() => { if (selectedWH) loadMap(selectedWH) }, [selectedWH, loadMap])
 
-    // Canvas pan via middle click or background drag
-    const handleCanvasMouseDown = (e: React.MouseEvent) => {
-        if (dragging) return
-        if (e.target === canvasRef.current || (e.target as HTMLElement).dataset?.canvas) {
+    // ── Canvas mouse handlers ──────────────────────────
+    const toCanvas = useCallback((clientX: number, clientY: number) => {
+        const rect = canvasRef.current?.getBoundingClientRect()
+        if (!rect) return { x: 0, y: 0 }
+        return {
+            x: (clientX - rect.left - pan.x) / zoom,
+            y: (clientY - rect.top - pan.y) / zoom,
+        }
+    }, [pan, zoom])
+
+    const snap = (v: number, grid = 10) => Math.round(v / grid) * grid
+
+    const onCanvasMouseDown = (e: React.MouseEvent) => {
+        if (e.button === 1 || (e.button === 0 && (tool === 'select' && !editMode))) {
             setIsPanning(true)
-            panStart.current = { x: e.clientX, y: e.clientY }
+            panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y }
+            return
+        }
+
+        if (!editMode) return
+        const pos = toCanvas(e.clientX, e.clientY)
+
+        if (tool === 'wall') {
+            if (!wallDrawing) {
+                setWallDrawing({ x1: snap(pos.x), y1: snap(pos.y) })
+            } else {
+                const newWall: Wall = {
+                    id: uid(),
+                    x1: wallDrawing.x1, y1: wallDrawing.y1,
+                    x2: snap(pos.x), y2: snap(pos.y),
+                    thickness: 6,
+                }
+                setLayoutCfg(prev => ({ ...prev, walls: [...prev.walls, newWall] }))
+                setWallDrawing(null)
+                setHasChanges(true)
+            }
+        } else if (tool === 'door') {
+            const newDoor: Door = { id: uid(), x: snap(pos.x), y: snap(pos.y), width: 40, rotation: 0 }
+            setLayoutCfg(prev => ({ ...prev, doors: [...prev.doors, newDoor] }))
+            setHasChanges(true)
+        } else if (tool === 'label') {
+            const text = prompt('Nhập nội dung nhãn:')
+            if (text) {
+                const newLabel: Label = { id: uid(), x: snap(pos.x), y: snap(pos.y), text, fontSize: 14 }
+                setLayoutCfg(prev => ({ ...prev, labels: [...prev.labels, newLabel] }))
+                setHasChanges(true)
+            }
+        } else if (tool === 'eraser') {
+            // Try to remove nearest wall/door/label
+            const threshold = 15
+            const px = pos.x, py = pos.y
+            // Walls
+            const wallIdx = layoutCfg.walls.findIndex(w => {
+                const dx = w.x2 - w.x1, dy = w.y2 - w.y1
+                const len = Math.sqrt(dx * dx + dy * dy)
+                if (len === 0) return Math.hypot(px - w.x1, py - w.y1) < threshold
+                const t = Math.max(0, Math.min(1, ((px - w.x1) * dx + (py - w.y1) * dy) / (len * len)))
+                const cx = w.x1 + t * dx, cy = w.y1 + t * dy
+                return Math.hypot(px - cx, py - cy) < threshold
+            })
+            if (wallIdx >= 0) {
+                setLayoutCfg(prev => ({ ...prev, walls: prev.walls.filter((_, i) => i !== wallIdx) }))
+                setHasChanges(true)
+                return
+            }
+            // Doors
+            const doorIdx = layoutCfg.doors.findIndex(d => Math.hypot(px - d.x, py - d.y) < threshold)
+            if (doorIdx >= 0) {
+                setLayoutCfg(prev => ({ ...prev, doors: prev.doors.filter((_, i) => i !== doorIdx) }))
+                setHasChanges(true)
+                return
+            }
+            // Labels
+            const lblIdx = layoutCfg.labels.findIndex(l => Math.hypot(px - l.x, py - l.y) < threshold + 20)
+            if (lblIdx >= 0) {
+                setLayoutCfg(prev => ({ ...prev, labels: prev.labels.filter((_, i) => i !== lblIdx) }))
+                setHasChanges(true)
+            }
         }
     }
 
-    // Zoom with scroll
-    const handleWheel = (e: React.WheelEvent) => {
+    const onCanvasMouseMove = (e: React.MouseEvent) => {
+        if (isPanning) {
+            setPan({
+                x: panStart.current.panX + (e.clientX - panStart.current.x),
+                y: panStart.current.panY + (e.clientY - panStart.current.y),
+            })
+            return
+        }
+        const pos = toCanvas(e.clientX, e.clientY)
+        setMousePos(pos)
+
+        // Drag location
+        if (dragLoc && editMode && tool === 'select') {
+            const dx = (e.clientX - dragLoc.startX) / zoom
+            const dy = (e.clientY - dragLoc.startY) / zoom
+            setLocations(prev => prev.map(l => l.id === dragLoc.id
+                ? { ...l, posX: snap(dragLoc.origX + dx), posY: snap(dragLoc.origY + dy) }
+                : l
+            ))
+            setHasChanges(true)
+        }
+    }
+
+    const onCanvasMouseUp = () => {
+        setIsPanning(false)
+        setDragLoc(null)
+    }
+
+    const onWheel = (e: React.WheelEvent) => {
         e.preventDefault()
         const delta = e.deltaY > 0 ? -0.1 : 0.1
         setZoom(prev => Math.min(3, Math.max(0.3, prev + delta)))
     }
 
-    // ── Search product locations ─────────────────
-    let searchTimer: any
-    const handleSearch = (val: string) => {
-        setSearchTerm(val)
-        clearTimeout(searchTimer)
-        if (val.length < 2) {
-            setHighlightedIds(new Set())
-            setSearchResults([])
-            return
+    // ── Save handlers ──────────────────────────────────
+    const handleSaveAll = async () => {
+        if (!selectedWH) return
+        setSaving(true)
+        try {
+            const layoutUpdates = locations.map(l => ({ id: l.id, posX: l.posX, posY: l.posY, width: l.width, height: l.height }))
+            const [res1, res2] = await Promise.all([
+                saveWarehouseLayout(selectedWH, layoutUpdates),
+                saveWarehouseLayoutConfig(selectedWH, layoutCfg),
+            ])
+            if (res1.success && res2.success) {
+                showToast('Đã lưu sơ đồ kho thành công!')
+                setHasChanges(false)
+            } else {
+                showToast(res1.error || res2.error || 'Lỗi lưu', 'err')
+            }
+        } finally {
+            setSaving(false)
         }
-        searchTimer = setTimeout(async () => {
-            if (!selectedWH) return
-            const results = await searchProductLocations(selectedWH, val)
-            setSearchResults(results)
-            const ids = new Set<string>()
-            results.forEach(r => r.locationIds.forEach(id => ids.add(id)))
-            setHighlightedIds(ids)
-        }, 300)
     }
 
-    const showToast = (type: 'ok' | 'err', msg: string) => {
-        setToast({ type, msg })
-        setTimeout(() => setToast(null), 3000)
+    const handleAutoLayout = async () => {
+        if (!selectedWH) return
+        setSaving(true)
+        try {
+            const res = await autoLayoutWarehouse(selectedWH)
+            if (res.success) {
+                showToast('Đã tự động sắp xếp!')
+                await loadMap(selectedWH)
+                setHasChanges(false)
+            } else showToast(res.error || 'Lỗi', 'err')
+        } finally { setSaving(false) }
     }
 
-    // ── Compute zone groups for legend ───────────
-    const zones = mapData ? Array.from(new Set(mapData.locations.map(l => l.zone))).sort() : []
+    // ── Search ─────────────────────────────────────────
+    const handleSearch = async () => {
+        if (!selectedWH || !searchTerm) return
+        const results = await searchProductLocations(selectedWH, searchTerm)
+        setSearchResults(results)
+        setHighlightLocs(results.flatMap(r => r.locationIds))
+    }
 
-    const ZONE_COLORS: Record<string, string> = {}
-    const PALETTE = ['#87CBB9', '#D4A853', '#4A8FAB', '#C74B50', '#5BA88A', '#B87333', '#7AC4C4', '#D4607A']
-    zones.forEach((z, i) => { ZONE_COLORS[z] = PALETTE[i % PALETTE.length] })
+    const selectedLoc = locations.find(l => l.id === selectedLocId)
+    const zones = [...new Set(locations.map(l => l.zone))].sort()
 
+    // ═══════════════════════════════════════════════════
+    // RENDER
+    // ═══════════════════════════════════════════════════
     return (
-        <div className="space-y-4">
-            {/* Toolbar */}
-            <div className="flex items-center gap-3 flex-wrap p-4 rounded-xl" style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}>
-                {/* Warehouse select */}
-                <select value={selectedWH} onChange={e => e.target.value && loadMap(e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm outline-none min-w-[180px]"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: selectedWH ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Chọn Kho...</option>
-                    {warehouses.map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
-                </select>
+        <div className="flex flex-col gap-0" style={{ height: 'calc(100vh - 280px)', minHeight: 500 }}>
+            {/* ── Top bar ─────────────────────────────── */}
+            <div className="flex items-center gap-3 p-3 rounded-t-xl" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                {/* Warehouse selector */}
+                <div className="relative">
+                    <select
+                        value={selectedWH}
+                        onChange={e => setSelectedWH(e.target.value)}
+                        className="appearance-none pl-3 pr-8 py-2 rounded-lg text-sm font-medium"
+                        style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#1e293b', minWidth: 220 }}
+                    >
+                        <option value="">Chọn kho...</option>
+                        {warehouses.map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#94a3b8' }} />
+                </div>
 
                 {/* Search */}
-                {selectedWH && (
-                    <div className="relative flex-1 min-w-[200px] max-w-sm">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
-                        <input placeholder="Gõ SKU/tên để tìm vị trí..." value={searchTerm} onChange={e => handleSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }} />
-                    </div>
-                )}
-
-                <div className="flex-1" />
+                <div className="flex-1 relative max-w-sm">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#94a3b8' }} />
+                    <input
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                        placeholder="Tìm SKU / tên sản phẩm..."
+                        className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
+                        style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#1e293b' }}
+                    />
+                </div>
 
                 {/* Zoom controls */}
-                {selectedWH && (
-                    <div className="flex items-center gap-1.5">
-                        <button onClick={() => setZoom(prev => Math.max(0.3, prev - 0.2))} className="p-1.5 rounded-lg" style={{ background: '#1B2E3D', color: '#8AAEBB' }}><ZoomOut size={14} /></button>
-                        <span className="text-xs w-10 text-center" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{Math.round(zoom * 100)}%</span>
-                        <button onClick={() => setZoom(prev => Math.min(3, prev + 0.2))} className="p-1.5 rounded-lg" style={{ background: '#1B2E3D', color: '#8AAEBB' }}><ZoomIn size={14} /></button>
-                        <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }) }} className="p-1.5 rounded-lg" style={{ background: '#1B2E3D', color: '#8AAEBB' }} title="Reset"><Maximize2 size={14} /></button>
-                    </div>
-                )}
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-gray-100"><ZoomOut size={14} style={{ color: '#64748b' }} /></button>
+                    <span className="text-xs font-mono w-10 text-center" style={{ color: '#64748b' }}>{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-gray-100"><ZoomIn size={14} style={{ color: '#64748b' }} /></button>
+                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-gray-100"><Maximize2 size={14} style={{ color: '#64748b' }} /></button>
+                </div>
 
-                {/* Admin controls */}
-                {isAdmin && selectedWH && (
-                    <div className="flex items-center gap-2 ml-2 pl-2" style={{ borderLeft: '1px solid #2A4355' }}>
-                        <button onClick={() => setEditMode(prev => !prev)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
-                            style={{
-                                background: editMode ? 'rgba(212,168,83,0.15)' : '#1B2E3D',
-                                color: editMode ? '#D4A853' : '#8AAEBB',
-                                border: `1px solid ${editMode ? '#D4A853' : '#2A4355'}`,
-                            }}>
-                            {editMode ? <Unlock size={12} /> : <Lock size={12} />}
-                            {editMode ? 'Đang Sửa' : 'Chỉnh Sửa'}
-                        </button>
-
-                        {editMode && (
+                {/* Edit controls (Admin) */}
+                {isAdmin && mapData && (
+                    <div className="flex items-center gap-1.5 ml-auto">
+                        {!editMode ? (
+                            <button onClick={() => setEditMode(true)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
+                                style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#475569' }}>
+                                <Move size={13} /> Chỉnh Sửa
+                            </button>
+                        ) : (
                             <>
                                 <button onClick={handleAutoLayout} disabled={saving}
-                                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}>
-                                    <Grid3x3 size={12} /> Auto
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
+                                    style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#475569' }}>
+                                    <Grid3x3 size={13} /> Auto
                                 </button>
-                                <button onClick={handleSave} disabled={saving || !hasChanges}
-                                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{
-                                        background: hasChanges ? '#87CBB9' : '#1B2E3D',
-                                        color: hasChanges ? '#0A1926' : '#4A6A7A',
-                                        border: `1px solid ${hasChanges ? '#87CBB9' : '#2A4355'}`,
-                                    }}>
-                                    {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                <button onClick={handleSaveAll} disabled={saving}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
+                                    style={{ background: hasChanges ? '#3b82f6' : '#94a3b8', color: '#fff' }}>
+                                    {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                                     Lưu
+                                </button>
+                                <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
+                                    style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#64748b' }}>
+                                    <Eye size={13} /> Xong
                                 </button>
                             </>
                         )}
@@ -314,299 +346,343 @@ export function WarehouseMapTab({
                 )}
             </div>
 
-            {/* Search results panel */}
-            {searchResults.length > 0 && (
-                <div className="flex gap-2 flex-wrap px-2">
-                    {searchResults.map(r => (
-                        <div key={r.skuCode} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
-                            style={{ background: 'rgba(135,203,185,0.1)', border: '1px solid rgba(135,203,185,0.3)' }}>
-                            <Package size={12} style={{ color: '#87CBB9' }} />
-                            <span className="font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{r.skuCode}</span>
-                            <span style={{ color: '#8AAEBB' }}>{r.productName.slice(0, 30)}</span>
-                            <span className="font-bold" style={{ color: '#5BA88A' }}>{r.totalQty.toLocaleString()} chai</span>
-                            <span style={{ color: '#4A6A7A' }}>({r.locationIds.length} vị trí)</span>
-                        </div>
-                    ))}
-                    <button onClick={() => { setSearchTerm(''); setHighlightedIds(new Set()); setSearchResults([]) }}
-                        className="px-2 py-1 rounded-lg text-xs" style={{ color: '#4A6A7A' }}>
-                        <X size={12} />
-                    </button>
-                </div>
-            )}
+            {/* ── Main area ─────────────────────────────── */}
+            <div className="flex flex-1 overflow-hidden rounded-b-xl" style={{ border: '1px solid #e2e8f0', borderTop: 'none' }}>
+                {/* Left toolbar (edit mode) */}
+                {editMode && (
+                    <div className="flex flex-col gap-1 p-2" style={{ background: '#f1f5f9', borderRight: '1px solid #e2e8f0', width: 52 }}>
+                        {([
+                            { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn' },
+                            { key: 'wall' as Tool, icon: Minus, label: 'Tường' },
+                            { key: 'door' as Tool, icon: DoorOpen, label: 'Cửa' },
+                            { key: 'label' as Tool, icon: Type, label: 'Nhãn' },
+                            { key: 'eraser' as Tool, icon: Trash2, label: 'Xóa' },
+                        ]).map(t => (
+                            <button key={t.key} onClick={() => { setTool(t.key); setWallDrawing(null) }}
+                                title={t.label}
+                                className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-all"
+                                style={{
+                                    background: tool === t.key ? '#3b82f6' : 'transparent',
+                                    color: tool === t.key ? '#fff' : '#64748b',
+                                }}>
+                                <t.icon size={16} />
+                                {t.label}
+                            </button>
+                        ))}
 
-            {/* Main map area */}
-            {loading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} />
-                </div>
-            ) : !selectedWH ? (
-                <div className="flex flex-col items-center py-24 gap-4 rounded-2xl" style={{ border: '1px dashed #2A4355' }}>
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.08)' }}>
-                        <MapPin size={28} style={{ color: '#2A4355' }} />
+                        <div className="mt-auto pt-2 border-t" style={{ borderColor: '#e2e8f0' }}>
+                            <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [] }); setHasChanges(true) }}
+                                title="Xóa tất cả vẽ" className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
+                                style={{ color: '#94a3b8' }}>
+                                <RotateCcw size={14} />
+                                Reset
+                            </button>
+                        </div>
                     </div>
-                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Chọn kho để xem sơ đồ 2D</p>
-                </div>
-            ) : mapData && mapData.locations.length === 0 ? (
-                <div className="flex flex-col items-center py-24 gap-4 rounded-2xl" style={{ border: '1px dashed #2A4355' }}>
-                    <Grid3x3 size={28} style={{ color: '#2A4355' }} />
-                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Kho chưa có vị trí nào. Vui lòng tạo Location trước.</p>
-                </div>
-            ) : mapData ? (
-                <div className="grid grid-cols-12 gap-4">
-                    {/* Canvas */}
-                    <div className="col-span-12 lg:col-span-9">
-                        <div ref={canvasRef}
-                            className="rounded-2xl overflow-hidden relative"
-                            style={{
-                                background: '#0A1420',
-                                border: `2px solid ${editMode ? '#D4A853' : '#2A4355'}`,
-                                height: 'calc(100vh - 340px)',
-                                minHeight: 500,
-                                cursor: editMode ? 'crosshair' : isPanning ? 'grabbing' : 'grab',
-                                // 2D grid background
-                                backgroundImage: 'linear-gradient(rgba(42,67,85,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(42,67,85,0.15) 1px, transparent 1px)',
-                                backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-                                backgroundPosition: `${pan.x * zoom}px ${pan.y * zoom}px`,
-                            }}
-                            onMouseDown={handleCanvasMouseDown}
-                            onWheel={handleWheel}
-                            data-canvas="true"
-                        >
+                )}
+
+                {/* Canvas area */}
+                <div
+                    ref={canvasRef}
+                    className="flex-1 relative overflow-hidden"
+                    style={{
+                        background: '#ffffff',
+                        backgroundImage: 'radial-gradient(circle, #e2e8f0 1px, transparent 1px)',
+                        backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+                        backgroundPosition: `${pan.x}px ${pan.y}px`,
+                        cursor: isPanning ? 'grabbing'
+                            : tool === 'wall' ? (wallDrawing ? 'crosshair' : 'crosshair')
+                                : tool === 'door' ? 'crosshair'
+                                    : tool === 'label' ? 'text'
+                                        : tool === 'eraser' ? 'not-allowed'
+                                            : editMode ? 'default' : 'grab',
+                    }}
+                    onMouseDown={onCanvasMouseDown}
+                    onMouseMove={onCanvasMouseMove}
+                    onMouseUp={onCanvasMouseUp}
+                    onMouseLeave={onCanvasMouseUp}
+                    onWheel={onWheel}
+                >
+                    {loading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-50">
+                            <Loader2 size={28} className="animate-spin" style={{ color: '#3b82f6' }} />
+                        </div>
+                    )}
+
+                    {!mapData && !loading && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                            <Box size={40} style={{ color: '#cbd5e1' }} />
+                            <p className="text-sm" style={{ color: '#94a3b8' }}>Chọn kho để xem sơ đồ</p>
+                        </div>
+                    )}
+
+                    {mapData && (
+                        <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+                            {/* SVG layer: walls + doors + wall-drawing preview */}
+                            <svg style={{ position: 'absolute', top: 0, left: 0, width: 2000, height: 1500, zIndex: 1, pointerEvents: 'none' }}>
+                                {/* Walls */}
+                                {layoutCfg.walls.map(w => (
+                                    <line key={w.id} x1={w.x1} y1={w.y1} x2={w.x2} y2={w.y2}
+                                        stroke="#334155" strokeWidth={w.thickness} strokeLinecap="round" />
+                                ))}
+                                {/* Wall drawing preview */}
+                                {wallDrawing && (
+                                    <line x1={wallDrawing.x1} y1={wallDrawing.y1}
+                                        x2={snap(mousePos.x)} y2={snap(mousePos.y)}
+                                        stroke="#3b82f6" strokeWidth={6} strokeLinecap="round" strokeDasharray="8 4" opacity={0.7} />
+                                )}
+                                {/* Doors */}
+                                {layoutCfg.doors.map(d => (
+                                    <g key={d.id} transform={`translate(${d.x}, ${d.y}) rotate(${d.rotation})`}>
+                                        <rect x={-d.width / 2} y={-4} width={d.width} height={8} fill="#fbbf24" stroke="#d97706" strokeWidth={1.5} rx={2} />
+                                        <path d={`M ${-d.width / 2} 4 A ${d.width / 2} ${d.width / 2} 0 0 1 ${d.width / 2} 4`}
+                                            fill="none" stroke="#d97706" strokeWidth={1} strokeDasharray="3 2" />
+                                    </g>
+                                ))}
+                                {/* Labels */}
+                                {layoutCfg.labels.map(l => (
+                                    <text key={l.id} x={l.x} y={l.y} fontSize={l.fontSize}
+                                        fill="#475569" fontWeight="600" fontFamily="Inter, sans-serif"
+                                        style={{ userSelect: 'none' }}>
+                                        {l.text}
+                                    </text>
+                                ))}
+                            </svg>
+
                             {/* Zone labels */}
                             {zones.map(zone => {
-                                const zoneLocs = mapData.locations.filter(l => l.zone === zone)
+                                const zoneLocs = locations.filter(l => l.zone === zone)
                                 if (zoneLocs.length === 0) return null
-                                const positions = zoneLocs.map(l => getPos(l))
-                                const minX = Math.min(...positions.map(p => p.posX)) - 10
-                                const minY = Math.min(...positions.map(p => p.posY)) - 28
+                                const minX = Math.min(...zoneLocs.map(l => l.posX))
+                                const minY = Math.min(...zoneLocs.map(l => l.posY))
+                                const maxX = Math.max(...zoneLocs.map(l => l.posX + l.width))
+                                const zColor = ZONE_COLORS[zone] ?? '#6b7280'
                                 return (
-                                    <div key={`zone-${zone}`}
-                                        className="absolute text-[10px] font-bold uppercase tracking-widest pointer-events-none select-none"
-                                        style={{
-                                            left: (minX + pan.x) * zoom,
-                                            top: (minY + pan.y) * zoom,
-                                            color: ZONE_COLORS[zone] || '#4A6A7A',
-                                            opacity: 0.7,
-                                            transform: `scale(${zoom})`,
-                                            transformOrigin: 'top left',
-                                        }}>
-                                        Zone {zone}
+                                    <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX - 8, top: minY - 32, zIndex: 2 }}>
+                                        {/* Zone background */}
+                                        <div style={{
+                                            position: 'absolute', left: 0, top: 28,
+                                            width: (maxX - minX) + 16,
+                                            height: Math.max(...zoneLocs.map(l => l.posY + l.height)) - minY + 16,
+                                            background: `${zColor}08`, border: `1.5px dashed ${zColor}30`,
+                                            borderRadius: 12, pointerEvents: 'none',
+                                        }} />
+                                        {/* Zone badge */}
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold"
+                                            style={{ background: zColor, color: '#fff', width: 'fit-content', letterSpacing: 0.5 }}>
+                                            <Layers size={11} />
+                                            ZONE {zone}
+                                        </div>
                                     </div>
                                 )
                             })}
 
                             {/* Location blocks */}
-                            {mapData.locations.map(loc => {
-                                const pos = getPos(loc)
-                                const isHighlighted = highlightedIds.has(loc.id)
-                                const isHovered = hoveredLoc?.id === loc.id
-                                const isSelected = selectedLoc?.id === loc.id
-                                const isDragged = dragging === loc.id
-                                const typeCfg = LOC_TYPE_ICON[loc.type] || { emoji: '📦', label: loc.type }
-                                const occColor = getOccupancyColor(loc.occupancyPct)
-                                const occBg = getOccupancyBg(loc.occupancyPct)
-
+                            {locations.map(loc => {
+                                const oc = occColor(loc.occupancyPct)
+                                const isHighlighted = highlightLocs.includes(loc.id)
+                                const isSelected = selectedLocId === loc.id
                                 return (
                                     <div
                                         key={loc.id}
-                                        className="absolute rounded-lg transition-shadow select-none"
-                                        style={{
-                                            left: (pos.posX + pan.x) * zoom,
-                                            top: (pos.posY + pan.y) * zoom,
-                                            width: pos.width * zoom,
-                                            height: pos.height * zoom,
-                                            background: isHighlighted
-                                                ? 'rgba(135,203,185,0.25)'
-                                                : isSelected
-                                                    ? 'rgba(74,143,171,0.2)'
-                                                    : occBg,
-                                            border: `${zoom > 0.5 ? 1.5 : 1}px solid ${isHighlighted
-                                                ? '#87CBB9'
-                                                : isSelected
-                                                    ? '#4A8FAB'
-                                                    : isDragged
-                                                        ? '#D4A853'
-                                                        : isHovered
-                                                            ? '#8AAEBB'
-                                                            : 'rgba(42,67,85,0.5)'}`,
-                                            boxShadow: isHighlighted
-                                                ? '0 0 12px rgba(135,203,185,0.4)'
-                                                : isDragged
-                                                    ? '0 4px 20px rgba(0,0,0,0.5)'
-                                                    : isHovered
-                                                        ? '0 2px 8px rgba(0,0,0,0.3)'
-                                                        : 'none',
-                                            cursor: editMode ? (isDragged ? 'grabbing' : 'grab') : 'pointer',
-                                            zIndex: isDragged ? 100 : isHighlighted ? 50 : isHovered ? 40 : 1,
-                                            transition: isDragged ? 'none' : 'border-color 0.15s, box-shadow 0.15s',
+                                        onMouseDown={e => {
+                                            if (editMode && tool === 'select') {
+                                                e.stopPropagation()
+                                                setDragLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origX: loc.posX, origY: loc.posY })
+                                            }
                                         }}
-                                        onMouseDown={e => editMode ? handleMouseDown(e, loc.id) : null}
-                                        onMouseEnter={() => setHoveredLoc(loc)}
-                                        onMouseLeave={() => setHoveredLoc(null)}
-                                        onClick={e => { if (!editMode) { e.stopPropagation(); setSelectedLoc(loc) } }}
+                                        onClick={e => { e.stopPropagation(); setSelectedLocId(loc.id === selectedLocId ? null : loc.id) }}
+                                        className="absolute transition-shadow"
+                                        style={{
+                                            left: loc.posX, top: loc.posY,
+                                            width: loc.width, height: loc.height,
+                                            background: oc.fill,
+                                            border: `2px solid ${isSelected ? '#3b82f6' : isHighlighted ? '#f59e0b' : oc.border}`,
+                                            borderRadius: 8,
+                                            zIndex: isSelected ? 20 : isHighlighted ? 15 : 10,
+                                            cursor: editMode && tool === 'select' ? 'move' : 'pointer',
+                                            boxShadow: isSelected ? '0 0 0 3px rgba(59,130,246,0.3)' :
+                                                isHighlighted ? '0 0 0 3px rgba(245,158,11,0.3), 0 0 12px rgba(245,158,11,0.2)' :
+                                                    '0 1px 3px rgba(0,0,0,0.06)',
+                                            padding: '6px 8px',
+                                            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                                            userSelect: 'none',
+                                        }}
                                     >
-                                        {/* Content visible at sufficient zoom */}
-                                        {zoom >= 0.5 && (
-                                            <div className="p-1 h-full flex flex-col justify-between overflow-hidden"
-                                                style={{ transform: `scale(${Math.min(1, zoom)})`, transformOrigin: 'top left' }}>
-                                                {/* Header */}
-                                                <div className="flex items-center justify-between gap-0.5">
-                                                    <span className="text-[9px] font-bold truncate" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>
-                                                        {loc.locationCode}
-                                                    </span>
-                                                    {loc.tempControlled && <Thermometer size={8} style={{ color: '#4A8FAB', flexShrink: 0 }} />}
-                                                </div>
-                                                {/* Occupancy bar */}
-                                                <div>
-                                                    <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'rgba(42,67,85,0.5)' }}>
-                                                        <div className="h-full rounded-full transition-all" style={{ width: `${loc.occupancyPct}%`, background: occColor }} />
-                                                    </div>
-                                                    <div className="flex items-center justify-between mt-0.5">
-                                                        <span className="text-[8px]" style={{ color: '#4A6A7A' }}>{typeCfg.emoji}</span>
-                                                        <span className="text-[8px] font-bold" style={{ color: occColor, fontFamily: '"DM Mono", monospace' }}>
-                                                            {loc.totalQty > 0 ? loc.totalQty : ''}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Highlight pulse animation */}
-                                        {isHighlighted && (
-                                            <div className="absolute inset-0 rounded-lg animate-pulse pointer-events-none"
-                                                style={{ border: '2px solid #87CBB9', opacity: 0.6 }} />
-                                        )}
+                                        {/* Top: code */}
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] font-bold" style={{ color: '#1e293b', letterSpacing: 0.3 }}>
+                                                {loc.locationCode}
+                                            </span>
+                                            {loc.tempControlled && (
+                                                <span className="text-[9px]" title="Kiểm soát nhiệt độ">❄️</span>
+                                            )}
+                                        </div>
+                                        {/* Occupancy bar */}
+                                        <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: '#e2e8f0', marginTop: 3 }}>
+                                            <div style={{ width: `${loc.occupancyPct}%`, height: '100%', background: oc.dot, borderRadius: 99, transition: 'width 0.3s' }} />
+                                        </div>
+                                        {/* Bottom: qty */}
+                                        <div className="flex items-center justify-between" style={{ marginTop: 3 }}>
+                                            <span className="text-[10px] font-medium" style={{ color: oc.text }}>
+                                                {loc.totalQty > 0 ? formatNumber(loc.totalQty) : '—'}
+                                            </span>
+                                            <span className="text-[9px] font-semibold" style={{ color: oc.text }}>
+                                                {loc.occupancyPct}%
+                                            </span>
+                                        </div>
                                     </div>
                                 )
                             })}
-
-                            {/* Edit mode indicator */}
-                            {editMode && (
-                                <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                                    style={{ background: 'rgba(212,168,83,0.2)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.4)', zIndex: 200 }}>
-                                    <Move size={12} /> Kéo thả để di chuyển vị trí
-                                </div>
-                            )}
                         </div>
+                    )}
+
+                    {/* Wall drawing helper text */}
+                    {wallDrawing && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-xs font-medium z-50"
+                            style={{ background: '#3b82f6', color: '#fff', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}>
+                            Click để đặt điểm cuối tường • ESC để hủy
+                        </div>
+                    )}
+                </div>
+
+                {/* Right panel — Legend + Selected details */}
+                <div className="flex flex-col gap-4 p-4 overflow-y-auto" style={{ width: 240, background: '#f8fafc', borderLeft: '1px solid #e2e8f0' }}>
+                    {/* Legend */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>Chú thích</h4>
+                        <div className="space-y-1.5">
+                            {[
+                                { label: 'Trống', pct: 0 },
+                                { label: 'Thấp (1-40%)', pct: 10 },
+                                { label: 'Trung bình (40-70%)', pct: 50 },
+                                { label: 'Cao (70-90%)', pct: 80 },
+                                { label: 'Đầy (>90%)', pct: 95 },
+                            ].map(item => {
+                                const c = occColor(item.pct)
+                                return (
+                                    <div key={item.label} className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-sm" style={{ background: c.fill, border: `1.5px solid ${c.border}` }} />
+                                        <span className="text-[11px]" style={{ color: '#475569' }}>{item.label}</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        {/* Floor plan legend */}
+                        {editMode && (
+                            <div className="mt-3 pt-3 border-t space-y-1.5" style={{ borderColor: '#e2e8f0' }}>
+                                <div className="flex items-center gap-2">
+                                    <div style={{ width: 16, height: 4, background: '#334155', borderRadius: 2 }} />
+                                    <span className="text-[11px]" style={{ color: '#475569' }}>Tường</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div style={{ width: 16, height: 6, background: '#fbbf24', borderRadius: 2 }} />
+                                    <span className="text-[11px]" style={{ color: '#475569' }}>Cửa</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Right panel — Legend + Detail */}
-                    <div className="col-span-12 lg:col-span-3 space-y-4">
-                        {/* Legend */}
-                        <div className="p-4 rounded-xl space-y-3" style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}>
-                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>Chú Thích</p>
-                            <div className="space-y-2">
-                                {[
-                                    { label: 'Trống', color: '#2A4355', pct: '0%' },
-                                    { label: 'Thấp', color: '#4A8FAB', pct: '1-40%' },
-                                    { label: 'Trung bình', color: '#5BA88A', pct: '40-70%' },
-                                    { label: 'Cao', color: '#D4A853', pct: '70-90%' },
-                                    { label: 'Đầy', color: '#C74B50', pct: '>90%' },
-                                ].map(l => (
-                                    <div key={l.label} className="flex items-center gap-2">
-                                        <div className="w-4 h-3 rounded" style={{ background: l.color }} />
-                                        <span className="text-xs flex-1" style={{ color: '#8AAEBB' }}>{l.label}</span>
-                                        <span className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{l.pct}</span>
+                    {/* Zones */}
+                    {zones.length > 0 && (
+                        <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>Zones</h4>
+                            <div className="flex flex-wrap gap-1.5">
+                                {zones.map(z => (
+                                    <span key={z} className="px-2 py-0.5 rounded text-[11px] font-bold"
+                                        style={{ background: ZONE_COLORS[z] ?? '#6b7280', color: '#fff' }}>
+                                        {z}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stats */}
+                    {mapData && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="p-2 rounded-lg text-center" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+                                <p className="text-lg font-bold" style={{ color: '#1e293b' }}>{locations.length}</p>
+                                <p className="text-[10px]" style={{ color: '#94a3b8' }}>Vị trí</p>
+                            </div>
+                            <div className="p-2 rounded-lg text-center" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+                                <p className="text-lg font-bold" style={{ color: '#1e293b' }}>{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
+                                <p className="text-[10px]" style={{ color: '#94a3b8' }}>Tổng chai</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Search results */}
+                    {searchResults.length > 0 && (
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748b' }}>Kết quả</h4>
+                                <button onClick={() => { setSearchResults([]); setHighlightLocs([]); setSearchTerm('') }}
+                                    className="p-0.5 rounded hover:bg-gray-200"><X size={12} style={{ color: '#94a3b8' }} /></button>
+                            </div>
+                            <div className="space-y-1.5">
+                                {searchResults.map(r => (
+                                    <div key={r.skuCode} className="p-2 rounded-lg" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+                                        <p className="text-[11px] font-bold truncate" style={{ color: '#1e293b' }}>{r.skuCode}</p>
+                                        <p className="text-[10px] truncate" style={{ color: '#64748b' }}>{r.productName}</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: '#f59e0b' }}>{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
                                     </div>
                                 ))}
                             </div>
-                            {/* Zone colors */}
-                            <div className="pt-2" style={{ borderTop: '1px solid #2A4355' }}>
-                                <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#4A6A7A' }}>Zone</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {zones.map(z => (
-                                        <span key={z} className="text-[10px] font-bold px-2 py-0.5 rounded"
-                                            style={{ color: ZONE_COLORS[z], background: `${ZONE_COLORS[z]}15` }}>
-                                            {z}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                            {/* Stats */}
-                            <div className="pt-2" style={{ borderTop: '1px solid #2A4355' }}>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="text-center">
-                                        <p className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{mapData.locations.length}</p>
-                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Vị trí</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-lg font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono", monospace' }}>
-                                            {formatNumber(mapData.locations.reduce((sum, l) => sum + l.totalQty, 0))}
-                                        </p>
-                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Tổng chai</p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
+                    )}
 
-                        {/* Selected location detail */}
-                        {selectedLoc && (
-                            <div className="p-4 rounded-xl space-y-3" style={{ background: '#0D1E2B', border: '1px solid #4A8FAB' }}>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
-                                        <MapPin size={12} className="inline mr-1" />{selectedLoc.locationCode}
-                                    </span>
-                                    <button onClick={() => setSelectedLoc(null)} style={{ color: '#4A6A7A' }}><X size={14} /></button>
+                    {/* Selected location detail */}
+                    {selectedLoc && (
+                        <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>Chi tiết vị trí</h4>
+                            <div className="p-3 rounded-lg space-y-2" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+                                <p className="text-sm font-bold" style={{ color: '#1e293b' }}>{selectedLoc.locationCode}</p>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                    <span style={{ color: '#94a3b8' }}>Zone:</span>
+                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.zone}</span>
+                                    <span style={{ color: '#94a3b8' }}>Rack:</span>
+                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.rack ?? '—'}</span>
+                                    <span style={{ color: '#94a3b8' }}>Bin:</span>
+                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.bin ?? '—'}</span>
+                                    <span style={{ color: '#94a3b8' }}>Loại:</span>
+                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.type}</span>
+                                    <span style={{ color: '#94a3b8' }}>Chiếm:</span>
+                                    <span className="font-semibold" style={{ color: occColor(selectedLoc.occupancyPct).text }}>{selectedLoc.occupancyPct}%</span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <div><span style={{ color: '#4A6A7A' }}>Zone:</span> <span style={{ color: '#E8F1F2' }}>{selectedLoc.zone}</span></div>
-                                    <div><span style={{ color: '#4A6A7A' }}>Rack:</span> <span style={{ color: '#E8F1F2' }}>{selectedLoc.rack || '—'}</span></div>
-                                    <div><span style={{ color: '#4A6A7A' }}>Bin:</span> <span style={{ color: '#E8F1F2' }}>{selectedLoc.bin || '—'}</span></div>
-                                    <div><span style={{ color: '#4A6A7A' }}>Loại:</span> <span style={{ color: '#E8F1F2' }}>{LOC_TYPE_ICON[selectedLoc.type]?.label || selectedLoc.type}</span></div>
-                                    <div><span style={{ color: '#4A6A7A' }}>Chiếm dụng:</span> <span style={{ color: getOccupancyColor(selectedLoc.occupancyPct) }}>{selectedLoc.occupancyPct}%</span></div>
-                                    {selectedLoc.tempControlled && (
-                                        <div className="col-span-2"><Thermometer size={10} className="inline mr-1" style={{ color: '#4A8FAB' }} /><span style={{ color: '#4A8FAB' }}>Kiểm soát nhiệt độ</span></div>
-                                    )}
-                                </div>
-                                {/* Products in location */}
                                 {selectedLoc.products.length > 0 && (
-                                    <div className="pt-2 space-y-1.5" style={{ borderTop: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>Sản Phẩm Trong Kệ</p>
-                                        {selectedLoc.products.map((p, i) => (
-                                            <div key={i} className="flex items-center justify-between text-xs px-2 py-1.5 rounded"
-                                                style={{ background: '#142433' }}>
-                                                <div className="min-w-0 flex-1">
-                                                    <span className="font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{p.skuCode}</span>
-                                                    <p className="text-[10px] truncate" style={{ color: '#8AAEBB' }}>{p.productName}</p>
-                                                </div>
-                                                <span className="font-bold ml-2 flex-shrink-0" style={{ color: '#5BA88A', fontFamily: '"DM Mono", monospace' }}>
-                                                    {p.qtyAvailable.toLocaleString()}
-                                                </span>
+                                    <div className="pt-2 border-t space-y-1" style={{ borderColor: '#f1f5f9' }}>
+                                        <p className="text-[10px] font-semibold uppercase" style={{ color: '#94a3b8' }}>Sản phẩm trong kệ</p>
+                                        {selectedLoc.products.slice(0, 5).map((p, i) => (
+                                            <div key={i} className="flex items-center gap-1.5">
+                                                <Package size={10} style={{ color: '#94a3b8' }} />
+                                                <span className="text-[10px] truncate flex-1" style={{ color: '#475569' }}>{p.skuCode}</span>
+                                                <span className="text-[10px] font-bold" style={{ color: '#1e293b' }}>{formatNumber(p.qtyAvailable)}</span>
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
-                        )}
-
-                        {/* Hovered tooltip */}
-                        {hoveredLoc && !selectedLoc && (
-                            <div className="p-3 rounded-xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{hoveredLoc.locationCode}</span>
-                                    <span className="text-[10px]" style={{ color: '#4A6A7A' }}>Zone {hoveredLoc.zone}</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs">
-                                    <span style={{ color: getOccupancyColor(hoveredLoc.occupancyPct) }}>{hoveredLoc.occupancyPct}% chiếm dụng</span>
-                                    <span style={{ color: '#8AAEBB' }}>{hoveredLoc.totalQty} chai</span>
-                                    <span style={{ color: '#4A6A7A' }}>{hoveredLoc.stockCount} lô</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
-            ) : null}
+            </div>
+
+            {/* Keyboard shortcuts for wall tool */}
+            {editMode && (
+                <div className="sr-only" tabIndex={0}
+                    onKeyDown={e => {
+                        if (e.key === 'Escape') { setWallDrawing(null); setTool('select') }
+                    }} />
+            )}
 
             {/* Toast */}
             {toast && (
-                <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold"
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg"
                     style={{
-                        background: toast.type === 'ok' ? 'rgba(91,168,138,0.15)' : 'rgba(199,75,80,0.15)',
-                        border: `1px solid ${toast.type === 'ok' ? '#5BA88A' : '#C74B50'}`,
-                        color: toast.type === 'ok' ? '#5BA88A' : '#C74B50',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                        background: toast.type === 'ok' ? '#10b981' : '#ef4444',
+                        color: '#fff',
                     }}>
-                    {toast.type === 'ok' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                     {toast.msg}
                 </div>
             )}
