@@ -45,39 +45,52 @@ export interface MapWarehouse {
 
 // ── Get warehouse map data ────────────────────────
 export async function getWarehouseMapData(warehouseId: string): Promise<MapWarehouse | null> {
-    return cached(`warehouse-map:${warehouseId}`, async () => {
+    try {
         const warehouse = await prisma.warehouse.findUnique({
             where: { id: warehouseId },
-            include: {
-                locations: {
-                    include: {
-                        stockLots: {
-                            where: { status: { in: ['AVAILABLE', 'RESERVED', 'QUARANTINE'] } },
-                            select: {
-                                id: true,
-                                qtyAvailable: true,
-                                status: true,
-                                product: {
-                                    select: { skuCode: true, productName: true },
-                                },
-                            },
-                        },
-                    },
-                    orderBy: [{ zone: 'asc' }, { rack: 'asc' }, { bin: 'asc' }],
-                },
+            select: { id: true, code: true, name: true, address: true },
+        })
+        if (!warehouse) return null
+
+        // Fetch locations separately (avoid nested stockLots include — Prisma column mapping issue)
+        const locations = await prisma.location.findMany({
+            where: { warehouseId },
+            orderBy: [{ zone: 'asc' }, { rack: 'asc' }, { bin: 'asc' }],
+        })
+
+        // Fetch stock lots for these locations
+        const locationIds = locations.map(l => l.id)
+        const stockLots = await prisma.stockLot.findMany({
+            where: {
+                locationId: { in: locationIds },
+                status: { in: ['AVAILABLE', 'RESERVED', 'QUARANTINE'] },
+            },
+            select: {
+                id: true,
+                locationId: true,
+                qtyAvailable: true,
+                status: true,
+                product: { select: { skuCode: true, productName: true } },
             },
         })
 
-        if (!warehouse) return null
+        // Group stock lots by locationId
+        const lotsByLoc = new Map<string, typeof stockLots>()
+        for (const lot of stockLots) {
+            const existing = lotsByLoc.get(lot.locationId) || []
+            existing.push(lot)
+            lotsByLoc.set(lot.locationId, existing)
+        }
 
-        return serialize({
+        return {
             id: warehouse.id,
             code: warehouse.code,
             name: warehouse.name,
             address: warehouse.address,
-            locations: warehouse.locations.map(loc => {
-                const totalQty = loc.stockLots.reduce((sum, lot) => sum + Number(lot.qtyAvailable), 0)
-                const capacity = loc.capacityCases ? loc.capacityCases * 12 : 500 // default 500 bottles if no capacity set
+            locations: locations.map(loc => {
+                const locLots = lotsByLoc.get(loc.id) || []
+                const totalQty = locLots.reduce((sum, lot) => sum + Number(lot.qtyAvailable), 0)
+                const capacity = loc.capacityCases ? loc.capacityCases * 12 : 500
                 const occupancyPct = Math.min(100, Math.round((totalQty / capacity) * 100))
 
                 return {
@@ -93,10 +106,10 @@ export async function getWarehouseMapData(warehouseId: string): Promise<MapWareh
                     posY: loc.posY ?? 0,
                     width: loc.width ?? 80,
                     height: loc.height ?? 60,
-                    stockCount: loc.stockLots.length,
+                    stockCount: locLots.length,
                     totalQty,
                     occupancyPct,
-                    products: loc.stockLots.map(lot => ({
+                    products: locLots.map(lot => ({
                         skuCode: lot.product.skuCode,
                         productName: lot.product.productName,
                         qtyAvailable: Number(lot.qtyAvailable),
@@ -104,8 +117,11 @@ export async function getWarehouseMapData(warehouseId: string): Promise<MapWareh
                     })),
                 }
             }),
-        })
-    }, 30_000)
+        }
+    } catch (err) {
+        console.error('[WMS-MAP] getWarehouseMapData error:', err)
+        return null
+    }
 }
 
 // ── Update single location position (admin only) ──
