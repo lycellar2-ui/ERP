@@ -103,6 +103,12 @@ erDiagram
         name        string
         dept_id     uuid FK
     }
+    LegalEntity {
+        id          uuid PK
+        code        string UK
+        name        string
+        tax_id      string
+    }
     ApprovalRequest {
         id          uuid PK
         doc_type    enum
@@ -280,6 +286,7 @@ erDiagram
     PurchaseOrder {
         id              uuid PK
         po_no           string
+        legal_entity_id uuid FK
         supplier_id     uuid FK
         contract_id     uuid FK
         currency        string
@@ -344,6 +351,7 @@ erDiagram
     StockLot {
         id              uuid PK
         lot_no          string
+        owner_entity_id uuid FK
         product_id      uuid FK
         shipment_id     uuid FK
         location_id     uuid FK
@@ -392,6 +400,7 @@ erDiagram
     SalesOrder {
         id                  uuid PK
         so_no               string
+        legal_entity_id     uuid FK
         customer_id         uuid FK
         contract_id         uuid FK
         sales_rep_id        uuid FK
@@ -478,14 +487,15 @@ erDiagram
 
     %% ── FIN DOMAIN ──────────────────────────────────────────
     ARInvoice {
-        id          uuid PK
-        invoice_no  string
-        so_id       uuid FK
-        customer_id uuid FK
-        amount      decimal
-        vat_amount  decimal
-        due_date    date
-        status      enum
+        id              uuid PK
+        invoice_no      string
+        legal_entity_id uuid FK
+        so_id           uuid FK
+        customer_id     uuid FK
+        amount          decimal
+        vat_amount      decimal
+        due_date        date
+        status          enum
     }
     ARPayment {
         id          uuid PK
@@ -495,14 +505,15 @@ erDiagram
         method      enum
     }
     APInvoice {
-        id          uuid PK
-        invoice_no  string
-        po_id       uuid FK
-        supplier_id uuid FK
-        amount      decimal
-        currency    string
-        due_date    date
-        status      enum
+        id              uuid PK
+        invoice_no      string
+        legal_entity_id uuid FK
+        po_id           uuid FK
+        supplier_id     uuid FK
+        amount          decimal
+        currency        string
+        due_date        date
+        status          enum
     }
     JournalEntry {
         id          uuid PK

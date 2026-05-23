@@ -19,40 +19,40 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
   - Luôn đảm bảo Typescript Build Không Lỗi (`npm run type-check` hay kiểm tra IDE errors).
 
 ## 3. PHÂN BỔ MODULES (APP ROUTER)
-- **System/Admin**: `src/app/dashboard/settings` (User/Role/Permission CRUD + **Approval Workflow Engine**), `src/app/login`
-- **Master Data**: `src/app/dashboard/products` (**Media Upload Gallery**), `src/app/dashboard/customers` (**Address CRUD**, soft-delete), `src/app/dashboard/suppliers` (soft-delete)
-- **Warehouse**: `src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO)
-- **Sales & Allocation**: `src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**, **Quick Filter Tabs**, **Sortable Columns**, **Date Range**, **Timeline**, **Clone SO**, **CSV Export**, **Role-based Margin Visibility**), `src/app/dashboard/quotations` (**Professional PDF Export**, **Send Drawer Email/Zalo**, **View Tracking**), `src/app/dashboard/price-list`, `src/app/dashboard/allocation`, `src/app/dashboard/returns` (Credit Note + WMS Quarantine)
-- **CRM**: `src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `src/app/dashboard/pipeline`
-- **Finance & Tem**: `src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `src/app/dashboard/stamps`
-- **Procurement & Operations**: `src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**, **Multi-currency VND**), `src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `src/app/dashboard/agency`
-- **Tax & Market Data**: `src/app/dashboard/tax`, `src/app/dashboard/costing`, `src/app/dashboard/market-price`
-- **Logistics**: `src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `src/app/dashboard/consignment`, `src/app/dashboard/transfers`, `src/app/dashboard/returns`, `src/app/dashboard/stock-count`
-- **CEO Board**: `src/app/dashboard` (**AI CEO Briefing**), `src/app/dashboard/kpi`, `src/app/dashboard/reports`
-- **AI & Features**: `src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro, **Prompt Template CRUD**, **AI Reports History**), `src/app/api/ceo-summary` (**AI CEO Briefing**), `src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `src/app/api/pipeline-analysis` (**AI Pipeline Analysis**), `src/app/api/crm-analysis` (**AI CRM Analysis**), `src/app/api/catalog-analysis` (**AI Catalog & Market Intelligence**), `src/app/api/ai/status` (**AI Toggle Check**), `src/app/api/ai/reports` (**AI Report Save**)
-- **POS & QR**: `src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `src/app/dashboard/pos/loyalty`, `src/app/dashboard/qr-codes` (Anti-counterfeit)
-- **External Portal**: `src/app/partner-login` (**External Partner Login & Portal**)
-- **Public Pages**: `src/app/verify/quotation/[token]` (**Public Quotation Viewer** — KH xem, accept/reject, view tracking), `src/app/api/export/quotation-pdf` (**PDF Export API** — Professional/Elegant styles)
+- **System/Admin**: `wine-erp/src/app/dashboard/settings` (User/Role/Permission CRUD + **Approval Workflow Engine**), `wine-erp/src/app/login`
+- **Master Data**: `wine-erp/src/app/dashboard/products` (**Media Upload Gallery**), `wine-erp/src/app/dashboard/customers` (**Address CRUD**, soft-delete), `wine-erp/src/app/dashboard/suppliers` (soft-delete)
+- **Warehouse**: `wine-erp/src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO)
+- **Sales & Allocation**: `wine-erp/src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**, **Quick Filter Tabs**, **Sortable Columns**, **Date Range**, **Timeline**, **Clone SO**, **CSV Export**, **Role-based Margin Visibility**), `wine-erp/src/app/dashboard/quotations` (**Professional PDF Export**, **Send Drawer Email/Zalo**, **View Tracking**), `wine-erp/src/app/dashboard/price-list`, `wine-erp/src/app/dashboard/allocation`, `wine-erp/src/app/dashboard/returns` (Credit Note + WMS Quarantine)
+- **CRM**: `wine-erp/src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `wine-erp/src/app/dashboard/pipeline`
+- **Finance & Tem**: `wine-erp/src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `wine-erp/src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `wine-erp/src/app/dashboard/stamps`
+- **Procurement & Operations**: `wine-erp/src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**, **Multi-currency VND**), `wine-erp/src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `wine-erp/src/app/dashboard/agency`
+- **Tax & Market Data**: `wine-erp/src/app/dashboard/tax`, `wine-erp/src/app/dashboard/costing`, `wine-erp/src/app/dashboard/market-price`
+- **Logistics**: `wine-erp/src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `wine-erp/src/app/dashboard/consignment`, `wine-erp/src/app/dashboard/transfers`, `wine-erp/src/app/dashboard/returns`, `wine-erp/src/app/dashboard/stock-count`
+- **CEO Board**: `wine-erp/src/app/dashboard` (**AI CEO Briefing**), `wine-erp/src/app/dashboard/kpi`, `wine-erp/src/app/dashboard/reports`
+- **AI & Features**: `wine-erp/src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro, **Prompt Template CRUD**, **AI Reports History**), `wine-erp/src/app/api/ceo-summary` (**AI CEO Briefing**), `wine-erp/src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `wine-erp/src/app/api/pipeline-analysis` (**AI Pipeline Analysis**), `wine-erp/src/app/api/crm-analysis` (**AI CRM Analysis**), `wine-erp/src/app/api/catalog-analysis` (**AI Catalog & Market Intelligence**), `wine-erp/src/app/api/ai/status` (**AI Toggle Check**), `wine-erp/src/app/api/ai/reports` (**AI Report Save**)
+- **POS & QR**: `wine-erp/src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `wine-erp/src/app/dashboard/pos/loyalty`, `wine-erp/src/app/dashboard/qr-codes` (Anti-counterfeit)
+- **External Portal**: `wine-erp/src/app/partner-login` (**External Partner Login & Portal**)
+- **Public Pages**: `wine-erp/src/app/verify/quotation/[token]` (**Public Quotation Viewer** — KH xem, accept/reject, view tracking), `wine-erp/src/app/api/export/quotation-pdf` (**PDF Export API** — Professional/Elegant styles)
 
 ## 4. CROSS-CUTTING ENGINES (Shared Libraries)
 | Engine | Path | Mô tả |
 |--------|------|-------|
-| **Auth** | `src/lib/session.ts` | `getCurrentUser()`, `hasPermission()`, `hasRole()` |
-| **RBAC Middleware** | `src/middleware.ts` | Route → Permission mapping, redirect unauthenticated |
+| **Auth** | `wine-erp/src/lib/session.ts` | `getCurrentUser()`, `hasPermission()`, `hasRole()` |
+| **RBAC Middleware** | `wine-erp/src/middleware.ts` | Route → Permission mapping, redirect unauthenticated |
 | **Approval Workflow** | `settings/actions.ts` | Template CRUD → Submit → Multi-step Approve/Reject → Audit trail |
-| **Notification** | `src/lib/notifications.ts` | 5 email templates via Resend (**lazy init** — không crash khi missing API key) + Telegram |
-| **Excel Export** | `src/lib/excel.ts` | Generic engine + 4 pre-built templates (AR Aging, Stock, Sales, Costing) |
-| **File Upload** | `src/lib/storage.ts` | Supabase Storage: uploadFile, deleteFile, listFiles |
+| **Notification** | `wine-erp/src/lib/notifications.ts` | 5 email templates via Resend (**lazy init** — không crash khi missing API key) + Telegram |
+| **Excel Export** | `wine-erp/src/lib/excel.ts` | Generic engine + 4 pre-built templates (AR Aging, Stock, Sales, Costing) |
+| **File Upload** | `wine-erp/src/lib/storage.ts` | Supabase Storage: uploadFile, deleteFile, listFiles |
 | **Tax Engine** | `tax/actions.ts` | CIF → NK → TTĐB → VAT auto-calc by HS Code + Country |
-| **SignaturePad** | `src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
-| **AI Service** | `src/lib/ai-service.ts` | Gemini 3.1 Pro API: `callGemini()` + `resolvePromptTemplate(slug)` → DB-driven prompts with `{{data}}` placeholder, fallback to hardcoded |
-| **AI Toggle** | `src/lib/useAiStatus.ts` | Client hook: `useAiStatus('module')` → auto-hide AI panels. Server: `isModuleAiEnabled()` → 403 |
-| **AI Management** | `src/app/dashboard/ai/ai-actions.ts` | Config toggle, prompt CRUD, report save/pin/archive, usage stats |
-| **AI Prompt Editor** | `src/app/dashboard/ai/ActivePromptEditor.tsx` | Inline editor cho 3 prompts (Pipeline/CRM/Catalog) — systemPrompt, userTemplate, temperature, maxTokens |
-| **Encryption** | `src/lib/encryption.ts` | AES-256-GCM key vault for API keys (ENCRYPTION_KEY env var) |
-| **Server Cache** | `src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
-| **Realtime Hook** | `src/lib/useRealtimeDashboard.ts` | Supabase Realtime subscriptions — role-based channel management |
-| **Audit Diff** | `src/lib/audit.ts` | `logAuditWithDiff()` — per-field change tracking + auto-description |
+| **SignaturePad** | `wine-erp/src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
+| **AI Service** | `wine-erp/src/lib/ai-service.ts` | Gemini 3.1 Pro API: `callGemini()` + `resolvePromptTemplate(slug)` → DB-driven prompts with `{{data}}` placeholder, fallback to hardcoded |
+| **AI Toggle** | `wine-erp/src/lib/useAiStatus.ts` | Client hook: `useAiStatus('module')` → auto-hide AI panels. Server: `isModuleAiEnabled()` → 403 |
+| **AI Management** | `wine-erp/src/app/dashboard/ai/ai-actions.ts` | Config toggle, prompt CRUD, report save/pin/archive, usage stats |
+| **AI Prompt Editor** | `wine-erp/src/app/dashboard/ai/ActivePromptEditor.tsx` | Inline editor cho 3 prompts (Pipeline/CRM/Catalog) — systemPrompt, userTemplate, temperature, maxTokens |
+| **Encryption** | `wine-erp/src/lib/encryption.ts` | AES-256-GCM key vault for API keys (ENCRYPTION_KEY env var) |
+| **Server Cache** | `wine-erp/src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
+| **Realtime Hook** | `wine-erp/src/lib/useRealtimeDashboard.ts` | Supabase Realtime subscriptions — role-based channel management |
+| **Audit Diff** | `wine-erp/src/lib/audit.ts` | `logAuditWithDiff()` — per-field change tracking + auto-description |
 
 ## 5. LƯU Ý QUAN TRỌNG
 - **Soft Delete Pattern**: Product, Customer, Supplier sử dụng `deletedAt` + `status: INACTIVE`. Kiểm tra active PO/SO trước khi xoá.
@@ -118,14 +118,14 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 □ Bug fix đã bổ sung vào bug-fix-lessons.md?
 ```
 
-### Số liệu hiện tại cần đồng nhất (2026-03-08)
+### Số liệu hiện tại cần đồng nhất (2026-03-10)
 
 | Metric | Giá trị | Nơi ghi nhận |
 |---|---|---|
 | Prisma models | **113** | README.md, llms.txt, tech-stack.md |
 | Prisma enums | **71** | README.md, llms.txt |
 | Dashboard routes | **33** | README.md, wine-erp-plan.md |
-| Server Action files | **38** | README.md |
+| Server Action files | **42** | README.md |
 | Module spec files | **24** | README.md |
 | Total modules (codes) | **26** | README.md, llms.txt, wine-erp-plan.md |
 | Next.js version | **16.1.6** | tech-stack.md, wine-erp-plan.md |

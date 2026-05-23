@@ -149,13 +149,16 @@ export async function createGoodsReceipt(input: {
 
                 const lot = await tx.stockLot.create({
                     data: {
-                        lotNo, productId: line.productId,
+                        lotNo,
+                        ownerEntityId: po.legalEntityId,
+                        productId: line.productId,
                         shipmentId: shipmentId ?? null,
                         locationId: line.locationId,
                         qtyReceived: line.qtyReceived,
                         qtyAvailable: line.qtyReceived,
                         unitLandedCost: line.unitLandedCost ?? 0,
-                        receivedDate: now, status: 'AVAILABLE',
+                        receivedDate: now,
+                        status: 'AVAILABLE',
                     },
                 })
 

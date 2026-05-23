@@ -52,7 +52,7 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 113 |
+| **Prisma models** | 114 |
 | **Prisma enums** | 71 |
 | **Dashboard routes** | 33 folders |
 | **Server Action files** | 42 files |
@@ -132,7 +132,7 @@
 
 | Chủ đề | Quyết định |
 |---|---|
-| **Database** | Supabase PostgreSQL — 113 models, 71 enums |
+| **Database** | Supabase PostgreSQL — 114 models, 71 enums |
 | **Auth** | Supabase Auth — JWT, `@supabase/ssr` cho App Router |
 | **File Storage** | **ImgBB** (ảnh sản phẩm, public) + **Supabase Storage** (hợp đồng/chứng từ, private) |
 | **Deployment** | Vercel — Auto-deploy khi merge `main`, Preview URLs per PR |
@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-03-10 13:34 | Wine ERP v6.8 — 26 modules, 113 models, 42 action files (38 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live, WMS Floor Plan Editor bug fix (commit e0b0362)*
+*Last updated: 2026-05-08 16:28 | Wine ERP v6.8 — 26 modules, 114 models, 42 action files (38 cached), 39 loading.tsx, Router Cache 120s, 6 AI features live, WMS Floor Plan Editor bug fix (commit e0b0362)*

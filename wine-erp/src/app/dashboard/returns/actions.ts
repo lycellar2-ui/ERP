@@ -93,7 +93,7 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
             where: { id },
             include: {
                 lines: { include: { product: { select: { skuCode: true, productName: true } } } },
-                so: { select: { soNo: true } },
+                so: { select: { soNo: true, legalEntityId: true } },
             },
         })
         if (!ro) return { success: false, error: 'Return order not found' }
@@ -131,13 +131,14 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
                 const originalLot = await tx.stockLot.findFirst({
                     where: { productId: line.productId, status: { in: ['AVAILABLE', 'RESERVED'] } },
                     orderBy: { receivedDate: 'desc' },
-                    select: { locationId: true, shipmentId: true, unitLandedCost: true },
+                    select: { locationId: true, shipmentId: true, unitLandedCost: true, ownerEntityId: true },
                 })
 
                 const lotCount = await tx.stockLot.count()
                 await tx.stockLot.create({
                     data: {
                         lotNo: `QRT-RET-${String(lotCount + 1).padStart(6, '0')}`,
+                        ownerEntityId: originalLot?.ownerEntityId ?? ro.so.legalEntityId,
                         productId: line.productId,
                         locationId: originalLot?.locationId ?? qrtLocation?.id ?? 'UNKNOWN_LOC',
                         shipmentId: originalLot?.shipmentId ?? null,

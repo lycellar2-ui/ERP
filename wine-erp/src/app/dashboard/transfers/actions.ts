@@ -158,9 +158,16 @@ export async function advanceTransferStatus(id: string): Promise<{ success: bool
                     : 0
 
                 const lotCount = await prisma.stockLot.count()
+                let ownerEntityId = sourceLots.length > 0 ? sourceLots[0].ownerEntityId : null
+                if (!ownerEntityId) {
+                    const firstLE = await prisma.legalEntity.findFirst()
+                    if (!firstLE) return { success: false, error: 'Không tìm thấy pháp nhân nào trong hệ thống' }
+                    ownerEntityId = firstLE.id
+                }
                 await prisma.stockLot.create({
                     data: {
                         lotNo: `TRF-${String(lotCount + 1).padStart(6, '0')}`,
+                        ownerEntityId,
                         productId: line.productId,
                         locationId: destLocation.id,
                         qtyReceived: line.qtyTransferred,

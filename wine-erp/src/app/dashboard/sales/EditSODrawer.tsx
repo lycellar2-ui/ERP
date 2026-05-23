@@ -7,6 +7,7 @@ import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
     updateSalesOrder, SOUpdateInput, SalesChannel,
     getProductPricesForChannel, getSalesOrderDetailWithMargin,
+    getLegalEntities, LegalEntityRow,
 } from './actions'
 import { formatVND } from '@/lib/utils'
 
@@ -55,13 +56,16 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
 
     const [saving, setSaving] = useState(false)
     const [soNo, setSoNo] = useState('')
+    const [entities, setEntities] = useState<LegalEntityRow[]>([])
+    const [legalEntityId, setLegalEntityId] = useState('')
 
     // Load reference data
     const loadReferenceData = useCallback(async () => {
         setLoadingData(true)
-        const [custs, prods] = await Promise.all([getCustomersForSO(), getProductsWithStock()])
+        const [custs, prods, ents] = await Promise.all([getCustomersForSO(), getProductsWithStock(), getLegalEntities()])
         setCustomers(custs as any)
         setProducts(prods as any)
+        setEntities(ents)
         setLoadingData(false)
     }, [])
 
@@ -81,6 +85,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
         setChannel(detail.channel as SalesChannel)
         setPaymentTerm(detail.paymentTerm)
         setOrderDiscount(Number(detail.orderDiscount ?? 0))
+        setLegalEntityId(detail.legalEntityId ?? '')
 
         // Set lines from detail
         setLines(detail.lines.map((l: any) => ({
@@ -170,6 +175,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
 
     const handleSave = async () => {
         if (!customerId) return toast.error('Vui lòng chọn khách hàng')
+        if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
         if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
 
         setSaving(true)
@@ -179,6 +185,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
             channel,
             paymentTerm,
             orderDiscount,
+            legalEntityId,
             lines: lines.map(l => ({
                 productId: l.productId,
                 qtyOrdered: l.qtyOrdered,
@@ -230,8 +237,8 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                                 </select>
                             </div>
 
-                            {/* Channel + Payment */}
-                            <div className="grid grid-cols-2 gap-3">
+                            {/* Channel + Payment + Legal Entity */}
+                            <div className="grid grid-cols-3 gap-3">
                                 <div>
                                     <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Kênh bán</label>
                                     <select value={channel} onChange={e => setChannel(e.target.value as SalesChannel)}
@@ -244,6 +251,14 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                                     <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
                                         className="w-full px-3 py-2 text-sm" style={inputStyle}>
                                         {['COD', 'NET15', 'NET30', 'NET45', 'NET60'].map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Pháp Nhân</label>
+                                    <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
+                                        className="w-full px-3 py-2 text-sm" style={inputStyle}>
+                                        <option value="">— Chọn —</option>
+                                        {entities.map(e => <option key={e.id} value={e.id}>{e.code}</option>)}
                                     </select>
                                 </div>
                             </div>

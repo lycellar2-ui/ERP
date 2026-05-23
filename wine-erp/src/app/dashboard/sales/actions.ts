@@ -10,7 +10,7 @@ import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
 import { serialize } from '@/lib/serialize'
 import { requireAuth } from '@/lib/session'
 
-export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
+export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL'
 
 export interface SalesOrderRow {
@@ -24,6 +24,8 @@ export interface SalesOrderRow {
     orderDiscount: number
     paymentTerm: string
     salesRepName: string
+    legalEntityName: string | null
+    legalEntityCode: string | null
     lineCount: number
     notes: string | null
     createdAt: Date
@@ -44,6 +46,7 @@ export interface SOCreateInput {
     shippingAddressId?: string
     orderDiscount?: number
     notes?: string
+    legalEntityId: string
     lines: SOLineCreate[]
 }
 
@@ -85,6 +88,7 @@ export async function getSalesOrders(filters: {
             include: {
                 customer: { select: { name: true, code: true } },
                 salesRep: { select: { name: true } },
+                legalEntity: { select: { name: true, code: true } },
                 _count: { select: { lines: true } },
             },
         }),
@@ -103,6 +107,8 @@ export async function getSalesOrders(filters: {
             orderDiscount: Number(o.orderDiscount),
             paymentTerm: o.paymentTerm,
             salesRepName: o.salesRep.name,
+            legalEntityName: (o as any).legalEntity?.name ?? null,
+            legalEntityCode: (o as any).legalEntity?.code ?? null,
             lineCount: o._count.lines,
             notes: (o as any).notes ?? null,
             createdAt: o.createdAt,
@@ -212,7 +218,7 @@ export async function getCustomersForSO() {
     return cached('sales:customers', async () => {
         return prisma.customer.findMany({
             where: { status: 'ACTIVE', deletedAt: null },
-            select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true },
+            select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, defaultLegalEntityId: true },
             orderBy: { name: 'asc' },
         })
     }, 60_000)
@@ -343,7 +349,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
         // --- 2. Credit Hold Check ---
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
-            select: { creditLimit: true, name: true },
+            select: { creditLimit: true, name: true, defaultLegalEntityId: true },
         })
 
         // Auto credit limit enforcement
@@ -395,6 +401,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 orderDiscount: input.orderDiscount ?? 0,
                 totalAmount: finalAmount,
                 status: 'DRAFT',
+                legalEntityId: input.legalEntityId,
                 lines: {
                     create: input.lines.map((l, idx) => {
                         const qc = quotaChecks.find(q => q.lineIdx === idx)
@@ -441,6 +448,7 @@ export interface SOUpdateInput {
     paymentTerm: string
     orderDiscount?: number
     notes?: string
+    legalEntityId: string
     lines: SOLineCreate[]
 }
 
@@ -487,6 +495,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     paymentTerm: input.paymentTerm,
                     orderDiscount: input.orderDiscount ?? 0,
                     totalAmount: finalAmount,
+                    legalEntityId: input.legalEntityId,
                 },
             }),
             // Create new lines
@@ -553,9 +562,9 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
             return { success: true, needsApproval: true }
         }
 
-        // Direct confirm for small orders
-        await prisma.salesOrder.update({ where: { id }, data: { status: 'CONFIRMED' } })
-        await logAudit({ userId: so.salesRepId, action: 'CONFIRM', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CONFIRMED' } }).catch(() => { })
+        // Direct confirm for small orders → go to PENDING_ACCOUNTING
+        await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_ACCOUNTING' } })
+        await logAudit({ userId: so.salesRepId, action: 'CONFIRM', entityType: 'SalesOrder', entityId: id, newValue: { status: 'PENDING_ACCOUNTING' } }).catch(() => { })
         revalidatePath('/dashboard/sales')
         revalidateCache('sales')
         revalidateCache('dashboard')
@@ -576,8 +585,8 @@ export async function approveSalesOrder(id: string): Promise<{ success: boolean;
         if (!so) return { success: false, error: 'SO not found' }
         if (so.status !== 'PENDING_APPROVAL') return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
 
-        await prisma.salesOrder.update({ where: { id }, data: { status: 'CONFIRMED' } })
-        await logAudit({ action: 'APPROVE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CONFIRMED', soNo: so.soNo, amount: Number(so.totalAmount) } }).catch(() => { })
+        await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_ACCOUNTING' } })
+        await logAudit({ action: 'APPROVE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'PENDING_ACCOUNTING', soNo: so.soNo, amount: Number(so.totalAmount) } }).catch(() => { })
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard')
         revalidateCache('sales')
@@ -611,6 +620,113 @@ export async function rejectSalesOrder(id: string): Promise<{ success: boolean; 
     }
 }
 
+// ═══════════════════════════════════════════════════
+// LEGAL ENTITY — Pháp Nhân
+// ═══════════════════════════════════════════════════
+
+export type LegalEntityRow = {
+    id: string
+    code: string
+    name: string
+    type: string
+    taxCode: string | null
+    isDefault: boolean
+}
+
+export async function getLegalEntities(): Promise<LegalEntityRow[]> {
+    return cached('legal-entities', async () => {
+        const entities = await prisma.legalEntity.findMany({
+            where: { status: 'ACTIVE' },
+            orderBy: { name: 'asc' },
+        })
+        return entities.map(e => ({
+            id: e.id,
+            code: e.code,
+            name: e.name,
+            type: e.type,
+            taxCode: e.taxCode,
+            isDefault: e.isDefault,
+        }))
+    }, 120_000)
+}
+
+// ═══════════════════════════════════════════════════
+// ACCOUNTING APPROVAL — Kế Toán Duyệt Đơn
+// ═══════════════════════════════════════════════════
+
+// ── Accounting Approve: PENDING_ACCOUNTING → CONFIRMED ──
+// Kế toán có thể thay đổi pháp nhân trước khi duyệt
+export async function accountingApproveSO(id: string, legalEntityId?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requireAuth()
+        const so = await prisma.salesOrder.findUnique({
+            where: { id },
+            select: { status: true, soNo: true, totalAmount: true, legalEntityId: true },
+        })
+        if (!so) return { success: false, error: 'SO không tồn tại' }
+        if (so.status !== 'PENDING_ACCOUNTING') return { success: false, error: `SO không ở trạng thái Chờ KT Duyệt (hiện: ${so.status})` }
+
+        const updateData: any = { status: 'CONFIRMED' }
+        if (legalEntityId && legalEntityId !== so.legalEntityId) {
+            updateData.legalEntityId = legalEntityId
+        }
+
+        await prisma.salesOrder.update({ where: { id }, data: updateData })
+        await logAudit({
+            action: 'ACCOUNTING_APPROVE',
+            entityType: 'SalesOrder',
+            entityId: id,
+            newValue: {
+                status: 'CONFIRMED',
+                soNo: so.soNo,
+                amount: Number(so.totalAmount),
+                legalEntityId: legalEntityId || so.legalEntityId,
+                entityChanged: legalEntityId && legalEntityId !== so.legalEntityId,
+            },
+        }).catch(() => { })
+
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Accounting Reject: PENDING_ACCOUNTING → DRAFT (trả về cho sales sửa) ──
+export async function accountingRejectSO(id: string, reason?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requireAuth()
+        const so = await prisma.salesOrder.findUnique({
+            where: { id },
+            select: { status: true, soNo: true, totalAmount: true },
+        })
+        if (!so) return { success: false, error: 'SO không tồn tại' }
+        if (so.status !== 'PENDING_ACCOUNTING') return { success: false, error: `SO không ở trạng thái Chờ KT Duyệt (hiện: ${so.status})` }
+
+        await prisma.salesOrder.update({ where: { id }, data: { status: 'DRAFT' } })
+        await logAudit({
+            action: 'ACCOUNTING_REJECT',
+            entityType: 'SalesOrder',
+            entityId: id,
+            newValue: {
+                status: 'DRAFT',
+                soNo: so.soNo,
+                reason: reason || 'KT từ chối — trả về DRAFT để sửa',
+            },
+        }).catch(() => { })
+
+        revalidatePath('/dashboard/sales')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
 // ── Internal: Advance SO status (called by event hooks, NOT by UI) ──
 // Used by: confirmDeliveryOrder → PARTIALLY_DELIVERED/DELIVERED
 //          createARInvoice → INVOICED
@@ -618,6 +734,7 @@ export async function rejectSalesOrder(id: string): Promise<{ success: boolean; 
 // DO NOT expose this to client components directly.
 export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): Promise<{ success: boolean; error?: string }> {
     const allowed: Record<string, SOStatus[]> = {
+        PENDING_ACCOUNTING: ['CONFIRMED'],
         CONFIRMED: ['PARTIALLY_DELIVERED', 'DELIVERED'],
         PARTIALLY_DELIVERED: ['DELIVERED'],
         DELIVERED: ['INVOICED'],

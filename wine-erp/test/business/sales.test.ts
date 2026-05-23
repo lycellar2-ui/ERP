@@ -43,6 +43,7 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
         }])
 
         const result = await createSalesOrder({
+            legalEntityId: 'le-1',
             customerId: 'cust-1', salesRepId: 'rep-1', channel: 'HORECA',
             paymentTerm: 'NET30',
             lines: [{ productId: 'p-grand-cru', qtyOrdered: 5, unitPrice: 2_000_000 }],
@@ -62,6 +63,7 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
         })
 
         const result = await createSalesOrder({
+            legalEntityId: 'le-1',
             customerId: 'cust-1', salesRepId: 'rep-1', channel: 'VIP_RETAIL',
             paymentTerm: 'NET30',
             lines: [{ productId: 'p-1', qtyOrdered: 6, unitPrice: 1_500_000 }],
@@ -77,6 +79,7 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
         mockPrisma.salesOrder.create.mockResolvedValue({ id: 'so-1', soNo: 'SO-01', lines: [] })
 
         await createSalesOrder({
+            legalEntityId: 'le-1',
             customerId: 'c-1', salesRepId: 'r-1', channel: 'HORECA',
             paymentTerm: 'NET30',
             orderDiscount: 5, // 5% overall discount

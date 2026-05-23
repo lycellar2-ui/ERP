@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth, getCurrentUser } from '@/lib/session'
+import { requireAuth, getCurrentUser, requirePermission } from '@/lib/session'
 import { logAudit, logAuditWithDiff } from '@/lib/audit'
 
 // ═══════════════════════════════════════════════════
@@ -126,6 +126,7 @@ export async function getCustomerById(id: string) {
             salesRep: { select: { id: true, name: true } },
             contacts: { where: { isPrimary: true }, take: 1 },
             addresses: { where: { isDefault: true }, take: 1 },
+            defaultLegalEntity: { select: { id: true, code: true, name: true } },
         },
     })
     if (!c) return null
@@ -144,6 +145,8 @@ export async function getCustomerById(id: string) {
         paymentTerm: c.paymentTerm,
         creditLimit: Number(c.creditLimit),
         salesRepId: c.salesRepId,
+        defaultLegalEntityId: c.defaultLegalEntityId,
+        defaultLegalEntityName: (c as any).defaultLegalEntity?.name ?? null,
         status: c.status,
         contactName: contact?.name ?? null,
         contactTitle: contact?.title ?? null,
@@ -278,6 +281,7 @@ const customerSchema = z.object({
     paymentTerm: z.string().default('NET30'),
     creditLimit: z.number().default(0),
     salesRepId: z.string().nullable().optional(),
+    defaultLegalEntityId: z.string().nullable().optional(),
     status: z.enum(['ACTIVE', 'CREDIT_HOLD', 'INACTIVE']).default('ACTIVE'),
     contactName: z.string().nullable().optional(),
     email: z.string().email('Email không hợp lệ').nullable().optional(),
@@ -292,49 +296,54 @@ export type CustomerInput = z.infer<typeof customerSchema>
 
 export async function createCustomer(input: CustomerInput) {
     try {
-        await requireAuth()
+        await requirePermission('MDM', 'WRITE')
         const data = customerSchema.parse(input)
-        const customer = await prisma.customer.create({
-            data: {
-                code: data.code,
-                name: data.name,
-                shortName: data.shortName ?? null,
-                taxId: data.taxId ?? null,
-                customerType: data.customerType,
-                channel: data.channel ?? null,
-                paymentTerm: data.paymentTerm,
-                creditLimit: data.creditLimit,
-                salesRepId: data.salesRepId ?? null,
-                status: data.status,
-            },
+
+        const customer = await prisma.$transaction(async (tx) => {
+            const cust = await tx.customer.create({
+                data: {
+                    code: data.code,
+                    name: data.name,
+                    shortName: data.shortName !== undefined ? data.shortName : null,
+                    taxId: data.taxId !== undefined ? data.taxId : null,
+                    customerType: data.customerType,
+                    channel: data.channel !== undefined ? data.channel : null,
+                    paymentTerm: data.paymentTerm,
+                    creditLimit: data.creditLimit,
+                    salesRepId: data.salesRepId !== undefined ? data.salesRepId : null,
+                    defaultLegalEntityId: data.defaultLegalEntityId !== undefined ? data.defaultLegalEntityId : null,
+                    status: data.status,
+                },
+            })
+
+            const hasContact = data.contactName || data.email || data.phone
+            if (hasContact) {
+                await tx.customerContact.create({
+                    data: {
+                        customerId: cust.id,
+                        name: data.contactName || data.name,
+                        email: data.email !== undefined ? data.email : null,
+                        phone: data.phone !== undefined ? data.phone : null,
+                        isPrimary: true,
+                    },
+                })
+            }
+
+            if (data.address) {
+                await tx.customerAddress.create({
+                    data: {
+                        customerId: cust.id,
+                        label: 'Địa chỉ chính',
+                        address: data.address,
+                        ward: data.ward !== undefined ? data.ward : null,
+                        district: data.district !== undefined ? data.district : null,
+                        city: data.city !== undefined ? data.city : null,
+                        isDefault: true,
+                    },
+                })
+            }
+            return cust
         })
-
-        const hasContact = data.contactName || data.email || data.phone
-        if (hasContact) {
-            await prisma.customerContact.create({
-                data: {
-                    customerId: customer.id,
-                    name: data.contactName || data.name,
-                    email: data.email ?? null,
-                    phone: data.phone ?? null,
-                    isPrimary: true,
-                },
-            })
-        }
-
-        if (data.address) {
-            await prisma.customerAddress.create({
-                data: {
-                    customerId: customer.id,
-                    label: 'Địa chỉ chính',
-                    address: data.address,
-                    ward: data.ward ?? null,
-                    district: data.district ?? null,
-                    city: data.city ?? null,
-                    isDefault: true,
-                },
-            })
-        }
 
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
@@ -353,68 +362,103 @@ export async function createCustomer(input: CustomerInput) {
 
 export async function updateCustomer(id: string, input: Partial<CustomerInput>) {
     try {
-        const { contactName, email, phone, address, ward, district, city, ...customerData } = input
+        await requirePermission('MDM', 'WRITE')
+        const data = customerSchema.partial().parse(input)
+        const { contactName, email, phone, address, ward, district, city, ...customerData } = data
         const oldCustomer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true, paymentTerm: true, channel: true, salesRepId: true, status: true, shortName: true } })
-        await prisma.customer.update({
-            where: { id },
-            data: {
-                ...customerData,
-                shortName: customerData.shortName ?? undefined,
-                salesRepId: customerData.salesRepId ?? null,
-            } as any,
+
+        const updateData: any = {}
+        if (customerData.code !== undefined) updateData.code = customerData.code
+        if (customerData.name !== undefined) updateData.name = customerData.name
+        if (customerData.shortName !== undefined) updateData.shortName = customerData.shortName
+        if (customerData.taxId !== undefined) updateData.taxId = customerData.taxId
+        if (customerData.customerType !== undefined) updateData.customerType = customerData.customerType
+        if (customerData.channel !== undefined) updateData.channel = customerData.channel
+        if (customerData.paymentTerm !== undefined) updateData.paymentTerm = customerData.paymentTerm
+        if (customerData.creditLimit !== undefined) updateData.creditLimit = customerData.creditLimit
+        if (customerData.salesRepId !== undefined) updateData.salesRepId = customerData.salesRepId
+        if (customerData.defaultLegalEntityId !== undefined) updateData.defaultLegalEntityId = customerData.defaultLegalEntityId
+        if (customerData.status !== undefined) updateData.status = customerData.status
+
+        await prisma.$transaction(async (tx) => {
+            await tx.customer.update({
+                where: { id },
+                data: updateData,
+            })
+
+            // Update primary contact if provided
+            if (contactName !== undefined || email !== undefined || phone !== undefined) {
+                const existing = await tx.customerContact.findFirst({
+                    where: { customerId: id, isPrimary: true },
+                })
+                if (existing) {
+                    const contactUpdate: any = {}
+                    if (contactName !== undefined) contactUpdate.name = contactName
+                    if (email !== undefined) contactUpdate.email = email
+                    if (phone !== undefined) contactUpdate.phone = phone
+                    await tx.customerContact.update({
+                        where: { id: existing.id },
+                        data: contactUpdate,
+                    })
+                } else {
+                    await tx.customerContact.create({
+                        data: {
+                            customerId: id,
+                            name: contactName || 'Liên hệ chính',
+                            email: email !== undefined ? email : null,
+                            phone: phone !== undefined ? phone : null,
+                            isPrimary: true,
+                        },
+                    })
+                }
+            }
+
+            // Update default address if provided
+            if (address !== undefined) {
+                const existingAddr = await tx.customerAddress.findFirst({
+                    where: { customerId: id, isDefault: true },
+                })
+                if (existingAddr) {
+                    const addrUpdate: any = {}
+                    if (address !== undefined) addrUpdate.address = address
+                    if (ward !== undefined) addrUpdate.ward = ward
+                    if (district !== undefined) addrUpdate.district = district
+                    if (city !== undefined) addrUpdate.city = city
+                    await tx.customerAddress.update({
+                        where: { id: existingAddr.id },
+                        data: addrUpdate,
+                    })
+                } else {
+                    await tx.customerAddress.create({
+                        data: {
+                            customerId: id,
+                            label: 'Địa chỉ chính',
+                            address: address || '',
+                            ward: ward !== undefined ? ward : null,
+                            district: district !== undefined ? district : null,
+                            city: city !== undefined ? city : null,
+                            isDefault: true,
+                        },
+                    })
+                }
+            } else {
+                if (ward !== undefined || district !== undefined || city !== undefined) {
+                    const existingAddr = await tx.customerAddress.findFirst({
+                        where: { customerId: id, isDefault: true },
+                    })
+                    if (existingAddr) {
+                        const addrUpdate: any = {}
+                        if (ward !== undefined) addrUpdate.ward = ward
+                        if (district !== undefined) addrUpdate.district = district
+                        if (city !== undefined) addrUpdate.city = city
+                        await tx.customerAddress.update({
+                            where: { id: existingAddr.id },
+                            data: addrUpdate,
+                        })
+                    }
+                }
+            }
         })
-
-        // Update primary contact if provided
-        if (contactName || email || phone) {
-            const existing = await prisma.customerContact.findFirst({
-                where: { customerId: id, isPrimary: true },
-            })
-            if (existing) {
-                await prisma.customerContact.update({
-                    where: { id: existing.id },
-                    data: {
-                        name: contactName || undefined,
-                        email: email ?? undefined,
-                        phone: phone ?? undefined,
-                    },
-                })
-            } else {
-                await prisma.customerContact.create({
-                    data: {
-                        customerId: id,
-                        name: contactName || 'Liên hệ chính',
-                        email: email ?? null,
-                        phone: phone ?? null,
-                        isPrimary: true,
-                    },
-                })
-            }
-        }
-
-        // Update default address if provided
-        if (address) {
-            const existingAddr = await prisma.customerAddress.findFirst({
-                where: { customerId: id, isDefault: true },
-            })
-            if (existingAddr) {
-                await prisma.customerAddress.update({
-                    where: { id: existingAddr.id },
-                    data: { address, ward: ward ?? undefined, district: district ?? undefined, city: city ?? undefined },
-                })
-            } else {
-                await prisma.customerAddress.create({
-                    data: {
-                        customerId: id,
-                        label: 'Địa chỉ chính',
-                        address,
-                        ward: ward ?? null,
-                        district: district ?? null,
-                        city: city ?? null,
-                        isDefault: true,
-                    },
-                })
-            }
-        }
 
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
@@ -423,6 +467,10 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Customer', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...customerData } })
         return { success: true }
     } catch (err: any) {
+        if (err?.issues) {
+            const msgs = err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')
+            return { success: false, error: `Validation: ${msgs}` }
+        }
         return { success: false, error: err.message ?? 'Lỗi cập nhật KH' }
     }
 }
@@ -466,6 +514,11 @@ export type ImportResult = {
 }
 
 export async function bulkImportCustomers(rows: Record<string, any>[]): Promise<ImportResult> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+    } catch (err: any) {
+        return { success: 0, errors: [{ row: 1, message: err.message || 'Không có quyền thực hiện action này' }], total: rows.length }
+    }
     const result: ImportResult = { success: 0, errors: [], total: rows.length }
     if (rows.length > 500) {
         result.errors.push({ row: 0, message: 'Tối đa 500 dòng mỗi lần import' })
@@ -554,6 +607,7 @@ export async function createCustomerAddress(input: {
     isDefault?: boolean
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         if (input.isDefault) {
             await prisma.customerAddress.updateMany({
                 where: { customerId: input.customerId, isDefault: true },
@@ -594,6 +648,7 @@ export async function updateCustomerAddress(
     }
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         if (input.isDefault) {
             const addr = await prisma.customerAddress.findUnique({ where: { id } })
             if (addr) {
@@ -615,6 +670,7 @@ export async function updateCustomerAddress(
 
 export async function deleteCustomerAddress(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.customerAddress.delete({ where: { id } })
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')

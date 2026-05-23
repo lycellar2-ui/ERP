@@ -10,9 +10,10 @@ import * as dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
 
-// ─── Use pg.Pool so we can set SSL properly ───────
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL!
+
 const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL!.replace('?sslmode=require', ''),
+    connectionString: connectionString.replace('?sslmode=require', ''),
     ssl: { rejectUnauthorized: false },
     max: 3,
     allowExitOnIdle: true,
@@ -22,6 +23,32 @@ const prisma = new PrismaClient({ adapter })
 
 async function main() {
     console.log('🍷 Seeding Wine ERP data...')
+
+    // ─── 0. Legal Entities (Pháp Nhân) ────────────────
+    console.log('  → Creating legal entities...')
+    const thangAn = await prisma.legalEntity.upsert({
+        where: { code: 'TA' },
+        update: {},
+        create: {
+            id: 'le-thang-an',
+            code: 'TA',
+            name: 'Thắng Ân',
+            taxId: '0316123456',
+            address: 'TPHCM',
+        },
+    })
+    const lysCellar = await prisma.legalEntity.upsert({
+        where: { code: 'LC' },
+        update: {},
+        create: {
+            id: 'le-lys-cellar',
+            code: 'LC',
+            name: "Ly's Cellar",
+            taxId: '0316789012',
+            address: 'TPHCM',
+        },
+    })
+    console.log('  ✓ 2 legal entities seeded (Thắng Ân + Ly\'s Cellar)')
 
     // ─── 1. Wine Regions ──────────────────────────────
     console.log('  → Creating wine regions...')

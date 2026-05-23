@@ -507,6 +507,7 @@ export async function createGoodsReceipt(input: {
                 const lot = await tx.stockLot.create({
                     data: {
                         lotNo,
+                        ownerEntityId: po.legalEntityId,
                         productId: line.productId,
                         shipmentId: shipmentId ?? null,
                         locationId: line.locationId,
@@ -875,6 +876,7 @@ export async function transferStock(input: {
                 await tx.stockLot.create({
                     data: {
                         lotNo: `TRF-${String(count + 1).padStart(6, '0')}`,
+                        ownerEntityId: lot.ownerEntityId,
                         productId: lot.productId,
                         locationId: input.toLocationId,
                         shipmentId: lot.shipmentId,
@@ -1090,6 +1092,7 @@ export async function moveToQuarantine(input: {
             await tx.stockLot.create({
                 data: {
                     lotNo: `QRT-${String(count + 1).padStart(6, '0')}`,
+                    ownerEntityId: lot.ownerEntityId,
                     productId: lot.productId,
                     locationId: lot.locationId,
                     shipmentId: lot.shipmentId,

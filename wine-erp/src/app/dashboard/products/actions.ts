@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth, getCurrentUser } from '@/lib/session'
+import { requireAuth, getCurrentUser, requirePermission } from '@/lib/session'
 import { logAudit, logAuditWithDiff } from '@/lib/audit'
 
 // ─── Types ────────────────────────────────────────
@@ -301,7 +301,7 @@ export type ProductInput = z.infer<typeof productSchema>
 // ─── Create ───────────────────────────────────────
 export async function createProduct(input: ProductInput) {
     try {
-        await requireAuth()
+        await requirePermission('MDM', 'WRITE')
         const data = productSchema.parse(input)
         const product = await prisma.product.create({
             data: {
@@ -344,39 +344,46 @@ export async function createProduct(input: ProductInput) {
 
 // ─── Update ───────────────────────────────────────
 export async function updateProduct(id: string, input: Partial<ProductInput>) {
-    const oldProduct = await prisma.product.findUnique({ where: { id }, select: { skuCode: true, productName: true, status: true, abvPercent: true, volumeMl: true, wineType: true, country: true, classification: true, isAllocationEligible: true, hsCode: true } })
-    await prisma.product.update({
-        where: { id },
-        data: {
-            ...(input.skuCode && { skuCode: input.skuCode }),
-            ...(input.productName && { productName: input.productName }),
-            ...(input.producerId && { producerId: input.producerId }),
-            vintage: input.vintage ?? undefined,
-            appellationId: input.appellationId ?? undefined,
-            ...(input.country && { country: input.country }),
-            ...(input.abvPercent !== undefined && { abvPercent: input.abvPercent ?? 0 }),
-            ...(input.format && { format: input.format }),
-            ...(input.packagingType && { packagingType: input.packagingType }),
-            ...(input.unitsPerCase && { unitsPerCase: input.unitsPerCase }),
-            ...(input.barcodeEan !== undefined && { barcodeEan: input.barcodeEan }),
-            ...(input.wineType && { wineType: input.wineType }),
-            ...(input.classification !== undefined && { classification: input.classification }),
-            ...(input.tastingNotes !== undefined && { tastingNotes: input.tastingNotes }),
-            ...(input.isAllocationEligible !== undefined && { isAllocationEligible: input.isAllocationEligible }),
-            ...(input.hsCode && { hsCode: input.hsCode }),
-            ...(input.status && { status: input.status }),
-        },
-    })
-    const user = await getCurrentUser().catch(() => null)
-    const oldPlain = oldProduct ? JSON.parse(JSON.stringify(oldProduct)) : null
-    logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Product', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...input } })
-    revalidateCache('products')
-    revalidatePath('/dashboard/products')
-    return { success: true }
+    try {
+        await requirePermission('MDM', 'WRITE')
+        const data = productSchema.partial().parse(input)
+        const oldProduct = await prisma.product.findUnique({ where: { id }, select: { skuCode: true, productName: true, status: true, abvPercent: true, volumeMl: true, wineType: true, country: true, classification: true, isAllocationEligible: true, hsCode: true } })
+        await prisma.product.update({
+            where: { id },
+            data: {
+                ...(data.skuCode && { skuCode: data.skuCode }),
+                ...(data.productName && { productName: data.productName }),
+                ...(data.producerId && { producerId: data.producerId }),
+                vintage: data.vintage !== undefined ? data.vintage : undefined,
+                appellationId: data.appellationId !== undefined ? data.appellationId : undefined,
+                ...(data.country && { country: data.country }),
+                abvPercent: data.abvPercent !== undefined ? data.abvPercent : undefined,
+                ...(data.format && { format: data.format }),
+                ...(data.packagingType && { packagingType: data.packagingType }),
+                ...(data.unitsPerCase && { unitsPerCase: data.unitsPerCase }),
+                barcodeEan: data.barcodeEan !== undefined ? data.barcodeEan : undefined,
+                ...(data.wineType && { wineType: data.wineType }),
+                classification: data.classification !== undefined ? data.classification : undefined,
+                tastingNotes: data.tastingNotes !== undefined ? data.tastingNotes : undefined,
+                ...(data.isAllocationEligible !== undefined && { isAllocationEligible: data.isAllocationEligible }),
+                ...(data.hsCode && { hsCode: data.hsCode }),
+                ...(data.status && { status: data.status }),
+            },
+        })
+        const user = await getCurrentUser().catch(() => null)
+        const oldPlain = oldProduct ? JSON.parse(JSON.stringify(oldProduct)) : null
+        logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Product', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...data } })
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }
 
 // ─── Soft delete ──────────────────────────────────
 export async function deleteProduct(id: string) {
+    await requirePermission('MDM', 'WRITE')
     const product = await prisma.product.findUnique({ where: { id }, select: { skuCode: true, productName: true, status: true } })
     await prisma.product.update({
         where: { id },
@@ -395,6 +402,7 @@ export type ImportResult = {
 }
 
 export async function bulkImportProducts(rows: Record<string, any>[]): Promise<ImportResult> {
+    await requirePermission('MDM', 'WRITE')
     const result: ImportResult = { success: 0, errors: [], total: rows.length }
     if (rows.length > 500) {
         result.errors.push({ row: 0, message: 'Tối đa 500 dòng mỗi lần import' })
@@ -592,6 +600,7 @@ export type PriceListInput = z.infer<typeof priceListSchema>
 
 export async function createPriceList(input: PriceListInput): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         const data = priceListSchema.parse(input)
         const pl = await prisma.priceList.create({
             data: {
@@ -617,6 +626,7 @@ export async function upsertPriceListLine(
     currency: string = 'VND'
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.priceListLine.upsert({
             where: {
                 priceListId_productId: { priceListId, productId },
@@ -635,6 +645,7 @@ export async function upsertPriceListLine(
 // ── Delete price list line ────────────────────────
 export async function deletePriceListLine(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.priceListLine.delete({ where: { id } })
         revalidateCache('products')
         revalidatePath('/dashboard/products')
@@ -647,6 +658,7 @@ export async function deletePriceListLine(id: string): Promise<{ success: boolea
 // ── Delete price list ─────────────────────────────
 export async function deletePriceList(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.$transaction([
             prisma.priceListLine.deleteMany({ where: { priceListId: id } }),
             prisma.priceList.delete({ where: { id } }),
@@ -695,6 +707,7 @@ export async function uploadProductMedia(
     mediaType: string = 'PRODUCT_MAIN'
 ): Promise<{ success: boolean; media?: ProductMediaRow; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         const file = formData.get('file') as File
         if (!file || file.size === 0) return { success: false, error: 'Không có file' }
         if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }
@@ -743,6 +756,7 @@ export async function deleteProductMedia(
     mediaId: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         const media = await prisma.productMedia.findUnique({
             where: { id: mediaId },
             select: { productId: true, isPrimary: true },
@@ -778,6 +792,7 @@ export async function setPrimaryMedia(
     productId: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.$transaction([
             prisma.productMedia.updateMany({
                 where: { productId },
@@ -842,6 +857,7 @@ export async function addProductAward(input: {
     awardedYear?: number
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.productAward.create({
             data: {
                 productId: input.productId,
@@ -862,6 +878,7 @@ export async function addProductAward(input: {
 
 export async function deleteProductAward(awardId: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.productAward.delete({ where: { id: awardId } })
         revalidateCache('products')
         revalidatePath('/dashboard/products')
@@ -879,6 +896,7 @@ export async function uploadProductImage(
     formData: FormData
 ): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         const file = formData.get('image') as File
         if (!file || file.size === 0) return { success: false, error: 'Không có file' }
         if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }
@@ -928,6 +946,7 @@ export async function deleteProductImage(
     productId: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('MDM', 'WRITE')
         await prisma.productMedia.deleteMany({
             where: { productId, isPrimary: true },
         })

@@ -40,9 +40,8 @@ export async function middleware(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    // Skip auth checks if Supabase not yet configured or dev mode
+    // Skip auth checks if Supabase not yet configured
     if (
-        process.env.NODE_ENV === 'development' ||
         !supabaseUrl ||
         supabaseUrl.includes('YOUR_PROJECT_REF') ||
         !supabaseKey

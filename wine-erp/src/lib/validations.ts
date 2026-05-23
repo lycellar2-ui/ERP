@@ -32,6 +32,7 @@ export const SOCreateSchema = z.object({
     shippingAddressId: idSchema.optional(),
     orderDiscount: percentSchema.optional(),
     notes: z.string().max(1000).optional(),
+    legalEntityId: idSchema,
     lines: z.array(SOLineCreateSchema).min(1, 'Đơn hàng phải có ít nhất 1 dòng'),
 })
 

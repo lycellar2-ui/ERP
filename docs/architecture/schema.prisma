@@ -44,6 +44,24 @@ model Role {
   @@map("roles")
 }
 
+model LegalEntity {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  name        String
+  taxId       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  // Relations
+  purchaseOrders PurchaseOrder[]
+  salesOrders    SalesOrder[]
+  stockLots      StockLot[]
+  arInvoices     ARInvoice[]
+  apInvoices     APInvoice[]
+
+  @@map("legal_entities")
+}
+
 model User {
   id           String            @id @default(cuid())
   email        String            @unique
@@ -529,6 +547,8 @@ model MarketPrice {
 model PurchaseOrder {
   id             String              @id @default(cuid())
   poNo           String              @unique
+  legalEntityId  String
+  legalEntity    LegalEntity         @relation(fields: [legalEntityId], references: [id])
   supplierId     String
   supplier       Supplier            @relation(fields: [supplierId], references: [id])
   contractId     String?
@@ -709,6 +729,8 @@ model Location {
 model StockLot {
   id              String      @id @default(cuid())
   lotNo           String      @unique
+  ownerEntityId   String
+  ownerEntity     LegalEntity @relation(fields: [ownerEntityId], references: [id])
   productId       String
   product         Product     @relation(fields: [productId], references: [id])
   shipmentId      String?
@@ -826,6 +848,8 @@ model StockCountLine {
 model SalesOrder {
   id                String            @id @default(cuid())
   soNo              String            @unique
+  legalEntityId     String
+  legalEntity       LegalEntity       @relation(fields: [legalEntityId], references: [id])
   customerId        String
   customer          Customer          @relation(fields: [customerId], references: [id])
   contractId        String?
@@ -1079,6 +1103,8 @@ model JournalLine {
 model ARInvoice {
   id             String      @id @default(cuid())
   invoiceNo      String      @unique
+  legalEntityId  String
+  legalEntity    LegalEntity @relation(fields: [legalEntityId], references: [id])
   soId           String
   so             SalesOrder  @relation(fields: [soId], references: [id])
   customerId     String
@@ -1109,6 +1135,8 @@ model ARPayment {
 model APInvoice {
   id          String       @id @default(cuid())
   invoiceNo   String
+  legalEntityId String
+  legalEntity LegalEntity  @relation(fields: [legalEntityId], references: [id])
   poId        String
   po          PurchaseOrder @relation(fields: [poId], references: [id])
   supplierId  String

@@ -3,14 +3,15 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV } from './actions'
+import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { CreateSODrawer } from './CreateSODrawer'
 import { EditSODrawer } from './EditSODrawer'
 
 const STATUS_CFG: Record<SOStatus, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: FileText },
-    PENDING_APPROVAL: { label: 'Chờ Duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
+    PENDING_APPROVAL: { label: 'Chờ CEO', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
+    PENDING_ACCOUNTING: { label: 'Chờ KT Duyệt', color: '#C084FC', bg: 'rgba(192,132,252,0.12)', icon: Clock },
     CONFIRMED: { label: 'Đã Xác Nhận', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: CheckCircle2 },
     PARTIALLY_DELIVERED: { label: 'Giao 1 Phần', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Truck },
     DELIVERED: { label: 'Đã Giao', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)', icon: Truck },
@@ -53,9 +54,10 @@ function SOStatCard({ label, value, sub, accent }: { label: string; value: strin
 }
 
 // ── Quick Filter Tabs ────────────────────────────
-const TAB_ORDER: (SOStatus | 'ALL')[] = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID', 'CANCELLED']
+const TAB_ORDER: (SOStatus | 'ALL')[] = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID', 'CANCELLED']
 const TAB_LABELS: Record<string, string> = {
-    ALL: 'Tất cả', DRAFT: 'Nháp', PENDING_APPROVAL: 'Chờ Duyệt', CONFIRMED: 'Đã XN',
+    ALL: 'Tất cả', DRAFT: 'Nháp', PENDING_APPROVAL: 'Chờ CEO', PENDING_ACCOUNTING: 'Chờ KT',
+    CONFIRMED: 'Đã XN',
     PARTIALLY_DELIVERED: 'Giao 1 phần', DELIVERED: 'Đã Giao', INVOICED: 'Xuất HĐ', PAID: 'Đã TT', CANCELLED: 'Huỷ',
 }
 
@@ -260,8 +262,8 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                 <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                     <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Tiến Trình</p>
                                     <div className="flex items-center gap-1">
-                                        {(['DRAFT', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] as SOStatus[]).map((s, i) => {
-                                            const steps: SOStatus[] = ['DRAFT', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
+                                        {(['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] as SOStatus[]).map((s, i) => {
+                                            const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
                                             const currentIdx = steps.indexOf(detail.status as SOStatus)
                                             const stepIdx = i
                                             const isDone = stepIdx <= currentIdx
@@ -281,7 +283,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                             {STATUS_CFG[s]?.label}
                                                         </p>
                                                     </div>
-                                                    {i < 4 && <div className="h-[2px] flex-1 rounded" style={{ background: isDone && stepIdx < currentIdx ? '#5BA88A' : '#2A4355', marginBottom: 16 }} />}
+                                                    {i < 5 && <div className="h-[2px] flex-1 rounded" style={{ background: isDone && stepIdx < currentIdx ? '#5BA88A' : '#2A4355', marginBottom: 16 }} />}
                                                 </div>
                                             )
                                         })}
@@ -452,6 +454,14 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
     const [detailId, setDetailId] = useState<string | null>(null)
     const [editId, setEditId] = useState<string | null>(null)
     const [counts, setCounts] = useState(statusCounts)
+    const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
+    const [acctModalId, setAcctModalId] = useState<string | null>(null)
+    const [acctEntityId, setAcctEntityId] = useState('')
+
+    // Load legal entities on mount
+    useEffect(() => {
+        getLegalEntities().then(setLegalEntities).catch(() => { })
+    }, [])
 
     const reload = useCallback(async (overrides?: Partial<{ search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string }>) => {
         setLoading(true)
@@ -490,7 +500,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
     const handleConfirm = async (id: string) => {
         setActionLoading(id)
         toast.promise(confirmSalesOrder(id).then(() => reload()), {
-            loading: 'Đang xác nhận...', success: 'Xác nhận thành công!', error: 'Không thể xác nhận đơn hàng', finally: () => setActionLoading(null)
+            loading: 'Đang xác nhận...', success: 'Đã chuyển sang Chờ KT Duyệt!', error: 'Không thể xác nhận đơn hàng', finally: () => setActionLoading(null)
         })
     }
 
@@ -613,6 +623,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                 <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} />
                                 <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Khách Hàng</th>
                                 <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Kênh</th>
+                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Pháp Nhân</th>
                                 <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} />
                                 <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Sales Rep</th>
                                 <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Trạng Thái</th>
@@ -622,11 +633,11 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={8} className="text-center py-12" style={{ color: '#4A6A7A' }}>
+                                <tr><td colSpan={9} className="text-center py-12" style={{ color: '#4A6A7A' }}>
                                     <Loader2 size={20} className="inline animate-spin mr-2" />Đang tải...
                                 </td></tr>
                             ) : rows.length === 0 ? (
-                                <tr><td colSpan={8} className="text-center py-16" style={{ color: '#4A6A7A' }}>
+                                <tr><td colSpan={9} className="text-center py-16" style={{ color: '#4A6A7A' }}>
                                     <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
                                     <p className="text-sm">Chưa có đơn hàng nào</p>
                                 </td></tr>
@@ -647,6 +658,16 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                             style={{ background: 'rgba(135,203,185,0.1)', color: '#8AAEBB' }}>
                                             {CHANNEL_LABEL[row.channel] ?? row.channel}
                                         </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {row.legalEntityCode ? (
+                                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                                style={{ background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(135,203,185,0.12)', color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' }}>
+                                                {row.legalEntityCode}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs" style={{ color: '#2A4355' }}>—</span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3">
                                         <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</p>
@@ -691,7 +712,27 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                                     <Pencil size={11} /> Sửa
                                                 </button>
                                             )}
-                                            {['DRAFT', 'CONFIRMED'].includes(row.status) && (
+                                            {row.status === 'PENDING_ACCOUNTING' && (
+                                                <button onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
+                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                    style={{ background: 'rgba(192,132,252,0.15)', color: '#C084FC', border: '1px solid rgba(192,132,252,0.35)', borderRadius: '5px' }}>
+                                                    <CheckCircle2 size={12} /> KT Duyệt
+                                                </button>
+                                            )}
+                                            {row.status === 'PENDING_ACCOUNTING' && (
+                                                <button onClick={async () => {
+                                                    if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
+                                                    setActionLoading(row.id)
+                                                    toast.promise(accountingRejectSO(row.id).then(() => reload()), {
+                                                        loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
+                                                    })
+                                                }} disabled={actionLoading === row.id}
+                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                    style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.3)', borderRadius: '5px' }}>
+                                                    <XCircle size={12} /> KT Trả Về
+                                                </button>
+                                            )}
+                                            {['DRAFT', 'CONFIRMED', 'PENDING_ACCOUNTING'].includes(row.status) && (
                                                 <button onClick={() => handleCancel(row.id)} disabled={actionLoading === row.id}
                                                     className="px-2 py-1 text-xs font-semibold"
                                                     style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '4px' }}>
@@ -732,6 +773,56 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
             <CreateSODrawer open={createOpen} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); reload() }} userId={userId} />
             {detailId && <SODetailDrawer soId={detailId} onClose={() => setDetailId(null)} onClone={handleClone} canSeeMargin={canSeeMargin} />}
             {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} />}
+
+            {/* Accounting Approval Modal */}
+            {acctModalId && (
+                <>
+                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setAcctModalId(null)} />
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                        <h3 className="text-lg font-bold mb-4" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                            Kế Toán Duyệt Đơn
+                        </h3>
+                        <div className="mb-4">
+                            <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
+                                Pháp Nhân Xuất Hoá Đơn
+                            </label>
+                            <select value={acctEntityId} onChange={e => setAcctEntityId(e.target.value)}
+                                className="w-full px-3 py-2.5 text-sm outline-none"
+                                style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
+                                <option value="">— Chưa chọn —</option>
+                                {legalEntities.map(e => (
+                                    <option key={e.id} value={e.id}>{e.name} ({e.code}) — {e.type === 'IMPORT' ? 'Nhập Khẩu' : 'Phân Phối'}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button onClick={() => setAcctModalId(null)}
+                                className="px-4 py-2 text-sm" style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}>
+                                Huỷ
+                            </button>
+                            <button onClick={async () => {
+                                if (!acctEntityId) return toast.error('Vui lòng chọn pháp nhân')
+                                setActionLoading(acctModalId)
+                                toast.promise(accountingApproveSO(acctModalId, acctEntityId).then(r => {
+                                    if (!r.success) throw new Error(r.error)
+                                    setAcctModalId(null)
+                                    reload()
+                                }), {
+                                    loading: 'Đang duyệt...',
+                                    success: 'KT duyệt thành công — chuyển CONFIRMED!',
+                                    error: (e: any) => `Lỗi: ${e.message}`,
+                                    finally: () => setActionLoading(null),
+                                })
+                            }}
+                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold"
+                                style={{ background: '#C084FC', color: '#0A1926', borderRadius: '6px' }}>
+                                <CheckCircle2 size={14} /> Duyệt & Xác Nhận
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     )
 }

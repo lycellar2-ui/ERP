@@ -65,9 +65,13 @@ async function main() {
     console.log('Step 4: Create PO')
     const poNo = 'PO-E2E-' + Date.now().toString(36).toUpperCase()
     const userId = (await prisma.user.findFirst({ select: { id: true } }))!.id
+    const legalEntity = await prisma.legalEntity.findFirst()
+    if (!legalEntity) throw new Error('No Legal Entity found to associate with PO/StockLot')
+
     const po = await prisma.purchaseOrder.create({
         data: {
             poNo,
+            legalEntity: { connect: { id: legalEntity.id } },
             supplier: { connect: { id: supplier.id } },
             currency: 'EUR',
             exchangeRate: 27500,
@@ -77,7 +81,7 @@ async function main() {
         },
         include: { lines: true }
     })
-    const totalEUR = po.lines.reduce((s, l) => Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+    const totalEUR = po.lines.reduce((s: number, l: any) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
     console.log('  OK:', po.poNo, '| EUR', totalEUR, '| Status:', po.status)
 
     // ── 5. Approve PO ──
@@ -178,6 +182,7 @@ async function main() {
     const lot = await prisma.stockLot.create({
         data: {
             lotNo: 'LOT-E2E-' + Date.now().toString(36).toUpperCase(),
+            ownerEntity: { connect: { id: legalEntity.id } },
             product: { connect: { id: product.id } },
             shipment: { connect: { id: shipment.id } },
             location: { connect: { id: loc.id } },

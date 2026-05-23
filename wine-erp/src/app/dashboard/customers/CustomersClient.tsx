@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useCallback, useEffect } from 'react'
 import {
@@ -10,6 +10,7 @@ import {
     createCustomer, updateCustomer, getCustomers, getCustomerById,
     deleteCustomer, exportCustomersData, bulkImportCustomers,
 } from './actions'
+import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
@@ -79,9 +80,10 @@ function StatCard({ label, value, icon: Icon, accent }: { label: string; value: 
 // CUSTOMER DRAWER (Create + Edit)
 // ════════════════════════════════════════════════════════
 
-function CustomerDrawer({ open, editingId, salesReps, onClose, onSaved }: {
+function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, onSaved }: {
     open: boolean; editingId: string | null
     salesReps: { id: string; name: string }[]
+    legalEntities: LegalEntityRow[]
     onClose: () => void; onSaved: () => void
 }) {
     const [form, setForm] = useState<Partial<CustomerInput>>({
@@ -117,6 +119,7 @@ function CustomerDrawer({ open, editingId, salesReps, onClose, onSaved }: {
                         ward: data.ward,
                         district: data.district,
                         city: data.city,
+                        defaultLegalEntityId: data.defaultLegalEntityId,
                     })
                 }
             }).finally(() => setLoading(false))
@@ -257,6 +260,19 @@ function CustomerDrawer({ open, editingId, salesReps, onClose, onSaved }: {
                                 </div>
                             </div>
 
+                            {/* Legal Entity default */}
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Pháp Nhân Mặc Định</label>
+                                <select className={inputCls} style={inputStyle} value={form.defaultLegalEntityId ?? ''}
+                                    onChange={e => set('defaultLegalEntityId', e.target.value || null)}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                    <option value="">— Chưa gán —</option>
+                                    {legalEntities.map(e => (
+                                        <option key={e.id} value={e.id}>{e.name} ({e.code}) — {e.type === 'IMPORT' ? 'Nhập Khẩu' : 'Phân Phối'}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Liên Hệ & Địa Chỉ</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -387,6 +403,11 @@ export function CustomersClient({ initialRows, initialTotal, stats, channels, sa
     const [statusFilter, setStatusFilter] = useState('')
     const [channelFilter, setChannelFilter] = useState('')
     const [exporting, setExporting] = useState(false)
+    const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
+
+    useEffect(() => {
+        getLegalEntities().then(setLegalEntities).catch(() => { })
+    }, [])
 
     const applyFilter = useCallback(async (newFilters: Partial<CustomerFilters>) => {
         const merged = { ...filters, ...newFilters, page: newFilters.page ?? 1 }
@@ -660,6 +681,7 @@ export function CustomersClient({ initialRows, initialTotal, stats, channels, sa
             <CustomerDrawer
                 open={drawerOpen} editingId={editingId}
                 salesReps={salesReps}
+                legalEntities={legalEntities}
                 onClose={() => setDrawerOpen(false)}
                 onSaved={() => { setDrawerOpen(false); applyFilter({}) }}
             />

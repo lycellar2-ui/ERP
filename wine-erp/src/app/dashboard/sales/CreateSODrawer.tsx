@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
     createSalesOrder, SOCreateInput, SalesChannel,
-    getProductPricesForChannel, getActiveAllocationsForProducts
+    getProductPricesForChannel, getActiveAllocationsForProducts,
+    getLegalEntities, LegalEntityRow,
 } from './actions'
 import { formatVND } from '@/lib/utils'
 
@@ -17,7 +18,7 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'DIRECT_INDIVIDUAL', label: 'Trực Tiếp' },
 ]
 
-interface Customer { id: string; name: string; code: string; creditLimit: number; paymentTerm: string; channel: string | null }
+interface Customer { id: string; name: string; code: string; creditLimit: number; paymentTerm: string; channel: string | null; defaultLegalEntityId: string | null }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
 interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number }
 
@@ -49,12 +50,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const [loadingPrices, setLoadingPrices] = useState(false)
 
     const [saving, setSaving] = useState(false)
+    const [entities, setEntities] = useState<LegalEntityRow[]>([])
+    const [legalEntityId, setLegalEntityId] = useState('')
 
     useEffect(() => {
         if (!open) return
         setLoadingData(true)
-        Promise.all([getCustomersForSO(), getProductsWithStock()])
-            .then(([c, p]) => { setCustomers(c as any); setProducts(p) })
+        Promise.all([getCustomersForSO(), getProductsWithStock(), getLegalEntities()])
+            .then(([c, p, e]) => { setCustomers(c as any); setProducts(p); setEntities(e) })
             .finally(() => setLoadingData(false))
     }, [open])
 
@@ -95,6 +98,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
         if (c) {
             setPaymentTerm(c.paymentTerm)
             setChannel((c.channel ?? 'HORECA') as SalesChannel)
+            setLegalEntityId(c.defaultLegalEntityId ?? '')
             setLoadingAR(true)
             const bal = await getCustomerARBalance(id)
             setArBalance(bal)
@@ -134,6 +138,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
 
     const handleSave = async () => {
         if (!customerId) return toast.error('Vui lòng chọn khách hàng')
+        if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
         if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
 
         setSaving(true)
@@ -149,6 +154,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                 unitPrice: l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
             })),
+            legalEntityId,
         } as SOCreateInput).then(res => {
             if (!res.success) throw new Error(res.error ?? 'Có lỗi xảy ra')
             return res
@@ -168,7 +174,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const resetForm = () => {
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
-        setArBalance(0); setPriceMap({})
+        setArBalance(0); setPriceMap({}); setLegalEntityId('')
     }
 
     if (!open) return null
@@ -254,8 +260,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                 </div>
                             )}
 
-                            {/* Channel + Payment Term */}
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Channel + Payment Term + Legal Entity */}
+                            <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
                                         Kênh Bán
@@ -273,6 +279,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                         className="w-full px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }}>
                                         {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID'].map(t => (
                                             <option key={t} value={t}>{t}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
+                                        Pháp Nhân
+                                    </label>
+                                    <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
+                                        className="w-full px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }}>
+                                        <option value="">— Mặc định —</option>
+                                        {entities.map(e => (
+                                            <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
                                         ))}
                                     </select>
                                 </div>

@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db'
 
-type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RETURN' | 'LOGIN' | 'EXPORT' | 'STATUS_CHANGE' | 'CONFIRM' | 'SIGN'
+type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RETURN' | 'LOGIN' | 'EXPORT' | 'STATUS_CHANGE' | 'CONFIRM' | 'SIGN' | 'ACCOUNTING_APPROVE' | 'ACCOUNTING_REJECT'
 
 interface AuditLogInput {
     userId?: string

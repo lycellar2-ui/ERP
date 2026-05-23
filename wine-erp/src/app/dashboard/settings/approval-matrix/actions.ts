@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requirePermission } from '@/lib/session'
 
 // ─── Types ───────────────────────────────────────
 export interface ProposalRouteConfig {
@@ -81,6 +82,7 @@ export async function saveProposalRoute(
     levels: number[],
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         const key = `proposal.${category}`
         await prisma.approvalConfig.upsert({
             where: { configKey: key },
@@ -102,6 +104,7 @@ export async function saveThreshold(
     value: number,
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         await prisma.approvalConfig.upsert({
             where: { configKey: key },
             update: { value: { threshold: value }, updatedAt: new Date() },
@@ -122,6 +125,7 @@ export async function saveAllRoutes(
     routes: ProposalRouteConfig[],
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         for (const r of routes) {
             const key = `proposal.${r.category}`
             await prisma.approvalConfig.upsert({
@@ -144,6 +148,7 @@ export async function saveAllThresholds(
     thresholds: ThresholdConfig[],
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         for (const t of thresholds) {
             await prisma.approvalConfig.upsert({
                 where: { configKey: t.key },

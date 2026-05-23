@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, POSSaleSchema, POSVATInvoiceSchema, LoyaltyEarnSchema, LoyaltyRedeemSchema } from '@/lib/validations'
+import { requirePermission } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // POS — Point of Sale for Showroom
@@ -113,9 +114,11 @@ export async function processPOSSale(input: {
     soNo?: string
     totalAmount?: number
     change?: number
+    pointsEarned?: number
     error?: string
 }> {
     try {
+        await requirePermission('SLS', 'WRITE')
         const validated = parseOrThrow(POSSaleSchema, input)
 
         // Calculate total
@@ -165,35 +168,40 @@ export async function processPOSSale(input: {
             }
         }
 
+        // Get legalEntityId for SalesOrder
+        let legalEntityId = 'le-lys-cellar' // Default LC (Ly's Cellar)
+        if (customerId) {
+            const customerObj = await prisma.customer.findUnique({
+                where: { id: customerId },
+                select: { defaultLegalEntityId: true }
+            })
+            if (customerObj?.defaultLegalEntityId) {
+                legalEntityId = customerObj.defaultLegalEntityId
+            }
+        }
+        const leExists = await prisma.legalEntity.findUnique({ where: { id: legalEntityId } })
+        if (!leExists) {
+            const firstLE = await prisma.legalEntity.findFirst()
+            if (firstLE) {
+                legalEntityId = firstLE.id
+            } else {
+                throw new Error('Không tìm thấy pháp nhân nào trong hệ thống')
+            }
+        }
+
         // Transaction: Create SO + Deduct stock (FIFO)
         // Get or create a POS system user
         let salesRepId = 'pos-system'
         const adminUser = await prisma.user.findFirst({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } })
         if (adminUser) salesRepId = adminUser.id
 
-        const so = await prisma.$transaction(async (tx) => {
-            const salesOrder = await tx.salesOrder.create({
-                data: {
-                    soNo,
-                    customerId: customerId!,
-                    salesRepId,
-                    channel: 'DIRECT_INDIVIDUAL',
-                    paymentTerm: 'COD',
-                    totalAmount,
-                    status: 'PAID' as any, // POS is immediate
-                    lines: {
-                        create: validated.items.map(item => ({
-                            productId: item.productId,
-                            qtyOrdered: item.qty,
-                            unitPrice: item.unitPrice,
-                            lineDiscountPct: item.discountPct,
-                        })),
-                    },
-                },
-            })
+        let pointsEarned = 0
 
-            // Deduct stock FIFO per item
+        const so = await prisma.$transaction(async (tx) => {
+            // Deduct stock FIFO per item with Row Locking to prevent race conditions
             for (const item of validated.items) {
+                await tx.$executeRaw`SELECT id FROM stock_lots WHERE "productId" = ${item.productId} AND status = 'AVAILABLE' AND "qtyAvailable" > 0 FOR UPDATE`
+
                 let remaining = item.qty
                 const lots = await tx.stockLot.findMany({
                     where: {
@@ -216,6 +224,46 @@ export async function processPOSSale(input: {
 
                 if (remaining > 0) {
                     throw new Error(`Không đủ tồn kho cho ${item.skuCode}`)
+                }
+            }
+
+            const salesOrder = await tx.salesOrder.create({
+                data: {
+                    soNo,
+                    customerId: customerId!,
+                    salesRepId,
+                    legalEntityId,
+                    channel: 'DIRECT_INDIVIDUAL',
+                    paymentTerm: 'COD',
+                    totalAmount,
+                    status: 'PAID' as any, // POS is immediate
+                    lines: {
+                        create: validated.items.map(item => ({
+                            productId: item.productId,
+                            qtyOrdered: item.qty,
+                            unitPrice: item.unitPrice,
+                            lineDiscountPct: item.discountPct,
+                        })),
+                    },
+                },
+            })
+
+            // Earn loyalty points if customer is member (not WALK-IN)
+            const customer = await tx.customer.findUnique({
+                where: { id: customerId },
+                select: { code: true }
+            })
+            if (customer && customer.code !== 'WALK-IN') {
+                pointsEarned = Math.floor(totalAmount / 10000) * POINTS_PER_10K
+                if (pointsEarned > 0) {
+                    await tx.loyaltyTransaction.create({
+                        data: {
+                            customerId: customerId!,
+                            type: 'EARN',
+                            points: pointsEarned,
+                            description: `Tích điểm từ đơn POS ${soNo}`,
+                        },
+                    })
                 }
             }
 
@@ -242,6 +290,7 @@ export async function processPOSSale(input: {
             soNo,
             totalAmount,
             change: validated.paymentMethod === 'CASH' ? change : undefined,
+            pointsEarned,
         }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -334,6 +383,7 @@ export async function generatePOSVATInvoice(input: {
     customerAddress?: string
 }): Promise<{ success: boolean; invoiceNo?: string; error?: string }> {
     try {
+        await requirePermission('SLS', 'WRITE')
         const validated = parseOrThrow(POSVATInvoiceSchema, input)
         const so = await prisma.salesOrder.findFirst({
             where: { soNo: validated.soNo },
@@ -411,15 +461,28 @@ export async function getLoyaltyInfo(customerId: string): Promise<LoyaltyInfo | 
     })
     if (!customer) return null
 
+    // Get aggregated earned and redeemed points across all transactions to prevent truncation issues
+    const [earnedAgg, redeemedAgg] = await Promise.all([
+        prisma.loyaltyTransaction.aggregate({
+            where: { customerId, type: 'EARN' },
+            _sum: { points: true }
+        }),
+        prisma.loyaltyTransaction.aggregate({
+            where: { customerId, type: 'REDEEM' },
+            _sum: { points: true }
+        })
+    ])
+
+    const totalEarned = Number(earnedAgg._sum.points ?? 0)
+    const totalRedeemed = Math.abs(Number(redeemedAgg._sum.points ?? 0))
+    const pointsBalance = totalEarned - totalRedeemed
+
+    // Still fetch the last 50 transactions for display history
     const transactions = await prisma.loyaltyTransaction.findMany({
         where: { customerId },
         orderBy: { createdAt: 'desc' },
         take: 50,
     })
-
-    const totalEarned = transactions.filter(t => t.type === 'EARN').reduce((s, t) => s + t.points, 0)
-    const totalRedeemed = transactions.filter(t => t.type === 'REDEEM').reduce((s, t) => s + Math.abs(t.points), 0)
-    const pointsBalance = totalEarned - totalRedeemed
 
     const tier = pointsBalance >= 5000 ? 'PLATINUM' :
         pointsBalance >= 2000 ? 'GOLD' :
@@ -447,6 +510,7 @@ export async function earnLoyaltyPoints(input: {
     orderAmount: number
     soNo: string
 }): Promise<{ success: boolean; pointsEarned: number }> {
+    await requirePermission('SLS', 'WRITE')
     const validated = parseOrThrow(LoyaltyEarnSchema, input)
     const points = Math.floor(validated.orderAmount / 10000) * POINTS_PER_10K
     if (points <= 0) return { success: true, pointsEarned: 0 }
@@ -466,23 +530,49 @@ export async function redeemLoyaltyPoints(input: {
     customerId: string
     points: number
 }): Promise<{ success: boolean; discountAmount: number; error?: string }> {
-    const validated = parseOrThrow(LoyaltyRedeemSchema, input)
-    const info = await getLoyaltyInfo(validated.customerId)
-    if (!info) return { success: false, discountAmount: 0, error: 'Không tìm thấy KH' }
-    if (info.pointsBalance < validated.points) {
-        return { success: false, discountAmount: 0, error: `Không đủ điểm (còn ${info.pointsBalance})` }
+    try {
+        await requirePermission('SLS', 'WRITE')
+        const validated = parseOrThrow(LoyaltyRedeemSchema, input)
+
+        const discountAmount = await prisma.$transaction(async (tx) => {
+            // Lock loyalty transactions for this customer to prevent race conditions
+            await tx.$executeRaw`SELECT id FROM loyalty_transactions WHERE "customerId" = ${validated.customerId} FOR UPDATE`
+
+            const [earnedAgg, redeemedAgg] = await Promise.all([
+                tx.loyaltyTransaction.aggregate({
+                    where: { customerId: validated.customerId, type: 'EARN' },
+                    _sum: { points: true }
+                }),
+                tx.loyaltyTransaction.aggregate({
+                    where: { customerId: validated.customerId, type: 'REDEEM' },
+                    _sum: { points: true }
+                })
+            ])
+
+            const totalEarned = Number(earnedAgg._sum.points ?? 0)
+            const totalRedeemed = Math.abs(Number(redeemedAgg._sum.points ?? 0))
+            const pointsBalance = totalEarned - totalRedeemed
+
+            if (pointsBalance < validated.points) {
+                throw new Error(`Không đủ điểm (còn ${pointsBalance})`)
+            }
+
+            await tx.loyaltyTransaction.create({
+                data: {
+                    customerId: validated.customerId,
+                    type: 'REDEEM',
+                    points: -validated.points,
+                    description: `Đổi ${validated.points} điểm = ${(validated.points * POINT_VALUE_VND).toLocaleString()}đ`,
+                },
+            })
+
+            return validated.points * POINT_VALUE_VND
+        })
+
+        return { success: true, discountAmount }
+    } catch (err: any) {
+        return { success: false, discountAmount: 0, error: err.message }
     }
-
-    await prisma.loyaltyTransaction.create({
-        data: {
-            customerId: validated.customerId,
-            type: 'REDEEM',
-            points: -validated.points,
-            description: `Đổi ${validated.points} điểm = ${(validated.points * POINT_VALUE_VND).toLocaleString()}đ`,
-        },
-    })
-
-    return { success: true, discountAmount: validated.points * POINT_VALUE_VND }
 }
 
 // ═══════════════════════════════════════════════════
@@ -508,16 +598,20 @@ export async function openShift(input: {
     openingCash: number
 }): Promise<{ success: boolean; shiftId?: string; error?: string }> {
     try {
-        // Check no open shift exists
-        const existing = await prisma.salesOrder.findFirst({
+        await requirePermission('SLS', 'WRITE')
+
+        // Check if there is already an open shift (action is CREATE but not yet closed by UPDATE)
+        const lastShiftLog = await prisma.auditLog.findFirst({
             where: {
-                soNo: { startsWith: 'POS-' },
-                createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+                entityType: 'POS_SHIFT',
             },
+            orderBy: { createdAt: 'desc' },
         })
 
-        // For now, shifts are tracked via a lightweight in-memory approach
-        // using the getPOSShiftSummary function as the source of truth
+        if (lastShiftLog && lastShiftLog.action === 'CREATE') {
+            return { success: false, error: 'Hiện tại đang có một ca bán hàng chưa đóng. Vui lòng đóng ca cũ trước.' }
+        }
+
         const shiftId = `SHIFT-${Date.now()}`
 
         logAudit({
@@ -541,15 +635,26 @@ export async function closeShift(input: {
     openingCash: number
 }): Promise<{ success: boolean; summary?: ShiftInfo; error?: string }> {
     try {
+        await requirePermission('SLS', 'WRITE')
         const today = new Date()
         const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-        const dayEnd = new Date(dayStart.getTime() + 86400000)
 
-        // Get today's POS sales
+        // Find the last opened shift log for this showroom/POS to get the exact start time
+        const lastOpenShiftLog = await prisma.auditLog.findFirst({
+            where: {
+                entityType: 'POS_SHIFT',
+                action: 'CREATE',
+            },
+            orderBy: { createdAt: 'desc' },
+        })
+
+        const openedAt = lastOpenShiftLog ? lastOpenShiftLog.createdAt : dayStart
+
+        // Get POS sales created during this shift
         const posSales = await prisma.salesOrder.findMany({
             where: {
                 soNo: { startsWith: 'POS-' },
-                createdAt: { gte: dayStart, lt: dayEnd },
+                createdAt: { gte: openedAt, lte: today },
             },
             select: { totalAmount: true },
         })
@@ -559,10 +664,10 @@ export async function closeShift(input: {
         const cashVariance = input.closingCash - expectedCash
 
         const summary: ShiftInfo = {
-            id: `SHIFT-${dayStart.getTime()}`,
+            id: lastOpenShiftLog ? lastOpenShiftLog.entityId! : `SHIFT-${dayStart.getTime()}`,
             cashierName: input.cashierName,
-            openedAt: dayStart,
-            closedAt: new Date(),
+            openedAt: openedAt,
+            closedAt: today,
             openingCash: input.openingCash,
             closingCash: input.closingCash,
             expectedCash,
@@ -577,7 +682,7 @@ export async function closeShift(input: {
             action: 'UPDATE',
             entityType: 'POS_SHIFT',
             entityId: summary.id,
-            description: `Ca bán hàng đóng. Doanh thu: ${totalRevenue.toLocaleString()}đ. Chênh lệch: ${cashVariance.toLocaleString()}đ`,
+            description: `Ca bán hàng đóng bởi ${input.cashierName}. Doanh thu: ${totalRevenue.toLocaleString()}đ. Chênh lệch: ${cashVariance.toLocaleString()}đ`,
             newValue: summary,
         }).catch(() => { })
 

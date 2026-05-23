@@ -6,7 +6,8 @@ import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 import { serialize } from '@/lib/serialize'
 import { logAudit } from '@/lib/audit'
-import { getCurrentUser } from '@/lib/session'
+import { getCurrentUser, requireAuth, requirePermission } from '@/lib/session'
+import crypto from 'crypto'
 
 // ═══════════════════════════════════════════════════
 // SETTINGS — RBAC, Users, System Config
@@ -65,17 +66,20 @@ export type UserInput = z.infer<typeof userSchema>
 
 export async function createUser(input: UserInput): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         const data = userSchema.parse(input)
 
         // Check email unique
         const existing = await prisma.user.findUnique({ where: { email: data.email } })
         if (existing) return { success: false, error: 'Email đã tồn tại' }
 
+        const hash = crypto.createHash('sha256').update(data.passwordHash).digest('hex')
+
         const user = await prisma.user.create({
             data: {
                 email: data.email,
                 name: data.name,
-                passwordHash: data.passwordHash, // In production: hash with bcrypt
+                passwordHash: hash,
                 roles: {
                     create: data.roleIds.map(roleId => ({ roleId })),
                 },
@@ -97,6 +101,7 @@ export async function updateUser(
     input: { name?: string; status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' }
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         const oldUser = await prisma.user.findUnique({ where: { id }, select: { name: true, status: true } })
         await prisma.user.update({
             where: { id },
@@ -121,6 +126,7 @@ export async function updateUserRoles(
     roleIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         const oldRoles = await prisma.userRole.findMany({ where: { userId }, include: { role: { select: { name: true } } } })
         await prisma.$transaction([
             prisma.userRole.deleteMany({ where: { userId } }),
@@ -169,6 +175,7 @@ export async function createRole(input: {
     permissionIds?: string[]
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         const role = await prisma.role.create({
             data: {
                 name: input.name,
@@ -202,6 +209,7 @@ export async function updateRolePermissions(
     permissionIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         const oldPerms = await prisma.rolePermission.findMany({ where: { roleId }, include: { permission: { select: { code: true } } } })
         await prisma.$transaction([
             prisma.rolePermission.deleteMany({ where: { roleId } }),
@@ -255,6 +263,7 @@ export async function createApprovalTemplate(input: {
     steps: { approverRole: string; threshold?: number }[]
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requirePermission('SYS', 'ADMIN')
         const template = await prisma.approvalTemplate.create({
             data: {
                 name: input.name,
@@ -277,6 +286,45 @@ export async function createApprovalTemplate(input: {
 }
 
 // ── Submit document for approval ──────────────────
+// Helper to get docValue dynamically
+async function getDocValue(docType: string, docId: string): Promise<number> {
+    try {
+        if (docType === 'SALES_ORDER') {
+            const order = await prisma.salesOrder.findUnique({
+                where: { id: docId },
+                select: { totalAmount: true }
+            })
+            return order ? Number(order.totalAmount) : 0
+        }
+        if (docType === 'PURCHASE_ORDER') {
+            const order = await prisma.purchaseOrder.findUnique({
+                where: { id: docId },
+                include: { lines: true }
+            })
+            if (!order) return 0
+            return order.lines.reduce((sum, line) => sum + Number(line.qtyOrdered) * Number(line.unitPrice), 0)
+        }
+        if (docType === 'CONSIGNMENT') {
+            const agreement = await prisma.consignmentAgreement.findUnique({
+                where: { id: docId },
+                include: { contract: true }
+            })
+            if (agreement?.contract) {
+                return Number(agreement.contract.value)
+            }
+            return 0
+        }
+        const proposal = await prisma.proposal.findUnique({
+            where: { id: docId },
+            select: { estimatedAmount: true }
+        })
+        return proposal ? Number(proposal.estimatedAmount) : 0
+    } catch {
+        return 0
+    }
+}
+
+// ── Submit document for approval ──────────────────
 export async function submitForApproval(input: {
     docType: 'PURCHASE_ORDER' | 'SALES_ORDER' | 'WRITE_OFF' | 'DISCOUNT_OVERRIDE' | 'TAX_DECLARATION' | 'CONSIGNMENT'
     docId: string
@@ -291,20 +339,27 @@ export async function submitForApproval(input: {
         })
         if (!template) return { success: false, error: 'Không tìm thấy template phê duyệt cho loại tài liệu này' }
 
+        let finalDocValue = input.docValue
+        if (finalDocValue === undefined) {
+            finalDocValue = await getDocValue(input.docType, input.docId)
+        }
+
         // Filter steps by threshold (only steps where threshold <= docValue, or no threshold)
         const applicableSteps = template.steps.filter(s =>
-            !s.threshold || (input.docValue && input.docValue >= Number(s.threshold))
+            !s.threshold || (finalDocValue !== undefined && finalDocValue >= Number(s.threshold))
         )
         if (applicableSteps.length === 0) {
             return { success: false, error: 'Không có bước phê duyệt phù hợp' }
         }
+
+        const firstStep = applicableSteps[0]
 
         const request = await prisma.approvalRequest.create({
             data: {
                 templateId: template.id,
                 docType: input.docType,
                 docId: input.docId,
-                currentStep: 1,
+                currentStep: firstStep.stepOrder,
                 status: 'PENDING',
                 requestedBy: input.requestedBy,
             },
@@ -322,10 +377,13 @@ export async function submitForApproval(input: {
 export async function processApproval(input: {
     requestId: string
     action: 'APPROVE' | 'REJECT'
-    approverId: string
+    approverId?: string
     comment?: string
 }): Promise<{ success: boolean; finalStatus?: string; error?: string }> {
     try {
+        const sessionUser = await requireAuth()
+        const approverId = sessionUser.id
+
         const request = await prisma.approvalRequest.findUnique({
             where: { id: input.requestId },
             include: {
@@ -335,12 +393,24 @@ export async function processApproval(input: {
         if (!request) return { success: false, error: 'Yêu cầu phê duyệt không tồn tại' }
         if (request.status !== 'PENDING') return { success: false, error: 'Yêu cầu đã được xử lý' }
 
-        // Verify approver has the correct role for this step
-        const currentStepDef = request.template.steps.find(s => s.stepOrder === request.currentStep)
-        if (!currentStepDef) return { success: false, error: 'Bước phê duyệt không tồn tại' }
+        const docValue = await getDocValue(request.docType, request.docId)
+
+        const applicableSteps = request.template.steps.filter(s =>
+            !s.threshold || (docValue !== undefined && docValue >= Number(s.threshold))
+        )
+        if (applicableSteps.length === 0) {
+            return { success: false, error: 'Không có bước phê duyệt phù hợp với giá trị tài liệu hiện tại' }
+        }
+
+        const currentIdx = applicableSteps.findIndex(s => s.stepOrder === request.currentStep)
+        if (currentIdx === -1) {
+            return { success: false, error: 'Bước phê duyệt hiện tại không nằm trong danh sách bước áp dụng' }
+        }
+
+        const currentStepDef = applicableSteps[currentIdx]
 
         const approverRoles = await prisma.userRole.findMany({
-            where: { userId: input.approverId },
+            where: { userId: approverId },
             include: { role: true },
         })
         const hasRole = approverRoles.some(ur => ur.role.name === currentStepDef.approverRole)
@@ -352,7 +422,7 @@ export async function processApproval(input: {
                 requestId: input.requestId,
                 step: request.currentStep,
                 action: input.action,
-                approvedBy: input.approverId,
+                approvedBy: approverId,
                 comment: input.comment ?? null,
             },
         })
@@ -368,10 +438,9 @@ export async function processApproval(input: {
         }
 
         // APPROVE: check if there are more steps
-        const totalSteps = request.template.steps.length
-        const nextStep = request.currentStep + 1
+        const nextIdx = currentIdx + 1
 
-        if (nextStep > totalSteps) {
+        if (nextIdx >= applicableSteps.length) {
             // Final approval
             await prisma.approvalRequest.update({
                 where: { id: input.requestId },
@@ -382,9 +451,10 @@ export async function processApproval(input: {
             return { success: true, finalStatus: 'APPROVED' }
         } else {
             // Move to next step
+            const nextStepDef = applicableSteps[nextIdx]
             await prisma.approvalRequest.update({
                 where: { id: input.requestId },
-                data: { currentStep: nextStep },
+                data: { currentStep: nextStepDef.stepOrder },
             })
             revalidateCache('settings')
             revalidatePath('/dashboard/settings')
