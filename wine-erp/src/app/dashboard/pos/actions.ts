@@ -6,6 +6,7 @@ import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, POSSaleSchema, POSVATInvoiceSchema, LoyaltyEarnSchema, LoyaltyRedeemSchema } from '@/lib/validations'
 import { requirePermission } from '@/lib/session'
+import { resolveCustomerProductPrice, getCustomerResolvedPrices } from '@/app/dashboard/price-list/customer-rules-actions'
 
 // ═══════════════════════════════════════════════════
 // POS — Point of Sale for Showroom
@@ -33,8 +34,8 @@ export type CartItem = {
 export type ShiftStatus = 'OPEN' | 'CLOSED'
 
 // ── Get products for POS display ──────────────────
-export async function getPOSProducts(search?: string, category?: string): Promise<POSProduct[]> {
-    const cacheKey = `pos:products:${search ?? ''}:${category ?? ''}`
+export async function getPOSProducts(search?: string, category?: string, customerId?: string): Promise<POSProduct[]> {
+    const cacheKey = `pos:products:${search ?? ''}:${category ?? ''}:${customerId ?? ''}`
     return cached(cacheKey, async () => {
         const where: any = { status: 'ACTIVE', deletedAt: null }
         if (search) {
@@ -59,6 +60,24 @@ export async function getPOSProducts(search?: string, category?: string): Promis
             orderBy: { productName: 'asc' },
             take: 100,
         })
+
+        // If customerId is provided, resolve price per product
+        if (customerId) {
+            const resolvedPrices = await getCustomerResolvedPrices(customerId)
+            const mappedProducts = products.map((p) => {
+                const resolved = resolvedPrices[p.id] ?? { price: 0 }
+                return {
+                    id: p.id,
+                    skuCode: p.skuCode,
+                    productName: p.productName,
+                    category: p.wineType ?? 'OTHER',
+                    unitPrice: resolved.price,
+                    qtyAvailable: p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0),
+                    imageUrl: null,
+                }
+            })
+            return mappedProducts
+        }
 
         // Get VIP/POS prices
         const now = new Date()
@@ -329,7 +348,7 @@ export async function getPOSShiftSummary(date?: string) {
 }
 
 // ── Barcode / SKU Lookup ──────────────────────────
-export async function lookupByBarcode(barcode: string): Promise<POSProduct | null> {
+export async function lookupByBarcode(barcode: string, customerId?: string): Promise<POSProduct | null> {
     // Try exact SKU match first, then barcode field
     const product = await prisma.product.findFirst({
         where: {
@@ -350,18 +369,23 @@ export async function lookupByBarcode(barcode: string): Promise<POSProduct | nul
 
     if (!product) return null
 
-    // Get POS price
-    const now = new Date()
-    const priceList = await prisma.priceList.findFirst({
-        where: { channel: 'VIP_RETAIL', effectiveDate: { lte: now } },
-        orderBy: { effectiveDate: 'desc' },
-    })
     let unitPrice = 0
-    if (priceList) {
-        const priceLine = await prisma.priceListLine.findFirst({
-            where: { priceListId: priceList.id, productId: product.id },
+    if (customerId) {
+        const resolved = await resolveCustomerProductPrice(customerId, product.id)
+        unitPrice = resolved.price
+    } else {
+        // Get POS price
+        const now = new Date()
+        const priceList = await prisma.priceList.findFirst({
+            where: { channel: 'VIP_RETAIL', effectiveDate: { lte: now } },
+            orderBy: { effectiveDate: 'desc' },
         })
-        unitPrice = priceLine ? Number(priceLine.unitPrice) : 0
+        if (priceList) {
+            const priceLine = await prisma.priceListLine.findFirst({
+                where: { priceListId: priceList.id, productId: product.id },
+            })
+            unitPrice = priceLine ? Number(priceLine.unitPrice) : 0
+        }
     }
 
     return {

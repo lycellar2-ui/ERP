@@ -10,6 +10,7 @@ import {
     getLegalEntities, LegalEntityRow,
 } from './actions'
 import { formatVND } from '@/lib/utils'
+import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
@@ -17,6 +18,40 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'VIP_RETAIL', label: 'VIP Retail' },
     { value: 'DIRECT_INDIVIDUAL', label: 'Trực Tiếp' },
 ]
+
+const getPriceBadgeStyle = (source: string) => {
+    switch (source) {
+        case 'SPECIAL_PRICE':
+            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
+        case 'FIXED_PRICE':
+            return { background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }
+        case 'FIXED_DISCOUNT':
+            return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
+        case 'CHANNEL_BASE':
+            return { background: 'rgba(91,168,138,0.1)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.2)' }
+        case 'RETAIL_FALLBACK':
+            return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
+        default:
+            return { background: 'rgba(74,106,122,0.1)', color: '#4A6A7A', border: '1px solid rgba(74,106,122,0.2)' }
+    }
+}
+
+const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
+    switch (resolved.source) {
+        case 'SPECIAL_PRICE':
+            return 'Giá Đặc Biệt (Campaign)'
+        case 'FIXED_PRICE':
+            return 'Giá Cố Định Riêng'
+        case 'FIXED_DISCOUNT':
+            return `Chiết Khấu Cố Định (-${resolved.discountPct}%)`
+        case 'CHANNEL_BASE':
+            return `Giá Kênh ${defaultChannel}`
+        case 'RETAIL_FALLBACK':
+            return 'Giá Bán Lẻ Mặc Định'
+        default:
+            return 'Giá Mặc Định'
+    }
+}
 
 interface Customer { id: string; name: string; code: string; creditLimit: number; paymentTerm: string; channel: string | null; defaultLegalEntityId: string | null }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
@@ -45,7 +80,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const [arBalance, setArBalance] = useState(0)
     const [loadingAR, setLoadingAR] = useState(false)
 
-    const [priceMap, setPriceMap] = useState<Record<string, number>>({})
+    const [priceMap, setPriceMap] = useState<Record<string, ResolvedPrice>>({})
     const [allocations, setAllocations] = useState<{ productId: string; campaignName: string; remaining: number }[]>([])
     const [loadingPrices, setLoadingPrices] = useState(false)
 
@@ -61,27 +96,51 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
             .finally(() => setLoadingData(false))
     }, [open])
 
-    // Auto-load prices when channel changes
-    const loadPricesForChannel = useCallback(async (ch: string) => {
+    // Load customer-resolved prices or fallback channel prices
+    const loadPrices = useCallback(async (custId: string | null, ch: SalesChannel) => {
         setLoadingPrices(true)
         try {
-            const prices = await getProductPricesForChannel(ch)
-            setPriceMap(prices)
-            // Auto-update existing lines that have no manual price
-            setLines(prev => prev.map(l => {
-                const autoPrice = prices[l.productId]
-                if (autoPrice && l.unitPrice === 0) {
-                    return { ...l, unitPrice: autoPrice }
+            if (custId) {
+                const resolvedPrices = await getCustomerResolvedPrices(custId)
+                setPriceMap(resolvedPrices)
+                // Auto-update existing lines that have no manual price
+                setLines(prev => prev.map(l => {
+                    const resolved = resolvedPrices[l.productId]
+                    if (resolved && (l.unitPrice === 0 || !prev.find(p => p.productId === l.productId && p.unitPrice !== 0))) {
+                        return { ...l, unitPrice: resolved.price }
+                    }
+                    return l
+                }))
+            } else {
+                const basePrices = await getProductPricesForChannel(ch)
+                const converted: Record<string, ResolvedPrice> = {}
+                for (const [prodId, price] of Object.entries(basePrices)) {
+                    converted[prodId] = {
+                        price: price,
+                        source: 'CHANNEL_BASE'
+                    }
                 }
-                return l
-            }))
-        } catch { /* silent */ }
+                setPriceMap(converted)
+                // Auto-update existing lines that have no manual price
+                setLines(prev => prev.map(l => {
+                    const resolved = converted[l.productId]
+                    if (resolved && (l.unitPrice === 0 || !prev.find(p => p.productId === l.productId && p.unitPrice !== 0))) {
+                        return { ...l, unitPrice: resolved.price }
+                    }
+                    return l
+                }))
+            }
+        } catch (err) {
+            console.error("Lỗi load bảng giá:", err)
+        }
         setLoadingPrices(false)
     }, [])
 
     useEffect(() => {
-        if (open && channel) loadPricesForChannel(channel)
-    }, [open, channel, loadPricesForChannel])
+        if (open) {
+            loadPrices(customerId || null, channel)
+        }
+    }, [open, customerId, channel, loadPrices])
 
     // Load allocation info when products change
     useEffect(() => {
@@ -109,7 +168,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const addLine = () => {
         if (products.length === 0) return
         const p = products[0]
-        const autoPrice = priceMap[p.id] ?? 0
+        const autoPrice = priceMap[p.id]?.price ?? 0
         setLines(prev => [...prev, { productId: p.id, productName: p.productName, skuCode: p.skuCode, qtyOrdered: 1, unitPrice: autoPrice, lineDiscountPct: 0, stock: p.totalStock }])
     }
 
@@ -118,7 +177,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
             if (idx !== i) return l
             if (field === 'productId') {
                 const p = products.find(p => p.id === value)!
-                const autoPrice = priceMap[value] ?? 0
+                const autoPrice = priceMap[value]?.price ?? 0
                 return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: autoPrice }
             }
             return { ...l, [field]: value }
@@ -320,7 +379,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                             const lowStock = line.qtyOrdered > line.stock
                                             const alloc = allocations.find(a => a.productId === line.productId)
                                             const quotaExceeded = alloc && line.qtyOrdered > alloc.remaining
-                                            const hasAutoPrice = priceMap[line.productId] !== undefined
+                                            const resolved = priceMap[line.productId]
+                                            const hasAutoPrice = resolved !== undefined && resolved.source !== 'DEFAULT_ZERO'
                                             return (
                                                 <div key={i} className="p-3 rounded-md space-y-2"
                                                     style={{ background: '#142433', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(139,26,46,0.35)' : '#2A4355'}` }}>
@@ -352,8 +412,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                                         )}
                                                         {hasAutoPrice && (
                                                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
-                                                                style={{ background: 'rgba(91,168,138,0.1)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.2)' }}>
-                                                                <Tag size={11} /> Giá theo {channel}
+                                                                style={getPriceBadgeStyle(resolved.source)}>
+                                                                <Tag size={11} /> {getPriceBadgeLabel(resolved, channel)}
                                                             </span>
                                                         )}
                                                     </div>

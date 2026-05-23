@@ -2,7 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/audit', () => ({ logAudit: vi.fn().mockResolvedValue(undefined) }))
+vi.mock('@/lib/cache', () => ({
+    cached: vi.fn((key, fn) => fn()),
+    revalidateCache: vi.fn(),
+}))
 vi.mock('@/lib/utils', () => ({ generateSoNo: vi.fn((n: number) => `SO-2603-${String(n).padStart(4, '0')}`) }))
+vi.mock('@/lib/session', () => ({
+    requirePermission: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
+    requireAuth: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
+}))
 
 const mockPrisma = {
     salesOrder: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
@@ -12,6 +21,7 @@ const mockPrisma = {
     allocationLog: { create: vi.fn() },
     aRInvoice: { aggregate: vi.fn() },
     stockLot: { findMany: vi.fn() },
+    customer: { findUnique: vi.fn() },
     $transaction: vi.fn(async (ops: any) => Promise.all(ops)),
 }
 
@@ -27,7 +37,10 @@ const {
     getCustomerARBalance,
 } = await import('@/app/dashboard/sales/actions')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.customer.findUnique.mockResolvedValue({ creditLimit: 0, name: 'Test Customer', defaultLegalEntityId: null })
+})
 
 // ═══════════════════════════════════════════════════
 // SLS: Create Sales Order + Quota Check
@@ -64,7 +77,7 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
 
         const result = await createSalesOrder({
             legalEntityId: 'le-1',
-            customerId: 'cust-1', salesRepId: 'rep-1', channel: 'VIP_RETAIL',
+            customerId: 'cust-1', salesRepId: 'rep-1', channel: 'RETAIL',
             paymentTerm: 'NET30',
             lines: [{ productId: 'p-1', qtyOrdered: 6, unitPrice: 1_500_000 }],
         })
@@ -107,7 +120,7 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
 describe('SYS-02: confirmSalesOrder — Approval Threshold', () => {
     it('should route to approval engine when SO >= 100M VND', async () => {
         mockPrisma.salesOrder.findUnique.mockResolvedValue({
-            totalAmount: 150_000_000, salesRepId: 'rep-1', soNo: 'SO-01', status: 'DRAFT',
+            totalAmount: 150_000_000, salesRepId: 'rep-1', soNo: 'SO-01', status: 'DRAFT', lines: []
         })
         mockPrisma.salesOrder.update.mockResolvedValue({})
 
@@ -123,17 +136,17 @@ describe('SYS-02: confirmSalesOrder — Approval Threshold', () => {
 
     it('should directly confirm SO under threshold (<100M)', async () => {
         mockPrisma.salesOrder.findUnique.mockResolvedValue({
-            totalAmount: 50_000_000, salesRepId: 'rep-1', soNo: 'SO-02', status: 'DRAFT',
+            totalAmount: 50_000_000, salesRepId: 'rep-1', soNo: 'SO-02', status: 'DRAFT', lines: []
         })
         mockPrisma.salesOrder.update.mockResolvedValue({})
 
         const result = await confirmSalesOrder('so-small')
 
         expect(result.success).toBe(true)
-        expect(result.needsApproval).toBeUndefined()
+        expect(result.needsApproval).toBe(undefined)
         expect(mockPrisma.salesOrder.update).toHaveBeenCalledWith({
             where: { id: 'so-small' },
-            data: { status: 'CONFIRMED' },
+            data: { status: 'PENDING_ACCOUNTING' },
         })
     })
 

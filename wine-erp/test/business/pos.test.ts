@@ -3,6 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/audit', () => ({ logAudit: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@/lib/utils', () => ({ generateSoNo: vi.fn((n) => `POS-SO-${n}`) }))
+vi.mock('@/lib/session', () => ({
+    requirePermission: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
+}))
 
 const mockTx = {
     salesOrder: { count: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -15,16 +19,20 @@ const mockTx = {
     journalEntry: { count: vi.fn(), create: vi.fn() },
     accountingPeriod: { findFirst: vi.fn() },
     vatInvoice: { create: vi.fn() },
+    customer: { findUnique: vi.fn() },
+    loyaltyTransaction: { create: vi.fn() },
+    $executeRaw: vi.fn(),
 }
 
 const mockPrisma = {
     salesOrder: { findUnique: vi.fn(), aggregate: vi.fn(), count: vi.fn(), findFirst: vi.fn() },
     stockLot: { findUnique: vi.fn(), findMany: vi.fn() },
     product: { findUnique: vi.fn(), findFirst: vi.fn() },
-    customer: { findFirst: vi.fn(), create: vi.fn() },
+    customer: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
     user: { findFirst: vi.fn() },
     priceList: { findFirst: vi.fn() },
     priceListLine: { findFirst: vi.fn(), findMany: vi.fn() },
+    legalEntity: { findUnique: vi.fn(), findFirst: vi.fn() },
     aRInvoice: { findFirst: vi.fn(), count: vi.fn(), create: vi.fn() },
     $transaction: vi.fn(async (cb: any) => {
         if (typeof cb === 'function') return cb(mockTx)
@@ -40,7 +48,11 @@ const {
     lookupByBarcode,
 } = await import('@/app/dashboard/pos/actions')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.legalEntity.findFirst.mockResolvedValue({ id: 'le-lys-cellar' })
+    mockPrisma.legalEntity.findUnique.mockResolvedValue({ id: 'le-lys-cellar' })
+})
 
 describe('POS-01: processPOSSale', () => {
     it('should reject if cart is empty', async () => {

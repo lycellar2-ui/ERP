@@ -10,6 +10,7 @@ import {
     getLegalEntities, LegalEntityRow,
 } from './actions'
 import { formatVND } from '@/lib/utils'
+import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
@@ -17,6 +18,40 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'VIP_RETAIL', label: 'VIP Retail' },
     { value: 'DIRECT_INDIVIDUAL', label: 'Trực Tiếp' },
 ]
+
+const getPriceBadgeStyle = (source: string) => {
+    switch (source) {
+        case 'SPECIAL_PRICE':
+            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
+        case 'FIXED_PRICE':
+            return { background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }
+        case 'FIXED_DISCOUNT':
+            return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
+        case 'CHANNEL_BASE':
+            return { background: 'rgba(91,168,138,0.1)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.2)' }
+        case 'RETAIL_FALLBACK':
+            return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
+        default:
+            return { background: 'rgba(74,106,122,0.1)', color: '#4A6A7A', border: '1px solid rgba(74,106,122,0.2)' }
+    }
+}
+
+const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
+    switch (resolved.source) {
+        case 'SPECIAL_PRICE':
+            return 'Giá Đặc Biệt (Campaign)'
+        case 'FIXED_PRICE':
+            return 'Giá Cố Định Riêng'
+        case 'FIXED_DISCOUNT':
+            return `Chiết Khấu Cố Định (-${resolved.discountPct}%)`
+        case 'CHANNEL_BASE':
+            return `Giá Kênh ${defaultChannel}`
+        case 'RETAIL_FALLBACK':
+            return 'Giá Bán Lẻ Mặc Định'
+        default:
+            return 'Giá Mặc Định'
+    }
+}
 
 interface Customer { id: string; name: string; code: string; creditLimit: number; paymentTerm: string; channel: string | null }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
@@ -52,7 +87,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
     const [arBalance, setArBalance] = useState(0)
 
-    const [priceMap, setPriceMap] = useState<Record<string, number>>({})
+    const [priceMap, setPriceMap] = useState<Record<string, ResolvedPrice>>({})
 
     const [saving, setSaving] = useState(false)
     const [soNo, setSoNo] = useState('')
@@ -129,12 +164,33 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
         }
     }, [products]) // eslint-disable-line
 
-    // Load prices when channel changes
-    useEffect(() => {
-        if (channel && products.length > 0) {
-            getProductPricesForChannel(channel).then(setPriceMap)
+    // Load customer-resolved prices or fallback channel prices
+    const loadPrices = useCallback(async (custId: string | null, ch: SalesChannel) => {
+        try {
+            if (custId) {
+                const resolvedPrices = await getCustomerResolvedPrices(custId)
+                setPriceMap(resolvedPrices)
+            } else {
+                const basePrices = await getProductPricesForChannel(ch)
+                const converted: Record<string, ResolvedPrice> = {}
+                for (const [prodId, price] of Object.entries(basePrices)) {
+                    converted[prodId] = {
+                        price: price,
+                        source: 'CHANNEL_BASE'
+                    }
+                }
+                setPriceMap(converted)
+            }
+        } catch (err) {
+            console.error("Lỗi load bảng giá:", err)
         }
-    }, [channel, products])
+    }, [])
+
+    useEffect(() => {
+        if (open && products.length > 0) {
+            loadPrices(customerId || null, channel)
+        }
+    }, [open, customerId, channel, products, loadPrices])
 
     const handleCustomerChange = async (cId: string) => {
         setCustomerId(cId)
@@ -151,7 +207,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
         if (lines.find(l => l.productId === productId)) return toast.error('Sản phẩm đã có trong đơn')
         const p = products.find(p => p.id === productId)
         if (!p) return
-        const price = priceMap[productId] ?? 0
+        const price = priceMap[productId]?.price ?? 0
         setLines(prev => [...prev, {
             productId: p.id, productName: p.productName, skuCode: p.skuCode,
             qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: p.totalStock,
@@ -298,6 +354,14 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                                                     <p className="text-xs truncate" style={{ color: '#4A6A7A' }}>{l.productName}</p>
                                                     {l.stock < l.qtyOrdered && (
                                                         <p className="text-xs mt-0.5" style={{ color: '#D4A853' }}>⚠ Tồn: {l.stock}</p>
+                                                    )}
+                                                    {priceMap[l.productId] && priceMap[l.productId].source !== 'DEFAULT_ZERO' && (
+                                                        <div className="mt-1">
+                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                                style={getPriceBadgeStyle(priceMap[l.productId].source)}>
+                                                                <Tag size={9} /> {getPriceBadgeLabel(priceMap[l.productId], channel)}
+                                                            </span>
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-1.5">

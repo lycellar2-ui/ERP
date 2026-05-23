@@ -93,6 +93,8 @@ model User {
   proposalsCreated       Proposal[]         @relation("ProposalCreator")
   proposalComments       ProposalComment[]  @relation("ProposalCommentAuthor")
   proposalApprovals      ProposalApprovalLog[] @relation("ProposalApprover")
+  priceRulesRequested    CustomerPriceRule[] @relation("PriceRuleRequester")
+  priceRulesApproved     CustomerPriceRule[] @relation("PriceRuleApprover")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -262,6 +264,7 @@ model Product {
   transferOrderLines   TransferOrderLine[]
   qrCodes              QRCode[]
   regulatedDocs        RegulatedDocument[]
+  priceRules           CustomerPriceRule[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -320,6 +323,31 @@ model PriceListLine {
 
   @@unique([priceListId, productId])
   @@map("price_list_lines")
+}
+
+model CustomerPriceRule {
+  id          String          @id @default(cuid())
+  customerId  String
+  customer    Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ruleType    PriceRuleType
+  value       Decimal         @db.Decimal(18, 2)
+  startDate   DateTime
+  endDate     DateTime?
+  status      PriceRuleStatus @default(DRAFT)
+  
+  requestedBy String
+  requester   User            @relation("PriceRuleRequester", fields: [requestedBy], references: [id])
+  approvedBy  String?
+  approver    User?           @relation("PriceRuleApprover", fields: [approvedBy], references: [id])
+  approvedAt  DateTime?
+  notes       String?
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("customer_price_rules")
 }
 
 model Supplier {
@@ -424,6 +452,7 @@ model Customer {
   winePreference WinePreference?
   tastingGuests  TastingEventGuest[]   @relation("TastingGuests")
   loyaltyTransactions LoyaltyTransaction[]
+  priceRules    CustomerPriceRule[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   deletedAt     DateTime?
@@ -1799,6 +1828,19 @@ enum UserStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+}
+
+enum PriceRuleType {
+  FIXED_DISCOUNT
+  FIXED_PRICE
+  SPECIAL_PRICE
+}
+
+enum PriceRuleStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
 }
 
 enum ApprovalDocType {

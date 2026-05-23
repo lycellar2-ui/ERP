@@ -17,11 +17,21 @@ function ChannelBadge({ channel }: { channel: string }) {
     return <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
 }
 
+import { CustomerRulesTab } from './CustomerRulesTab'
+
 interface Props {
     initialLists: PriceListRow[]
+    currentUser: {
+        id: string
+        email: string
+        name: string
+        roles: string[]
+        permissions: string[]
+    } | null
 }
 
-export function PriceListClient({ initialLists }: Props) {
+export function PriceListClient({ initialLists, currentUser }: Props) {
+    const [activeTab, setActiveTab] = useState<'general' | 'customer'>('general')
     const [lists, setLists] = useState(initialLists)
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [detail, setDetail] = useState<Awaited<ReturnType<typeof getPriceListDetail>>>(null)
@@ -121,160 +131,194 @@ export function PriceListClient({ initialLists }: Props) {
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
-                        Bảng Giá (PRC)
+                        {activeTab === 'general' ? 'Bảng Giá (PRC)' : 'Chính Sách Giá Khách Hàng (Customer Pricing)'}
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Quản lý bảng giá theo kênh bán hàng — HORECA, Đại Lý, VIP, Trực Tiếp
+                        {activeTab === 'general' 
+                            ? 'Quản lý bảng giá theo kênh bán hàng — HORECA, Đại Lý, VIP, Trực Tiếp' 
+                            : 'Đề xuất, phê duyệt và quản lý giá cố định hoặc giá đặc biệt cho từng khách hàng cụ thể'}
                     </p>
                 </div>
+                {activeTab === 'general' && (
+                    <button
+                        onClick={() => setCreateOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all"
+                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
+                    >
+                        <Plus size={16} /> Tạo Bảng Giá
+                    </button>
+                )}
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-[#2A4355] mb-2">
                 <button
-                    onClick={() => setCreateOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all"
-                    style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
+                    onClick={() => setActiveTab('general')}
+                    className="px-4 py-2.5 text-sm font-semibold transition-all border-b-2"
+                    style={{
+                        color: activeTab === 'general' ? '#87CBB9' : '#8AAEBB',
+                        borderColor: activeTab === 'general' ? '#87CBB9' : 'transparent',
+                    }}
                 >
-                    <Plus size={16} /> Tạo Bảng Giá
+                    Bảng Giá Chung
+                </button>
+                <button
+                    onClick={() => setActiveTab('customer')}
+                    className="px-4 py-2.5 text-sm font-semibold transition-all border-b-2"
+                    style={{
+                        color: activeTab === 'customer' ? '#87CBB9' : '#8AAEBB',
+                        borderColor: activeTab === 'customer' ? '#87CBB9' : 'transparent',
+                    }}
+                >
+                    Giá Khách Hàng & Cấu Hình
                 </button>
             </div>
 
-            {/* Summary cards */}
-            <div className="grid grid-cols-4 gap-3">
-                {Object.entries(CHANNEL_CFG).map(([key, cfg]) => {
-                    const count = lists.filter(l => l.channel === key).length
-                    return (
-                        <div key={key} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color }} />
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
-                            </div>
-                            <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{count}</p>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>bảng giá</p>
-                        </div>
-                    )
-                })}
-            </div>
+            {activeTab === 'customer' ? (
+                <CustomerRulesTab currentUser={currentUser} />
+            ) : (
+                <>
+                    {/* Summary cards */}
+                    <div className="grid grid-cols-4 gap-3">
+                        {Object.entries(CHANNEL_CFG).map(([key, cfg]) => {
+                            const count = lists.filter(l => l.channel === key).length
+                            return (
+                                <div key={key} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color }} />
+                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
+                                    </div>
+                                    <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{count}</p>
+                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>bảng giá</p>
+                                </div>
+                            )
+                        })}
+                    </div>
 
-            {/* Main content: list + detail */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Left: Price Lists */}
-                <div className="lg:col-span-1 space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>DANH SÁCH BẢNG GIÁ</p>
-                    {lists.length === 0 ? (
-                        <div className="text-center py-12 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                            <Tag size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
-                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có bảng giá nào</p>
-                        </div>
-                    ) : lists.map(pl => (
-                        <div
-                            key={pl.id}
-                            onClick={() => loadDetail(pl.id)}
-                            className="p-3.5 rounded-md cursor-pointer transition-all"
-                            style={{
-                                background: selectedId === pl.id ? 'rgba(135,203,185,0.08)' : '#1B2E3D',
-                                border: `1px solid ${selectedId === pl.id ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
-                            }}
-                        >
-                            <div className="flex items-center justify-between mb-1.5">
-                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{pl.name}</p>
-                                <ChannelBadge channel={pl.channel} />
-                            </div>
-                            <div className="flex items-center justify-between text-xs" style={{ color: '#4A6A7A' }}>
-                                <span>{pl.itemCount} sản phẩm</span>
-                                <span>{new Date(pl.effectiveDate).toLocaleDateString('vi-VN')}</span>
-                            </div>
-                            <div className="flex items-center justify-between mt-2">
-                                <ChevronRight size={12} style={{ color: '#4A6A7A' }} />
-                                <button
-                                    onClick={e => { e.stopPropagation(); handleDelete(pl.id) }}
-                                    className="p-1 rounded hover:bg-red-500/10 transition"
-                                    title="Xóa bảng giá"
+                    {/* Main content: list + detail */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* Left: Price Lists */}
+                        <div className="lg:col-span-1 space-y-2">
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>DANH SÁCH BẢNG GIÁ</p>
+                            {lists.length === 0 ? (
+                                <div className="text-center py-12 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <Tag size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có bảng giá nào</p>
+                                </div>
+                            ) : lists.map(pl => (
+                                <div
+                                    key={pl.id}
+                                    onClick={() => loadDetail(pl.id)}
+                                    className="p-3.5 rounded-md cursor-pointer transition-all"
+                                    style={{
+                                        background: selectedId === pl.id ? 'rgba(135,203,185,0.08)' : '#1B2E3D',
+                                        border: `1px solid ${selectedId === pl.id ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
+                                    }}
                                 >
-                                    <Trash2 size={12} style={{ color: '#8B1A2E' }} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Right: Detail */}
-                <div className="lg:col-span-2">
-                    {detailLoading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
-                        </div>
-                    ) : !selectedId ? (
-                        <div className="text-center py-20 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                            <DollarSign size={40} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
-                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chọn bảng giá bên trái để xem chi tiết</p>
-                        </div>
-                    ) : detail ? (
-                        <div className="space-y-4">
-                            {/* Detail header */}
-                            <div className="flex items-center justify-between p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <div>
-                                    <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>{detail.name}</h3>
-                                    <div className="flex items-center gap-3 mt-1">
-                                        <ChannelBadge channel={detail.channel} />
-                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>
-                                            Hiệu lực: {new Date(detail.effectiveDate).toLocaleDateString('vi-VN')}
-                                            {detail.expiryDate && ` → ${new Date(detail.expiryDate).toLocaleDateString('vi-VN')}`}
-                                        </span>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{pl.name}</p>
+                                        <ChannelBadge channel={pl.channel} />
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs" style={{ color: '#4A6A7A' }}>
+                                        <span>{pl.itemCount} sản phẩm</span>
+                                        <span>{new Date(pl.effectiveDate).toLocaleDateString('vi-VN')}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-2">
+                                        <ChevronRight size={12} style={{ color: '#4A6A7A' }} />
+                                        <button
+                                            onClick={e => { e.stopPropagation(); handleDelete(pl.id) }}
+                                            className="p-1 rounded hover:bg-red-500/10 transition"
+                                            title="Xóa bảng giá"
+                                        >
+                                            <Trash2 size={12} style={{ color: '#8B1A2E' }} />
+                                        </button>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={openAddProduct}
-                                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold transition-all"
-                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)', borderRadius: '6px' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.25)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.15)')}
-                                >
-                                    <Plus size={14} /> Thêm Sản Phẩm
-                                </button>
-                            </div>
-
-                            {/* Price lines table */}
-                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                                <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ background: '#142433' }}>
-                                            {['SKU', 'Sản Phẩm', 'Giá Bán', 'Tiền Tệ', 'Hành Động'].map(h => (
-                                                <th key={h} className="px-4 py-2.5 text-xs uppercase tracking-wider text-left font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {detail.lines.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={5} className="text-center py-12" style={{ color: '#4A6A7A' }}>
-                                                    <Package size={28} className="mx-auto mb-2" style={{ color: '#2A4355' }} />
-                                                    <p className="text-xs">Chưa có sản phẩm. Bấm "Thêm Sản Phẩm" để bắt đầu.</p>
-                                                </td>
-                                            </tr>
-                                        ) : detail.lines.map(line => (
-                                            <tr key={line.id} style={{ borderTop: '1px solid #2A4355' }}>
-                                                <td className="px-4 py-2.5">
-                                                    <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{line.skuCode}</span>
-                                                </td>
-                                                <td className="px-4 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>{line.productName}</td>
-                                                <td className="px-4 py-2.5">
-                                                    <span className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(line.unitPrice)}</span>
-                                                </td>
-                                                <td className="px-4 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>{line.currency}</td>
-                                                <td className="px-4 py-2.5">
-                                                    <button onClick={() => handleRemoveLine(line.id)} className="p-1.5 rounded transition hover:bg-red-500/10">
-                                                        <Trash2 size={13} style={{ color: '#8B1A2E' }} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            ))}
                         </div>
-                    ) : null}
-                </div>
-            </div>
+
+                        {/* Right: Detail */}
+                        <div className="lg:col-span-2">
+                            {detailLoading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
+                                </div>
+                            ) : !selectedId ? (
+                                <div className="text-center py-20 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <DollarSign size={40} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Chọn bảng giá bên trái để xem chi tiết</p>
+                                </div>
+                            ) : detail ? (
+                                <div className="space-y-4">
+                                    {/* Detail header */}
+                                    <div className="flex items-center justify-between p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                        <div>
+                                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>{detail.name}</h3>
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <ChannelBadge channel={detail.channel} />
+                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                    Hiệu lực: {new Date(detail.effectiveDate).toLocaleDateString('vi-VN')}
+                                                    {detail.expiryDate && ` → ${new Date(detail.expiryDate).toLocaleDateString('vi-VN')}`}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={openAddProduct}
+                                            className="flex items-center gap-2 px-3 py-2 text-xs font-semibold transition-all"
+                                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)', borderRadius: '6px' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.25)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.15)')}
+                                        >
+                                            <Plus size={14} /> Thêm Sản Phẩm
+                                        </button>
+                                    </div>
+
+                                    {/* Price lines table */}
+                                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                        <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
+                                            <thead>
+                                                <tr style={{ background: '#142433' }}>
+                                                    {['SKU', 'Sản Phẩm', 'Giá Bán', 'Tiền Tệ', 'Hành Động'].map(h => (
+                                                        <th key={h} className="px-4 py-2.5 text-xs uppercase tracking-wider text-left font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {detail.lines.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={5} className="text-center py-12" style={{ color: '#4A6A7A' }}>
+                                                            <Package size={28} className="mx-auto mb-2" style={{ color: '#2A4355' }} />
+                                                            <p className="text-xs">Chưa có sản phẩm. Bấm "Thêm Sản Phẩm" để bắt đầu.</p>
+                                                        </td>
+                                                    </tr>
+                                                ) : detail.lines.map(line => (
+                                                    <tr key={line.id} style={{ borderTop: '1px solid #2A4355' }}>
+                                                        <td className="px-4 py-2.5">
+                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{line.skuCode}</span>
+                                                        </td>
+                                                        <td className="px-4 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>{line.productName}</td>
+                                                        <td className="px-4 py-2.5">
+                                                            <span className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(line.unitPrice)}</span>
+                                                        </td>
+                                                        <td className="px-4 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>{line.currency}</td>
+                                                        <td className="px-4 py-2.5">
+                                                            <button onClick={() => handleRemoveLine(line.id)} className="p-1.5 rounded transition hover:bg-red-500/10">
+                                                                <Trash2 size={13} style={{ color: '#8B1A2E' }} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ) : null}
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Create drawer */}
             {createOpen && (
