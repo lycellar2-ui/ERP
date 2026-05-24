@@ -126,7 +126,6 @@ export async function getCustomerById(id: string) {
             salesRep: { select: { id: true, name: true } },
             contacts: { where: { isPrimary: true }, take: 1 },
             addresses: { where: { isDefault: true }, take: 1 },
-            defaultLegalEntity: { select: { id: true, code: true, name: true } },
         },
     })
     if (!c) return null
@@ -145,8 +144,6 @@ export async function getCustomerById(id: string) {
         paymentTerm: c.paymentTerm,
         creditLimit: Number(c.creditLimit),
         salesRepId: c.salesRepId,
-        defaultLegalEntityId: c.defaultLegalEntityId,
-        defaultLegalEntityName: (c as any).defaultLegalEntity?.name ?? null,
         status: c.status,
         contactName: contact?.name ?? null,
         contactTitle: contact?.title ?? null,
@@ -281,7 +278,6 @@ const customerSchema = z.object({
     paymentTerm: z.string().default('NET30'),
     creditLimit: z.number().default(0),
     salesRepId: z.string().nullable().optional(),
-    defaultLegalEntityId: z.string().nullable().optional(),
     status: z.enum(['ACTIVE', 'CREDIT_HOLD', 'INACTIVE']).default('ACTIVE'),
     contactName: z.string().nullable().optional(),
     email: z.string().email('Email không hợp lệ').nullable().optional(),
@@ -311,7 +307,6 @@ export async function createCustomer(input: CustomerInput) {
                     paymentTerm: data.paymentTerm,
                     creditLimit: data.creditLimit,
                     salesRepId: data.salesRepId !== undefined ? data.salesRepId : null,
-                    defaultLegalEntityId: data.defaultLegalEntityId !== undefined ? data.defaultLegalEntityId : null,
                     status: data.status,
                 },
             })
@@ -377,7 +372,6 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.paymentTerm !== undefined) updateData.paymentTerm = customerData.paymentTerm
         if (customerData.creditLimit !== undefined) updateData.creditLimit = customerData.creditLimit
         if (customerData.salesRepId !== undefined) updateData.salesRepId = customerData.salesRepId
-        if (customerData.defaultLegalEntityId !== undefined) updateData.defaultLegalEntityId = customerData.defaultLegalEntityId
         if (customerData.status !== undefined) updateData.status = customerData.status
 
         await prisma.$transaction(async (tx) => {

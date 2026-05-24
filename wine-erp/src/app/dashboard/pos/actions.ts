@@ -188,14 +188,19 @@ export async function processPOSSale(input: {
         }
 
         // Get legalEntityId for SalesOrder
-        let legalEntityId = 'le-lys-cellar' // Default LC (Ly's Cellar)
-        if (customerId) {
-            const customerObj = await prisma.customer.findUnique({
-                where: { id: customerId },
-                select: { defaultLegalEntityId: true }
-            })
-            if (customerObj?.defaultLegalEntityId) {
-                legalEntityId = customerObj.defaultLegalEntityId
+        let legalEntityId = ''
+        const defaultLE = await prisma.legalEntity.findFirst({
+            where: { code: 'LC' },
+            select: { id: true }
+        })
+        if (defaultLE) {
+            legalEntityId = defaultLE.id
+        } else {
+            const firstLE = await prisma.legalEntity.findFirst({ select: { id: true } })
+            if (firstLE) {
+                legalEntityId = firstLE.id
+            } else {
+                throw new Error('Không tìm thấy pháp nhân nào trong hệ thống')
             }
         }
         const leExists = await prisma.legalEntity.findUnique({ where: { id: legalEntityId } })
@@ -448,6 +453,7 @@ export async function generatePOSVATInvoice(input: {
                 totalAmount,
                 status: 'PAID',
                 dueDate: now,
+                legalEntityId: so.legalEntityId,
             },
         })
 

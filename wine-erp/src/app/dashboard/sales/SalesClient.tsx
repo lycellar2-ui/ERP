@@ -792,7 +792,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                 style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
                                 <option value="">— Chưa chọn —</option>
                                 {legalEntities.map(e => (
-                                    <option key={e.id} value={e.id}>{e.name} ({e.code}) — {e.type === 'IMPORT' ? 'Nhập Khẩu' : 'Phân Phối'}</option>
+                                    <option key={e.id} value={e.id}>{e.name} ({e.code}) — {e.code === 'TA' ? 'Nhập Khẩu' : 'Phân Phối'}</option>
                                 ))}
                             </select>
                         </div>

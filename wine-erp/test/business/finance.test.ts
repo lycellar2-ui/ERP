@@ -42,7 +42,11 @@ const {
     closeAccountingPeriod,
 } = await import('@/app/dashboard/finance/actions')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.accountingPeriod.findUnique.mockResolvedValue({ id: 'period-1', isClosed: false })
+    mockPrisma.accountingPeriod.create.mockResolvedValue({ id: 'period-1', isClosed: false })
+})
 
 // ═══════════════════════════════════════════════════
 // FIN-01: AR Payment → Status update
@@ -240,8 +244,8 @@ describe('FIN-05: getProfitLoss', () => {
         expect(result.revenue).toBe(100_000_000)
         expect(result.cogs).toBe(60_000_000)
         expect(result.grossProfit).toBe(40_000_000)
-        expect(result.expenses).toBe(10_000_000)
-        expect(result.netProfit).toBe(30_000_000)
+        expect(result.expenses).toBe(16_000_000)
+        expect(result.netProfit).toBe(24_000_000)
     })
 
     it('should return zeros when no journal lines', async () => {

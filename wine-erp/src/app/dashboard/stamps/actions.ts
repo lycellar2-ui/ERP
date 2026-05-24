@@ -156,7 +156,10 @@ export async function safeRecordStampUsage(data: {
     notes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        await recordStampUsage(data)
+        const res = await recordStampUsage(data)
+        if (res && typeof res === 'object' && 'success' in res && res.success === false) {
+            return res as { success: false; error: string }
+        }
         revalidateCache('stamps')
         revalidatePath('/dashboard/stamps')
         return { success: true }

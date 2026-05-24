@@ -38,7 +38,7 @@ describe('callGemini', () => {
         const result = await callGemini({ prompt: 'test' })
 
         expect(result.success).toBe(false)
-        expect(result.error).toBe('GEMINI_API_KEY not configured')
+        expect(result.error).toBe('Chưa cấu hình Gemini API Key. Vào AI Settings → API Key Vault → Thêm Key Gemini.')
     })
 
     it('should call Gemini API with correct payload (no system prompt)', async () => {

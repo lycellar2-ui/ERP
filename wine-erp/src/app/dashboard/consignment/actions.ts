@@ -245,14 +245,16 @@ export async function confirmConsignmentReport(
         if (totalSales > 0) {
             // Find or create a SO placeholder for consignment
             let soId: string | undefined
+            let legalEntityId: string | undefined
             const existingSO = await prisma.salesOrder.findFirst({
                 where: { customerId: report.agreement.customerId, channel: 'HORECA' },
                 orderBy: { createdAt: 'desc' },
-                select: { id: true },
+                select: { id: true, legalEntityId: true },
             })
             soId = existingSO?.id
+            legalEntityId = existingSO?.legalEntityId
 
-            if (soId) {
+            if (soId && legalEntityId) {
                 const invCount = await prisma.aRInvoice.count()
                 invoiceNo = `CSG-INV-${String(invCount + 1).padStart(6, '0')}`
                 const vatAmount = totalSales * 0.1
@@ -268,6 +270,7 @@ export async function confirmConsignmentReport(
                         totalAmount,
                         dueDate: new Date(Date.now() + 30 * 86400000), // NET30
                         status: 'UNPAID',
+                        legalEntityId,
                     },
                 })
             }

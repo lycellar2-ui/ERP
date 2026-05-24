@@ -187,6 +187,15 @@ export async function createPurchaseOrder(input: CreatePOInput) {
     const data = createPOSchema.parse(input)
     const userId = await getOrCreateSystemUser()
 
+    const defaultEntity = await prisma.legalEntity.findFirst({
+        where: { code: 'TA' },
+        select: { id: true },
+    })
+    if (!defaultEntity) {
+        return { success: false, error: "Không tìm thấy pháp nhân mặc định Thắng Ân (TA)" }
+    }
+    const legalEntityId = defaultEntity.id
+
     // Generate PO number: PO-YYMM-NNNN
     const now = new Date()
     const yy = String(now.getFullYear()).slice(-2)
@@ -202,6 +211,7 @@ export async function createPurchaseOrder(input: CreatePOInput) {
             exchangeRate: data.exchangeRate,
             status: 'DRAFT',
             createdBy: userId,
+            legalEntityId,
             lines: {
                 create: data.lines.map(l => ({
                     productId: l.productId,
@@ -502,6 +512,15 @@ export async function importPOFromExcel(data: {
         }
 
         const userId = await getOrCreateSystemUser()
+        const defaultEntity = await prisma.legalEntity.findFirst({
+            where: { code: 'TA' },
+            select: { id: true },
+        })
+        if (!defaultEntity) {
+            return { success: false, error: "Không tìm thấy pháp nhân mặc định Thắng Ân (TA)" }
+        }
+        const legalEntityId = defaultEntity.id
+
         const count = await prisma.purchaseOrder.count()
         const poNo = `PO-${String(count + 1).padStart(6, '0')}`
 
@@ -514,6 +533,7 @@ export async function importPOFromExcel(data: {
                 exchangeRate: data.exchangeRate,
                 status: 'DRAFT',
                 createdBy: userId,
+                legalEntityId,
                 lines: {
                     create: data.lines.map(l => ({
                         productId: l.productId,

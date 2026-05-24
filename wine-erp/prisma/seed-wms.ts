@@ -151,14 +151,14 @@ async function main() {
     }
 
     const stockLots: any[] = [
-        { lotNo: `LOT-2503-0001`, productId: products[0].id, locationId: hcmLoc_A01_01.id, qtyReceived: 120, qtyAvailable: 96, unitLandedCost: 4_500_000, receivedDate: new Date('2025-03-10'), status: 'AVAILABLE' },
-        { lotNo: `LOT-2503-0002`, productId: products[1].id, locationId: hcmLoc_A01_01.id, qtyReceived: 72, qtyAvailable: 72, unitLandedCost: 18_000_000, receivedDate: new Date('2025-03-10'), status: 'AVAILABLE' },
-        { lotNo: `LOT-2503-0003`, productId: products[2].id, locationId: hcmLoc_A01_02.id, qtyReceived: 60, qtyAvailable: 48, unitLandedCost: 9_200_000, receivedDate: new Date('2025-03-12'), status: 'AVAILABLE' },
-        { lotNo: `LOT-2503-0004`, productId: products[3].id, locationId: hcmLoc_A02_01.id, qtyReceived: 48, qtyAvailable: 12, unitLandedCost: 32_000_000, receivedDate: new Date('2025-02-20'), status: 'AVAILABLE' },
-        { lotNo: `LOT-2503-0005`, productId: products[0].id, locationId: hcmLoc_B01_01.id, qtyReceived: 36, qtyAvailable: 36, unitLandedCost: 4_800_000, receivedDate: new Date('2025-03-01'), status: 'RESERVED' as const },
-        { lotNo: `LOT-2502-0006`, productId: products[4 % products.length].id, locationId: hniLoc_A01_01.id, qtyReceived: 60, qtyAvailable: 55, unitLandedCost: 3_800_000, receivedDate: new Date('2025-02-15'), status: 'AVAILABLE' },
-        { lotNo: `LOT-2502-0007`, productId: products[5 % products.length].id, locationId: hniLoc_A01_01.id, qtyReceived: 24, qtyAvailable: 24, unitLandedCost: 6_200_000, receivedDate: new Date('2025-02-20'), status: 'AVAILABLE' },
-        { lotNo: `LOT-2503-0008`, productId: products[6 % products.length].id, locationId: showroomLoc.id, qtyReceived: 12, qtyAvailable: 9, unitLandedCost: 14_000_000, receivedDate: new Date('2025-03-05'), status: 'AVAILABLE' },
+        { lotNo: `LOT-2503-0001`, productId: products[0].id, locationId: hcmLoc_A01_01.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 120, qtyAvailable: 96, unitLandedCost: 4_500_000, receivedDate: new Date('2025-03-10'), status: 'AVAILABLE' },
+        { lotNo: `LOT-2503-0002`, productId: products[1].id, locationId: hcmLoc_A01_01.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 72, qtyAvailable: 72, unitLandedCost: 18_000_000, receivedDate: new Date('2025-03-10'), status: 'AVAILABLE' },
+        { lotNo: `LOT-2503-0003`, productId: products[2].id, locationId: hcmLoc_A01_02.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 60, qtyAvailable: 48, unitLandedCost: 9_200_000, receivedDate: new Date('2025-03-12'), status: 'AVAILABLE' },
+        { lotNo: `LOT-2503-0004`, productId: products[3].id, locationId: hcmLoc_A02_01.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 48, qtyAvailable: 12, unitLandedCost: 32_000_000, receivedDate: new Date('2025-02-20'), status: 'AVAILABLE' },
+        { lotNo: `LOT-2503-0005`, productId: products[0].id, locationId: hcmLoc_B01_01.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 36, qtyAvailable: 36, unitLandedCost: 4_800_000, receivedDate: new Date('2025-03-01'), status: 'RESERVED' as const },
+        { lotNo: `LOT-2502-0006`, productId: products[4 % products.length].id, locationId: hniLoc_A01_01.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 60, qtyAvailable: 55, unitLandedCost: 3_800_000, receivedDate: new Date('2025-02-15'), status: 'AVAILABLE' },
+        { lotNo: `LOT-2502-0007`, productId: products[5 % products.length].id, locationId: hniLoc_A01_01.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 24, qtyAvailable: 24, unitLandedCost: 6_200_000, receivedDate: new Date('2025-02-20'), status: 'AVAILABLE' },
+        { lotNo: `LOT-2503-0008`, productId: products[6 % products.length].id, locationId: showroomLoc.id, ownerEntityId: 'le-lys-cellar', qtyReceived: 12, qtyAvailable: 9, unitLandedCost: 14_000_000, receivedDate: new Date('2025-03-05'), status: 'AVAILABLE' },
     ]
 
     for (const lot of stockLots) {

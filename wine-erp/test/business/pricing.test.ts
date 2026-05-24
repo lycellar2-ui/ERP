@@ -12,7 +12,7 @@ vi.mock('@/lib/session', () => ({
 
 const mockPrisma = {
     customer: { findUnique: vi.fn() },
-    customerPriceRule: { findMany: vi.fn() },
+    customerPriceRule: { findMany: vi.fn(), create: vi.fn() },
     priceList: { findFirst: vi.fn() },
     priceListLine: { findMany: vi.fn() },
     approvalConfig: { findUnique: vi.fn() },

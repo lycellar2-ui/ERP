@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+vi.mock('@/lib/cache', () => ({
+    cached: vi.fn((key, fn) => fn()),
+    cachedWithTiming: vi.fn((key, fn) => fn()),
+    revalidateCache: vi.fn()
+}))
 
 const mockPrisma = {
     journalLine: { findMany: vi.fn() },

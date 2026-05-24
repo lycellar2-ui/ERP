@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useEffect } from 'react'
 import {
@@ -74,6 +74,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
         setSaving(true)
         toast.promise(
             createPurchaseOrder({ supplierId, currency, exchangeRate, lines }).then(res => {
+                if (!res.success || !res.poNo) throw new Error(res.error || 'Lỗi không xác định')
                 onCreated(res.poNo)
                 return res
             }),

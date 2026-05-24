@@ -119,7 +119,6 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         ward: data.ward,
                         district: data.district,
                         city: data.city,
-                        defaultLegalEntityId: data.defaultLegalEntityId,
                     })
                 }
             }).finally(() => setLoading(false))
@@ -258,19 +257,6 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                     </select>
                                 </div>
-                            </div>
-
-                            {/* Legal Entity default */}
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Pháp Nhân Mặc Định</label>
-                                <select className={inputCls} style={inputStyle} value={form.defaultLegalEntityId ?? ''}
-                                    onChange={e => set('defaultLegalEntityId', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                    <option value="">— Chưa gán —</option>
-                                    {legalEntities.map(e => (
-                                        <option key={e.id} value={e.id}>{e.name} ({e.code}) — {e.type === 'IMPORT' ? 'Nhập Khẩu' : 'Phân Phối'}</option>
-                                    ))}
-                                </select>
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Liên Hệ & Địa Chỉ</p>

@@ -24,9 +24,9 @@ const mockTx = {
 
 const mockPrisma = {
     purchaseOrder: { findUnique: vi.fn(), update: vi.fn() },
-    goodsReceipt: { count: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+    goodsReceipt: { count: vi.fn(), findMany: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
     salesOrder: { findUnique: vi.fn() },
-    deliveryOrder: { count: vi.fn(), findMany: vi.fn() },
+    deliveryOrder: { count: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
     stockLot: { findUnique: vi.fn(), update: vi.fn(), findFirst: vi.fn(), count: vi.fn(), create: vi.fn() },
     warehouse: { findMany: vi.fn(), count: vi.fn(), create: vi.fn() },
     location: { findMany: vi.fn(), create: vi.fn(), findUnique: vi.fn(), delete: vi.fn() },
@@ -54,6 +54,8 @@ beforeEach(() => {
         if (typeof cb === 'function') return cb(mockTx)
         return Promise.all(cb)
     })
+    mockPrisma.goodsReceipt.findFirst.mockResolvedValue(null)
+    mockPrisma.deliveryOrder.findFirst.mockResolvedValue(null)
 })
 
 // ═══════════════════════════════════════════════════

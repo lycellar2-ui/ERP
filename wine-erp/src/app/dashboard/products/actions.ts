@@ -357,7 +357,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 vintage: data.vintage !== undefined ? data.vintage : undefined,
                 appellationId: data.appellationId !== undefined ? data.appellationId : undefined,
                 ...(data.country && { country: data.country }),
-                abvPercent: data.abvPercent !== undefined ? data.abvPercent : undefined,
+                abvPercent: data.abvPercent !== undefined ? (data.abvPercent ?? 13.0) : undefined,
                 ...(data.format && { format: data.format }),
                 ...(data.packagingType && { packagingType: data.packagingType }),
                 ...(data.unitsPerCase && { unitsPerCase: data.unitsPerCase }),

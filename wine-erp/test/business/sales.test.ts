@@ -77,7 +77,7 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
 
         const result = await createSalesOrder({
             legalEntityId: 'le-1',
-            customerId: 'cust-1', salesRepId: 'rep-1', channel: 'RETAIL',
+            customerId: 'cust-1', salesRepId: 'rep-1', channel: 'DIRECT_INDIVIDUAL',
             paymentTerm: 'NET30',
             lines: [{ productId: 'p-1', qtyOrdered: 6, unitPrice: 1_500_000 }],
         })

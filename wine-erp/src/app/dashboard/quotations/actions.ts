@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
@@ -349,6 +349,15 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
             return { success: false, error: 'Quotation đã hủy hoặc hết hạn' }
         }
 
+        const defaultEntity = await prisma.legalEntity.findFirst({
+            where: { code: 'LC' },
+            select: { id: true }
+        })
+        if (!defaultEntity) {
+            return { success: false, error: 'Không tìm thấy pháp nhân mặc định Ly\'s Cellar (LC)' }
+        }
+        const legalEntityId = defaultEntity.id
+
         const soCount = await prisma.salesOrder.count()
         const soNo = `SO-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(soCount + 1).padStart(3, '0')}`
 
@@ -362,6 +371,7 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
                 orderDiscount: qt.orderDiscount,
                 totalAmount: qt.totalAmount,
                 status: 'DRAFT',
+                legalEntityId,
                 lines: {
                     create: qt.lines.map(l => ({
                         productId: l.productId,

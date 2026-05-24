@@ -1,5 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { encryptApiKey, decryptApiKey, maskApiKey } from '@/lib/encryption'
+
+beforeEach(() => {
+    vi.stubEnv('ENCRYPTION_KEY', 'test-encryption-key-32-chars-long')
+})
+
+afterEach(() => {
+    vi.unstubAllEnvs()
+})
 
 // ─── Encrypt → Decrypt Round-trip ─────────────────
 

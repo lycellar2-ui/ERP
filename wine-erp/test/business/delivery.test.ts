@@ -66,8 +66,14 @@ describe('DLV-02: recordDeliveryFailure', () => {
             where: { id: 'stop-1' },
             data: expect.objectContaining({
                 status: 'FAILED',
-                failureReason: 'REFUSED',
-                notes: 'KH từ chối nhận',
+                pod: expect.objectContaining({
+                    upsert: expect.objectContaining({
+                        create: expect.objectContaining({
+                            confirmedBy: 'SYSTEM',
+                            notes: '[Lý do: REFUSED] KH từ chối nhận',
+                        }),
+                    }),
+                }),
             }),
         })
         // Route auto-completed

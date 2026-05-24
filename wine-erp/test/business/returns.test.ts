@@ -6,6 +6,7 @@ const mockTx = {
     returnOrder: { update: vi.fn() },
     creditNote: { create: vi.fn() },
     stockLot: { findFirst: vi.fn(), count: vi.fn(), create: vi.fn() },
+    location: { findFirst: vi.fn() },
 }
 
 const mockPrisma = {
@@ -87,9 +88,10 @@ describe('RET-02: approveReturnOrder', () => {
                 productId: 'p-wine', qtyReturned: 5, unitPrice: 400_000,
                 product: { skuCode: 'W-01', productName: 'Wine Test' },
             }],
-            so: { soNo: 'SO-01' },
+            so: { soNo: 'SO-01', legalEntityId: 'le-lc' },
         })
         mockPrisma.creditNote.count.mockResolvedValue(0)
+        mockTx.location.findFirst.mockResolvedValue({ id: 'loc-q' })
         mockTx.stockLot.findFirst.mockResolvedValue({ locationId: 'loc-q', shipmentId: 'ship-1', unitLandedCost: 350_000 })
         mockTx.stockLot.count.mockResolvedValue(100)
 

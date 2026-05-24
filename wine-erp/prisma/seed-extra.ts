@@ -130,6 +130,7 @@ async function main() {
                 soNo: 'SO-202503-001',
                 customerId: customers[0].id,
                 salesRepId: salesUser1.id,
+                legalEntityId: 'le-lys-cellar',
                 channel: customers[0].channel || 'HORECA',
                 paymentTerm: customers[0].paymentTerm || 'NET30',
                 status: 'CONFIRMED',
@@ -153,6 +154,7 @@ async function main() {
                 invoiceNo: 'INV-202503-001',
                 soId: so.id,
                 customerId: customers[0].id,
+                legalEntityId: 'le-lys-cellar',
                 amount: 12000000,
                 vatAmount: 1200000,
                 totalAmount: 13200000,
@@ -191,6 +193,7 @@ async function main() {
             create: {
                 poNo: 'PO-202503-001',
                 supplierId: suppliers[0].id,
+                legalEntityId: 'le-lys-cellar',
                 createdBy: adminUser.id,
                 status: 'APPROVED',
                 currency: 'USD',
@@ -213,6 +216,7 @@ async function main() {
                 invoiceNo: 'AP-INV-' + Math.random().toString(36).substring(7),
                 poId: po.id,
                 supplierId: suppliers[0].id,
+                legalEntityId: 'le-lys-cellar',
                 amount: 4800,
                 dueDate: new Date(new Date().getTime() + 30 * 86400000),
                 status: 'UNPAID'

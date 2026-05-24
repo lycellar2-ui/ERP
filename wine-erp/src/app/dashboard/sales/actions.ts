@@ -218,7 +218,7 @@ export async function getCustomersForSO() {
     return cached('sales:customers', async () => {
         return prisma.customer.findMany({
             where: { status: 'ACTIVE', deletedAt: null },
-            select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, defaultLegalEntityId: true },
+            select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true },
             orderBy: { name: 'asc' },
         })
     }, 60_000)
@@ -349,7 +349,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
         // --- 2. Credit Hold Check ---
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
-            select: { creditLimit: true, name: true, defaultLegalEntityId: true },
+            select: { creditLimit: true, name: true },
         })
 
         // Auto credit limit enforcement
@@ -628,24 +628,21 @@ export type LegalEntityRow = {
     id: string
     code: string
     name: string
-    type: string
-    taxCode: string | null
-    isDefault: boolean
+    taxId: string | null
+    address: string | null
 }
 
 export async function getLegalEntities(): Promise<LegalEntityRow[]> {
     return cached('legal-entities', async () => {
         const entities = await prisma.legalEntity.findMany({
-            where: { status: 'ACTIVE' },
             orderBy: { name: 'asc' },
         })
         return entities.map(e => ({
             id: e.id,
             code: e.code,
             name: e.name,
-            type: e.type,
-            taxCode: e.taxCode,
-            isDefault: e.isDefault,
+            taxId: e.taxId,
+            address: e.address,
         }))
     }, 120_000)
 }
@@ -1392,6 +1389,7 @@ export async function cloneSalesOrder(sourceId: string): Promise<{ success: bool
                 orderDiscount: source.orderDiscount,
                 totalAmount: source.totalAmount,
                 status: 'DRAFT',
+                legalEntityId: source.legalEntityId,
                 lines: {
                     create: source.lines.map(l => ({
                         productId: l.productId,

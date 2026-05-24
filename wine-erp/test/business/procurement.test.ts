@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+vi.mock('@/lib/session', () => ({
+    requirePermission: vi.fn().mockResolvedValue({ id: 'sys-user', name: 'Mock User', email: 'mock@test.com' }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'sys-user', name: 'Mock User', email: 'mock@test.com' }),
+    requireAuth: vi.fn().mockResolvedValue({ id: 'sys-user', name: 'Mock User', email: 'mock@test.com' }),
+}))
+vi.mock('@/lib/audit', () => ({ logAudit: vi.fn().mockResolvedValue(undefined) }))
 
 const mockPrisma = {
     purchaseOrder: {
@@ -13,13 +19,17 @@ const mockPrisma = {
     purchaseOrderLine: { findMany: vi.fn() },
     user: { findFirst: vi.fn(), create: vi.fn() },
     department: { findFirst: vi.fn(), create: vi.fn() },
+    legalEntity: { findFirst: vi.fn() },
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
 const { createPurchaseOrder, updatePOStatus, getPOStats } = await import('@/app/dashboard/procurement/actions')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.legalEntity.findFirst.mockResolvedValue({ id: 'le-ta' })
+})
 
 // ═══════════════════════════════════════════════════
 // PRC-01: Create Purchase Order
@@ -85,6 +95,7 @@ describe('PRC-01: createPurchaseOrder', () => {
 
 describe('PRC-02: updatePOStatus', () => {
     it('should update PO status', async () => {
+        mockPrisma.purchaseOrder.findUnique.mockResolvedValue({ status: 'PENDING_APPROVAL', poNo: 'PO-2603-0001' })
         mockPrisma.purchaseOrder.update.mockResolvedValue({})
         const result = await updatePOStatus('po-1', 'APPROVED')
         expect(result.success).toBe(true)
