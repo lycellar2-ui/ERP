@@ -65,6 +65,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                     defaultCurrency: data.defaultCurrency, incoterms: data.incoterms,
                     leadTimeDays: data.leadTimeDays, status: data.status as any,
                     website: data.website, notes: data.notes,
+                    pickupInfo: (data as any).pickupInfo, bankAccountInfo: (data as any).bankAccountInfo,
                     contactName: data.contactName, contactTitle: data.contactTitle,
                     contactEmail: data.contactEmail, contactPhone: data.contactPhone,
                     address: data.address, city: data.city, region: data.region,
@@ -238,8 +239,18 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tiền tệ</label>
-                                <select className={inputCls} style={inputStyle} value={form.defaultCurrency ?? 'USD'} onChange={e => set('defaultCurrency', e.target.value)}>
-                                    <option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option>
+                                <select 
+                                    className={inputCls} 
+                                    style={{ ...inputStyle, opacity: isEdit ? 0.6 : 1, cursor: isEdit ? 'not-allowed' : 'default' }} 
+                                    value={form.defaultCurrency ?? 'USD'} 
+                                    onChange={e => set('defaultCurrency', e.target.value)}
+                                    disabled={isEdit}
+                                >
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="NZD">NZD</option>
+                                    <option value="AUD">AUD</option>
                                 </select>
                             </div>
                             <div>
@@ -255,6 +266,18 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Website</label>
                                 <input className={inputCls} style={inputStyle} value={form.website ?? ''} onChange={e => set('website', e.target.value || null)} placeholder="https://winery.fr" />
+                            </div>
+                        </div>
+
+                        <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Pickup & Ngân Hàng</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Thông tin Pickup</label>
+                                <input className={inputCls} style={inputStyle} value={form.pickupInfo ?? ''} onChange={e => set('pickupInfo', e.target.value || null)} placeholder="Winery Warehouse, Ex-works Bordeaux..." />
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tài khoản ngân hàng</label>
+                                <input className={inputCls} style={inputStyle} value={form.bankAccountInfo ?? ''} onChange={e => set('bankAccountInfo', e.target.value || null)} placeholder="Bank Name, IBAN, Swift Code..." />
                             </div>
                         </div>
 

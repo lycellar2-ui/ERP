@@ -174,7 +174,7 @@ const poLineSchema = z.object({
 
 const createPOSchema = z.object({
     supplierId: z.string().min(1, 'Chọn nhà cung cấp'),
-    currency: z.enum(['USD', 'EUR', 'GBP']).default('USD'),
+    currency: z.enum(['USD', 'EUR', 'GBP', 'NZD', 'AUD']).default('USD'),
     exchangeRate: z.number().positive().default(25000),
     lines: z.array(poLineSchema).min(1, 'Cần ít nhất 1 dòng sản phẩm'),
 })
@@ -186,6 +186,17 @@ export async function createPurchaseOrder(input: CreatePOInput) {
     await requireAuth()
     const data = createPOSchema.parse(input)
     const userId = await getOrCreateSystemUser()
+
+    const supplier = await prisma.supplier.findUnique({
+        where: { id: data.supplierId },
+        select: { defaultCurrency: true }
+    })
+    if (!supplier) {
+        return { success: false, error: "Không tìm thấy nhà cung cấp" }
+    }
+    if (supplier.defaultCurrency && supplier.defaultCurrency !== data.currency) {
+        return { success: false, error: `Tiền tệ đơn hàng (${data.currency}) không khớp với tiền tệ mặc định của nhà cung cấp (${supplier.defaultCurrency})` }
+    }
 
     const defaultEntity = await prisma.legalEntity.findFirst({
         where: { code: 'TA' },
@@ -503,6 +514,9 @@ export async function importPOFromExcel(data: {
 
         const supplier = await prisma.supplier.findUnique({ where: { id: data.supplierId } })
         if (!supplier) return { success: false, error: 'Nhà cung cấp không tồn tại' }
+        if (supplier.defaultCurrency && supplier.defaultCurrency !== data.currency) {
+            return { success: false, error: `Tiền tệ nhập vào (${data.currency}) không khớp với tiền tệ mặc định của nhà cung cấp (${supplier.defaultCurrency})` }
+        }
 
         // Validate contract if provided
         if (data.contractId) {

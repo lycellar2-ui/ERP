@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { Edit2, ChevronLeft, ChevronRight, ImageOff, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
@@ -173,7 +173,23 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
     }
 
     return (
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+        <div className="rounded-2xl overflow-hidden relative" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+            <style>{`
+                @keyframes barProgress {
+                    0% { left: -30%; }
+                    100% { left: 100%; }
+                }
+            `}</style>
+
+            {loading && rows.length > 0 && (
+                <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden bg-[#142433] z-10">
+                    <div className="absolute h-full bg-[#87CBB9]" style={{
+                        width: '30%',
+                        animation: 'barProgress 1.2s infinite ease-in-out'
+                    }} />
+                </div>
+            )}
+
             <div className="overflow-x-auto">
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
@@ -191,8 +207,8 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                             ))}
                         </tr>
                     </thead>
-                    <tbody>
-                        {loading
+                    <tbody className={`transition-opacity duration-200 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
+                        {rows.length === 0 && loading
                             ? Array.from({ length: 6 }).map((_, i) => (
                                 <tr key={i} style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}>
                                     {sortableHeaders.map((_, j) => (

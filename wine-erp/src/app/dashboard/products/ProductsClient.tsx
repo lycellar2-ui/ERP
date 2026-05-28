@@ -1,8 +1,8 @@
-﻿'use client'
+'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2 } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
@@ -91,6 +91,22 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
     const [vintageFilter, setVintageFilter] = useState('')
     const [exporting, setExporting] = useState(false)
 
+    const debounceRef = useRef<NodeJS.Timeout | null>(null)
+
+    const handleSearchChange = (value: string) => {
+        setSearch(value)
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        debounceRef.current = setTimeout(() => {
+            applyFilter({ search: value || undefined })
+        }, 300)
+    }
+
+    useEffect(() => {
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current)
+        }
+    }, [])
+
     // Use server-aggregated stats (counts all products, not just current page)
     const topTypeLabel = stats.topTypes.map(t => `${t.count} ${t.label}`).join(' / ') || 'N/A'
 
@@ -99,7 +115,6 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
         setFilters(merged)
         setLoading(true)
         try {
-            const { getProducts } = await import('./actions')
             const result = await getProducts(merged)
             setRows(result.rows)
             setTotal(result.total)
@@ -216,7 +231,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                         type="text"
                         placeholder="Tìm theo tên, SKU, barcode, nhà SX..."
                         value={search}
-                        onChange={e => { setSearch(e.target.value); applyFilter({ search: e.target.value || undefined }) }}
+                        onChange={e => handleSearchChange(e.target.value)}
                         className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}

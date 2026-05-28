@@ -7,6 +7,7 @@ import {
     getSupplierShipments, getSupplierProducts, getSupplierPricingHistory,
     getSupplierActivities, createSupplierActivity, getSupplierScorecard,
     createSupplierContact, deleteSupplierContact,
+    createSupplierAddress, deleteSupplierAddress,
     type SupplierDetail, type SupplierPO, type SupplierAPInvoice, type SupplierContract,
     type SupplierShipment, type SupplierProduct, type PricingPoint, type SupplierScorecard,
 } from './actions'
@@ -134,6 +135,67 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                 }
             } else {
                 toast.error(res.error ?? 'Lỗi khi xóa liên hệ')
+            }
+        } catch (err: any) {
+            toast.error(err.message ?? 'Lỗi hệ thống')
+        }
+    }
+
+    // Secondary addresses state
+    const [showAddressForm, setShowAddressForm] = useState(false)
+    const [addressLabel, setAddressLabel] = useState('Warehouse')
+    const [addressVal, setAddressVal] = useState('')
+    const [addressCity, setAddressCity] = useState('')
+    const [addressRegion, setAddressRegion] = useState('')
+    const [addressCountry, setAddressCountry] = useState('')
+    const [addressIsDefault, setAddressIsDefault] = useState(false)
+    const [savingAddress, setSavingAddress] = useState(false)
+
+    const handleAddAddress = async () => {
+        if (!supplierId || !addressVal.trim()) return
+        setSavingAddress(true)
+        try {
+            const res = await createSupplierAddress({
+                supplierId,
+                label: addressLabel,
+                address: addressVal.trim(),
+                city: addressCity.trim() || null,
+                region: addressRegion.trim() || null,
+                country: addressCountry.trim() || detail?.supplier.country || 'VN',
+                isDefault: addressIsDefault,
+            })
+            if (res.success) {
+                toast.success('Đã thêm địa chỉ thành công!')
+                setAddressVal('')
+                setAddressCity('')
+                setAddressRegion('')
+                setAddressCountry('')
+                setAddressIsDefault(false)
+                setShowAddressForm(false)
+                const freshDetail = await getSupplierDetail(supplierId)
+                setDetail(freshDetail)
+            } else {
+                toast.error(res.error ?? 'Lỗi khi thêm địa chỉ')
+            }
+        } catch (err: any) {
+            toast.error(err.message ?? 'Lỗi hệ thống')
+        } finally {
+            setSavingAddress(false)
+        }
+    }
+
+    const handleDeleteAddress = async (addressId: string, label: string) => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa địa chỉ "${label}"?`)) return
+        try {
+            const res = await deleteSupplierAddress(addressId)
+            if (res.success) {
+                toast.success(`Đã xóa địa chỉ "${label}"`)
+                if (supplierId) {
+                    const freshDetail = await getSupplierDetail(supplierId)
+                    setDetail(freshDetail)
+                }
+            } else {
+                toast.error(res.error ?? 'Lỗi khi xóa địa chỉ')
             }
         } catch (err: any) {
             toast.error(err.message ?? 'Lỗi hệ thống')
@@ -348,12 +410,91 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             </div>
                                             {/* Addresses */}
                                             <div>
-                                                <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#87CBB9' }}>── Địa Chỉ</p>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Địa Chỉ</p>
+                                                    <button onClick={() => setShowAddressForm(!showAddressForm)}
+                                                        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all"
+                                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                        <Plus size={10} /> Thêm
+                                                    </button>
+                                                </div>
+
+                                                {/* Add address inline form */}
+                                                {showAddressForm && (
+                                                    <div className="p-3 rounded-lg mb-3 space-y-2.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>Thêm Địa Chỉ Mới</p>
+                                                        
+                                                        {/* Label Select Dropdown */}
+                                                        <div>
+                                                            <label className="block text-[9px] uppercase tracking-wider font-bold mb-1" style={{ color: '#4A6A7A' }}>Loại địa chỉ</label>
+                                                            <select value={addressLabel} onChange={e => setAddressLabel(e.target.value)}
+                                                                className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none cursor-pointer">
+                                                                <option value="Warehouse">Warehouse (Kho hàng)</option>
+                                                                <option value="Pickup Point">Pickup Point (Điểm nhận hàng)</option>
+                                                                <option value="Office">Office (Văn phòng)</option>
+                                                                <option value="Port of Loading">Port of Loading (Cảng xếp hàng)</option>
+                                                                <option value="Headquarter">Headquarter (Trụ sở chính)</option>
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Address Input */}
+                                                        <div>
+                                                            <input type="text" value={addressVal} onChange={e => setAddressVal(e.target.value)}
+                                                                placeholder="Địa chỉ chi tiết *" className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                        </div>
+
+                                                        {/* City & Region */}
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <input type="text" value={addressCity} onChange={e => setAddressCity(e.target.value)}
+                                                                placeholder="Thành phố" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                            <input type="text" value={addressRegion} onChange={e => setAddressRegion(e.target.value)}
+                                                                placeholder="Bang/Vùng" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                        </div>
+
+                                                        {/* Country */}
+                                                        <div>
+                                                            <input type="text" value={addressCountry} onChange={e => setAddressCountry(e.target.value)}
+                                                                placeholder={`Mã quốc gia (Ví dụ: ${detail.supplier.country})`} className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                        </div>
+
+                                                        {/* Default checkbox */}
+                                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                            <input type="checkbox" checked={addressIsDefault} onChange={e => setAddressIsDefault(e.target.checked)} className="w-3.5 h-3.5 accent-[#87CBB9]" />
+                                                            <span className="text-[10px]" style={{ color: '#8AAEBB' }}>Đặt làm địa chỉ mặc định</span>
+                                                        </label>
+
+                                                        {/* Buttons */}
+                                                        <div className="flex justify-end gap-2 pt-1">
+                                                            <button onClick={() => setShowAddressForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                                            <button onClick={handleAddAddress} disabled={!addressVal.trim() || savingAddress}
+                                                                className="text-[10px] px-3 py-1 rounded font-semibold disabled:opacity-50"
+                                                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                {savingAddress ? 'Đang tạo...' : 'Lưu'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {detail.addresses.length > 0 ? detail.addresses.map(a => (
-                                                    <div key={a.id} className="p-3 rounded-lg mb-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                        <p className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{a.label}</p>
+                                                    <div key={a.id} className="p-3 rounded-lg mb-2 relative group" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{a.label}</span>
+                                                                {a.isDefault && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Mặc định</span>}
+                                                            </div>
+                                                            {!a.isDefault && (
+                                                                <button onClick={() => handleDeleteAddress(a.id, a.label)}
+                                                                    className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
+                                                                    style={{ color: '#4A6A7A' }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#E05252'; e.currentTarget.style.background = 'rgba(139,26,46,0.12)' }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#4A6A7A'; e.currentTarget.style.background = '' }}
+                                                                    title="Xóa địa chỉ">
+                                                                    <Trash2 size={13} />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                         <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#E8F1F2' }}><MapPin size={10} /> {a.address}</p>
-                                                        {a.city && <p className="text-xs" style={{ color: '#4A6A7A' }}>{[a.city, a.region, a.country].filter(Boolean).join(', ')}</p>}
+                                                        {(a.city || a.region || a.country) && <p className="text-xs" style={{ color: '#4A6A7A' }}>{[a.city, a.region, a.country].filter(Boolean).join(', ')}</p>}
                                                     </div>
                                                 )) : <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa có địa chỉ</p>}
                                             </div>
@@ -365,6 +506,23 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             )}
                                         </div>
                                     </div>
+                                    {(detail.supplier.pickupInfo || detail.supplier.bankAccountInfo) && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {detail.supplier.pickupInfo && (
+                                                <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#87CBB9' }}>📍 Thông tin Pickup</p>
+                                                    <p className="text-xs whitespace-pre-wrap" style={{ color: '#8AAEBB' }}>{detail.supplier.pickupInfo}</p>
+                                                </div>
+                                            )}
+                                            {detail.supplier.bankAccountInfo && (
+                                                <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#87CBB9' }}>💳 Tài khoản ngân hàng</p>
+                                                    <p className="text-xs whitespace-pre-wrap" style={{ color: '#8AAEBB' }}>{detail.supplier.bankAccountInfo}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     {detail.supplier.notes && (
                                         <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                             <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#4A6A7A' }}>Ghi chú</p>

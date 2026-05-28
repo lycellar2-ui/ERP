@@ -365,6 +365,9 @@ model Supplier {
   leadTimeDays    Int                @default(45)
   status          SupplierStatus     @default(ACTIVE)
   website         String?
+  pickupInfo      String?
+  portOfLoading   String?
+  bankAccountInfo String?
   notes           String?
   purchaseOrders  PurchaseOrder[]
   contracts       Contract[]

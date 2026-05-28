@@ -80,7 +80,7 @@ export const POLineCreateSchema = z.object({
 export const POCreateSchema = z.object({
     supplierId: idSchema,
     contractId: idSchema.optional(),
-    currency: z.enum(['VND', 'USD', 'EUR']).default('USD'),
+    currency: z.enum(['VND', 'USD', 'EUR', 'NZD', 'AUD']).default('USD'),
     paymentTerm: z.string().min(1),
     notes: z.string().max(1000).optional(),
     lines: z.array(POLineCreateSchema).min(1, 'PO phải có ít nhất 1 dòng'),
@@ -120,7 +120,10 @@ export const SupplierCreateSchema = z.object({
     country: z.string().min(1),
     contactEmail: z.string().email().optional().or(z.literal('')),
     contactPhone: z.string().max(20).optional(),
-    paymentTerms: z.string().optional(),
+    paymentTerm: z.string().optional(),
+    pickupInfo: z.string().optional(),
+    portOfLoading: z.string().optional(),
+    bankAccountInfo: z.string().optional(),
 })
 
 // ═══════════════════════════════════════════════════
@@ -217,7 +220,7 @@ export const ContractCreateSchema = z.object({
     supplierId: idSchema.optional(),
     customerId: idSchema.optional(),
     value: positiveNumber,
-    currency: z.enum(['VND', 'USD', 'EUR']).default('VND'),
+    currency: z.enum(['VND', 'USD', 'EUR', 'NZD', 'AUD']).default('VND'),
     startDate: z.string().min(1, 'Chưa chọn ngày bắt đầu'),
     endDate: z.string().min(1, 'Chưa chọn ngày kết thúc'),
     paymentTerm: z.string().max(100).optional(),

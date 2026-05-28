@@ -152,7 +152,11 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
                             <input type="number" className={inputCls} style={inputStyle} value={form.cifAmount || ''} onChange={e => set('cifAmount', Number(e.target.value))} /></div>
                         <div><label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>Tiền tệ</label>
                             <select className={inputCls} style={inputStyle} value={form.cifCurrency} onChange={e => set('cifCurrency', e.target.value)}>
-                                <option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="NZD">NZD</option>
+                                <option value="AUD">AUD</option>
                             </select></div>
                         <div />
                         <div><label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>Forwarder</label>

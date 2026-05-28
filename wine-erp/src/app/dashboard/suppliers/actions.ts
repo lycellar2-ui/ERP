@@ -134,6 +134,7 @@ export async function getSupplierById(id: string) {
         paymentTerm: s.paymentTerm, defaultCurrency: s.defaultCurrency,
         incoterms: s.incoterms, leadTimeDays: s.leadTimeDays,
         status: s.status, website: s.website, notes: s.notes,
+        pickupInfo: s.pickupInfo, bankAccountInfo: s.bankAccountInfo,
         contactName: contact?.name ?? null,
         contactTitle: contact?.title ?? null,
         contactEmail: contact?.email ?? null,
@@ -312,6 +313,8 @@ export async function exportSuppliersData() {
         'Email': s.contacts[0]?.email ?? '',
         'Địa chỉ': s.addresses[0]?.address ?? '',
         'Website': s.website ?? '',
+        'Thông tin Pickup': s.pickupInfo ?? '',
+        'Tài khoản Ngân hàng': s.bankAccountInfo ?? '',
     }))
 }
 
@@ -333,6 +336,8 @@ const supplierSchema = z.object({
     leadTimeDays: z.number().int().default(45),
     status: z.enum(['ACTIVE', 'INACTIVE', 'BLACKLISTED']).default('ACTIVE'),
     website: z.string().nullable().optional(),
+    pickupInfo: z.string().nullable().optional(),
+    bankAccountInfo: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
     // Flattened contact fields
     contactName: z.string().nullable().optional(),
@@ -366,6 +371,8 @@ export async function createSupplier(input: SupplierInput) {
                 leadTimeDays: data.leadTimeDays,
                 status: data.status,
                 website: data.website ?? null,
+                pickupInfo: data.pickupInfo ?? null,
+                bankAccountInfo: data.bankAccountInfo ?? null,
                 notes: data.notes ?? null,
             },
         })
@@ -415,8 +422,9 @@ export async function createSupplier(input: SupplierInput) {
 
 export async function updateSupplier(id: string, input: Partial<SupplierInput>) {
     try {
+        const user = await getCurrentUser().catch(() => null)
         const { contactName, contactTitle, contactEmail, contactPhone, address, city, region, ...supplierData } = input
-        const oldSupplier = await prisma.supplier.findUnique({ where: { id }, select: { code: true, name: true, type: true, paymentTerm: true, defaultCurrency: true, incoterms: true, leadTimeDays: true, status: true } })
+        const oldSupplier = await prisma.supplier.findUnique({ where: { id }, select: { code: true, name: true, type: true, paymentTerm: true, defaultCurrency: true, incoterms: true, leadTimeDays: true, status: true, pickupInfo: true, bankAccountInfo: true } })
 
         await prisma.supplier.update({
             where: { id },
@@ -458,12 +466,28 @@ export async function updateSupplier(id: string, input: Partial<SupplierInput>) 
                 where: { supplierId: id, isDefault: true },
             })
             if (existingAddr) {
+                const oldAddr = { address: existingAddr.address, city: existingAddr.city, region: existingAddr.region }
+                const newAddr = { address, city: city ?? existingAddr.city, region: region ?? existingAddr.region }
+
                 await prisma.supplierAddress.update({
                     where: { id: existingAddr.id },
                     data: { address, city: city ?? undefined, region: region ?? undefined },
                 })
+
+                if (oldAddr.address !== newAddr.address || oldAddr.city !== newAddr.city || oldAddr.region !== newAddr.region) {
+                    logAuditWithDiff({
+                        userId: user?.id,
+                        userName: user?.name,
+                        action: 'UPDATE',
+                        entityType: 'SupplierAddress',
+                        entityId: existingAddr.id,
+                        oldObj: oldAddr,
+                        newObj: newAddr,
+                        description: `Thay đổi địa chỉ NCC (${oldSupplier?.name ?? id}): "${oldAddr.address}" → "${newAddr.address}"`
+                    })
+                }
             } else {
-                await prisma.supplierAddress.create({
+                const newAddr = await prisma.supplierAddress.create({
                     data: {
                         supplierId: id,
                         label: 'Trụ sở chính',
@@ -474,12 +498,19 @@ export async function updateSupplier(id: string, input: Partial<SupplierInput>) 
                         isDefault: true,
                     },
                 })
+                logAudit({
+                    userId: user?.id,
+                    userName: user?.name,
+                    action: 'CREATE',
+                    entityType: 'SupplierAddress',
+                    entityId: newAddr.id,
+                    description: `Thêm địa chỉ trụ sở chính cho NCC (${oldSupplier?.name ?? id}): "${address}"`
+                })
             }
         }
 
         revalidateCache('suppliers')
         revalidatePath('/dashboard/suppliers')
-        const user = await getCurrentUser().catch(() => null)
         const oldPlain = oldSupplier ? JSON.parse(JSON.stringify(oldSupplier)) : null
         logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Supplier', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...supplierData } })
         return { success: true }
@@ -924,6 +955,71 @@ export async function deleteSupplierContact(id: string) {
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message ?? 'Lỗi xóa liên hệ' }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// SUPPLIER ADDRESSES
+// ═══════════════════════════════════════════════════
+
+export async function createSupplierAddress(input: {
+    supplierId: string
+    label: string
+    address: string
+    city?: string | null
+    region?: string | null
+    country?: string | null
+    isDefault?: boolean
+}) {
+    try {
+        await requireAuth()
+
+        if (input.isDefault) {
+            await prisma.supplierAddress.updateMany({
+                where: { supplierId: input.supplierId, isDefault: true },
+                data: { isDefault: false },
+            })
+        }
+
+        const addr = await prisma.supplierAddress.create({
+            data: {
+                supplierId: input.supplierId,
+                label: input.label,
+                address: input.address,
+                city: input.city ?? null,
+                region: input.region ?? null,
+                country: input.country ?? null,
+                isDefault: input.isDefault ?? false,
+            },
+        })
+
+        revalidatePath('/dashboard/suppliers')
+        return { success: true, address: addr }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi tạo địa chỉ' }
+    }
+}
+
+export async function deleteSupplierAddress(id: string) {
+    try {
+        await requireAuth()
+
+        const existing = await prisma.supplierAddress.findUnique({
+            where: { id },
+        })
+        if (!existing) return { success: false, error: 'Không tìm thấy địa chỉ' }
+        if (existing.isDefault) {
+            return { success: false, error: 'Không thể xóa địa chỉ mặc định. Vui lòng đặt địa chỉ khác làm mặc định trước.' }
+        }
+
+        await prisma.supplierAddress.delete({
+            where: { id },
+        })
+
+        revalidatePath('/dashboard/suppliers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi xóa địa chỉ' }
     }
 }
 

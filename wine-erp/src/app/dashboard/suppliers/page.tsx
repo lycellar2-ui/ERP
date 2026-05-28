@@ -2,6 +2,8 @@ import { getSuppliers, getSupplierStats } from './actions'
 import { SuppliersClient } from './SuppliersClient'
 import { AICatalogAnalysis } from '../products/AICatalogAnalysis'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = { title: 'Nhà Cung Cấp | Wine ERP' }
 
 export default async function SuppliersPage() {

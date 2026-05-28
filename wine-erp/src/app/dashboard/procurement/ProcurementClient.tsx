@@ -45,12 +45,33 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     const [suppliers, setSuppliers] = useState<{ id: string; name: string; defaultCurrency: string }[]>([])
     const [products, setProducts] = useState<{ id: string; productName: string; skuCode: string }[]>([])
     const [supplierId, setSupplierId] = useState('')
-    const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP'>('USD')
+    const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'NZD' | 'AUD'>('USD')
     const [exchangeRate, setExchangeRate] = useState(25500)
     const [lines, setLines] = useState<{ productId: string; qtyOrdered: number; unitPrice: number; uom: string }[]>([
         { productId: '', qtyOrdered: 12, unitPrice: 0, uom: 'BOTTLE' }
     ])
     const [saving, setSaving] = useState(false)
+
+    // Automatically set default exchange rate based on chosen currency
+    useEffect(() => {
+        if (currency === 'EUR') setExchangeRate(27500)
+        else if (currency === 'GBP') setExchangeRate(32500)
+        else if (currency === 'NZD') setExchangeRate(15500)
+        else if (currency === 'AUD') setExchangeRate(16500)
+        else setExchangeRate(25500)
+    }, [currency])
+
+    const handleSupplierChange = (id: string) => {
+        setSupplierId(id)
+        if (id) {
+            const selectedSup = suppliers.find(s => s.id === id)
+            if (selectedSup && selectedSup.defaultCurrency) {
+                setCurrency(selectedSup.defaultCurrency as any)
+            }
+        } else {
+            setCurrency('USD')
+        }
+    }
 
     useEffect(() => {
         if (!open) return
@@ -124,7 +145,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                     <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-2">
                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Nhà Cung Cấp *</label>
-                            <select className={inputCls} style={inputStyle} value={supplierId} onChange={e => setSupplierId(e.target.value)}
+                            <select className={inputCls} style={inputStyle} value={supplierId} onChange={e => handleSupplierChange(e.target.value)}
                                 onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                                 onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
                                 <option value="">— Chọn NCC —</option>
@@ -133,12 +154,20 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         </div>
                         <div>
                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tiền Tệ</label>
-                            <select className={inputCls} style={inputStyle} value={currency} onChange={e => setCurrency(e.target.value as any)}
+                            <select 
+                                className={inputCls} 
+                                style={{ ...inputStyle, opacity: supplierId ? 0.6 : 1, cursor: supplierId ? 'not-allowed' : 'default' }} 
+                                value={currency} 
+                                onChange={e => setCurrency(e.target.value as any)}
                                 onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                                disabled={!!supplierId}
+                            >
                                 <option value="USD">USD</option>
                                 <option value="EUR">EUR</option>
                                 <option value="GBP">GBP</option>
+                                <option value="NZD">NZD</option>
+                                <option value="AUD">AUD</option>
                             </select>
                         </div>
                     </div>

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, Sparkles } from 'lucide-react'
@@ -163,11 +163,15 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
             setRegions(r)
         })
         if (editingId) {
+            setLoading(true)
             getProductMedia(editingId).then(setMediaList)
             getProductAwards(editingId).then(setAwards)
             // Load product data for edit form
             getProductById(editingId).then(data => {
-                if (!data) return
+                if (!data) {
+                    setLoading(false)
+                    return
+                }
                 setForm({
                     sku: data.skuCode,
                     name: data.productName,
@@ -188,6 +192,8 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                     isAllocationEligible: data.isAllocationEligible,
                     status: data.status,
                 })
+                setLoading(false)
+            }).catch(() => {
                 setLoading(false)
             })
         } else {
@@ -278,7 +284,13 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                 </div>
 
                 {/* Body (scrollable) */}
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 relative">
+                    {loading && (
+                        <div className="absolute inset-0 bg-[#0D1E2B]/80 flex flex-col items-center justify-center gap-3 z-30">
+                            <Loader2 size={32} className="animate-spin text-[#87CBB9]" />
+                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Đang tải thông tin sản phẩm...</p>
+                        </div>
+                    )}
 
                     {/* Global error */}
                     {errors._global && (
