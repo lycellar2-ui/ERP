@@ -32,6 +32,7 @@ export interface ContractCreateInput {
     startDate: string
     endDate: string
     paymentTerm?: string
+    priceTerm?: string
     incoterms?: string
     discountTerms?: string
     marketingBudget?: string
@@ -142,6 +143,7 @@ export async function createContract(input: ContractCreateInput): Promise<{ succ
                 startDate: new Date(validated.startDate),
                 endDate: new Date(validated.endDate),
                 paymentTerm: validated.paymentTerm ?? null,
+                priceTerm: validated.priceTerm ?? null,
                 incoterms: validated.incoterms ?? null,
                 discountTerms: validated.discountTerms ?? null,
                 marketingBudget: validated.marketingBudget ?? null,
@@ -212,6 +214,7 @@ export async function getContractUtilization(contractId: string) {
         stampVerification: contract.stampVerification,
         archiveStatus: contract.archiveStatus,
         paymentTerm: contract.paymentTerm,
+        priceTerm: contract.priceTerm,
         documents: contract.documents.map(d => ({
             id: d.id,
             name: d.name,

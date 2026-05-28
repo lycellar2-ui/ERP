@@ -43,6 +43,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
         startDate: today,
         endDate: nextYear,
         paymentTerm: '',
+        priceTerm: '',
         discountTerms: '',
         marketingBudget: '',
         stampVerification: '',
@@ -77,6 +78,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
             startDate: form.startDate,
             endDate: form.endDate,
             paymentTerm: form.paymentTerm || undefined,
+            priceTerm: form.priceTerm || undefined,
             discountTerms: form.discountTerms || undefined,
             marketingBudget: form.marketingBudget || undefined,
             stampVerification: form.stampVerification || undefined,
@@ -207,6 +209,14 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                         <input className={inputCls} style={baseStyle} value={form.paymentTerm}
                             onChange={e => setForm(f => ({ ...f, paymentTerm: e.target.value }))}
                             placeholder="VD: Net 30, 50% TT sau 60 ngày..."
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </Row>
+
+                    <Row label="Điều Khoản Giá Cả (Price Term)">
+                        <input className={inputCls} style={baseStyle} value={form.priceTerm}
+                            onChange={e => setForm(f => ({ ...f, priceTerm: e.target.value }))}
+                            placeholder="VD: Giá CIF Hồ Chí Minh cố định..."
                             onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                             onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                     </Row>
@@ -499,6 +509,10 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                                     <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
                                                                         <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Ngân Sách Marketing</p>
                                                                         <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.marketingBudget || 'Chưa quy định chi tiết'}</p>
+                                                                    </div>
+                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Điều Khoản Giá Cả (Price Term)</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.priceTerm || 'Chưa quy định chi tiết'}</p>
                                                                     </div>
                                                                     <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
                                                                         <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Kiểm Tra Khớp Dấu & Tên Hợp Đồng</p>

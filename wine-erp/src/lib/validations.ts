@@ -221,6 +221,7 @@ export const ContractCreateSchema = z.object({
     startDate: z.string().min(1, 'Chưa chọn ngày bắt đầu'),
     endDate: z.string().min(1, 'Chưa chọn ngày kết thúc'),
     paymentTerm: z.string().max(100).optional(),
+    priceTerm: z.string().optional(),
     incoterms: z.string().max(20).optional(),
     discountTerms: z.string().optional(),
     marketingBudget: z.string().optional(),
