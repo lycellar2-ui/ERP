@@ -26,8 +26,8 @@ const prisma = new PrismaClient({ adapter })
 // ─── Module Permission Definitions ────────────────
 const MODULES = [
     { module: 'DSH', actions: ['READ'] },
-    { module: 'MDM', actions: ['READ', 'CREATE', 'UPDATE', 'DELETE'] },
-    { module: 'SLS', actions: ['READ', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE'] },
+    { module: 'MDM', actions: ['READ', 'CREATE', 'UPDATE', 'DELETE', 'WRITE'] },
+    { module: 'SLS', actions: ['READ', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'WRITE'] },
     { module: 'PRC', actions: ['READ', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE'] },
     { module: 'WMS', actions: ['READ', 'CREATE', 'UPDATE', 'DELETE'] },
     { module: 'FIN', actions: ['READ', 'CREATE', 'UPDATE', 'APPROVE', 'EXPORT'] },
@@ -58,20 +58,21 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     ],
     'Sales Manager': [
         'DSH:READ',
-        'SLS:READ', 'SLS:CREATE', 'SLS:UPDATE', 'SLS:APPROVE',
+        'SLS:READ', 'SLS:CREATE', 'SLS:UPDATE', 'SLS:APPROVE', 'SLS:WRITE',
         'CRM:READ', 'CRM:CREATE', 'CRM:UPDATE',
         'RPT:READ', 'RPT:EXPORT',
-        'MDM:READ',
+        'MDM:READ', 'MDM:WRITE',
         'KPI:READ', 'KPI:CREATE', 'KPI:UPDATE',
         'CSG:READ', 'CSG:CREATE', 'CSG:UPDATE',
     ],
     'Sales Rep': [
         'DSH:READ',
-        'SLS:READ', 'SLS:CREATE', 'SLS:UPDATE',
+        'SLS:READ', 'SLS:CREATE', 'SLS:UPDATE', 'SLS:WRITE',
         'CRM:READ', 'CRM:CREATE', 'CRM:UPDATE',
-        'MDM:READ',
+        'MDM:READ', 'MDM:WRITE',
         'KPI:READ',
     ],
+
     'Thủ Kho': [
         'DSH:READ',
         'WMS:READ', 'WMS:CREATE', 'WMS:UPDATE', 'WMS:DELETE',
