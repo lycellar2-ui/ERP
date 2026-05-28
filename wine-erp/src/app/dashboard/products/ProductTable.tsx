@@ -37,11 +37,29 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
             {/* Product */}
             <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"
-                        style={{ background: row.primaryImageUrl ? 'transparent' : '#142433', border: '1px solid #2A4355' }}>
-                        {row.primaryImageUrl
-                            ? <img src={row.primaryImageUrl} alt={row.productName} className="w-full h-full object-cover rounded-lg" />
-                            : <ImageOff size={14} style={{ color: '#2A4355' }} />}
+                    <div className="relative group/img w-10 h-14 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden cursor-zoom-in"
+                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        {row.primaryImageUrl ? (
+                            <>
+                                <img src={row.primaryImageUrl} alt={row.productName} className="w-full h-full object-contain p-0.5 transition-transform duration-200 group-hover/img:scale-105" />
+                                
+                                {/* Gorgeous hover preview card */}
+                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-52 bg-[#0D1E2B]/95 backdrop-blur-md rounded-2xl p-4 border border-[#2A4355] shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 scale-95 pointer-events-none group-hover/img:opacity-100 group-hover/img:scale-100 transition-all duration-200 z-50 flex flex-col items-center gap-3">
+                                    <div className="w-full h-64 bg-[#142433] rounded-xl p-3 flex items-center justify-center border border-[#2A4355]/40 overflow-hidden">
+                                        <img src={row.primaryImageUrl} alt={row.productName} className="h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.4)]" />
+                                    </div>
+                                    <div className="text-center w-full min-w-0">
+                                        <p className="text-xs font-bold truncate text-ellipsis" style={{ color: '#E8F1F2' }}>{row.productName}</p>
+                                        <p className="text-[10px] mt-1" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{row.skuCode}</p>
+                                        <p className="text-[10px] font-bold mt-1 inline-block px-2 py-0.5 rounded" style={{ background: row.vintage ? 'rgba(135,203,185,0.1)' : 'rgba(74,106,122,0.1)', color: row.vintage ? '#87CBB9' : '#4A6A7A' }}>
+                                            {row.vintage ? `Năm: ${row.vintage}` : 'Không niên vụ (NV)'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <ImageOff size={16} style={{ color: '#2A4355' }} />
+                        )}
                     </div>
                     <div className="min-w-0">
                         <p className="text-sm font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }}>

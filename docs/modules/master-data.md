@@ -112,6 +112,9 @@ Rượu vang cao cấp cần hình ảnh chuyên nghiệp cho Sales đem chào K
 | `incoterms` | Điều kiện giao hàng mặc định (FOB / CIF / EXW) |
 | `lead_time_days` | Thời gian giao hàng trung bình (ngày) — Dự báo kế hoạch nhập |
 | `credit_limit_usd` | Hạn mức tín dụng NCC cấp cho công ty (nếu có) |
+| `port_of_loading` | Cảng bốc hàng đi (ví dụ: Melbourne Port, Livorno Port...) |
+| `pickup_info` | Thông tin kho nhận hàng (Pickup Address / Contact...) |
+| `bank_account_info` | Tài khoản ngân hàng giao dịch của NCC |
 | `status` | ACTIVE / INACTIVE / BLACKLISTED |
 
 ### B. Danh Sách Sản Phẩm Của NCC
@@ -130,7 +133,7 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
 
 | Tab | Nội dung | Server Action |
 |---|---|---|
-| **Tổng quan** | Scorecard + 4 KPI cards + Info 2 cột + Contacts + Addresses | `getSupplierDetail`, `getSupplierScorecard` |
+| **Tổng quan** | Scorecard + 4 KPI cards + Info 2 cột + Quản lý Contacts (Thêm/Xóa trực tiếp) + Quản lý Địa chỉ (Thêm/Xóa Warehouse/Pickup Point trực tiếp) | `getSupplierDetail`, `getSupplierScorecard`, `createSupplierContact`, `deleteSupplierContact`, `createSupplierAddress`, `deleteSupplierAddress` |
 | **Đơn Hàng** | Danh sách PO + Sản phẩm NCC + Lịch sử giá | `getSupplierPOs`, `getSupplierProducts`, `getSupplierPricingHistory` |
 | **Tài Chính** | 3 AP stats + Danh sách AP Invoice | `getSupplierAPInvoices` |
 | **Hợp Đồng** | Danh sách contracts với NCC | `getSupplierContracts` |
