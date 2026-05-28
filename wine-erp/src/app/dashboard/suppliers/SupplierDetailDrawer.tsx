@@ -258,8 +258,8 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     {/* Summary cards */}
                                     <div className="grid grid-cols-4 gap-3">
                                         <MiniCard label="Đơn PO" value={detail.poSummary.total} accent="#87CBB9" />
-                                        <MiniCard label="Tổng PO" value={fmtCurrency(detail.poSummary.totalValue)} accent="#5BA88A" />
-                                        <MiniCard label="Nợ phải trả" value={fmtCurrency(detail.apSummary.unpaidAmount)} accent={detail.apSummary.unpaidAmount > 0 ? '#D4A853' : '#5BA88A'} />
+                                        <MiniCard label="Tổng PO" value={fmtCurrency(detail.poSummary.totalValue, detail.supplier.defaultCurrency)} accent="#5BA88A" />
+                                        <MiniCard label="Nợ phải trả" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#D4A853' : '#5BA88A'} />
                                         <MiniCard label="Sản phẩm" value={detail.productCount} accent="#4A8FAB" />
                                     </div>
 
@@ -449,8 +449,8 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-3 gap-3">
                                         <MiniCard label="Tổng hoá đơn" value={detail.apSummary.totalInvoices} accent="#4A8FAB" />
-                                        <MiniCard label="Tổng giá trị" value={fmtCurrency(detail.apSummary.totalAmount)} accent="#87CBB9" />
-                                        <MiniCard label="Chưa thanh toán" value={fmtCurrency(detail.apSummary.unpaidAmount)} accent={detail.apSummary.unpaidAmount > 0 ? '#D4A853' : '#5BA88A'} />
+                                        <MiniCard label="Tổng giá trị" value={fmtCurrency(detail.apSummary.totalAmount, detail.supplier.defaultCurrency)} accent="#87CBB9" />
+                                        <MiniCard label="Chưa thanh toán" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#D4A853' : '#5BA88A'} />
                                     </div>
                                     <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Danh Sách AP Invoice</p>
                                     {!invoices ? <Loader2 size={16} className="animate-spin mx-auto" style={{ color: '#87CBB9' }} /> :

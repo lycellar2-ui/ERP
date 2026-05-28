@@ -176,7 +176,7 @@ export async function getSupplierDetail(id: string): Promise<SupplierDetail | nu
         }),
         prisma.purchaseOrder.findMany({
             where: { supplierId: id },
-            include: { lines: { select: { qtyOrdered: true, unitPrice: true } } },
+            include: { lines: { select: { qtyOrdered: true, unitPrice: true, productId: true } } },
         }),
         prisma.aPInvoice.findMany({
             where: { supplierId: id },
@@ -192,7 +192,7 @@ export async function getSupplierDetail(id: string): Promise<SupplierDetail | nu
     for (const po of pos) {
         statusMap[po.status] = (statusMap[po.status] ?? 0) + 1
         for (const line of po.lines) {
-            totalPOValue += Number(line.qtyOrdered) * Number(line.unitPrice) * Number(po.exchangeRate)
+            totalPOValue += Number(line.qtyOrdered) * Number(line.unitPrice)
         }
     }
 
@@ -205,14 +205,10 @@ export async function getSupplierDetail(id: string): Promise<SupplierDetail | nu
         if (inv.status === 'OVERDUE' || inv.status === 'PARTIALLY_PAID') unpaidAPAmount += amt
     }
 
-    // Unique products
+    // Unique products computed in-memory (no N+1 queries)
     const productIds = new Set<string>()
     for (const po of pos) {
-        const poLines = await prisma.purchaseOrderLine.findMany({
-            where: { poId: po.id },
-            select: { productId: true },
-        })
-        poLines.forEach(l => productIds.add(l.productId))
+        po.lines.forEach(l => productIds.add(l.productId))
     }
 
     return {
