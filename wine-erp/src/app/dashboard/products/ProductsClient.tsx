@@ -74,9 +74,10 @@ interface ProductsClientProps {
     stats: ProductStats
     countries: { code: string; count: number }[]
     vintages: number[]
+    producers: { id: string; name: string }[]
 }
 
-export function ProductsClient({ initialRows, initialTotal, stats, countries, vintages }: ProductsClientProps) {
+export function ProductsClient({ initialRows, initialTotal, stats, countries, vintages, producers }: ProductsClientProps) {
     const [rows, setRows] = useState<ProductRow[]>(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -89,6 +90,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
     const [statusFilter, setStatusFilter] = useState('')
     const [countryFilter, setCountryFilter] = useState('')
     const [vintageFilter, setVintageFilter] = useState('')
+    const [producerFilter, setProducerFilter] = useState('')
     const [exporting, setExporting] = useState(false)
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -281,10 +283,20 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                         <option key={v} value={v}>{v}</option>
                     ))}
                 </select>
-                {(search || typeFilter || statusFilter || countryFilter || vintageFilter) && (
+                {/* Producer/NCC filter — dynamic from DB */}
+                <select value={producerFilter}
+                    onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
+                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer max-w-[200px]"
+                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: producerFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                    <option value="">Tất cả NCC / Nhà SX</option>
+                    {producers.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                </select>
+                {(search || typeFilter || statusFilter || countryFilter || vintageFilter || producerFilter) && (
                     <button onClick={() => {
-                        setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setVintageFilter('')
-                        applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, vintage: undefined })
+                        setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setVintageFilter(''); setProducerFilter('')
+                        applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, vintage: undefined, producerId: undefined })
                     }} className="px-3 py-2.5 rounded-lg text-sm"
                         style={{ color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.3)' }}>
                         Xóa filter

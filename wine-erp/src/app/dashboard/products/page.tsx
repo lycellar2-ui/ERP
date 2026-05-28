@@ -1,5 +1,5 @@
-﻿import { Suspense } from 'react'
-import { getProducts, getProductStats, getProductCountries, getProductVintages } from './actions'
+import { Suspense } from 'react'
+import { getProducts, getProductStats, getProductCountries, getProductVintages, getProducers } from './actions'
 import { ProductsClient } from './ProductsClient'
 import { AICatalogAnalysis } from './AICatalogAnalysis'
 
@@ -7,7 +7,7 @@ export const metadata = { title: 'Danh Mục Sản Phẩm | Wine ERP' }
 
 export default async function ProductsPage() {
     // Server-side: fetch paginated rows + aggregated stats + filter options in parallel
-    const [{ rows, total }, stats, countries, vintages] = await Promise.all([
+    const [{ rows, total }, stats, countries, vintages, producers] = await Promise.all([
         getProducts({ page: 1, pageSize: 20 }).catch(() => ({
             rows: [] as any[],
             total: 0,
@@ -17,6 +17,7 @@ export default async function ProductsPage() {
         })),
         getProductCountries().catch(() => []),
         getProductVintages().catch(() => []),
+        getProducers().catch(() => []),
     ])
 
     return (
@@ -29,6 +30,7 @@ export default async function ProductsPage() {
                     stats={stats}
                     countries={countries}
                     vintages={vintages}
+                    producers={producers}
                 />
             </Suspense>
         </div>
