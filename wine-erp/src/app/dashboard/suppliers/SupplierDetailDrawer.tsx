@@ -1,17 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Loader2, Building2, Package, DollarSign, FileText, Ship, MessageSquare, Clock, TrendingUp, Award, Globe, Phone, Mail, MapPin, ExternalLink, Shield, AlertTriangle } from 'lucide-react'
+import { X, Loader2, Building2, Package, DollarSign, FileText, Ship, MessageSquare, Clock, TrendingUp, Award, Globe, Phone, Mail, MapPin, ExternalLink, Shield, AlertTriangle, Plus, Trash2 } from 'lucide-react'
 import {
     getSupplierDetail, getSupplierPOs, getSupplierAPInvoices, getSupplierContracts,
     getSupplierShipments, getSupplierProducts, getSupplierPricingHistory,
     getSupplierActivities, createSupplierActivity, getSupplierScorecard,
+    createSupplierContact, deleteSupplierContact,
     type SupplierDetail, type SupplierPO, type SupplierAPInvoice, type SupplierContract,
     type SupplierShipment, type SupplierProduct, type PricingPoint, type SupplierScorecard,
 } from './actions'
 import { getSupplierRegDocs } from '../contracts/reg-doc-xmodule'
 import { REG_DOC_TYPE_LABELS, REG_DOC_STATUS_LABELS } from '../contracts/reg-doc-constants'
 import { formatVND } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const PO_STATUS_COLOR: Record<string, { color: string; bg: string }> = {
     DRAFT: { color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' },
@@ -76,6 +78,67 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
     const [noteType, setNoteType] = useState('NOTE')
     const [savingNote, setSavingNote] = useState(false)
     const [regDocs, setRegDocs] = useState<any[] | null>(null)
+
+    // Secondary contacts state
+    const [showContactForm, setShowContactForm] = useState(false)
+    const [contactName, setContactName] = useState('')
+    const [contactTitle, setContactTitle] = useState('')
+    const [contactEmail, setContactEmail] = useState('')
+    const [contactPhone, setContactPhone] = useState('')
+    const [contactIsPrimary, setContactIsPrimary] = useState(false)
+    const [savingContact, setSavingContact] = useState(false)
+
+    const handleAddContact = async () => {
+        if (!supplierId || !contactName.trim()) return
+        setSavingContact(true)
+        try {
+            const res = await createSupplierContact({
+                supplierId,
+                name: contactName.trim(),
+                title: contactTitle.trim() || null,
+                email: contactEmail.trim() || null,
+                phone: contactPhone.trim() || null,
+                isPrimary: contactIsPrimary,
+            })
+            if (res.success) {
+                toast.success('Đã thêm liên hệ thành công!')
+                // Reset form
+                setContactName('')
+                setContactTitle('')
+                setContactEmail('')
+                setContactPhone('')
+                setContactIsPrimary(false)
+                setShowContactForm(false)
+                // Reload details
+                const freshDetail = await getSupplierDetail(supplierId)
+                setDetail(freshDetail)
+            } else {
+                toast.error(res.error ?? 'Lỗi khi thêm liên hệ')
+            }
+        } catch (err: any) {
+            toast.error(err.message ?? 'Lỗi hệ thống')
+        } finally {
+            setSavingContact(false)
+        }
+    }
+
+    const handleDeleteContact = async (contactId: string, name: string) => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa liên hệ "${name}"?`)) return
+        try {
+            const res = await deleteSupplierContact(contactId)
+            if (res.success) {
+                toast.success(`Đã xóa liên hệ "${name}"`)
+                if (supplierId) {
+                    const freshDetail = await getSupplierDetail(supplierId)
+                    setDetail(freshDetail)
+                }
+            } else {
+                toast.error(res.error ?? 'Lỗi khi xóa liên hệ')
+            }
+        } catch (err: any) {
+            toast.error(err.message ?? 'Lỗi hệ thống')
+        }
+    }
 
     useEffect(() => {
         if (!open || !supplierId) { setDetail(null); setTab('overview'); return }
@@ -217,12 +280,65 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                         <div className="space-y-4">
                                             {/* Contacts */}
                                             <div>
-                                                <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#87CBB9' }}>── Liên Hệ</p>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Liên Hệ</p>
+                                                    <button onClick={() => setShowContactForm(!showContactForm)}
+                                                        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all"
+                                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                        <Plus size={10} /> Thêm
+                                                    </button>
+                                                </div>
+
+                                                {/* Add contact inline form */}
+                                                {showContactForm && (
+                                                    <div className="p-3 rounded-lg mb-3 space-y-2.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>Thêm Liên Hệ Phụ</p>
+                                                        <div>
+                                                            <input type="text" value={contactName} onChange={e => setContactName(e.target.value)}
+                                                                placeholder="Tên người liên hệ *" className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <input type="text" value={contactTitle} onChange={e => setContactTitle(e.target.value)}
+                                                                placeholder="Chức vụ" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                            <input type="text" value={contactPhone} onChange={e => setContactPhone(e.target.value)}
+                                                                placeholder="Số điện thoại" className="px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                        </div>
+                                                        <div>
+                                                            <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)}
+                                                                placeholder="Email" className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none" />
+                                                        </div>
+                                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                            <input type="checkbox" checked={contactIsPrimary} onChange={e => setContactIsPrimary(e.target.checked)} className="w-3.5 h-3.5 accent-[#87CBB9]" />
+                                                            <span className="text-[10px]" style={{ color: '#8AAEBB' }}>Đặt làm liên hệ chính</span>
+                                                        </label>
+                                                        <div className="flex justify-end gap-2 pt-1">
+                                                            <button onClick={() => setShowContactForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#4A6A7A' }}>Hủy</button>
+                                                            <button onClick={handleAddContact} disabled={!contactName.trim() || savingContact}
+                                                                className="text-[10px] px-3 py-1 rounded font-semibold disabled:opacity-50"
+                                                                style={{ background: '#87CBB9', color: '#0A1926' }}>
+                                                                {savingContact ? 'Đang tạo...' : 'Lưu'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {detail.contacts.length > 0 ? detail.contacts.map(c => (
-                                                    <div key={c.id} className="p-3 rounded-lg mb-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{c.name}</span>
-                                                            {c.isPrimary && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Chính</span>}
+                                                    <div key={c.id} className="p-3 rounded-lg mb-2 relative group" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{c.name}</span>
+                                                                {c.isPrimary && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Chính</span>}
+                                                            </div>
+                                                            {!c.isPrimary && (
+                                                                <button onClick={() => handleDeleteContact(c.id, c.name)}
+                                                                    className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
+                                                                    style={{ color: '#4A6A7A' }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#E05252'; e.currentTarget.style.background = 'rgba(139,26,46,0.12)' }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#4A6A7A'; e.currentTarget.style.background = '' }}
+                                                                    title="Xóa liên hệ">
+                                                                    <Trash2 size={13} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                         {c.title && <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{c.title}</p>}
                                                         {c.phone && <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#8AAEBB' }}><Phone size={10} /> {c.phone}</p>}

@@ -825,6 +825,113 @@ export async function createSupplierActivity(input: {
 }
 
 // ═══════════════════════════════════════════════════
+// SUPPLIER CONTACTS
+// ═══════════════════════════════════════════════════
+
+export async function createSupplierContact(input: {
+    supplierId: string
+    name: string
+    title?: string | null
+    email?: string | null
+    phone?: string | null
+    isPrimary?: boolean
+}) {
+    try {
+        await requireAuth()
+
+        if (input.isPrimary) {
+            await prisma.supplierContact.updateMany({
+                where: { supplierId: input.supplierId, isPrimary: true },
+                data: { isPrimary: false },
+            })
+        }
+
+        const contact = await prisma.supplierContact.create({
+            data: {
+                supplierId: input.supplierId,
+                name: input.name,
+                title: input.title ?? null,
+                email: input.email ?? null,
+                phone: input.phone ?? null,
+                isPrimary: input.isPrimary ?? false,
+            },
+        })
+
+        revalidatePath('/dashboard/suppliers')
+        return { success: true, contact }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi tạo liên hệ' }
+    }
+}
+
+export async function updateSupplierContact(
+    id: string,
+    input: {
+        name?: string
+        title?: string | null
+        email?: string | null
+        phone?: string | null
+        isPrimary?: boolean
+    }
+) {
+    try {
+        await requireAuth()
+
+        const existing = await prisma.supplierContact.findUnique({
+            where: { id },
+            select: { supplierId: true },
+        })
+        if (!existing) return { success: false, error: 'Không tìm thấy liên hệ' }
+
+        if (input.isPrimary) {
+            await prisma.supplierContact.updateMany({
+                where: { supplierId: existing.supplierId, isPrimary: true },
+                data: { isPrimary: false },
+            })
+        }
+
+        const contact = await prisma.supplierContact.update({
+            where: { id },
+            data: {
+                name: input.name,
+                title: input.title,
+                email: input.email,
+                phone: input.phone,
+                isPrimary: input.isPrimary,
+            },
+        })
+
+        revalidatePath('/dashboard/suppliers')
+        return { success: true, contact }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi cập nhật liên hệ' }
+    }
+}
+
+export async function deleteSupplierContact(id: string) {
+    try {
+        await requireAuth()
+
+        const existing = await prisma.supplierContact.findUnique({
+            where: { id },
+        })
+        if (!existing) return { success: false, error: 'Không tìm thấy liên hệ' }
+        if (existing.isPrimary) {
+            return { success: false, error: 'Không thể xóa liên hệ chính. Vui lòng đặt liên hệ khác làm chính trước.' }
+        }
+
+        await prisma.supplierContact.delete({
+            where: { id },
+        })
+
+        revalidatePath('/dashboard/suppliers')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi xóa liên hệ' }
+    }
+}
+
+// ═══════════════════════════════════════════════════
 // SUPPLIER SCORECARD
 // ═══════════════════════════════════════════════════
 
