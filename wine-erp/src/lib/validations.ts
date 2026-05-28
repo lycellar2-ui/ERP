@@ -222,6 +222,10 @@ export const ContractCreateSchema = z.object({
     endDate: z.string().min(1, 'Chưa chọn ngày kết thúc'),
     paymentTerm: z.string().max(100).optional(),
     incoterms: z.string().max(20).optional(),
+    discountTerms: z.string().optional(),
+    marketingBudget: z.string().optional(),
+    stampVerification: z.string().optional(),
+    archiveStatus: z.string().optional(),
 }).refine(d => d.supplierId || d.customerId, {
     message: 'Phải chọn nhà cung cấp hoặc khách hàng',
 })

@@ -33,6 +33,10 @@ export interface ContractCreateInput {
     endDate: string
     paymentTerm?: string
     incoterms?: string
+    discountTerms?: string
+    marketingBudget?: string
+    stampVerification?: string
+    archiveStatus?: string
 }
 
 export async function getContracts(filters: {
@@ -139,6 +143,10 @@ export async function createContract(input: ContractCreateInput): Promise<{ succ
                 endDate: new Date(validated.endDate),
                 paymentTerm: validated.paymentTerm ?? null,
                 incoterms: validated.incoterms ?? null,
+                discountTerms: validated.discountTerms ?? null,
+                marketingBudget: validated.marketingBudget ?? null,
+                stampVerification: validated.stampVerification ?? null,
+                archiveStatus: validated.archiveStatus ?? null,
                 status: 'ACTIVE',
             },
         })
@@ -199,6 +207,11 @@ export async function getContractUtilization(contractId: string) {
         poTotal,
         soTotal,
         remaining: contractValue - utilizedValue,
+        discountTerms: contract.discountTerms,
+        marketingBudget: contract.marketingBudget,
+        stampVerification: contract.stampVerification,
+        archiveStatus: contract.archiveStatus,
+        paymentTerm: contract.paymentTerm,
         documents: contract.documents.map(d => ({
             id: d.id,
             name: d.name,

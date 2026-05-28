@@ -639,6 +639,10 @@ model Contract {
   currency       String                 @default("USD")
   paymentTerm    String?
   incoterms      String?
+  discountTerms     String?
+  marketingBudget   String?
+  stampVerification String?
+  archiveStatus     String?
   startDate      DateTime
   endDate        DateTime
   status         ContractStatus         @default(DRAFT)

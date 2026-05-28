@@ -43,6 +43,10 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
         startDate: today,
         endDate: nextYear,
         paymentTerm: '',
+        discountTerms: '',
+        marketingBudget: '',
+        stampVerification: '',
+        archiveStatus: '',
     })
     const [counterparties, setCounterparties] = useState<Counterparties | null>(null)
     const [saving, setSaving] = useState(false)
@@ -73,6 +77,10 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
             startDate: form.startDate,
             endDate: form.endDate,
             paymentTerm: form.paymentTerm || undefined,
+            discountTerms: form.discountTerms || undefined,
+            marketingBudget: form.marketingBudget || undefined,
+            stampVerification: form.stampVerification || undefined,
+            archiveStatus: form.archiveStatus || undefined,
         })
         setSaving(false)
 
@@ -199,6 +207,38 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                         <input className={inputCls} style={baseStyle} value={form.paymentTerm}
                             onChange={e => setForm(f => ({ ...f, paymentTerm: e.target.value }))}
                             placeholder="VD: Net 30, 50% TT sau 60 ngày..."
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </Row>
+
+                    <Row label="Quy Định Giảm Giá (Discount)">
+                        <input className={inputCls} style={baseStyle} value={form.discountTerms}
+                            onChange={e => setForm(f => ({ ...f, discountTerms: e.target.value }))}
+                            placeholder="VD: Giảm 5% khi mua trên 500 chai..."
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </Row>
+
+                    <Row label="Ngân Sách Marketing">
+                        <input className={inputCls} style={baseStyle} value={form.marketingBudget}
+                            onChange={e => setForm(f => ({ ...f, marketingBudget: e.target.value }))}
+                            placeholder="VD: NCC hỗ trợ $2,000 ngân sách chạy thử..."
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </Row>
+
+                    <Row label="Kiểm Tra Khớp Dấu & Tên Hợp Đồng">
+                        <input className={inputCls} style={baseStyle} value={form.stampVerification}
+                            onChange={e => setForm(f => ({ ...f, stampVerification: e.target.value }))}
+                            placeholder="VD: Đã kiểm tra khớp 100%..."
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </Row>
+
+                    <Row label="Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm">
+                        <input className={inputCls} style={baseStyle} value={form.archiveStatus}
+                            onChange={e => setForm(f => ({ ...f, archiveStatus: e.target.value }))}
+                            placeholder="VD: Bản mềm đã upload, bản cứng lưu tại Tủ 2..."
                             onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                             onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                     </Row>
@@ -446,6 +486,29 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                             <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
                                                                 <span>PO: {utilization.poCount} ({formatVND(utilization.poTotal)})</span>
                                                                 <span>SO: {utilization.soCount} ({formatVND(utilization.soTotal)})</span>
+                                                            </div>
+
+                                                            {/* Custom Fields Section */}
+                                                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
+                                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#87CBB9' }}>Thông Tin Điều Khoản & Lưu Trữ</p>
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Quy Định Giảm Giá (Discount)</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.discountTerms || 'Chưa quy định chi tiết'}</p>
+                                                                    </div>
+                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Ngân Sách Marketing</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.marketingBudget || 'Chưa quy định chi tiết'}</p>
+                                                                    </div>
+                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Kiểm Tra Khớp Dấu & Tên Hợp Đồng</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.stampVerification || 'Chưa có ghi chú kiểm tra'}</p>
+                                                                    </div>
+                                                                    <div className="p-3 rounded bg-[#1B2E3D]" style={{ border: '1px solid #2A4355' }}>
+                                                                        <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: '#4A6A7A' }}>Tình Trạng Lưu Trữ Bản Cứng / Bản Mềm</p>
+                                                                        <p className="text-sm mt-1 font-medium" style={{ color: '#E8F1F2' }}>{utilization.archiveStatus || 'Chưa có ghi chú lưu trữ'}</p>
+                                                                    </div>
+                                                                </div>
                                                             </div>
 
                                                             {/* Documents Section */}
