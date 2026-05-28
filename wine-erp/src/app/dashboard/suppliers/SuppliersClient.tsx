@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useCallback, useEffect } from 'react'
 import {
@@ -91,15 +91,27 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
         setSaving(true)
         try {
             if (isEdit) {
-                await updateSupplier(editingId!, form as SupplierInput)
-                toast.success('Đã cập nhật NCC')
+                const res = await updateSupplier(editingId!, form as SupplierInput)
+                if (res.success) {
+                    toast.success('Đã cập nhật NCC')
+                    onSaved()
+                } else {
+                    toast.error(res.error ?? 'Lỗi cập nhật NCC')
+                    setErrors({ _global: res.error ?? 'Lỗi cập nhật NCC' })
+                }
             } else {
-                await createSupplier(form as SupplierInput)
-                toast.success('Đã tạo NCC mới')
+                const res = await createSupplier(form as SupplierInput)
+                if (res.success) {
+                    toast.success('Đã tạo NCC mới')
+                    onSaved()
+                } else {
+                    toast.error(res.error ?? 'Lỗi tạo NCC')
+                    setErrors({ _global: res.error ?? 'Lỗi tạo NCC' })
+                }
             }
-            onSaved()
         } catch (err: any) {
             setErrors({ _global: err.message })
+            toast.error(err.message ?? 'Đã xảy ra lỗi')
         } finally { setSaving(false) }
     }
 

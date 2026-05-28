@@ -141,15 +141,27 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         setSaving(true)
         try {
             if (isEdit) {
-                await updateCustomer(editingId!, form as CustomerInput)
-                toast.success('Đã cập nhật khách hàng')
+                const res = await updateCustomer(editingId!, form as CustomerInput)
+                if (res.success) {
+                    toast.success('Đã cập nhật khách hàng')
+                    onSaved()
+                } else {
+                    toast.error(res.error ?? 'Lỗi cập nhật khách hàng')
+                    setErrors({ _global: res.error ?? 'Lỗi cập nhật khách hàng' })
+                }
             } else {
-                await createCustomer(form as CustomerInput)
-                toast.success('Đã tạo khách hàng mới')
+                const res = await createCustomer(form as CustomerInput)
+                if (res.success) {
+                    toast.success('Đã tạo khách hàng mới')
+                    onSaved()
+                } else {
+                    toast.error(res.error ?? 'Lỗi tạo khách hàng')
+                    setErrors({ _global: res.error ?? 'Lỗi tạo khách hàng' })
+                }
             }
-            onSaved()
         } catch (err: any) {
             setErrors({ _global: err.message })
+            toast.error(err.message ?? 'Đã xảy ra lỗi')
         } finally {
             setSaving(false)
         }
