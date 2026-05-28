@@ -37,7 +37,7 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
             {/* Product */}
             <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <div className="relative group/img w-14 h-10 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden cursor-zoom-in"
+                    <div className="relative group/img w-20 h-11 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden cursor-zoom-in"
                         style={{ background: '#142433', border: '1px solid #2A4355' }}>
                         {row.primaryImageUrl ? (
                             <>
@@ -94,13 +94,6 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
             <td className="px-3 py-3 text-center">
                 <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
                     {row.abvPercent != null ? `${row.abvPercent}°` : '—'}
-                </span>
-            </td>
-
-            {/* Pack */}
-            <td className="px-3 py-3 text-center">
-                <span className="text-xs" style={{ color: '#4A6A7A' }}>
-                    {row.packagingType === 'OWC' ? '📦 OWC' : '📫 Carton'} ×{row.unitsPerCase}
                 </span>
             </td>
 
@@ -166,14 +159,13 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
     const totalPages = Math.ceil(total / pageSize)
 
     const sortableHeaders = [
-        { key: 'name' as const, label: 'Sản phẩm', cls: 'px-4 py-3 w-[300px]', sortable: true },
-        { key: 'vintage' as const, label: 'Vintage', cls: 'px-3 py-3 w-[70px] text-center', sortable: true },
-        { key: undefined, label: 'Loại', cls: 'px-3 py-3 w-[100px]', sortable: false },
+        { key: 'name' as const, label: 'Sản phẩm', cls: 'px-4 py-3 w-[340px]', sortable: true },
+        { key: 'vintage' as const, label: 'Vintage', cls: 'px-3 py-3 w-[60px] text-center', sortable: true },
+        { key: undefined, label: 'Loại', cls: 'px-3 py-3 w-[80px]', sortable: false },
         { key: undefined, label: 'Nhà SX / Vùng', cls: 'px-3 py-3 w-[220px]', sortable: false },
         { key: 'abv' as const, label: 'ABV', cls: 'px-3 py-3 w-[60px] text-center', sortable: true },
-        { key: undefined, label: 'Đóng gói', cls: 'px-3 py-3 w-[110px] text-center', sortable: false },
-        { key: 'stock' as const, label: 'Tồn kho', cls: 'px-3 py-3 w-[80px] text-center', sortable: false },
-        { key: undefined, label: 'Trạng thái', cls: 'px-3 py-3 w-[120px]', sortable: false },
+        { key: 'stock' as const, label: 'Tồn kho', cls: 'px-3 py-3 w-[85px] text-center', sortable: false },
+        { key: undefined, label: 'Trạng thái', cls: 'px-3 py-3 w-[125px]', sortable: false },
         { key: undefined, label: '', cls: 'px-3 py-3 w-[70px]', sortable: false },
     ]
 
@@ -238,7 +230,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                                 </tr>
                             ))
                             : rows.length === 0
-                                ? <tr><td colSpan={9}><EmptyState /></td></tr>
+                                ? <tr><td colSpan={8}><EmptyState /></td></tr>
                                 : rows.map(row => (
                                     <ProductTableRow
                                         key={row.id}
