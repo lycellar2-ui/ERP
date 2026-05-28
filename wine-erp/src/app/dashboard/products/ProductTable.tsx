@@ -37,7 +37,7 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
             {/* Product */}
             <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <div className="relative group/img w-20 h-11 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden cursor-zoom-in"
+                    <div className="relative group/img w-20 h-11 rounded-lg flex-shrink-0 flex items-center justify-center cursor-zoom-in"
                         style={{ background: '#142433', border: '1px solid #2A4355' }}>
                         {row.primaryImageUrl ? (
                             <>
