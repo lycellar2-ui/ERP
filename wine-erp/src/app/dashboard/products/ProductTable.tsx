@@ -41,7 +41,7 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
                         style={{ background: '#142433', border: '1px solid #2A4355' }}>
                         {row.primaryImageUrl ? (
                             <>
-                                <img src={row.primaryImageUrl} alt={row.productName} className="w-full h-full object-contain p-0.5 transition-transform duration-200 group-hover/img:scale-105" />
+                                <img src={row.primaryImageUrl} alt={row.productName} className="w-full h-full object-contain p-0.5 -rotate-90 transition-transform duration-200 group-hover/img:scale-105 group-hover/img:-rotate-90" />
                                 
                                 {/* Gorgeous hover preview card */}
                                 <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-52 bg-[#0D1E2B]/95 backdrop-blur-md rounded-2xl p-4 border border-[#2A4355] shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 scale-95 pointer-events-none group-hover/img:opacity-100 group-hover/img:scale-100 transition-all duration-200 z-50 flex flex-col items-center gap-3">
