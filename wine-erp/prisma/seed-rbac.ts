@@ -8,10 +8,14 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 import * as dotenv from 'dotenv'
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 dotenv.config({ path: '.env.local' })
 
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL!
+
 const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL!.replace('?sslmode=require', ''),
+    connectionString: connectionString.replace('?sslmode=require', ''),
     ssl: { rejectUnauthorized: false },
     max: 3,
     allowExitOnIdle: true,
@@ -153,6 +157,25 @@ async function main() {
         create: { userId: adminUser.id, roleId: 'role-ceo' },
     })
     console.log(`  ✓ Admin user: ${adminUser.email} → CEO role`)
+
+    const adminUser2 = await prisma.user.upsert({
+        where: { email: 'admin2@lyscellars.com' },
+        update: { name: 'Ly (CEO Secondary)' },
+        create: {
+            id: 'user-admin2',
+            email: 'admin2@lyscellars.com',
+            name: 'Ly (CEO Secondary)',
+            passwordHash: 'supabase-managed',
+            status: 'ACTIVE',
+        },
+    })
+
+    await prisma.userRole.upsert({
+        where: { userId_roleId: { userId: adminUser2.id, roleId: 'role-ceo' } },
+        update: {},
+        create: { userId: adminUser2.id, roleId: 'role-ceo' },
+    })
+    console.log(`  ✓ Secondary Admin user: ${adminUser2.email} → CEO role`)
 
     // ─── 4. Create sample users ────────────────────
     console.log('  → Creating sample users...')
