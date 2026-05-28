@@ -7,7 +7,7 @@ import {
     ProductInput, createProduct, updateProduct, getProducers, getRegions,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
     getProductAwards, addProductAward, deleteProductAward,
-    getProductById, createProducerInline,
+    getProductById, createProducerInline, getProductEditDetails,
     type ProductMediaRow, type ProductAwardRow,
 } from './actions'
 
@@ -158,20 +158,28 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     // Load reference data + product data for edit
     useEffect(() => {
         if (!open) return
-        Promise.all([getProducers(), getRegions()]).then(([p, r]) => {
-            setProducers(p)
-            setRegions(r)
-        })
+
+        // ⚡ Optimization 1: Only fetch reference lists once per page lifecycle, rather than on every single drawer open
+        if (producers.length === 0 || regions.length === 0) {
+            Promise.all([getProducers(), getRegions()]).then(([p, r]) => {
+                setProducers(p)
+                setRegions(r)
+            })
+        }
+
         if (editingId) {
             setLoading(true)
-            getProductMedia(editingId).then(setMediaList)
-            getProductAwards(editingId).then(setAwards)
-            // Load product data for edit form
-            getProductById(editingId).then(data => {
-                if (!data) {
+            // ⚡ Optimization 2: Use the new consolidated server action to load everything (Product, Media, Awards) in ONE single network roundtrip!
+            getProductEditDetails(editingId).then(details => {
+                if (!details) {
                     setLoading(false)
                     return
                 }
+                
+                const { product: data, media, awards: aw } = details
+                setMediaList(media)
+                setAwards(aw)
+
                 setForm({
                     sku: data.skuCode,
                     name: data.productName,
@@ -200,7 +208,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
             setMediaList([])
             setAwards([])
         }
-    }, [open, editingId])
+    }, [open, editingId, producers.length, regions.length])
 
     // Reset form when opening for new
     useEffect(() => {

@@ -848,6 +848,73 @@ export async function getProductAwards(productId: string): Promise<ProductAwardR
     }))
 }
 
+export async function getProductEditDetails(id: string) {
+    const [p, media, awards] = await Promise.all([
+        prisma.product.findUnique({
+            where: { id },
+            include: {
+                producer: { select: { id: true, name: true } },
+                appellation: { select: { id: true, name: true } },
+            },
+        }),
+        prisma.productMedia.findMany({
+            where: { productId: id },
+            orderBy: [{ isPrimary: 'desc' }, { uploadedAt: 'desc' }],
+        }),
+        prisma.productAward.findMany({
+            where: { productId: id },
+            orderBy: [{ awardedYear: 'desc' }, { source: 'asc' }],
+        })
+    ])
+
+    if (!p) return null
+
+    return {
+        product: {
+            id: p.id,
+            skuCode: p.skuCode,
+            productName: p.productName,
+            producerId: p.producerId,
+            vintage: p.vintage,
+            appellationId: p.appellationId,
+            country: p.country,
+            abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
+            volumeMl: p.volumeMl,
+            format: p.format,
+            packagingType: p.packagingType,
+            unitsPerCase: p.unitsPerCase,
+            hsCode: p.hsCode,
+            barcodeEan: p.barcodeEan,
+            wineType: p.wineType,
+            storageTempMin: p.storageTempMin ? Number(p.storageTempMin) : null,
+            storageTempMax: p.storageTempMax ? Number(p.storageTempMax) : null,
+            isAllocationEligible: p.isAllocationEligible,
+            classification: p.classification,
+            tastingNotes: p.tastingNotes,
+            status: p.status,
+        },
+        media: media.map(m => ({
+            id: m.id,
+            url: m.url,
+            thumbnailUrl: m.thumbnailUrl,
+            mediaType: m.mediaType,
+            isPrimary: m.isPrimary,
+            tags: m.tags,
+            uploadedAt: m.uploadedAt,
+        })),
+        awards: awards.map(a => ({
+            id: a.id,
+            source: a.source,
+            score: a.score ? Number(a.score) : null,
+            medal: a.medal,
+            medalLabel: a.medal ? MEDAL_LABEL[a.medal] ?? a.medal : null,
+            vintage: a.vintage,
+            awardedYear: a.awardedYear,
+        }))
+    }
+}
+
+
 export async function addProductAward(input: {
     productId: string
     source: string
