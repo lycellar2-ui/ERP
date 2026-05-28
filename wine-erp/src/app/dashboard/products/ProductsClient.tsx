@@ -173,68 +173,76 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
-                        Danh Mục Sản Phẩm
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Master Data — Quản lý toàn bộ danh mục rượu vang nhập khẩu
-                    </p>
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0D1E2B]/40 p-3 rounded-xl border border-[#2A4355]/30">
+                <div className="flex flex-wrap items-center gap-4">
+                    <div>
+                        <h2 className="text-lg font-bold"
+                            style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                            Danh Mục Sản Phẩm
+                        </h2>
+                    </div>
+                    
+                    {/* Compact Metrics Pill Row */}
+                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#87CBB9' }}>
+                            Tổng: &nbsp;<strong className="text-[#E8F1F2]">{stats.total}</strong>
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#5BA88A' }}>
+                            Đang bán: &nbsp;<strong className="text-[#E8F1F2]">{stats.active}</strong>
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#E05252' }}>
+                            Hết hàng: &nbsp;<strong className="text-[#E8F1F2]">{stats.outOfStock}</strong>
+                        </span>
+                        <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded bg-[#1B2E3D] border border-[#2A4355]/50" style={{ color: '#4A8FAB' }}>
+                            Nổi bật: &nbsp;<strong className="text-[#E8F1F2] font-mono">{topTypeLabel}</strong>
+                        </span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center gap-1.5">
                     <button
                         onClick={handleExport}
                         disabled={exporting}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
                         style={{ background: '#1B2E3D', color: '#5BA88A', border: '1px solid #2A4355' }}
                         onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#5BA88A' } }}
                         onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
                     >
-                        <Download size={16} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
+                        <Download size={13} /> {exporting ? 'Đang xuất...' : 'Export'}
                     </button>
                     <button
                         onClick={() => setImportOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                         style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
                         onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
                     >
-                        <Upload size={16} /> Import Excel
+                        <Upload size={13} /> Import
                     </button>
                     <button
                         onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
                         style={{ background: '#87CBB9', color: '#0A1926' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                         onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
                     >
-                        <Plus size={16} /> Thêm Sản Phẩm
+                        <Plus size={13} /> Thêm Sản Phẩm
                     </button>
                 </div>
             </div>
 
-            {/* Stats — aggregated from all products (server) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard label="Tổng sản phẩm" value={stats.total} icon={Wine} accent="#87CBB9" />
-                <StatCard label="Đang kinh doanh" value={stats.active} icon={Package} accent="#5BA88A" />
-                <StatCard label="Hết hàng (cần nhập)" value={stats.outOfStock} icon={AlertCircle} accent="#8B1A2E" />
-                <StatCard label="Loại nổi bật" value={topTypeLabel} icon={TrendingUp} accent="#4A8FAB" />
-            </div>
-
             {/* Filters */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
                 <div className="relative flex-1 min-w-[200px]">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input
                         type="text"
                         placeholder="Tìm theo tên, SKU, barcode, nhà SX..."
                         value={search}
                         onChange={e => handleSearchChange(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
+                        className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                         onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
@@ -242,7 +250,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 </div>
                 <select value={typeFilter}
                     onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer animate-none"
                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
                     <option value="">Tất cả loại</option>
                     <option value="RED">🔴 Vang Đỏ</option>
@@ -254,7 +262,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 </select>
                 <select value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
                     <option value="">Tất cả trạng thái</option>
                     <option value="ACTIVE">Đang bán</option>
@@ -264,7 +272,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 {/* Country filter — dynamic from DB */}
                 <select value={countryFilter}
                     onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: countryFilter ? '#E8F1F2' : '#4A6A7A' }}>
                     <option value="">Tất cả quốc gia</option>
                     {countries.map(c => (
@@ -276,7 +284,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 {/* Vintage filter — dynamic from DB */}
                 <select value={vintageFilter}
                     onChange={e => { setVintageFilter(e.target.value); applyFilter({ vintage: e.target.value ? Number(e.target.value) : undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: vintageFilter ? '#E8F1F2' : '#4A6A7A' }}>
                     <option value="">Tất cả vintage</option>
                     {vintages.map(v => (
@@ -286,7 +294,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 {/* Producer/NCC filter — dynamic from DB */}
                 <select value={producerFilter}
                     onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer max-w-[200px]"
+                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer max-w-[180px]"
                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: producerFilter ? '#E8F1F2' : '#4A6A7A' }}>
                     <option value="">Tất cả NCC / Nhà SX</option>
                     {producers.map(p => (
