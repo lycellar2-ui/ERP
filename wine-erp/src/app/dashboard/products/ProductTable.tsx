@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Edit2, ChevronLeft, ChevronRight, ImageOff, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ProductRow, ProductFilters } from './actions'
 import { WineTypeBadge, StatusBadge } from './ProductsClient'
@@ -28,6 +28,28 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
     const [isVertical, setIsVertical] = useState(false)
+    const imgRef = useRef<HTMLImageElement>(null)
+
+    useEffect(() => {
+        const img = imgRef.current
+        if (!img) return
+
+        const handleLoad = () => {
+            if (img.naturalHeight > img.naturalWidth * 1.2) {
+                setIsVertical(true)
+            } else {
+                setIsVertical(false)
+            }
+        }
+
+        if (img.complete) {
+            handleLoad()
+        } else {
+            setIsVertical(false)
+            img.addEventListener('load', handleLoad)
+            return () => img.removeEventListener('load', handleLoad)
+        }
+    }, [row.primaryImageUrl])
 
     return (
         <tr className="group transition-colors duration-100"
@@ -43,12 +65,15 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
                         {row.primaryImageUrl ? (
                             <>
                                 <img 
+                                    ref={imgRef}
                                     src={row.primaryImageUrl} 
                                     alt={row.productName} 
                                     onLoad={(e) => {
                                         const img = e.currentTarget;
                                         if (img.naturalHeight > img.naturalWidth * 1.2) {
                                             setIsVertical(true);
+                                        } else {
+                                            setIsVertical(false);
                                         }
                                     }}
                                     className={`object-contain transition-all duration-200 ${
