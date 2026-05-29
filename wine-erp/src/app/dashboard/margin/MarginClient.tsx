@@ -173,24 +173,7 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
         })
     }, [addedProducts])
 
-    // Live Metrics aggregated of Báo Giá Nhanh items
-    const summary = useMemo(() => {
-        const count = computedRows.length
-        if (count === 0) return { avgCost: 0, avgSellingPrice: 0, avgNet: 0, avgMargin: 0, avgMarkup: 0, totalProfit: 0 }
 
-        const totalCost = computedRows.reduce((sum, r) => sum + r.product.costPrice, 0)
-        const totalSelling = computedRows.reduce((sum, r) => sum + r.sellingPrice, 0)
-        const totalNet = computedRows.reduce((sum, r) => sum + r.netSellingPrice, 0)
-        const totalProfit = computedRows.reduce((sum, r) => sum + r.profit, 0)
-
-        const avgCost = Math.round(totalCost / count)
-        const avgSellingPrice = Math.round(totalSelling / count)
-        const avgNet = Math.round(totalNet / count)
-        const avgMargin = totalNet > 0 ? (totalProfit / totalNet) * 100 : 0
-        const avgMarkup = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0
-
-        return { avgCost, avgSellingPrice, avgNet, avgMargin, avgMarkup, totalProfit }
-    }, [computedRows])
 
     // Add current simulated product into addedProducts collection
     const handleAddToReport = () => {
@@ -619,29 +602,7 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                 </div>
             ) : (
                 <>
-                    {/* Integrated dynamic metrics computed dynamically from addedProducts only */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5">
-                        <div className="bg-[#1B2E3D]/50 border border-[#2A4355]/30 p-2.5 rounded-xl text-center">
-                            <p className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Vốn TB</p>
-                            <p className="text-xs font-bold mt-1 text-[#E8F1F2] font-mono">{formatVND(summary.avgCost)}</p>
-                        </div>
-                        <div className="bg-[#1B2E3D]/50 border border-[#2A4355]/30 p-2.5 rounded-xl text-center">
-                            <p className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Bán Đề Xuất TB</p>
-                            <p className="text-xs font-bold mt-1 text-[#D4A853] font-mono">{formatVND(summary.avgSellingPrice)}</p>
-                        </div>
-                        <div className="bg-[#1B2E3D]/50 border border-[#2A4355]/30 p-2.5 rounded-xl text-center">
-                            <p className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Bán Ròng TB (Net)</p>
-                            <p className="text-xs font-bold mt-1 text-[#87CBB9] font-mono">{formatVND(summary.avgNet)}</p>
-                        </div>
-                        <div className="bg-[#1B2E3D]/50 border border-[#2A4355]/30 p-2.5 rounded-xl text-center">
-                            <p className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Biên Lợi Nhuận TB</p>
-                            <p className="text-xs font-bold mt-1 text-emerald-400 font-mono">{summary.avgMargin.toFixed(1)}%</p>
-                        </div>
-                        <div className="bg-[#1B2E3D]/50 border border-[#2A4355]/30 p-2.5 rounded-xl text-center col-span-2 md:col-span-1">
-                            <p className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Tổng Lợi Nhuận TB</p>
-                            <p className="text-xs font-bold mt-1 text-[#5BA88A] font-mono">{formatVND(summary.totalProfit)}</p>
-                        </div>
-                    </div>
+
 
                     {/* DESKTOP VIEW: Premium Wide Grid Table */}
                     <div className="hidden md:block rounded-xl overflow-hidden border border-[#2A4355]/40 bg-[#0D1E2B]">
