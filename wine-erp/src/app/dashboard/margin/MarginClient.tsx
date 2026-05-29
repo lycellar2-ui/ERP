@@ -380,7 +380,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             'SKU', 'Tên sản phẩm', 'Loại', 'Quốc gia', 'Vintage',
             'Giá vốn (VND)', 'Retail Price (VND)', 'Wholesale Price (VND)',
             'Special Price (VND)', 'Chiết khấu (%)', 'Buy', 'FOC', 'Incentive (%)', 'Incentive (VND)',
-            'Giá bán ròng (VND)', 'Lợi nhuận gộp (VND)', 'Biên lợi nhuận (%)', 'Tỷ lệ Markup (%)',
+            'Giá bán ròng (VND)', 'Lợi nhuận gộp (VND)', 'Biên lợi nhuận (%)',
             'Mức giảm vs Wholesale (%)', 'Mức giảm vs Retail (%)'
         ]
 
@@ -404,7 +404,6 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                 r.netSellingPrice,
                 r.profit,
                 r.marginPercent.toFixed(1),
-                r.markupPercent.toFixed(1),
                 r.reductionVsWholesale.toFixed(1),
                 r.reductionVsRetail.toFixed(1)
             ].join(','))
@@ -794,7 +793,6 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#87CBB9] text-right w-[110px]">Bán Ròng Net</th>
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[105px]">Lãi gộp</th>
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">Margin</th>
-                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">Markup</th>
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">% Giảm vs Sỉ</th>
                                         <th className="px-2.5 py-2 text-center w-[40px]"></th>
                                     </tr>
@@ -1048,11 +1046,7 @@ function SimulatedTableRow({
                 )}
             </td>
 
-            {/* Markup (%) */}
-            <td className="px-2 py-2.5 text-center whitespace-nowrap font-mono text-[10px]"
-                style={{ color: row.markupPercent >= 35 ? '#D4A853' : row.markupPercent >= 0 ? '#5BA88A' : '#E05252' }}>
-                {row.markupPercent.toFixed(1)}%
-            </td>
+
 
             {/* % Giảm vs Wholesale */}
             <td className="px-2 py-2.5 text-center whitespace-nowrap font-mono text-[10px] text-[#8AAEBB]">
