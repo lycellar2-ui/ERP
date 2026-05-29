@@ -60,6 +60,9 @@ type AddedProduct = {
     sellingPrice: number // user-defined actual selling price (S)
     discount: number     // additional discount percent (D %)
     incentive: number    // additional incentive VND (I)
+    buyQty: number       // buy quantity
+    focQty: number       // FOC quantity
+    incentivePercent: number // additional incentive percent
 }
 
 // Extracted metrics derived from inputs
@@ -68,6 +71,9 @@ type ComputedRow = {
     sellingPrice: number
     discountPercent: number
     incentiveVnd: number
+    incentivePercent: number
+    buyQty: number
+    focQty: number
     netSellingPrice: number
     profit: number
     marginPercent: number
@@ -94,6 +100,9 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
     const [simSellingPrice, setSimSellingPrice] = useState<number>(0)
     const [simDiscount, setSimDiscount] = useState<number>(0)
     const [simIncentive, setSimIncentive] = useState<number>(0)
+    const [simBuyQty, setSimBuyQty] = useState<number>(1)
+    const [simFocQty, setSimFocQty] = useState<number>(0)
+    const [simIncentivePercent, setSimIncentivePercent] = useState<number>(0)
 
     // Báo Giá Nhanh Accumulated Products List
     const [addedProducts, setAddedProducts] = useState<AddedProduct[]>([])
@@ -115,8 +124,45 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
             setSimSellingPrice(activeProduct.wholesalePrice)
             setSimDiscount(0)
             setSimIncentive(0)
+            setSimIncentivePercent(0)
+            setSimBuyQty(1)
+            setSimFocQty(0)
         }
     }, [activeProduct])
+
+    const handleSimSellingPriceChange = (val: number) => {
+        setSimSellingPrice(val)
+        if (activeProduct) {
+            const W = activeProduct.wholesalePrice
+            const dVal = W > 0 ? parseFloat((((W - val) / W) * 100).toFixed(1)) : 0
+            setSimDiscount(dVal)
+            const incVal = Math.round(val * (simIncentivePercent / 100))
+            setSimIncentive(incVal)
+        }
+    }
+
+    const handleSimDiscountChange = (val: number) => {
+        setSimDiscount(val)
+        if (activeProduct) {
+            const W = activeProduct.wholesalePrice
+            const sVal = Math.round(W * (1 - val / 100))
+            setSimSellingPrice(sVal)
+            const incVal = Math.round(sVal * (simIncentivePercent / 100))
+            setSimIncentive(incVal)
+        }
+    }
+
+    const handleSimIncentivePercentChange = (val: number) => {
+        setSimIncentivePercent(val)
+        const incVal = Math.round(simSellingPrice * (val / 100))
+        setSimIncentive(incVal)
+    }
+
+    const handleSimIncentiveChange = (val: number) => {
+        setSimIncentive(val)
+        const pVal = simSellingPrice > 0 ? parseFloat(((val / simSellingPrice) * 100).toFixed(1)) : 0
+        setSimIncentivePercent(pVal)
+    }
 
     const reloadData = async () => {
         setLoading(true)
@@ -164,10 +210,18 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
             const r = item.product
             const s = item.sellingPrice
             const d = item.discount
-            const incentive = item.incentive
+            const incPercent = item.incentivePercent || 0
+            const incVnd = item.incentive || 0
+            const buy = item.buyQty || 1
+            const foc = item.focQty || 0
+
+            // Effective FOC dilution factor (e.g. pay 12 get 14 -> factor = 12/14)
+            const focFactor = (buy > 0 && foc > 0) ? (buy / (buy + foc)) : 1
 
             // Formulas: pre-tax
-            const netSellingPrice = Math.max(0, Math.round(s * (1 - d / 100) - incentive))
+            const baseNetSellingPrice = Math.max(0, Math.round(s * (1 - d / 100) - incVnd))
+            const netSellingPrice = Math.round(baseNetSellingPrice * focFactor)
+
             const profit = netSellingPrice - r.costPrice
             const marginPercent = netSellingPrice > 0 ? (profit / netSellingPrice) * 100 : -100
             const markupPercent = r.costPrice > 0 ? (profit / r.costPrice) * 100 : 0
@@ -178,7 +232,10 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                 product: r,
                 sellingPrice: s,
                 discountPercent: d,
-                incentiveVnd: incentive,
+                incentiveVnd: incVnd,
+                incentivePercent: incPercent,
+                buyQty: buy,
+                focQty: foc,
                 netSellingPrice,
                 profit,
                 marginPercent,
@@ -200,7 +257,10 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
             product: activeProduct,
             sellingPrice: simSellingPrice,
             discount: simDiscount,
-            incentive: simIncentive
+            incentive: simIncentive,
+            buyQty: simBuyQty,
+            focQty: simFocQty,
+            incentivePercent: simIncentivePercent
         }
 
         setAddedProducts(prev => {
@@ -222,9 +282,44 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
     }
 
     // Direct inline modification of inputs inside table rows
-    const updateInlineProduct = (productId: string, field: 'sellingPrice' | 'discount' | 'incentive', value: number) => {
+    const updateInlineProduct = (
+        productId: string, 
+        field: 'sellingPrice' | 'discount' | 'incentive' | 'buyQty' | 'focQty' | 'incentivePercent', 
+        value: number
+    ) => {
         setAddedProducts(prev => prev.map(item => {
             if (item.product.id === productId) {
+                const W = item.product.wholesalePrice
+                
+                if (field === 'sellingPrice') {
+                    // Recalculate discount percent based on Selling Price S vs Wholesale price W
+                    const discount = W > 0 ? parseFloat((((W - value) / W) * 100).toFixed(1)) : 0
+                    // Recalculate incentive amount if % incentive is loaded
+                    const incentive = Math.round(value * ((item.incentivePercent || 0) / 100))
+                    return { ...item, sellingPrice: value, discount, incentive }
+                }
+                
+                if (field === 'discount') {
+                    // Recalculate Selling Price S based on discount percent D %
+                    const sellingPrice = Math.round(W * (1 - value / 100))
+                    // Recalculate incentive amount if % incentive is loaded
+                    const incentive = Math.round(sellingPrice * ((item.incentivePercent || 0) / 100))
+                    return { ...item, discount: value, sellingPrice, incentive }
+                }
+
+                if (field === 'incentivePercent') {
+                    // Recalculate incentive VND amount based on % and current Selling Price S
+                    const incentive = Math.round(item.sellingPrice * (value / 100))
+                    return { ...item, incentivePercent: value, incentive }
+                }
+
+                if (field === 'incentive') {
+                    // Recalculate incentive percent based on VND amount vs Selling Price S
+                    const S = item.sellingPrice
+                    const incentivePercent = S > 0 ? parseFloat(((value / S) * 100).toFixed(1)) : 0
+                    return { ...item, incentive: value, incentivePercent }
+                }
+
                 return {
                     ...item,
                     [field]: value
@@ -258,8 +353,15 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
         const s = simSellingPrice
         const d = simDiscount
         const incentive = simIncentive
+        const buy = simBuyQty
+        const foc = simFocQty
 
-        const netSellingPrice = Math.max(0, Math.round(s * (1 - d / 100) - incentive))
+        // Dilute price per bottle based on Buy/FOC ratio
+        const focFactor = (buy > 0 && foc > 0) ? (buy / (buy + foc)) : 1
+
+        const baseNetSellingPrice = Math.max(0, Math.round(s * (1 - d / 100) - incentive))
+        const netSellingPrice = Math.round(baseNetSellingPrice * focFactor)
+
         const profit = netSellingPrice - c
         const marginPercent = netSellingPrice > 0 ? (profit / netSellingPrice) * 100 : -100
         const markupPercent = c > 0 ? (profit / c) * 100 : 0
@@ -274,7 +376,7 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
             reductionVsWholesale,
             reductionVsRetail
         }
-    }, [activeProduct, simSellingPrice, simDiscount, simIncentive])
+    }, [activeProduct, simSellingPrice, simDiscount, simIncentive, simBuyQty, simFocQty])
 
     const handleExportCsv = () => {
         if (computedRows.length === 0) {
@@ -285,7 +387,7 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
         const headers = [
             'SKU', 'Tên sản phẩm', 'Loại', 'Quốc gia', 'Vintage',
             'Giá vốn (VND)', 'Giá bán lẻ (VND)', 'Giá sỉ tiêu chuẩn (VND)',
-            'Giá bán thực tế (VND)', 'Chiết khấu (%)', 'Incentive (VND)',
+            'Giá bán thực tế (VND)', 'Chiết khấu (%)', 'Buy', 'FOC', 'Incentive (%)', 'Incentive (VND)',
             'Giá bán ròng (VND)', 'Lợi nhuận gộp (VND)', 'Biên lợi nhuận (%)', 'Tỷ lệ Markup (%)',
             'Mức giảm vs Wholesale (%)', 'Mức giảm vs Retail (%)'
         ]
@@ -303,6 +405,9 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                 r.product.wholesalePrice,
                 r.sellingPrice,
                 r.discountPercent,
+                r.buyQty,
+                r.focQty,
+                r.incentivePercent,
                 r.incentiveVnd,
                 r.netSellingPrice,
                 r.profit,
@@ -331,7 +436,7 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                     {/* Supplier Filter (NCC) */}
                     <div className="md:col-span-3 space-y-1">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase">Nhà cung cấp (NCC)</label>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase">NCC</label>
                         <select
                             value={supplierFilter}
                             onChange={e => {
@@ -359,7 +464,7 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                                 <HelpCircle size={13} className="text-[#8AAEBB] hover:text-[#D4A853] cursor-pointer transition-colors" />
                                 <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-72 p-3 bg-[#0D1E2B]/95 border border-[#2A4355] rounded-lg shadow-2xl text-[10px] text-slate-300 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
                                     <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
-                                    <p>• Chọn Nhà cung cấp (NCC) để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
+                                    <p>• Chọn NCC để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
                                     <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
                                     <p>• Hệ thống lưu trữ độc lập Giá Vốn, Lẻ và Sỉ theo bảng Excel bạn đã tải lên.</p>
                                     <p>• Tất cả các số liệu đều được xử lý ở dạng Trước thuế (Pre-tax).</p>
@@ -463,11 +568,11 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 border-t border-[#2A4355]/20 pt-4">
                         {/* Product Info Column */}
                         <div className="md:col-span-4 flex flex-col items-center justify-center p-3 rounded-lg bg-[#142433]/40 border border-[#2A4355]/30">
-                            <div className="relative w-20 h-28 bg-[#142433] rounded border border-[#2A4355]/40 flex items-center justify-center p-1.5 mb-2 overflow-hidden">
+                            <div className="relative w-28 h-36 bg-[#142433] rounded border border-[#2A4355]/40 flex items-center justify-center p-1.5 mb-2 transition-all duration-200 hover:scale-[1.8] hover:z-50 hover:shadow-2xl hover:bg-[#0D1E2B] cursor-zoom-in">
                                 {activeProduct.primaryImageUrl ? (
                                     <img src={activeProduct.primaryImageUrl} alt={activeProduct.productName} className="max-h-full max-w-full object-contain" />
                                 ) : (
-                                    <span className="text-2xl">🍷</span>
+                                    <span className="text-3xl">🍷</span>
                                 ) }
                             </div>
                             <div className="text-center leading-tight">
@@ -502,21 +607,20 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                                 </div>
                             </div>
 
-                            {/* User Interactive Inputs */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {/* User Interactive Inputs (6-columns) */}
+                            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-bold text-slate-300 uppercase">Giá Bán Thực Tế (S)</label>
+                                    <label className="block text-[9px] font-bold text-emerald-400 uppercase">Giá Bán S (đ)</label>
                                     <input
                                         type="text"
                                         value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
-                                        onChange={e => setSimSellingPrice(parseNumberString(e.target.value))}
-                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
-                                        placeholder="Gợi ý: Nhập sỉ..."
+                                        onChange={e => handleSimSellingPriceChange(parseNumberString(e.target.value))}
+                                        className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                                        placeholder="Giá bán"
                                     />
-                                    <span className="text-[9px] text-[#4A6A7A] block italic">Mặc định bằng giá sỉ sẵn có (excl. VAT)</span>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-bold text-slate-300 uppercase">Khấu trừ sỉ (%)</label>
+                                    <label className="block text-[9px] font-bold text-emerald-400 uppercase">C.Khấu D (%)</label>
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -524,21 +628,59 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                                             max="100"
                                             step="0.5"
                                             value={simDiscount === 0 ? '' : simDiscount}
-                                            onChange={e => setSimDiscount(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                            className="w-full pl-2.5 pr-7 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                            onChange={e => handleSimDiscountChange(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
+                                            className="w-full pl-2 pr-5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                                             placeholder="0"
                                         />
-                                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">%</span>
+                                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-bold">%</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-[10px] font-bold text-slate-300 uppercase">Incentive/chai (đ)</label>
+                                    <label className="block text-[9px] font-bold text-amber-400 uppercase">Buy (Mua)</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={simBuyQty === 0 ? '' : simBuyQty}
+                                        onChange={e => setSimBuyQty(Math.max(1, parseInt(e.target.value || '1')))}
+                                        className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                        placeholder="1"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[9px] font-bold text-amber-400 uppercase">FOC (Tặng)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={simFocQty === 0 ? '' : simFocQty}
+                                        onChange={e => setSimFocQty(Math.max(0, parseInt(e.target.value || '0')))}
+                                        className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[9px] font-bold text-sky-400 uppercase">% Incentive</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.1"
+                                            value={simIncentivePercent === 0 ? '' : simIncentivePercent}
+                                            onChange={e => handleSimIncentivePercentChange(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
+                                            className="w-full pl-2 pr-5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-sky-300 focus:outline-none focus:border-[#8AAEBB]"
+                                            placeholder="0"
+                                        />
+                                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-bold">%</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[9px] font-bold text-sky-400 uppercase">Inc VNĐ</label>
                                     <input
                                         type="text"
                                         value={simIncentive === 0 ? '' : formatNumberString(simIncentive)}
-                                        onChange={e => setSimIncentive(parseNumberString(e.target.value))}
-                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
-                                        placeholder="0đ"
+                                        onChange={e => handleSimIncentiveChange(parseNumberString(e.target.value))}
+                                        className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-sky-300 focus:outline-none focus:border-[#8AAEBB]"
+                                        placeholder="Thưởng đ"
                                     />
                                 </div>
                             </div>
@@ -585,9 +727,9 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-8 py-10 border border-[#2A4355]/20 rounded-lg bg-[#142433]/10">
                         <span className="text-3xl mb-2 block">🍷</span>
-                        <h4 className="text-xs font-bold text-slate-400">Sandbox Mô Phỏng Chờ Kích Hoạt</h4>
+                        <h4 className="text-xs font-bold text-slate-400">Check margin</h4>
                         <p className="text-[10px] text-slate-500 max-w-sm mt-1">
-                            Vui lòng chọn Nhà cung cấp và Sản phẩm phía trên để bắt đầu mô phỏng giá bán và lãi gộp cho khách hàng.
+                            Vui lòng chọn NCC và Sản phẩm phía trên để kiểm tra margin.
                         </p>
                     </div>
                 )}
@@ -638,20 +780,36 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
+                                    <tr style={{ background: '#102435', borderBottom: '1px solid rgba(42, 67, 85, 0.4)' }}>
+                                        <th colSpan={4} className="px-3 py-1.5 text-[9px] uppercase font-extrabold tracking-wider text-slate-400 text-center border-r border-[#2A4355]/40">
+                                            Thông tin tham chiếu
+                                        </th>
+                                        <th colSpan={6} className="px-3 py-1.5 text-[9px] uppercase font-extrabold tracking-wider text-emerald-400 bg-[#132A3E]/40 text-center border-r border-[#2A4355]/40">
+                                            Nhập liệu & Tinh chỉnh
+                                        </th>
+                                        <th colSpan={6} className="px-3 py-1.5 text-[9px] uppercase font-extrabold tracking-wider text-[#87CBB9] text-center">
+                                            Kết quả mô phỏng (Pre-tax)
+                                        </th>
+                                    </tr>
                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                        <th className="px-3 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] w-[220px]">Sản phẩm</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Vốn (C)</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Lẻ (R)</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Sỉ (W)</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[110px] text-emerald-400">Giá bán S (đ)</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[80px]">C.Khấu D(%)</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[95px]">Incentive I</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[110px] text-[#87CBB9]">Bán Ròng Net</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[105px]">Lãi gộp</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">Margin</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">Markup</th>
-                                        <th className="px-2 py-2.5 text-[10px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">% Giảm vs Sỉ</th>
-                                        <th className="px-2.5 py-2.5 text-center w-[50px]"></th>
+                                        <th className="px-3 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] w-[240px]">Sản phẩm</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Vốn (C)</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Lẻ (R)</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px] border-r border-[#2A4355]/40">Sỉ (W)</th>
+                                        
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-right w-[110px]">Giá bán S (đ)</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[80px]">C.Khấu D (%)</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[60px]">Buy</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[60px]">FOC</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-center w-[85px]">% Inc</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-right w-[95px] border-r border-[#2A4355]/40">Inc VNĐ</th>
+                                        
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#87CBB9] text-right w-[110px]">Bán Ròng Net</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[105px]">Lãi gộp</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">Margin</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">Markup</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[85px]">% Giảm vs Sỉ</th>
+                                        <th className="px-2.5 py-2 text-center w-[40px]"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -711,7 +869,11 @@ function SimulatedTableRow({
     onDelete
 }: {
     row: ComputedRow
-    onUpdate: (productId: string, field: 'sellingPrice' | 'discount' | 'incentive', value: number) => void
+    onUpdate: (
+        productId: string, 
+        field: 'sellingPrice' | 'discount' | 'incentive' | 'buyQty' | 'focQty' | 'incentivePercent', 
+        value: number
+    ) => void
     onDelete: (productId: string) => void
 }) {
     const p = row.product
@@ -744,10 +906,10 @@ function SimulatedTableRow({
 
     return (
         <tr className="group border-b border-[#2A4355]/30 hover:bg-[#1B2E3D]/10 transition-colors">
-            {/* Th Thumbnail & details */}
+            {/* Thumbnail & details */}
             <td className="px-3 py-2.5">
                 <div className="flex items-center gap-2 min-w-0">
-                    <div className="relative w-9 h-7 rounded bg-[#142433] border border-[#2A4355]/60 flex items-center justify-center flex-shrink-0">
+                    <div className="relative w-16 h-12 rounded bg-[#142433] border border-[#2A4355]/60 flex items-center justify-center flex-shrink-0 transition-all duration-200 hover:scale-[3.5] hover:z-50 hover:shadow-2xl hover:bg-[#0D1E2B] cursor-zoom-in">
                         {p.primaryImageUrl ? (
                             <img
                                 ref={imgRef}
@@ -755,7 +917,7 @@ function SimulatedTableRow({
                                 alt={p.productName}
                                 className={`object-contain transition-all duration-100 ${
                                     isVertical
-                                        ? 'absolute w-[18px] h-[32px] rotate-90'
+                                        ? 'absolute w-[24px] h-[44px] rotate-90'
                                         : 'w-full h-full p-0.5'
                                 }`}
                             />
@@ -790,14 +952,14 @@ function SimulatedTableRow({
                 <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
-            {/* Giá Sỉ tiêu chuẩn */}
-            <td className="px-2 py-2.5 text-right font-sans text-xs text-[#D4A853] font-semibold whitespace-nowrap leading-tight">
+            {/* Giá Sỉ tiêu chuẩn (Vùng chia 1) */}
+            <td className="px-2 py-2.5 text-right font-sans text-xs text-[#D4A853] font-semibold whitespace-nowrap leading-tight border-r border-[#2A4355]/40">
                 <div>{formatVND(p.wholesalePrice)}</div>
                 <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Giá Bán Thực Tế (S) Input */}
-            <td className="px-2 py-2.5 text-right leading-tight">
+            <td className="px-2 py-2.5 text-right leading-tight bg-[#132A3E]/10">
                 <input
                     type="text"
                     value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
@@ -809,28 +971,70 @@ function SimulatedTableRow({
             </td>
 
             {/* Chiết khấu % Input */}
-            <td className="px-2 py-2.5 text-center">
+            <td className="px-2 py-2.5 text-center bg-[#132A3E]/10">
                 <div className="inline-flex items-center justify-center">
                     <input
                         type="number"
                         min="0"
                         max="100"
+                        step="0.5"
                         value={row.discountPercent === 0 ? '' : row.discountPercent}
                         onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                        className="w-[45px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
+                        className="w-[45px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-xs text-emerald-300 outline-none focus:border-[#87CBB9]"
                         placeholder="0"
                     />
                     <span className="text-[9px] text-[#4A6A7A] ml-0.5">%</span>
                 </div>
             </td>
 
-            {/* Incentive Input */}
-            <td className="px-2 py-2.5 text-right">
+            {/* Buy Input */}
+            <td className="px-2 py-2.5 text-center bg-[#132A3E]/10">
+                <input
+                    type="number"
+                    min="1"
+                    value={row.buyQty === 0 ? '' : row.buyQty}
+                    onChange={e => onUpdate(p.id, 'buyQty', Math.max(1, parseInt(e.target.value || '1')))}
+                    className="w-[45px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-xs text-[#E8F1F2] outline-none focus:border-[#D4A853]"
+                    placeholder="1"
+                />
+            </td>
+
+            {/* FOC Input */}
+            <td className="px-2 py-2.5 text-center bg-[#132A3E]/10">
+                <input
+                    type="number"
+                    min="0"
+                    value={row.focQty === 0 ? '' : row.focQty}
+                    onChange={e => onUpdate(p.id, 'focQty', Math.max(0, parseInt(e.target.value || '0')))}
+                    className="w-[45px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-xs text-[#E8F1F2] outline-none focus:border-[#D4A853]"
+                    placeholder="0"
+                />
+            </td>
+
+            {/* % Incentive Input */}
+            <td className="px-2 py-2.5 text-center bg-[#132A3E]/10">
+                <div className="inline-flex items-center justify-center">
+                    <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={row.incentivePercent === 0 ? '' : row.incentivePercent}
+                        onChange={e => onUpdate(p.id, 'incentivePercent', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
+                        className="w-[50px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-xs text-sky-300 outline-none focus:border-[#8AAEBB]"
+                        placeholder="0"
+                    />
+                    <span className="text-[9px] text-[#4A6A7A] ml-0.5">%</span>
+                </div>
+            </td>
+
+            {/* Incentive VNĐ Input (Vùng chia 2) */}
+            <td className="px-2 py-2.5 text-right bg-[#132A3E]/10 border-r border-[#2A4355]/40">
                 <input
                     type="text"
                     value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
                     onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
-                    className="w-[75px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-sans text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
+                    className="w-[75px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-sans text-xs text-sky-300 outline-none focus:border-[#8AAEBB]"
                     placeholder="0đ"
                 />
             </td>
@@ -900,7 +1104,11 @@ function MobileSimulatedCard({
     onDelete
 }: {
     row: ComputedRow
-    onUpdate: (productId: string, field: 'sellingPrice' | 'discount' | 'incentive', value: number) => void
+    onUpdate: (
+        productId: string, 
+        field: 'sellingPrice' | 'discount' | 'incentive' | 'buyQty' | 'focQty' | 'incentivePercent', 
+        value: number
+    ) => void
     onDelete: (productId: string) => void
 }) {
     const p = row.product
@@ -935,7 +1143,7 @@ function MobileSimulatedCard({
         <div className="bg-[#0D1E2B] border border-[#2A4355]/40 rounded-xl p-3.5 space-y-3 relative">
             {/* Header info */}
             <div className="flex gap-2">
-                <div className="relative w-12 h-12 rounded bg-[#142433] border border-[#2A4355]/50 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden">
+                <div className="relative w-16 h-16 rounded bg-[#142433] border border-[#2A4355]/50 flex items-center justify-center p-1 flex-shrink-0 transition-all duration-200 hover:scale-[2.5] hover:z-50 hover:shadow-2xl hover:bg-[#0D1E2B] cursor-zoom-in">
                     {p.primaryImageUrl ? (
                         <img
                             ref={imgRef}
@@ -943,7 +1151,7 @@ function MobileSimulatedCard({
                             alt={p.productName}
                             className={`object-contain transition-all duration-100 ${
                                 isVertical
-                                    ? 'absolute w-[20px] h-[36px] rotate-90'
+                                    ? 'absolute w-[24px] h-[44px] rotate-90'
                                     : 'w-full h-full'
                             }`}
                         />
@@ -990,41 +1198,89 @@ function MobileSimulatedCard({
             </div>
 
             {/* Touch Friendly Inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div className="space-y-1">
-                    <span className="block text-[9px] uppercase font-bold text-slate-400">Giá bán thực tế (S)</span>
-                    <input
-                        type="text"
-                        value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
-                        onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
-                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
-                        placeholder="Nhập giá sỉ..."
-                    />
-                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
-                </div>
+            <div className="space-y-2.5">
+                {/* Row 1: Price and Discount (bound) */}
                 <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                        <span className="block text-[9px] uppercase font-bold text-slate-400">Khấu trừ %</span>
+                        <span className="block text-[9px] uppercase font-bold text-emerald-400">Giá bán S (đ)</span>
+                        <input
+                            type="text"
+                            value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
+                            onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
+                            className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                            placeholder="Nhập giá sỉ..."
+                        />
+                        <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
+                    </div>
+                    <div className="space-y-1">
+                        <span className="block text-[9px] uppercase font-bold text-emerald-400">Khấu trừ %</span>
                         <div className="relative">
                             <input
                                 type="number"
                                 min="0"
                                 max="100"
+                                step="0.5"
                                 value={row.discountPercent === 0 ? '' : row.discountPercent}
                                 onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                className="w-full pl-2 pr-6 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                className="w-full pl-2 pr-6 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                                placeholder="0"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#4A6A7A] font-bold">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Row 2: Buy & FOC */}
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                        <span className="block text-[9px] uppercase font-bold text-amber-400">Mua (Buy Qty)</span>
+                        <input
+                            type="number"
+                            min="1"
+                            value={row.buyQty === 0 ? '' : row.buyQty}
+                            onChange={e => onUpdate(p.id, 'buyQty', Math.max(1, parseInt(e.target.value || '1')))}
+                            className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                            placeholder="1"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <span className="block text-[9px] uppercase font-bold text-amber-400">Tặng (FOC Qty)</span>
+                        <input
+                            type="number"
+                            min="0"
+                            value={row.focQty === 0 ? '' : row.focQty}
+                            onChange={e => onUpdate(p.id, 'focQty', Math.max(0, parseInt(e.target.value || '0')))}
+                            className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                            placeholder="0"
+                        />
+                    </div>
+                </div>
+
+                {/* Row 3: Incentive % and amount */}
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                        <span className="block text-[9px] uppercase font-bold text-sky-400">% Incentive</span>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                value={row.incentivePercent === 0 ? '' : row.incentivePercent}
+                                onChange={e => onUpdate(p.id, 'incentivePercent', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
+                                className="w-full pl-2 pr-6 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-sky-300 focus:outline-none focus:border-[#8AAEBB]"
                                 placeholder="0"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#4A6A7A] font-bold">%</span>
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <span className="block text-[9px] uppercase font-bold text-slate-400">Incentive đ</span>
+                        <span className="block text-[9px] uppercase font-bold text-sky-400">Incentive đ</span>
                         <input
                             type="text"
                             value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
                             onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
-                            className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                            className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-sky-300 focus:outline-none focus:border-[#8AAEBB]"
                             placeholder="0đ"
                         />
                     </div>
