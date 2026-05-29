@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Search, Download, Upload, Calculator, RefreshCw, Trash2, ArrowUpRight, Plus, HelpCircle, Check, ChevronDown } from 'lucide-react'
+import { Search, Download, Upload, Calculator, RefreshCw, Trash2, ArrowUpRight, Plus, HelpCircle, Check, ChevronDown, LayoutList } from 'lucide-react'
 import { toast } from 'sonner'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { MarginProductRow, getMarginProducts, bulkImportMarginPrices } from './actions'
@@ -106,6 +106,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
 
     // Báo Giá Nhanh Accumulated Products List
     const [addedProducts, setAddedProducts] = useState<AddedProduct[]>([])
+    const [isCompactView, setIsCompactView] = useState(false)
 
     // Close autocomplete when clicking outside
     useEffect(() => {
@@ -745,7 +746,18 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                 </div>
 
                 {addedProducts.length > 0 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                            onClick={() => setIsCompactView(prev => !prev)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 border ${
+                                isCompactView
+                                    ? 'bg-[#D4A853] text-[#0A1926] border-[#D4A853] hover:bg-[#E5B964]'
+                                    : 'bg-[#1B2E3D] text-[#8AAEBB] border-[#2A4355] hover:bg-[#142433] hover:text-[#E8F1F2]'
+                            }`}
+                        >
+                            <LayoutList size={13} />
+                            <span>{isCompactView ? 'Xem đầy đủ' : 'Xem rút gọn'}</span>
+                        </button>
                         <button
                             onClick={handleExportCsv}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 shadow-lg shadow-emerald-950/20 bg-[#87CBB9] text-[#0A1926] hover:bg-[#A5DED0]"
@@ -771,6 +783,119 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                         Hãy chọn sản phẩm phía trên, nhập mức chiết khấu ưu đãi cho khách và click "+ Thêm vào bảng check margin".
                     </p>
                 </div>
+            ) : isCompactView ? (
+                <>
+                    {/* DESKTOP VIEW: Simplified Compact Table */}
+                    <div className="hidden md:block rounded-xl overflow-hidden border border-[#2A4355]/40 bg-[#0D1E2B]">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] w-[140px]">Mã SKU</th>
+                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A]">Tên sản phẩm</th>
+                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Giá Wholesale</th>
+                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Giá Đặc Biệt</th>
+                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[100px]">Margin</th>
+                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[140px]">Vs Wholesale</th>
+                                        <th className="px-3 py-2.5 w-[50px]"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {computedRows.map(row => {
+                                        const p = row.product
+                                        return (
+                                            <tr key={p.id} className="group border-b border-[#2A4355]/30 hover:bg-[#1B2E3D]/10 transition-colors">
+                                                <td className="px-3 py-2.5 text-xs text-[#8AAEBB] font-sans font-medium whitespace-nowrap">{p.skuCode}</td>
+                                                <td className="px-3 py-2.5 text-xs text-slate-100 font-medium leading-snug">{p.productName}</td>
+                                                <td className="px-3 py-2.5 text-xs text-right font-sans text-[#D4A853] font-semibold whitespace-nowrap">{formatVND(p.wholesalePrice)}</td>
+                                                <td className="px-3 py-2.5 text-xs text-right font-sans text-[#87CBB9] font-bold whitespace-nowrap">{formatVND(row.netSellingPrice)}</td>
+                                                <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                                                    {row.marginPercent === -100 ? (
+                                                        <span className="text-xs text-[#4A6A7A] font-sans">N/A</span>
+                                                    ) : (
+                                                        <span className="px-1.5 py-0.5 rounded text-xs font-bold font-sans"
+                                                            style={{
+                                                                background: row.marginPercent < 15 ? 'rgba(224,82,82,0.12)' : row.marginPercent >= 35 ? 'rgba(212,168,83,0.12)' : 'rgba(91,168,138,0.12)',
+                                                                color: row.marginPercent < 15 ? '#E05252' : row.marginPercent >= 35 ? '#D4A853' : '#5BA88A'
+                                                            }}>
+                                                            {row.marginPercent.toFixed(1)}%
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center whitespace-nowrap font-sans text-xs text-[#8AAEBB]">
+                                                    {row.reductionVsWholesale > 0 ? (
+                                                        <span className="flex items-center justify-center gap-0.5 text-rose-400">
+                                                            <ArrowUpRight size={10} className="rotate-90" /> {row.reductionVsWholesale.toFixed(1)}%
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[#4A6A7A]">0%</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center">
+                                                    <button
+                                                        onClick={() => removeProductFromReport(p.id)}
+                                                        className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* MOBILE VIEW: Simplified Compact Cards */}
+                    <div className="block md:hidden space-y-3">
+                        {computedRows.map(row => {
+                            const p = row.product
+                            return (
+                                <div key={p.id} className="bg-[#0D1E2B] border border-[#2A4355]/40 rounded-xl p-3.5 space-y-2 relative">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="text-xs font-bold text-slate-100 leading-snug">{p.productName}</h4>
+                                            <p className="text-[10px] text-[#8AAEBB] font-sans font-medium mt-0.5">{p.skuCode}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => removeProductFromReport(p.id)}
+                                            className="p-1.5 rounded-lg bg-[#E05252]/10 text-[#E05252] hover:bg-[#E05252]/20 transition-colors flex-shrink-0"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-[#2A4355]/20 text-[11px]">
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-400">Wholesale:</span>
+                                                <span className="font-semibold text-[#D4A853]">{formatVND(p.wholesalePrice)}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-400">Giá đặc biệt:</span>
+                                                <span className="font-bold text-[#87CBB9]">{formatVND(row.netSellingPrice)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1 pl-2 border-l border-[#2A4355]/20">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-400">Margin:</span>
+                                                <span className="font-bold px-1 rounded" style={{
+                                                    background: row.marginPercent < 15 ? 'rgba(224,82,82,0.12)' : row.marginPercent >= 35 ? 'rgba(212,168,83,0.12)' : 'rgba(91,168,138,0.12)',
+                                                    color: row.marginPercent < 15 ? '#E05252' : row.marginPercent >= 35 ? '#D4A853' : '#5BA88A'
+                                                }}>{row.marginPercent.toFixed(1)}%</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-400">vs Wholesale:</span>
+                                                <span className="font-semibold text-rose-400">-{row.reductionVsWholesale.toFixed(1)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </>
             ) : (
                 <>
 
