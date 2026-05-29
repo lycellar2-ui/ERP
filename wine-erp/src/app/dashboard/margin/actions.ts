@@ -8,6 +8,11 @@ import { requirePermission } from '@/lib/session'
 import { logAudit } from '@/lib/audit'
 import { getCurrentUser } from '@/lib/session'
 
+export type MarginSupplierOption = {
+    id: string
+    name: string
+}
+
 export type MarginProductRow = {
     id: string
     skuCode: string
@@ -25,19 +30,76 @@ export type MarginProductRow = {
     updatedAt: Date | null
     producerId: string
     producerName: string
+    supplierId: string
+    supplierName: string
+}
+
+// Deterministic supplier fallback mapping based on the seeded brand/producer
+function getSupplierForProduct(
+    producerId: string,
+    poLines: { po: { supplierId: string } }[]
+): string {
+    if (poLines && poLines.length > 0) {
+        return poLines[0].po.supplierId
+    }
+
+    switch (producerId) {
+        case 'prod-petrus':
+        case 'prod-mouton':
+        case 'prod-margaux':
+        case 'prod-drc':
+            return 'sup-millesima'
+        case 'prod-opusone':
+            return 'sup-suntory'
+        case 'prod-krug':
+        case 'prod-veuve':
+            return 'sup-lvmh'
+        case 'prod-sassicaia':
+            return 'sup-treasury'
+        default:
+            return 'sup-millesima'
+    }
+}
+
+export async function getMarginSuppliers(): Promise<MarginSupplierOption[]> {
+    const suppliers = await prisma.supplier.findMany({
+        where: { deletedAt: null, status: 'ACTIVE' },
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' }
+    })
+    return suppliers
 }
 
 // ─── Fetch products with pricing ──────────────────
 export async function getMarginProducts(): Promise<MarginProductRow[]> {
-    const products = await prisma.product.findMany({
-        where: { deletedAt: null, status: 'ACTIVE' },
-        include: {
-            marginPrice: true,
-            producer: { select: { id: true, name: true } },
-            media: { select: { url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } }
-        },
-        orderBy: { productName: 'asc' }
-    })
+    const [products, suppliers] = await Promise.all([
+        prisma.product.findMany({
+            where: { deletedAt: null, status: 'ACTIVE' },
+            include: {
+                marginPrice: true,
+                producer: { select: { id: true, name: true } },
+                media: { select: { url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
+                poLines: {
+                    select: {
+                        po: {
+                            select: {
+                                supplierId: true
+                            }
+                        }
+                    },
+                    take: 1
+                }
+            },
+            orderBy: { productName: 'asc' }
+        }),
+        prisma.supplier.findMany({
+            where: { deletedAt: null },
+            select: { id: true, name: true }
+        })
+    ])
+
+    const supplierMap = new Map<string, string>()
+    suppliers.forEach(s => supplierMap.set(s.id, s.name))
 
     return products.map(p => {
         let costPrice = 0
@@ -61,6 +123,9 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
             wholesalePrice = Math.round(retailPrice * 0.8) // 20% wholesale discount standard
         }
 
+        const supplierId = getSupplierForProduct(p.producer.id, p.poLines)
+        const supplierName = supplierMap.get(supplierId) || 'NCC Mặc Định'
+
         return {
             id: p.id,
             skuCode: p.skuCode,
@@ -75,7 +140,9 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
             hasCustomPrice,
             updatedAt,
             producerId: p.producer.id,
-            producerName: p.producer.name
+            producerName: p.producer.name,
+            supplierId,
+            supplierName
         }
     })
 }

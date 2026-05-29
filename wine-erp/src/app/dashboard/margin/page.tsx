@@ -1,14 +1,15 @@
 import { Suspense } from 'react'
-import { getMarginProducts } from './actions'
+import { getMarginProducts, getMarginSuppliers } from './actions'
 import { MarginClient } from './MarginClient'
 import { getCurrentUser, hasRole } from '@/lib/session'
 
 export const metadata = { title: 'Check Margin | Wine ERP' }
 
 export default async function MarginPage() {
-    // Fetch initial products and current user roles in parallel
-    const [initialRows, user] = await Promise.all([
+    // Fetch initial products, suppliers and current user roles in parallel
+    const [initialRows, suppliers, user] = await Promise.all([
         getMarginProducts().catch(() => []),
+        getMarginSuppliers().catch(() => []),
         getCurrentUser().catch(() => null)
     ])
 
@@ -16,7 +17,7 @@ export default async function MarginPage() {
 
     return (
         <Suspense fallback={<MarginPageSkeleton />}>
-            <MarginClient initialRows={initialRows} isAdmin={isAdmin} />
+            <MarginClient initialRows={initialRows} suppliers={suppliers} isAdmin={isAdmin} />
         </Suspense>
     )
 }

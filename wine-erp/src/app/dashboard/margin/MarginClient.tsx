@@ -82,7 +82,7 @@ type ComputedRow = {
     reductionVsRetail: number
 }
 
-export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProductRow[]; isAdmin: boolean }) {
+export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows: MarginProductRow[]; suppliers: { id: string; name: string }[]; isAdmin: boolean }) {
     const [dbRows, setDbRows] = useState<MarginProductRow[]>(initialRows)
     const [loading, setLoading] = useState(false)
     const [importOpen, setImportOpen] = useState(false)
@@ -178,21 +178,13 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
     }
 
     // Dynamic list of unique suppliers (NCC)
-    const uniqueSuppliers = useMemo(() => {
-        const list = dbRows.map(p => ({ id: p.producerId, name: p.producerName }))
-        const seen = new Set<string>()
-        return list.filter(item => {
-            if (seen.has(item.id)) return false
-            seen.add(item.id)
-            return true
-        }).sort((a, b) => a.name.localeCompare(b.name))
-    }, [dbRows])
+    const uniqueSuppliers = suppliers
 
     // Filter autocomplete suggestions based on search text and supplier filter (NCC)
     const autocompleteSuggestions = useMemo(() => {
         let list = dbRows
         if (supplierFilter) {
-            list = list.filter(p => p.producerId === supplierFilter)
+            list = list.filter(p => p.supplierId === supplierFilter)
         }
         if (!searchQuery.trim()) {
             return list.slice(0, 15)
@@ -442,7 +434,7 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                             onChange={e => {
                                 setSupplierFilter(e.target.value)
                                 // Reset active product if it doesn't belong to the new supplier
-                                if (activeProduct && e.target.value && activeProduct.producerId !== e.target.value) {
+                                if (activeProduct && e.target.value && activeProduct.supplierId !== e.target.value) {
                                     setActiveProduct(null)
                                     setSearchQuery('')
                                 }
