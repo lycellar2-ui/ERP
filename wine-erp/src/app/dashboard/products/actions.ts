@@ -765,6 +765,48 @@ export async function uploadProductMedia(
     }
 }
 
+/** Save media URL that was uploaded directly from client to ImgBB (bypasses Vercel payload limit) */
+export async function saveProductMediaUrl(
+    productId: string,
+    urls: { url: string; thumbUrl?: string; mediumUrl?: string },
+    mediaType: string = 'PRODUCT_MAIN'
+): Promise<{ success: boolean; media?: ProductMediaRow; error?: string }> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+        if (!urls.url) return { success: false, error: 'URL ảnh bắt buộc' }
+
+        const existingCount = await prisma.productMedia.count({ where: { productId } })
+
+        const media = await prisma.productMedia.create({
+            data: {
+                productId,
+                url: urls.url,
+                thumbnailUrl: urls.thumbUrl ?? null,
+                mediumUrl: urls.mediumUrl ?? null,
+                mediaType: mediaType as any,
+                isPrimary: existingCount === 0,
+            },
+        })
+
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return {
+            success: true,
+            media: {
+                id: media.id,
+                url: media.url,
+                thumbnailUrl: media.thumbnailUrl,
+                mediaType: media.mediaType,
+                isPrimary: media.isPrimary,
+                tags: media.tags,
+                uploadedAt: media.uploadedAt,
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
 export async function deleteProductMedia(
     mediaId: string
 ): Promise<{ success: boolean; error?: string }> {

@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, Sparkles } from 'lucide-react'
 import { compressImage } from '@/lib/compress-image'
+import { uploadToImgBBDirect } from '@/lib/imgbb-client'
 import { toast } from 'sonner'
 import {
     ProductInput, createProduct, updateProduct, getProducers, getRegions, getSuppliers,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
+    saveProductMediaUrl,
     getProductAwards, addProductAward, deleteProductAward,
     getProductById, createProducerInline, getProductEditDetails,
     type ProductMediaRow, type ProductAwardRow,
@@ -701,14 +703,37 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                                     const savedPct = Math.round((1 - compressed.size / file.size) * 100)
                                                     if (savedPct > 5) toast.info(`Ảnh đã nén: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressed.size / 1024 / 1024).toFixed(1)}MB (-${savedPct}%)`)
                                                 }
-                                                const fd = new FormData()
-                                                fd.append('file', compressed)
-                                                const res = await uploadProductMedia(editingId, fd)
-                                                if (res.success && res.media) {
-                                                    setMediaList(prev => [res.media!, ...prev])
-                                                    toast.success('Upload ảnh thành công!')
+
+                                                // Direct upload: Browser → ImgBB (bypass Vercel)
+                                                const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY
+                                                if (apiKey) {
+                                                    const imgResult = await uploadToImgBBDirect(compressed, apiKey, compressed.name.replace(/\.[^.]+$/, ''))
+                                                    if (!imgResult.success || !imgResult.url) {
+                                                        toast.error(`Lỗi upload ImgBB: ${imgResult.error}`)
+                                                        return
+                                                    }
+                                                    const res = await saveProductMediaUrl(editingId, {
+                                                        url: imgResult.url,
+                                                        thumbUrl: imgResult.thumbUrl,
+                                                        mediumUrl: imgResult.mediumUrl,
+                                                    })
+                                                    if (res.success && res.media) {
+                                                        setMediaList(prev => [res.media!, ...prev])
+                                                        toast.success('Upload ảnh thành công!')
+                                                    } else {
+                                                        toast.error(`Lỗi lưu ảnh: ${res.error}`)
+                                                    }
                                                 } else {
-                                                    toast.error(`Lỗi upload: ${res.error}`)
+                                                    // Fallback: upload through server action
+                                                    const fd = new FormData()
+                                                    fd.append('file', compressed)
+                                                    const res = await uploadProductMedia(editingId, fd)
+                                                    if (res.success && res.media) {
+                                                        setMediaList(prev => [res.media!, ...prev])
+                                                        toast.success('Upload ảnh thành công!')
+                                                    } else {
+                                                        toast.error(`Lỗi upload: ${res.error}`)
+                                                    }
                                                 }
                                             } catch (err: any) {
                                                 toast.error(`Lỗi upload: ${err.message ?? err}`)

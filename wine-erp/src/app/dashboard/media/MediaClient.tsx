@@ -7,10 +7,11 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { compressImage } from '@/lib/compress-image'
+import { uploadToImgBBDirect } from '@/lib/imgbb-client'
 import {
     MediaItem, MediaStats, MediaFilters,
     getAllMedia, deleteMedia, bulkDeleteMedia,
-    uploadMediaToProduct, getProductsForUpload
+    uploadMediaToProduct, saveMediaUrl, getProductsForUpload
 } from './actions'
 
 const MEDIA_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
@@ -361,11 +362,25 @@ function UploadModal({ onClose }: { onClose: () => void }) {
         for (const file of Array.from(files)) {
             try {
                 const compressed = await compressImage(file)
-                const fd = new FormData()
-                fd.append('file', compressed)
-                const res = await uploadMediaToProduct(selectedProduct, fd, mediaType)
-                if (res.success) success++
-                else failed++
+                const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY
+                if (apiKey) {
+                    const imgResult = await uploadToImgBBDirect(compressed, apiKey, compressed.name.replace(/\.[^.]+$/, ''))
+                    if (imgResult.success && imgResult.url) {
+                        const res = await saveMediaUrl(selectedProduct, {
+                            url: imgResult.url,
+                            thumbUrl: imgResult.thumbUrl,
+                            mediumUrl: imgResult.mediumUrl,
+                        }, mediaType)
+                        if (res.success) success++
+                        else failed++
+                    } else { failed++ }
+                } else {
+                    const fd = new FormData()
+                    fd.append('file', compressed)
+                    const res = await uploadMediaToProduct(selectedProduct, fd, mediaType)
+                    if (res.success) success++
+                    else failed++
+                }
             } catch {
                 failed++
             }

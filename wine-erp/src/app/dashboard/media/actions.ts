@@ -161,6 +161,36 @@ export async function uploadMediaToProduct(
     }
 }
 
+/** Save media URL uploaded directly from client to ImgBB */
+export async function saveMediaUrl(
+    productId: string,
+    urls: { url: string; thumbUrl?: string; mediumUrl?: string },
+    mediaType: string = 'PRODUCT_MAIN'
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const existingCount = await prisma.productMedia.count({ where: { productId } })
+
+        await prisma.productMedia.create({
+            data: {
+                productId,
+                url: urls.url,
+                thumbnailUrl: urls.thumbUrl ?? null,
+                mediumUrl: urls.mediumUrl ?? null,
+                mediaType: mediaType as any,
+                isPrimary: existingCount === 0,
+            },
+        })
+
+        revalidateCache('media:stats')
+        revalidateCache('products')
+        revalidatePath('/dashboard/media')
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
 // ─── Delete ───────────────────────────────────────
 
 export async function deleteMedia(mediaId: string): Promise<{ success: boolean; error?: string }> {
