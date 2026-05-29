@@ -265,11 +265,26 @@ model Product {
   qrCodes              QRCode[]
   regulatedDocs        RegulatedDocument[]
   priceRules           CustomerPriceRule[]
+  marginPrice          ProductMarginPrice?
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
 
   @@map("products")
+}
+
+model ProductMarginPrice {
+  id             String   @id @default(cuid())
+  productId      String   @unique
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  skuCode        String   @unique
+  costPrice      Decimal  @db.Decimal(18, 2)
+  retailPrice    Decimal  @db.Decimal(18, 2)
+  wholesalePrice Decimal  @db.Decimal(18, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("product_margin_prices")
 }
 
 model ProductMedia {
