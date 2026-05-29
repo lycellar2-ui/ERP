@@ -48,7 +48,7 @@ const NAV_GROUPS = [
             { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng' },
             { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá' },
             { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá' },
-            { href: '/dashboard/margin', icon: Calculator, label: 'Mô Phỏng Margin' },
+            { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin' },
             { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng' },
             { href: '/dashboard/pipeline', icon: Target, label: 'Sales Pipeline' },
             { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)' },

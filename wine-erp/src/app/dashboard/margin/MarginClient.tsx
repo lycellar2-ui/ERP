@@ -325,82 +325,12 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
 
     return (
         <div className="space-y-4 max-w-screen-2xl text-slate-100">
-            {/* Upper control board with actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0D1E2B]/50 p-4 rounded-xl border border-[#2A4355]/40 backdrop-blur-md">
-                <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
-                        Check Giá & Biên Lợi Nhuận
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded tracking-wider uppercase font-mono" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>
-                            Báo Giá Nhanh
-                        </span>
-                    </h2>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {addedProducts.length > 0 && (
-                        <button
-                            onClick={handleExportCsv}
-                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-150 shadow-lg shadow-emerald-950/20"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
-                        >
-                            <Download size={13} /> Xuất Báo Giá (CSV)
-                        </button>
-                    )}
-                </div>
-            </div>
-
             {/* Select & Workbench Section */}
             <div className="bg-[#0D1E2B] border border-[#2A4355]/40 rounded-xl p-4 relative overflow-hidden space-y-4">
-                {/* Header Row: Calculator Icon on Left, Info Tooltip and Admin Toolbar on Right */}
-                <div className="flex items-center justify-between border-b border-[#2A4355]/20 pb-2">
-                    <div className="flex items-center gap-1.5 text-xs text-[#D4A853]">
-                        <Calculator size={14} />
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                        {isAdmin && (
-                            <div className="flex items-center gap-1.5">
-                                <button
-                                    onClick={reloadData}
-                                    disabled={loading}
-                                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1B2E3D] hover:bg-[#142433] border border-[#2A4355] text-[10px] font-semibold text-[#87CBB9] transition-all disabled:opacity-50"
-                                    title="Làm mới Database"
-                                >
-                                    <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
-                                    <span>Làm mới DB</span>
-                                </button>
-                                <button
-                                    onClick={() => setImportOpen(true)}
-                                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1B2E3D] hover:bg-[#142433] border border-[#2A4355] text-[10px] font-semibold text-[#D4A853] transition-all"
-                                    title="Nhập bảng giá từ Excel"
-                                >
-                                    <Upload size={11} />
-                                    <span>Nhập Excel</span>
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Compact Info tooltip "i" icon */}
-                        <div className="relative group">
-                            <HelpCircle size={15} className="text-[#8AAEBB] hover:text-[#D4A853] cursor-pointer transition-all duration-150" />
-                            <div className="absolute right-0 top-6 hidden group-hover:block w-72 p-3 bg-[#0D1E2B]/95 border border-[#2A4355] rounded-lg shadow-2xl text-[10px] text-slate-300 space-y-1.5 z-50 leading-relaxed backdrop-blur-md">
-                                <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
-                                <p>• Chọn Nhà cung cấp (NCC) để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
-                                <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
-                                <p>• Hệ thống lưu trữ độc lập Giá Vốn, Lẻ và Sỉ theo bảng Excel bạn đã tải lên.</p>
-                                <p>• Tất cả các số liệu đều được xử lý ở dạng Trước thuế (Pre-tax).</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Selector Row (NCC Filter and Product Autocomplete side-by-side) */}
+                {/* Selector Row (NCC Filter, Autocomplete, Admin tools, and Help tooltip inline) */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                     {/* Supplier Filter (NCC) */}
-                    <div className="md:col-span-4 space-y-1">
+                    <div className="md:col-span-3 space-y-1">
                         <label className="block text-[10px] font-bold text-slate-400 uppercase">Nhà cung cấp (NCC)</label>
                         <select
                             value={supplierFilter}
@@ -412,7 +342,7 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                                     setSearchQuery('')
                                 }
                             }}
-                            className="w-full px-2.5 py-2 bg-[#142433] border border-[#2A4355] rounded-lg text-xs outline-none cursor-pointer text-slate-200 focus:border-[#D4A853] transition-colors"
+                            className="w-full h-8 px-2.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs outline-none cursor-pointer text-slate-200 focus:border-[#D4A853] transition-colors"
                         >
                             <option value="">Tất cả NCC</option>
                             {uniqueSuppliers.map(s => (
@@ -422,8 +352,20 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                     </div>
 
                     {/* Search SKU Autocomplete */}
-                    <div className="md:col-span-8 space-y-1 relative" ref={dropdownRef}>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase">Chọn mã sản phẩm</label>
+                    <div className={`${isAdmin ? 'md:col-span-5' : 'md:col-span-9'} space-y-1 relative`} ref={dropdownRef}>
+                        <div className="flex items-center gap-1.5 h-4 mb-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase leading-none">Chọn mã sản phẩm</label>
+                            <div className="relative group leading-none flex items-center">
+                                <HelpCircle size={13} className="text-[#8AAEBB] hover:text-[#D4A853] cursor-pointer transition-colors" />
+                                <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-72 p-3 bg-[#0D1E2B]/95 border border-[#2A4355] rounded-lg shadow-2xl text-[10px] text-slate-300 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
+                                    <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
+                                    <p>• Chọn Nhà cung cấp (NCC) để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
+                                    <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
+                                    <p>• Hệ thống lưu trữ độc lập Giá Vốn, Lẻ và Sỉ theo bảng Excel bạn đã tải lên.</p>
+                                    <p>• Tất cả các số liệu đều được xử lý ở dạng Trước thuế (Pre-tax).</p>
+                                </div>
+                            </div>
+                        </div>
                         <div className="relative">
                             <input
                                 type="text"
@@ -434,7 +376,7 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                                     setIsOpenDropdown(true)
                                 }}
                                 onFocus={() => setIsOpenDropdown(true)}
-                                className="w-full pl-8 pr-8 py-2 bg-[#142433] border border-[#2A4355] rounded-lg text-xs text-[#E8F1F2] placeholder-[#4A6A7A] focus:outline-none focus:border-[#D4A853] focus:ring-1 focus:ring-[#D4A853]/30 transition-all font-mono"
+                                className="w-full h-8 pl-8 pr-8 bg-[#142433] border border-[#2A4355] rounded-lg text-xs text-[#E8F1F2] placeholder-[#4A6A7A] focus:outline-none focus:border-[#D4A853] focus:ring-1 focus:ring-[#D4A853]/30 transition-all font-sans"
                             />
                             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#4A6A7A]" />
                             <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4A6A7A] pointer-events-none" />
@@ -485,6 +427,35 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                             </div>
                         )}
                     </div>
+
+                    {isAdmin && (
+                        <>
+                            {/* Làm mới DB */}
+                            <div className="md:col-span-2 space-y-1">
+                                <span className="block text-[10px] font-bold text-transparent select-none h-4">DB Tools</span>
+                                <button
+                                    onClick={reloadData}
+                                    disabled={loading}
+                                    className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-[#1B2E3D] hover:bg-[#142433] border border-[#2A4355] text-[#87CBB9] disabled:opacity-50"
+                                >
+                                    <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                                    <span>Làm mới DB</span>
+                                </button>
+                            </div>
+
+                            {/* Nhập Excel */}
+                            <div className="md:col-span-2 space-y-1">
+                                <span className="block text-[10px] font-bold text-transparent select-none h-4">Excel Tools</span>
+                                <button
+                                    onClick={() => setImportOpen(true)}
+                                    className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-[#1B2E3D] hover:bg-[#142433] border border-[#2A4355] text-[#D4A853]"
+                                >
+                                    <Upload size={13} />
+                                    <span>Nhập Excel</span>
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Rest of Workbench Details - visible only when activeProduct is chosen */}
@@ -632,12 +603,20 @@ export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProd
                 </h3>
 
                 {addedProducts.length > 0 && (
-                    <button
-                        onClick={handleClearAll}
-                        className="text-xs text-[#E05252] border border-[#E05252]/20 hover:border-[#E05252]/40 rounded-lg px-2.5 py-1 hover:bg-[#E05252]/5 transition-all flex items-center gap-1"
-                    >
-                        <Trash2 size={12} /> Xóa sạch bảng
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleExportCsv}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 shadow-lg shadow-emerald-950/20 bg-[#87CBB9] text-[#0A1926] hover:bg-[#A5DED0]"
+                        >
+                            <Download size={13} /> Xuất Báo Giá (CSV)
+                        </button>
+                        <button
+                            onClick={handleClearAll}
+                            className="text-xs text-[#E05252] border border-[#E05252]/20 hover:border-[#E05252]/40 rounded-lg px-2.5 py-1 hover:bg-[#E05252]/5 transition-all flex items-center gap-1"
+                        >
+                            <Trash2 size={12} /> Xóa sạch bảng
+                        </button>
+                    </div>
                 )}
             </div>
 

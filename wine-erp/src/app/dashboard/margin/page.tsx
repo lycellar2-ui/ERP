@@ -3,7 +3,7 @@ import { getMarginProducts } from './actions'
 import { MarginClient } from './MarginClient'
 import { getCurrentUser, hasRole } from '@/lib/session'
 
-export const metadata = { title: 'Mô Phỏng Margin Giá Vang | Wine ERP' }
+export const metadata = { title: 'Check Margin | Wine ERP' }
 
 export default async function MarginPage() {
     // Fetch initial products and current user roles in parallel

@@ -16,7 +16,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton }: Heade
     const getHeaderTitle = (): string => {
         if (customTitle && customTitle !== "LY's Cellars") return customTitle
 
-        if (pathname === '/dashboard/margin') return 'Check Giá & Biên Lợi Nhuận'
+        if (pathname === '/dashboard/margin') return 'Check Margin'
 
         const routes = [
             { path: '/dashboard/proposals', title: 'Tờ Trình — Đề Xuất' },
