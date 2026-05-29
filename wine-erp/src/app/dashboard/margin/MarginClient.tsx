@@ -41,6 +41,18 @@ function formatVND(val: number) {
         .replace('₫', 'đ')
 }
 
+function formatNumberString(val: number | string) {
+    if (val === undefined || val === null || val === '') return ''
+    const clean = String(val).replace(/\D/g, '')
+    if (!clean) return ''
+    return new Intl.NumberFormat('vi-VN').format(parseInt(clean))
+}
+
+function parseNumberString(val: string): number {
+    const clean = val.replace(/\D/g, '')
+    return clean ? parseInt(clean) : 0
+}
+
 // Simulated active pricing parameters
 type AddedProduct = {
     id: string // maps to product.id
@@ -494,9 +506,9 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                                     <div className="space-y-1">
                                         <label className="block text-[10px] font-bold text-slate-300 uppercase">Giá Bán Thực Tế (S)</label>
                                         <input
-                                            type="number"
-                                            value={simSellingPrice === 0 ? '' : simSellingPrice}
-                                            onChange={e => setSimSellingPrice(Math.max(0, parseInt(e.target.value || '0')))}
+                                            type="text"
+                                            value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
+                                            onChange={e => setSimSellingPrice(parseNumberString(e.target.value))}
                                             className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                                             placeholder="Gợi ý: Nhập sỉ..."
                                         />
@@ -521,9 +533,9 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                                     <div className="space-y-1">
                                         <label className="block text-[10px] font-bold text-slate-300 uppercase">Incentive/chai (đ)</label>
                                         <input
-                                            type="number"
-                                            value={simIncentive === 0 ? '' : simIncentive}
-                                            onChange={e => setSimIncentive(Math.max(0, parseInt(e.target.value || '0')))}
+                                            type="text"
+                                            value={simIncentive === 0 ? '' : formatNumberString(simIncentive)}
+                                            onChange={e => setSimIncentive(parseNumberString(e.target.value))}
                                             className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                                             placeholder="0đ"
                                         />
@@ -794,9 +806,9 @@ function SimulatedTableRow({
             {/* Giá Bán Thực Tế (S) Input */}
             <td className="px-2 py-2.5 text-right">
                 <input
-                    type="number"
-                    value={row.sellingPrice === 0 ? '' : row.sellingPrice}
-                    onChange={e => onUpdate(p.id, 'sellingPrice', Math.max(0, parseInt(e.target.value || '0')))}
+                    type="text"
+                    value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
+                    onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
                     className="w-[95px] px-1.5 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-mono text-xs text-emerald-300 font-semibold outline-none focus:border-[#87CBB9]"
                     placeholder="0đ"
                 />
@@ -821,9 +833,9 @@ function SimulatedTableRow({
             {/* Incentive Input */}
             <td className="px-2 py-2.5 text-right">
                 <input
-                    type="number"
-                    value={row.incentiveVnd === 0 ? '' : row.incentiveVnd}
-                    onChange={e => onUpdate(p.id, 'incentive', Math.max(0, parseInt(e.target.value || '0')))}
+                    type="text"
+                    value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
+                    onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
                     className="w-[75px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-mono text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
                     placeholder="0đ"
                 />
@@ -983,9 +995,9 @@ function MobileSimulatedCard({
                 <div className="space-y-1">
                     <span className="block text-[9px] uppercase font-bold text-slate-400">Giá bán thực tế (S)</span>
                     <input
-                        type="number"
-                        value={row.sellingPrice === 0 ? '' : row.sellingPrice}
-                        onChange={e => onUpdate(p.id, 'sellingPrice', Math.max(0, parseInt(e.target.value || '0')))}
+                        type="text"
+                        value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
+                        onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
                         className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                         placeholder="Nhập giá sỉ..."
                     />
@@ -1009,9 +1021,9 @@ function MobileSimulatedCard({
                     <div className="space-y-1">
                         <span className="block text-[9px] uppercase font-bold text-slate-400">Incentive đ</span>
                         <input
-                            type="number"
-                            value={row.incentiveVnd === 0 ? '' : row.incentiveVnd}
-                            onChange={e => onUpdate(p.id, 'incentive', Math.max(0, parseInt(e.target.value || '0')))}
+                            type="text"
+                            value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
+                            onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
                             className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                             placeholder="0đ"
                         />
