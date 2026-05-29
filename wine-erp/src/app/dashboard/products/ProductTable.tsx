@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { Edit2, ChevronLeft, ChevronRight, ImageOff, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ProductRow, ProductFilters } from './actions'
 import { WineTypeBadge, StatusBadge } from './ProductsClient'
@@ -27,29 +27,6 @@ function EmptyState() {
 function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: () => void; onDelete: () => void }) {
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
-    const [isVertical, setIsVertical] = useState(false)
-    const imgRef = useRef<HTMLImageElement>(null)
-
-    useEffect(() => {
-        const img = imgRef.current
-        if (!img) return
-
-        const handleLoad = () => {
-            if (img.naturalHeight > img.naturalWidth * 1.2) {
-                setIsVertical(true)
-            } else {
-                setIsVertical(false)
-            }
-        }
-
-        if (img.complete) {
-            handleLoad()
-        } else {
-            setIsVertical(false)
-            img.addEventListener('load', handleLoad)
-            return () => img.removeEventListener('load', handleLoad)
-        }
-    }, [row.primaryImageUrl])
 
     return (
         <tr className="group transition-colors duration-100"
@@ -60,29 +37,16 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
             {/* Product */}
             <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <div className="relative group/img w-20 h-11 rounded-lg flex-shrink-0 flex items-center justify-center cursor-zoom-in"
+                    <div className="relative group/img w-12 h-14 rounded-lg flex-shrink-0 flex items-center justify-center cursor-zoom-in"
                         style={{ background: '#142433', border: '1px solid #2A4355' }}>
                         {row.primaryImageUrl ? (
                             <>
                                 <img 
-                                    ref={imgRef}
                                     src={row.primaryImageUrl} 
                                     alt={row.productName} 
                                     loading="lazy"
                                     decoding="async"
-                                    onLoad={(e) => {
-                                        const img = e.currentTarget;
-                                        if (img.naturalHeight > img.naturalWidth * 1.2) {
-                                            setIsVertical(true);
-                                        } else {
-                                            setIsVertical(false);
-                                        }
-                                    }}
-                                    className={`object-contain transition-all duration-200 ${
-                                        isVertical 
-                                            ? 'absolute w-[44px] h-[80px] rotate-90 group-hover/img:scale-105 group-hover/img:rotate-90' 
-                                            : 'w-full h-full p-0.5 group-hover/img:scale-105'
-                                    }`} 
+                                    className="w-full h-full object-contain p-0.5 transition-all duration-200 group-hover/img:scale-105"
                                 />
                                 
                                 {/* Gorgeous hover preview card */}
