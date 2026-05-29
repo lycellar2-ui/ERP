@@ -184,16 +184,29 @@ async function main() {
 
     // 3. Clear existing Products, Appellations, Regions, and Producers safely
     console.log("\nClearing existing database tables...");
-    await prisma.product.deleteMany({});
-    await prisma.appellation.deleteMany({});
-    await prisma.wineRegion.deleteMany({});
-    await prisma.producer.deleteMany({});
-    console.log("✓ Successfully cleared tables.");
+    try {
+        await prisma.$executeRawUnsafe('TRUNCATE TABLE products, appellations, wine_regions, producers CASCADE;');
+        console.log("✓ Successfully cleared tables using CASCADE TRUNCATE.");
+    } catch (e) {
+        console.log("Cascade truncate failed, trying deleteMany catches...");
+        try { await prisma.productMarginPrice.deleteMany({}); } catch (x) {}
+        try { await prisma.productMedia.deleteMany({}); } catch (x) {}
+        try { await prisma.productAward.deleteMany({}); } catch (x) {}
+        try { await prisma.product.deleteMany({}); } catch (x) {}
+        try { await prisma.appellation.deleteMany({}); } catch (x) {}
+        try { await prisma.wineRegion.deleteMany({}); } catch (x) {}
+        try { await prisma.producer.deleteMany({}); } catch (x) {}
+        console.log("✓ Successfully cleared tables using fallback.");
+    }
 
     // Caches
     const producerCache = new Map<string, string>(); // name -> id
     const regionCache = new Map<string, string>(); // country:name -> id
     const appellationCache = new Map<string, string>(); // name -> id
+    const supplierCache = new Map<string, string>(); // code -> cuid id
+
+    const existingSuppliers = await prisma.supplier.findMany({ select: { id: true, code: true } });
+    existingSuppliers.forEach(s => supplierCache.set(s.code.toUpperCase().trim(), s.id));
 
     jsonData[0][7] = "Hãng sản xuất";
     let successCount = 0;
@@ -340,11 +353,14 @@ async function main() {
         else if (wineType === 'WHITE') abv = 12.5;
 
         // 4.10 Create Product
+        const supplierId = supplierCache.get(r.supplierCode.toUpperCase().trim()) || null;
+
         await prisma.product.create({
             data: {
                 skuCode: finalSku,
                 productName: r.wineName,
                 producerId,
+                supplierId,
                 appellationId,
                 vintage,
                 country: countryCode,
