@@ -12,7 +12,7 @@ const cormorant = Cormorant_Garamond({
 })
 
 const dmMono = DM_Mono({
-  subsets: ['latin', 'latin-ext'],
+  subsets: ['latin', 'latin-ext', 'vietnamese'] as any,
   weight: ['400', '500'],
   variable: '--font-mono',
   display: 'swap',
@@ -20,7 +20,7 @@ const dmMono = DM_Mono({
 })
 
 const dmSans = DM_Sans({
-  subsets: ['latin', 'latin-ext'],
+  subsets: ['latin', 'latin-ext', 'vietnamese'] as any,
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
