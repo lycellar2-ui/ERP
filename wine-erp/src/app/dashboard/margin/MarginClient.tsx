@@ -41,6 +41,10 @@ function formatVND(val: number) {
         .replace('₫', 'đ')
 }
 
+function formatNumberOnly(val: number) {
+    return new Intl.NumberFormat('vi-VN').format(val)
+}
+
 function formatNumberString(val: number | string) {
     if (val === undefined || val === null || val === '') return ''
     const clean = String(val).replace(/\D/g, '')
@@ -598,15 +602,15 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <div className="grid grid-cols-3 gap-3 bg-[#1B2E3D]/40 p-3.5 rounded-xl border border-[#2A4355]/30 text-center font-sans">
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Cost</div>
-                                    <div className="text-lg sm:text-xl font-black text-[#87CBB9] mt-1">{formatVND(activeProduct.costPrice)}</div>
+                                    <div className="text-lg sm:text-xl font-black text-[#87CBB9] mt-1">{formatNumberOnly(activeProduct.costPrice)}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Wholesale</div>
-                                    <div className="text-lg sm:text-xl font-black text-[#D4A853] mt-1">{formatVND(activeProduct.wholesalePrice)}</div>
+                                    <div className="text-lg sm:text-xl font-black text-[#D4A853] mt-1">{formatNumberOnly(activeProduct.wholesalePrice)}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Retail</div>
-                                    <div className="text-lg sm:text-xl font-black text-slate-200 mt-1">{formatVND(activeProduct.retailPrice)}</div>
+                                    <div className="text-lg sm:text-xl font-black text-slate-200 mt-1">{formatNumberOnly(activeProduct.retailPrice)}</div>
                                 </div>
                             </div>
 
@@ -794,7 +798,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] w-[140px]">Mã SKU</th>
                                         <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A]">Tên sản phẩm</th>
                                         <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Giá Wholesale</th>
-                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Giá Đặc Biệt</th>
+                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Special Price</th>
                                         <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[100px]">Margin</th>
                                         <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[140px]">Vs Wholesale</th>
                                         <th className="px-3 py-2.5 w-[50px]"></th>
@@ -807,7 +811,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                             <tr key={p.id} className="group border-b border-[#2A4355]/30 hover:bg-[#1B2E3D]/10 transition-colors">
                                                 <td className="px-3 py-2.5 text-xs text-[#8AAEBB] font-sans font-medium whitespace-nowrap">{p.skuCode}</td>
                                                 <td className="px-3 py-2.5 text-xs text-slate-100 font-medium leading-snug">{p.productName}</td>
-                                                <td className="px-3 py-2.5 text-xs text-right font-sans text-[#D4A853] font-semibold whitespace-nowrap">{formatVND(p.wholesalePrice)}</td>
+                                                <td className="px-3 py-2.5 text-xs text-right font-sans text-[#D4A853] font-semibold whitespace-nowrap">{formatNumberOnly(p.wholesalePrice)}</td>
                                                 <td className="px-3 py-2.5 text-xs text-right font-sans text-[#87CBB9] font-bold whitespace-nowrap">{formatVND(row.netSellingPrice)}</td>
                                                 <td className="px-3 py-2.5 text-center whitespace-nowrap">
                                                     {row.marginPercent === -100 ? (
@@ -870,10 +874,10 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         <div className="space-y-1">
                                             <div className="flex justify-between">
                                                 <span className="text-slate-400">Wholesale:</span>
-                                                <span className="font-semibold text-[#D4A853]">{formatVND(p.wholesalePrice)}</span>
+                                                <span className="font-semibold text-[#D4A853]">{formatNumberOnly(p.wholesalePrice)}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-slate-400">Giá đặc biệt:</span>
+                                                <span className="text-slate-400">Special Price:</span>
                                                 <span className="font-bold text-[#87CBB9]">{formatVND(row.netSellingPrice)}</span>
                                             </div>
                                         </div>
@@ -1073,17 +1077,17 @@ function SimulatedTableRow({
 
             {/* Giá Vốn trước thuế */}
             <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-slate-300 font-semibold whitespace-nowrap leading-tight">
-                <div>{formatVND(p.costPrice)}</div>
+                <div>{formatNumberOnly(p.costPrice)}</div>
             </td>
 
             {/* Giá Lẻ trước thuế */}
             <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-slate-300 font-semibold whitespace-nowrap leading-tight">
-                <div>{formatVND(p.retailPrice)}</div>
+                <div>{formatNumberOnly(p.retailPrice)}</div>
             </td>
 
             {/* Giá Sỉ tiêu chuẩn (Vùng chia 1) */}
             <td className="px-1.5 py-2.5 text-right font-sans text-[11px] text-[#D4A853] font-semibold whitespace-nowrap leading-tight border-r border-[#2A4355]/40">
-                <div>{formatVND(p.wholesalePrice)}</div>
+                <div>{formatNumberOnly(p.wholesalePrice)}</div>
             </td>
 
             {/* Giá Bán Thực Tế (S) Input */}
@@ -1310,15 +1314,15 @@ function MobileSimulatedCard({
             <div className="grid grid-cols-3 gap-1 bg-[#142433]/40 p-2 rounded-lg border border-[#2A4355]/20 text-center font-sans text-[10px]">
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Cost</span>
-                    <span className="font-bold text-slate-300 block">{formatVND(p.costPrice)}</span>
+                    <span className="font-bold text-slate-300 block">{formatNumberOnly(p.costPrice)}</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Wholesale</span>
-                    <span className="font-bold text-[#D4A853] block">{formatVND(p.wholesalePrice)}</span>
+                    <span className="font-bold text-[#D4A853] block">{formatNumberOnly(p.wholesalePrice)}</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Retail</span>
-                    <span className="font-bold text-slate-200 block">{formatVND(p.retailPrice)}</span>
+                    <span className="font-bold text-slate-200 block">{formatNumberOnly(p.retailPrice)}</span>
                 </div>
             </div>
 
