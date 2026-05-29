@@ -80,7 +80,7 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
                                     }}
                                     className={`object-contain transition-all duration-200 ${
                                         isVertical 
-                                            ? 'absolute w-[44px] h-[80px] rotate-90 group-hover/img:scale-105 group-hover/img:rotate-90' 
+                                            ? 'absolute inset-0 m-auto w-[44px] h-[80px] rotate-90 group-hover/img:scale-105' 
                                             : 'w-full h-full p-0.5 group-hover/img:scale-105'
                                     }`} 
                                 />
