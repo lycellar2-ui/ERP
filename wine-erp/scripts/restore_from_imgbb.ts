@@ -16,9 +16,8 @@ const pool = new pg.Pool({
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
-async function fetchImgBBPage(page: number): Promise<string> {
-    const url = `https://cellar-ly.imgbb.com/?page=${page}`;
-    console.log(`🌐 Fetching ImgBB Page ${page}: ${url}...`);
+async function fetchImgBBUrl(url: string): Promise<string> {
+    console.log(`🌐 Fetching ImgBB URL: ${url}...`);
     
     const response = await fetch(url, {
         headers: {
@@ -29,7 +28,7 @@ async function fetchImgBBPage(page: number): Promise<string> {
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to fetch page ${page}: ${response.statusText}`);
+        throw new Error(`Failed to fetch URL ${url}: ${response.statusText}`);
     }
 
     return response.text();
@@ -80,13 +79,13 @@ async function main() {
     dbProducts.forEach(p => productMap.set(p.skuCode.toLowerCase().trim(), p));
 
     const allImgBBPictures: ImgBBObject[] = [];
+    let currentUrl = 'https://cellar-ly.imgbb.com/';
     let page = 1;
-    let hasMore = true;
 
-    // We will scan up to 10 pages or stop if we find 0 items on a page
-    while (hasMore && page <= 10) {
+    // Scan sequentially using cursor links in HTML
+    while (currentUrl && page <= 10) {
         try {
-            const html = await fetchImgBBPage(page);
+            const html = await fetchImgBBUrl(currentUrl);
             
             // Match all data-object='...'
             const regex = /data-object='([^']*)'/g;
@@ -109,20 +108,25 @@ async function main() {
 
             console.log(`   ✓ Found ${countOnPage} images on page ${page}.`);
             
-            if (countOnPage === 0) {
-                hasMore = false;
-            } else {
+            // Parse next page link
+            const nextMatch = html.match(/<li class="pagination-next"[^>]*>\s*<a[^>]*href="([^"]+)"/i) || 
+                              html.match(/<a[^>]*data-pagination="next"[^>]*href="([^"]+)"/i);
+            
+            if (nextMatch) {
+                currentUrl = nextMatch[1].replace(/&amp;/g, '&');
                 page++;
                 // Polite delay between requests
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } else {
+                currentUrl = '';
             }
         } catch (err: any) {
-            console.error(`❌ Error fetching/parsing page ${page}: ${err.message}`);
-            hasMore = false;
+            console.error(`❌ Error fetching/parsing URL ${currentUrl}: ${err.message}`);
+            currentUrl = '';
         }
     }
 
-    console.log(`\nParsed a total of ${allImgBBPictures.length} unique images from ImgBB.`);
+    console.log(`\nParsed a total of ${allImgBBPictures.length} images from ImgBB.`);
 
     let restoredCount = 0;
     let skippedCount = 0;
