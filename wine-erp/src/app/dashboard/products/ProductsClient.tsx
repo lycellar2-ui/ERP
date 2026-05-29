@@ -172,6 +172,11 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
         applyFilter({ sortBy, sortDir: newDir })
     }
 
+    const prefetchPage = useCallback((p: number) => {
+        const merged = { ...filters, page: p }
+        getProducts(merged).catch(() => {})
+    }, [filters])
+
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
@@ -321,6 +326,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 onEdit={id => { setEditingId(id); setDrawerOpen(true) }}
                 onDelete={handleDelete}
                 onRefresh={() => applyFilter({})}
+                onPrefetch={prefetchPage}
             />
 
             <ProductDrawer

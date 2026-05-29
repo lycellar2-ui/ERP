@@ -68,6 +68,8 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
                                     ref={imgRef}
                                     src={row.primaryImageUrl} 
                                     alt={row.productName} 
+                                    loading="lazy"
+                                    decoding="async"
                                     onLoad={(e) => {
                                         const img = e.currentTarget;
                                         if (img.naturalHeight > img.naturalWidth * 1.2) {
@@ -86,7 +88,7 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
                                 {/* Gorgeous hover preview card */}
                                 <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-52 bg-[#0D1E2B]/95 backdrop-blur-md rounded-2xl p-4 border border-[#2A4355] shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 scale-95 pointer-events-none group-hover/img:opacity-100 group-hover/img:scale-100 transition-all duration-200 z-50 flex flex-col items-center gap-3">
                                     <div className="w-full h-64 bg-[#142433] rounded-xl p-3 flex items-center justify-center border border-[#2A4355]/40 overflow-hidden">
-                                        <img src={row.primaryImageUrl} alt={row.productName} className="h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.4)]" />
+                                        <img src={row.primaryImageUrl} alt={row.productName} loading="lazy" decoding="async" className="h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.4)]" />
                                     </div>
                                     <div className="text-center w-full min-w-0">
                                         <p className="text-xs font-bold truncate text-ellipsis" style={{ color: '#E8F1F2' }}>{row.productName}</p>
@@ -193,9 +195,10 @@ interface ProductTableProps {
     onEdit: (id: string) => void
     onDelete: (id: string, name: string) => void
     onRefresh: () => void
+    onPrefetch?: (page: number) => void
 }
 
-export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete }: ProductTableProps) {
+export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onPrefetch }: ProductTableProps) {
     const totalPages = Math.ceil(total / pageSize)
 
     const sortableHeaders = [
@@ -294,7 +297,12 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                         <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
                             className="p-1.5 rounded-lg disabled:opacity-30"
                             style={{ color: '#8AAEBB' }}
-                            onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#1B2E3D')}
+                            onMouseEnter={e => {
+                                if (!e.currentTarget.disabled) {
+                                    e.currentTarget.style.background = '#1B2E3D';
+                                    onPrefetch?.(page - 1);
+                                }
+                            }}
                             onMouseLeave={e => (e.currentTarget.style.background = '')}>
                             <ChevronLeft size={16} />
                         </button>
@@ -303,6 +311,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                                 <span key={`dots-${i}`} className="px-1 text-xs" style={{ color: '#4A6A7A' }}>…</span>
                             ) : (
                                 <button key={p} onClick={() => onPageChange(p as number)}
+                                    onMouseEnter={() => p !== page && onPrefetch?.(p as number)}
                                     className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
                                     style={{ background: p === page ? '#87CBB9' : 'transparent', color: p === page ? '#0A1926' : '#8AAEBB' }}>
                                     {p}
@@ -312,7 +321,12 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                         <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
                             className="p-1.5 rounded-lg disabled:opacity-30"
                             style={{ color: '#8AAEBB' }}
-                            onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#1B2E3D')}
+                            onMouseEnter={e => {
+                                if (!e.currentTarget.disabled) {
+                                    e.currentTarget.style.background = '#1B2E3D';
+                                    onPrefetch?.(page + 1);
+                                }
+                            }}
                             onMouseLeave={e => (e.currentTarget.style.background = '')}>
                             <ChevronRight size={16} />
                         </button>
