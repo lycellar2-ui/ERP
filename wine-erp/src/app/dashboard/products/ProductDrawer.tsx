@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, Sparkles } from 'lucide-react'
+import { compressImage } from '@/lib/compress-image'
 import { toast } from 'sonner'
 import {
     ProductInput, createProduct, updateProduct, getProducers, getRegions, getSuppliers,
@@ -695,16 +696,22 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                             if (!file || !editingId) return
                                             setUploadingMedia(true)
                                             try {
+                                                const compressed = await compressImage(file)
+                                                if (compressed !== file) {
+                                                    const savedPct = Math.round((1 - compressed.size / file.size) * 100)
+                                                    if (savedPct > 5) toast.info(`Ảnh đã nén: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressed.size / 1024 / 1024).toFixed(1)}MB (-${savedPct}%)`)
+                                                }
                                                 const fd = new FormData()
-                                                fd.append('file', file)
+                                                fd.append('file', compressed)
                                                 const res = await uploadProductMedia(editingId, fd)
                                                 if (res.success && res.media) {
                                                     setMediaList(prev => [res.media!, ...prev])
+                                                    toast.success('Upload ảnh thành công!')
                                                 } else {
                                                     toast.error(`Lỗi upload: ${res.error}`)
                                                 }
                                             } catch (err: any) {
-                                                toast.error(`Lỗi kết nối hoặc file vượt giới hạn tải: ${err.message ?? err}`)
+                                                toast.error(`Lỗi upload: ${err.message ?? err}`)
                                             } finally {
                                                 setUploadingMedia(false)
                                                 e.target.value = ''

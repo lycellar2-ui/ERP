@@ -6,6 +6,7 @@ import {
     X, Loader2, CheckSquare, Square, Filter, ExternalLink, LayoutGrid
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { compressImage } from '@/lib/compress-image'
 import {
     MediaItem, MediaStats, MediaFilters,
     getAllMedia, deleteMedia, bulkDeleteMedia,
@@ -358,11 +359,16 @@ function UploadModal({ onClose }: { onClose: () => void }) {
         let failed = 0
 
         for (const file of Array.from(files)) {
-            const fd = new FormData()
-            fd.append('file', file)
-            const res = await uploadMediaToProduct(selectedProduct, fd, mediaType)
-            if (res.success) success++
-            else failed++
+            try {
+                const compressed = await compressImage(file)
+                const fd = new FormData()
+                fd.append('file', compressed)
+                const res = await uploadMediaToProduct(selectedProduct, fd, mediaType)
+                if (res.success) success++
+                else failed++
+            } catch {
+                failed++
+            }
         }
 
         setUploading(false)
