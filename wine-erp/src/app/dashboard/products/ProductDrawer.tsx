@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import {
-    ProductInput, createProduct, updateProduct, getProducers, getRegions,
+    ProductInput, createProduct, updateProduct, getProducers, getRegions, getSuppliers,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
     getProductAwards, addProductAward, deleteProductAward,
     getProductById, createProducerInline, getProductEditDetails,
@@ -78,6 +78,7 @@ interface ProductFormState {
     barcodeEan?: string | null
     countryCode?: string | null  // → country
     producerId?: string | null
+    supplierId?: string | null   // → supplierId
     regionId?: string | null   // → appellationId
     retailPriceVnd?: number | null
     peakDrinkStart?: number | null
@@ -94,6 +95,7 @@ function formToInput(f: ProductFormState): ProductInput {
         skuCode: f.sku ?? '',
         productName: f.name ?? '',
         producerId: f.producerId ?? '',
+        supplierId: f.supplierId ?? null,
         vintage: f.vintage ?? null,
         appellationId: f.regionId ?? null,
         country: f.countryCode ?? 'FR',
@@ -120,6 +122,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [producers, setProducers] = useState<{ id: string; name: string }[]>([])
     const [regions, setRegions] = useState<{ id: string; name: string; country: string }[]>([])
+    const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([])
 
     // Media state
     const [mediaList, setMediaList] = useState<ProductMediaRow[]>([])
@@ -160,10 +163,11 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
         if (!open) return
 
         // ⚡ Optimization 1: Only fetch reference lists once per page lifecycle, rather than on every single drawer open
-        if (producers.length === 0 || regions.length === 0) {
-            Promise.all([getProducers(), getRegions()]).then(([p, r]) => {
+        if (producers.length === 0 || regions.length === 0 || suppliers.length === 0) {
+            Promise.all([getProducers(), getRegions(), getSuppliers()]).then(([p, r, s]) => {
                 setProducers(p)
                 setRegions(r)
+                setSuppliers(s)
             })
         }
 
@@ -193,6 +197,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                     barcodeEan: data.barcodeEan,
                     countryCode: data.country,
                     producerId: data.producerId,
+                    supplierId: data.supplierId,
                     regionId: data.appellationId,
                     classification: data.classification,
                     tastingNotes: data.tastingNotes,
@@ -411,7 +416,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
                             ── Xuất Xứ & Nhà Sản Xuất
                         </p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Field label="Quốc gia">
                                 <Select value={form.countryCode ?? ''} onChange={e => set('countryCode', e.target.value || null)}>
                                     <option value="">Chọn quốc gia...</option>
@@ -452,6 +457,12 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                         +
                                     </button>
                                 </div>
+                            </Field>
+                            <Field label="Nhà cung cấp (NCC)">
+                                <Select value={form.supplierId ?? ''} onChange={e => set('supplierId', e.target.value || null)}>
+                                    <option value="">— Chọn nhà cung cấp —</option>
+                                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </Select>
                             </Field>
                         </div>
 

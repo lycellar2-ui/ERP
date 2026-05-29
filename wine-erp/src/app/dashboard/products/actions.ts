@@ -279,6 +279,7 @@ const productSchema = z.object({
     skuCode: z.string().min(3, 'SKU tối thiểu 3 ký tự'),
     productName: z.string().min(2, 'Tên sản phẩm bắt buộc'),
     producerId: z.string().min(1, 'Nhà sản xuất bắt buộc'),
+    supplierId: z.string().nullable().optional(),
     vintage: z.number().int().min(1800).max(2030).nullable().optional(),
     appellationId: z.string().nullable().optional(),
     country: z.string().min(2).max(2),
@@ -308,6 +309,7 @@ export async function createProduct(input: ProductInput) {
                 skuCode: data.skuCode,
                 productName: data.productName,
                 producerId: data.producerId,
+                supplierId: data.supplierId ?? null,
                 vintage: data.vintage ?? null,
                 appellationId: data.appellationId ?? null,
                 country: data.country,
@@ -354,6 +356,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 ...(data.skuCode && { skuCode: data.skuCode }),
                 ...(data.productName && { productName: data.productName }),
                 ...(data.producerId && { producerId: data.producerId }),
+                supplierId: data.supplierId !== undefined ? data.supplierId : undefined,
                 vintage: data.vintage !== undefined ? data.vintage : undefined,
                 appellationId: data.appellationId !== undefined ? data.appellationId : undefined,
                 ...(data.country && { country: data.country }),
@@ -487,6 +490,16 @@ export async function bulkImportProducts(rows: Record<string, any>[]): Promise<I
 export async function getProducers() {
     return cached('products:producers', async () => {
         return prisma.producer.findMany({
+            select: { id: true, name: true, country: true },
+            orderBy: { name: 'asc' },
+        })
+    }, 120_000) // 120s — reference data
+}
+
+export async function getSuppliers() {
+    return cached('products:suppliers', async () => {
+        return prisma.supplier.findMany({
+            where: { deletedAt: null, status: 'ACTIVE' },
             select: { id: true, name: true, country: true },
             orderBy: { name: 'asc' },
         })
@@ -875,6 +888,7 @@ export async function getProductEditDetails(id: string) {
             skuCode: p.skuCode,
             productName: p.productName,
             producerId: p.producerId,
+            supplierId: p.supplierId,
             vintage: p.vintage,
             appellationId: p.appellationId,
             country: p.country,
