@@ -127,9 +127,11 @@ async function main() {
     let restoredCount = 0;
     let skippedCount = 0;
 
-    // Clear current media first to avoid duplicates, or just insert if not existing
+    // Clear current media first to avoid duplicates
     console.log("Clearing any existing media...");
     await prisma.productMedia.deleteMany({});
+
+    const insertedProductIds = new Set<string>();
 
     for (const pic of allImgBBPictures) {
         const titleSku = pic.title.trim().toLowerCase();
@@ -153,6 +155,12 @@ async function main() {
             continue;
         }
 
+        // Enforce uniqueness: Only insert one primary image per product
+        if (insertedProductIds.has(dbProd.id)) {
+            continue;
+        }
+        insertedProductIds.add(dbProd.id);
+
         // Insert into ProductMedia
         await prisma.productMedia.create({
             data: {
@@ -170,7 +178,7 @@ async function main() {
     }
 
     console.log(`\n🎉 Image Restoration Completed!`);
-    console.log(`- Restored in DB: ${restoredCount} images`);
+    console.log(`- Restored in DB: ${restoredCount} unique product images`);
     console.log(`- Skipped (unmatched): ${skippedCount} images`);
 }
 
