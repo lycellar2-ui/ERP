@@ -183,6 +183,98 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
     )
 }
 
+function ProductMobileCard({ row, onEdit, onDelete }: { row: ProductRow; onEdit: () => void; onDelete: () => void }) {
+    const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
+    const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
+
+    return (
+        <div className="p-4 flex gap-4 transition-colors duration-100 animate-none"
+            style={{ borderBottom: '1px solid rgba(42,67,85,0.2)', background: '#0D1E2B' }}>
+            
+            {/* Bottle Thumbnail Image Container */}
+            <div className="relative w-16 h-24 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border"
+                style={{ background: '#142433', borderColor: '#2A4355' }}>
+                {row.primaryImageUrl ? (
+                    <img 
+                        src={row.primaryImageUrl} 
+                        alt={row.productName} 
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-contain p-1.5 transition-transform duration-200 hover:scale-105"
+                    />
+                ) : (
+                    <ImageOff size={16} style={{ color: '#2A4355' }} />
+                )}
+                {/* Small Vintage Badge on Image */}
+                {row.vintage && (
+                    <span className="absolute bottom-0 left-0 right-0 text-[9px] font-bold text-center py-0.5"
+                        style={{ background: 'rgba(135,203,185,0.85)', color: '#0A1926' }}>
+                        {row.vintage}
+                    </span>
+                )}
+            </div>
+
+            {/* Product Details Area */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                <div>
+                    {/* Title */}
+                    <h4 className="text-sm font-bold leading-snug line-clamp-2" style={{ color: '#E8F1F2' }}>
+                        {row.productName}
+                    </h4>
+                    
+                    {/* SKU Code */}
+                    <p className="text-[10px] font-mono mt-0.5" style={{ color: '#4A6A7A' }}>
+                        {row.skuCode}
+                    </p>
+
+                    {/* Wine type & Status Badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        <WineTypeBadge type={row.wineType} />
+                        <StatusBadge status={row.status} />
+                    </div>
+
+                    {/* Producer & Appellation details */}
+                    <p className="text-[11px] mt-1.5 truncate" style={{ color: '#8AAEBB' }}>
+                        <span className="mr-1">{flag}</span>
+                        {row.producerName}
+                        {row.appellationName ? ` • ${row.appellationName}` : ''}
+                    </p>
+                </div>
+
+                {/* Footer of the Card: Stock & Actions */}
+                <div className="flex items-center justify-between mt-2 pt-2"
+                    style={{ borderTop: '1px solid rgba(42,67,85,0.15)' }}>
+                    {/* Stock level */}
+                    <div className="text-xs" style={{ color: '#8AAEBB' }}>
+                        Tồn: <span className="font-bold text-sm" style={{ color: stockColor, fontFamily: '"DM Mono", monospace' }}>{row.totalStock}</span> chai
+                        {row.abvPercent != null && (
+                            <span className="ml-2 px-1 py-0.5 rounded text-[10px] bg-[#1B2E3D]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                                {row.abvPercent}°
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Quick action buttons */}
+                    <div className="flex items-center gap-1.5">
+                        <button onClick={onEdit}
+                            className="flex items-center justify-center p-1.5 rounded-lg transition-colors border"
+                            style={{ background: '#1B2E3D', color: '#87CBB9', borderColor: '#2A4355' }}
+                            title="Sửa">
+                            <Edit2 size={12} />
+                        </button>
+                        <button onClick={onDelete}
+                            className="flex items-center justify-center p-1.5 rounded-lg transition-colors border"
+                            style={{ background: '#1B2E3D', color: '#E05252', borderColor: '#2A4355' }}
+                            title="Xóa">
+                            <Trash2 size={12} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 function SortIcon({ column, sortBy, sortDir }: { column: string; sortBy?: string; sortDir?: string }) {
     if (sortBy !== column) return <ArrowUpDown size={11} style={{ color: '#2A4355' }} />
     return sortDir === 'asc'
@@ -236,16 +328,16 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
     const renderPagination = (position: 'top' | 'bottom') => {
         if (total <= 0) return null
         return (
-            <div className="flex items-center justify-between px-4 py-3 animate-none"
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 animate-none"
                 style={{ 
                     borderTop: position === 'bottom' ? '1px solid #2A4355' : 'none', 
                     borderBottom: position === 'top' ? '1px solid #2A4355' : 'none', 
                     background: '#142433' 
                 }}>
-                <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                <p className="text-xs text-center sm:text-left" style={{ color: '#4A6A7A' }}>
                     Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span>
                 </p>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center flex-wrap gap-1">
                     <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
                         className="p-1.5 rounded-lg disabled:opacity-30"
                         style={{ color: '#8AAEBB' }}
@@ -288,7 +380,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
     }
 
     return (
-        <div className="rounded-2xl overflow-hidden relative border border-[#2A4355] bg-[#0D1E2B]">
+        <div className="rounded-2xl overflow-hidden relative border border-[#2A4355] bg-[#0D1E2B] animate-none">
             <style>{`
                 @keyframes barProgress {
                     0% { left: -30%; }
@@ -297,7 +389,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
             `}</style>
 
             {loading && rows.length > 0 && (
-                <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden bg-[#142433] z-10">
+                <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden bg-[#142433] z-10 animate-none">
                     <div className="absolute h-full bg-[#87CBB9]" style={{
                         width: '30%',
                         animation: 'barProgress 1.2s infinite ease-in-out'
@@ -307,7 +399,38 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
 
             {renderPagination('top')}
 
-            <div className="overflow-x-auto">
+            {/* Mobile Card List View: visible on small screens, hidden on md (768px) and up */}
+            <div className={`block md:hidden divide-y divide-[#2A4355]/30 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
+                {rows.length === 0 && loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="p-4 space-y-3" style={{ borderBottom: '1px solid rgba(42,67,85,0.2)', background: '#0D1E2B' }}>
+                            <div className="flex gap-4">
+                                <div className="w-16 h-24 rounded-xl bg-[#1B2E3D] animate-pulse flex-shrink-0" />
+                                <div className="flex-1 space-y-2 py-1">
+                                    <div className="h-4 rounded bg-[#1B2E3D] animate-pulse w-3/4" />
+                                    <div className="h-3 rounded bg-[#1B2E3D] animate-pulse w-1/2" />
+                                    <div className="h-3 rounded bg-[#1B2E3D] animate-pulse w-1/4" />
+                                    <div className="h-8 rounded bg-[#1B2E3D] animate-pulse w-full mt-2" />
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                ) : rows.length === 0 ? (
+                    <EmptyState />
+                ) : (
+                    rows.map(row => (
+                        <ProductMobileCard
+                            key={row.id}
+                            row={row}
+                            onEdit={() => onEdit(row.id)}
+                            onDelete={() => onDelete(row.id, row.productName)}
+                        />
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table View: hidden on small screens, visible on md (768px) and up */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>

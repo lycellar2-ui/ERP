@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2 } from 'lucide-react'
+import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
@@ -92,6 +92,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
     const [vintageFilter, setVintageFilter] = useState('')
     const [producerFilter, setProducerFilter] = useState('')
     const [exporting, setExporting] = useState(false)
+    const [showMobileFilters, setShowMobileFilters] = useState(false)
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -188,6 +189,14 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
         }
     }, [])
 
+    const activeFiltersCount = [
+        typeFilter,
+        statusFilter,
+        countryFilter,
+        vintageFilter,
+        producerFilter,
+    ].filter(Boolean).length
+
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
@@ -250,82 +259,101 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-2">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên, SKU, barcode, nhà SX..."
-                        value={search}
-                        onChange={e => handleSearchChange(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
-                    />
-                </div>
-                <select value={typeFilter}
-                    onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer animate-none"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả loại</option>
-                    <option value="RED">🔴 Vang Đỏ</option>
-                    <option value="WHITE">🟡 Vang Trắng</option>
-                    <option value="ROSE">🌸 Rosé</option>
-                    <option value="SPARKLING">🥂 Sâm panh</option>
-                    <option value="FORTIFIED">🍯 Fortified</option>
-                    <option value="DESSERT">🍰 Dessert</option>
-                </select>
-                <select value={statusFilter}
-                    onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="ACTIVE">Đang bán</option>
-                    <option value="DISCONTINUED">Ngừng KD</option>
-                    <option value="ALLOCATION_ONLY">Allocation</option>
-                </select>
-                {/* Country filter — dynamic from DB */}
-                <select value={countryFilter}
-                    onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: countryFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả quốc gia</option>
-                    {countries.map(c => (
-                        <option key={c.code} value={c.code}>
-                            {COUNTRY_FLAGS[c.code] ?? '🌍'} {COUNTRY_NAMES[c.code] ?? c.code} ({c.count})
-                        </option>
-                    ))}
-                </select>
-                {/* Vintage filter — dynamic from DB */}
-                <select value={vintageFilter}
-                    onChange={e => { setVintageFilter(e.target.value); applyFilter({ vintage: e.target.value ? Number(e.target.value) : undefined }) }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: vintageFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả vintage</option>
-                    {vintages.map(v => (
-                        <option key={v} value={v}>{v}</option>
-                    ))}
-                </select>
-                {/* Producer/NCC filter — dynamic from DB */}
-                <select value={producerFilter}
-                    onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer max-w-[180px]"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: producerFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả NCC / Nhà SX</option>
-                    {producers.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                </select>
-                {(search || typeFilter || statusFilter || countryFilter || vintageFilter || producerFilter) && (
-                    <button onClick={() => {
-                        setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setVintageFilter(''); setProducerFilter('')
-                        applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, vintage: undefined, producerId: undefined })
-                    }} className="px-3 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.3)' }}>
-                        Xóa filter
+            <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <input
+                            type="text"
+                            placeholder="Tìm theo tên, SKU, barcode, nhà SX..."
+                            value={search}
+                            onChange={e => handleSearchChange(e.target.value)}
+                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
+                        />
+                    </div>
+                    {/* Collapsible Trigger Button for Mobile Filters */}
+                    <button
+                        onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        className="flex md:hidden items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+                        style={{ 
+                            background: '#1B2E3D', 
+                            color: showMobileFilters ? '#87CBB9' : '#8AAEBB', 
+                            borderColor: showMobileFilters ? '#87CBB9' : '#2A4355' 
+                        }}
+                    >
+                        <SlidersHorizontal size={13} />
+                        Lọc {activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
                     </button>
-                )}
+                </div>
+
+                {/* Filters container: collapsible on mobile, flex row on desktop */}
+                <div className={`${showMobileFilters ? 'flex flex-col sm:flex-row' : 'hidden'} md:flex flex-wrap gap-2 transition-all duration-200`}>
+                    <select value={typeFilter}
+                        onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
+                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer animate-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Tất cả loại</option>
+                        <option value="RED">🔴 Vang Đỏ</option>
+                        <option value="WHITE">🟡 Vang Trắng</option>
+                        <option value="ROSE">🌸 Rosé</option>
+                        <option value="SPARKLING">🥂 Sâm panh</option>
+                        <option value="FORTIFIED">🍯 Fortified</option>
+                        <option value="DESSERT">🍰 Dessert</option>
+                    </select>
+                    <select value={statusFilter}
+                        onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
+                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="ACTIVE">Đang bán</option>
+                        <option value="DISCONTINUED">Ngừng KD</option>
+                        <option value="ALLOCATION_ONLY">Allocation</option>
+                    </select>
+                    {/* Country filter — dynamic from DB */}
+                    <select value={countryFilter}
+                        onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
+                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: countryFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Tất cả quốc gia</option>
+                        {countries.map(c => (
+                            <option key={c.code} value={c.code}>
+                                {COUNTRY_FLAGS[c.code] ?? '🌍'} {COUNTRY_NAMES[c.code] ?? c.code} ({c.count})
+                            </option>
+                        ))}
+                    </select>
+                    {/* Vintage filter — dynamic from DB */}
+                    <select value={vintageFilter}
+                        onChange={e => { setVintageFilter(e.target.value); applyFilter({ vintage: e.target.value ? Number(e.target.value) : undefined }) }}
+                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: vintageFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Tất cả vintage</option>
+                        {vintages.map(v => (
+                            <option key={v} value={v}>{v}</option>
+                        ))}
+                    </select>
+                    {/* Producer/NCC filter — dynamic from DB */}
+                    <select value={producerFilter}
+                        onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
+                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer md:max-w-[180px]"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: producerFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Tất cả NCC / Nhà SX</option>
+                        {producers.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+                    {(search || typeFilter || statusFilter || countryFilter || vintageFilter || producerFilter) && (
+                        <button onClick={() => {
+                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setVintageFilter(''); setProducerFilter('')
+                            applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, vintage: undefined, producerId: undefined })
+                        }} className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                            style={{ color: '#E05252', border: '1px solid rgba(224,82,82,0.3)', background: 'rgba(224,82,82,0.05)' }}>
+                            Xóa bộ lọc
+                        </button>
+                    )}
+                </div>
             </div>
 
             <ProductTable
