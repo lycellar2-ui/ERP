@@ -515,8 +515,8 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                             <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 flex-shrink-0">Chưa import</span>
                                                         )}
                                                     </div>
-                                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
-                                                        <span className="text-[#8AAEBB]">{p.skuCode}</span>
+                                                    <div className="text-[10px] text-slate-400 font-sans mt-0.5 flex items-center gap-1.5">
+                                                        <span className="text-[#8AAEBB] font-medium">{p.skuCode}</span>
                                                         <span>•</span>
                                                         <span>{flag} {p.country}</span>
                                                         <span>•</span>
@@ -576,7 +576,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <div className="text-center leading-tight">
                                 <h4 className="text-sm font-bold text-slate-100 line-clamp-2 px-1">{activeProduct.productName}</h4>
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                                    <span className="text-[10px] text-[#8AAEBB] font-mono">{activeProduct.skuCode}</span>
+                                    <span className="text-[10px] text-[#8AAEBB] font-sans font-medium">{activeProduct.skuCode}</span>
                                     {activeProduct.hasCustomPrice ? (
                                         <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-400 bg-emerald-500/10 uppercase tracking-wide border border-emerald-500/20">Đã có giá import</span>
                                     ) : (
@@ -586,7 +586,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
                                     <span className="text-xs">{COUNTRY_FLAGS[activeProduct.country] ?? '🌍'}</span>
                                     <WineTypeBadge type={activeProduct.wineType} />
-                                    <span className="text-[10px] text-slate-400 font-mono">V:{activeProduct.vintage ?? 'NV'}</span>
+                                    <span className="text-[10px] text-slate-400 font-sans font-medium">V:{activeProduct.vintage ?? 'NV'}</span>
                                 </div>
                             </div>
                         </div>
@@ -935,10 +935,10 @@ function SimulatedTableRow({
                                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0 mt-1" title="Giá giả định (Chưa import)" />
                             )}
                         </div>
-                        <p className="text-[10px] mt-0.5 text-slate-400 font-mono flex items-center gap-1 flex-wrap">
+                        <p className="text-[10px] mt-0.5 text-slate-400 font-sans flex items-center gap-1 flex-wrap">
                             <span className="text-[#8AAEBB] font-bold">{p.skuCode}</span>
                             <span>•</span>
-                            <span>V:{p.vintage ?? 'NV'}</span>
+                            <span className="font-semibold">V:{p.vintage ?? 'NV'}</span>
                             <span>•</span>
                             <span>{flag}</span>
                         </p>
@@ -1164,11 +1164,11 @@ function MobileSimulatedCard({
                             <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0 mt-1" />
                         )}
                     </div>
-                    <p className="text-[11px] text-[#8AAEBB] font-mono font-bold mt-0.5">{p.skuCode}</p>
+                    <p className="text-[11px] text-[#8AAEBB] font-sans font-bold mt-0.5">{p.skuCode}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-[10px]">{flag}</span>
                         <WineTypeBadge type={p.wineType} />
-                        <span className="text-[9px] text-slate-400 font-mono">V:{p.vintage ?? 'NV'}</span>
+                        <span className="text-[9px] text-slate-400 font-sans font-semibold">V:{p.vintage ?? 'NV'}</span>
                     </div>
                 </div>
                 

@@ -130,17 +130,17 @@ function ProductLineCard({ line, i, totalCount }: { line: LineData; i: number; t
                         </div>
 
                         {/* Technical Metadata */}
-                        <p style={{ color: '#4A6A7A', fontSize: 12, margin: '6px 0 0', fontFamily: 'var(--font-mono)' }}>
+                        <p style={{ color: '#4A6A7A', fontSize: 12, margin: '6px 0 0', fontFamily: 'var(--font-sans)', fontWeight: 500 }}>
                             SKU: <span style={{ color: '#8AAEBB' }}>{line.skuCode}</span> • Type: <span style={{ color: '#8AAEBB' }}>{line.wineType}</span> • Vol: <span style={{ color: '#8AAEBB' }}>{line.volumeMl}ml</span> • ABV: <span style={{ color: '#8AAEBB' }}>{line.abvPercent}%</span>
                         </p>
                     </div>
 
                     {/* Pricing column */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <p style={{ color: '#87CBB9', fontWeight: 700, fontSize: 18, margin: 0, fontFamily: 'var(--font-mono)' }}>
+                        <p style={{ color: '#87CBB9', fontWeight: 700, fontSize: 18, margin: 0, fontFamily: 'var(--font-sans)' }}>
                             {fmt(line.lineTotal)} <span style={{ fontSize: 12, fontWeight: 400 }}>₫</span>
                         </p>
-                        <p style={{ color: '#4A6A7A', fontSize: 12, margin: '2px 0 0', fontFamily: 'var(--font-mono)' }}>
+                        <p style={{ color: '#4A6A7A', fontSize: 12, margin: '2px 0 0', fontFamily: 'var(--font-sans)' }}>
                             {line.qty} × {fmt(line.unitPrice)} ₫
                             {line.discountPct > 0 && (
                                 <span style={{ color: '#EF4444', fontWeight: 600, marginLeft: 4 }}>
@@ -376,7 +376,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         </h2>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                        <span style={{ color: '#D4A853', fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
+                        <span style={{ color: '#D4A853', fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-sans)', letterSpacing: '0.05em' }}>
                             {data.quotationNo}
                         </span>
                         <div style={{ 
@@ -437,13 +437,13 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <Calendar size={13} style={{ color: '#4A6A7A' }} /> Ngày lập báo giá
                                 </span>
-                                <strong style={{ color: '#E8F1F2', fontSize: 13, fontFamily: 'var(--font-mono)' }}>{fmtDate(data.createdAt)}</strong>
+                                <strong style={{ color: '#E8F1F2', fontSize: 13, fontFamily: 'var(--font-sans)' }}>{fmtDate(data.createdAt)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(42,67,85,0.5)', paddingBottom: 6 }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <Clock size={13} style={{ color: '#4A6A7A' }} /> Hiệu lực ưu đãi
                                 </span>
-                                <strong style={{ color: data.isExpired ? '#8B1A2E' : '#D4A853', fontSize: 13, fontFamily: 'var(--font-mono)' }}>{fmtDate(data.validUntil)}</strong>
+                                <strong style={{ color: data.isExpired ? '#8B1A2E' : '#D4A853', fontSize: 13, fontFamily: 'var(--font-sans)' }}>{fmtDate(data.validUntil)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -493,7 +493,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         <h3 style={{ color: '#E8F1F2', fontSize: 16, fontWeight: 700, letterSpacing: '0.04em', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Wine size={16} style={{ color: '#87CBB9' }} /> DANH SÁCH RƯỢU VANG TUYỂN CHỌN / BOTTLE DETAILS
                         </h3>
-                        <span style={{ color: '#8AAEBB', fontSize: 12, fontFamily: 'var(--font-mono)' }}>
+                        <span style={{ color: '#8AAEBB', fontSize: 12, fontFamily: 'var(--font-sans)', fontWeight: 500 }}>
                             {data.lines.length} dòng sản phẩm
                         </span>
                     </div>
@@ -530,20 +530,20 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: '#8AAEBB', fontSize: 14 }}>Tạm tính trước chiết khấu</span>
-                            <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: 'var(--font-mono)' }}>{fmt(subtotal)} ₫</span>
+                            <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: 'var(--font-sans)' }}>{fmt(subtotal)} ₫</span>
                         </div>
                         
                         {data.orderDiscount > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#EF4444', fontSize: 14 }}>Chiết khấu báo giá tổng ({data.orderDiscount}%)</span>
-                                <span style={{ color: '#EF4444', fontWeight: 600, fontSize: 14, fontFamily: 'var(--font-mono)' }}>−{fmt(discountAmount)} ₫</span>
+                                <span style={{ color: '#EF4444', fontWeight: 600, fontSize: 14, fontFamily: 'var(--font-sans)' }}>−{fmt(discountAmount)} ₫</span>
                             </div>
                         )}
 
                         {!data.vatIncluded && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 14 }}>Thuế Giá trị gia tăng (VAT 10%)</span>
-                                <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: 'var(--font-mono)' }}>{fmt(vatAmount)} ₫</span>
+                                <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: 'var(--font-sans)' }}>{fmt(vatAmount)} ₫</span>
                             </div>
                         )}
 
