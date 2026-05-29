@@ -1,14 +1,69 @@
 'use client'
 
 import { Bell, Search } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 interface HeaderProps {
-    title: string
+    title?: string
     subtitle?: string
     mobileMenuButton?: React.ReactNode
 }
 
-export function Header({ title, subtitle, mobileMenuButton }: HeaderProps) {
+export function Header({ title: customTitle, subtitle, mobileMenuButton }: HeaderProps) {
+    const pathname = usePathname()
+
+    // Dynamic title mapper based on pathname
+    const getHeaderTitle = (): string => {
+        if (customTitle && customTitle !== "LY's Cellars") return customTitle
+
+        if (pathname === '/dashboard/margin') return 'Check Giá & Biên Lợi Nhuận'
+
+        const routes = [
+            { path: '/dashboard/proposals', title: 'Tờ Trình — Đề Xuất' },
+            { path: '/dashboard/products', title: 'Sản Phẩm' },
+            { path: '/dashboard/suppliers', title: 'Nhà Cung Cấp' },
+            { path: '/dashboard/customers', title: 'Khách Hàng' },
+            { path: '/dashboard/contracts', title: 'Hợp Đồng' },
+            { path: '/dashboard/procurement', title: 'Đơn Mua Hàng' },
+            { path: '/dashboard/shipments', title: 'Lô Hàng' },
+            { path: '/dashboard/agency', title: 'Agency Portal' },
+            { path: '/dashboard/tax', title: 'Tra Cứu Thuế' },
+            { path: '/dashboard/costing', title: 'Tính Giá Vốn (CST)' },
+            { path: '/dashboard/warehouse', title: 'Kho Hàng' },
+            { path: '/dashboard/transfers', title: 'Chuyển Kho' },
+            { path: '/dashboard/stock-count', title: 'Kiểm Kê' },
+            { path: '/dashboard/sales', title: 'Đơn Bán Hàng' },
+            { path: '/dashboard/quotations', title: 'Báo Giá' },
+            { path: '/dashboard/price-list', title: 'Bảng Giá' },
+            { path: '/dashboard/crm', title: 'CRM — Khách Hàng' },
+            { path: '/dashboard/pipeline', title: 'Sales Pipeline' },
+            { path: '/dashboard/consignment', title: 'Ký Gửi (CSG)' },
+            { path: '/dashboard/allocation', title: 'Allocation Engine' },
+            { path: '/dashboard/delivery', title: 'Vận Chuyển' },
+            { path: '/dashboard/returns', title: 'Trả Hàng & CN' },
+            { path: '/dashboard/pos', title: 'POS Showroom' },
+            { path: '/dashboard/qr-codes', title: 'QR Truy Xuất' },
+            { path: '/dashboard/finance', title: 'Công Nợ & Kế Toán' },
+            { path: '/dashboard/declarations', title: 'Tờ Khai Thuế' },
+            { path: '/dashboard/stamps', title: 'Quản Lý Tem' },
+            { path: '/dashboard/reports', title: 'Báo Cáo' },
+            { path: '/dashboard/market-price', title: 'Giá Thị Trường' },
+            { path: '/dashboard/kpi', title: 'KPI Chỉ Tiêu' },
+            { path: '/dashboard/media', title: 'Thư Viện Ảnh' },
+            { path: '/dashboard/audit-log', title: 'Nhật Ký Hệ Thống' },
+            { path: '/dashboard/ai', title: 'AI & Prompt' },
+            { path: '/dashboard/settings/approval-matrix', title: 'Ma Trận Phân Quyền' },
+            { path: '/dashboard/settings', title: 'Cài Đặt & RBAC' },
+            { path: '/dashboard', title: 'Dashboard CEO' },
+        ]
+
+        const matched = routes.find(r => pathname.startsWith(r.path))
+        return matched ? matched.title : "Hệ Thống"
+    }
+
+    const title = getHeaderTitle()
+    const isMarginPage = pathname === '/dashboard/margin'
+
     return (
         <header
             className="sticky top-0 z-10 flex items-center justify-between px-6"
@@ -29,41 +84,40 @@ export function Header({ title, subtitle, mobileMenuButton }: HeaderProps) {
                     >
                         {title}
                     </h1>
-                    {subtitle && (
-                        <p className="text-xs hidden sm:block" style={{ color: '#4A6A7A' }}>{subtitle}</p>
-                    )}
                 </div>
             </div>
 
             {/* Right side */}
             <div className="flex items-center gap-3">
                 {/* Search */}
-                <button
-                    className="flex items-center gap-2 px-3 py-2 text-sm transition-all duration-150"
-                    style={{
-                        background: '#1B2E3D',
-                        color: '#4A6A7A',
-                        border: '1px solid #2A4355',
-                        borderRadius: '6px',
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.borderColor = '#87CBB9'
-                        e.currentTarget.style.color = '#8AAEBB'
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.borderColor = '#2A4355'
-                        e.currentTarget.style.color = '#4A6A7A'
-                    }}
-                >
-                    <Search size={15} />
-                    <span className="hidden sm:inline text-xs">Tìm kiếm...</span>
-                    <kbd
-                        className="hidden sm:inline text-xs px-1.5 py-0.5"
-                        style={{ background: '#2A4355', color: '#4A6A7A', borderRadius: '4px', fontSize: '10px' }}
+                {!isMarginPage && (
+                    <button
+                        className="flex items-center gap-2 px-3 py-2 text-sm transition-all duration-150"
+                        style={{
+                            background: '#1B2E3D',
+                            color: '#4A6A7A',
+                            border: '1px solid #2A4355',
+                            borderRadius: '6px',
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = '#87CBB9'
+                            e.currentTarget.style.color = '#8AAEBB'
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = '#2A4355'
+                            e.currentTarget.style.color = '#4A6A7A'
+                        }}
                     >
-                        ⌘K
-                    </kbd>
-                </button>
+                        <Search size={15} />
+                        <span className="hidden sm:inline text-xs">Tìm kiếm...</span>
+                        <kbd
+                            className="hidden sm:inline text-xs px-1.5 py-0.5"
+                            style={{ background: '#2A4355', color: '#4A6A7A', borderRadius: '4px', fontSize: '10px' }}
+                        >
+                            ⌘K
+                        </kbd>
+                    </button>
+                )}
 
                 {/* Notifications */}
                 <button

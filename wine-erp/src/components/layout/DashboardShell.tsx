@@ -81,8 +81,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
                 <Header
-                    title="LY's Cellars"
-                    subtitle="Hệ thống quản lý nhập khẩu rượu vang"
                     mobileMenuButton={isMobile ? (
                         <button
                             onClick={() => setMobileOpen(true)}

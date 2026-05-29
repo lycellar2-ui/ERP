@@ -3,7 +3,7 @@ import { Cormorant_Garamond, DM_Mono, DM_Sans } from 'next/font/google'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
+  subsets: ['latin', 'vietnamese'],
   weight: ['400', '600', '700'],
   style: ['normal', 'italic'],
   variable: '--font-display',
@@ -12,7 +12,7 @@ const cormorant = Cormorant_Garamond({
 })
 
 const dmMono = DM_Mono({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '500'],
   variable: '--font-mono',
   display: 'swap',
@@ -20,7 +20,7 @@ const dmMono = DM_Mono({
 })
 
 const dmSans = DM_Sans({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',

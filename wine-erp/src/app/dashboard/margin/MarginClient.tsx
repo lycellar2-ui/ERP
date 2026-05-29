@@ -76,7 +76,7 @@ type ComputedRow = {
     reductionVsRetail: number
 }
 
-export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] }) {
+export function MarginClient({ initialRows, isAdmin }: { initialRows: MarginProductRow[]; isAdmin: boolean }) {
     const [dbRows, setDbRows] = useState<MarginProductRow[]>(initialRows)
     const [loading, setLoading] = useState(false)
     const [importOpen, setImportOpen] = useState(false)
@@ -335,30 +335,9 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                             Báo Giá Nhanh
                         </span>
                     </h2>
-                    <p className="text-[11px] mt-0.5 text-slate-400">
-                        Chọn từng mã hàng để mô phỏng mức chiết khấu bán hàng, sau đó thu thập vào bảng báo giá chung gửi khách hàng.
-                    </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={reloadData}
-                        disabled={loading}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 disabled:opacity-50"
-                        style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid #2A4355' }}
-                    >
-                        <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> 
-                        {loading ? 'Đang tải...' : 'Làm mới DB'}
-                    </button>
-                    <button
-                        onClick={() => setImportOpen(true)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
-                        style={{ background: '#1B2E3D', color: '#D4A853', border: '1px solid #2A4355' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#D4A853' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
-                    >
-                        <Upload size={13} /> Nhập Bảng Giá Excel
-                    </button>
                     {addedProducts.length > 0 && (
                         <button
                             onClick={handleExportCsv}
@@ -375,21 +354,45 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
 
             {/* Select & Workbench Section */}
             <div className="bg-[#0D1E2B] border border-[#2A4355]/40 rounded-xl p-4 relative overflow-hidden space-y-4">
-                {/* Header Row: Title & Info Tooltip */}
+                {/* Header Row: Calculator Icon on Left, Info Tooltip and Admin Toolbar on Right */}
                 <div className="flex items-center justify-between border-b border-[#2A4355]/20 pb-2">
-                    <h3 className="text-sm font-bold text-[#D4A853] flex items-center gap-1.5" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
-                        <Calculator size={14} /> Sandbox mô phỏng & kiểm tra giá
-                    </h3>
+                    <div className="flex items-center gap-1.5 text-xs text-[#D4A853]">
+                        <Calculator size={14} />
+                    </div>
                     
-                    {/* Compact Info tooltip "i" icon */}
-                    <div className="relative group">
-                        <HelpCircle size={15} className="text-[#8AAEBB] hover:text-[#D4A853] cursor-pointer transition-all duration-150" />
-                        <div className="absolute right-0 top-6 hidden group-hover:block w-72 p-3 bg-[#0D1E2B]/95 border border-[#2A4355] rounded-lg shadow-2xl text-[10px] text-slate-300 space-y-1.5 z-50 leading-relaxed backdrop-blur-md">
-                            <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
-                            <p>• Chọn Nhà cung cấp (NCC) để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
-                            <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
-                            <p>• Hệ thống lưu trữ độc lập Giá Vốn, Lẻ và Sỉ theo bảng Excel bạn đã tải lên.</p>
-                            <p>• Tất cả các số liệu đều được xử lý ở dạng Trước thuế (Pre-tax).</p>
+                    <div className="flex items-center gap-2">
+                        {isAdmin && (
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={reloadData}
+                                    disabled={loading}
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1B2E3D] hover:bg-[#142433] border border-[#2A4355] text-[10px] font-semibold text-[#87CBB9] transition-all disabled:opacity-50"
+                                    title="Làm mới Database"
+                                >
+                                    <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
+                                    <span>Làm mới DB</span>
+                                </button>
+                                <button
+                                    onClick={() => setImportOpen(true)}
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1B2E3D] hover:bg-[#142433] border border-[#2A4355] text-[10px] font-semibold text-[#D4A853] transition-all"
+                                    title="Nhập bảng giá từ Excel"
+                                >
+                                    <Upload size={11} />
+                                    <span>Nhập Excel</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Compact Info tooltip "i" icon */}
+                        <div className="relative group">
+                            <HelpCircle size={15} className="text-[#8AAEBB] hover:text-[#D4A853] cursor-pointer transition-all duration-150" />
+                            <div className="absolute right-0 top-6 hidden group-hover:block w-72 p-3 bg-[#0D1E2B]/95 border border-[#2A4355] rounded-lg shadow-2xl text-[10px] text-slate-300 space-y-1.5 z-50 leading-relaxed backdrop-blur-md">
+                                <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
+                                <p>• Chọn Nhà cung cấp (NCC) để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
+                                <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
+                                <p>• Hệ thống lưu trữ độc lập Giá Vốn, Lẻ và Sỉ theo bảng Excel bạn đã tải lên.</p>
+                                <p>• Tất cả các số liệu đều được xử lý ở dạng Trước thuế (Pre-tax).</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -510,18 +513,21 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                         {/* Inputs & Outputs Column */}
                         <div className="md:col-span-8 flex flex-col justify-between space-y-4">
                             {/* Base Reference Values */}
-                            <div className="grid grid-cols-3 gap-2 bg-[#1B2E3D]/30 p-2.5 rounded-lg border border-[#2A4355]/20 text-center font-mono">
+                            <div className="grid grid-cols-3 gap-2 bg-[#1B2E3D]/30 p-2.5 rounded-lg border border-[#2A4355]/20 text-center font-sans">
                                 <div>
                                     <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Vốn (C)</div>
-                                    <div className="text-xs font-bold text-[#8AAEBB] mt-0.5">{formatVND(activeProduct.costPrice)}</div>
+                                    <div className="text-sm font-bold text-[#8AAEBB] mt-0.5">{formatVND(activeProduct.costPrice)}</div>
+                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div>
                                     <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Sỉ (W)</div>
-                                    <div className="text-xs font-bold text-[#D4A853] mt-0.5">{formatVND(activeProduct.wholesalePrice)}</div>
+                                    <div className="text-sm font-bold text-[#D4A853] mt-0.5">{formatVND(activeProduct.wholesalePrice)}</div>
+                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div>
                                     <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Lẻ (R)</div>
-                                    <div className="text-xs font-bold text-slate-200 mt-0.5">{formatVND(activeProduct.retailPrice)}</div>
+                                    <div className="text-sm font-bold text-slate-200 mt-0.5">{formatVND(activeProduct.retailPrice)}</div>
+                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                             </div>
 
@@ -533,10 +539,10 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                                         type="text"
                                         value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
                                         onChange={e => setSimSellingPrice(parseNumberString(e.target.value))}
-                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                                         placeholder="Gợi ý: Nhập sỉ..."
                                     />
-                                    <span className="text-[9px] text-[#4A6A7A] block italic">Mặc định bằng giá sỉ sắn có</span>
+                                    <span className="text-[9px] text-[#4A6A7A] block italic">Mặc định bằng giá sỉ sẵn có (excl. VAT)</span>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-[10px] font-bold text-slate-300 uppercase">Khấu trừ sỉ (%)</label>
@@ -548,7 +554,7 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                                             step="0.5"
                                             value={simDiscount === 0 ? '' : simDiscount}
                                             onChange={e => setSimDiscount(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                            className="w-full pl-2.5 pr-7 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                            className="w-full pl-2.5 pr-7 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                                             placeholder="0"
                                         />
                                         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">%</span>
@@ -560,7 +566,7 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                                         type="text"
                                         value={simIncentive === 0 ? '' : formatNumberString(simIncentive)}
                                         onChange={e => setSimIncentive(parseNumberString(e.target.value))}
-                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                                         placeholder="0đ"
                                     />
                                 </div>
@@ -568,25 +574,29 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
 
                             {/* Dynamic calculations */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#1B2E3D]/20 p-2.5 rounded-lg border border-[#2A4355]/30">
-                                <div className="text-center font-mono">
+                                <div className="text-center font-sans">
                                     <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Giá Bán Ròng (Net)</div>
                                     <div className="text-xs font-bold text-[#87CBB9] mt-0.5">{formatVND(activeComputed.netSellingPrice)}</div>
+                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
-                                <div className="text-center font-mono">
+                                <div className="text-center font-sans">
                                     <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Lợi Nhuận Gộp</div>
                                     <div className="text-xs font-bold mt-0.5" style={{ color: activeComputed.profit >= 0 ? '#5BA88A' : '#E05252' }}>
                                         {activeComputed.profit >= 0 ? '+' : ''}{formatVND(activeComputed.profit)}
                                     </div>
+                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
-                                <div className="text-center font-mono">
+                                <div className="text-center font-sans">
                                     <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Biên Lợi Nhuận</div>
                                     <div className="text-xs font-bold text-[#D4A853] mt-0.5">{activeComputed.marginPercent.toFixed(1)}%</div>
+                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">Net Margin</div>
                                 </div>
-                                <div className="text-center font-mono">
+                                <div className="text-center font-sans">
                                     <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Giảm so vs Sỉ</div>
                                     <div className="text-xs font-bold text-rose-400 mt-0.5">
                                         {activeComputed.reductionVsWholesale > 0 ? `-${activeComputed.reductionVsWholesale.toFixed(1)}%` : '0%'}
                                     </div>
+                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">vs Wholesale</div>
                                 </div>
                             </div>
 
@@ -790,29 +800,33 @@ function SimulatedTableRow({
             </td>
 
             {/* Giá Vốn trước thuế */}
-            <td className="px-2 py-2.5 text-right font-mono text-[11px] text-slate-400 whitespace-nowrap">
-                {formatVND(p.costPrice)}
+            <td className="px-2 py-2.5 text-right font-sans text-xs text-slate-300 font-semibold whitespace-nowrap leading-tight">
+                <div>{formatVND(p.costPrice)}</div>
+                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Giá Lẻ trước thuế */}
-            <td className="px-2 py-2.5 text-right font-mono text-[11px] text-slate-400 whitespace-nowrap">
-                {formatVND(p.retailPrice)}
+            <td className="px-2 py-2.5 text-right font-sans text-xs text-slate-300 font-semibold whitespace-nowrap leading-tight">
+                <div>{formatVND(p.retailPrice)}</div>
+                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Giá Sỉ tiêu chuẩn */}
-            <td className="px-2 py-2.5 text-right font-mono text-[11px] text-[#D4A853] whitespace-nowrap">
-                {formatVND(p.wholesalePrice)}
+            <td className="px-2 py-2.5 text-right font-sans text-xs text-[#D4A853] font-semibold whitespace-nowrap leading-tight">
+                <div>{formatVND(p.wholesalePrice)}</div>
+                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Giá Bán Thực Tế (S) Input */}
-            <td className="px-2 py-2.5 text-right">
+            <td className="px-2 py-2.5 text-right leading-tight">
                 <input
                     type="text"
                     value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
                     onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
-                    className="w-[95px] px-1.5 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-mono text-xs text-emerald-300 font-semibold outline-none focus:border-[#87CBB9]"
+                    className="w-[95px] px-1.5 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-sans text-xs text-emerald-300 font-bold outline-none focus:border-[#87CBB9]"
                     placeholder="0đ"
                 />
+                <div className="text-[8px] text-[#4A6A7A] font-normal italic mt-0.5">excl. VAT</div>
             </td>
 
             {/* Chiết khấu % Input */}
@@ -824,7 +838,7 @@ function SimulatedTableRow({
                         max="100"
                         value={row.discountPercent === 0 ? '' : row.discountPercent}
                         onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                        className="w-[45px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-mono text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
+                        className="w-[45px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
                         placeholder="0"
                     />
                     <span className="text-[9px] text-[#4A6A7A] ml-0.5">%</span>
@@ -837,20 +851,22 @@ function SimulatedTableRow({
                     type="text"
                     value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
                     onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
-                    className="w-[75px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-mono text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
+                    className="w-[75px] px-1 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-sans text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
                     placeholder="0đ"
                 />
             </td>
 
             {/* Giá Bán Ròng (Net) */}
-            <td className="px-2 py-2.5 text-right font-mono text-xs text-[#87CBB9] font-bold whitespace-nowrap">
-                {formatVND(row.netSellingPrice)}
+            <td className="px-2 py-2.5 text-right font-sans text-xs text-[#87CBB9] font-bold whitespace-nowrap leading-tight">
+                <div>{formatVND(row.netSellingPrice)}</div>
+                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Lãi gộp VND */}
-            <td className="px-2 py-2.5 text-right font-mono text-xs font-bold whitespace-nowrap"
+            <td className="px-2 py-2.5 text-right font-sans text-xs font-bold whitespace-nowrap leading-tight"
                 style={{ color: row.profit >= 0 ? '#5BA88A' : '#E05252' }}>
-                {row.profit >= 0 ? '+' : ''}{formatVND(row.profit)}
+                <div>{row.profit >= 0 ? '+' : ''}{formatVND(row.profit)}</div>
+                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Margin (%) */}
@@ -976,18 +992,21 @@ function MobileSimulatedCard({
             </div>
 
             {/* Static Base Prices Reference Row */}
-            <div className="grid grid-cols-3 gap-1 bg-[#142433]/40 p-2 rounded-lg border border-[#2A4355]/20 text-center font-mono text-[10px]">
+            <div className="grid grid-cols-3 gap-1 bg-[#142433]/40 p-2 rounded-lg border border-[#2A4355]/20 text-center font-sans text-[10px]">
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Vốn (C)</span>
-                    <span className="font-semibold text-slate-300">{formatVND(p.costPrice)}</span>
+                    <span className="font-bold text-slate-300 block">{formatVND(p.costPrice)}</span>
+                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Sỉ (W)</span>
-                    <span className="font-semibold text-[#D4A853]">{formatVND(p.wholesalePrice)}</span>
+                    <span className="font-bold text-[#D4A853] block">{formatVND(p.wholesalePrice)}</span>
+                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Lẻ (R)</span>
-                    <span className="font-semibold text-slate-200">{formatVND(p.retailPrice)}</span>
+                    <span className="font-bold text-slate-200 block">{formatVND(p.retailPrice)}</span>
+                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
             </div>
 
@@ -999,9 +1018,10 @@ function MobileSimulatedCard({
                         type="text"
                         value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
                         onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
-                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                         placeholder="Nhập giá sỉ..."
                     />
+                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
@@ -1013,7 +1033,7 @@ function MobileSimulatedCard({
                                 max="100"
                                 value={row.discountPercent === 0 ? '' : row.discountPercent}
                                 onChange={e => onUpdate(p.id, 'discount', Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                className="w-full pl-2 pr-6 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                className="w-full pl-2 pr-6 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                                 placeholder="0"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#4A6A7A] font-bold">%</span>
@@ -1025,7 +1045,7 @@ function MobileSimulatedCard({
                             type="text"
                             value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
                             onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
-                            className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                            className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                             placeholder="0đ"
                         />
                     </div>
@@ -1034,22 +1054,24 @@ function MobileSimulatedCard({
 
             {/* Calculations and Output Badges */}
             <div className="grid grid-cols-2 gap-2 bg-[#1B2E3D]/20 p-2 rounded-lg border border-[#2A4355]/30">
-                <div className="flex flex-col items-center justify-center font-mono">
+                <div className="flex flex-col items-center justify-center font-sans">
                     <span className="text-[8px] text-slate-400 uppercase">Giá bán ròng (Net)</span>
                     <span className="text-xs font-bold text-[#87CBB9]">{formatVND(row.netSellingPrice)}</span>
+                    <span className="text-[7px] text-[#4A6A7A] italic mt-0.5">excl. VAT</span>
                 </div>
-                <div className="flex flex-col items-center justify-center font-mono">
+                <div className="flex flex-col items-center justify-center font-sans">
                     <span className="text-[8px] text-slate-400 uppercase">Lãi gộp</span>
                     <span className="text-xs font-bold" style={{ color: row.profit >= 0 ? '#5BA88A' : '#E05252' }}>
                         {row.profit >= 0 ? '+' : ''}{formatVND(row.profit)}
                     </span>
+                    <span className="text-[7px] text-[#4A6A7A] italic mt-0.5">excl. VAT</span>
                 </div>
             </div>
 
             <div className="flex items-center justify-between text-[10px] pt-1">
                 <div className="flex items-center gap-1.5">
                     <span className="text-[#4A6A7A]">Margin:</span>
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono"
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-sans"
                         style={{
                             background: row.marginPercent < 15 ? 'rgba(224,82,82,0.12)' : row.marginPercent >= 35 ? 'rgba(212,168,83,0.12)' : 'rgba(91,168,138,0.12)',
                             color: row.marginPercent < 15 ? '#E05252' : row.marginPercent >= 35 ? '#D4A853' : '#5BA88A'
@@ -1057,7 +1079,7 @@ function MobileSimulatedCard({
                         {row.marginPercent.toFixed(1)}%
                     </span>
                 </div>
-                <div className="flex items-center gap-1 text-[#8AAEBB] font-mono">
+                <div className="flex items-center gap-1 text-[#8AAEBB] font-sans">
                     <span>Giảm vs Sỉ:</span>
                     <span className="font-bold text-rose-400">{row.reductionVsWholesale > 0 ? `-${row.reductionVsWholesale.toFixed(1)}%` : '0%'}</span>
                 </div>
