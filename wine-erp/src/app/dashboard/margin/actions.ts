@@ -137,12 +137,27 @@ export async function bulkImportMarginPrices(rows: Record<string, any>[]): Promi
         const rowNum = i + 2 // Row index starts at 2 in Excel sheets (header is row 1)
 
         try {
-            const rawSku = String(r['SKU'] ?? r['skuCode'] ?? r['Mã hàng'] ?? '').trim()
+            // Sanitize keys: remove BOM, trim spaces, convert to lowercase
+            const cleanRow: Record<string, any> = {}
+            for (const key of Object.keys(r)) {
+                const cleanKey = key.replace(/^\uFEFF/, '').trim().toLowerCase()
+                cleanRow[cleanKey] = r[key]
+            }
+
+            // Flexibly find SKU column
+            const rawSkuVal = cleanRow['sku'] ?? 
+                              cleanRow['skucode'] ?? 
+                              cleanRow['mã hàng'] ?? 
+                              cleanRow['ma hang'] ?? 
+                              cleanRow['mã sản phẩm'] ?? 
+                              cleanRow['ma san pham'] ?? 
+                              ''
+            const rawSku = String(rawSkuVal).trim()
             
-            // Flexibly find column names in VN/EN
-            const rawCost = r['Giá vốn'] ?? r['giá vốn'] ?? r['costPrice'] ?? r['Cost'] ?? r['cost']
-            const rawRetail = r['Giá retail'] ?? r['giá retail'] ?? r['retailPrice'] ?? r['Retail'] ?? r['retail']
-            const rawWholesale = r['Giá wholesale'] ?? r['giá wholesale'] ?? r['wholesalePrice'] ?? r['Wholesale'] ?? r['wholesale']
+            // Flexibly find cost, retail, wholesale (supports EN/VN, typo tolerance like wholesal)
+            const rawCostVal = cleanRow['giá vốn'] ?? cleanRow['gia von'] ?? cleanRow['costprice'] ?? cleanRow['cost'] ?? 0
+            const rawRetailVal = cleanRow['giá retail'] ?? cleanRow['gia retail'] ?? cleanRow['retailprice'] ?? cleanRow['retail'] ?? 0
+            const rawWholesaleVal = cleanRow['giá wholesale'] ?? cleanRow['gia wholesale'] ?? cleanRow['wholesaleprice'] ?? cleanRow['wholesale'] ?? cleanRow['giá wholesal'] ?? cleanRow['gia wholesal'] ?? 0
 
             if (!rawSku) {
                 result.errors.push({ row: rowNum, message: 'Thiếu cột mã hàng (SKU)' })
@@ -155,12 +170,26 @@ export async function bulkImportMarginPrices(rows: Record<string, any>[]): Promi
                 continue
             }
 
+            // Helper to clean price numbers: handles strings with commas, dots, spaces, or currency symbols (e.g. 854,528 -> 854528)
+            const parseVal = (v: any) => {
+                if (v === undefined || v === null || v === '') return 0
+                if (typeof v === 'number') return v
+                // Strip formatting: commas, dots, spaces, currency symbols
+                const cleanStr = String(v).replace(/[,.\sđđ]/g, '').trim()
+                const num = Number(cleanStr)
+                return isNaN(num) ? 0 : num
+            }
+
+            const costPrice = parseVal(rawCostVal)
+            const retailPrice = parseVal(rawRetailVal)
+            const wholesalePrice = parseVal(rawWholesaleVal)
+
             // Convert and validate numbers
             const parsed = importRowSchema.parse({
                 sku: rawSku,
-                costPrice: Number(rawCost ?? 0),
-                retailPrice: Number(rawRetail ?? 0),
-                wholesalePrice: Number(rawWholesale ?? 0),
+                costPrice,
+                retailPrice,
+                wholesalePrice,
             })
 
             // Upsert pricing preset
