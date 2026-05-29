@@ -507,7 +507,14 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                     )}
                                                 </div>
                                                 <div className="min-w-0 flex-1 leading-tight">
-                                                    <div className="font-semibold text-slate-200 truncate">{p.productName}</div>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="font-semibold text-slate-200 truncate">{p.productName}</div>
+                                                        {p.hasCustomPrice ? (
+                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">Đã import</span>
+                                                        ) : (
+                                                            <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 flex-shrink-0">Chưa import</span>
+                                                        )}
+                                                    </div>
                                                     <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
                                                         <span className="text-[#8AAEBB]">{p.skuCode}</span>
                                                         <span>•</span>
@@ -568,7 +575,14 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             </div>
                             <div className="text-center leading-tight">
                                 <h4 className="text-sm font-bold text-slate-100 line-clamp-2 px-1">{activeProduct.productName}</h4>
-                                <span className="text-[10px] text-[#8AAEBB] font-mono block mt-1">{activeProduct.skuCode}</span>
+                                <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                                    <span className="text-[10px] text-[#8AAEBB] font-mono">{activeProduct.skuCode}</span>
+                                    {activeProduct.hasCustomPrice ? (
+                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-emerald-400 bg-emerald-500/10 uppercase tracking-wide border border-emerald-500/20">Đã có giá import</span>
+                                    ) : (
+                                        <span className="px-1.5 py-0.2 rounded text-[7px] font-bold text-amber-400 bg-amber-500/10 uppercase tracking-wide border border-amber-500/20 animate-pulse">Chưa import (Giá giả định)</span>
+                                    )}
+                                </div>
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
                                     <span className="text-xs">{COUNTRY_FLAGS[activeProduct.country] ?? '🌍'}</span>
                                     <WineTypeBadge type={activeProduct.wineType} />
@@ -911,9 +925,16 @@ function SimulatedTableRow({
                         )}
                     </div>
                     <div className="min-w-0 leading-tight">
-                        <p className="text-xs font-semibold truncate text-[#E8F1F2] max-w-[140px]" title={p.productName}>
-                            {p.productName}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs font-semibold truncate text-[#E8F1F2] max-w-[140px]" title={p.productName}>
+                                {p.productName}
+                            </p>
+                            {p.hasCustomPrice ? (
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" title="Đã có giá import" />
+                            ) : (
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" title="Giá giả định (Chưa import)" />
+                            )}
+                        </div>
                         <p className="text-[9px] mt-0.5 text-slate-400 font-mono flex items-center gap-1 flex-wrap">
                             <span className="text-[#8AAEBB]">{p.skuCode}</span>
                             <span>•</span>
@@ -1135,7 +1156,14 @@ function MobileSimulatedCard({
                     )}
                 </div>
                 <div className="min-w-0 flex-1 leading-tight pr-6">
-                    <h4 className="text-xs font-bold text-slate-100 truncate">{p.productName}</h4>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="text-xs font-bold text-slate-100 truncate max-w-[150px]">{p.productName}</h4>
+                        {p.hasCustomPrice ? (
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        ) : (
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        )}
+                    </div>
                     <p className="text-[9px] text-[#8AAEBB] font-mono mt-0.5">{p.skuCode}</p>
                     <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-[10px]">{flag}</span>
