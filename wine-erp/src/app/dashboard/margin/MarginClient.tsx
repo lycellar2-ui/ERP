@@ -82,6 +82,7 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
     const [importOpen, setImportOpen] = useState(false)
 
     // Product Autocomplete States
+    const [supplierFilter, setSupplierFilter] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const [isOpenDropdown, setIsOpenDropdown] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -130,17 +131,32 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
         }
     }
 
-    // Filter autocomplete suggestions based on search text
+    // Dynamic list of unique suppliers (NCC)
+    const uniqueSuppliers = useMemo(() => {
+        const list = dbRows.map(p => ({ id: p.producerId, name: p.producerName }))
+        const seen = new Set<string>()
+        return list.filter(item => {
+            if (seen.has(item.id)) return false
+            seen.add(item.id)
+            return true
+        }).sort((a, b) => a.name.localeCompare(b.name))
+    }, [dbRows])
+
+    // Filter autocomplete suggestions based on search text and supplier filter (NCC)
     const autocompleteSuggestions = useMemo(() => {
+        let list = dbRows
+        if (supplierFilter) {
+            list = list.filter(p => p.producerId === supplierFilter)
+        }
         if (!searchQuery.trim()) {
-            return dbRows.slice(0, 12)
+            return list.slice(0, 15)
         }
         const q = searchQuery.toLowerCase()
-        return dbRows.filter(p => 
+        return list.filter(p => 
             p.productName.toLowerCase().includes(q) || 
             p.skuCode.toLowerCase().includes(q)
         ).slice(0, 30)
-    }, [dbRows, searchQuery])
+    }, [dbRows, searchQuery, supplierFilter])
 
     // Calculates individual computed rows for the report list
     const computedRows = useMemo<ComputedRow[]>(() => {
@@ -358,14 +374,53 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
             </div>
 
             {/* Select & Workbench Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Search & Selector card */}
-                <div className="lg:col-span-1 bg-[#0D1E2B] border border-[#2A4355]/40 rounded-xl p-4 flex flex-col justify-start">
-                    <h3 className="text-sm font-bold text-[#D4A853] mb-3 flex items-center gap-1">
-                        <Search size={14} /> Bước 1: Chọn mã sản phẩm
+            <div className="bg-[#0D1E2B] border border-[#2A4355]/40 rounded-xl p-4 relative overflow-hidden space-y-4">
+                {/* Header Row: Title & Info Tooltip */}
+                <div className="flex items-center justify-between border-b border-[#2A4355]/20 pb-2">
+                    <h3 className="text-sm font-bold text-[#D4A853] flex items-center gap-1.5" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                        <Calculator size={14} /> Sandbox mô phỏng & kiểm tra giá
                     </h3>
                     
-                    <div ref={dropdownRef} className="relative w-full">
+                    {/* Compact Info tooltip "i" icon */}
+                    <div className="relative group">
+                        <HelpCircle size={15} className="text-[#8AAEBB] hover:text-[#D4A853] cursor-pointer transition-all duration-150" />
+                        <div className="absolute right-0 top-6 hidden group-hover:block w-72 p-3 bg-[#0D1E2B]/95 border border-[#2A4355] rounded-lg shadow-2xl text-[10px] text-slate-300 space-y-1.5 z-50 leading-relaxed backdrop-blur-md">
+                            <p className="font-bold text-[#D4A853]">💡 Hướng dẫn nhanh:</p>
+                            <p>• Chọn Nhà cung cấp (NCC) để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
+                            <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
+                            <p>• Hệ thống lưu trữ độc lập Giá Vốn, Lẻ và Sỉ theo bảng Excel bạn đã tải lên.</p>
+                            <p>• Tất cả các số liệu đều được xử lý ở dạng Trước thuế (Pre-tax).</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Selector Row (NCC Filter and Product Autocomplete side-by-side) */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                    {/* Supplier Filter (NCC) */}
+                    <div className="md:col-span-4 space-y-1">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase">Nhà cung cấp (NCC)</label>
+                        <select
+                            value={supplierFilter}
+                            onChange={e => {
+                                setSupplierFilter(e.target.value)
+                                // Reset active product if it doesn't belong to the new supplier
+                                if (activeProduct && e.target.value && activeProduct.producerId !== e.target.value) {
+                                    setActiveProduct(null)
+                                    setSearchQuery('')
+                                }
+                            }}
+                            className="w-full px-2.5 py-2 bg-[#142433] border border-[#2A4355] rounded-lg text-xs outline-none cursor-pointer text-slate-200 focus:border-[#D4A853] transition-colors"
+                        >
+                            <option value="">Tất cả NCC</option>
+                            {uniqueSuppliers.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Search SKU Autocomplete */}
+                    <div className="md:col-span-8 space-y-1 relative" ref={dropdownRef}>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase">Chọn mã sản phẩm</label>
                         <div className="relative">
                             <input
                                 type="text"
@@ -376,10 +431,10 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                                     setIsOpenDropdown(true)
                                 }}
                                 onFocus={() => setIsOpenDropdown(true)}
-                                className="w-full pl-9 pr-8 py-2.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs text-[#E8F1F2] placeholder-[#4A6A7A] focus:outline-none focus:border-[#D4A853] focus:ring-1 focus:ring-[#D4A853]/30 transition-all font-mono"
+                                className="w-full pl-8 pr-8 py-2 bg-[#142433] border border-[#2A4355] rounded-lg text-xs text-[#E8F1F2] placeholder-[#4A6A7A] focus:outline-none focus:border-[#D4A853] focus:ring-1 focus:ring-[#D4A853]/30 transition-all font-mono"
                             />
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A6A7A]" />
-                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4A6A7A] pointer-events-none" />
+                            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#4A6A7A]" />
+                            <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4A6A7A] pointer-events-none" />
                         </div>
 
                         {/* Autocomplete Dropdown List */}
@@ -401,7 +456,7 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                                                     setSearchQuery(p.productName)
                                                     setIsOpenDropdown(false)
                                                 }}
-                                                className="w-full text-left px-3 py-2.5 hover:bg-[#1B2E3D]/50 transition-colors flex items-center gap-2 text-xs"
+                                                className="w-full text-left px-3 py-2 hover:bg-[#1B2E3D]/50 transition-colors flex items-center gap-2 text-xs"
                                             >
                                                 <div className="w-8 h-8 rounded bg-[#142433] border border-[#2A4355]/30 flex items-center justify-center flex-shrink-0">
                                                     {p.primaryImageUrl ? (
@@ -427,149 +482,134 @@ export function MarginClient({ initialRows }: { initialRows: MarginProductRow[] 
                             </div>
                         )}
                     </div>
+                </div>
 
-                    <div className="mt-4 text-xs text-[#4A6A7A] space-y-2 leading-relaxed bg-[#1B2E3D]/20 p-3 rounded-lg border border-[#2A4355]/20">
-                        <p className="font-semibold text-slate-400">💡 Hướng dẫn nhanh:</p>
-                        <ul className="list-disc pl-4 space-y-1">
-                            <li>Nhập mã SKU (ví dụ: MOUTON) để lọc nhanh chai vang.</li>
-                            <li>Hệ thống lưu trữ độc lập <strong>Giá Vốn, Lẻ và Sỉ</strong> theo bảng Excel bạn đã tải lên.</li>
-                            <li>Tất cả các số liệu đều được xử lý ở dạng <strong>Trước thuế (Pre-tax)</strong>.</li>
-                        </ul>
+                {/* Rest of Workbench Details - visible only when activeProduct is chosen */}
+                {activeProduct && activeComputed ? (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 border-t border-[#2A4355]/20 pt-4">
+                        {/* Product Info Column */}
+                        <div className="md:col-span-4 flex flex-col items-center justify-center p-3 rounded-lg bg-[#142433]/40 border border-[#2A4355]/30">
+                            <div className="relative w-20 h-28 bg-[#142433] rounded border border-[#2A4355]/40 flex items-center justify-center p-1.5 mb-2 overflow-hidden">
+                                {activeProduct.primaryImageUrl ? (
+                                    <img src={activeProduct.primaryImageUrl} alt={activeProduct.productName} className="max-h-full max-w-full object-contain" />
+                                ) : (
+                                    <span className="text-2xl">🍷</span>
+                                ) }
+                            </div>
+                            <div className="text-center leading-tight">
+                                <h4 className="text-sm font-bold text-slate-100 line-clamp-2 px-1">{activeProduct.productName}</h4>
+                                <span className="text-[10px] text-[#8AAEBB] font-mono block mt-1">{activeProduct.skuCode}</span>
+                                <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                                    <span className="text-xs">{COUNTRY_FLAGS[activeProduct.country] ?? '🌍'}</span>
+                                    <WineTypeBadge type={activeProduct.wineType} />
+                                    <span className="text-[10px] text-slate-400 font-mono">V:{activeProduct.vintage ?? 'NV'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Inputs & Outputs Column */}
+                        <div className="md:col-span-8 flex flex-col justify-between space-y-4">
+                            {/* Base Reference Values */}
+                            <div className="grid grid-cols-3 gap-2 bg-[#1B2E3D]/30 p-2.5 rounded-lg border border-[#2A4355]/20 text-center font-mono">
+                                <div>
+                                    <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Vốn (C)</div>
+                                    <div className="text-xs font-bold text-[#8AAEBB] mt-0.5">{formatVND(activeProduct.costPrice)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Sỉ (W)</div>
+                                    <div className="text-xs font-bold text-[#D4A853] mt-0.5">{formatVND(activeProduct.wholesalePrice)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Lẻ (R)</div>
+                                    <div className="text-xs font-bold text-slate-200 mt-0.5">{formatVND(activeProduct.retailPrice)}</div>
+                                </div>
+                            </div>
+
+                            {/* User Interactive Inputs */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-bold text-slate-300 uppercase">Giá Bán Thực Tế (S)</label>
+                                    <input
+                                        type="text"
+                                        value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
+                                        onChange={e => setSimSellingPrice(parseNumberString(e.target.value))}
+                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
+                                        placeholder="Gợi ý: Nhập sỉ..."
+                                    />
+                                    <span className="text-[9px] text-[#4A6A7A] block italic">Mặc định bằng giá sỉ sắn có</span>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-bold text-slate-300 uppercase">Khấu trừ sỉ (%)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.5"
+                                            value={simDiscount === 0 ? '' : simDiscount}
+                                            onChange={e => setSimDiscount(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
+                                            className="w-full pl-2.5 pr-7 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                            placeholder="0"
+                                        />
+                                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">%</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] font-bold text-slate-300 uppercase">Incentive/chai (đ)</label>
+                                    <input
+                                        type="text"
+                                        value={simIncentive === 0 ? '' : formatNumberString(simIncentive)}
+                                        onChange={e => setSimIncentive(parseNumberString(e.target.value))}
+                                        className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
+                                        placeholder="0đ"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Dynamic calculations */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#1B2E3D]/20 p-2.5 rounded-lg border border-[#2A4355]/30">
+                                <div className="text-center font-mono">
+                                    <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Giá Bán Ròng (Net)</div>
+                                    <div className="text-xs font-bold text-[#87CBB9] mt-0.5">{formatVND(activeComputed.netSellingPrice)}</div>
+                                </div>
+                                <div className="text-center font-mono">
+                                    <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Lợi Nhuận Gộp</div>
+                                    <div className="text-xs font-bold mt-0.5" style={{ color: activeComputed.profit >= 0 ? '#5BA88A' : '#E05252' }}>
+                                        {activeComputed.profit >= 0 ? '+' : ''}{formatVND(activeComputed.profit)}
+                                    </div>
+                                </div>
+                                <div className="text-center font-mono">
+                                    <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Biên Lợi Nhuận</div>
+                                    <div className="text-xs font-bold text-[#D4A853] mt-0.5">{activeComputed.marginPercent.toFixed(1)}%</div>
+                                </div>
+                                <div className="text-center font-mono">
+                                    <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Giảm so vs Sỉ</div>
+                                    <div className="text-xs font-bold text-rose-400 mt-0.5">
+                                        {activeComputed.reductionVsWholesale > 0 ? `-${activeComputed.reductionVsWholesale.toFixed(1)}%` : '0%'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleAddToReport}
+                                className="w-full py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 text-xs transition-all duration-150"
+                                style={{ background: '#D4A853', color: '#0A1926' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#E5B964')}
+                                onMouseLeave={e => (e.currentTarget.style.background = '#D4A853')}
+                            >
+                                <Plus size={14} /> THÊM VÀO BÁO GIÁ NHANH
+                            </button>
+                        </div>
                     </div>
-                </div>
-
-                {/* Simulation Workbench card */}
-                <div className="lg:col-span-2 bg-[#0D1E2B] border border-[#2A4355]/40 rounded-xl p-4 relative overflow-hidden flex flex-col justify-between">
-                    <h3 className="text-sm font-bold text-[#D4A853] mb-3 flex items-center gap-1.5">
-                        <Calculator size={14} /> Bước 2: Sandbox mô phỏng & kiểm tra giá
-                    </h3>
-
-                    {activeProduct && activeComputed ? (
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 flex-1">
-                            {/* Product Info Column */}
-                            <div className="md:col-span-4 flex flex-col items-center justify-center p-3 rounded-lg bg-[#142433]/40 border border-[#2A4355]/30">
-                                <div className="relative w-20 h-28 bg-[#142433] rounded border border-[#2A4355]/40 flex items-center justify-center p-1.5 mb-2 overflow-hidden">
-                                    {activeProduct.primaryImageUrl ? (
-                                        <img src={activeProduct.primaryImageUrl} alt={activeProduct.productName} className="max-h-full max-w-full object-contain" />
-                                    ) : (
-                                        <span className="text-2xl">🍷</span>
-                                    )}
-                                </div>
-                                <div className="text-center leading-tight">
-                                    <h4 className="text-sm font-bold text-slate-100 line-clamp-2 px-1">{activeProduct.productName}</h4>
-                                    <span className="text-[10px] text-[#8AAEBB] font-mono block mt-1">{activeProduct.skuCode}</span>
-                                    <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                                        <span className="text-xs">{COUNTRY_FLAGS[activeProduct.country] ?? '🌍'}</span>
-                                        <WineTypeBadge type={activeProduct.wineType} />
-                                        <span className="text-[10px] text-slate-400 font-mono">V:{activeProduct.vintage ?? 'NV'}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Inputs & Outputs Column */}
-                            <div className="md:col-span-8 flex flex-col justify-between space-y-4">
-                                {/* Base Reference Values */}
-                                <div className="grid grid-cols-3 gap-2 bg-[#1B2E3D]/30 p-2.5 rounded-lg border border-[#2A4355]/20 text-center font-mono">
-                                    <div>
-                                        <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Vốn (C)</div>
-                                        <div className="text-xs font-bold text-[#8AAEBB] mt-0.5">{formatVND(activeProduct.costPrice)}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Sỉ (W)</div>
-                                        <div className="text-xs font-bold text-[#D4A853] mt-0.5">{formatVND(activeProduct.wholesalePrice)}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Lẻ (R)</div>
-                                        <div className="text-xs font-bold text-slate-200 mt-0.5">{formatVND(activeProduct.retailPrice)}</div>
-                                    </div>
-                                </div>
-
-                                {/* User Interactive Inputs */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div className="space-y-1">
-                                        <label className="block text-[10px] font-bold text-slate-300 uppercase">Giá Bán Thực Tế (S)</label>
-                                        <input
-                                            type="text"
-                                            value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
-                                            onChange={e => setSimSellingPrice(parseNumberString(e.target.value))}
-                                            className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
-                                            placeholder="Gợi ý: Nhập sỉ..."
-                                        />
-                                        <span className="text-[9px] text-[#4A6A7A] block italic">Mặc định bằng giá sỉ sắn có</span>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="block text-[10px] font-bold text-slate-300 uppercase">Khấu trừ sỉ (%)</label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="100"
-                                                step="0.5"
-                                                value={simDiscount === 0 ? '' : simDiscount}
-                                                onChange={e => setSimDiscount(Math.max(0, Math.min(100, parseFloat(e.target.value || '0'))))}
-                                                className="w-full pl-2.5 pr-7 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
-                                                placeholder="0"
-                                            />
-                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">%</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="block text-[10px] font-bold text-slate-300 uppercase">Incentive/chai (đ)</label>
-                                        <input
-                                            type="text"
-                                            value={simIncentive === 0 ? '' : formatNumberString(simIncentive)}
-                                            onChange={e => setSimIncentive(parseNumberString(e.target.value))}
-                                            className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-mono text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
-                                            placeholder="0đ"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Dynamic calculations */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#1B2E3D]/20 p-2.5 rounded-lg border border-[#2A4355]/30">
-                                    <div className="text-center font-mono">
-                                        <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Giá Bán Ròng (Net)</div>
-                                        <div className="text-xs font-bold text-[#87CBB9] mt-0.5">{formatVND(activeComputed.netSellingPrice)}</div>
-                                    </div>
-                                    <div className="text-center font-mono">
-                                        <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Lợi Nhuận Gộp</div>
-                                        <div className="text-xs font-bold mt-0.5" style={{ color: activeComputed.profit >= 0 ? '#5BA88A' : '#E05252' }}>
-                                            {activeComputed.profit >= 0 ? '+' : ''}{formatVND(activeComputed.profit)}
-                                        </div>
-                                    </div>
-                                    <div className="text-center font-mono">
-                                        <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Biên Lợi Nhuận</div>
-                                        <div className="text-xs font-bold text-[#D4A853] mt-0.5">{activeComputed.marginPercent.toFixed(1)}%</div>
-                                    </div>
-                                    <div className="text-center font-mono">
-                                        <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Giảm so vs Sỉ</div>
-                                        <div className="text-xs font-bold text-rose-400 mt-0.5">
-                                            {activeComputed.reductionVsWholesale > 0 ? `-${activeComputed.reductionVsWholesale.toFixed(1)}%` : '0%'}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={handleAddToReport}
-                                    className="w-full py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 text-xs transition-all duration-150"
-                                    style={{ background: '#D4A853', color: '#0A1926' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = '#E5B964')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '#D4A853')}
-                                >
-                                    <Plus size={14} /> THÊM VÀO BÁO GIÁ NHANH
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 py-14">
-                            <span className="text-4xl mb-3 text-slate-600 block">🍷</span>
-                            <h4 className="text-xs font-bold text-slate-400">Sandbox Mô Phỏng Chờ Kích Hoạt</h4>
-                            <p className="text-[10px] text-slate-500 max-w-sm mt-1">
-                                Vui lòng sử dụng hộp tìm kiếm ở phía bên trái để chọn một chai vang cụ thể và bắt đầu mô phỏng kịch bản giá cho khách hàng.
-                            </p>
-                        </div>
-                    )}
-                </div>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 py-10 border border-[#2A4355]/20 rounded-lg bg-[#142433]/10">
+                        <span className="text-3xl mb-2 block">🍷</span>
+                        <h4 className="text-xs font-bold text-slate-400">Sandbox Mô Phỏng Chờ Kích Hoạt</h4>
+                        <p className="text-[10px] text-slate-500 max-w-sm mt-1">
+                            Vui lòng chọn Nhà cung cấp và Sản phẩm phía trên để bắt đầu mô phỏng giá bán và lãi gộp cho khách hàng.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Báo Giá Nhanh Section Title & Action Button */}

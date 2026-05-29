@@ -23,6 +23,8 @@ export type MarginProductRow = {
     // Metadata
     hasCustomPrice: boolean
     updatedAt: Date | null
+    producerId: string
+    producerName: string
 }
 
 // ─── Fetch products with pricing ──────────────────
@@ -31,6 +33,7 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
         where: { deletedAt: null, status: 'ACTIVE' },
         include: {
             marginPrice: true,
+            producer: { select: { id: true, name: true } },
             media: { select: { url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } }
         },
         orderBy: { productName: 'asc' }
@@ -70,7 +73,9 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
             retailPrice,
             wholesalePrice,
             hasCustomPrice,
-            updatedAt
+            updatedAt,
+            producerId: p.producer.id,
+            producerName: p.producer.name
         }
     })
 }
