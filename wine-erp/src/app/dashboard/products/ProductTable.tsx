@@ -78,11 +78,19 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
                                             setIsVertical(false);
                                         }
                                     }}
-                                    className={`object-contain transition-all duration-200 ${
-                                        isVertical 
-                                            ? 'absolute inset-0 m-auto w-[44px] h-[80px] rotate-90 group-hover/img:scale-105' 
-                                            : 'w-full h-full p-0.5 group-hover/img:scale-105'
-                                    }`} 
+                                    className="object-contain transition-all duration-200 group-hover/img:scale-105"
+                                    style={isVertical ? {
+                                        position: 'absolute',
+                                        width: '44px',
+                                        height: '80px',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%) rotate(90deg)',
+                                    } : {
+                                        width: '100%',
+                                        height: '100%',
+                                        padding: '2px',
+                                    }}
                                 />
                                 
                                 {/* Gorgeous hover preview card */}
