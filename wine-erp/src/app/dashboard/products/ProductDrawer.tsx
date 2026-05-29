@@ -750,8 +750,8 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                     <div className="grid grid-cols-3 gap-3">
                                         {mediaList.map(m => (
                                             <div key={m.id} className="relative group rounded-lg overflow-hidden"
-                                                style={{ border: m.isPrimary ? '2px solid #87CBB9' : '1px solid #2A4355', aspectRatio: '1' }}>
-                                                <img src={m.url} alt="Product" className="w-full h-full object-cover" />
+                                                style={{ border: m.isPrimary ? '2px solid #87CBB9' : '1px solid #2A4355', aspectRatio: '3/4', background: '#142433' }}>
+                                                <img src={m.url} alt="Product" className="w-full h-full object-contain p-1" />
 
                                                 {/* Primary badge */}
                                                 {m.isPrimary && (

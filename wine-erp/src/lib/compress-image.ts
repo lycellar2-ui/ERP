@@ -6,8 +6,8 @@
  * JPEG/WebP: compresses to WebP (smaller, supports transparency) with quality fallback.
  */
 
-const MAX_WIDTH = 1600
-const MAX_HEIGHT = 6000
+const MAX_WIDTH = 1200
+const MAX_HEIGHT = 4800
 const QUALITY = 0.88
 const MAX_FILE_SIZE = 3.5 * 1024 * 1024 // 3.5MB target
 
