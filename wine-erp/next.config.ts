@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
+    serverActions: {
+      bodySizeLimit: '15mb',
+    },
     staleTimes: {
       dynamic: 120,   // Pages visited within 2min → instant from browser cache
       static: 600,    // Static pages cached 10min

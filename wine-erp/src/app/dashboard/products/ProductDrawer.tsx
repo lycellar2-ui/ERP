@@ -694,16 +694,21 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                             const file = e.target.files?.[0]
                                             if (!file || !editingId) return
                                             setUploadingMedia(true)
-                                            const fd = new FormData()
-                                            fd.append('file', file)
-                                            const res = await uploadProductMedia(editingId, fd)
-                                            setUploadingMedia(false)
-                                            if (res.success && res.media) {
-                                                setMediaList(prev => [res.media!, ...prev])
-                                            } else {
-                                                toast.error(`Lỗi upload: ${res.error} `)
+                                            try {
+                                                const fd = new FormData()
+                                                fd.append('file', file)
+                                                const res = await uploadProductMedia(editingId, fd)
+                                                if (res.success && res.media) {
+                                                    setMediaList(prev => [res.media!, ...prev])
+                                                } else {
+                                                    toast.error(`Lỗi upload: ${res.error}`)
+                                                }
+                                            } catch (err: any) {
+                                                toast.error(`Lỗi kết nối hoặc file vượt giới hạn tải: ${err.message ?? err}`)
+                                            } finally {
+                                                setUploadingMedia(false)
+                                                e.target.value = ''
                                             }
-                                            e.target.value = ''
                                         }}
                                     />
                                 </label>
