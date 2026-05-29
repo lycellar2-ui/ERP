@@ -211,7 +211,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             const focFactor = (buy > 0 && foc > 0) ? (buy / (buy + foc)) : 1
 
             // Formulas: pre-tax
-            const baseNetSellingPrice = Math.max(0, Math.round(s * (1 - d / 100) - incVnd))
+            const baseNetSellingPrice = Math.max(0, Math.round(s - incVnd))
             const netSellingPrice = Math.round(baseNetSellingPrice * focFactor)
 
             const profit = netSellingPrice - r.costPrice
@@ -351,7 +351,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
         // Dilute price per bottle based on Buy/FOC ratio
         const focFactor = (buy > 0 && foc > 0) ? (buy / (buy + foc)) : 1
 
-        const baseNetSellingPrice = Math.max(0, Math.round(s * (1 - d / 100) - incentive))
+        const baseNetSellingPrice = Math.max(0, Math.round(s - incentive))
         const netSellingPrice = Math.round(baseNetSellingPrice * focFactor)
 
         const profit = netSellingPrice - c
