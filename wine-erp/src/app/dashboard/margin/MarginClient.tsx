@@ -585,27 +585,21 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <div>
                                     <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Vốn (C)</div>
                                     <div className="text-sm font-bold text-[#8AAEBB] mt-0.5">{formatVND(activeProduct.costPrice)}</div>
-                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div>
                                     <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Wholesale Price (W)</div>
                                     <div className="text-sm font-bold text-[#D4A853] mt-0.5">{formatVND(activeProduct.wholesalePrice)}</div>
-                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div>
                                     <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Retail Price (R)</div>
                                     <div className="text-sm font-bold text-slate-200 mt-0.5">{formatVND(activeProduct.retailPrice)}</div>
-                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                             </div>
 
                             {/* User Interactive Inputs (6-columns) */}
                             <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
                                 <div className="space-y-1">
-                                    <div className="flex justify-between items-center">
-                                        <label className="block text-[9px] font-bold text-emerald-400 uppercase">Special Price</label>
-                                        <span className="text-[7px] text-[#4A6A7A] italic">excl. VAT</span>
-                                    </div>
+                                    <label className="block text-[9px] font-bold text-emerald-400 uppercase">Special Price</label>
                                     <input
                                         type="text"
                                         value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
@@ -685,14 +679,12 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <div className="text-center font-sans">
                                     <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Giá Bán Ròng (Net)</div>
                                     <div className="text-xs font-bold text-[#87CBB9] mt-0.5">{formatVND(activeComputed.netSellingPrice)}</div>
-                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div className="text-center font-sans">
                                     <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Lợi Nhuận Gộp</div>
                                     <div className="text-xs font-bold mt-0.5" style={{ color: activeComputed.profit >= 0 ? '#5BA88A' : '#E05252' }}>
                                         {activeComputed.profit >= 0 ? '+' : ''}{formatVND(activeComputed.profit)}
                                     </div>
-                                    <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div className="text-center font-sans">
                                     <div className="text-[9px] text-[#4A6A7A] uppercase font-bold">Biên Lợi Nhuận</div>
@@ -938,19 +930,16 @@ function SimulatedTableRow({
             {/* Giá Vốn trước thuế */}
             <td className="px-2 py-2.5 text-right font-sans text-xs text-slate-300 font-semibold whitespace-nowrap leading-tight">
                 <div>{formatVND(p.costPrice)}</div>
-                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Giá Lẻ trước thuế */}
             <td className="px-2 py-2.5 text-right font-sans text-xs text-slate-300 font-semibold whitespace-nowrap leading-tight">
                 <div>{formatVND(p.retailPrice)}</div>
-                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Giá Sỉ tiêu chuẩn (Vùng chia 1) */}
             <td className="px-2 py-2.5 text-right font-sans text-xs text-[#D4A853] font-semibold whitespace-nowrap leading-tight border-r border-[#2A4355]/40">
                 <div>{formatVND(p.wholesalePrice)}</div>
-                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Giá Bán Thực Tế (S) Input */}
@@ -962,7 +951,6 @@ function SimulatedTableRow({
                     className="w-[95px] px-1.5 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-right font-sans text-xs text-emerald-300 font-bold outline-none focus:border-[#87CBB9]"
                     placeholder="0đ"
                 />
-                <div className="text-[8px] text-[#4A6A7A] font-normal italic mt-0.5">excl. VAT</div>
             </td>
 
             {/* Chiết khấu % Input */}
@@ -1037,14 +1025,12 @@ function SimulatedTableRow({
             {/* Giá Bán Ròng (Net) */}
             <td className="px-2 py-2.5 text-right font-sans text-xs text-[#87CBB9] font-bold whitespace-nowrap leading-tight">
                 <div>{formatVND(row.netSellingPrice)}</div>
-                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Lãi gộp VND */}
             <td className="px-2 py-2.5 text-right font-sans text-xs font-bold whitespace-nowrap leading-tight"
                 style={{ color: row.profit >= 0 ? '#5BA88A' : '#E05252' }}>
                 <div>{row.profit >= 0 ? '+' : ''}{formatVND(row.profit)}</div>
-                <div className="text-[8px] text-[#4A6A7A] font-normal italic">excl. VAT</div>
             </td>
 
             {/* Margin (%) */}
@@ -1178,17 +1164,14 @@ function MobileSimulatedCard({
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Vốn (C)</span>
                     <span className="font-bold text-slate-300 block">{formatVND(p.costPrice)}</span>
-                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Wholesale (W)</span>
                     <span className="font-bold text-[#D4A853] block">{formatVND(p.wholesalePrice)}</span>
-                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[8px] uppercase">Retail (R)</span>
                     <span className="font-bold text-slate-200 block">{formatVND(p.retailPrice)}</span>
-                    <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
             </div>
 
@@ -1205,7 +1188,6 @@ function MobileSimulatedCard({
                             className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                             placeholder="Special Price"
                         />
-                        <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                     </div>
                     <div className="space-y-1">
                         <span className="block text-[9px] uppercase font-bold text-emerald-400">Khấu trừ %</span>
@@ -1287,14 +1269,12 @@ function MobileSimulatedCard({
                 <div className="flex flex-col items-center justify-center font-sans">
                     <span className="text-[8px] text-slate-400 uppercase">Giá bán ròng (Net)</span>
                     <span className="text-xs font-bold text-[#87CBB9]">{formatVND(row.netSellingPrice)}</span>
-                    <span className="text-[7px] text-[#4A6A7A] italic mt-0.5">excl. VAT</span>
                 </div>
                 <div className="flex flex-col items-center justify-center font-sans">
                     <span className="text-[8px] text-slate-400 uppercase">Lãi gộp</span>
                     <span className="text-xs font-bold" style={{ color: row.profit >= 0 ? '#5BA88A' : '#E05252' }}>
                         {row.profit >= 0 ? '+' : ''}{formatVND(row.profit)}
                     </span>
-                    <span className="text-[7px] text-[#4A6A7A] italic mt-0.5">excl. VAT</span>
                 </div>
             </div>
 
