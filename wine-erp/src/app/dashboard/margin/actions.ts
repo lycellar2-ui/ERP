@@ -34,31 +34,70 @@ export type MarginProductRow = {
     supplierName: string
 }
 
-// Deterministic supplier fallback mapping based on the seeded brand/producer
+// Deterministic supplier fallback mapping based on the seeded brand/producer name
 function getSupplierForProduct(
-    producerId: string,
-    poLines: { po: { supplierId: string } }[]
-): string {
+    producerName: string,
+    poLines: { po: { supplierId: string } }[],
+    codeToSupplierMap: Map<string, { id: string; name: string }>,
+    idToSupplierMap: Map<string, { id: string; name: string }>
+): { id: string; name: string } {
     if (poLines && poLines.length > 0) {
-        return poLines[0].po.supplierId
+        const sid = poLines[0].po.supplierId
+        const match = idToSupplierMap.get(sid)
+        if (match) return match
     }
 
-    switch (producerId) {
-        case 'prod-petrus':
-        case 'prod-mouton':
-        case 'prod-margaux':
-        case 'prod-drc':
-            return 'sup-millesima'
-        case 'prod-opusone':
-            return 'sup-suntory'
-        case 'prod-krug':
-        case 'prod-veuve':
-            return 'sup-lvmh'
-        case 'prod-sassicaia':
-            return 'sup-treasury'
-        default:
-            return 'sup-millesima'
+    const nameLower = producerName.toLowerCase()
+    let code = 'NCC001' // Default general fallback (Collis Heritage S.p.A.)
+
+    if (nameLower.includes('sartori') || nameLower.includes('arco dei giovi') || nameLower.includes('i saltari') || nameLower.includes('lamura') || nameLower.includes('casa mirafiore')) {
+        code = 'NCC001'
+    } else if (nameLower.includes('bouey') || nameLower.includes('lestruelle') || nameLower.includes('aurilhac') || nameLower.includes('maison neuve') || nameLower.includes('france delhomme')) {
+        code = 'NCC002'
+    } else if (nameLower.includes('tour blanche')) {
+        code = 'NCC003'
+    } else if (nameLower.includes('san esteban') || nameLower.includes('in situ') || nameLower.includes('esteban')) {
+        code = 'NCC004'
+    } else if (nameLower.includes('berton')) {
+        code = 'NCC005'
+    } else if (nameLower.includes('solitude')) {
+        code = 'NCC006'
+    } else if (nameLower.includes('collavini')) {
+        code = 'NCC007'
+    } else if (nameLower.includes('pardon')) {
+        code = 'NCC008'
+    } else if (nameLower.includes('alta mora')) {
+        code = 'NCC009'
+    } else if (nameLower.includes('meteore') || nameLower.includes('météore')) {
+        code = 'NCC010'
+    } else if (nameLower.includes('perrière') || nameLower.includes('perriere') || nameLower.includes('saget')) {
+        code = 'NCC011'
+    } else if (nameLower.includes('pennautier') || nameLower.includes('l\'angle') || nameLower.includes('ciffre') || nameLower.includes('lorgeril')) {
+        code = 'NCC012'
+    } else if (nameLower.includes('millet') || nameLower.includes('rochebin') || nameLower.includes('dvp')) {
+        code = 'NCC013'
+    } else if (nameLower.includes('la jara')) {
+        code = 'NCC014'
+    } else if (nameLower.includes('marevia')) {
+        code = 'NCC015'
+    } else if (nameLower.includes('paniza')) {
+        code = 'NCC016'
+    } else if (nameLower.includes('scott')) {
+        code = 'NCC017'
+    } else if (nameLower.includes('plaimont')) {
+        code = 'NCC018'
+    } else if (nameLower.includes('buccia nera')) {
+        code = 'NCC019'
+    } else if (nameLower.includes('calabria')) {
+        code = 'NCC020'
+    } else if (nameLower.includes('bourceau')) {
+        code = 'NCC021'
+    } else if (nameLower.includes('linshank')) {
+        code = 'NCC022'
     }
+
+    const match = codeToSupplierMap.get(code)
+    return match || { id: 'NCC001', name: 'Collis Heritage S.p.A.' }
 }
 
 export async function getMarginSuppliers(): Promise<MarginSupplierOption[]> {
@@ -94,12 +133,16 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
         }),
         prisma.supplier.findMany({
             where: { deletedAt: null },
-            select: { id: true, name: true }
+            select: { id: true, code: true, name: true }
         })
     ])
 
-    const supplierMap = new Map<string, string>()
-    suppliers.forEach(s => supplierMap.set(s.id, s.name))
+    const codeToSupplierMap = new Map<string, { id: string; name: string }>()
+    const idToSupplierMap = new Map<string, { id: string; name: string }>()
+    suppliers.forEach(s => {
+        codeToSupplierMap.set(s.code, { id: s.id, name: s.name })
+        idToSupplierMap.set(s.id, { id: s.id, name: s.name })
+    })
 
     return products.map(p => {
         let costPrice = 0
@@ -123,8 +166,7 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
             wholesalePrice = Math.round(retailPrice * 0.8) // 20% wholesale discount standard
         }
 
-        const supplierId = getSupplierForProduct(p.producer.id, p.poLines)
-        const supplierName = supplierMap.get(supplierId) || 'NCC Mặc Định'
+        const resolvedSupplier = getSupplierForProduct(p.producer.name, p.poLines, codeToSupplierMap, idToSupplierMap)
 
         return {
             id: p.id,
@@ -141,8 +183,8 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
             updatedAt,
             producerId: p.producer.id,
             producerName: p.producer.name,
-            supplierId,
-            supplierName
+            supplierId: resolvedSupplier.id,
+            supplierName: resolvedSupplier.name
         }
     })
 }

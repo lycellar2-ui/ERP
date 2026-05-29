@@ -31,7 +31,7 @@ async function main() {
     });
     console.log(`Found ${suppliers.length} active suppliers:`);
     suppliers.forEach((s, idx) => {
-        console.log(`[${idx+1}] Code: ${s.code} | Name: ${s.name} | Country: ${s.country} | Currency: ${s.defaultCurrency} | Type: ${s.type}`);
+        console.log(`[${idx+1}] ID: ${s.id} | Code: ${s.code} | Name: ${s.name} | Country: ${s.country} | Currency: ${s.defaultCurrency} | Type: ${s.type}`);
     });
 }
 
