@@ -212,7 +212,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                                 aspectRatio: '1',
                             }}>
                             <img src={item.thumbnailUrl || item.url} alt={item.product.productName}
-                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                className="w-full h-full object-contain p-2 transition-transform group-hover:scale-105"
                                 onClick={() => setLightbox(item)} />
 
                             {/* Primary badge */}

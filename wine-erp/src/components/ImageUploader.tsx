@@ -67,7 +67,7 @@ export function ImageUploader({
                 <div className="relative group rounded-xl overflow-hidden"
                     style={{ width: size, height: size, background: '#1B2E3D' }}>
                     <img src={preview} alt={label}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        className="w-full h-full object-contain p-2 transition-transform group-hover:scale-105" />
 
                     {uploading && (
                         <div className="absolute inset-0 flex items-center justify-center"
