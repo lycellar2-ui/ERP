@@ -37,7 +37,24 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
     }
 
     // Download template
-    const downloadTemplate = () => {
+    const downloadTemplate = async () => {
+        try {
+            // Try fetching the static pre-populated template first
+            const res = await fetch(`/${templateFileName}`, { method: 'HEAD' })
+            if (res.ok) {
+                const link = document.createElement('a')
+                link.href = `/${templateFileName}`
+                link.download = templateFileName
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                return
+            }
+        } catch (e) {
+            // Fallback to dynamic generation on network error
+        }
+
+        // Fallback: dynamically generate template
         const ws = XLSX.utils.aoa_to_sheet([
             templateColumns.map(c => c.header),
             templateColumns.map(c => c.sample),
