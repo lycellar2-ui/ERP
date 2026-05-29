@@ -1198,10 +1198,10 @@ function MobileSimulatedCard({
             </div>
 
             {/* Compact Inline Inputs */}
-            <div className="space-y-1.5">
-                {/* Row 1: Special Price + Discount inline */}
-                <div className="flex items-center gap-1.5">
-                    <span className="text-[8px] uppercase font-bold text-emerald-400 w-[44px] flex-shrink-0 leading-tight">Special Price</span>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                {/* Pair 1 Left: Special Price */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[8px] uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Special Price</span>
                     <input
                         type="text"
                         value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
@@ -1209,8 +1209,12 @@ function MobileSimulatedCard({
                         className="flex-1 min-w-0 px-2 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                         placeholder="0đ"
                     />
-                    <span className="text-[8px] uppercase font-bold text-emerald-400 w-[40px] flex-shrink-0 text-right leading-tight">Discount</span>
-                    <div className="relative w-[56px] flex-shrink-0">
+                </div>
+
+                {/* Pair 1 Right: Discount */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[8px] uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Discount</span>
+                    <div className="relative flex-1 min-w-0">
                         <input
                             type="number"
                             min="0"
@@ -1225,32 +1229,36 @@ function MobileSimulatedCard({
                     </div>
                 </div>
 
-                {/* Row 2: Buy + FOC */}
-                <div className="flex items-center gap-1.5">
-                    <span className="text-[8px] uppercase font-bold text-amber-400 w-[24px] flex-shrink-0">BUY</span>
+                {/* Pair 2 Left: BUY */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[8px] uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">BUY</span>
                     <input
                         type="number"
                         min="1"
                         value={row.buyQty === 0 ? '' : row.buyQty}
                         onChange={e => onUpdate(p.id, 'buyQty', Math.max(1, parseInt(e.target.value || '1')))}
-                        className="w-[48px] px-1.5 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853] flex-shrink-0"
+                        className="flex-1 min-w-0 px-2 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                         placeholder="1"
                     />
-                    <span className="text-[8px] uppercase font-bold text-amber-400 w-[24px] flex-shrink-0">FOC</span>
+                </div>
+
+                {/* Pair 2 Right: FOC */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[8px] uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">FOC</span>
                     <input
                         type="number"
                         min="0"
                         value={row.focQty === 0 ? '' : row.focQty}
                         onChange={e => onUpdate(p.id, 'focQty', Math.max(0, parseInt(e.target.value || '0')))}
-                        className="w-[48px] px-1.5 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853] flex-shrink-0"
+                        className="flex-1 min-w-0 px-2 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-[#E8F1F2] focus:outline-none focus:border-[#D4A853]"
                         placeholder="0"
                     />
                 </div>
 
-                {/* Row 3: Incentive % + Value */}
-                <div className="flex items-center gap-1.5">
-                    <span className="text-[8px] uppercase font-bold text-sky-400 w-[24px] flex-shrink-0">Inc%</span>
-                    <div className="relative w-[56px] flex-shrink-0">
+                {/* Pair 3 Left: INC % */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[8px] uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC %</span>
+                    <div className="relative flex-1 min-w-0">
                         <input
                             type="number"
                             min="0"
@@ -1263,12 +1271,16 @@ function MobileSimulatedCard({
                         />
                         <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-[#4A6A7A] font-bold">%</span>
                     </div>
-                    <span className="text-[8px] uppercase font-bold text-sky-400 w-[28px] flex-shrink-0 text-right">Inc đ</span>
+                </div>
+
+                {/* Pair 3 Right: INC Đ */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[8px] uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC Đ</span>
                     <input
                         type="text"
                         value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}
                         onChange={e => onUpdate(p.id, 'incentive', parseNumberString(e.target.value))}
-                        className="flex-1 min-w-0 px-1.5 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-sky-300 focus:outline-none focus:border-[#8AAEBB]"
+                        className="flex-1 min-w-0 px-2 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-sky-300 focus:outline-none focus:border-[#8AAEBB]"
                         placeholder="0đ"
                     />
                 </div>
