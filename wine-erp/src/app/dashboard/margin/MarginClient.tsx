@@ -378,8 +378,8 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
 
         const headers = [
             'SKU', 'Tên sản phẩm', 'Loại', 'Quốc gia', 'Vintage',
-            'Giá vốn (VND)', 'Giá bán lẻ (VND)', 'Giá sỉ tiêu chuẩn (VND)',
-            'Giá bán thực tế (VND)', 'Chiết khấu (%)', 'Buy', 'FOC', 'Incentive (%)', 'Incentive (VND)',
+            'Giá vốn (VND)', 'Retail Price (VND)', 'Wholesale Price (VND)',
+            'Special Price (VND)', 'Chiết khấu (%)', 'Buy', 'FOC', 'Incentive (%)', 'Incentive (VND)',
             'Giá bán ròng (VND)', 'Lợi nhuận gộp (VND)', 'Biên lợi nhuận (%)', 'Tỷ lệ Markup (%)',
             'Mức giảm vs Wholesale (%)', 'Mức giảm vs Retail (%)'
         ]
@@ -588,12 +588,12 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div>
-                                    <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Sỉ (W)</div>
+                                    <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Wholesale Price (W)</div>
                                     <div className="text-sm font-bold text-[#D4A853] mt-0.5">{formatVND(activeProduct.wholesalePrice)}</div>
                                     <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
                                 <div>
-                                    <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Giá Lẻ (R)</div>
+                                    <div className="text-[9px] uppercase font-bold tracking-wide text-slate-400">Retail Price (R)</div>
                                     <div className="text-sm font-bold text-slate-200 mt-0.5">{formatVND(activeProduct.retailPrice)}</div>
                                     <div className="text-[8px] text-[#4A6A7A] mt-0.5 italic">excl. VAT</div>
                                 </div>
@@ -602,13 +602,16 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             {/* User Interactive Inputs (6-columns) */}
                             <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
                                 <div className="space-y-1">
-                                    <label className="block text-[9px] font-bold text-emerald-400 uppercase">Giá Bán S (đ)</label>
+                                    <div className="flex justify-between items-center">
+                                        <label className="block text-[9px] font-bold text-emerald-400 uppercase">Special Price</label>
+                                        <span className="text-[7px] text-[#4A6A7A] italic">excl. VAT</span>
+                                    </div>
                                     <input
                                         type="text"
                                         value={simSellingPrice === 0 ? '' : formatNumberString(simSellingPrice)}
                                         onChange={e => handleSimSellingPriceChange(parseNumberString(e.target.value))}
                                         className="w-full px-2 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
-                                        placeholder="Giá bán"
+                                        placeholder="Special Price"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -786,10 +789,10 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
                                         <th className="px-3 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] w-[240px]">Sản phẩm</th>
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Vốn (C)</th>
-                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Lẻ (R)</th>
-                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px] border-r border-[#2A4355]/40">Sỉ (W)</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px]">Retail (R)</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[100px] border-r border-[#2A4355]/40">Wholesale (W)</th>
                                         
-                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-right w-[110px]">Giá bán S (đ)</th>
+                                        <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[110px]">Special Price</th>
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[80px]">C.Khấu D (%)</th>
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[60px]">Buy</th>
                                         <th className="px-2 py-2 text-[9px] uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[60px]">FOC</th>
@@ -836,13 +839,13 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             <ExcelImportDialog
                 open={importOpen}
                 onClose={() => setImportOpen(false)}
-                title="Upload Bảng Giá (Giá Vốn, Giá Lẻ, Giá Sỉ)"
+                title="Upload Bảng Giá (Giá Vốn, Retail, Wholesale)"
                 templateFileName="template_bang_gia_mo_phong.xlsx"
                 templateColumns={[
                     { header: 'SKU', sample: 'MOUTON-2018-750', required: true },
                     { header: 'Giá vốn', sample: '850000', required: true },
-                    { header: 'Giá retail', sample: '1500000', required: true },
-                    { header: 'Giá wholesale', sample: '1200000', required: true }
+                    { header: 'Retail Price', sample: '1500000', required: true },
+                    { header: 'Wholesale Price', sample: '1200000', required: true }
                 ]}
                 onImport={bulkImportMarginPrices}
                 onComplete={() => {
@@ -1178,12 +1181,12 @@ function MobileSimulatedCard({
                     <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[8px] uppercase">Sỉ (W)</span>
+                    <span className="text-slate-400 block text-[8px] uppercase">Wholesale (W)</span>
                     <span className="font-bold text-[#D4A853] block">{formatVND(p.wholesalePrice)}</span>
                     <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[8px] uppercase">Lẻ (R)</span>
+                    <span className="text-slate-400 block text-[8px] uppercase">Retail (R)</span>
                     <span className="font-bold text-slate-200 block">{formatVND(p.retailPrice)}</span>
                     <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                 </div>
@@ -1194,13 +1197,13 @@ function MobileSimulatedCard({
                 {/* Row 1: Price and Discount (bound) */}
                 <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                        <span className="block text-[9px] uppercase font-bold text-emerald-400">Giá bán S (đ)</span>
+                        <span className="block text-[9px] uppercase font-bold text-emerald-400">Special Price (đ)</span>
                         <input
                             type="text"
                             value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
                             onChange={e => onUpdate(p.id, 'sellingPrice', parseNumberString(e.target.value))}
                             className="w-full px-2.5 py-1.5 bg-[#142433] border border-[#2A4355] rounded-lg text-xs font-sans font-bold text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
-                            placeholder="Nhập giá sỉ..."
+                            placeholder="Special Price"
                         />
                         <span className="text-[7px] text-[#4A6A7A] block italic mt-0.5">excl. VAT</span>
                     </div>

@@ -155,9 +155,9 @@ export async function bulkImportMarginPrices(rows: Record<string, any>[]): Promi
             const rawSku = String(rawSkuVal).trim()
             
             // Flexibly find cost, retail, wholesale (supports EN/VN, typo tolerance like wholesal)
-            const rawCostVal = cleanRow['giá vốn'] ?? cleanRow['gia von'] ?? cleanRow['costprice'] ?? cleanRow['cost'] ?? 0
-            const rawRetailVal = cleanRow['giá retail'] ?? cleanRow['gia retail'] ?? cleanRow['retailprice'] ?? cleanRow['retail'] ?? 0
-            const rawWholesaleVal = cleanRow['giá wholesale'] ?? cleanRow['gia wholesale'] ?? cleanRow['wholesaleprice'] ?? cleanRow['wholesale'] ?? cleanRow['giá wholesal'] ?? cleanRow['gia wholesal'] ?? 0
+            const rawCostVal = cleanRow['giá vốn'] ?? cleanRow['gia von'] ?? cleanRow['costprice'] ?? cleanRow['cost_price'] ?? cleanRow['cost price'] ?? cleanRow['cost'] ?? 0
+            const rawRetailVal = cleanRow['giá retail'] ?? cleanRow['gia retail'] ?? cleanRow['retailprice'] ?? cleanRow['retail_price'] ?? cleanRow['retail price'] ?? cleanRow['retail'] ?? 0
+            const rawWholesaleVal = cleanRow['giá wholesale'] ?? cleanRow['gia wholesale'] ?? cleanRow['wholesaleprice'] ?? cleanRow['wholesale_price'] ?? cleanRow['wholesale price'] ?? cleanRow['wholesale'] ?? cleanRow['giá wholesal'] ?? cleanRow['gia wholesal'] ?? 0
 
             if (!rawSku) {
                 result.errors.push({ row: rowNum, message: 'Thiếu cột mã hàng (SKU)' })
