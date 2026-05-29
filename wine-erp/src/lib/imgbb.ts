@@ -35,7 +35,7 @@ export async function uploadToImgBB(
 
         return {
             success: true,
-            url: json.data.display_url,
+            url: json.data.url,
             thumbUrl: json.data.thumb?.url,
             mediumUrl: json.data.medium?.url,
             deleteUrl: json.data.delete_url,
