@@ -526,10 +526,10 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                     </div>
 
                     {isAdmin && (
-                        <>
+                        <div className="md:col-span-4 grid grid-cols-2 gap-2 w-full">
                             {/* Làm mới DB */}
-                            <div className="md:col-span-2 space-y-1">
-                                <span className="block text-[10px] font-bold text-transparent select-none h-4">DB Tools</span>
+                            <div className="space-y-1">
+                                <span className="hidden md:block text-[10px] font-bold text-transparent select-none h-4">DB Tools</span>
                                 <button
                                     onClick={reloadData}
                                     disabled={loading}
@@ -541,8 +541,8 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             </div>
 
                             {/* Nhập Excel */}
-                            <div className="md:col-span-2 space-y-1">
-                                <span className="block text-[10px] font-bold text-transparent select-none h-4">Excel Tools</span>
+                            <div className="space-y-1">
+                                <span className="hidden md:block text-[10px] font-bold text-transparent select-none h-4">Excel Tools</span>
                                 <button
                                     onClick={() => setImportOpen(true)}
                                     className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-[#1B2E3D] hover:bg-[#142433] border border-[#2A4355] text-[#D4A853]"
@@ -551,7 +551,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     <span>Nhập Excel</span>
                                 </button>
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
 
@@ -730,7 +730,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             {/* Báo Giá Nhanh Section Title & Action Button */}
             <div className="flex items-center justify-between border-b border-[#2A4355]/40 pb-2 mt-6">
                 <h3 className="text-base font-bold text-slate-100 flex items-center gap-2" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
-                    <span>Danh Sách Báo Giá Nhanh Tích Lũy</span>
+                    <span>Danh sách check margin</span>
                     <span className="text-xs px-2 py-0.5 bg-[#1B2E3D] border border-[#2A4355]/60 text-slate-300 font-mono rounded-full font-normal">
                         {addedProducts.length} sản phẩm
                     </span>
