@@ -172,10 +172,21 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
         applyFilter({ sortBy, sortDir: newDir })
     }
 
+    const prefetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
     const prefetchPage = useCallback((p: number) => {
-        const merged = { ...filters, page: p }
-        getProducts(merged).catch(() => {})
+        if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current)
+        prefetchTimeoutRef.current = setTimeout(() => {
+            const merged = { ...filters, page: p }
+            getProducts(merged).catch(() => {})
+        }, 150) // 150ms dwell time (intent-based prefetching)
     }, [filters])
+
+    useEffect(() => {
+        return () => {
+            if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current)
+        }
+    }, [])
 
     return (
         <div className="space-y-4 max-w-screen-2xl">
