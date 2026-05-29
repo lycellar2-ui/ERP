@@ -225,8 +225,62 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
         return pages
     }
 
+    const renderPagination = (position: 'top' | 'bottom') => {
+        if (total <= 0) return null
+        return (
+            <div className="flex items-center justify-between px-4 py-3 animate-none"
+                style={{ 
+                    borderTop: position === 'bottom' ? '1px solid #2A4355' : 'none', 
+                    borderBottom: position === 'top' ? '1px solid #2A4355' : 'none', 
+                    background: '#142433' 
+                }}>
+                <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                    Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span>
+                </p>
+                <div className="flex items-center gap-1">
+                    <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
+                        className="p-1.5 rounded-lg disabled:opacity-30"
+                        style={{ color: '#8AAEBB' }}
+                        onMouseEnter={e => {
+                            if (!e.currentTarget.disabled) {
+                                e.currentTarget.style.background = '#1B2E3D';
+                                onPrefetch?.(page - 1);
+                            }
+                        }}
+                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                        <ChevronLeft size={16} />
+                    </button>
+                    {getPageNumbers().map((p, i) =>
+                        p === '...' ? (
+                            <span key={`dots-${position}-${i}`} className="px-1 text-xs" style={{ color: '#4A6A7A' }}>…</span>
+                        ) : (
+                            <button key={`${position}-${p}`} onClick={() => onPageChange(p as number)}
+                                onMouseEnter={() => p !== page && onPrefetch?.(p as number)}
+                                className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
+                                style={{ background: p === page ? '#87CBB9' : 'transparent', color: p === page ? '#0A1926' : '#8AAEBB' }}>
+                                {p}
+                            </button>
+                        )
+                    )}
+                    <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
+                        className="p-1.5 rounded-lg disabled:opacity-30"
+                        style={{ color: '#8AAEBB' }}
+                        onMouseEnter={e => {
+                            if (!e.currentTarget.disabled) {
+                                e.currentTarget.style.background = '#1B2E3D';
+                                onPrefetch?.(page + 1);
+                            }
+                        }}
+                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     return (
-        <div className="rounded-2xl overflow-hidden relative" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+        <div className="rounded-2xl overflow-hidden relative border border-[#2A4355] bg-[#0D1E2B]">
             <style>{`
                 @keyframes barProgress {
                     0% { left: -30%; }
@@ -242,6 +296,8 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                     }} />
                 </div>
             )}
+
+            {renderPagination('top')}
 
             <div className="overflow-x-auto">
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
@@ -287,52 +343,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                 </table>
             </div>
 
-            {total > 0 && (
-                <div className="flex items-center justify-between px-4 py-3"
-                    style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
-                    <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                        Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span>
-                    </p>
-                    <div className="flex items-center gap-1">
-                        <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
-                            className="p-1.5 rounded-lg disabled:opacity-30"
-                            style={{ color: '#8AAEBB' }}
-                            onMouseEnter={e => {
-                                if (!e.currentTarget.disabled) {
-                                    e.currentTarget.style.background = '#1B2E3D';
-                                    onPrefetch?.(page - 1);
-                                }
-                            }}
-                            onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                            <ChevronLeft size={16} />
-                        </button>
-                        {getPageNumbers().map((p, i) =>
-                            p === '...' ? (
-                                <span key={`dots-${i}`} className="px-1 text-xs" style={{ color: '#4A6A7A' }}>…</span>
-                            ) : (
-                                <button key={p} onClick={() => onPageChange(p as number)}
-                                    onMouseEnter={() => p !== page && onPrefetch?.(p as number)}
-                                    className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                    style={{ background: p === page ? '#87CBB9' : 'transparent', color: p === page ? '#0A1926' : '#8AAEBB' }}>
-                                    {p}
-                                </button>
-                            )
-                        )}
-                        <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
-                            className="p-1.5 rounded-lg disabled:opacity-30"
-                            style={{ color: '#8AAEBB' }}
-                            onMouseEnter={e => {
-                                if (!e.currentTarget.disabled) {
-                                    e.currentTarget.style.background = '#1B2E3D';
-                                    onPrefetch?.(page + 1);
-                                }
-                            }}
-                            onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
-                </div>
-            )}
+            {renderPagination('bottom')}
         </div>
     )
 }
