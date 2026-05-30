@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
     const groups: Record<string, { supplierName: string; country: string; lines: typeof qt.lines }> = {}
     for (const l of qt.lines) {
         const supplierName = (l.product as any).supplier?.name || "Ly's Cellars"
-        const country = l.product.country || "Khác"
+        const country = l.product.country || "Other"
         const key = `${supplierName} - ${country}`
         if (!groups[key]) {
             groups[key] = { supplierName, country, lines: [] }
@@ -149,10 +149,10 @@ export async function GET(req: NextRequest) {
     }).join('')
 
     const html = `<!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Báo Giá ${qt.quotationNo} — LY's Cellars</title>
+    <title>Quotation ${qt.quotationNo} — LY's Cellars</title>
     <style>
         /* ═══════════ RESET & BASE ═══════════ */
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -491,9 +491,9 @@ export async function GET(req: NextRequest) {
             </div>
         </div>
         <div class="header-info">
-            <strong>CÔNG TY TNHH LY'S CELLARS</strong>
-            MST: 0312345678<br/>
-            123 Đường Pasteur, Quận 1, TP. Hồ Chí Minh<br/>
+            <strong>LY'S CELLARS CO., LTD</strong>
+            Tax Code: 0312345678<br/>
+            123 Pasteur Street, District 1, Ho Chi Minh City<br/>
             ☎ 028 1234 5678 &nbsp;|&nbsp; ✉ info@lyscellars.com
         </div>
     </div>
@@ -501,28 +501,28 @@ export async function GET(req: NextRequest) {
     <!-- TITLE BAR -->
     <div class="title-bar">
         <div>
-            <div class="title-text">BÁO GIÁ / QUOTATION</div>
+            <div class="title-text">${qt.showQuantity ? 'EXCLUSIVE QUOTATION' : 'EXCLUSIVE PRICE LIST'}</div>
             <div class="title-no">${qt.quotationNo}</div>
         </div>
         <div class="title-dates">
-            Ngày lập: <strong>${fmtDate(qt.createdAt)}</strong><br/>
-            Hiệu lực đến: <strong style="color: ${t.accent}">${fmtDate(qt.validUntil)}</strong>
+            Date Issued: <strong>${fmtDate(qt.createdAt)}</strong><br/>
+            Valid Until: <strong style="color: ${t.accent}">${fmtDate(qt.validUntil)}</strong>
         </div>
     </div>
 
     <!-- CUSTOMER INFO -->
     <div class="info-grid">
         <div class="info-box">
-            <div class="info-label">Kính gửi</div>
+            <div class="info-label">Prepared For</div>
             <div class="info-value">${qt.contactPerson || qt.customer.name}</div>
             ${qt.companyName ? `<div class="info-detail">${qt.companyName}</div>` : ''}
-            <div class="info-detail">Mã KH: ${qt.customer.code} &nbsp;·&nbsp; Kênh: ${qt.channel}</div>
+            <div class="info-detail">Client Code: ${qt.customer.code} &nbsp;·&nbsp; Channel: ${qt.channel}</div>
         </div>
         <div class="info-box">
-            <div class="info-label">Điều khoản</div>
+            <div class="info-label">Terms & Advisor</div>
             <div class="info-detail" style="margin-top:0">
-                Thanh toán: <strong style="color:${t.textStrong}">${qt.paymentTerm}</strong><br/>
-                NV phụ trách: <strong style="color:${t.textStrong}">${qt.salesRep.name}</strong><br/>
+                Payment: <strong style="color:${t.textStrong}">${qt.paymentTerm}</strong><br/>
+                Advisor: <strong style="color:${t.textStrong}">${qt.salesRep.name}</strong><br/>
                 ${qt.salesRep.email ? `<span style="color:${t.accent}">${qt.salesRep.email}</span>` : ''}
             </div>
         </div>
@@ -535,16 +535,16 @@ export async function GET(req: NextRequest) {
                 <tr>
                     <th class="th-center">#</th>
                     <th></th>
-                    <th>Sản Phẩm</th>
+                    <th>Wine Portfolio</th>
                     ${qt.showQuantity ? `
-                    <th class="th-center">SL</th>
-                    <th class="th-right">Đơn Giá (₫)</th>
-                    <th class="th-center">CK</th>
-                    <th class="th-right">Thành Tiền (₫)</th>
+                    <th class="th-center">Qty</th>
+                    <th class="th-right">Unit Price (₫)</th>
+                    <th class="th-center">Disc</th>
+                    <th class="th-right">Total (₫)</th>
                     ` : `
-                    <th class="th-right">Đơn Giá Gốc (₫)</th>
-                    <th class="th-center">Ưu Đãi</th>
-                    <th class="th-right">Giá Đề Xuất (₫)</th>
+                    <th class="th-right">Base Price (₫)</th>
+                    <th class="th-center">Discount</th>
+                    <th class="th-right">Proposed Price (₫)</th>
                     `}
                 </tr>
             </thead>
@@ -559,56 +559,56 @@ export async function GET(req: NextRequest) {
     <div class="totals-wrap">
         <div class="totals-box">
             <div class="totals-row">
-                <span class="label">Tạm tính (${qt.lines.length} sản phẩm)</span>
+                <span class="label">Subtotal (${qt.lines.length} items)</span>
                 <span class="value">${fmt(subtotal)}</span>
             </div>
             ${Number(qt.orderDiscount) > 0 ? `
             <div class="totals-row discount">
-                <span class="label">Chiết khấu ${qt.orderDiscount}%</span>
+                <span class="label">Order Discount (${qt.orderDiscount}%)</span>
                 <span class="value">−${fmt(discountAmount)}</span>
             </div>` : ''}
             ${!qt.vatIncluded ? `
             <div class="totals-row">
-                <span class="label">VAT 10%</span>
+                <span class="label">VAT (10%)</span>
                 <span class="value">${fmt(vatAmount)}</span>
             </div>` : ''}
             <div class="totals-grand">
-                <span class="label">TỔNG CỘNG</span>
+                <span class="label">GRAND TOTAL</span>
                 <span class="value">${fmt(grandTotal)} ₫</span>
             </div>
-            <div class="vat-note">${qt.vatIncluded ? 'Giá đã bao gồm VAT' : 'Giá chưa bao gồm VAT 10%'}</div>
+            <div class="vat-note">${qt.vatIncluded ? 'VAT Included' : 'VAT Excluded (10%)'}</div>
         </div>
     </div>` : ''}
 
     <!-- TERMS & NOTES -->
     ${qt.terms ? `
     <div class="terms-section">
-        <div class="terms-title">Điều khoản & Điều kiện</div>
+        <div class="terms-title">Terms & Conditions</div>
         <div class="terms-content">${qt.terms}</div>
     </div>` : ''}
     ${qt.deliveryTerms ? `
     <div class="terms-section">
-        <div class="terms-title">Giao hàng</div>
+        <div class="terms-title">Delivery & Logistics</div>
         <div class="terms-content">${qt.deliveryTerms}</div>
     </div>` : ''}
     ${qt.notes ? `
     <div class="terms-section">
-        <div class="terms-title">Ghi chú</div>
+        <div class="terms-title">Special Notes</div>
         <div class="terms-content">${qt.notes}</div>
     </div>` : ''}
 
     <!-- FOOTER -->
     <div class="footer">
-        Báo giá được tạo bởi hệ thống LY's Cellars ERP &nbsp;·&nbsp; © ${new Date().getFullYear()} LY's Cellars
+        Generated by LY's Cellars ERP &nbsp;·&nbsp; © ${new Date().getFullYear()} LY's Cellars
     </div>
 
     <!-- PRINT BUTTONS -->
     <div class="no-print">
         <button class="btn-print btn-print-secondary" onclick="location.href=location.href.replace('style=${style}','style=${style === 'elegant' ? 'professional' : 'elegant'}')">
-            ${style === 'elegant' ? '☀️ Bản Trắng' : '🌙 Bản Tối'}
+            ${style === 'elegant' ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
         <button class="btn-print btn-print-primary" onclick="window.print()">
-            🖨️ In / Lưu PDF
+            🖨️ Print / Save PDF
         </button>
     </div>
 </body>

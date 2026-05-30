@@ -249,7 +249,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
     const groups: Record<string, { supplierName: string; country: string; lines: LineData[] }> = {}
     for (const line of data.lines) {
         const supplierName = (line as any).supplierName || "Ly's Cellars"
-        const country = line.country || "Khác"
+        const country = line.country || "Other"
         const key = `${supplierName} - ${country}`
         if (!groups[key]) {
             groups[key] = { supplierName, country, lines: [] }
@@ -262,7 +262,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
         const res = await acceptQuotationPublic(token)
         setAccepting(false)
         if (res.success) setDone('accepted')
-        else alert(res.error || 'Có lỗi xảy ra')
+        else alert(res.error || 'An error occurred')
     }
 
     async function handleReject() {
@@ -270,8 +270,11 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
         setRejecting(true)
         const res = await rejectQuotationPublic(token, rejectReason)
         setRejecting(false)
-        if (res.success) setDone('rejected')
-        else alert(res.error || 'Có lỗi xảy ra')
+        if (res.success) {
+            setDone('rejected')
+        } else {
+            alert(res.error || 'An error occurred')
+        }
     }
 
     if (done) {
@@ -291,10 +294,10 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(91,168,138,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                                 <CheckCircle2 size={48} style={{ color: '#5BA88A' }} />
                             </div>
-                            <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, fontFamily: '"Cormorant Garamond", Georgia, serif', letterSpacing: '0.02em' }}>Cảm ơn quý khách!</h1>
+                            <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, fontFamily: '"Cormorant Garamond", Georgia, serif', letterSpacing: '0.02em' }}>Thank You!</h1>
                             <p style={{ color: '#8AAEBB', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
-                                Báo giá <strong style={{ color: '#87CBB9' }}>{data.quotationNo}</strong> đã được đồng thuận phê duyệt thành công.
-                                Đội ngũ Lys Cellars sẽ liên hệ quý khách ngay lập tức để xác nhận khâu hậu cần & giao hàng.
+                                The proposal <strong style={{ color: '#87CBB9' }}>{data.quotationNo}</strong> has been successfully approved.
+                                Our LY's Cellars team will contact you shortly to coordinate logistics and delivery.
                             </p>
                         </>
                     ) : (
@@ -302,9 +305,9 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(139,26,46,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                                 <XCircle size={48} style={{ color: '#8B1A2E' }} />
                             </div>
-                            <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, fontFamily: '"Cormorant Garamond", Georgia, serif' }}>Đã ghi nhận phản hồi</h1>
+                            <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, fontFamily: '"Cormorant Garamond", Georgia, serif' }}>Feedback Recorded</h1>
                             <p style={{ color: '#8AAEBB', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
-                                Phản hồi từ chối báo giá của quý khách đã được lưu trữ trên hệ thống. Chúng tôi sẽ nhanh chóng hiệu chỉnh các điều kiện thương mại để gửi lại đề xuất tối ưu nhất.
+                                Your request to decline this proposal has been successfully recorded. We will quickly adjust the commercial terms and send a revised offer as soon as possible.
                             </p>
                         </>
                     )}
@@ -365,12 +368,12 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     </div>
                     <div style={{ textAlign: 'right', display: 'flex', gap: 24 }}>
                         <div>
-                            <p style={{ color: '#4A6A7A', fontSize: 10, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Hỗ Trợ Trực Tuyến</p>
+                            <p style={{ color: '#4A6A7A', fontSize: 10, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Online Support</p>
                             <p style={{ color: '#87CBB9', fontWeight: 600, fontSize: 14, margin: 0 }}>📧 info@lyscellars.com</p>
                         </div>
                         <div style={{ height: '32px', width: '1px', background: '#2A4355', alignSelf: 'center' }} />
                         <div>
-                            <p style={{ color: '#4A6A7A', fontSize: 10, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Hotline Tư Vấn</p>
+                            <p style={{ color: '#4A6A7A', fontSize: 10, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Hotline</p>
                             <p style={{ color: '#E8F1F2', fontWeight: 600, fontSize: 14, margin: 0 }}>📞 028 1234 5678</p>
                         </div>
                     </div>
@@ -395,11 +398,11 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                             <ShieldCheck size={16} style={{ color: '#87CBB9' }} />
                             <span style={{ color: '#87CBB9', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                                {data.showQuantity ? 'Bản Chào Hàng Độc Quyền' : 'Bảng Giá Thỏa Thuận Khung'}
+                                {data.showQuantity ? 'Exclusive Proposal' : 'Frame Pricing Agreement'}
                             </span>
                         </div>
                         <h2 style={{ color: '#E8F1F2', fontSize: 32, fontWeight: 700, margin: 0, fontFamily: '"Cormorant Garamond", Georgia, serif', letterSpacing: '0.01em' }}>
-                            {data.showQuantity ? 'ĐỀ XUẤT BÁO GIÁ GIÁ TRỊ / QUOTATION' : 'BẢNG GIÁ ƯU ĐÃI ĐỘC QUYỀN / PRICE LIST'}
+                            {data.showQuantity ? 'EXCLUSIVE QUOTATION' : 'EXCLUSIVE PRICE LIST'}
                         </h2>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
@@ -435,17 +438,17 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         position: 'relative'
                     }}>
                         <div style={{ position: 'absolute', top: 18, right: 18, width: 8, height: 8, borderRadius: '50%', background: '#87CBB9' }} />
-                        <h4 style={{ color: '#4A6A7A', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>QUÝ KHÁCH HÀNG / CLIENT</h4>
+                        <h4 style={{ color: '#4A6A7A', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>PREPARED FOR</h4>
                         <p style={{ color: '#E8F1F2', fontWeight: 600, fontSize: 18, margin: 0, fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
                             {data.contactPerson || data.customerName}
                         </p>
                         {data.companyName && <p style={{ color: '#8AAEBB', fontSize: 14, margin: '6px 0 0' }}>{data.companyName}</p>}
                         <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
                             <span style={{ fontSize: 11, background: 'rgba(135,203,185,0.05)', color: '#87CBB9', padding: '2px 8px', border: '1px solid rgba(135,203,185,0.1)' }}>
-                                Code: {data.customerCode}
+                                Client Code: {data.customerCode}
                             </span>
                             <span style={{ fontSize: 11, background: 'rgba(74,143,171,0.05)', color: '#8AAEBB', padding: '2px 8px', border: '1px solid rgba(74,143,171,0.1)' }}>
-                                Kênh: {data.channel}
+                                Channel: {data.channel}
                             </span>
                         </div>
                     </div>
@@ -457,24 +460,24 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         borderRadius: 2, 
                         border: '1px solid #2A4355' 
                     }}>
-                        <h4 style={{ color: '#4A6A7A', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>ĐIỀU KHOẢN / TIMELINE</h4>
+                        <h4 style={{ color: '#4A6A7A', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>TIMELINE & TERMS</h4>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(42,67,85,0.5)', paddingBottom: 6 }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <Calendar size={13} style={{ color: '#4A6A7A' }} /> Ngày lập báo giá
+                                    <Calendar size={13} style={{ color: '#4A6A7A' }} /> Date Issued
                                 </span>
-                                <strong style={{ color: '#E8F1F2', fontSize: 13, fontFamily: 'var(--font-sans)' }}>{fmtDate(data.createdAt)}</strong>
+                                <strong style={{ color: '#E8F1F2', fontSize: 13, fontFamily: '"DM Mono", monospace' }}>{fmtDate(data.createdAt)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(42,67,85,0.5)', paddingBottom: 6 }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <Clock size={13} style={{ color: '#4A6A7A' }} /> Hiệu lực ưu đãi
+                                    <Clock size={13} style={{ color: '#4A6A7A' }} /> Valid Until
                                 </span>
-                                <strong style={{ color: data.isExpired ? '#8B1A2E' : '#D4A853', fontSize: 13, fontFamily: 'var(--font-sans)' }}>{fmtDate(data.validUntil)}</strong>
+                                <strong style={{ color: data.isExpired ? '#8B1A2E' : '#D4A853', fontSize: 13, fontFamily: '"DM Mono", monospace' }}>{fmtDate(data.validUntil)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <CreditCard size={13} style={{ color: '#4A6A7A' }} /> Phương thức TT
+                                    <CreditCard size={13} style={{ color: '#4A6A7A' }} /> Payment Term
                                 </span>
                                 <strong style={{ color: '#E8F1F2', fontSize: 13 }}>{data.paymentTerm}</strong>
                             </div>
@@ -488,14 +491,14 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         borderRadius: 2, 
                         border: '1px solid #2A4355' 
                     }}>
-                        <h4 style={{ color: '#4A6A7A', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>TƯ VẤN SẢN PHẨM / WINE ADVISOR</h4>
+                        <h4 style={{ color: '#4A6A7A', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>WINE ADVISOR</h4>
                         <p style={{ color: '#E8F1F2', fontWeight: 600, fontSize: 16, margin: '0 0 6px' }}>{data.salesRepName}</p>
                         
                         <p style={{ color: '#8AAEBB', fontSize: 13, margin: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                             <Mail size={13} style={{ color: '#87CBB9' }} /> {data.salesRepEmail}
                         </p>
                         <p style={{ color: '#4A6A7A', fontSize: 11, margin: '8px 0 0', fontStyle: 'italic' }}>
-                            Đại diện chuyên môn cao cấp từ hầm rượu Lys Cellars
+                            Professional Wine Consultant from LY&apos;s Cellars
                         </p>
                     </div>
                 </div>
@@ -518,10 +521,10 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         background: 'linear-gradient(180deg, #182B3C 0%, #142433 100%)'
                     }}>
                         <h3 style={{ color: '#E8F1F2', fontSize: 16, fontWeight: 700, letterSpacing: '0.04em', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Wine size={16} style={{ color: '#87CBB9' }} /> DANH SÁCH RƯỢU VANG TUYỂN CHỌN / BOTTLE DETAILS
+                            <Wine size={16} style={{ color: '#87CBB9' }} /> SELECTED WINE PORTFOLIO / BOTTLE DETAILS
                         </h3>
                         <span style={{ color: '#8AAEBB', fontSize: 12, fontFamily: 'var(--font-sans)', fontWeight: 500 }}>
-                            {data.lines.length} dòng sản phẩm
+                            {data.lines.length} items
                         </span>
                     </div>
 
@@ -565,30 +568,30 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                                 <ShieldCheck size={16} style={{ color: '#87CBB9' }} />
-                                <span style={{ color: '#E8F1F2', fontSize: 14, fontWeight: 600 }}>Cam Kết Chất Lượng Hầm Rượu</span>
+                                <span style={{ color: '#E8F1F2', fontSize: 14, fontWeight: 600 }}>Cellar Quality Commitment</span>
                             </div>
                             <p style={{ color: '#8AAEBB', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                                Tất cả chai rượu được phân phối bởi Lys Cellars đều được nhập khẩu chính ngạch trực tiếp từ các điền trang danh tiếng thế giới, vận chuyển và bảo quản nghiêm ngặt ở nhiệt độ hầm tiêu chuẩn 14-16°C.
+                                All fine wines distributed by LY&apos;s Cellars are imported directly from world-class estates, strictly transported and stored under standard cellar conditions of 14-16°C.
                             </p>
                         </div>
 
                         {/* Right: Detailed financial matrix */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#8AAEBB', fontSize: 14 }}>Tạm tính trước chiết khấu</span>
+                                <span style={{ color: '#8AAEBB', fontSize: 14 }}>Subtotal (Before Discount)</span>
                                 <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>{fmt(subtotal)} ₫</span>
                             </div>
                             
                             {data.orderDiscount > 0 && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#EF4444', fontSize: 14 }}>Chiết khấu báo giá tổng ({data.orderDiscount}%)</span>
+                                    <span style={{ color: '#EF4444', fontSize: 14 }}>Order Discount ({data.orderDiscount}%)</span>
                                     <span style={{ color: '#EF4444', fontWeight: 600, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>−{fmt(discountAmount)} ₫</span>
                                 </div>
                             )}
 
                             {!data.vatIncluded && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#8AAEBB', fontSize: 14 }}>Thuế Giá trị gia tăng (VAT 10%)</span>
+                                    <span style={{ color: '#8AAEBB', fontSize: 14 }}>Value Added Tax (VAT 10%)</span>
                                     <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>{fmt(vatAmount)} ₫</span>
                                 </div>
                             )}
@@ -602,9 +605,9 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 alignItems: 'center' 
                             }}>
                                 <div>
-                                    <span style={{ color: '#E8F1F2', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em' }}>TỔNG THANH TOÁN</span>
+                                    <span style={{ color: '#E8F1F2', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em' }}>GRAND TOTAL</span>
                                     <p style={{ color: '#4A6A7A', fontSize: 11, margin: '2px 0 0' }}>
-                                        {data.vatIncluded ? 'Đã bao gồm thuế VAT' : 'Chưa bao gồm thuế VAT'}
+                                        {data.vatIncluded ? 'VAT Included' : 'VAT Excluded'}
                                     </p>
                                 </div>
                                 <span style={{ 
@@ -640,25 +643,25 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             borderBottom: '1px solid rgba(42,67,85,0.5)',
                             paddingBottom: 10
                         }}>
-                            ĐIỀU KHOẢN THƯƠNG MẠI & BẢO MẬT / TERMS
+                            COMMERCIAL TERMS & CONFIDENTIALITY
                         </h3>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
                             {data.terms && (
                                 <div>
-                                    <h4 style={{ color: '#8AAEBB', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>Thanh Toán & Hợp Đồng</h4>
+                                    <h4 style={{ color: '#8AAEBB', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>Contract & Payment Terms</h4>
                                     <p style={{ color: '#E8F1F2', fontSize: 13, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>{data.terms}</p>
                                 </div>
                             )}
                             {data.deliveryTerms && (
                                 <div>
-                                    <h4 style={{ color: '#8AAEBB', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>Vận Chuyển & Lưu Kho</h4>
+                                    <h4 style={{ color: '#8AAEBB', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>Delivery & Warehousing</h4>
                                     <p style={{ color: '#E8F1F2', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{data.deliveryTerms}</p>
                                 </div>
                             )}
                             {data.notes && (
                                 <div style={{ gridColumn: '1 / -1' }}>
-                                    <h4 style={{ color: '#8AAEBB', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>Ghi Chú Đặc Biệt</h4>
+                                    <h4 style={{ color: '#8AAEBB', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>Special Notes</h4>
                                     <p style={{ color: '#E8F1F2', fontSize: 13, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>{data.notes}</p>
                                 </div>
                             )}
@@ -698,7 +701,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 e.currentTarget.style.transform = 'translateY(0)'
                             }}
                         >
-                            {accepting ? '⏳ Đang xác thực...' : '✓ Chấp Nhận & Ký Phê Duyệt Báo Giá'}
+                            {accepting ? '⏳ Verifying...' : '✓ Approve & Sign Proposal'}
                         </button>
                         
                         {!showRejectForm ? (
@@ -729,13 +732,13 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                     e.currentTarget.style.borderColor = '#8B1A2E'
                                 }}
                             >
-                                Từ Chối Đề Xuất
+                                Decline Proposal
                             </button>
                         ) : (
                             <div style={{ flex: 2, minWidth: 260, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                                 <input
                                     type="text"
-                                    placeholder="Lý do từ chối cụ thể để chúng tôi tối ưu..."
+                                    placeholder="Please state your reason for declining to help us improve..."
                                     value={rejectReason}
                                     onChange={e => setRejectReason(e.target.value)}
                                     style={{ 
@@ -768,7 +771,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                         transition: 'background-color 0.3s ease'
                                     }}
                                 >
-                                    Xác nhận từ chối
+                                    Confirm Decline
                                 </button>
                             </div>
                         )}
@@ -786,9 +789,9 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
                     }}>
                         <AlertTriangle size={28} style={{ color: '#EF4444', margin: '0 auto 12px' }} />
-                        <h4 style={{ color: '#EF4444', fontSize: 16, fontWeight: 700, margin: '0 0 6px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Báo giá đã quá hạn hiệu lực</h4>
+                        <h4 style={{ color: '#EF4444', fontSize: 16, fontWeight: 700, margin: '0 0 6px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>This Proposal has Expired</h4>
                         <p style={{ color: '#8AAEBB', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
-                            Thời hạn duy trì biểu giá ưu đãi thương thảo đặc quyền cho tài liệu này đã kết thúc. Vui lòng liên hệ Wine Advisor <strong style={{ color: '#E8F1F2' }}>{data.salesRepName}</strong> hoặc gửi email về hòm thư hỗ trợ để nhận phiên bản báo giá cập nhật mới nhất.
+                            The validity period for this exclusive pricing has ended. Please contact your Wine Advisor <strong style={{ color: '#E8F1F2' }}>{data.salesRepName}</strong> or email our support desk to receive an updated proposal.
                         </p>
                     </div>
                 )}
@@ -808,7 +811,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         © {new Date().getFullYear()} LY&apos;s Cellars — Fine Wine Specialist | Private Client Service
                     </p>
                     <p style={{ color: '#4A6A7A', fontSize: 11, maxWidth: 600, margin: 0, lineHeight: 1.5 }}>
-                        Tài liệu này chứa thông tin bảo mật thương mại độc quyền giữa Lys Cellars và quý đối tác. Mọi hành vi sao chép, phân phối thông tin giá hoặc tài liệu thử nếm khi chưa có sự đồng ý bằng văn bản từ Lys Cellars đều bị nghiêm cấm.
+                        This document contains confidential commercial information intended solely for the recipient. Any unauthorized copying, distribution, or pricing disclosure without prior written consent from LY&apos;s Cellars is strictly prohibited.
                     </p>
                 </div>
             </footer>
