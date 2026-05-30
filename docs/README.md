@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-05-30 00:26 | Wine ERP v6.9 — 26 modules, 114 models, 42 action files, Check Margin compact view toggle, mobile inputs alignment, and price formatting styling fix (commit 71c311f)*
+*Last updated: 2026-05-30 13:50 | Wine ERP v7.0 — 26 modules, 114 models, 42 action files, Quotation upgraded with quick product picker, landscape images, and supplier-country grouping*

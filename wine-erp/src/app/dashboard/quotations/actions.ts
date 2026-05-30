@@ -94,6 +94,7 @@ export async function getQuotationDetail(id: string): Promise<{ success: true; d
                                 skuCode: true, productName: true, wineType: true, volumeMl: true,
                                 vintage: true, country: true, abvPercent: true, tastingNotes: true, classification: true,
                                 producer: { select: { name: true } },
+                                supplier: { select: { name: true } },
                                 appellation: { select: { name: true, region: { select: { name: true } } } },
                                 media: { where: { isPrimary: true }, select: { url: true, thumbnailUrl: true }, take: 1 },
                                 awards: { select: { source: true, score: true, medal: true }, take: 3 },
@@ -499,23 +500,70 @@ export async function exportQuotationExcel(quotationId: string): Promise<{ succe
             include: {
                 customer: { select: { name: true, code: true } },
                 salesRep: { select: { name: true } },
-                lines: { include: { product: { select: { skuCode: true, productName: true, wineType: true, volumeMl: true } } } },
+                lines: {
+                    include: {
+                        product: {
+                            select: {
+                                skuCode: true,
+                                productName: true,
+                                wineType: true,
+                                volumeMl: true,
+                                country: true,
+                                supplier: { select: { name: true } },
+                            }
+                        }
+                    }
+                },
             },
         })
         if (!qt) return { success: false, error: 'Quotation không tồn tại' }
 
         const { generateExcelBuffer } = await import('@/lib/excel')
-        const rows = qt.lines.map((l, i) => ({
-            stt: i + 1,
-            skuCode: l.product.skuCode,
-            productName: l.product.productName,
-            wineType: l.product.wineType,
-            volumeMl: l.product.volumeMl,
-            qty: Number(l.qtyOrdered),
-            unitPrice: Number(l.unitPrice),
-            discount: Number(l.lineDiscountPct),
-            lineTotal: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
-        }))
+        
+        // Group lines by Supplier and Country
+        const groups: Record<string, { supplierName: string; country: string; lines: typeof qt.lines }> = {}
+        for (const l of qt.lines) {
+            const supplierName = (l.product as any).supplier?.name || "Ly's Cellars"
+            const country = l.product.country || "Khác"
+            const key = `${supplierName} - ${country}`
+            if (!groups[key]) {
+                groups[key] = { supplierName, country, lines: [] }
+            }
+            groups[key].lines.push(l)
+        }
+
+        const rows: any[] = []
+        let index = 1
+        for (const key of Object.keys(groups)) {
+            const group = groups[key]
+            // Add a group header row in Excel
+            rows.push({
+                stt: `📦 ${group.supplierName} (${group.country})`,
+                skuCode: '',
+                productName: '',
+                wineType: '',
+                volumeMl: '',
+                qty: '',
+                unitPrice: '',
+                discount: '',
+                lineTotal: ''
+            })
+
+            // Add products under this group
+            for (const l of group.lines) {
+                rows.push({
+                    stt: index++,
+                    skuCode: l.product.skuCode,
+                    productName: l.product.productName,
+                    wineType: l.product.wineType,
+                    volumeMl: l.product.volumeMl,
+                    qty: Number(l.qtyOrdered),
+                    unitPrice: Number(l.unitPrice),
+                    discount: Number(l.lineDiscountPct),
+                    lineTotal: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
+                })
+            }
+        }
 
         const buffer = await generateExcelBuffer({
             sheetName: qt.quotationNo,

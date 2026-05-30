@@ -62,8 +62,8 @@ function ProductLineCard({ line, i, totalCount }: { line: LineData; i: number; t
         >
             {/* Product image with sleek premium dark background and shadow */}
             <div style={{ 
-                width: 90, 
-                height: 140, 
+                width: 140, 
+                height: 90, 
                 borderRadius: 4, 
                 flexShrink: 0, 
                 background: 'linear-gradient(135deg, #091520 0%, #112130 100%)', 
@@ -231,6 +231,18 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
     const vatAmount = data.vatIncluded ? 0 : afterDiscount * 0.1
     const grandTotal = afterDiscount + vatAmount
     const statusInfo = STATUS_MAP[data.status] || STATUS_MAP.DRAFT
+
+    // Group lines by supplierName and country
+    const groups: Record<string, { supplierName: string; country: string; lines: LineData[] }> = {}
+    for (const line of data.lines) {
+        const supplierName = (line as any).supplierName || "Ly's Cellars"
+        const country = line.country || "Khác"
+        const key = `${supplierName} - ${country}`
+        if (!groups[key]) {
+            groups[key] = { supplierName, country, lines: [] }
+        }
+        groups[key].lines.push(line)
+    }
 
     async function handleAccept() {
         setAccepting(true)
@@ -498,8 +510,26 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         </span>
                     </div>
 
-                    {data.lines.map((line, i) => (
-                        <ProductLineCard key={i} line={line} i={i} totalCount={data.lines.length} />
+                    {Object.entries(groups).map(([groupKey, group], gIdx) => (
+                        <div key={groupKey} style={{ borderBottom: gIdx < Object.keys(groups).length - 1 ? '1.5px solid #2A4355' : 'none' }}>
+                            {/* Group Header Row */}
+                            <div style={{ 
+                                padding: '12px 24px', 
+                                background: 'rgba(135,203,185,0.06)', 
+                                borderBottom: '1px solid #2A4355',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8
+                            }}>
+                                <span style={{ color: '#87CBB9', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    📦 {group.supplierName} — 🌍 {group.country}
+                                </span>
+                            </div>
+                            
+                            {group.lines.map((line, i) => (
+                                <ProductLineCard key={i} line={line} i={i} totalCount={group.lines.length} />
+                            ))}
+                        </div>
                     ))}
                 </div>
 

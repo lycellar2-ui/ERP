@@ -42,6 +42,13 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const [sendDrawerOpen, setSendDrawerOpen] = useState<string | null>(null)
     const [sendLoading, setSendLoading] = useState(false)
 
+    // Quick Product Picker states
+    const [pickerOpen, setPickerOpen] = useState(false)
+    const [pickerSearch, setPickerSearch] = useState('')
+    const [pickerCountry, setPickerCountry] = useState('')
+    const [pickerWineType, setPickerWineType] = useState('')
+    const [pickerSelected, setPickerSelected] = useState<Record<string, { qty: number; checked: boolean }>>({})
+
     const reload = useCallback(async () => {
         setLoading(true)
         const data = await getQuotations({ search: search || undefined, status: statusFilter || undefined })
@@ -146,6 +153,46 @@ export function QuotationClient({ initialRows, stats }: Props) {
         const copy = [...formLines]
             ; (copy[i] as any)[field] = val
         setFormLines(copy)
+    }
+
+    const selectProductForLine = (i: number, productId: string) => {
+        const prod = products.find(p => p.id === productId)
+        const copy = [...formLines]
+        copy[i].productId = productId
+        copy[i].price = prod ? prod.wholesalePrice : 0
+        setFormLines(copy)
+    }
+
+    const openPicker = () => {
+        const initialSelected: Record<string, { qty: number; checked: boolean }> = {}
+        for (const line of formLines) {
+            if (line.productId) {
+                initialSelected[line.productId] = { qty: line.qty, checked: true }
+            }
+        }
+        setPickerSelected(initialSelected)
+        setPickerOpen(true)
+    }
+
+    const confirmPickerAdd = () => {
+        const newLines: typeof formLines = []
+        for (const [prodId, data] of Object.entries(pickerSelected)) {
+            if (data.checked && prodId) {
+                const prod = products.find(p => p.id === prodId)
+                const existing = formLines.find(l => l.productId === prodId)
+                newLines.push({
+                    productId: prodId,
+                    qty: data.qty,
+                    price: existing?.price || (prod ? prod.wholesalePrice : 0),
+                    discount: existing?.discount || 0
+                })
+            }
+        }
+        setFormLines(newLines)
+        setPickerOpen(false)
+        setPickerSearch('')
+        setPickerCountry('')
+        setPickerWineType('')
     }
 
     return (
@@ -485,30 +532,104 @@ export function QuotationClient({ initialRows, stats }: Props) {
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Sản Phẩm</p>
-                                    <button onClick={addLine} className="text-xs font-semibold px-2 py-1" style={{ color: '#87CBB9' }}>+ Thêm Dòng</button>
+                                    <div className="flex gap-2">
+                                        <button onClick={openPicker} className="text-xs font-semibold px-2.5 py-1 transition-all" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', borderRadius: '4px' }}>🔍 Chọn Nhanh</button>
+                                        <button onClick={addLine} className="text-xs font-semibold px-2.5 py-1 transition-all" style={{ background: 'rgba(138,174,187,0.15)', color: '#8AAEBB', borderRadius: '4px' }}>+ Thêm dòng</button>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    {formLines.map((line, i) => (
-                                        <div key={i} className="p-3 rounded-md space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                            <select value={line.productId} onChange={e => updateLine(i, 'productId', e.target.value)}
-                                                className="w-full px-2 py-1.5 text-xs outline-none"
-                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
-                                                <option value="">Chọn sản phẩm...</option>
-                                                {products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
-                                            </select>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <input type="number" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} placeholder="SL"
-                                                    className="px-2 py-1.5 text-xs outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
-                                                <input type="number" value={line.price} onChange={e => updateLine(i, 'price', Number(e.target.value))} placeholder="Giá"
-                                                    className="px-2 py-1.5 text-xs outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853', fontFamily: '"DM Mono"', borderRadius: '4px' }} />
-                                                <div className="flex items-center gap-1">
-                                                    <input type="number" value={line.discount} onChange={e => updateLine(i, 'discount', Number(e.target.value))} placeholder="CK%"
-                                                        className="flex-1 px-2 py-1.5 text-xs outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
-                                                    <button onClick={() => removeLine(i)} className="p-1 text-xs" style={{ color: '#8B1A2E' }}>✕</button>
-                                                </div>
+                                <div className="space-y-2.5">
+                                    {formLines.map((line, i) => {
+                                        const prod = products.find(p => p.id === line.productId)
+                                        
+                                        // Calculate metrics
+                                        const diffPct = prod && prod.wholesalePrice > 0 ? ((line.price - prod.wholesalePrice) / prod.wholesalePrice) * 100 : 0
+                                        const marginPct = prod && line.price > 0 ? ((line.price - prod.costPrice) / line.price) * 100 : 0
+                                        
+                                        return (
+                                            <div key={i} className="p-3 rounded-sm space-y-2.5 transition-all" style={{ background: '#142433', border: '1px solid #2A4355', borderRadius: '4px' }}>
+                                                {/* Header row: dropdown selector or product info */}
+                                                {!line.productId ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <select value={line.productId} onChange={e => selectProductForLine(i, e.target.value)}
+                                                            className="flex-1 px-2.5 py-1.5 text-xs outline-none"
+                                                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
+                                                            <option value="">Chọn sản phẩm...</option>
+                                                            {products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
+                                                        </select>
+                                                        <button onClick={() => removeLine(i)} className="p-1.5 text-xs" style={{ color: '#8B1A2E' }}>✕</button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-3">
+                                                        {/* Horizontal Image thumbnail */}
+                                                        <div className="w-16 h-12 rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: '#091520', border: '1px solid #2A4355' }}>
+                                                            {prod?.primaryImageUrl ? (
+                                                                <img src={prod.primaryImageUrl} alt="" className="max-w-full max-h-full object-contain" />
+                                                            ) : (
+                                                                <span className="text-xs">🍷</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-start justify-between gap-1">
+                                                                <h5 className="text-xs font-bold truncate" style={{ color: '#E8F1F2' }} title={prod?.productName}>{prod?.productName}</h5>
+                                                                <button onClick={() => removeLine(i)} className="p-0.5 text-xs flex-shrink-0" style={{ color: '#8B1A2E' }}>✕</button>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <span className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{prod?.skuCode}</span>
+                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: prod && prod.totalStock > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)', color: prod && prod.totalStock > 0 ? '#22C55E' : '#EF4444' }}>
+                                                                    Tồn: {prod?.totalStock}
+                                                                </span>
+                                                                <span className="text-[10px] text-[#4A6A7A] truncate">
+                                                                    {prod?.supplierName}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Numeric controls and indicators if product is selected */}
+                                                {line.productId && prod && (
+                                                    <div className="space-y-2">
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            <div>
+                                                                <label className="text-[9px] uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>SL</label>
+                                                                <input type="number" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} placeholder="SL"
+                                                                    className="w-full px-2 py-1 text-xs outline-none text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>Giá báo khách</label>
+                                                                <input type="number" value={line.price} onChange={e => updateLine(i, 'price', Number(e.target.value))} placeholder="Giá"
+                                                                    className="w-full px-2 py-1 text-xs outline-none text-right" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853', fontFamily: '"DM Mono"', borderRadius: '4px' }} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>CK%</label>
+                                                                <input type="number" value={line.discount} onChange={e => updateLine(i, 'discount', Number(e.target.value))} placeholder="CK%"
+                                                                    className="w-full px-2 py-1 text-xs outline-none text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Reference metrics row */}
+                                                        <div className="flex items-center justify-between text-[10px] px-1 py-0.5 rounded" style={{ background: '#0D1E2B' }}>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span style={{ color: '#4A6A7A' }}>Wholesale:</span>
+                                                                <span className="font-mono font-semibold text-[#D4A853]">{prod.wholesalePrice.toLocaleString('vi-VN')} đ</span>
+                                                                <span className="font-semibold" style={{ color: diffPct >= 0 ? '#5BA88A' : '#EF4444' }}>
+                                                                    {diffPct >= 0 ? `+${diffPct.toFixed(1)}%` : `${diffPct.toFixed(1)}%`}
+                                                                </span>
+                                                            </div>
+                                                            {prod.costPrice > 0 && (
+                                                                <div className="flex items-center gap-1">
+                                                                    <span style={{ color: '#4A6A7A' }}>Lãi gộp:</span>
+                                                                    <span className="font-semibold" style={{ color: marginPct >= 15 ? '#87CBB9' : marginPct >= 0 ? '#D4A853' : '#EF4444' }}>
+                                                                        {marginPct.toFixed(1)}%
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             </div>
 
@@ -616,6 +737,189 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                     <span className="text-sm" style={{ color: '#8AAEBB' }}>Đang xử lý...</span>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Quick Product Picker Modal */}
+            {pickerOpen && (
+                <>
+                    <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(10,5,2,0.8)' }} onClick={() => setPickerOpen(false)} />
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col rounded-sm"
+                        style={{ width: 'min(780px,95vw)', height: 'min(620px,90vh)', background: '#0D1E2B', border: '1px solid #2A4355', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+                        
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+                            <div>
+                                <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                                    🔍 Chọn sản phẩm nhanh
+                                </h3>
+                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+                                    Tìm kiếm, lọc danh sách và tích chọn hàng loạt sản phẩm để thêm vào báo giá
+                                </p>
+                            </div>
+                            <button onClick={() => setPickerOpen(false)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                        </div>
+
+                        {/* Filters Bar */}
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                                <input 
+                                    value={pickerSearch} 
+                                    onChange={e => setPickerSearch(e.target.value)}
+                                    placeholder="Tìm SKU, tên sản phẩm..."
+                                    className="w-full pl-9 pr-4 py-1.5 text-xs outline-none"
+                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} 
+                                />
+                            </div>
+                            <select 
+                                value={pickerCountry} 
+                                onChange={e => setPickerCountry(e.target.value)}
+                                className="px-3 py-1.5 text-xs outline-none cursor-pointer"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: pickerCountry ? '#E8F1F2' : '#4A6A7A', borderRadius: '4px' }}
+                            >
+                                <option value="">Tất cả quốc gia</option>
+                                {[...new Set(products.map(p => p.country).filter(Boolean))].map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                            <select 
+                                value={pickerWineType} 
+                                onChange={e => setPickerWineType(e.target.value)}
+                                className="px-3 py-1.5 text-xs outline-none cursor-pointer"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: pickerWineType ? '#E8F1F2' : '#4A6A7A', borderRadius: '4px' }}
+                            >
+                                <option value="">Tất cả loại rượu</option>
+                                {[...new Set(products.map(p => p.wineType).filter(Boolean))].map(w => (
+                                    <option key={w} value={w}>{w}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Product List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                            {(() => {
+                                const filtered = products.filter(p => {
+                                    const matchSearch = pickerSearch ? (p.skuCode.toLowerCase().includes(pickerSearch.toLowerCase()) || p.productName.toLowerCase().includes(pickerSearch.toLowerCase())) : true
+                                    const matchCountry = pickerCountry ? p.country === pickerCountry : true
+                                    const matchWineType = pickerWineType ? p.wineType === pickerWineType : true
+                                    return matchSearch && matchCountry && matchWineType
+                                })
+
+                                if (filtered.length === 0) {
+                                    return (
+                                        <div className="text-center py-12" style={{ color: '#4A6A7A' }}>
+                                            Không tìm thấy sản phẩm phù hợp bộ lọc
+                                        </div>
+                                    )
+                                }
+
+                                return filtered.map(p => {
+                                    const selection = pickerSelected[p.id] || { qty: 1, checked: false }
+                                    const handleCheckboxChange = (checked: boolean) => {
+                                        setPickerSelected({
+                                            ...pickerSelected,
+                                            [p.id]: { ...selection, checked }
+                                        })
+                                    }
+                                    const handleQtyChange = (qty: number) => {
+                                        setPickerSelected({
+                                            ...pickerSelected,
+                                            [p.id]: { ...selection, qty: Math.max(1, qty) }
+                                        })
+                                    }
+
+                                    return (
+                                        <div 
+                                            key={p.id} 
+                                            onClick={() => handleCheckboxChange(!selection.checked)}
+                                            className="p-2.5 rounded-sm flex items-center gap-3 transition-all cursor-pointer"
+                                            style={{ 
+                                                background: selection.checked ? 'rgba(135,203,185,0.04)' : '#142433', 
+                                                border: selection.checked ? '1px solid rgba(135,203,185,0.3)' : '1px solid #2A4355',
+                                                borderRadius: '4px'
+                                            }}
+                                        >
+                                            {/* Checkbox */}
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selection.checked} 
+                                                onChange={e => handleCheckboxChange(e.target.checked)}
+                                                onClick={e => e.stopPropagation()} 
+                                                className="cursor-pointer accent-[#87CBB9]" 
+                                            />
+
+                                            {/* Image - Horizontal */}
+                                            <div className="w-16 h-12 rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: '#091520', border: '1px solid #2A4355' }}>
+                                                {p.primaryImageUrl ? (
+                                                    <img src={p.primaryImageUrl} alt="" className="max-w-full max-h-full object-contain" />
+                                                ) : (
+                                                    <span className="text-xs">🍷</span>
+                                                )}
+                                            </div>
+
+                                            {/* Details */}
+                                            <div className="flex-1 min-w-0" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <h4 className="text-xs font-bold truncate" style={{ color: selection.checked ? '#87CBB9' : '#E8F1F2' }}>
+                                                        {p.productName}
+                                                    </h4>
+                                                    <span className="text-xs font-bold text-[#D4A853] font-mono">
+                                                        {p.wholesalePrice.toLocaleString('vi-VN')} đ
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{p.skuCode}</span>
+                                                    <span className="text-[10px] text-[#4A6A7A]">•</span>
+                                                    <span className="text-[10px] text-[#8AAEBB]">{p.wineType} ({p.country})</span>
+                                                    <span className="text-[10px] text-[#4A6A7A]">•</span>
+                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-full" style={{ background: p.totalStock > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: p.totalStock > 0 ? '#22C55E' : '#EF4444' }}>
+                                                        Tồn: {p.totalStock}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Quantity input inside picker card */}
+                                            <div className="flex-shrink-0 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                                                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>SL:</span>
+                                                <input 
+                                                    type="number" 
+                                                    min={1} 
+                                                    value={selection.qty}
+                                                    onChange={e => handleQtyChange(Number(e.target.value))}
+                                                    className="w-12 px-1 py-0.5 text-center text-xs outline-none"
+                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            })()}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 flex items-center justify-between" style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
+                            <div className="text-xs" style={{ color: '#8AAEBB' }}>
+                                Đã chọn: <strong className="text-[#87CBB9]">{Object.values(pickerSelected).filter(s => s.checked).length}</strong> sản phẩm
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => setPickerOpen(false)}
+                                    className="px-4 py-2 text-xs font-semibold rounded"
+                                    style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB', borderRadius: '4px' }}
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button 
+                                    onClick={confirmPickerAdd}
+                                    className="px-5 py-2 text-xs font-semibold rounded"
+                                    style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '4px' }}
+                                >
+                                    Xác nhận thêm
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </>

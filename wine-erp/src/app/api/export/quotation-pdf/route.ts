@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
                             vintage: true, country: true, abvPercent: true, tastingNotes: true,
                             classification: true,
                             producer: { select: { name: true } },
+                            supplier: { select: { name: true } },
                             appellation: { select: { name: true, region: { select: { name: true } } } },
                             media: { where: { isPrimary: true }, select: { url: true }, take: 1 },
                             awards: { select: { source: true, score: true, medal: true }, take: 2 },
@@ -79,41 +80,66 @@ export async function GET(req: NextRequest) {
         awardText: '#B8860B',
     }
 
-    const productRows = qt.lines.map((l, i) => {
-        const qty = Number(l.qtyOrdered)
-        const price = Number(l.unitPrice)
-        const disc = Number(l.lineDiscountPct)
-        const lineTotal = qty * price * (1 - disc / 100)
-        const imgUrl = l.product.media?.[0]?.url
-        const awards = l.product.awards?.map(a =>
-            `${a.source} ${a.score ? Number(a.score) : (a.medal?.replace('_', ' ') || '')}`
-        ).join(' · ')
+    // Group lines by Supplier and Country
+    const groups: Record<string, { supplierName: string; country: string; lines: typeof qt.lines }> = {}
+    for (const l of qt.lines) {
+        const supplierName = (l.product as any).supplier?.name || "Ly's Cellars"
+        const country = l.product.country || "Khác"
+        const key = `${supplierName} - ${country}`
+        if (!groups[key]) {
+            groups[key] = { supplierName, country, lines: [] }
+        }
+        groups[key].lines.push(l)
+    }
 
-        return `
-        <tr class="${i % 2 === 1 ? 'alt' : ''}">
-            <td class="cell-center cell-num">${i + 1}</td>
-            <td class="cell-img">
-                ${imgUrl
-                ? `<img src="${imgUrl}" alt="" class="product-img" />`
-                : `<div class="product-img-placeholder">🍷</div>`
-            }
+    let globalIdx = 0
+    const productRows = Object.entries(groups).map(([groupKey, group]) => {
+        const groupHeaderRow = `
+        <tr class="group-header">
+            <td colspan="7" class="group-header-title">
+                📦 ${group.supplierName} — 🌍 ${group.country}
             </td>
-            <td class="cell-product">
-                <div class="product-name">${l.product.productName}</div>
-                <div class="product-detail">
-                    ${l.product.vintage ? `<strong>${l.product.vintage}</strong> · ` : ''}${l.product.appellation?.name || ''}${l.product.appellation?.region?.name ? ` · ${l.product.appellation.region.name}` : ''} · ${l.product.country}
-                </div>
-                <div class="product-meta">
-                    ${l.product.skuCode} · ${l.product.wineType} · ${l.product.volumeMl}ml · ${Number(l.product.abvPercent)}% ABV${l.product.classification ? ` · ${l.product.classification}` : ''}
-                </div>
-                ${awards ? `<div class="product-awards">🏅 ${awards}</div>` : ''}
-                ${l.product.tastingNotes ? `<div class="product-notes">${l.product.tastingNotes.slice(0, 120)}${l.product.tastingNotes.length > 120 ? '…' : ''}</div>` : ''}
-            </td>
-            <td class="cell-center cell-qty">${qty}</td>
-            <td class="cell-right cell-price">${fmt(price)}</td>
-            <td class="cell-center cell-disc">${disc > 0 ? `${disc}%` : '—'}</td>
-            <td class="cell-right cell-total">${fmt(lineTotal)}</td>
         </tr>`
+
+        const lineRows = group.lines.map((l) => {
+            globalIdx++
+            const qty = Number(l.qtyOrdered)
+            const price = Number(l.unitPrice)
+            const disc = Number(l.lineDiscountPct)
+            const lineTotal = qty * price * (1 - disc / 100)
+            const imgUrl = l.product.media?.[0]?.url
+            const awards = l.product.awards?.map(a =>
+                `${a.source} ${a.score ? Number(a.score) : (a.medal?.replace('_', ' ') || '')}`
+            ).join(' · ')
+
+            return `
+            <tr class="${globalIdx % 2 === 0 ? 'alt' : ''}">
+                <td class="cell-center cell-num">${globalIdx}</td>
+                <td class="cell-img">
+                    ${imgUrl
+                    ? `<img src="${imgUrl}" alt="" class="product-img" />`
+                    : `<div class="product-img-placeholder">🍷</div>`
+                }
+                </td>
+                <td class="cell-product">
+                    <div class="product-name">${l.product.productName}</div>
+                    <div class="product-detail">
+                        ${l.product.vintage ? `<strong>${l.product.vintage}</strong> · ` : ''}${l.product.appellation?.name || ''}${l.product.appellation?.region?.name ? ` · ${l.product.appellation.region.name}` : ''} · ${l.product.country}
+                    </div>
+                    <div class="product-meta">
+                        ${l.product.skuCode} · ${l.product.wineType} · ${l.product.volumeMl}ml · ${Number(l.product.abvPercent)}% ABV${l.product.classification ? ` · ${l.product.classification}` : ''}
+                    </div>
+                    ${awards ? `<div class="product-awards">🏅 ${awards}</div>` : ''}
+                    ${l.product.tastingNotes ? `<div class="product-notes">${l.product.tastingNotes.slice(0, 120)}${l.product.tastingNotes.length > 120 ? '…' : ''}</div>` : ''}
+                </td>
+                <td class="cell-center cell-qty">${qty}</td>
+                <td class="cell-right cell-price">${fmt(price)}</td>
+                <td class="cell-center cell-disc">${disc > 0 ? `${disc}%` : '—'}</td>
+                <td class="cell-right cell-total">${fmt(lineTotal)}</td>
+            </tr>`
+        }).join('')
+
+        return groupHeaderRow + lineRows
     }).join('')
 
     const html = `<!DOCTYPE html>
@@ -281,29 +307,40 @@ export async function GET(req: NextRequest) {
         .cell-center { text-align: center; }
         .cell-right { text-align: right; }
         .cell-num { color: ${t.textMuted}; font-size: 12px; width: 28px; }
-        .cell-img { width: 54px; }
+        .cell-img { width: 72px; }
         .cell-qty { width: 40px; font-weight: 600; color: ${t.textStrong}; }
         .cell-price { width: 100px; font-family: 'Consolas', 'Courier New', monospace; color: ${t.textStrong}; }
         .cell-disc { width: 48px; color: ${t.accent}; font-weight: 600; }
         .cell-total { width: 115px; font-family: 'Consolas', 'Courier New', monospace; font-weight: 700; color: ${t.textStrong}; font-size: 13px; }
 
         .product-img {
-            width: 48px;
-            height: 64px;
-            object-fit: cover;
+            width: 64px;
+            height: 48px;
+            object-fit: contain;
             border-radius: 4px;
+            background: ${isDark ? '#112130' : '#F5F7F9'};
             border: 1px solid ${t.border};
         }
         .product-img-placeholder {
-            width: 48px;
-            height: 64px;
+            width: 64px;
+            height: 48px;
             border-radius: 4px;
             background: ${isDark ? '#1A2F40' : '#F0F0F0'};
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 16px;
             border: 1px solid ${t.border};
+        }
+        .group-header-title {
+            font-weight: 700;
+            color: ${t.accent};
+            font-size: 11.5px;
+            background: ${isDark ? 'rgba(110,197,176,0.06)' : 'rgba(26,122,102,0.06)'};
+            padding: 8px 12px !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1.5px solid ${t.border} !important;
         }
         .product-name {
             font-size: 13.5px;

@@ -62,6 +62,7 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
                 tastingNotes: l.product.tastingNotes,
                 classification: l.product.classification,
                 producerName: l.product.producer?.name,
+                supplierName: (l.product as any).supplier?.name || "Ly's Cellars",
                 appellationName: l.product.appellation?.name,
                 regionName: l.product.appellation?.region?.name,
                 imageUrl: l.product.media?.[0]?.url || l.product.media?.[0]?.thumbnailUrl || null,

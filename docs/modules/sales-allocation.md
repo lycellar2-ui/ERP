@@ -31,7 +31,8 @@ PAID / CLOSED
 ### Tạo & Quản lý
 - Tạo Quotation gửi cho KH trước khi chốt đơn
 - Chọn KH → Hệ thống tự load bảng giá đúng kênh (HORECA / Đại lý / VIP)
-- Thêm dòng sản phẩm → Check tồn kho real-time + Check Allocation Quota
+- Thêm dòng sản phẩm → Sử dụng **Quick Product Picker Modal** hỗ trợ tìm kiếm, lọc theo nước & loại vang, hiển thị tồn kho thực tế và giá wholesale.
+- Tính toán **Biên lợi nhuận gộp (Profit Margin %)** và phần trăm chênh lệch với giá wholesale thời gian thực, có cảnh báo đỏ nếu giá bán thấp hơn giá vốn.
 - Quotation có Ngày hết hạn (Expiry Date) — sau ngày này giá không còn hiệu lực
 - Chuyển Quotation → SO chỉ 1 click
 - Duplicate quotation — clone + 30 ngày hạn mới
@@ -45,7 +46,8 @@ PAID / CLOSED
 ### PDF Export (3 Styles)
 - **Professional** (nền trắng) — tối ưu cho in giấy
 - **Elegant** (dark theme) — gửi digital, KH cao cấp
-- Nội dung: Logo + header công ty, MST, ảnh sản phẩm, thông tin wine (vintage, appellation, awards, tasting notes), VAT tách riêng 10%, chiết khấu, điều khoản
+- Nội dung: Logo + header công ty, MST, ảnh sản phẩm (hiển thị dạng **nằm ngang - landscape** với tỷ lệ `contain` hoàn hảo không móp méo), thông tin wine (vintage, appellation, awards, tasting notes), VAT tách riêng 10%, chiết khấu, điều khoản.
+- Định dạng xuất bản: Hỗ trợ tự động gom nhóm sản phẩm theo **Nhà Cung Cấp + Quốc Gia** trước khi hiển thị trên các tài liệu PDF chuyên nghiệp.
 
 ### Public Quotation Viewer
 - **URL**: `/verify/quotation/[publicToken]` — KH xem trực tuyến không cần login
@@ -247,6 +249,17 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Sale Admin/Rep: ẩn margin** | `SalesClient.tsx` | Hiển thị "🔒 Chỉ Ban Giám Đốc" thay cho cột COGS/Margin |
 | **Negative Margin Warning** | `SalesClient.tsx` | Chỉ CEO/Finance thấy cảnh báo biên âm |
 
+#### 🆕 Session 9 — Quotation Upgrades (30/05/2026)
+
+**Advanced Quotation (Quotation Upgrades):**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Quick Product Picker Modal** | `QuotationClient.tsx` | Chọn nhanh nhiều sản phẩm bằng modal, lọc theo quốc gia/loại vang, hiển thị tồn kho và giá bán wholesale |
+| **Pricing & Margin Control** | `QuotationClient.tsx` | Tính toán lãi gộp và biên lợi nhuận thời gian thực dựa trên giá wholesale, cảnh báo đỏ nếu giá báo thấp hơn giá vốn |
+| **Landscape Horizontal Images** | `QuotationClient.tsx`, `QuotationPublicView.tsx`, `route.ts` (PDF) | Ảnh sản phẩm được bo viền và thiết kế ngang (`contain` fit), tránh việc méo mó nhãn chai rượu vang |
+| **Supplier & Country Grouping** | `actions.ts`, `QuotationPublicView.tsx`, `route.ts` (PDF) | Gộp nhóm tự động theo Nhà Cung Cấp + Quốc gia trước khi hiển thị chi tiết sản phẩm trên Link HTML, PDF A4, và Excel |
+
 ### ❌ Chưa triển khai
 
 | Tính năng | Ưu tiên |
@@ -256,5 +269,5 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Shipment → PO status hook (IN_TRANSIT) | 🟡 P2 |
 | RBAC middleware cho server actions | 🟡 P2 |
 
-*Last updated: 2026-03-08 21:40 | Wine ERP v6.1*
+*Last updated: 2026-05-30 13:50 | Wine ERP v7.0*
 
