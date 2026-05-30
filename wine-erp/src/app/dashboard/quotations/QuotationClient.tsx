@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw, Download, Link2, Copy, ExternalLink, Printer, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation, sendQuotation, duplicateQuotation, exportQuotationExcel } from './actions'
@@ -48,6 +48,21 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const [pickerCountry, setPickerCountry] = useState('')
     const [pickerWineType, setPickerWineType] = useState('')
     const [pickerSelected, setPickerSelected] = useState<Record<string, { qty: number; checked: boolean }>>({})
+
+    useEffect(() => {
+        // Prefetch customer, sales rep, and product data in the background on mount
+        const prefetch = async () => {
+            try {
+                const [c, r, p] = await Promise.all([getCustomersForSO(), getSalesReps(), getProductsWithStock()])
+                setCustomers(c)
+                setReps(r)
+                setProducts(p)
+            } catch (err) {
+                console.error("Failed to prefetch quotation form metadata:", err)
+            }
+        }
+        prefetch()
+    }, [])
 
     const reload = useCallback(async () => {
         setLoading(true)
@@ -110,14 +125,17 @@ export function QuotationClient({ initialRows, stats }: Props) {
         )
     }
 
-    const openCreate = async () => {
-        if (customers.length === 0) {
-            const [c, r, p] = await Promise.all([getCustomersForSO(), getSalesReps(), getProductsWithStock()])
-            setCustomers(c)
-            setReps(r)
-            setProducts(p)
-        }
+    const openCreate = () => {
         setCreateOpen(true)
+        if (customers.length === 0) {
+            Promise.all([getCustomersForSO(), getSalesReps(), getProductsWithStock()]).then(([c, r, p]) => {
+                setCustomers(c)
+                setReps(r)
+                setProducts(p)
+            }).catch(err => {
+                console.error("Failed to load quotation form metadata:", err)
+            })
+        }
     }
 
     const handleCreate = async () => {
@@ -500,7 +518,11 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                     className="w-full mt-1 px-3 py-2.5 text-sm outline-none"
                                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}>
                                     <option value="">Chọn khách hàng...</option>
-                                    {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+                                    {customers.length === 0 ? (
+                                        <option disabled>⏳ Đang tải danh sách khách hàng...</option>
+                                    ) : (
+                                        customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)
+                                    )}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
@@ -510,7 +532,11 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                         className="w-full mt-1 px-3 py-2.5 text-sm outline-none"
                                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}>
                                         <option value="">Chọn...</option>
-                                        {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                        {reps.length === 0 ? (
+                                            <option disabled>⏳ Đang tải...</option>
+                                        ) : (
+                                            reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)
+                                        )}
                                     </select>
                                 </div>
                                 <div>
@@ -539,8 +565,10 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Sản Phẩm</p>
                                     <div className="flex gap-2">
-                                        <button onClick={openPicker} className="text-xs font-semibold px-2.5 py-1 transition-all" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', borderRadius: '4px' }}>🔍 Chọn Nhanh</button>
-                                        <button onClick={addLine} className="text-xs font-semibold px-2.5 py-1 transition-all" style={{ background: 'rgba(138,174,187,0.15)', color: '#8AAEBB', borderRadius: '4px' }}>+ Thêm dòng</button>
+                                        <button onClick={openPicker} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', borderRadius: '4px' }}>
+                                            {products.length === 0 ? '⏳ Đang tải...' : '🔍 Chọn Nhanh'}
+                                        </button>
+                                        <button onClick={addLine} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(138,174,187,0.15)', color: '#8AAEBB', borderRadius: '4px' }}>+ Thêm dòng</button>
                                     </div>
                                 </div>
                                 <div className="space-y-2.5">
@@ -560,7 +588,11 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                                             className="flex-1 px-2.5 py-1.5 text-xs outline-none"
                                                             style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
                                                             <option value="">Chọn sản phẩm...</option>
-                                                            {products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
+                                                            {products.length === 0 ? (
+                                                                <option disabled>⏳ Đang tải sản phẩm...</option>
+                                                            ) : (
+                                                                products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)
+                                                            )}
                                                         </select>
                                                         <button onClick={() => removeLine(i)} className="p-1.5 text-xs" style={{ color: '#8B1A2E' }}>✕</button>
                                                     </div>
