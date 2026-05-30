@@ -1007,7 +1007,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                     borderRadius: '2px'
                                 }}>
                                     <span style={{ color: '#4A6A7A', fontSize: 12 }}>
-                                        SKU: <span style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{activeModalLine.skuCode}</span>
+                                        SKU: <span style={{ color: '#8AAEBB', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>{activeModalLine.skuCode}</span>
                                     </span>
                                     <span style={{ color: '#4A6A7A', fontSize: 12 }}>
                                         Type: <span style={{ color: '#8AAEBB' }}>{activeModalLine.wineType}</span>
@@ -1095,7 +1095,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                         </span>
                                     )}
                                 </div>
-                                <strong style={{ color: '#87CBB9', fontSize: 22, fontFamily: '"DM Mono", monospace' }}>
+                                <strong style={{ color: '#87CBB9', fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-sans)' }}>
                                     {fmt(activeModalLine.unitPrice * (1 - activeModalLine.discountPct / 100))} <span style={{ fontSize: 13, fontWeight: 400 }}>₫</span>
                                 </strong>
                             </div>
