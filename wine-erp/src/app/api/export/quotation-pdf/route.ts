@@ -132,10 +132,16 @@ export async function GET(req: NextRequest) {
                     ${awards ? `<div class="product-awards">🏅 ${awards}</div>` : ''}
                     ${l.product.tastingNotes ? `<div class="product-notes">${l.product.tastingNotes.slice(0, 120)}${l.product.tastingNotes.length > 120 ? '…' : ''}</div>` : ''}
                 </td>
-                ${qt.showQuantity ? `<td class="cell-center cell-qty">${qty}</td>` : ''}
+                ${qt.showQuantity ? `
+                <td class="cell-center cell-qty">${qty}</td>
                 <td class="cell-right cell-price">${fmt(price)}</td>
                 <td class="cell-center cell-disc">${disc > 0 ? `${disc}%` : '—'}</td>
                 <td class="cell-right cell-total">${fmt(lineTotal)}</td>
+                ` : `
+                <td class="cell-right cell-price">${fmt(price)}</td>
+                <td class="cell-center cell-disc">${disc > 0 ? `${disc}%` : '—'}</td>
+                <td class="cell-right cell-total">${fmt(price * (1 - disc / 100))}</td>
+                `}
             </tr>`
         }).join('')
 
@@ -530,10 +536,16 @@ export async function GET(req: NextRequest) {
                     <th class="th-center">#</th>
                     <th></th>
                     <th>Sản Phẩm</th>
-                    ${qt.showQuantity ? '<th class="th-center">SL</th>' : ''}
+                    ${qt.showQuantity ? `
+                    <th class="th-center">SL</th>
                     <th class="th-right">Đơn Giá (₫)</th>
                     <th class="th-center">CK</th>
                     <th class="th-right">Thành Tiền (₫)</th>
+                    ` : `
+                    <th class="th-right">Đơn Giá Gốc (₫)</th>
+                    <th class="th-center">Ưu Đãi</th>
+                    <th class="th-right">Giá Đề Xuất (₫)</th>
+                    `}
                 </tr>
             </thead>
             <tbody>
@@ -543,6 +555,7 @@ export async function GET(req: NextRequest) {
     </div>
 
     <!-- TOTALS -->
+    ${qt.showQuantity ? `
     <div class="totals-wrap">
         <div class="totals-box">
             <div class="totals-row">
@@ -565,7 +578,7 @@ export async function GET(req: NextRequest) {
             </div>
             <div class="vat-note">${qt.vatIncluded ? 'Giá đã bao gồm VAT' : 'Giá chưa bao gồm VAT 10%'}</div>
         </div>
-    </div>
+    </div>` : ''}
 
     <!-- TERMS & NOTES -->
     ${qt.terms ? `

@@ -394,14 +394,16 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                             <ShieldCheck size={16} style={{ color: '#87CBB9' }} />
-                            <span style={{ color: '#87CBB9', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Bản Chào Hàng Độc Quyền</span>
+                            <span style={{ color: '#87CBB9', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                                {data.showQuantity ? 'Bản Chào Hàng Độc Quyền' : 'Bảng Giá Thỏa Thuận Khung'}
+                            </span>
                         </div>
                         <h2 style={{ color: '#E8F1F2', fontSize: 32, fontWeight: 700, margin: 0, fontFamily: '"Cormorant Garamond", Georgia, serif', letterSpacing: '0.01em' }}>
-                            ĐỀ XUẤT BÁO GIÁ GIÁ TRỊ / QUOTATION
+                            {data.showQuantity ? 'ĐỀ XUẤT BÁO GIÁ GIÁ TRỊ / QUOTATION' : 'BẢNG GIÁ ƯU ĐÃI ĐỘC QUYỀN / PRICE LIST'}
                         </h2>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                        <span style={{ color: '#D4A853', fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-sans)', letterSpacing: '0.05em' }}>
+                        <span style={{ color: '#D4A853', fontSize: 16, fontWeight: 700, fontFamily: '"DM Mono", monospace', letterSpacing: '0.05em' }}>
                             {data.quotationNo}
                         </span>
                         <div style={{ 
@@ -547,75 +549,77 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                 </div>
 
                 {/* Pricing totals summary block */}
-                <div style={{ 
-                    background: 'linear-gradient(180deg, #142433 0%, #0C1A27 100%)', 
-                    borderRadius: 2, 
-                    border: '1px solid #2A4355', 
-                    padding: '28px 32px', 
-                    marginBottom: 32,
-                    boxShadow: '0 16px 48px rgba(0,0,0,0.3)',
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                    gap: 32
-                }}>
-                    {/* Left: Quick checklist validation details */}
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <ShieldCheck size={16} style={{ color: '#87CBB9' }} />
-                            <span style={{ color: '#E8F1F2', fontSize: 14, fontWeight: 600 }}>Cam Kết Chất Lượng Hầm Rượu</span>
+                {data.showQuantity && (
+                    <div style={{ 
+                        background: 'linear-gradient(180deg, #142433 0%, #0C1A27 100%)', 
+                        borderRadius: 2, 
+                        border: '1px solid #2A4355', 
+                        padding: '28px 32px', 
+                        marginBottom: 32,
+                        boxShadow: '0 16px 48px rgba(0,0,0,0.3)',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: 32
+                    }}>
+                        {/* Left: Quick checklist validation details */}
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                <ShieldCheck size={16} style={{ color: '#87CBB9' }} />
+                                <span style={{ color: '#E8F1F2', fontSize: 14, fontWeight: 600 }}>Cam Kết Chất Lượng Hầm Rượu</span>
+                            </div>
+                            <p style={{ color: '#8AAEBB', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                                Tất cả chai rượu được phân phối bởi Lys Cellars đều được nhập khẩu chính ngạch trực tiếp từ các điền trang danh tiếng thế giới, vận chuyển và bảo quản nghiêm ngặt ở nhiệt độ hầm tiêu chuẩn 14-16°C.
+                            </p>
                         </div>
-                        <p style={{ color: '#8AAEBB', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                            Tất cả chai rượu được phân phối bởi Lys Cellars đều được nhập khẩu chính ngạch trực tiếp từ các điền trang danh tiếng thế giới, vận chuyển và bảo quản nghiêm ngặt ở nhiệt độ hầm tiêu chuẩn 14-16°C.
-                        </p>
-                    </div>
 
-                    {/* Right: Detailed financial matrix */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#8AAEBB', fontSize: 14 }}>Tạm tính trước chiết khấu</span>
-                            <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: 'var(--font-sans)' }}>{fmt(subtotal)} ₫</span>
-                        </div>
-                        
-                        {data.orderDiscount > 0 && (
+                        {/* Right: Detailed financial matrix */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#EF4444', fontSize: 14 }}>Chiết khấu báo giá tổng ({data.orderDiscount}%)</span>
-                                <span style={{ color: '#EF4444', fontWeight: 600, fontSize: 14, fontFamily: 'var(--font-sans)' }}>−{fmt(discountAmount)} ₫</span>
+                                <span style={{ color: '#8AAEBB', fontSize: 14 }}>Tạm tính trước chiết khấu</span>
+                                <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>{fmt(subtotal)} ₫</span>
                             </div>
-                        )}
+                            
+                            {data.orderDiscount > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: '#EF4444', fontSize: 14 }}>Chiết khấu báo giá tổng ({data.orderDiscount}%)</span>
+                                    <span style={{ color: '#EF4444', fontWeight: 600, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>−{fmt(discountAmount)} ₫</span>
+                                </div>
+                            )}
 
-                        {!data.vatIncluded && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#8AAEBB', fontSize: 14 }}>Thuế Giá trị gia tăng (VAT 10%)</span>
-                                <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: 'var(--font-sans)' }}>{fmt(vatAmount)} ₫</span>
-                            </div>
-                        )}
+                            {!data.vatIncluded && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: '#8AAEBB', fontSize: 14 }}>Thuế Giá trị gia tăng (VAT 10%)</span>
+                                    <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>{fmt(vatAmount)} ₫</span>
+                                </div>
+                            )}
 
-                        <div style={{ 
-                            borderTop: '1px solid #2A4355', 
-                            paddingTop: 16, 
-                            marginTop: 10, 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center' 
-                        }}>
-                            <div>
-                                <span style={{ color: '#E8F1F2', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em' }}>TỔNG THANH TOÁN</span>
-                                <p style={{ color: '#4A6A7A', fontSize: 11, margin: '2px 0 0' }}>
-                                    {data.vatIncluded ? 'Đã bao gồm thuế VAT' : 'Chưa bao gồm thuế VAT'}
-                                </p>
-                            </div>
-                            <span style={{ 
-                                color: '#87CBB9', 
-                                fontSize: 28, 
-                                fontWeight: 700, 
-                                fontFamily: '"Cormorant Garamond", Georgia, serif',
-                                letterSpacing: '0.02em'
+                            <div style={{ 
+                                borderTop: '1px solid #2A4355', 
+                                paddingTop: 16, 
+                                marginTop: 10, 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center' 
                             }}>
-                                {fmt(grandTotal)} <span style={{ fontSize: 14, fontWeight: 400, fontFamily: 'var(--font-sans)' }}>₫</span>
-                            </span>
+                                <div>
+                                    <span style={{ color: '#E8F1F2', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em' }}>TỔNG THANH TOÁN</span>
+                                    <p style={{ color: '#4A6A7A', fontSize: 11, margin: '2px 0 0' }}>
+                                        {data.vatIncluded ? 'Đã bao gồm thuế VAT' : 'Chưa bao gồm thuế VAT'}
+                                    </p>
+                                </div>
+                                <span style={{ 
+                                    color: '#87CBB9', 
+                                    fontSize: 28, 
+                                    fontWeight: 700, 
+                                    fontFamily: '"DM Mono", monospace',
+                                    letterSpacing: '0.02em'
+                                }}>
+                                    {fmt(grandTotal)} <span style={{ fontSize: 14, fontWeight: 400, fontFamily: '"DM Mono", monospace' }}>₫</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Additional Commercial Terms & Notes */}
                 {(data.terms || data.notes || data.deliveryTerms) && (
