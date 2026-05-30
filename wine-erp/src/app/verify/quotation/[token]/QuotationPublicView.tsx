@@ -159,7 +159,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                                 </>
                             ) : (
                                 <>
-                                    Đơn giá: {fmt(line.unitPrice)} ₫
+                                    Unit Price: {fmt(line.unitPrice)} ₫
                                     {line.discountPct > 0 && (
                                         <span style={{ color: '#EF4444', fontWeight: 600, marginLeft: 4 }}>
                                             (−{line.discountPct}%)
@@ -193,44 +193,6 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                                 {a.source} {a.score ? `${a.score} pts` : a.medal?.replace('_', ' ')}
                             </span>
                         ))}
-                    </div>
-                )}
-
-                {/* Sommelier Tasting Profile Card */}
-                {line.tastingNotes && (
-                    <div style={{ 
-                        marginTop: 14, 
-                        padding: '14px 18px', 
-                        borderRadius: 2, 
-                        background: 'linear-gradient(135deg, rgba(212,168,83,0.02) 0%, rgba(135,203,185,0.01) 100%)', 
-                        borderLeft: '3px solid #D4A853', 
-                        borderTop: '1px solid rgba(212,168,83,0.05)',
-                        borderRight: '1px solid rgba(212,168,83,0.05)',
-                        borderBottom: '1px solid rgba(212,168,83,0.05)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                            <Quote size={12} style={{ color: '#D4A853', transform: 'rotate(180deg)' }} />
-                            <span style={{ 
-                                color: '#D4A853', 
-                                fontSize: 10, 
-                                fontWeight: 700, 
-                                letterSpacing: '0.12em', 
-                                textTransform: 'uppercase' 
-                            }}>
-                                Sommelier&apos;s Tasting Profile
-                            </span>
-                        </div>
-                        <p style={{ 
-                            color: '#8AAEBB', 
-                            fontSize: 13, 
-                            lineHeight: 1.6,
-                            margin: 0,
-                            fontStyle: 'italic',
-                            fontFamily: '"Cormorant Garamond", Georgia, serif',
-                        }}>
-                            {line.tastingNotes}
-                        </p>
                     </div>
                 )}
             </div>
