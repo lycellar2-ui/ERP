@@ -35,7 +35,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; bor
 }
 
 // Sub-component for individual product cards with rich hover styling and spring transitions
-function ProductLineCard({ line, i, totalCount, showQuantity }: { line: LineData; i: number; totalCount: number; showQuantity?: boolean }) {
+function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { line: LineData; i: number; totalCount: number; showQuantity?: boolean; onImageClick: (line: LineData) => void }) {
     const [hovered, setHovered] = useState(false)
 
     // Formulate a premium classification subtitle (e.g. "Grand Cru Classé • Bordeaux, France")
@@ -62,21 +62,27 @@ function ProductLineCard({ line, i, totalCount, showQuantity }: { line: LineData
             }}
         >
             {/* Product image with sleek premium dark background and shadow */}
-            <div className="qtn-img-wrap" style={{ 
-                width: 140, 
-                height: 90, 
-                borderRadius: 4, 
-                flexShrink: 0, 
-                background: 'linear-gradient(135deg, #091520 0%, #112130 100%)', 
-                border: hovered ? '1px solid rgba(135,203,185,0.35)' : '1px solid #2A4355', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                padding: '10px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-                transition: 'all 0.4s ease',
-                transform: hovered ? 'scale(1.03)' : 'scale(1)',
-            }}>
+            <div 
+                className="qtn-img-wrap cursor-pointer" 
+                onClick={() => onImageClick(line)}
+                style={{ 
+                    width: 140, 
+                    height: 90, 
+                    borderRadius: 4, 
+                    flexShrink: 0, 
+                    background: 'linear-gradient(135deg, #091520 0%, #112130 100%)', 
+                    border: hovered ? '1px solid rgba(135,203,185,0.35)' : '1px solid #2A4355', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    padding: '10px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                    transition: 'all 0.4s ease',
+                    transform: hovered ? 'scale(1.03)' : 'scale(1)',
+                    cursor: 'pointer',
+                }}
+                title="Click to view large image & tasting profile"
+            >
                 {line.imageUrl ? (
                     <img 
                         src={line.imageUrl} 
@@ -235,6 +241,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity }: { line: LineData
 export function QuotationPublicView({ data, token }: { data: QuotationData; token: string }) {
     const [accepting, setAccepting] = useState(false)
     const [rejecting, setRejecting] = useState(false)
+    const [activeModalLine, setActiveModalLine] = useState<LineData | null>(null)
     const [rejectReason, setRejectReason] = useState('')
     const [showRejectForm, setShowRejectForm] = useState(false)
     const [done, setDone] = useState<'accepted' | 'rejected' | null>(null)
@@ -320,6 +327,65 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
     return (
         <div style={{ minHeight: '100vh', background: '#0A1926', color: '#E8F1F2', fontFamily: 'var(--font-sans)', position: 'relative', overflowX: 'hidden' }}>
             <style>{`
+                .qtn-modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 24px;
+                    background: rgba(8, 16, 24, 0.88);
+                    backdrop-filter: blur(12px);
+                    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                .qtn-modal-container {
+                    width: 100%;
+                    max-width: 760px;
+                    background: linear-gradient(135deg, #0D1E2B 0%, #0A1621 100%);
+                    border: 1px solid #2A4355;
+                    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7);
+                    border-radius: 2px;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: row;
+                    gap: 28px;
+                    padding: 28px;
+                    position: relative;
+                    animation: qtnModalFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+                .qtn-modal-img-col {
+                    width: 45%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 24px;
+                    border-radius: 2px;
+                    background: linear-gradient(135deg, #081119 0%, #112130 100%);
+                    border: 1px solid rgba(42, 67, 85, 0.5);
+                    min-height: 380px;
+                    flex-shrink: 0;
+                }
+                .qtn-modal-info-col {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    min-width: 0;
+                }
+                @keyframes qtnModalFadeIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.96) translateY(10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
                 @media (max-width: 640px) {
                     .qtn-product-card {
                         flex-direction: column !important;
@@ -329,6 +395,21 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     .qtn-img-wrap {
                         width: 100% !important;
                         height: 160px !important;
+                    }
+                    .qtn-modal-overlay {
+                        padding: 12px !important;
+                    }
+                    .qtn-modal-container {
+                        flex-direction: column !important;
+                        gap: 20px !important;
+                        padding: 20px !important;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                    }
+                    .qtn-modal-img-col {
+                        width: 100% !important;
+                        min-height: 200px !important;
+                        padding: 16px !important;
                     }
                 }
             `}</style>
@@ -559,7 +640,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             </div>
                             
                             {group.lines.map((line, i) => (
-                                <ProductLineCard key={i} line={line} i={i} totalCount={group.lines.length} showQuantity={data.showQuantity} />
+                                <ProductLineCard key={i} line={line} i={i} totalCount={group.lines.length} showQuantity={data.showQuantity} onImageClick={setActiveModalLine} />
                             ))}
                         </div>
                     ))}
@@ -829,6 +910,199 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     </p>
                 </div>
             </footer>
+
+            {/* Render the details modal if active */}
+            {activeModalLine && (
+                <div 
+                    className="qtn-modal-overlay"
+                    onClick={() => setActiveModalLine(null)}
+                >
+                    <div 
+                        className="qtn-modal-container"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Close button at top right */}
+                        <button 
+                            onClick={() => setActiveModalLine(null)} 
+                            style={{
+                                position: 'absolute',
+                                top: 16,
+                                right: 16,
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: '#8AAEBB',
+                                padding: 4,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'color 0.2s ease',
+                                zIndex: 10
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+                            onMouseLeave={e => e.currentTarget.style.color = '#8AAEBB'}
+                        >
+                            <XCircle size={24} />
+                        </button>
+
+                        {/* Left/Top Column: Big bottle visual with luxury gradients */}
+                        <div className="qtn-modal-img-col">
+                            {activeModalLine.imageUrl ? (
+                                <img 
+                                    src={activeModalLine.imageUrl} 
+                                    alt={activeModalLine.productName} 
+                                    style={{ 
+                                        maxWidth: '100%', 
+                                        maxHeight: '340px', 
+                                        objectFit: 'contain',
+                                        filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.65))'
+                                    }} 
+                                />
+                            ) : (
+                                <Wine size={80} style={{ color: '#4A6A7A' }} />
+                            )}
+                        </div>
+
+                        {/* Right/Bottom Column: Content portfolio & specs */}
+                        <div className="qtn-modal-info-col">
+                            <div>
+                                {/* Appellation & Classification */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                                    {activeModalLine.vintage ? (
+                                        <span style={{ color: '#D4A853', fontSize: 14, fontWeight: 700, letterSpacing: '0.05em' }}>
+                                            {activeModalLine.vintage}
+                                        </span>
+                                    ) : (
+                                        <span style={{ color: '#4A6A7A', fontSize: 13, fontWeight: 500 }}>N/V</span>
+                                    )}
+                                    <span style={{ color: '#4A6A7A', fontSize: 11 }}>•</span>
+                                    <span style={{ color: '#8AAEBB', fontSize: 13, fontWeight: 500 }}>
+                                        {[activeModalLine.appellationName, activeModalLine.regionName !== activeModalLine.appellationName ? activeModalLine.regionName : null, activeModalLine.country].filter(Boolean).join(', ')}
+                                    </span>
+                                </div>
+
+                                {/* Wine Title */}
+                                <h3 style={{ 
+                                    color: '#E8F1F2', 
+                                    fontSize: 24, 
+                                    fontWeight: 700, 
+                                    fontFamily: '"Cormorant Garamond", Georgia, serif', 
+                                    margin: '0 0 12px 0', 
+                                    lineHeight: 1.2,
+                                    borderBottom: '1px solid rgba(42, 67, 85, 0.4)',
+                                    paddingBottom: '12px'
+                                }}>
+                                    {activeModalLine.productName}
+                                </h3>
+
+                                {/* Technical Specs Block */}
+                                <div style={{ 
+                                    display: 'grid', 
+                                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                                    gap: '8px 16px',
+                                    marginBottom: 16,
+                                    background: 'rgba(27, 46, 61, 0.3)',
+                                    padding: '10px 14px',
+                                    border: '1px solid rgba(42, 67, 85, 0.3)',
+                                    borderRadius: '2px'
+                                }}>
+                                    <span style={{ color: '#4A6A7A', fontSize: 12 }}>
+                                        SKU: <span style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{activeModalLine.skuCode}</span>
+                                    </span>
+                                    <span style={{ color: '#4A6A7A', fontSize: 12 }}>
+                                        Type: <span style={{ color: '#8AAEBB' }}>{activeModalLine.wineType}</span>
+                                    </span>
+                                    <span style={{ color: '#4A6A7A', fontSize: 12 }}>
+                                        Vol: <span style={{ color: '#8AAEBB' }}>{activeModalLine.volumeMl}ml</span>
+                                    </span>
+                                    <span style={{ color: '#4A6A7A', fontSize: 12 }}>
+                                        ABV: <span style={{ color: '#8AAEBB' }}>{activeModalLine.abvPercent}%</span>
+                                    </span>
+                                </div>
+
+                                {/* Tasting Notes Details */}
+                                <div style={{ marginBottom: 18 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                                        <Quote size={12} style={{ color: '#D4A853', transform: 'rotate(180deg)' }} />
+                                        <span style={{ 
+                                            color: '#D4A853', 
+                                            fontSize: 11, 
+                                            fontWeight: 700, 
+                                            letterSpacing: '0.1em', 
+                                            textTransform: 'uppercase' 
+                                        }}>
+                                            Sommelier&apos;s Tasting Notes
+                                        </span>
+                                    </div>
+                                    <p style={{ 
+                                        color: '#E8F1F2', 
+                                        fontSize: 14, 
+                                        lineHeight: 1.6,
+                                        margin: 0,
+                                        fontStyle: 'italic',
+                                        fontFamily: '"Cormorant Garamond", Georgia, serif',
+                                        background: 'linear-gradient(135deg, rgba(212,168,83,0.02) 0%, rgba(135,203,185,0.01) 100%)',
+                                        padding: '12px 16px',
+                                        borderLeft: '2px solid #D4A853',
+                                        borderRadius: '2px'
+                                    }}>
+                                        {activeModalLine.tastingNotes || "No tasting notes available for this specific vintage yet. Please ask our Wine Advisor for professional recommendation."}
+                                    </p>
+                                </div>
+
+                                {/* Wine Awards */}
+                                {activeModalLine.awards.length > 0 && (
+                                    <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
+                                        {activeModalLine.awards.map((a, j) => (
+                                            <span key={j} style={{ 
+                                                display: 'inline-flex', 
+                                                alignItems: 'center', 
+                                                gap: 4, 
+                                                background: 'rgba(212,168,83,0.08)', 
+                                                color: '#D4A853', 
+                                                border: '1px solid rgba(212,168,83,0.2)',
+                                                padding: '3px 8px', 
+                                                borderRadius: 2, 
+                                                fontSize: 10, 
+                                                fontWeight: 600,
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.02em'
+                                            }}>
+                                                {a.medal ? <Award size={11} /> : <Star size={11} />}
+                                                {a.source} {a.score ? `${a.score} pts` : a.medal?.replace('_', ' ')}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Pricing matrix block */}
+                            <div style={{ 
+                                marginTop: 20, 
+                                paddingTop: 16, 
+                                borderTop: '1px solid rgba(42, 67, 85, 0.4)', 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center' 
+                            }}>
+                                <div>
+                                    <span style={{ color: '#4A6A7A', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Exclusive Proposal Price
+                                    </span>
+                                    {activeModalLine.discountPct > 0 && (
+                                        <span style={{ color: '#EF4444', fontSize: 11, fontWeight: 600, marginLeft: 6 }}>
+                                            ({activeModalLine.discountPct}% saving)
+                                        </span>
+                                    )}
+                                </div>
+                                <strong style={{ color: '#87CBB9', fontSize: 22, fontFamily: '"DM Mono", monospace' }}>
+                                    {fmt(activeModalLine.unitPrice * (1 - activeModalLine.discountPct / 100))} <span style={{ fontSize: 13, fontWeight: 400 }}>₫</span>
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
