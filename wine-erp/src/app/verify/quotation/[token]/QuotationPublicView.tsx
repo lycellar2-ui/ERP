@@ -48,6 +48,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity }: { line: LineData
         <div 
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
+            className="qtn-product-card"
             style={{ 
                 padding: '28px 24px', 
                 borderBottom: i < totalCount - 1 ? '1px solid #1B2E3D' : 'none', 
@@ -61,7 +62,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity }: { line: LineData
             }}
         >
             {/* Product image with sleek premium dark background and shadow */}
-            <div style={{ 
+            <div className="qtn-img-wrap" style={{ 
                 width: 140, 
                 height: 90, 
                 borderRadius: 4, 
@@ -318,6 +319,19 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
 
     return (
         <div style={{ minHeight: '100vh', background: '#0A1926', color: '#E8F1F2', fontFamily: 'var(--font-sans)', position: 'relative', overflowX: 'hidden' }}>
+            <style>{`
+                @media (max-width: 640px) {
+                    .qtn-product-card {
+                        flex-direction: column !important;
+                        gap: 16px !important;
+                        padding: 20px 16px !important;
+                    }
+                    .qtn-img-wrap {
+                        width: 100% !important;
+                        height: 160px !important;
+                    }
+                }
+            `}</style>
             
             {/* Ambient luxury radial glow */}
             <div style={{ 

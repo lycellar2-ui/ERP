@@ -267,8 +267,8 @@ export function QuotationClient({ initialRows, stats }: Props) {
                 </select>
             </div>
 
-            {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            {/* Table (Desktop View) */}
+            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
@@ -320,13 +320,11 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                                 style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
                                                 <Eye size={13} />
                                             </button>
-                                            {/* PDF Preview */}
                                             <button onClick={() => window.open(`/api/export/quotation-pdf?id=${row.id}&style=professional`, '_blank')}
                                                 className="p-1.5 rounded" title="Xem PDF"
                                                 style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB' }}>
                                                 <Printer size={13} />
                                             </button>
-                                            {/* Send */}
                                             {['DRAFT', 'SENT'].includes(row.status) && (
                                                 <button onClick={() => setSendDrawerOpen(row.id)}
                                                     className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
@@ -334,7 +332,6 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                                     <Send size={10} /> Gửi
                                                 </button>
                                             )}
-                                            {/* View tracking */}
                                             {row.viewCount > 0 && (
                                                 <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" title={`KH đã xem ${row.viewCount} lần${row.lastViewedAt ? ` · Lần cuối: ${formatDate(row.lastViewedAt)}` : ''}`}
                                                     style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}>
@@ -355,6 +352,88 @@ export function QuotationClient({ initialRows, stats }: Props) {
                         })}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Stacked Quotations List (Mobile View) */}
+            <div className="block md:hidden space-y-3">
+                {loading ? (
+                    <div className="text-center py-12" style={{ color: '#4A6A7A' }}>Đang tải...</div>
+                ) : rows.length === 0 ? (
+                    <div className="text-center py-16" style={{ color: '#4A6A7A', border: '1px solid #2A4355', borderRadius: '6px' }}>
+                        <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                        <p className="text-sm">Chưa có báo giá nào</p>
+                    </div>
+                ) : rows.map(row => {
+                    const cfg = STATUS_CFG[row.status]
+                    const isExpired = new Date(row.validUntil) < new Date() && !['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(row.status)
+                    return (
+                        <div key={row.id} className="p-4 rounded-lg space-y-3 transition-all" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            {/* Header: Quotation No & Status */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.quotationNo}</span>
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+                            </div>
+                            {/* Body: Customer Name & Channel */}
+                            <div>
+                                <h4 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.customerName}</h4>
+                                <div className="flex gap-2 items-center mt-1">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(135,203,185,0.1)', color: '#8AAEBB' }}>{row.channel}</span>
+                                    <span className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>{row.customerCode}</span>
+                                </div>
+                            </div>
+                            {/* Financials & Timeline */}
+                            <div className="flex justify-between items-end pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.4)' }}>
+                                <div>
+                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Giá Trị</p>
+                                    <span className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</span>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Hạn Báo Giá</p>
+                                    <span className="text-xs" style={{ color: isExpired ? '#EF4444' : '#8AAEBB' }}>
+                                        {formatDate(row.validUntil)}
+                                        {isExpired && <span className="ml-1 text-[10px] font-bold text-[#EF4444]">QUÁ HẠN</span>}
+                                    </span>
+                                </div>
+                            </div>
+                            {/* Actions */}
+                            <div className="flex items-center justify-between pt-3 gap-2" style={{ borderTop: '1px solid rgba(42,67,85,0.4)' }}>
+                                <span className="text-[11px]" style={{ color: '#4A6A7A' }}>Sale: <strong style={{ color: '#8AAEBB' }}>{row.salesRepName}</strong></span>
+                                <div className="flex items-center gap-1.5">
+                                    <button onClick={() => openDetail(row.id)} className="p-2 rounded" title="Chi tiết"
+                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                        <Eye size={14} />
+                                    </button>
+                                    <button onClick={() => window.open(`/api/export/quotation-pdf?id=${row.id}&style=professional`, '_blank')}
+                                        className="p-2 rounded" title="Xem PDF"
+                                        style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB' }}>
+                                        <Printer size={14} />
+                                    </button>
+                                    {['DRAFT', 'SENT'].includes(row.status) && (
+                                        <button onClick={() => setSendDrawerOpen(row.id)}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded"
+                                            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                            <Send size={11} /> Gửi
+                                        </button>
+                                    )}
+                                    {row.viewCount > 0 && (
+                                        <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full font-medium"
+                                            style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}
+                                            title={`KH đã xem ${row.viewCount} lần`}>
+                                            <Eye size={10} /> {row.viewCount}
+                                        </span>
+                                    )}
+                                    {['SENT', 'ACCEPTED'].includes(row.status) && (
+                                        <button onClick={() => handleConvert(row.id)} disabled={actionLoading === row.id}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded"
+                                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                            {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><ArrowRight size={11} /> → SO</>}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
 
             {/* Detail Drawer */}
