@@ -259,6 +259,7 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Pricing & Margin Control** | `QuotationClient.tsx` | Tính toán lãi gộp và biên lợi nhuận thời gian thực dựa trên giá wholesale, cảnh báo đỏ nếu giá báo thấp hơn giá vốn |
 | **Landscape Horizontal Images** | `QuotationClient.tsx`, `QuotationPublicView.tsx`, `route.ts` (PDF) | Ảnh sản phẩm được bo viền và thiết kế ngang (`contain` fit), tránh việc méo mó nhãn chai rượu vang |
 | **Supplier & Country Grouping** | `actions.ts`, `QuotationPublicView.tsx`, `route.ts` (PDF) | Gộp nhóm tự động theo Nhà Cung Cấp + Quốc gia trước khi hiển thị chi tiết sản phẩm trên Link HTML, PDF A4, và Excel |
+| **Show/Hide Quantity Option** | `QuotationClient.tsx`, `QuotationPublicView.tsx`, `route.ts` (PDF), `actions.ts` (Excel) | Báo giá mặc định ẩn số lượng (ẩn cột SL), có tùy chọn hộp kiểm hiển thị số lượng theo nhu cầu |
 
 ### ❌ Chưa triển khai
 
@@ -269,5 +270,5 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Shipment → PO status hook (IN_TRANSIT) | 🟡 P2 |
 | RBAC middleware cho server actions | 🟡 P2 |
 
-*Last updated: 2026-05-30 13:50 | Wine ERP v7.0*
+*Last updated: 2026-05-30 14:00 | Wine ERP v7.1*
 

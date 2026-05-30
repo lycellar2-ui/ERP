@@ -1332,6 +1332,7 @@ model SalesQuotation {
   deliveryTerms   String?                      // Delivery conditions
   vatIncluded     Boolean             @default(false) // Prices include VAT?
   pdfStyle        String              @default("professional") // professional, elegant, minimal
+  showQuantity    Boolean             @default(false) // Show quantity in quotation
 
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt

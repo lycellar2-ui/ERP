@@ -36,7 +36,7 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const [customers, setCustomers] = useState<any[]>([])
     const [reps, setReps] = useState<any[]>([])
     const [products, setProducts] = useState<any[]>([])
-    const [formData, setFormData] = useState({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '' })
+    const [formData, setFormData] = useState({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '', showQuantity: false })
     const [formLines, setFormLines] = useState<{ productId: string; qty: number; price: number; discount: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [sendDrawerOpen, setSendDrawerOpen] = useState<string | null>(null)
@@ -133,7 +133,7 @@ export function QuotationClient({ initialRows, stats }: Props) {
             }).then((res: any) => {
                 if (!res.success) throw new Error(res.error || 'Lỗi tạo báo giá')
                 setCreateOpen(false)
-                setFormData({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '' })
+                setFormData({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '', showQuantity: false })
                 setFormLines([])
                 reload()
                 return res
@@ -526,6 +526,12 @@ export function QuotationClient({ initialRows, stats }: Props) {
                                     rows={2} placeholder="Điều kiện giao hàng, thanh toán..."
                                     className="w-full mt-1 px-3 py-2 text-sm outline-none resize-none"
                                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }} />
+                            </div>
+
+                            <div className="flex items-center gap-2 py-1 select-none">
+                                <input type="checkbox" id="showQuantity" checked={formData.showQuantity} onChange={e => setFormData({ ...formData, showQuantity: e.target.checked })}
+                                    className="w-4 h-4 cursor-pointer accent-[#87CBB9]" />
+                                <label htmlFor="showQuantity" className="text-xs font-semibold cursor-pointer" style={{ color: '#E8F1F2' }}>Hiển thị số lượng (SL) trên báo giá</label>
                             </div>
 
                             {/* Lines */}

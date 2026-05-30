@@ -36,6 +36,7 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
         terms: qt.terms,
         deliveryTerms: qt.deliveryTerms,
         vatIncluded: qt.vatIncluded,
+        showQuantity: qt.showQuantity,
         companyName: qt.companyName,
         contactPerson: qt.contactPerson,
         createdAt: qt.createdAt.toISOString(),

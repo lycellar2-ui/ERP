@@ -75,6 +75,7 @@ export async function getQuotations(filters: { search?: string; status?: string 
             customerEmail: r.customerEmail,
             orderDiscount: Number(r.orderDiscount),
             vatIncluded: r.vatIncluded,
+            showQuantity: r.showQuantity,
         }))
     }) // end cached
 }
@@ -134,6 +135,7 @@ export async function createQuotation(input: {
     notes?: string
     terms?: string
     vatIncluded?: boolean
+    showQuantity?: boolean
     deliveryTerms?: string
     companyName?: string
     contactPerson?: string
@@ -166,6 +168,7 @@ export async function createQuotation(input: {
                 notes: input.notes,
                 terms: input.terms,
                 vatIncluded: input.vatIncluded ?? false,
+                showQuantity: input.showQuantity ?? false,
                 deliveryTerms: input.deliveryTerms,
                 companyName: input.companyName,
                 contactPerson: input.contactPerson,
@@ -204,6 +207,7 @@ export async function updateQuotation(id: string, input: {
     notes?: string
     terms?: string
     vatIncluded?: boolean
+    showQuantity?: boolean
     deliveryTerms?: string
     companyName?: string
     contactPerson?: string
@@ -226,6 +230,7 @@ export async function updateQuotation(id: string, input: {
         if (input.notes !== undefined) updateData.notes = input.notes
         if (input.terms !== undefined) updateData.terms = input.terms
         if (input.vatIncluded !== undefined) updateData.vatIncluded = input.vatIncluded
+        if (input.showQuantity !== undefined) updateData.showQuantity = input.showQuantity
         if (input.deliveryTerms !== undefined) updateData.deliveryTerms = input.deliveryTerms
         if (input.companyName !== undefined) updateData.companyName = input.companyName
         if (input.contactPerson !== undefined) updateData.contactPerson = input.contactPerson
@@ -557,7 +562,7 @@ export async function exportQuotationExcel(quotationId: string): Promise<{ succe
                     productName: l.product.productName,
                     wineType: l.product.wineType,
                     volumeMl: l.product.volumeMl,
-                    qty: Number(l.qtyOrdered),
+                    ...(qt.showQuantity ? { qty: Number(l.qtyOrdered) } : {}),
                     unitPrice: Number(l.unitPrice),
                     discount: Number(l.lineDiscountPct),
                     lineTotal: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
@@ -574,7 +579,7 @@ export async function exportQuotationExcel(quotationId: string): Promise<{ succe
                 { header: 'Tên sản phẩm', key: 'productName', width: 30 },
                 { header: 'Loại', key: 'wineType', width: 12 },
                 { header: 'ml', key: 'volumeMl', width: 8 },
-                { header: 'SL', key: 'qty', width: 8, numFmt: '#,##0' },
+                ...(qt.showQuantity ? [{ header: 'SL', key: 'qty', width: 8, numFmt: '#,##0' }] : []),
                 { header: 'Đơn giá', key: 'unitPrice', width: 15, numFmt: '#,##0' },
                 { header: 'CK %', key: 'discount', width: 8, numFmt: '0.0' },
                 { header: 'Thành tiền', key: 'lineTotal', width: 18, numFmt: '#,##0' },

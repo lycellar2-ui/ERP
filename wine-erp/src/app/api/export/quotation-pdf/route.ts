@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     const productRows = Object.entries(groups).map(([groupKey, group]) => {
         const groupHeaderRow = `
         <tr class="group-header">
-            <td colspan="7" class="group-header-title">
+            <td colspan="${qt.showQuantity ? 7 : 6}" class="group-header-title">
                 📦 ${group.supplierName} — 🌍 ${group.country}
             </td>
         </tr>`
@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
                     ${awards ? `<div class="product-awards">🏅 ${awards}</div>` : ''}
                     ${l.product.tastingNotes ? `<div class="product-notes">${l.product.tastingNotes.slice(0, 120)}${l.product.tastingNotes.length > 120 ? '…' : ''}</div>` : ''}
                 </td>
-                <td class="cell-center cell-qty">${qty}</td>
+                ${qt.showQuantity ? `<td class="cell-center cell-qty">${qty}</td>` : ''}
                 <td class="cell-right cell-price">${fmt(price)}</td>
                 <td class="cell-center cell-disc">${disc > 0 ? `${disc}%` : '—'}</td>
                 <td class="cell-right cell-total">${fmt(lineTotal)}</td>
@@ -530,7 +530,7 @@ export async function GET(req: NextRequest) {
                     <th class="th-center">#</th>
                     <th></th>
                     <th>Sản Phẩm</th>
-                    <th class="th-center">SL</th>
+                    ${qt.showQuantity ? '<th class="th-center">SL</th>' : ''}
                     <th class="th-right">Đơn Giá (₫)</th>
                     <th class="th-center">CK</th>
                     <th class="th-right">Thành Tiền (₫)</th>

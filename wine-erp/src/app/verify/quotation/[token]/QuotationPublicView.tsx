@@ -19,7 +19,7 @@ type QuotationData = {
     terms: string | null; deliveryTerms: string | null; vatIncluded: boolean
     companyName: string | null; contactPerson: string | null; createdAt: string
     customerName: string; customerCode: string; salesRepName: string; salesRepEmail: string
-    isExpired: boolean; isActionable: boolean; lines: LineData[]
+    isExpired: boolean; isActionable: boolean; showQuantity?: boolean; lines: LineData[]
 }
 
 const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 0 })
@@ -35,7 +35,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; bor
 }
 
 // Sub-component for individual product cards with rich hover styling and spring transitions
-function ProductLineCard({ line, i, totalCount }: { line: LineData; i: number; totalCount: number }) {
+function ProductLineCard({ line, i, totalCount, showQuantity }: { line: LineData; i: number; totalCount: number; showQuantity?: boolean }) {
     const [hovered, setHovered] = useState(false)
 
     // Formulate a premium classification subtitle (e.g. "Grand Cru Classé • Bordeaux, France")
@@ -138,14 +138,27 @@ function ProductLineCard({ line, i, totalCount }: { line: LineData; i: number; t
                     {/* Pricing column */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <p style={{ color: '#87CBB9', fontWeight: 700, fontSize: 18, margin: 0, fontFamily: 'var(--font-sans)' }}>
-                            {fmt(line.lineTotal)} <span style={{ fontSize: 12, fontWeight: 400 }}>₫</span>
+                            {showQuantity ? fmt(line.lineTotal) : fmt(line.unitPrice * (1 - line.discountPct / 100))} <span style={{ fontSize: 12, fontWeight: 400 }}>₫</span>
                         </p>
                         <p style={{ color: '#4A6A7A', fontSize: 12, margin: '2px 0 0', fontFamily: 'var(--font-sans)' }}>
-                            {line.qty} × {fmt(line.unitPrice)} ₫
-                            {line.discountPct > 0 && (
-                                <span style={{ color: '#EF4444', fontWeight: 600, marginLeft: 4 }}>
-                                    (−{line.discountPct}%)
-                                </span>
+                            {showQuantity ? (
+                                <>
+                                    {line.qty} × {fmt(line.unitPrice)} ₫
+                                    {line.discountPct > 0 && (
+                                        <span style={{ color: '#EF4444', fontWeight: 600, marginLeft: 4 }}>
+                                            (−{line.discountPct}%)
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    Đơn giá: {fmt(line.unitPrice)} ₫
+                                    {line.discountPct > 0 && (
+                                        <span style={{ color: '#EF4444', fontWeight: 600, marginLeft: 4 }}>
+                                            (−{line.discountPct}%)
+                                        </span>
+                                    )}
+                                </>
                             )}
                         </p>
                     </div>
@@ -527,7 +540,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             </div>
                             
                             {group.lines.map((line, i) => (
-                                <ProductLineCard key={i} line={line} i={i} totalCount={group.lines.length} />
+                                <ProductLineCard key={i} line={line} i={i} totalCount={group.lines.length} showQuantity={data.showQuantity} />
                             ))}
                         </div>
                     ))}
