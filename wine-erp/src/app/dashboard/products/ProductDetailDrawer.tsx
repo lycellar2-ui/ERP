@@ -183,7 +183,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <h2 className="text-xl font-bold leading-snug" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
                                 {activeProduct.productName}
                             </h2>
-                            <p className="text-xs font-mono" style={{ color: '#87CBB9' }}>{activeProduct.skuCode}</p>
+                            <p className="text-xs font-sans tracking-wide" style={{ color: '#87CBB9' }}>{activeProduct.skuCode}</p>
                             
                             <div className="flex flex-wrap gap-2 pt-1">
                                 {wineTypeBadge && (
@@ -210,7 +210,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 </div>
                                 <div>
                                     <span style={{ color: '#4A6A7A' }}>Tổng tồn kho: </span>
-                                    <span className="font-bold text-sm block" style={{ color: totalStockQty > 0 ? '#5BA88A' : '#E05252' }}>
+                                    <span className="font-bold text-sm block font-sans" style={{ color: totalStockQty > 0 ? '#5BA88A' : '#E05252' }}>
                                         {totalStockQty.toLocaleString()} chai
                                     </span>
                                 </div>
@@ -248,7 +248,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             ].map((spec, i) => (
                                 <div key={i} className="flex justify-between py-1.5 border-b border-[#2A4355]/20 last:border-b-0">
                                     <span style={{ color: '#4A6A7A' }}>{spec.label}</span>
-                                    <span className="font-semibold text-right flex items-center justify-end" style={{ color: '#E8F1F2' }}>{spec.value}</span>
+                                    <span className="font-semibold text-right flex items-center justify-end font-sans tabular-nums" style={{ color: '#E8F1F2' }}>{spec.value}</span>
                                 </div>
                             ))}
                         </div>
@@ -261,7 +261,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                 <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#4A6A7A' }}>Giá Bán Lẻ Niêm Yết</span>
-                                <span className="text-lg font-bold mt-1 font-mono" style={{ color: '#87CBB9' }}>
+                                <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#87CBB9' }}>
                                     {data ? (data.retailPrice ? formatVND(data.retailPrice) : 'Chưa thiết lập') : (
                                         <div className="h-7 w-28 bg-[#2A4355]/30 animate-pulse rounded mt-1" />
                                     )}
@@ -269,7 +269,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             </div>
                             <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                 <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#4A6A7A' }}>Giá Bán Buôn (Wholesale)</span>
-                                <span className="text-lg font-bold mt-1 font-mono" style={{ color: '#87CBB9' }}>
+                                <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#87CBB9' }}>
                                     {data ? (data.wholesalePrice ? formatVND(data.wholesalePrice) : 'Chưa thiết lập') : (
                                         <div className="h-7 w-28 bg-[#2A4355]/30 animate-pulse rounded mt-1" />
                                     )}
@@ -333,7 +333,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         <div className="min-w-0">
                                             <p className="font-bold truncate" style={{ color: '#E8F1F2' }}>
                                                 {a.source}
-                                                {a.score && <span className="ml-1.5 text-xs text-[#87CBB9] font-mono">{a.score}pt</span>}
+                                                {a.score && <span className="ml-1.5 text-xs text-[#87CBB9] font-sans font-bold">{a.score}pt</span>}
                                             </p>
                                             <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>
                                                 {a.medalLabel ?? ''} {a.vintage ? `(Vintage: ${a.vintage})` : ''}
@@ -397,14 +397,14 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                                         return (
                                                             <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
                                                                 <td className="px-3 py-2 font-medium" style={{ color: '#E8F1F2' }}>{lot.warehouseName}</td>
-                                                                <td className="px-3 py-2 font-mono font-bold" style={{ color: '#8AAEBB' }}>{lot.locationCode}</td>
-                                                                <td className="px-3 py-2 font-mono" style={{ color: '#4A6A7A' }}>{lot.lotNo}</td>
+                                                                <td className="px-3 py-2 font-sans font-semibold" style={{ color: '#8AAEBB' }}>{lot.locationCode}</td>
+                                                                <td className="px-3 py-2 font-sans" style={{ color: '#4A6A7A' }}>{lot.lotNo}</td>
                                                                 <td className="px-3 py-2">
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold inline-block" style={{ color: statusCfg.color, background: statusCfg.bg }}>
                                                                         {statusCfg.label}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-3 py-2 text-right font-mono font-bold" style={{ color: '#87CBB9' }}>
+                                                                <td className="px-3 py-2 text-right font-sans font-bold tabular-nums" style={{ color: '#87CBB9' }}>
                                                                     {lot.qtyAvailable.toLocaleString()}
                                                                 </td>
                                                             </tr>
