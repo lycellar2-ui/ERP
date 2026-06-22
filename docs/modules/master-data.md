@@ -39,6 +39,13 @@ Mỗi sản phẩm rượu vang có các thuộc tính đặc thù ngành mà ER
 | `tasting_notes` | Text | Mô tả hương vị (Marketing, hiển thị cho Sales) | |
 | `status` | Enum | ACTIVE / DISCONTINUED / ALLOCATION_ONLY | ✅ |
 
+### A.2 Xem Chi Tiết & Tồn Kho (Product Detail View)
+- **Kích hoạt bằng Row Click**: Click trực tiếp vào dòng sản phẩm trên bảng để xem nhanh chi tiết thông tin (áp dụng cho cả máy tính và điện thoại).
+- **Bảo mật giá vốn (Cost Protection)**: Hệ thống tự động ẩn toàn bộ thông tin giá vốn (`costPrice`, `unitLandedCost`) trong tầm nhìn của Sales (không trả về dữ liệu giá vốn ở server-side action).
+- **Chi tiết Tồn kho vật lý**: Hiển thị danh sách các lô hàng đang tồn tại trong hệ thống kho: tên kho, mã vị trí cụ thể (Zone/Rack/Bin), số lô, trạng thái (Sẵn sàng/Đặt trước/Cách ly) và số lượng khả dụng.
+- **Giá bán theo kênh**: Hiển thị Giá bán lẻ niêm yết và Giá bán buôn (Wholesale) lấy từ bảng giá margin.
+- **Phân quyền chỉnh sửa**: Đối với người dùng có quyền ghi (`MDM:WRITE`), Drawer xem chi tiết sẽ hiển thị thêm nút "Chỉnh sửa" để mở form cập nhật sản phẩm.
+
 ### B. Danh Mục Phụ (Sub-catalogs) — Quản Lý Tập Trung
 Các giá trị này được Admin quản lý tập trung, không hardcode:
 - `Appellation` (Danh sách vùng trồng chứng nhận)

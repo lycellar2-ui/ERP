@@ -1090,3 +1090,123 @@ export async function getProductImage(
     })
     return media?.url ?? null
 }
+
+export type ProductStockLotViewRow = {
+    id: string
+    lotNo: string
+    qtyAvailable: number
+    receivedDate: Date
+    status: string
+    locationCode: string
+    warehouseName: string
+}
+
+export type ProductViewDetails = {
+    id: string
+    skuCode: string
+    productName: string
+    vintage: number | null
+    country: string
+    abvPercent: number | null
+    volumeMl: number
+    format: string
+    packagingType: string
+    unitsPerCase: number
+    hsCode: string
+    barcodeEan: string | null
+    wineType: string
+    classification: string | null
+    tastingNotes: string | null
+    status: string
+    isAllocationEligible: boolean
+    producerName: string
+    appellationName: string | null
+    retailPrice: number | null
+    wholesalePrice: number | null
+    media: { id: string; url: string; isPrimary: boolean }[]
+    awards: { id: string; source: string; score: number | null; medal: string | null; medalLabel: string | null; vintage: number | null; awardedYear: number | null }[]
+    stockLots: ProductStockLotViewRow[]
+}
+
+export async function getProductViewDetails(id: string): Promise<ProductViewDetails | null> {
+    const cacheKey = `products:detail:${id}`
+    return cached(cacheKey, async () => {
+        const p = await prisma.product.findUnique({
+            where: { id },
+            include: {
+                producer: { select: { name: true } },
+                appellation: { select: { name: true } },
+                marginPrice: { select: { retailPrice: true, wholesalePrice: true } },
+                media: { select: { id: true, url: true, isPrimary: true }, orderBy: [{ isPrimary: 'desc' }, { uploadedAt: 'desc' }] },
+                awards: { select: { id: true, source: true, score: true, medal: true, vintage: true, awardedYear: true }, orderBy: [{ awardedYear: 'desc' }, { source: 'asc' }] },
+                stockLots: {
+                    where: { qtyAvailable: { gt: 0 } },
+                    select: {
+                        id: true,
+                        lotNo: true,
+                        qtyAvailable: true,
+                        receivedDate: true,
+                        status: true,
+                        location: {
+                            select: {
+                                locationCode: true,
+                                warehouse: {
+                                    select: {
+                                        name: true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    orderBy: { receivedDate: 'desc' }
+                }
+            }
+        })
+
+        if (!p) return null
+
+        return {
+            id: p.id,
+            skuCode: p.skuCode,
+            productName: p.productName,
+            vintage: p.vintage,
+            country: p.country,
+            abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
+            volumeMl: p.volumeMl,
+            format: p.format,
+            packagingType: p.packagingType,
+            unitsPerCase: p.unitsPerCase,
+            hsCode: p.hsCode,
+            barcodeEan: p.barcodeEan,
+            wineType: p.wineType,
+            classification: p.classification,
+            tastingNotes: p.tastingNotes,
+            status: p.status,
+            isAllocationEligible: p.isAllocationEligible,
+            producerName: p.producer.name,
+            appellationName: p.appellation?.name ?? null,
+            retailPrice: p.marginPrice?.retailPrice ? Number(p.marginPrice.retailPrice) : null,
+            wholesalePrice: p.marginPrice?.wholesalePrice ? Number(p.marginPrice.wholesalePrice) : null,
+            media: p.media,
+            awards: p.awards.map(a => ({
+                id: a.id,
+                source: a.source,
+                score: a.score ? Number(a.score) : null,
+                medal: a.medal,
+                medalLabel: a.medal ? MEDAL_LABEL[a.medal] ?? a.medal : null,
+                vintage: a.vintage,
+                awardedYear: a.awardedYear,
+            })),
+            stockLots: p.stockLots.map(l => ({
+                id: l.id,
+                lotNo: l.lotNo,
+                qtyAvailable: Number(l.qtyAvailable),
+                receivedDate: l.receivedDate,
+                status: l.status,
+                locationCode: l.location.locationCode,
+                warehouseName: l.location.warehouse.name
+            }))
+        }
+    })
+}
+

@@ -2,12 +2,14 @@ import { Suspense } from 'react'
 import { getProducts, getProductStats, getProductCountries, getProductVintages, getProducers } from './actions'
 import { ProductsClient } from './ProductsClient'
 import { AICatalogAnalysis } from './AICatalogAnalysis'
+import { getCurrentUser, hasPermission } from '@/lib/session'
 
 export const metadata = { title: 'Danh Mục Sản Phẩm | Wine ERP' }
 
 export default async function ProductsPage() {
     // Server-side: fetch paginated rows + aggregated stats + filter options in parallel
-    const [{ rows, total }, stats, countries, vintages, producers] = await Promise.all([
+    const [user, { rows, total }, stats, countries, vintages, producers] = await Promise.all([
+        getCurrentUser().catch(() => null),
         getProducts({ page: 1, pageSize: 20 }).catch(() => ({
             rows: [] as any[],
             total: 0,
@@ -20,6 +22,8 @@ export default async function ProductsPage() {
         getProducers().catch(() => []),
     ])
 
+    const canEdit = user ? hasPermission(user, 'MDM', 'WRITE') : false
+
     return (
         <div>
             <AICatalogAnalysis />
@@ -31,6 +35,7 @@ export default async function ProductsPage() {
                     countries={countries}
                     vintages={vintages}
                     producers={producers}
+                    canEdit={canEdit}
                 />
             </Suspense>
         </div>

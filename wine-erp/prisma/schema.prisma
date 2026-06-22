@@ -272,6 +272,11 @@ model Product {
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
 
+  @@index([deletedAt])
+  @@index([status])
+  @@index([country])
+  @@index([vintage])
+  @@index([producerId])
   @@map("products")
 }
 
@@ -301,6 +306,8 @@ model ProductMedia {
   tags         String[]
   uploadedAt   DateTime  @default(now())
 
+  @@index([productId])
+  @@index([productId, isPrimary])
   @@map("product_media")
 }
 
@@ -314,6 +321,7 @@ model ProductAward {
   medal       AwardMedal?
   awardedYear Int?
 
+  @@index([productId])
   @@map("product_awards")
 }
 

@@ -33,8 +33,8 @@ export function GoodsReceiptTab({ warehouses }: {
     const [detailData, setDetailData] = useState<GRDetail>(null)
     const [detailLoading, setDetailLoading] = useState(false)
 
-    useEffect(() => { reload() }, [])
     const reload = async () => { setLoading(true); const d = await getGoodsReceipts(); setRows(d); setLoading(false) }
+    useEffect(() => { reload() }, [])
 
     const openDetail = async (id: string) => {
         setDetailLoading(true)

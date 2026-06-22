@@ -24,7 +24,7 @@ function EmptyState() {
     )
 }
 
-function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: () => void; onDelete: () => void }) {
+function ProductTableRow({ row, onEdit, onDelete, onView, canEdit }: { row: ProductRow; onEdit: () => void; onDelete: () => void; onView: () => void; canEdit: boolean }) {
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
     const [isVertical, setIsVertical] = useState(false)
@@ -52,8 +52,9 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
     }, [row.primaryImageUrl])
 
     return (
-        <tr className="group transition-colors duration-100"
+        <tr className="group transition-colors duration-100 cursor-pointer"
             style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
+            onClick={onView}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
             onMouseLeave={e => (e.currentTarget.style.background = '')}>
 
@@ -61,7 +62,8 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
             <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
                     <div className="relative group/img w-20 h-11 rounded-lg flex-shrink-0 flex items-center justify-center cursor-zoom-in"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        style={{ background: '#142433', border: '1px solid #2A4355' }}
+                        onClick={e => e.stopPropagation()}>
                         {row.primaryImageUrl ? (
                             <>
                                 <img 
@@ -160,39 +162,42 @@ function ProductTableRow({ row, onEdit, onDelete }: { row: ProductRow; onEdit: (
 
             {/* Actions */}
             <td className="px-3 py-3">
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                    <button onClick={onEdit}
-                        className="p-1.5 rounded-lg transition-all"
-                        style={{ color: '#8AAEBB' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}
-                        title="Chỉnh sửa">
-                        <Edit2 size={14} />
-                    </button>
-                    <button onClick={onDelete}
-                        className="p-1.5 rounded-lg transition-all"
-                        style={{ color: '#4A6A7A' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#4A6A7A' }}
-                        title="Xóa">
-                        <Trash2 size={14} />
-                    </button>
-                </div>
+                {canEdit && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all">
+                        <button onClick={e => { e.stopPropagation(); onEdit() }}
+                            className="p-1.5 rounded-lg transition-all"
+                            style={{ color: '#8AAEBB' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}
+                            title="Chỉnh sửa">
+                            <Edit2 size={14} />
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); onDelete() }}
+                            className="p-1.5 rounded-lg transition-all"
+                            style={{ color: '#4A6A7A' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#4A6A7A' }}
+                            title="Xóa">
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                )}
             </td>
         </tr>
     )
 }
 
-function ProductMobileCard({ row, onEdit, onDelete }: { row: ProductRow; onEdit: () => void; onDelete: () => void }) {
+function ProductMobileCard({ row, onEdit, onDelete, onView, canEdit }: { row: ProductRow; onEdit: () => void; onDelete: () => void; onView: () => void; canEdit: boolean }) {
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
 
     return (
-        <div className="p-4 flex gap-4 transition-colors duration-100 animate-none"
-            style={{ borderBottom: '1px solid rgba(42,67,85,0.2)', background: '#0D1E2B' }}>
+        <div className="p-2.5 flex gap-3 transition-colors duration-100 animate-none cursor-pointer items-center"
+            style={{ borderBottom: '1px solid rgba(42,67,85,0.15)', background: '#0D1E2B' }}
+            onClick={onView}>
             
-            {/* Bottle Thumbnail Image Container */}
-            <div className="relative w-16 h-24 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border"
+            {/* 1. Bottle Thumbnail (Compact) */}
+            <div className="relative w-10 h-16 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border"
                 style={{ background: '#142433', borderColor: '#2A4355' }}>
                 {row.primaryImageUrl ? (
                     <img 
@@ -200,76 +205,69 @@ function ProductMobileCard({ row, onEdit, onDelete }: { row: ProductRow; onEdit:
                         alt={row.productName} 
                         loading="lazy"
                         decoding="async"
-                        className="h-full w-full object-contain p-1.5 transition-transform duration-200 hover:scale-105"
+                        className="h-full object-contain p-0.5 transition-transform duration-200"
                     />
                 ) : (
-                    <ImageOff size={16} style={{ color: '#2A4355' }} />
-                )}
-                {/* Small Vintage Badge on Image */}
-                {row.vintage && (
-                    <span className="absolute bottom-0 left-0 right-0 text-[9px] font-bold text-center py-0.5"
-                        style={{ background: 'rgba(135,203,185,0.85)', color: '#0A1926' }}>
-                        {row.vintage}
-                    </span>
+                    <ImageOff size={12} style={{ color: '#2A4355' }} />
                 )}
             </div>
 
-            {/* Product Details Area */}
-            <div className="flex-1 min-w-0 flex flex-col justify-between">
-                <div>
-                    {/* Title */}
-                    <h4 className="text-sm font-bold leading-snug line-clamp-2" style={{ color: '#E8F1F2' }}>
+            {/* 2. Central Details: Title, SKU, ABV, Producer & Region */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <h4 className="text-xs font-bold leading-tight truncate max-w-[190px]" style={{ color: '#E8F1F2' }}>
                         {row.productName}
                     </h4>
-                    
-                    {/* SKU Code */}
-                    <p className="text-[10px] font-mono mt-0.5" style={{ color: '#4A6A7A' }}>
-                        {row.skuCode}
-                    </p>
-
-                    {/* Wine type & Status Badges */}
-                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                        <WineTypeBadge type={row.wineType} />
-                        <StatusBadge status={row.status} />
-                    </div>
-
-                    {/* Producer & Appellation details */}
-                    <p className="text-[11px] mt-1.5 truncate" style={{ color: '#8AAEBB' }}>
-                        <span className="mr-1">{flag}</span>
-                        {row.producerName}
-                        {row.appellationName ? ` • ${row.appellationName}` : ''}
-                    </p>
+                    <span className="text-[9px] font-bold" style={{ color: row.vintage ? '#87CBB9' : '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                        {row.vintage ? `'${String(row.vintage).slice(-2)}` : 'NV'}
+                    </span>
+                </div>
+                
+                <div className="flex items-center gap-2 mt-0.5 text-[10px]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                    <span className="font-medium text-[#8AAEBB]">{row.skuCode}</span>
+                    {row.abvPercent != null && (
+                        <span className="px-1 py-0.2 rounded bg-[#1B2E3D]" style={{ color: '#8AAEBB' }}>
+                            {row.abvPercent}°
+                        </span>
+                    )}
                 </div>
 
-                {/* Footer of the Card: Stock & Actions */}
-                <div className="flex items-center justify-between mt-2 pt-2"
-                    style={{ borderTop: '1px solid rgba(42,67,85,0.15)' }}>
-                    {/* Stock level */}
-                    <div className="text-xs" style={{ color: '#8AAEBB' }}>
-                        Tồn: <span className="font-bold text-sm" style={{ color: stockColor, fontFamily: '"DM Mono", monospace' }}>{row.totalStock}</span> chai
-                        {row.abvPercent != null && (
-                            <span className="ml-2 px-1 py-0.5 rounded text-[10px] bg-[#1B2E3D]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
-                                {row.abvPercent}°
-                            </span>
-                        )}
-                    </div>
+                <p className="text-[10px] mt-0.5 truncate" style={{ color: '#8AAEBB' }}>
+                    <span className="mr-1">{flag}</span>
+                    {row.producerName}
+                    {row.appellationName ? ` • ${row.appellationName}` : ''}
+                </p>
+            </div>
 
-                    {/* Quick action buttons */}
-                    <div className="flex items-center gap-1.5">
-                        <button onClick={onEdit}
-                            className="flex items-center justify-center p-1.5 rounded-lg transition-colors border"
+            {/* 3. Right Side: Stock Level, Status Badge & Action buttons */}
+            <div className="flex flex-col items-end justify-center gap-1 flex-shrink-0 min-w-[85px]">
+                {/* Stock info */}
+                <div className="text-[11px] font-medium" style={{ color: '#8AAEBB' }}>
+                    Tồn: <span className="font-bold text-xs" style={{ color: stockColor, fontFamily: '"DM Mono", monospace' }}>{row.totalStock}</span>
+                </div>
+
+                {/* Wine Type Badge (compact wrapper) */}
+                <div className="scale-90 origin-right">
+                    <WineTypeBadge type={row.wineType} />
+                </div>
+
+                {/* Actions */}
+                {canEdit && (
+                    <div className="flex items-center gap-1 scale-90 origin-right mt-0.5">
+                        <button onClick={e => { e.stopPropagation(); onEdit() }}
+                            className="flex items-center justify-center p-1 rounded transition-colors border"
                             style={{ background: '#1B2E3D', color: '#87CBB9', borderColor: '#2A4355' }}
                             title="Sửa">
-                            <Edit2 size={12} />
+                            <Edit2 size={11} />
                         </button>
-                        <button onClick={onDelete}
-                            className="flex items-center justify-center p-1.5 rounded-lg transition-colors border"
+                        <button onClick={e => { e.stopPropagation(); onDelete() }}
+                            className="flex items-center justify-center p-1 rounded transition-colors border"
                             style={{ background: '#1B2E3D', color: '#E05252', borderColor: '#2A4355' }}
                             title="Xóa">
-                            <Trash2 size={12} />
+                            <Trash2 size={11} />
                         </button>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     )
@@ -294,11 +292,13 @@ interface ProductTableProps {
     onSort: (sortBy: ProductFilters['sortBy']) => void
     onEdit: (id: string) => void
     onDelete: (id: string, name: string) => void
+    onView: (id: string) => void
+    canEdit?: boolean
     onRefresh: () => void
     onPrefetch?: (page: number) => void
 }
 
-export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onPrefetch }: ProductTableProps) {
+export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, canEdit = false, onPrefetch }: ProductTableProps) {
     const totalPages = Math.ceil(total / pageSize)
 
     const sortableHeaders = [
@@ -424,6 +424,8 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                             row={row}
                             onEdit={() => onEdit(row.id)}
                             onDelete={() => onDelete(row.id, row.productName)}
+                            onView={() => onView(row.id)}
+                            canEdit={canEdit}
                         />
                     ))
                 )}
@@ -467,6 +469,8 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                                         row={row}
                                         onEdit={() => onEdit(row.id)}
                                         onDelete={() => onDelete(row.id, row.productName)}
+                                        onView={() => onView(row.id)}
+                                        canEdit={canEdit}
                                     />
                                 ))
                         }

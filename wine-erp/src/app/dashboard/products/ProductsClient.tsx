@@ -5,6 +5,7 @@ import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download,
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
+import { ProductDetailDrawer } from './ProductDetailDrawer'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
 
@@ -75,15 +76,18 @@ interface ProductsClientProps {
     countries: { code: string; count: number }[]
     vintages: number[]
     producers: { id: string; name: string }[]
+    canEdit?: boolean
 }
 
-export function ProductsClient({ initialRows, initialTotal, stats, countries, vintages, producers }: ProductsClientProps) {
+export function ProductsClient({ initialRows, initialTotal, stats, countries, vintages, producers, canEdit = false }: ProductsClientProps) {
     const [rows, setRows] = useState<ProductRow[]>(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
+    const [viewOpen, setViewOpen] = useState(false)
+    const [viewId, setViewId] = useState<string | null>(null)
     const [importOpen, setImportOpen] = useState(false)
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
@@ -237,24 +241,28 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                     >
                         <Download size={13} /> {exporting ? 'Đang xuất...' : 'Export'}
                     </button>
-                    <button
-                        onClick={() => setImportOpen(true)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                        style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
-                    >
-                        <Upload size={13} /> Import
-                    </button>
-                    <button
-                        onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
-                    >
-                        <Plus size={13} /> Thêm Sản Phẩm
-                    </button>
+                    {canEdit && (
+                        <>
+                            <button
+                                onClick={() => setImportOpen(true)}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                                style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
+                                onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
+                                onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}
+                            >
+                                <Upload size={13} /> Import
+                            </button>
+                            <button
+                                onClick={() => { setEditingId(null); setDrawerOpen(true) }}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
+                                style={{ background: '#87CBB9', color: '#0A1926' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                                onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}
+                            >
+                                <Plus size={13} /> Thêm Sản Phẩm
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -364,6 +372,8 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 onSort={handleSort}
                 onEdit={id => { setEditingId(id); setDrawerOpen(true) }}
                 onDelete={handleDelete}
+                onView={id => { setViewId(id); setViewOpen(true) }}
+                canEdit={canEdit}
                 onRefresh={() => applyFilter({})}
                 onPrefetch={prefetchPage}
             />
@@ -372,6 +382,14 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 open={drawerOpen} editingId={editingId}
                 onClose={() => setDrawerOpen(false)}
                 onSaved={() => { setDrawerOpen(false); applyFilter({}) }}
+            />
+
+            <ProductDetailDrawer
+                open={viewOpen}
+                productId={viewId}
+                onClose={() => setViewOpen(false)}
+                canEdit={canEdit}
+                onEditTrigger={id => { setEditingId(id); setDrawerOpen(true) }}
             />
 
             <ExcelImportDialog

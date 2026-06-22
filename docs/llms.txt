@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-05-30 14:00
-> Status: Production — 26 modules, 114 DB models, 33 dashboard routes, 6 AI features live, Quotation upgraded with show/hide quantity option, quick product picker, landscape images, and supplier-country grouping
+> Last updated: 2026-06-20 10:00
+> Status: Production — 26 modules, 114 DB models, 33 dashboard routes, 6 AI features live, Product Detail View Drawer with inventory breakdown and row click navigation live
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

@@ -37,8 +37,8 @@ export function DeliveryOrderTab({ warehouses }: {
     const [detailData, setDetailData] = useState<DODetail>(null)
     const [detailLoading, setDetailLoading] = useState(false)
 
-    useEffect(() => { reload() }, [])
     const reload = async () => { setLoading(true); const d = await getDeliveryOrders(); setRows(d); setLoading(false) }
+    useEffect(() => { reload() }, [])
 
     const openDetail = async (id: string) => {
         setDetailLoading(true)

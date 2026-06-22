@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-05-30 14:00 | Wine ERP v7.1 — 26 modules, 114 models, 42 action files, Quotation upgraded with show/hide quantity option, quick product picker, landscape images, and supplier-country grouping*
+*Last updated: 2026-06-20 10:00 | Wine ERP v7.2 — 26 modules, 114 models, 42 action files, Product Detail View Drawer with inventory breakdown and row click navigation live*
