@@ -88,13 +88,29 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const [entities, setEntities] = useState<LegalEntityRow[]>([])
     const [legalEntityId, setLegalEntityId] = useState('')
 
-    const productOptions = useMemo(() => {
-        return products.map(p => (
-            <option key={p.id} value={p.id}>
-                [{p.skuCode}] {p.productName} — Tồn: {p.totalStock}
-            </option>
-        ))
+    const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
+    const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null)
+
+    const getFilteredProducts = useCallback((query: string) => {
+        const q = query.trim().toLowerCase()
+        if (!q) return products.slice(0, 100)
+        return products.filter(p =>
+            p.productName.toLowerCase().includes(q) ||
+            p.skuCode.toLowerCase().includes(q)
+        )
     }, [products])
+
+    useEffect(() => {
+        const queries: Record<number, string> = {}
+        lines.forEach((l, idx) => {
+            if (l.productId) {
+                queries[idx] = `[${l.skuCode}] ${l.productName}`
+            } else {
+                queries[idx] = ''
+            }
+        })
+        setSearchQueries(queries)
+    }, [lines.length]) // eslint-disable-line
 
     useEffect(() => {
         if (!open) return
@@ -174,11 +190,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     }
 
     const addLine = () => {
-        if (products.length === 0) return
-        const p = products[0]
-        const autoPrice = priceMap[p.id]?.price ?? 0
-        const source = priceMap[p.id]?.source ?? null
-        setLines(prev => [...prev, { productId: p.id, productName: p.productName, skuCode: p.skuCode, qtyOrdered: 1, unitPrice: autoPrice, lineDiscountPct: 0, stock: p.totalStock, priceSource: source }])
+        setLines(prev => [...prev, { productId: '', productName: '', skuCode: '', qtyOrdered: 1, unitPrice: 0, lineDiscountPct: 0, stock: 0, priceSource: null }])
     }
 
     const updateLine = (i: number, field: keyof SOLine, value: any) => {
@@ -188,6 +200,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                 const p = products.find(p => p.id === value)!
                 const autoPrice = priceMap[value]?.price ?? 0
                 const source = priceMap[value]?.source ?? null
+                
+                // Update search query display
+                setSearchQueries(prevQueries => ({
+                    ...prevQueries,
+                    [i]: `[${p.skuCode}] ${p.productName}`
+                }))
+
                 return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: autoPrice, priceSource: source }
             }
             return { ...l, [field]: value }
@@ -209,6 +228,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
         if (!customerId) return toast.error('Vui lòng chọn khách hàng')
         if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
         if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
+        if (lines.some(l => !l.productId)) return toast.error('Vui lòng chọn sản phẩm cho tất cả các dòng')
 
         setSaving(true)
         const promise = createSalesOrder({
@@ -244,7 +264,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const resetForm = () => {
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
-        setArBalance(0); setPriceMap({}); setLegalEntityId('')
+        setArBalance(0); setPriceMap({}); setLegalEntityId(''); setSearchQueries({})
     }
 
     if (!open) return null
@@ -387,7 +407,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                     <div className="space-y-2">
                                         {lines.map((line, i) => {
                                             const lineTotal = line.qtyOrdered * line.unitPrice * (1 - line.lineDiscountPct / 100)
-                                            const lowStock = line.qtyOrdered > line.stock
+                                            const lowStock = line.productId ? line.qtyOrdered > line.stock : false
                                             const alloc = allocations.find(a => a.productId === line.productId)
                                             const quotaExceeded = alloc && line.qtyOrdered > alloc.remaining
                                             const resolved = priceMap[line.productId]
@@ -396,15 +416,64 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                                 <div key={i} className="p-3 rounded-md space-y-2"
                                                     style={{ background: '#142433', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(139,26,46,0.35)' : '#2A4355'}` }}>
                                                     <div className="flex items-start gap-2">
-                                                        <select
-                                                            value={line.productId}
-                                                            onChange={e => updateLine(i, 'productId', e.target.value)}
-                                                            className="flex-1 px-2.5 py-2 text-xs outline-none"
-                                                            style={{ ...inputStyle, minWidth: 0 }}
-                                                        >
-                                                            {productOptions}
-                                                        </select>
-                                                        <button onClick={() => removeLine(i)} style={{ color: '#8B1A2E', padding: '8px' }}>
+                                                        <div className="flex-1 relative">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Gõ mã SKU hoặc tên sản phẩm..."
+                                                                value={searchQueries[i] ?? ''}
+                                                                onFocus={() => {
+                                                                    setActiveDropdownIndex(i)
+                                                                }}
+                                                                onBlur={() => {
+                                                                    setTimeout(() => {
+                                                                        setActiveDropdownIndex(null)
+                                                                        if (line.productId) {
+                                                                            setSearchQueries(prev => ({
+                                                                                ...prev,
+                                                                                [i]: `[${line.skuCode}] ${line.productName}`
+                                                                            }))
+                                                                        } else {
+                                                                            setSearchQueries(prev => ({ ...prev, [i]: '' }))
+                                                                        }
+                                                                    }, 200)
+                                                                }}
+                                                                onChange={e => {
+                                                                    const val = e.target.value
+                                                                    setSearchQueries(prev => ({ ...prev, [i]: val }))
+                                                                    setActiveDropdownIndex(i)
+                                                                }}
+                                                                className="w-full px-3 py-2 text-xs outline-none"
+                                                                style={{ ...inputStyle, minWidth: 0 }}
+                                                            />
+                                                            
+                                                            {activeDropdownIndex === i && (
+                                                                <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-lg border"
+                                                                     style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                                                    {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
+                                                                        <div className="px-3 py-2 text-xs text-gray-500">
+                                                                            Không tìm thấy sản phẩm
+                                                                        </div>
+                                                                    ) : (
+                                                                        getFilteredProducts(searchQueries[i] ?? '').map(p => (
+                                                                            <div
+                                                                                key={p.id}
+                                                                                onMouseDown={() => {
+                                                                                    updateLine(i, 'productId', p.id)
+                                                                                    setActiveDropdownIndex(null)
+                                                                                }}
+                                                                                className="px-3 py-2 text-xs cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left"
+                                                                                style={{ color: '#E8F1F2' }}
+                                                                            >
+                                                                                <span className="font-bold text-[#87CBB9] mr-1.5">[{p.skuCode}]</span>
+                                                                                <span>{p.productName}</span>
+                                                                                <span className="ml-2 text-gray-400 text-[10px]">(Tồn: {p.totalStock})</span>
+                                                                            </div>
+                                                                        ))
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button onClick={() => removeLine(i)} style={{ color: '#8B1A2E', padding: '8px' }} type="button">
                                                             <Trash2 size={14} />
                                                         </button>
                                                     </div>

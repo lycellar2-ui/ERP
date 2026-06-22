@@ -11,7 +11,7 @@ import { serialize } from '@/lib/serialize'
 import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
-export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL'
+export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
 
 export interface SalesOrderRow {
     id: string
@@ -357,8 +357,31 @@ export async function getActiveAllocationsForProducts(productIds: string[]): Pro
 
 // ── Get AR outstanding for customer (credit check) ─
 export async function getCustomerARBalance(customerId: string): Promise<number> {
+    const cust = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { parentId: true },
+    })
+
+    let targetCustomerIds = [customerId]
+
+    if (cust?.parentId) {
+        const siblingCusts = await prisma.customer.findMany({
+            where: { OR: [{ id: cust.parentId }, { parentId: cust.parentId }] },
+            select: { id: true }
+        })
+        targetCustomerIds = siblingCusts.map(c => c.id)
+    } else {
+        const childCusts = await prisma.customer.findMany({
+            where: { parentId: customerId },
+            select: { id: true }
+        })
+        if (childCusts.length > 0) {
+            targetCustomerIds = [customerId, ...childCusts.map(c => c.id)]
+        }
+    }
+
     const result = await prisma.aRInvoice.aggregate({
-        where: { customerId, status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+        where: { customerId: { in: targetCustomerIds }, status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
         _sum: { amount: true },
     })
     return Number(result._sum?.amount ?? 0)
@@ -418,31 +441,42 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
         // --- 2. Credit Hold Check ---
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
-            select: { creditLimit: true, name: true },
+            select: { creditLimit: true, name: true, parentId: true, parent: { select: { id: true, creditLimit: true, name: true } } },
         })
 
         // Auto credit limit enforcement
-        if (customer && Number(customer.creditLimit) > 0) {
-            const arBalance = await getCustomerARBalance(input.customerId)
+        if (customer) {
+            let checkCustomerId = input.customerId
+            let creditLimit = Number(customer.creditLimit)
+            let targetCustomerName = customer.name
 
-            const newOrderAmount = input.lines.reduce((sum, l) => {
-                const lineTotal = l.qtyOrdered * l.unitPrice
-                const discount = lineTotal * ((l.lineDiscountPct ?? 0) / 100)
-                return sum + lineTotal - discount
-            }, 0) * (1 - (input.orderDiscount ?? 0) / 100)
+            if (customer.parent) {
+                checkCustomerId = customer.parent.id
+                creditLimit = Number(customer.parent.creditLimit)
+                targetCustomerName = customer.parent.name
+            }
 
-            const creditLimit = Number(customer.creditLimit)
-            const projectedBalance = arBalance + newOrderAmount
+            if (creditLimit > 0) {
+                const arBalance = await getCustomerARBalance(checkCustomerId)
 
-            if (projectedBalance > creditLimit) {
-                return {
-                    success: false,
-                    error: `⚠️ Vượt hạn mức tín dụng!\n` +
-                        `• Hạn mức: ${creditLimit.toLocaleString('vi-VN')} ₫\n` +
-                        `• Công nợ hiện tại: ${arBalance.toLocaleString('vi-VN')} ₫\n` +
-                        `• Đơn mới: ${Math.round(newOrderAmount).toLocaleString('vi-VN')} ₫\n` +
-                        `• Tổng dự kiến: ${Math.round(projectedBalance).toLocaleString('vi-VN')} ₫\n` +
-                        `Cần thu nợ thêm ${Math.round(projectedBalance - creditLimit).toLocaleString('vi-VN')} ₫ trước khi tạo đơn.`,
+                const newOrderAmount = input.lines.reduce((sum, l) => {
+                    const lineTotal = l.qtyOrdered * l.unitPrice
+                    const discount = lineTotal * ((l.lineDiscountPct ?? 0) / 100)
+                    return sum + lineTotal - discount
+                }, 0) * (1 - (input.orderDiscount ?? 0) / 100)
+
+                const projectedBalance = arBalance + newOrderAmount
+
+                if (projectedBalance > creditLimit) {
+                    return {
+                        success: false,
+                        error: `⚠️ Vượt hạn mức tín dụng (${customer.parent ? 'Nhóm Khách Hàng Cha: ' + targetCustomerName : 'Khách Hàng: ' + targetCustomerName})!\n` +
+                            `• Hạn mức: ${creditLimit.toLocaleString('vi-VN')} ₫\n` +
+                            `• Công nợ gộp hiện tại: ${arBalance.toLocaleString('vi-VN')} ₫\n` +
+                            `• Đơn mới: ${Math.round(newOrderAmount).toLocaleString('vi-VN')} ₫\n` +
+                            `• Tổng dự kiến: ${Math.round(projectedBalance).toLocaleString('vi-VN')} ₫\n` +
+                            `Cần thu nợ thêm ${Math.round(projectedBalance - creditLimit).toLocaleString('vi-VN')} ₫ trước khi tạo đơn.`,
+                    }
                 }
             }
         }
@@ -550,12 +584,20 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
         // Credit check
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
-            select: { creditLimit: true },
+            select: { creditLimit: true, parentId: true, parent: { select: { id: true, creditLimit: true } } },
         })
-        if (customer && Number(customer.creditLimit) > 0) {
-            const arBalance = await getCustomerARBalance(input.customerId)
-            if (arBalance + finalAmount > Number(customer.creditLimit)) {
-                return { success: false, error: `Vượt hạn mức tín dụng! AR: ${arBalance.toLocaleString('vi-VN')}₫ + Đơn: ${Math.round(finalAmount).toLocaleString('vi-VN')}₫ > Limit: ${Number(customer.creditLimit).toLocaleString('vi-VN')}₫` }
+        if (customer) {
+            let checkCustomerId = input.customerId
+            let creditLimit = Number(customer.creditLimit)
+            if (customer.parent) {
+                checkCustomerId = customer.parent.id
+                creditLimit = Number(customer.parent.creditLimit)
+            }
+            if (creditLimit > 0) {
+                const arBalance = await getCustomerARBalance(checkCustomerId)
+                if (arBalance + finalAmount > creditLimit) {
+                    return { success: false, error: `Vượt hạn mức tín dụng! AR: ${arBalance.toLocaleString('vi-VN')}₫ + Đơn: ${Math.round(finalAmount).toLocaleString('vi-VN')}₫ > Limit: ${creditLimit.toLocaleString('vi-VN')}₫` }
+                }
             }
         }
 

@@ -464,6 +464,10 @@ model Customer {
   salesRepId    String?
   salesRep      User?                  @relation("CustomerSalesRep", fields: [salesRepId], references: [id])
   status        CustomerStatus         @default(ACTIVE)
+  parentId      String?
+  parent        Customer?              @relation("CustomerHierarchy", fields: [parentId], references: [id])
+  children      Customer[]             @relation("CustomerHierarchy")
+  brandGroup    String?
   addresses     CustomerAddress[]
   contacts      CustomerContact[]
   tags          CustomerTag[]
@@ -1951,6 +1955,8 @@ enum SalesChannel {
   WHOLESALE_DISTRIBUTOR
   VIP_RETAIL
   DIRECT_INDIVIDUAL
+  CORPORATE
+  RETAIL
 }
 
 enum SupplierType {
@@ -1973,6 +1979,8 @@ enum CustomerType {
   WHOLESALE_DISTRIBUTOR
   VIP_RETAIL
   INDIVIDUAL
+  CORPORATE
+  RETAIL
 }
 
 enum CustomerStatus {

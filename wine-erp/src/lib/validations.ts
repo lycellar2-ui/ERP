@@ -15,7 +15,7 @@ export const percentSchema = z.number().min(0).max(100, 'Phần trăm phải t�
 // SALES MODULE
 // ═══════════════════════════════════════════════════
 
-export const SalesChannelSchema = z.enum(['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'DIRECT_INDIVIDUAL'])
+export const SalesChannelSchema = z.enum(['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'DIRECT_INDIVIDUAL', 'CORPORATE', 'RETAIL'])
 
 export const SOLineCreateSchema = z.object({
     productId: idSchema,
@@ -113,6 +113,8 @@ export const CustomerCreateSchema = z.object({
     taxCode: z.string().max(20).optional(),
     creditLimit: nonNegativeNumber.optional(),
     channel: SalesChannelSchema.optional(),
+    parentId: z.string().optional().nullable(),
+    brandGroup: z.string().optional().nullable(),
 })
 
 export const SupplierCreateSchema = z.object({

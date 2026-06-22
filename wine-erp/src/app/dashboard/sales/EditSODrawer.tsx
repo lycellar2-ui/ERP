@@ -96,14 +96,17 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
 
     const activeProductIds = useMemo(() => new Set(lines.map(l => l.productId)), [lines])
     
-    const availableProductOptions = useMemo(() => {
-        return products
-            .filter(p => !activeProductIds.has(p.id))
-            .map(p => (
-                <option key={p.id} value={p.id}>
-                    {p.skuCode} — {p.productName} (tồn: {p.totalStock})
-                </option>
-            ))
+    const [addProductSearchQuery, setAddProductSearchQuery] = useState('')
+    const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false)
+
+    const getFilteredAddProducts = useCallback((query: string) => {
+        const q = query.trim().toLowerCase()
+        const available = products.filter(p => !activeProductIds.has(p.id))
+        if (!q) return available.slice(0, 100)
+        return available.filter(p =>
+            p.productName.toLowerCase().includes(q) ||
+            p.skuCode.toLowerCase().includes(q)
+        )
     }, [products, activeProductIds])
 
     // Load reference data
@@ -374,19 +377,60 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
 
                             {/* Lines */}
                             <div>
-                                <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center justify-between mb-2 relative">
                                     <label className="text-xs font-semibold" style={{ color: '#4A6A7A' }}>Sản Phẩm</label>
-                                    <select onChange={e => { if (e.target.value) { addLine(e.target.value); e.target.value = '' } }}
-                                        className="text-xs px-2 py-1" style={inputStyle}>
-                                        <option value="">+ Thêm SP</option>
-                                        {availableProductOptions}
-                                    </select>
+                                    <div className="w-64 relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Gõ mã/tên để thêm sản phẩm..."
+                                            value={addProductSearchQuery}
+                                            onFocus={() => setIsAddDropdownOpen(true)}
+                                            onBlur={() => {
+                                                setTimeout(() => {
+                                                    setIsAddDropdownOpen(false)
+                                                    setAddProductSearchQuery('')
+                                                }, 200)
+                                            }}
+                                            onChange={e => {
+                                                setAddProductSearchQuery(e.target.value)
+                                                setIsAddDropdownOpen(true)
+                                            }}
+                                            className="w-full px-2.5 py-1 text-xs outline-none"
+                                            style={inputStyle}
+                                        />
+                                        
+                                        {isAddDropdownOpen && (
+                                            <div className="absolute right-0 left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded shadow-lg border text-left"
+                                                 style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                                {getFilteredAddProducts(addProductSearchQuery).length === 0 ? (
+                                                    <div className="px-2 py-1.5 text-[10px] text-gray-500">
+                                                        Không tìm thấy hoặc đã thêm
+                                                    </div>
+                                                ) : (
+                                                    getFilteredAddProducts(addProductSearchQuery).map(p => (
+                                                        <div
+                                                            key={p.id}
+                                                            onMouseDown={() => {
+                                                                addLine(p.id)
+                                                                setAddProductSearchQuery('')
+                                                                setIsAddDropdownOpen(false)
+                                                            }}
+                                                            className="px-2 py-1.5 text-[10px] cursor-pointer hover:bg-[#1B2E3D]"
+                                                            style={{ color: '#E8F1F2' }}
+                                                        >
+                                                            <span className="font-bold text-[#87CBB9]">[{p.skuCode}]</span> {p.productName}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {lines.length === 0 ? (
                                     <div className="text-center py-6 rounded" style={{ background: '#142433', border: '1px dashed #2A4355' }}>
                                         <Plus size={20} className="mx-auto mb-1" style={{ color: '#2A4355' }} />
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Chọn sản phẩm từ dropdown</p>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Tìm kiếm sản phẩm ở trên để thêm</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-2">
