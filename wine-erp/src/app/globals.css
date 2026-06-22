@@ -71,15 +71,27 @@ html {
 /* 1. Backgrounds (#0A1926) -> var(--color-lys-bg) */
 [style*="#0A1926"],
 [style*="#0a1926"],
-[style*="rgb(10, 25, 38)"] {
+[style*="rgb(10, 25, 38)"],
+[style*="rgba(10,25,38"],
+[style*="rgba(10, 25, 38"] {
   background: var(--color-lys-bg) !important;
   background-color: var(--color-lys-bg) !important;
 }
+[class*="bg-[#0A1926]"],
+[class*="bg-[#0a1926]"] {
+  background-color: var(--color-lys-bg) !important;
+}
 
-/* 2. Surfaces / Sticky headers (#142433) -> var(--color-lys-surface) */
+/* 2. Surfaces / Sticky headers (#142433 / rgba(20,36,51,0.92)) -> var(--color-lys-surface) */
 [style*="#142433"],
-[style*="rgb(20, 36, 51)"] {
+[style*="rgb(20, 36, 51)"],
+[style*="rgba(20,36,51"],
+[style*="rgba(20, 36, 51"] {
   background: var(--color-lys-surface) !important;
+  background-color: var(--color-lys-surface) !important;
+}
+[class*="bg-[#142433]"],
+[class*="bg-[#142433]/40"] {
   background-color: var(--color-lys-surface) !important;
 }
 
@@ -90,13 +102,33 @@ html {
   background: var(--color-lys-card) !important;
   background-color: var(--color-lys-card) !important;
 }
-
-/* 4. Borders (#2A4355) -> var(--color-lys-border) */
-[style*="#2A4355"],
-[style*="#2a4355"],
-[style*="rgb(42, 67, 85)"] {
-  border-color: var(--color-lys-border) !important;
+[class*="bg-[#1B2E3D]"] {
+  background-color: var(--color-lys-card) !important;
 }
+
+/* 4. Midnight ocean secondary backgrounds (#0D1E2B) -> var(--color-lys-surface) */
+[style*="#0D1E2B"],
+[style*="#0d1e2b"],
+[style*="rgb(13, 30, 43)"],
+[style*="rgba(13,30,43"],
+[style*="rgba(13, 30, 43"] {
+  background: var(--color-lys-surface) !important;
+  background-color: var(--color-lys-surface) !important;
+}
+[class*="bg-[#0D1E2B]"],
+[class*="bg-[#0d1e2b]"] {
+  background-color: var(--color-lys-surface) !important;
+}
+
+/* 5. Borders (#2A4355) -> var(--color-lys-border) */
+[style*="border"][style*="#2A4355"],
+[style*="border"][style*="#2a4355"],
+[style*="border-color: #2A4355"],
+[style*="border-color:#2A4355"],
+[style*="border-top"][style*="#2A4355"],
+[style*="border-bottom"][style*="#2A4355"],
+[style*="border-left"][style*="#2A4355"],
+[style*="border-right"][style*="#2A4355"],
 div[style*="border: 1px solid #2A4355"],
 div[style*="border:1px solid #2A4355"],
 div[style*="border: 1px dashed #2A4355"],
@@ -105,34 +137,69 @@ table[style*="border-top: 1px solid #2A4355"],
 table[style*="border-top:1px solid #2A4355"] {
   border-color: var(--color-lys-border) !important;
 }
+[class*="border-[#2A4355]"],
+[class*="border-[#2a4355]"] {
+  border-color: var(--color-lys-border) !important;
+}
 
-/* 5. Text primary (#E8F1F2) -> var(--color-lys-ivory) */
-[style*="#E8F1F2"],
-[style*="#e8f1f2"],
-[style*="rgb(232, 241, 242)"] {
+/* 6. Text primary (#E8F1F2) -> var(--color-lys-ivory) */
+[style*="color: #E8F1F2"],
+[style*="color:#E8F1F2"],
+[style*="color: #e8f1f2"],
+[style*="color:#e8f1f2"],
+[style*="color: rgb(232, 241, 242)"],
+[style*="color:rgb(232, 241, 242)"] {
+  color: var(--color-lys-ivory) !important;
+}
+[class*="text-[#E8F1F2]"],
+[class*="text-[#e8f1f2]"] {
   color: var(--color-lys-ivory) !important;
 }
 
-/* 6. Text secondary / labels (#8AAEBB) -> var(--color-lys-muted) */
-[style*="#8AAEBB"],
-[style*="#8aaebb"],
-[style*="rgb(138, 174, 187)"] {
+/* 7. Text secondary / labels (#8AAEBB) -> var(--color-lys-muted) */
+[style*="color: #8AAEBB"],
+[style*="color:#8AAEBB"],
+[style*="color: #8aaebb"],
+[style*="color:#8aaebb"],
+[style*="color: rgb(138, 174, 187)"],
+[style*="color:rgb(138, 174, 187)"] {
+  color: var(--color-lys-muted) !important;
+}
+[class*="text-[#8AAEBB]"],
+[class*="text-[#8aaebb]"] {
   color: var(--color-lys-muted) !important;
 }
 
-/* 7. Text dim / placeholders (#4A6A7A) -> var(--color-lys-dim) */
-[style*="#4A6A7A"],
-[style*="#4a6a7a"],
-[style*="rgb(74, 106, 122)"] {
+/* 8. Text dim / placeholders (#4A6A7A or #2A4355 when used as color) -> var(--color-lys-dim) */
+[style*="color: #4A6A7A"],
+[style*="color:#4A6A7A"],
+[style*="color: #4a6a7a"],
+[style*="color:#4a6a7a"],
+[style*="color: #2A4355"],
+[style*="color:#2A4355"],
+[style*="color: #2a4355"],
+[style*="color:#2a4355"],
+[style*="color: rgb(74, 106, 122)"],
+[style*="color:rgb(74, 106, 122)"] {
+  color: var(--color-lys-dim) !important;
+}
+[class*="text-[#4A6A7A]"],
+[class*="text-[#4a6a7a]"],
+[class*="text-[#2A4355]"] {
   color: var(--color-lys-dim) !important;
 }
 
-/* 8. Accent Teal text/bg (#87CBB9) -> var(--color-lys-teal) */
+/* 9. Accent Teal text/bg (#87CBB9) -> var(--color-lys-teal) */
 span[style*="#87CBB9"],
 p[style*="#87CBB9"],
 strong[style*="#87CBB9"],
+th[style*="#87CBB9"],
 button[style*="color: #87CBB9"],
 button[style*="color:#87CBB9"] {
+  color: var(--color-lys-teal) !important;
+}
+[class*="text-[#87CBB9]"],
+[class*="text-[#87cbb9]"] {
   color: var(--color-lys-teal) !important;
 }
 button[style*="background: #87CBB9"],
@@ -146,13 +213,35 @@ a[style*="background:#87CBB9"] {
   color: #FFFFFF !important;
 }
 
-/* 9. Handle hover transparency for badges */
+/* 10. Table hover borders and backgrounds */
+tr[style*="border-bottom: 1px solid rgba(61,43,31"],
+tr[style*="border-bottom: 1px solid rgba(61, 43, 31"],
+tr[style*="border-bottom:1px solid rgba(61,43,31"] {
+  border-bottom-color: var(--color-lys-border) !important;
+}
+tbody tr:hover {
+  background-color: #F1F5F9 !important;
+}
+button[style*="#1B2E3D"]:hover,
+button[style*="#1b2e3d"]:hover {
+  background-color: #F1F5F9 !important;
+}
+
+/* 11. Handle hover transparency for badges */
 [style*="rgba(135,203,185,0.12)"],
 [style*="rgba(135,203,185,0.15)"],
 [style*="rgba(135, 203, 185, 0.12)"],
 [style*="rgba(135, 203, 185, 0.15)"] {
   background-color: rgba(8, 145, 178, 0.08) !important;
   color: var(--color-lys-teal) !important;
+}
+
+/* 12. Skeletons */
+[class*="bg-[#2A4355]/30"],
+[class*="bg-[#2a4355]/30"],
+[class*="bg-[#2A4355]/20"],
+[class*="bg-[#2a4355]/20"] {
+  background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
 
