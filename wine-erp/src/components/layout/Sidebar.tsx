@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useCallback, useRef, useState } from 'react'
 import { signOut } from '@/app/login/actions'
@@ -88,71 +89,39 @@ const NAV_GROUPS = [
     }
 ]
 
-// LY's Cellars — Wine glass SVG logo
+// LY's Cellars — Wine glass PNG logo
 function LysLogo({ collapsed }: { collapsed: boolean }) {
+    if (collapsed) {
+        return (
+            <div
+                className="flex items-center justify-center py-4 w-full"
+                style={{ borderBottom: '1px solid #2A4355', minHeight: '64px' }}
+            >
+                <Image
+                    src="/logo/logo_icon_white_green.png"
+                    alt="LY's Cellars"
+                    width={20}
+                    height={36}
+                    priority
+                    className="object-contain"
+                />
+            </div>
+        )
+    }
+
     return (
         <div
-            className="flex items-center gap-3 px-4 py-4"
+            className="flex items-center px-6 py-4 w-full"
             style={{ borderBottom: '1px solid #2A4355', minHeight: '64px' }}
         >
-            {/* Wine glass SVG — matches real logo */}
-            <svg
-                width="28"
-                height="28"
-                viewBox="0 0 40 48"
-                fill="none"
-                className="flex-shrink-0"
-                aria-hidden="true"
-            >
-                {/* Glass body */}
-                <path
-                    d="M8 4 Q8 20 20 26 Q32 20 32 4 Z"
-                    stroke="#87CBB9"
-                    strokeWidth="1.8"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-                {/* Stem */}
-                <line
-                    x1="20" y1="26" x2="20" y2="40"
-                    stroke="#87CBB9"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                />
-                {/* Base */}
-                <line
-                    x1="13" y1="40" x2="27" y2="40"
-                    stroke="#87CBB9"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                />
-                {/* Teal swirl — the signature element from logo */}
-                <path
-                    d="M20 22 Q16 16 18 10 Q20 6 22 10"
-                    stroke="#A5DED0"
-                    strokeWidth="1.5"
-                    fill="none"
-                    strokeLinecap="round"
-                />
-            </svg>
-
-            {!collapsed && (
-                <div className="min-w-0">
-                    <p
-                        className="font-bold text-lg leading-tight truncate"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}
-                    >
-                        LY&apos;s Cellars
-                    </p>
-                    <p
-                        className="text-xs truncate"
-                        style={{ color: '#4A6A7A', letterSpacing: '0.08em' }}
-                    >
-                        FINE WINE SPECIALIST
-                    </p>
-                </div>
-            )}
+            <Image
+                src="/logo/logo_tagline_white_green.png"
+                alt="LY's Cellars"
+                width={130}
+                height={36}
+                priority
+                className="object-contain"
+            />
         </div>
     )
 }

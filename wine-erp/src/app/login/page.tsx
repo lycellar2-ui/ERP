@@ -1,6 +1,7 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { signIn } from './actions'
 
 export default function LoginPage() {
@@ -47,35 +48,15 @@ export default function LoginPage() {
                 {/* Logo */}
                 <div className="text-center mb-10">
                     <div className="flex justify-center mb-4">
-                        <svg width="52" height="64" viewBox="0 0 40 52" fill="none" aria-hidden="true">
-                            <path
-                                d="M6 3 Q6 22 20 30 Q34 22 34 3 Z"
-                                stroke="#87CBB9"
-                                strokeWidth="1.6"
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                            <line x1="20" y1="30" x2="20" y2="45" stroke="#87CBB9" strokeWidth="1.6" strokeLinecap="round" />
-                            <line x1="11" y1="45" x2="29" y2="45" stroke="#87CBB9" strokeWidth="1.6" strokeLinecap="round" />
-                            <path
-                                d="M20 26 Q15 19 17 11 Q19 6 22 11"
-                                stroke="#A5DED0"
-                                strokeWidth="1.4"
-                                fill="none"
-                                strokeLinecap="round"
-                            />
-                        </svg>
+                        <Image
+                            src="/logo/logo_tagline_white_green.png"
+                            alt="LY's Cellars"
+                            width={252}
+                            height={70}
+                            priority
+                            className="object-contain"
+                        />
                     </div>
-                    <h1
-                        className="text-3xl font-bold mb-1"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}
-                    >
-                        LY&apos;s Cellars
-                    </h1>
-                    <p className="text-xs tracking-widest" style={{ color: '#4A6A7A', letterSpacing: '0.12em' }}>
-                        FINE WINE SPECIALIST
-                    </p>
                 </div>
 
                 {/* Card */}
