@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { X, Plus, Trash2, AlertCircle, Loader2, Save, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -93,6 +93,18 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
     const [soNo, setSoNo] = useState('')
     const [entities, setEntities] = useState<LegalEntityRow[]>([])
     const [legalEntityId, setLegalEntityId] = useState('')
+
+    const activeProductIds = useMemo(() => new Set(lines.map(l => l.productId)), [lines])
+    
+    const availableProductOptions = useMemo(() => {
+        return products
+            .filter(p => !activeProductIds.has(p.id))
+            .map(p => (
+                <option key={p.id} value={p.id}>
+                    {p.skuCode} — {p.productName} (tồn: {p.totalStock})
+                </option>
+            ))
+    }, [products, activeProductIds])
 
     // Load reference data
     const loadReferenceData = useCallback(async () => {
@@ -367,9 +379,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                                     <select onChange={e => { if (e.target.value) { addLine(e.target.value); e.target.value = '' } }}
                                         className="text-xs px-2 py-1" style={inputStyle}>
                                         <option value="">+ Thêm SP</option>
-                                        {products.filter(p => !lines.find(l => l.productId === p.id)).map(p => (
-                                            <option key={p.id} value={p.id}>{p.skuCode} — {p.productName} (tồn: {p.totalStock})</option>
-                                        ))}
+                                        {availableProductOptions}
                                     </select>
                                 </div>
 

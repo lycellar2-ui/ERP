@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -87,6 +87,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const [saving, setSaving] = useState(false)
     const [entities, setEntities] = useState<LegalEntityRow[]>([])
     const [legalEntityId, setLegalEntityId] = useState('')
+
+    const productOptions = useMemo(() => {
+        return products.map(p => (
+            <option key={p.id} value={p.id}>
+                [{p.skuCode}] {p.productName} — Tồn: {p.totalStock}
+            </option>
+        ))
+    }, [products])
 
     useEffect(() => {
         if (!open) return
@@ -394,11 +402,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                                             className="flex-1 px-2.5 py-2 text-xs outline-none"
                                                             style={{ ...inputStyle, minWidth: 0 }}
                                                         >
-                                                            {products.map(p => (
-                                                                <option key={p.id} value={p.id}>
-                                                                    [{p.skuCode}] {p.productName} — Tồn: {p.totalStock}
-                                                                </option>
-                                                            ))}
+                                                            {productOptions}
                                                         </select>
                                                         <button onClick={() => removeLine(i)} style={{ color: '#8B1A2E', padding: '8px' }}>
                                                             <Trash2 size={14} />

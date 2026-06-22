@@ -64,12 +64,12 @@ export async function getSalesOrders(filters: {
 } = {}): Promise<{ rows: SalesOrderRow[]; total: number }> {
     const { status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', dateFrom, dateTo } = filters
 
-    // Cache the default page-load (page 1, no filters) for instant tab switches
-    const isDefaultLoad = page === 1 && !status && !search && !dateFrom && !dateTo && sortBy === 'createdAt' && sortDir === 'desc'
+    const user = await getCurrentUser()
+    const userId = user?.id ?? 'anonymous'
+    const cacheKey = `sales:orders:list:${userId}:${status || 'all'}:${search || 'none'}:${page}:${pageSize}:${sortBy}:${sortDir}:${dateFrom || 'none'}:${dateTo || 'none'}`
 
     const fetchData = async () => {
         const skip = (page - 1) * pageSize
-        const user = await getCurrentUser()
         const where: any = {}
 
         if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
@@ -128,10 +128,7 @@ export async function getSalesOrders(filters: {
         }
     }
 
-    if (isDefaultLoad) {
-        return cached('sales:orders:default', fetchData, 30_000)
-    }
-    return fetchData()
+    return cached(cacheKey, fetchData, 30_000)
 }
 
 // ── Fetch single SO detail ───────────────────────
@@ -262,67 +259,71 @@ export async function getCustomersForSO() {
 
 // ── Products with stock for SO lines ─────────────
 export async function getProductsWithStock() {
-    const products = await prisma.product.findMany({
-        where: { status: 'ACTIVE', deletedAt: null },
-        select: {
-            id: true, skuCode: true, productName: true, wineType: true, country: true,
-            stockLots: { where: { status: 'AVAILABLE' }, select: { qtyAvailable: true } },
-            marginPrice: true,
-            media: { select: { url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
-            supplier: { select: { name: true } },
-        },
-        orderBy: { productName: 'asc' },
-    })
+    return cached('products:with-stock', async () => {
+        const products = await prisma.product.findMany({
+            where: { status: 'ACTIVE', deletedAt: null },
+            select: {
+                id: true, skuCode: true, productName: true, wineType: true, country: true,
+                stockLots: { where: { status: 'AVAILABLE' }, select: { qtyAvailable: true } },
+                marginPrice: true,
+                media: { select: { url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
+                supplier: { select: { name: true } },
+            },
+            orderBy: { productName: 'asc' },
+        })
 
-    return products.map((p) => {
-        let costPrice = 0
-        let retailPrice = 0
-        let wholesalePrice = 0
+        return products.map((p) => {
+            let costPrice = 0
+            let retailPrice = 0
+            let wholesalePrice = 0
 
-        if (p.marginPrice) {
-            costPrice = Number(p.marginPrice.costPrice)
-            retailPrice = Number(p.marginPrice.retailPrice)
-            wholesalePrice = Number(p.marginPrice.wholesalePrice)
-        } else {
-            // Robust hash-based fallback data to avoid empty prices
-            const hash = p.productName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-            const generatedCost = 250000 + (hash % 15) * 50000
-            costPrice = Math.round(generatedCost)
-            retailPrice = Math.round(generatedCost * 1.6)
-            wholesalePrice = Math.round(retailPrice * 0.8)
-        }
+            if (p.marginPrice) {
+                costPrice = Number(p.marginPrice.costPrice)
+                retailPrice = Number(p.marginPrice.retailPrice)
+                wholesalePrice = Number(p.marginPrice.wholesalePrice)
+            } else {
+                // Robust hash-based fallback data to avoid empty prices
+                const hash = p.productName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+                const generatedCost = 250000 + (hash % 15) * 50000
+                costPrice = Math.round(generatedCost)
+                retailPrice = Math.round(generatedCost * 1.6)
+                wholesalePrice = Math.round(retailPrice * 0.8)
+            }
 
-        return {
-            id: p.id,
-            skuCode: p.skuCode,
-            productName: p.productName,
-            wineType: p.wineType,
-            country: p.country,
-            listPrice: wholesalePrice,
-            totalStock: p.stockLots.reduce((sum: number, l: any) => sum + Number(l.qtyAvailable), 0),
-            costPrice,
-            retailPrice,
-            wholesalePrice,
-            primaryImageUrl: p.media.find(m => m.isPrimary)?.url ?? p.media[0]?.url ?? null,
-            supplierName: p.supplier?.name || "Ly's Cellars",
-        }
-    })
+            return {
+                id: p.id,
+                skuCode: p.skuCode,
+                productName: p.productName,
+                wineType: p.wineType,
+                country: p.country,
+                listPrice: wholesalePrice,
+                totalStock: p.stockLots.reduce((sum: number, l: any) => sum + Number(l.qtyAvailable), 0),
+                costPrice,
+                retailPrice,
+                wholesalePrice,
+                primaryImageUrl: p.media.find(m => m.isPrimary)?.url ?? p.media[0]?.url ?? null,
+                supplierName: p.supplier?.name || "Ly's Cellars",
+            }
+        })
+    }, 60_000)
 }
 
 // ── Batch load prices by channel for SO creation ─
 export async function getProductPricesForChannel(channel: string): Promise<Record<string, number>> {
-    const now = new Date()
-    const priceList = await prisma.priceList.findFirst({
-        where: {
-            channel: channel as any,
-            effectiveDate: { lte: now },
-            OR: [{ expiryDate: null }, { expiryDate: { gte: now } }],
-        },
-        include: { lines: { select: { productId: true, unitPrice: true } } },
-        orderBy: { effectiveDate: 'desc' },
-    })
-    if (!priceList) return {}
-    return Object.fromEntries(priceList.lines.map(l => [l.productId, Number(l.unitPrice)]))
+    return cached(`pricing:channel:${channel}`, async () => {
+        const now = new Date()
+        const priceList = await prisma.priceList.findFirst({
+            where: {
+                channel: channel as any,
+                effectiveDate: { lte: now },
+                OR: [{ expiryDate: null }, { expiryDate: { gte: now } }],
+            },
+            include: { lines: { select: { productId: true, unitPrice: true } } },
+            orderBy: { effectiveDate: 'desc' },
+        })
+        if (!priceList) return {}
+        return Object.fromEntries(priceList.lines.map(l => [l.productId, Number(l.unitPrice)]))
+    }, 60_000)
 }
 
 // ── Get active allocation campaigns for products ─

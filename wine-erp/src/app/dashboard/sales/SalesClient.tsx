@@ -1,12 +1,20 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
-import { CreateSODrawer } from './CreateSODrawer'
-import { EditSODrawer } from './EditSODrawer'
+import dynamic from 'next/dynamic'
+
+const CreateSODrawer = dynamic(() => import('./CreateSODrawer').then(m => m.CreateSODrawer), {
+    loading: () => null,
+    ssr: false
+})
+const EditSODrawer = dynamic(() => import('./EditSODrawer').then(m => m.EditSODrawer), {
+    loading: () => null,
+    ssr: false
+})
 
 const STATUS_CFG: Record<SOStatus, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: FileText },
@@ -487,8 +495,17 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
+    const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<SOStatus | ''>('')
+    
+    const debounceRef = useRef<NodeJS.Timeout | null>(null)
+
+    useEffect(() => {
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current)
+        }
+    }, [])
     const [page, setPage] = useState(1)
     const [sortBy, setSortBy] = useState<'createdAt' | 'totalAmount' | 'soNo'>('createdAt')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -638,8 +655,17 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                 <div className="relative flex-1 min-w-[200px]">
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input type="text" placeholder="Tìm số SO, khách hàng..."
-                        value={search}
-                        onChange={e => { setSearch(e.target.value); setPage(1); reload({ search: e.target.value, page: 1 }) }}
+                        value={searchInput}
+                        onChange={e => {
+                            const val = e.target.value
+                            setSearchInput(val)
+                            if (debounceRef.current) clearTimeout(debounceRef.current)
+                            debounceRef.current = setTimeout(() => {
+                                setSearch(val)
+                                setPage(1)
+                                reload({ search: val, page: 1 })
+                            }, 300)
+                        }}
                         className="w-full pl-9 pr-4 py-2.5 text-sm outline-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
