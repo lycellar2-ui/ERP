@@ -8,7 +8,7 @@ export default async function PipelinePage() {
     const [rows, stats] = await Promise.all([getOpportunities(), getPipelineStats()])
     return (
         <div className="space-y-4">
-            <AIPipelineAnalysis />
+            {/* <AIPipelineAnalysis /> */}
             <PipelineClient initialRows={rows} stats={stats} />
         </div>
     )

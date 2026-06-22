@@ -12,7 +12,7 @@ export default async function ProcurementPage() {
 
     return (
         <div className="space-y-4">
-            <AIPurchaseSuggestion />
+            {/* <AIPurchaseSuggestion /> */}
             <ProcurementClient initialRows={rows} initialTotal={total} stats={stats} />
         </div>
     )

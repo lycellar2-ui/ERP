@@ -15,7 +15,7 @@ export default async function SuppliersPage() {
     ])
     return (
         <>
-            <AICatalogAnalysis />
+            {/* <AICatalogAnalysis /> */}
             <SuppliersClient initialRows={data.rows} initialTotal={data.total} stats={stats} />
         </>
     )

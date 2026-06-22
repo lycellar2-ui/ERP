@@ -26,7 +26,7 @@ export default async function ProductsPage() {
 
     return (
         <div>
-            <AICatalogAnalysis />
+            {/* <AICatalogAnalysis /> */}
             <Suspense fallback={<ProductsPageSkeleton />}>
                 <ProductsClient
                     initialRows={rows}

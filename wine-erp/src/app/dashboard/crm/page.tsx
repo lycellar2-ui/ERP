@@ -14,7 +14,7 @@ export default async function CRMPage() {
 
     return (
         <>
-            <AICRMAnalysis />
+            {/* <AICRMAnalysis /> */}
             <CRMClient initialRows={rows} initialTotal={total} stats={stats} />
         </>
     )
