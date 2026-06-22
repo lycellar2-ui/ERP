@@ -387,6 +387,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
             <ProductDetailDrawer
                 open={viewOpen}
                 productId={viewId}
+                initialData={rows.find(r => r.id === viewId) || null}
                 onClose={() => setViewOpen(false)}
                 canEdit={canEdit}
                 onEditTrigger={id => { setEditingId(id); setDrawerOpen(true) }}
