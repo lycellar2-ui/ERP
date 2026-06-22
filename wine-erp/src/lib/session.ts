@@ -37,7 +37,11 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
         if (!user || user.status !== 'ACTIVE') return null
 
-        const roles = user.roles.map(r => r.role.name)
+        const roles = user.roles.flatMap(r => {
+            const name = r.role.name
+            const norm = ROLE_NAME_MAP[name] || name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '')
+            return name === norm ? [name] : [name, norm]
+        })
         const permissions = Array.from(
             new Set(
                 user.roles.flatMap(r =>
@@ -59,6 +63,15 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     }
 }
 
+export const ROLE_NAME_MAP: Record<string, string> = {
+    'Kế Toán': 'KE_TOAN',
+    'Sales Manager': 'SALES_MGR',
+    'Sales Rep': 'SALES_REP',
+    'Thủ Kho': 'THU_KHO',
+    'Thu Mua': 'THU_MUA',
+    'Sales Admin': 'SALES_ADMIN',
+}
+
 // Check if user has specific permission
 export function hasPermission(user: SessionUser, module: string, action: string): boolean {
     return user.permissions.includes(`${module}:${action}`)
@@ -72,15 +85,15 @@ export function hasRole(user: SessionUser, ...roleNames: string[]): boolean {
 // ── Report Permission Mapping ─────────────────────
 const REPORT_ROLE_MAP: Record<string, string[]> = {
     'R01_STOCK_DETAIL': ['CEO', 'THU_KHO', 'KE_TOAN'],
-    'R02_REVENUE': ['CEO', 'SALES_MGR', 'KE_TOAN'],
+    'R02_REVENUE': ['CEO', 'SALES_MGR', 'KE_TOAN', 'SALES_ADMIN'],
     'R03_AR_AGING': ['CEO', 'KE_TOAN'],
-    'R04_COST_MARGIN': ['CEO', 'KE_TOAN'],
+    'R04_COST_MARGIN': ['CEO', 'KE_TOAN', 'SALES_ADMIN'],
     'R05_AP_OUTSTANDING': ['CEO', 'KE_TOAN', 'THU_MUA'],
     'R06_PO_STATUS': ['CEO', 'THU_MUA', 'KE_TOAN'],
     'R07_MONTHLY_PL': ['CEO', 'KE_TOAN'],
-    'R08_SKU_MARGIN': ['CEO', 'KE_TOAN', 'SALES_MGR'],
-    'R09_CHANNEL_PERF': ['CEO', 'SALES_MGR', 'SALES_REP'],
-    'R10_CUSTOMER_RANK': ['CEO', 'SALES_MGR', 'KE_TOAN'],
+    'R08_SKU_MARGIN': ['CEO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN'],
+    'R09_CHANNEL_PERF': ['CEO', 'SALES_MGR', 'SALES_REP', 'SALES_ADMIN'],
+    'R10_CUSTOMER_RANK': ['CEO', 'SALES_MGR', 'KE_TOAN', 'SALES_ADMIN'],
     'R11_SLOW_STOCK': ['CEO', 'THU_KHO'],
     'R12_STAMP_USAGE': ['CEO', 'KE_TOAN', 'THU_KHO'],
     'R13_TAX_SUMMARY': ['CEO', 'KE_TOAN'],

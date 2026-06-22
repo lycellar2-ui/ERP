@@ -22,6 +22,7 @@ export const SOLineCreateSchema = z.object({
     qtyOrdered: z.number().int().positive('Số lượng phải > 0'),
     unitPrice: positiveNumber,
     lineDiscountPct: percentSchema.optional(),
+    priceSource: z.string().optional(),
 })
 
 export const SOCreateSchema = z.object({

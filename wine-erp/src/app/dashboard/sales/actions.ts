@@ -8,7 +8,7 @@ import { logAudit } from '@/lib/audit'
 import { submitForApproval } from '@/lib/approval'
 import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
 import { serialize } from '@/lib/serialize'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL'
@@ -36,6 +36,7 @@ export interface SOLineCreate {
     qtyOrdered: number
     unitPrice: number
     lineDiscountPct?: number
+    priceSource?: string
 }
 
 export interface SOCreateInput {
@@ -64,7 +65,13 @@ export async function getSalesOrders(filters: {
     const { status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', dateFrom, dateTo } = filters
     const skip = (page - 1) * pageSize
 
+    const user = await getCurrentUser()
     const where: any = {}
+
+    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        where.salesRepId = user.id
+    }
+
     if (status) where.status = status
     if (search) {
         where.OR = [
@@ -119,11 +126,12 @@ export async function getSalesOrders(filters: {
 
 // ── Fetch single SO detail ───────────────────────
 export async function getSalesOrderDetail(id: string) {
+    const user = await requireAuth()
     const raw = await prisma.salesOrder.findUnique({
         where: { id },
         include: {
             customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
-            salesRep: { select: { name: true } },
+            salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {
                 include: {
@@ -134,6 +142,14 @@ export async function getSalesOrderDetail(id: string) {
             arInvoices: { select: { id: true, invoiceNo: true, status: true, amount: true, dueDate: true } },
         },
     })
+    if (!raw) return null
+
+    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        if (raw.salesRepId !== user.id) {
+            throw new Error('Bạn không có quyền xem đơn hàng của Sales khác.')
+        }
+    }
+
     return serialize(raw)
 }
 
@@ -142,11 +158,12 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     detail: Awaited<ReturnType<typeof getSalesOrderDetail>>
     margin: SOMarginData | null
 }> {
+    const user = await requireAuth()
     const detail = await prisma.salesOrder.findUnique({
         where: { id },
         include: {
             customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
-            salesRep: { select: { name: true } },
+            salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {
                 include: {
@@ -158,6 +175,14 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
         },
     })
     if (!detail) return { detail: null, margin: null }
+
+    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        if (detail.salesRepId !== user.id) {
+            throw new Error('Bạn không có quyền xem đơn hàng của Sales khác.')
+        }
+    }
+
+    const canSeeMargin = hasRole(user, 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN')
 
     // Single batch query for ALL product costs (eliminates N+1)
     const productIds = [...new Set(detail.lines.map(l => l.productId))]
@@ -201,6 +226,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
             productName: l.product.productName,
             qty, unitPrice, lineDiscountPct: discPct,
             revenue, avgCost, cogs, margin, marginPct, isNegative,
+            priceSource: l.priceSource ?? null,
         }
     })
 
@@ -209,7 +235,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
 
     return serialize({
         detail,
-        margin: { lines: marginLines, totalRevenue, totalCOGS, totalMargin, totalMarginPct, hasNegativeMargin },
+        margin: canSeeMargin ? { lines: marginLines, totalRevenue, totalCOGS, totalMargin, totalMarginPct, hasNegativeMargin } : null,
     })
 }
 
@@ -341,9 +367,14 @@ export async function getSalesReps() {
 // ── Create Sales Order ───────────────────────────
 export async function createSalesOrder(input: SOCreateInput): Promise<{ success: boolean; soId?: string; soNo?: string; error?: string; quotaWarnings?: string[] }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
         // --- 0. Validate input ---
         parseOrThrow(SOCreateSchema, input)
+
+        let salesRepId = input.salesRepId
+        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            salesRepId = user.id
+        }
 
         // --- 1. Check allocation quotas BEFORE creating ---
         const quotaWarnings: string[] = []
@@ -353,7 +384,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             const line = input.lines[i]
             const check = await checkAllocationQuota({
                 productId: line.productId,
-                salesRepId: input.salesRepId,
+                salesRepId: salesRepId,
                 customerId: input.customerId,
                 channel: input.channel,
                 qtyRequested: line.qtyOrdered,
@@ -421,7 +452,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             data: {
                 soNo,
                 customerId: input.customerId,
-                salesRepId: input.salesRepId,
+                salesRepId: salesRepId,
                 channel: input.channel,
                 paymentTerm: input.paymentTerm,
                 shippingAddressId: input.shippingAddressId ?? null,
@@ -437,6 +468,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                             qtyOrdered: l.qtyOrdered,
                             unitPrice: l.unitPrice,
                             lineDiscountPct: l.lineDiscountPct ?? 0,
+                            priceSource: l.priceSource ?? null,
                             ...(qc ? { allocationCampaignId: qc.campaignId } : {}),
                         }
                     }),
@@ -455,7 +487,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
 
         // --- 5. Audit log ---
         try {
-            await logAudit({ userId: input.salesRepId, action: 'CREATE', entityType: 'SalesOrder', entityId: so.id, newValue: { soNo, channel: input.channel, totalAmount: finalAmount } })
+            await logAudit({ userId: salesRepId, action: 'CREATE', entityType: 'SalesOrder', entityId: so.id, newValue: { soNo, channel: input.channel, totalAmount: finalAmount } })
         } catch { /* silent */ }
 
         revalidatePath('/dashboard/sales')
@@ -481,13 +513,19 @@ export interface SOUpdateInput {
 
 export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success: boolean; error?: string }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id: input.soId },
             select: { status: true, salesRepId: true, soNo: true },
         })
         if (!so) return { success: false, error: 'SO không tồn tại' }
         if (so.status !== 'DRAFT') return { success: false, error: `Chỉ có thể sửa SO ở trạng thái DRAFT (hiện tại: ${so.status})` }
+
+        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            if (so.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không có quyền sửa đơn hàng của Sales khác.' }
+            }
+        }
 
         if (!input.lines || input.lines.length === 0) return { success: false, error: 'Cần ít nhất 1 dòng sản phẩm' }
 
@@ -533,6 +571,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     qtyOrdered: l.qtyOrdered,
                     unitPrice: l.unitPrice,
                     lineDiscountPct: l.lineDiscountPct ?? 0,
+                    priceSource: l.priceSource ?? null,
                 },
             })),
         ])
@@ -552,13 +591,19 @@ const DISCOUNT_APPROVAL_THRESHOLD = 15 // > 15% discount → cần CEO duyệt
 
 export async function confirmSalesOrder(id: string): Promise<{ success: boolean; error?: string; needsApproval?: boolean }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
             select: { totalAmount: true, salesRepId: true, soNo: true, status: true, orderDiscount: true, lines: { select: { qtyOrdered: true, unitPrice: true, lineDiscountPct: true } } },
         })
         if (!so) return { success: false, error: 'SO not found' }
         if (so.status !== 'DRAFT') return { success: false, error: `Không thể xác nhận SO ở trạng thái ${so.status}` }
+
+        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            if (so.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không có quyền xác nhận đơn hàng của Sales khác.' }
+            }
+        }
 
         const amount = Number(so.totalAmount)
 
@@ -795,7 +840,19 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
 // ── Cancel SO — also releases allocation quotas ─
 export async function cancelSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
+        const so = await prisma.salesOrder.findUnique({
+            where: { id },
+            select: { salesRepId: true },
+        })
+        if (!so) return { success: false, error: 'SO không tồn tại' }
+
+        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            if (so.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không có quyền huỷ đơn hàng của Sales khác.' }
+            }
+        }
+
         // Release allocation quotas linked to this SO
         const soLines = await prisma.salesOrderLine.findMany({
             where: { soId: id },
@@ -840,17 +897,33 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
 
 // ── Sales stats ─────────────────────────────────
 export async function getSalesStats() {
-    return cached('sales:stats', async () => {
+    const user = await getCurrentUser()
+    const isSalesRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
+    const cacheKey = isSalesRep ? `sales:stats:${user.id}` : 'sales:stats:all'
+
+    return cached(cacheKey, async () => {
+        const where: any = {
+            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+            createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+        }
+        const groupWhere: any = {}
+
+        if (isSalesRep) {
+            where.salesRepId = user.id
+            groupWhere.salesRepId = user.id
+        }
+
         const [totals, byStatus] = await Promise.all([
             prisma.salesOrder.aggregate({
-                where: {
-                    status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-                    createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
-                },
+                where,
                 _sum: { totalAmount: true },
                 _count: true,
             }),
-            prisma.salesOrder.groupBy({ by: ['status'], _count: true }),
+            prisma.salesOrder.groupBy({
+                by: ['status'],
+                where: groupWhere,
+                _count: true
+            }),
         ])
 
         const statusMap = Object.fromEntries(byStatus.map((s) => [s.status, s._count]))
@@ -879,6 +952,7 @@ export type SOMarginLine = {
     margin: number
     marginPct: number
     isNegative: boolean
+    priceSource?: string | null
 }
 
 export type SOMarginData = {
@@ -891,6 +965,11 @@ export type SOMarginData = {
 }
 
 export async function getSOMarginData(soId: string): Promise<SOMarginData | null> {
+    const user = await requireAuth()
+    if (!hasRole(user, 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN')) {
+        return null
+    }
+
     const so = await prisma.salesOrder.findUnique({
         where: { id: soId },
         include: {
@@ -954,6 +1033,7 @@ export async function getSOMarginData(soId: string): Promise<SOMarginData | null
             margin,
             marginPct,
             isNegative,
+            priceSource: l.priceSource ?? null,
         }
     })
 
@@ -1386,11 +1466,18 @@ export async function getSOTimeline(soId: string): Promise<SOTimelineEvent[]> {
 // ── Clone SO (create DRAFT copy) ──────────────────
 export async function cloneSalesOrder(sourceId: string): Promise<{ success: boolean; soId?: string; soNo?: string; error?: string }> {
     try {
+        const user = await requireAuth()
         const source = await prisma.salesOrder.findUnique({
             where: { id: sourceId },
             include: { lines: true },
         })
         if (!source) return { success: false, error: 'SO không tồn tại' }
+
+        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            if (source.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không có quyền sao chép đơn hàng của Sales khác.' }
+            }
+        }
 
         // Generate unique SO number
         const now = new Date()
@@ -1449,8 +1536,13 @@ export async function exportSalesOrdersCSV(filters: {
     dateFrom?: string
     dateTo?: string
 } = {}): Promise<{ csv: string }> {
+    const user = await requireAuth()
     const { status, dateFrom, dateTo } = filters
     const where: any = {}
+
+    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        where.salesRepId = user.id
+    }
     if (status) where.status = status
     if (dateFrom || dateTo) {
         where.createdAt = {}
@@ -1492,8 +1584,15 @@ export async function exportSalesOrdersCSV(filters: {
 
 // ── Status counts for quick filter tabs ───────────
 export async function getSOStatusCounts(): Promise<Record<string, number>> {
+    const user = await getCurrentUser()
+    const where: any = {}
+    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        where.salesRepId = user.id
+    }
+
     const counts = await prisma.salesOrder.groupBy({
         by: ['status'],
+        where,
         _count: { _all: true },
     })
     const result: Record<string, number> = { ALL: 0 }

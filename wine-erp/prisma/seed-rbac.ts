@@ -72,6 +72,14 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
         'MDM:READ', 'MDM:WRITE',
         'KPI:READ',
     ],
+    'Sales Admin': [
+        'DSH:READ',
+        'SLS:READ', 'SLS:CREATE', 'SLS:UPDATE', 'SLS:WRITE',
+        'CRM:READ', 'CRM:CREATE', 'CRM:UPDATE',
+        'RPT:READ',
+        'MDM:READ', 'MDM:WRITE',
+        'KPI:READ',
+    ],
 
     'Thủ Kho': [
         'DSH:READ',

@@ -69,3 +69,28 @@ export function maskApiKey(key: string): string {
 export function generateLocationCode(zone: string, rack: string, bin: string): string {
     return `${zone}-${rack}-${bin}`.toUpperCase()
 }
+
+// ─── Due date calculator ───────────────────────────
+export function calculateDueDate(invoiceDate: Date | string, paymentTerm: string): Date {
+    const baseDate = new Date(invoiceDate)
+    const term = (paymentTerm || '').toUpperCase()
+
+    if (term === 'EOM_10' || term === 'EOM_15') {
+        const dueDay = term === 'EOM_10' ? 10 : 15
+        const year = baseDate.getFullYear()
+        const month = baseDate.getMonth() + 1
+        return new Date(year, month, dueDay, 12, 0, 0, 0)
+    }
+
+    if (term.startsWith('NET')) {
+        const days = parseInt(term.replace('NET', ''), 10)
+        if (!isNaN(days)) {
+            const result = new Date(baseDate)
+            result.setDate(result.getDate() + days)
+            return result
+        }
+    }
+
+    return baseDate
+}
+

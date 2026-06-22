@@ -334,6 +334,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         <option value="NET30">NET 30</option>
                                         <option value="NET45">NET 45</option>
                                         <option value="NET60">NET 60</option>
+                                        <option value="EOM_10">EOM 10 (Chốt 30, trả 10 sau)</option>
+                                        <option value="EOM_15">EOM 15 (Chốt 30, trả 15 sau)</option>
                                     </select>
                                 </div>
                                 <div>

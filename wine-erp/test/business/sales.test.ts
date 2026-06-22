@@ -11,6 +11,7 @@ vi.mock('@/lib/session', () => ({
     requirePermission: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
     getCurrentUser: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
     requireAuth: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
+    hasRole: vi.fn((user: any, ...roles: string[]) => roles.some(r => ['CEO', 'Kế Toán', 'Sales Manager'].includes(r))),
 }))
 
 const mockPrisma = {

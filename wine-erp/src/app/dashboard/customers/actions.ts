@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth, getCurrentUser, requirePermission } from '@/lib/session'
+import { requireAuth, getCurrentUser, requirePermission, hasRole } from '@/lib/session'
 import { logAudit, logAuditWithDiff } from '@/lib/audit'
 
 // ═══════════════════════════════════════════════════
@@ -46,6 +46,11 @@ export type CustomerFilters = {
 export async function getCustomers(params?: CustomerFilters): Promise<{ rows: CustomerRow[]; total: number }> {
     const { search, type, status, channel, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
     const where: any = { deletedAt: null }
+
+    const user = await getCurrentUser()
+    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        where.salesRepId = user.id
+    }
 
     if (search) {
         where.OR = [
@@ -220,7 +225,7 @@ export async function getSalesRepList(): Promise<{ id: string; name: string }[]>
     const users = await prisma.user.findMany({
         where: {
             status: 'ACTIVE',
-            roles: { some: { role: { name: { in: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'] } } } },
+            roles: { some: { role: { name: { in: ['ADMIN', 'SALES_REP', 'SALES_MANAGER', 'SALES_MGR', 'Sales Rep', 'Sales Manager', 'Sales Admin', 'SALES_ADMIN'] } } } },
         },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
@@ -292,8 +297,13 @@ export type CustomerInput = z.infer<typeof customerSchema>
 
 export async function createCustomer(input: CustomerInput) {
     try {
-        await requirePermission('MDM', 'WRITE')
+        const user = await requirePermission('MDM', 'WRITE')
         const data = customerSchema.parse(input)
+
+        let salesRepId = data.salesRepId
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            salesRepId = user.id
+        }
 
         const customer = await prisma.$transaction(async (tx) => {
             const cust = await tx.customer.create({
@@ -306,7 +316,7 @@ export async function createCustomer(input: CustomerInput) {
                     channel: data.channel !== undefined ? data.channel : null,
                     paymentTerm: data.paymentTerm,
                     creditLimit: data.creditLimit,
-                    salesRepId: data.salesRepId !== undefined ? data.salesRepId : null,
+                    salesRepId: salesRepId !== undefined ? salesRepId : null,
                     status: data.status,
                 },
             })
@@ -342,7 +352,6 @@ export async function createCustomer(input: CustomerInput) {
 
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
-        const user = await getCurrentUser().catch(() => null)
         logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Customer', entityId: customer.id, newValue: { code: data.code, name: data.name, customerType: data.customerType, creditLimit: Number(data.creditLimit), paymentTerm: data.paymentTerm } })
         return { success: true }
     } catch (err: any) {
@@ -357,10 +366,20 @@ export async function createCustomer(input: CustomerInput) {
 
 export async function updateCustomer(id: string, input: Partial<CustomerInput>) {
     try {
-        await requirePermission('MDM', 'WRITE')
+        const user = await requirePermission('MDM', 'WRITE')
         const data = customerSchema.partial().parse(input)
         const { contactName, email, phone, address, ward, district, city, ...customerData } = data
         const oldCustomer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true, paymentTerm: true, channel: true, salesRepId: true, status: true, shortName: true } })
+        if (!oldCustomer) return { success: false, error: 'Khách hàng không tồn tại' }
+
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            if (oldCustomer.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không có quyền chỉnh sửa khách hàng của Sales khác.' }
+            }
+            if (customerData.salesRepId && customerData.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không thể đổi Sales phụ trách của khách hàng này.' }
+            }
+        }
 
         const updateData: any = {}
         if (customerData.code !== undefined) updateData.code = customerData.code
@@ -456,7 +475,6 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
 
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
-        const user = await getCurrentUser().catch(() => null)
         const oldPlain = oldCustomer ? JSON.parse(JSON.stringify(oldCustomer)) : null
         logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Customer', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...customerData } })
         return { success: true }
@@ -475,7 +493,16 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
 
 export async function deleteCustomer(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-        const customer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true } })
+        const user = await requirePermission('MDM', 'WRITE')
+        const customer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true, salesRepId: true } })
+        if (!customer) return { success: false, error: 'Khách hàng không tồn tại' }
+
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            if (customer.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không có quyền xoá khách hàng của Sales khác.' }
+            }
+        }
+
         const activeSOs = await prisma.salesOrder.count({
             where: { customerId: id, status: { notIn: ['PAID', 'CANCELLED'] } },
         })
@@ -487,7 +514,6 @@ export async function deleteCustomer(id: string): Promise<{ success: boolean; er
             where: { id },
             data: { deletedAt: new Date(), status: 'INACTIVE' },
         })
-        const user = await getCurrentUser().catch(() => null)
         logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'Customer', entityId: id, oldValue: { code: customer?.code, name: customer?.name, customerType: customer?.customerType, creditLimit: customer ? Number(customer.creditLimit) : null } })
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')

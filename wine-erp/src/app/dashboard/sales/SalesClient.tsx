@@ -24,6 +24,40 @@ const CHANNEL_LABEL: Record<string, string> = {
     HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Đại Lý', VIP_RETAIL: 'VIP', DIRECT_INDIVIDUAL: 'Trực Tiếp',
 }
 
+const getPriceBadgeStyle = (source: string | null) => {
+    switch (source) {
+        case 'SPECIAL_PRICE':
+            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
+        case 'FIXED_PRICE':
+            return { background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }
+        case 'FIXED_DISCOUNT':
+            return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
+        case 'CHANNEL_BASE':
+            return { background: 'rgba(91,168,138,0.1)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.2)' }
+        case 'RETAIL_FALLBACK':
+            return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
+        default:
+            return { background: 'rgba(74,106,122,0.1)', color: '#4A6A7A', border: '1px solid rgba(74,106,122,0.2)' }
+    }
+}
+
+const getPriceBadgeLabel = (source: string | null) => {
+    switch (source) {
+        case 'SPECIAL_PRICE':
+            return 'Giá Đặc Biệt'
+        case 'FIXED_PRICE':
+            return 'Giá Riêng'
+        case 'FIXED_DISCOUNT':
+            return 'CK Cố Định'
+        case 'CHANNEL_BASE':
+            return 'Giá Kênh'
+        case 'RETAIL_FALLBACK':
+            return 'Bán Lẻ Mặc Định'
+        default:
+            return 'Mặc Định'
+    }
+}
+
 function StatusBadge({ status }: { status: SOStatus }) {
     const cfg = STATUS_CFG[status]
     const Icon = cfg.icon
@@ -300,7 +334,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                     <div style={{ overflowX: 'auto' }}>
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
                                             <thead><tr style={{ background: '#142433' }}>
-                                                {(canSeeMargin ? ['SKU', 'SL', 'Giá Bán', 'Thành Tiền', 'Giá Vốn TB', 'Margin', 'Biên %'] : ['SKU', 'SL', 'Giá Bán', 'Thành Tiền']).map(h => (
+                                                {(canSeeMargin ? ['SKU', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền', 'Giá Vốn TB', 'Margin', 'Biên %'] : ['SKU', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền']).map(h => (
                                                     <th key={h} className="px-2.5 py-2 text-left font-semibold whitespace-nowrap" style={{ color: '#4A6A7A' }}>{h}</th>
                                                 ))}
                                             </tr></thead>
@@ -310,6 +344,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                     qty: Number(l.qtyOrdered), unitPrice: Number(l.unitPrice), lineDiscountPct: Number(l.lineDiscountPct),
                                                     revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
                                                     avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
+                                                    priceSource: (l as any).priceSource ?? null,
                                                 }))).map(ml => (
                                                     <tr key={ml.lineId} style={{ borderTop: '1px solid #2A4355', background: ml.isNegative ? 'rgba(220,38,38,0.06)' : 'transparent' }}>
                                                         <td className="px-2.5 py-2" title={ml.productName}>
@@ -318,6 +353,16 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                         </td>
                                                         <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{ml.qty}</td>
                                                         <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(ml.unitPrice)}</td>
+                                                        <td className="px-2.5 py-2">
+                                                            {ml.priceSource ? (
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                                    style={getPriceBadgeStyle(ml.priceSource)}>
+                                                                    {getPriceBadgeLabel(ml.priceSource)}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>Mặc định</span>
+                                                            )}
+                                                        </td>
                                                         <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(ml.revenue)}</td>
                                                         {canSeeMargin && (
                                                             <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
@@ -426,7 +471,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
 
 // ── Main Component ───────────────────────────────
 // Roles allowed to see cost/margin data
-const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'SALES_MGR']
+const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN', 'Sales Admin']
 
 interface Props {
     initialRows: SalesOrderRow[]

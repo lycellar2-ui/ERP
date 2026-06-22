@@ -8,6 +8,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 import * as dotenv from 'dotenv'
+import { calculateDueDate } from '../src/lib/utils'
 
 dotenv.config({ path: '.env.local' })
 
@@ -163,8 +164,7 @@ async function main() {
         })
 
         if (status === 'DELIVERED') {
-            const dueDate = new Date(date)
-            dueDate.setDate(dueDate.getDate() + 30)
+            const dueDate = calculateDueDate(date, customer.paymentTerm)
             const isPaid = date.getTime() < endOfToday.getTime() - 20 * 86400000
 
             const arInvoice = await prisma.aRInvoice.create({

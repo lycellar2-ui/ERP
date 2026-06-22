@@ -20,6 +20,7 @@ const mockPrisma = {
     user: { findFirst: vi.fn(), create: vi.fn() },
     department: { findFirst: vi.fn(), create: vi.fn() },
     legalEntity: { findFirst: vi.fn() },
+    supplier: { findUnique: vi.fn() },
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
@@ -29,6 +30,9 @@ const { createPurchaseOrder, updatePOStatus, getPOStats } = await import('@/app/
 beforeEach(() => {
     vi.clearAllMocks()
     mockPrisma.legalEntity.findFirst.mockResolvedValue({ id: 'le-ta' })
+    mockPrisma.supplier.findUnique.mockImplementation(async ({ where }) => ({
+        defaultCurrency: where.id === 'sup-1' ? 'EUR' : 'USD'
+    }))
 })
 
 // ═══════════════════════════════════════════════════

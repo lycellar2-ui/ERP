@@ -272,3 +272,69 @@ describe('FIN-06: closeAccountingPeriod', () => {
         })
     })
 })
+
+// ═══════════════════════════════════════════════════
+// FIN-07: Due Date Calculation (EOM_10, EOM_15, NET_X, COD)
+// ═══════════════════════════════════════════════════
+describe('FIN-07: calculateDueDate', () => {
+    it('should calculate correct due dates for EOM_10', async () => {
+        const { calculateDueDate } = await import('@/lib/utils')
+        
+        // Mid-month
+        const d1 = calculateDueDate('2026-06-15', 'EOM_10')
+        expect(d1.getFullYear()).toBe(2026)
+        expect(d1.getMonth()).toBe(6) // July is 6 (0-indexed)
+        expect(d1.getDate()).toBe(10)
+
+        // End of month
+        const d2 = calculateDueDate('2026-06-30', 'EOM_10')
+        expect(d2.getFullYear()).toBe(2026)
+        expect(d2.getMonth()).toBe(6)
+        expect(d2.getDate()).toBe(10)
+
+        // December rollover
+        const d3 = calculateDueDate('2026-12-15', 'EOM_10')
+        expect(d3.getFullYear()).toBe(2027)
+        expect(d3.getMonth()).toBe(0) // January is 0 (0-indexed)
+        expect(d3.getDate()).toBe(10)
+    })
+
+    it('should calculate correct due dates for EOM_15', async () => {
+        const { calculateDueDate } = await import('@/lib/utils')
+        
+        // Leap year rollover (Feb 2028 is leap year)
+        const d1 = calculateDueDate('2028-02-15', 'EOM_15')
+        expect(d1.getFullYear()).toBe(2028)
+        expect(d1.getMonth()).toBe(2) // March is 2
+        expect(d1.getDate()).toBe(15)
+    })
+
+    it('should calculate correct due dates for NET_X', async () => {
+        const { calculateDueDate } = await import('@/lib/utils')
+        
+        const d1 = calculateDueDate('2026-06-15', 'NET30')
+        expect(d1.getFullYear()).toBe(2026)
+        expect(d1.getMonth()).toBe(6) // July is 6
+        expect(d1.getDate()).toBe(15) // June 15 + 30 days = July 15
+
+        const d2 = calculateDueDate('2026-06-15', 'NET15')
+        expect(d2.getFullYear()).toBe(2026)
+        expect(d2.getMonth()).toBe(5) // June is 5
+        expect(d2.getDate()).toBe(30) // June 15 + 15 days = June 30
+    })
+
+    it('should fallback to base date for COD / PREPAID / unknown terms', async () => {
+        const { calculateDueDate } = await import('@/lib/utils')
+        
+        const base = '2026-06-15'
+        const d1 = calculateDueDate(base, 'COD')
+        expect(d1.getTime()).toBe(new Date(base).getTime())
+
+        const d2 = calculateDueDate(base, 'PREPAID')
+        expect(d2.getTime()).toBe(new Date(base).getTime())
+
+        const d3 = calculateDueDate(base, 'INVALID_TERM')
+        expect(d3.getTime()).toBe(new Date(base).getTime())
+    })
+})
+

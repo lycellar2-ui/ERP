@@ -2,43 +2,43 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── LY's Cellars — Oceanic Cellar Design Tokens ── */
+  /* ── LY's Cellars — Oceanic Cellar Design Tokens (Premium Light Mode) ── */
 
   /* Core Backgrounds */
-  --color-lys-bg: #0A1926;
-  /* Deep Sea Navy */
-  --color-lys-surface: #142433;
-  /* Midnight Teal */
-  --color-lys-card: #1B2E3D;
-  /* Steel Blue */
-  --color-lys-border: #2A4355;
-  /* Deep Ocean */
+  --color-lys-bg: #F8FAFC;
+  /* Light Slate Background */
+  --color-lys-surface: #FFFFFF;
+  /* Pure White Surface */
+  --color-lys-card: #FFFFFF;
+  /* Pure White Card */
+  --color-lys-border: #E2E8F0;
+  /* Light Gray Border */
 
   /* Brand Accents */
-  --color-lys-teal: #87CBB9;
-  /* Logo Teal — Linh hồn */
-  --color-lys-teal-light: #A5DED0;
-  /* Mint Light — Hover */
-  --color-lys-navy: #1A4363;
-  /* Showroom Door Navy */
-  --color-lys-wine: #8B1A2E;
-  /* Burgundy Red — Error/Alert */
-  --color-lys-amber: #D4A853;
-  /* Amber Warm — Warning */
+  --color-lys-teal: #0891B2;
+  /* Ocean Teal (Light Mode variant) */
+  --color-lys-teal-light: #06B6D4;
+  /* Bright Cyan/Teal for hover */
+  --color-lys-navy: #1E3A8A;
+  /* Deep Navy */
+  --color-lys-wine: #B91C1C;
+  /* Red/Alert */
+  --color-lys-amber: #D97706;
+  /* Amber/Warning */
 
   /* Text Scale */
-  --color-lys-ivory: #E8F1F2;
-  /* Cool White — primary text */
-  --color-lys-muted: #8AAEBB;
-  /* Steel Muted — labels */
-  --color-lys-dim: #4A6A7A;
-  /* Deep Muted — placeholders */
+  --color-lys-ivory: #0F172A;
+  /* Primary Text: Dark Slate */
+  --color-lys-muted: #475569;
+  /* Secondary Text: Medium Slate */
+  --color-lys-dim: #64748B;
+  /* Tertiary Text: Muted Slate */
 
   /* Semantic */
-  --color-success: #5BA88A;
-  --color-warning: #D4A853;
-  --color-error: #8B1A2E;
-  --color-info: #4A8FAB;
+  --color-success: #16A34A;
+  --color-warning: #D97706;
+  --color-error: #B91C1C;
+  --color-info: #2563EB;
 
   /* Typography — next/font injects these as CSS vars on <html class="...">.
      Define fallbacks here; the actual font name comes from next/font at runtime. */
@@ -63,8 +63,98 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
+
+/* ─── Inline Style Overrides Map (Option C - Light Mode mapping) ─── */
+
+/* 1. Backgrounds (#0A1926) -> var(--color-lys-bg) */
+[style*="#0A1926"],
+[style*="#0a1926"],
+[style*="rgb(10, 25, 38)"] {
+  background: var(--color-lys-bg) !important;
+  background-color: var(--color-lys-bg) !important;
+}
+
+/* 2. Surfaces / Sticky headers (#142433) -> var(--color-lys-surface) */
+[style*="#142433"],
+[style*="rgb(20, 36, 51)"] {
+  background: var(--color-lys-surface) !important;
+  background-color: var(--color-lys-surface) !important;
+}
+
+/* 3. Cards / Inputs / Popups (#1B2E3D) -> var(--color-lys-card) */
+[style*="#1B2E3D"],
+[style*="#1b2e3d"],
+[style*="rgb(27, 46, 61)"] {
+  background: var(--color-lys-card) !important;
+  background-color: var(--color-lys-card) !important;
+}
+
+/* 4. Borders (#2A4355) -> var(--color-lys-border) */
+[style*="#2A4355"],
+[style*="#2a4355"],
+[style*="rgb(42, 67, 85)"] {
+  border-color: var(--color-lys-border) !important;
+}
+div[style*="border: 1px solid #2A4355"],
+div[style*="border:1px solid #2A4355"],
+div[style*="border: 1px dashed #2A4355"],
+div[style*="border:1px dashed #2A4355"],
+table[style*="border-top: 1px solid #2A4355"],
+table[style*="border-top:1px solid #2A4355"] {
+  border-color: var(--color-lys-border) !important;
+}
+
+/* 5. Text primary (#E8F1F2) -> var(--color-lys-ivory) */
+[style*="#E8F1F2"],
+[style*="#e8f1f2"],
+[style*="rgb(232, 241, 242)"] {
+  color: var(--color-lys-ivory) !important;
+}
+
+/* 6. Text secondary / labels (#8AAEBB) -> var(--color-lys-muted) */
+[style*="#8AAEBB"],
+[style*="#8aaebb"],
+[style*="rgb(138, 174, 187)"] {
+  color: var(--color-lys-muted) !important;
+}
+
+/* 7. Text dim / placeholders (#4A6A7A) -> var(--color-lys-dim) */
+[style*="#4A6A7A"],
+[style*="#4a6a7a"],
+[style*="rgb(74, 106, 122)"] {
+  color: var(--color-lys-dim) !important;
+}
+
+/* 8. Accent Teal text/bg (#87CBB9) -> var(--color-lys-teal) */
+span[style*="#87CBB9"],
+p[style*="#87CBB9"],
+strong[style*="#87CBB9"],
+button[style*="color: #87CBB9"],
+button[style*="color:#87CBB9"] {
+  color: var(--color-lys-teal) !important;
+}
+button[style*="background: #87CBB9"],
+button[style*="background:#87CBB9"] {
+  background: var(--color-lys-teal) !important;
+  color: #FFFFFF !important;
+}
+a[style*="background: #87CBB9"],
+a[style*="background:#87CBB9"] {
+  background: var(--color-lys-teal) !important;
+  color: #FFFFFF !important;
+}
+
+/* 9. Handle hover transparency for badges */
+[style*="rgba(135,203,185,0.12)"],
+[style*="rgba(135,203,185,0.15)"],
+[style*="rgba(135, 203, 185, 0.12)"],
+[style*="rgba(135, 203, 185, 0.15)"] {
+  background-color: rgba(8, 145, 178, 0.08) !important;
+  color: var(--color-lys-teal) !important;
+}
+
 
 body {
   background-color: var(--color-lys-bg);

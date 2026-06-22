@@ -55,7 +55,7 @@ const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
 
 interface Customer { id: string; name: string; code: string; creditLimit: number; paymentTerm: string; channel: string | null; defaultLegalEntityId: string | null }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
-interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number }
+interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null }
 
 const inputStyle = {
     background: '#142433',
@@ -103,11 +103,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
             if (custId) {
                 const resolvedPrices = await getCustomerResolvedPrices(custId)
                 setPriceMap(resolvedPrices)
-                // Auto-update existing lines that have no manual price
+                // Auto-update existing lines to resolved prices and source
                 setLines(prev => prev.map(l => {
                     const resolved = resolvedPrices[l.productId]
-                    if (resolved && (l.unitPrice === 0 || !prev.find(p => p.productId === l.productId && p.unitPrice !== 0))) {
-                        return { ...l, unitPrice: resolved.price }
+                    if (resolved) {
+                        return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
                     }
                     return l
                 }))
@@ -121,11 +121,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                     }
                 }
                 setPriceMap(converted)
-                // Auto-update existing lines that have no manual price
+                // Auto-update existing lines to resolved prices and source
                 setLines(prev => prev.map(l => {
                     const resolved = converted[l.productId]
-                    if (resolved && (l.unitPrice === 0 || !prev.find(p => p.productId === l.productId && p.unitPrice !== 0))) {
-                        return { ...l, unitPrice: resolved.price }
+                    if (resolved) {
+                        return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
                     }
                     return l
                 }))
@@ -169,7 +169,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
         if (products.length === 0) return
         const p = products[0]
         const autoPrice = priceMap[p.id]?.price ?? 0
-        setLines(prev => [...prev, { productId: p.id, productName: p.productName, skuCode: p.skuCode, qtyOrdered: 1, unitPrice: autoPrice, lineDiscountPct: 0, stock: p.totalStock }])
+        const source = priceMap[p.id]?.source ?? null
+        setLines(prev => [...prev, { productId: p.id, productName: p.productName, skuCode: p.skuCode, qtyOrdered: 1, unitPrice: autoPrice, lineDiscountPct: 0, stock: p.totalStock, priceSource: source }])
     }
 
     const updateLine = (i: number, field: keyof SOLine, value: any) => {
@@ -178,7 +179,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
             if (field === 'productId') {
                 const p = products.find(p => p.id === value)!
                 const autoPrice = priceMap[value]?.price ?? 0
-                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: autoPrice }
+                const source = priceMap[value]?.source ?? null
+                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: autoPrice, priceSource: source }
             }
             return { ...l, [field]: value }
         }))
@@ -212,6 +214,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                 qtyOrdered: l.qtyOrdered,
                 unitPrice: l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
+                priceSource: l.priceSource || undefined,
             })),
             legalEntityId,
         } as SOCreateInput).then(res => {
@@ -336,7 +339,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                     </label>
                                     <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
                                         className="w-full px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }}>
-                                        {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID'].map(t => (
+                                        {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
                                             <option key={t} value={t}>{t}</option>
                                         ))}
                                     </select>
@@ -430,9 +433,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                                         <div>
                                                             <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá (VND){hasAutoPrice && <span style={{ color: '#5BA88A' }}> ✦</span>}</p>
                                                             <input type="number" min="0" value={line.unitPrice}
-                                                                onChange={e => updateLine(i, 'unitPrice', Number(e.target.value))}
-                                                                className="w-full px-2.5 py-1.5 text-sm outline-none"
-                                                                style={{ ...inputStyle }}
+                                                                readOnly
+                                                                className="w-full px-2.5 py-1.5 text-sm outline-none opacity-70 cursor-not-allowed"
+                                                                style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }}
                                                             />
                                                         </div>
                                                         <div>

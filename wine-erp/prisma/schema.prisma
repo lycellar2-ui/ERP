@@ -1399,6 +1399,7 @@ model SalesOrderLine {
   product              Product             @relation(fields: [productId], references: [id])
   qtyOrdered           Decimal
   unitPrice            Decimal
+  priceSource          String?
   lineDiscountPct      Decimal             @default(0)
   allocationCampaignId String?
   allocationCampaign   AllocationCampaign? @relation(fields: [allocationCampaignId], references: [id])

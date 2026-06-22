@@ -55,7 +55,7 @@ const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
 
 interface Customer { id: string; name: string; code: string; creditLimit: number; paymentTerm: string; channel: string | null }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
-interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number }
+interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null }
 
 const inputStyle = {
     background: '#142433',
@@ -131,6 +131,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
             unitPrice: Number(l.unitPrice),
             lineDiscountPct: Number(l.lineDiscountPct ?? 0),
             stock: 0, // will be populated from products list
+            priceSource: l.priceSource ?? null,
         })))
 
         setLoadingSO(false)
@@ -170,6 +171,16 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
             if (custId) {
                 const resolvedPrices = await getCustomerResolvedPrices(custId)
                 setPriceMap(resolvedPrices)
+                // Auto-update existing lines to resolved prices and source ONLY if not loading SO
+                if (!loadingSO) {
+                    setLines(prev => prev.map(l => {
+                        const resolved = resolvedPrices[l.productId]
+                        if (resolved) {
+                            return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
+                        }
+                        return l
+                    }))
+                }
             } else {
                 const basePrices = await getProductPricesForChannel(ch)
                 const converted: Record<string, ResolvedPrice> = {}
@@ -180,11 +191,21 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                     }
                 }
                 setPriceMap(converted)
+                // Auto-update existing lines to resolved prices and source ONLY if not loading SO
+                if (!loadingSO) {
+                    setLines(prev => prev.map(l => {
+                        const resolved = converted[l.productId]
+                        if (resolved) {
+                            return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
+                        }
+                        return l
+                    }))
+                }
             }
         } catch (err) {
             console.error("Lỗi load bảng giá:", err)
         }
-    }, [])
+    }, [loadingSO])
 
     useEffect(() => {
         if (open && products.length > 0) {
@@ -208,14 +229,25 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
         const p = products.find(p => p.id === productId)
         if (!p) return
         const price = priceMap[productId]?.price ?? 0
+        const source = priceMap[productId]?.source ?? null
         setLines(prev => [...prev, {
             productId: p.id, productName: p.productName, skuCode: p.skuCode,
             qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: p.totalStock,
+            priceSource: source,
         }])
     }
 
-    const updateLine = (idx: number, field: keyof SOLine, value: number) => {
-        setLines(prev => prev.map((l, i) => i === idx ? { ...l, [field]: value } : l))
+    const updateLine = (idx: number, field: keyof SOLine, value: any) => {
+        setLines(prev => prev.map((l, i) => {
+            if (i !== idx) return l
+            if (field === 'productId') {
+                const p = products.find(p => p.id === value)!
+                const price = priceMap[value]?.price ?? 0
+                const source = priceMap[value]?.source ?? null
+                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, priceSource: source }
+            }
+            return { ...l, [field]: value }
+        }))
     }
 
     const removeLine = (idx: number) => setLines(prev => prev.filter((_, i) => i !== idx))
@@ -247,6 +279,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                 qtyOrdered: l.qtyOrdered,
                 unitPrice: l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
+                priceSource: l.priceSource || undefined,
             })),
         } as SOUpdateInput).then(res => {
             if (!res.success) throw new Error(res.error ?? 'Có lỗi xảy ra')
@@ -306,7 +339,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                                     <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Payment Term</label>
                                     <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
                                         className="w-full px-3 py-2 text-sm" style={inputStyle}>
-                                        {['COD', 'NET15', 'NET30', 'NET45', 'NET60'].map(t => <option key={t} value={t}>{t}</option>)}
+                                        {['COD', 'NET15', 'NET30', 'NET45', 'NET60', 'EOM_10', 'EOM_15'].map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                 </div>
                                 <div>
@@ -370,8 +403,8 @@ export function EditSODrawer({ open, soId, onClose, onSaved }: EditSODrawerProps
                                                         className="w-14 px-2 py-1 text-xs text-center" style={inputStyle} />
                                                     <span className="text-xs" style={{ color: '#4A6A7A' }}>×</span>
                                                     <input type="number" min={0} value={l.unitPrice}
-                                                        onChange={e => updateLine(idx, 'unitPrice', Math.max(0, +e.target.value))}
-                                                        className="w-24 px-2 py-1 text-xs text-right" style={inputStyle} />
+                                                        readOnly
+                                                        className="w-24 px-2 py-1 text-xs text-right opacity-70 cursor-not-allowed" style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }} />
                                                     <div className="flex items-center gap-0.5">
                                                         <Tag size={10} style={{ color: '#D4A853' }} />
                                                         <input type="number" min={0} max={100} value={l.lineDiscountPct}
