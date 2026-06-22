@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
+import { signOut } from '@/app/login/actions'
 import {
     LayoutDashboard, Package, Users, ShoppingCart, Warehouse,
     Truck, DollarSign, FileText, BarChart3, Settings, ChevronLeft,
@@ -166,6 +167,17 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const prefetchedRef = useRef(new Set<string>())
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+    const handleLogout = useCallback(async () => {
+        setIsLoggingOut(true)
+        try {
+            await signOut()
+        } catch (err) {
+            console.error('Đăng xuất thất bại:', err)
+            setIsLoggingOut(false)
+        }
+    }, [])
 
     // Smart prefetch: prefetch on hover (with debounce to avoid spam)
     const handlePrefetch = useCallback((href: string) => {
@@ -263,13 +275,19 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
             {/* Bottom: Logout + Toggle */}
             <div style={{ borderTop: '1px solid #2A4355' }}>
                 <button
-                    className="flex items-center gap-3 w-full px-5 py-3.5 transition-colors duration-150"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="flex items-center gap-3 w-full px-5 py-3.5 transition-colors duration-150 disabled:opacity-50"
                     style={{ color: '#4A6A7A' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#8B1A2E')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#4A6A7A')}
+                    onMouseEnter={e => {
+                        if (!isLoggingOut) e.currentTarget.style.color = '#8B1A2E'
+                    }}
+                    onMouseLeave={e => {
+                        if (!isLoggingOut) e.currentTarget.style.color = '#4A6A7A'
+                    }}
                 >
-                    <LogOut size={16} className="flex-shrink-0" />
-                    {!collapsed && <span className="text-sm">Đăng Xuất</span>}
+                    <LogOut size={16} className={`flex-shrink-0 ${isLoggingOut ? 'animate-spin' : ''}`} />
+                    {!collapsed && <span className="text-sm">{isLoggingOut ? 'Đang Đăng Xuất...' : 'Đăng Xuất'}</span>}
                 </button>
 
                 <button
