@@ -22,7 +22,7 @@ const mockPrisma = {
     allocationLog: { create: vi.fn() },
     aRInvoice: { aggregate: vi.fn() },
     stockLot: { findMany: vi.fn() },
-    customer: { findUnique: vi.fn() },
+    customer: { findUnique: vi.fn(), findMany: vi.fn() },
     $transaction: vi.fn(async (ops: any) => Promise.all(ops)),
 }
 
@@ -41,6 +41,7 @@ const {
 beforeEach(() => {
     vi.clearAllMocks()
     mockPrisma.customer.findUnique.mockResolvedValue({ creditLimit: 0, name: 'Test Customer', defaultLegalEntityId: null })
+    mockPrisma.customer.findMany.mockResolvedValue([])
 })
 
 // ═══════════════════════════════════════════════════

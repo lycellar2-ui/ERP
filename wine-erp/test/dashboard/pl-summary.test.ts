@@ -8,7 +8,7 @@ vi.mock('@/lib/cache', () => ({
 }))
 
 const mockPrisma = {
-    journalLine: { findMany: vi.fn() },
+    journalLine: { findMany: vi.fn(), groupBy: vi.fn() },
     salesOrder: { aggregate: vi.fn(), count: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     stockLot: { findMany: vi.fn() },
     approvalRequest: { count: vi.fn(), findMany: vi.fn() },
@@ -28,12 +28,11 @@ beforeEach(() => { vi.clearAllMocks() })
 
 describe('getPLSummary', () => {
     it('should calculate revenue, COGS, gross/net profit correctly', async () => {
-        mockPrisma.journalLine.findMany.mockResolvedValue([
-            { account: '511 - Doanh thu', debit: 0, credit: 100_000_000 },
-            { account: '511 - Doanh thu', debit: 0, credit: 50_000_000 },
-            { account: '632 - Giá vốn', debit: 60_000_000, credit: 0 },
-            { account: '641 - CP bán hàng', debit: 10_000_000, credit: 0 },
-            { account: '642 - CP QLDN', debit: 5_000_000, credit: 0 },
+        mockPrisma.journalLine.groupBy.mockResolvedValue([
+            { account: '511 - Doanh thu', _sum: { debit: 0, credit: 150_000_000 } },
+            { account: '632 - Giá vốn', _sum: { debit: 60_000_000, credit: 0 } },
+            { account: '641 - CP bán hàng', _sum: { debit: 10_000_000, credit: 0 } },
+            { account: '642 - CP QLDN', _sum: { debit: 5_000_000, credit: 0 } },
         ])
         const r = await getPLSummary()
         expect(r.revenue).toBe(150_000_000)
@@ -45,18 +44,18 @@ describe('getPLSummary', () => {
     })
 
     it('should handle zero revenue without division error', async () => {
-        mockPrisma.journalLine.findMany.mockResolvedValue([])
+        mockPrisma.journalLine.groupBy.mockResolvedValue([])
         const r = await getPLSummary()
         expect(r.revenue).toBe(0)
         expect(r.grossMargin).toBe(0)
     })
 
     it('should handle TK 635 and TK 811', async () => {
-        mockPrisma.journalLine.findMany.mockResolvedValue([
-            { account: '511 - Rev', debit: 0, credit: 200_000_000 },
-            { account: '632 - COGS', debit: 100_000_000, credit: 0 },
-            { account: '635 - CP TC', debit: 20_000_000, credit: 0 },
-            { account: '811 - CP khác', debit: 5_000_000, credit: 0 },
+        mockPrisma.journalLine.groupBy.mockResolvedValue([
+            { account: '511 - Rev', _sum: { debit: 0, credit: 200_000_000 } },
+            { account: '632 - COGS', _sum: { debit: 100_000_000, credit: 0 } },
+            { account: '635 - CP TC', _sum: { debit: 20_000_000, credit: 0 } },
+            { account: '811 - CP khác', _sum: { debit: 5_000_000, credit: 0 } },
         ])
         const r = await getPLSummary()
         expect(r.expenses).toBe(25_000_000)
