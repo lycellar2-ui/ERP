@@ -282,9 +282,15 @@ async function main() {
 
                 console.log(`  ⬆️ Updating tasting notes for ${matchedVariants.length} database SKU variant(s)...`);
                 for (const variant of matchedVariants) {
-                    await prisma.product.update({
-                        where: { id: variant.id },
-                        data: { tastingNotes }
+                    await prisma.productProfile.upsert({
+                        where: { productId: variant.id },
+                        create: {
+                            productId: variant.id,
+                            aromas: tastingNotes,
+                        },
+                        update: {
+                            aromas: tastingNotes,
+                        }
                     });
                     console.log(`    ✓ Updated [${variant.skuCode}] ${variant.productName}`);
                     dbUpdatedCount++;

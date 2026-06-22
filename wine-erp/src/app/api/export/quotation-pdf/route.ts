@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
                     product: {
                         select: {
                             skuCode: true, productName: true, wineType: true, volumeMl: true,
-                            vintage: true, country: true, abvPercent: true, tastingNotes: true,
+                            vintage: true, country: true, abvPercent: true, profile: true,
                             classification: true,
                             producer: { select: { name: true } },
                             supplier: { select: { name: true } },
@@ -130,7 +130,18 @@ export async function GET(req: NextRequest) {
                         ${l.product.skuCode} · ${l.product.wineType} · ${l.product.volumeMl}ml · ${Number(l.product.abvPercent)}% ABV${l.product.classification ? ` · ${l.product.classification}` : ''}
                     </div>
                     ${awards ? `<div class="product-awards">🏅 ${awards}</div>` : ''}
-                    ${l.product.tastingNotes ? `<div class="product-notes">${l.product.tastingNotes.slice(0, 120)}${l.product.tastingNotes.length > 120 ? '…' : ''}</div>` : ''}
+                    ${(() => {
+                        const p = l.product.profile
+                        if (!p) return ''
+                        const text = [
+                            p.grapes ? `Nho: ${p.grapes}` : null,
+                            p.aromas ? `Hương thơm: ${p.aromas}` : null,
+                            p.palate ? `Vị: ${p.palate}` : null,
+                            p.servingTemp ? `Nhiệt độ phục vụ: ${p.servingTemp}` : null,
+                        ].filter(Boolean).join(' · ')
+                        if (!text) return ''
+                        return `<div class="product-notes">${text.slice(0, 150)}${text.length > 150 ? '…' : ''}</div>`
+                    })()}
                 </td>
                 ${qt.showQuantity ? `
                 <td class="cell-center cell-qty">${qty}</td>

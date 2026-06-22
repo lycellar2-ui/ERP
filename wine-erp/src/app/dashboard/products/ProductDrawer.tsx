@@ -87,7 +87,16 @@ interface ProductFormState {
     peakDrinkStart?: number | null
     peakDrinkEnd?: number | null
     classification?: string | null
-    tastingNotes?: string | null
+    originDetail?: string | null
+    certification?: string | null
+    color?: string | null
+    aromas?: string | null
+    palate?: string | null
+    style?: string | null
+    servingTemp?: string | null
+    foodPairings?: string | null
+    bestSuitedFor?: string | null
+    grapes?: string | null
     hsCode?: string
     isAllocationEligible?: boolean
     status?: string
@@ -111,9 +120,20 @@ function formToInput(f: ProductFormState): ProductInput {
         barcodeEan: f.barcodeEan ?? null,
         wineType: (f.wineType ?? 'RED') as any,
         classification: f.classification ?? null,
-        tastingNotes: f.tastingNotes ?? null,
         isAllocationEligible: f.isAllocationEligible ?? false,
         status: (f.status ?? 'ACTIVE') as any,
+        profile: {
+            originDetail: f.originDetail ?? null,
+            certification: f.certification ?? null,
+            color: f.color ?? null,
+            aromas: f.aromas ?? null,
+            palate: f.palate ?? null,
+            style: f.style ?? null,
+            servingTemp: f.servingTemp ?? null,
+            foodPairings: f.foodPairings ?? null,
+            bestSuitedFor: f.bestSuitedFor ?? null,
+            grapes: f.grapes ?? null,
+        }
     }
 }
 
@@ -143,7 +163,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
 
     // AI description state
     const [generatingAI, setGeneratingAI] = useState(false)
-    const [aiDescription, setAiDescription] = useState<{ vi: string; en: string } | null>(null)
+    const [aiProfile, setAiProfile] = useState<any | null>(null)
 
     // Inline producer creation
     const [showNewProducer, setShowNewProducer] = useState(false)
@@ -203,7 +223,16 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                     supplierId: data.supplierId,
                     regionId: data.appellationId,
                     classification: data.classification,
-                    tastingNotes: data.tastingNotes,
+                    originDetail: data.profile?.originDetail ?? null,
+                    certification: data.profile?.certification ?? null,
+                    color: data.profile?.color ?? null,
+                    aromas: data.profile?.aromas ?? null,
+                    palate: data.profile?.palate ?? null,
+                    style: data.profile?.style ?? null,
+                    servingTemp: data.profile?.servingTemp ?? null,
+                    foodPairings: data.profile?.foodPairings ?? null,
+                    bestSuitedFor: data.profile?.bestSuitedFor ?? null,
+                    grapes: data.profile?.grapes ?? null,
                     hsCode: data.hsCode,
                     isAllocationEligible: data.isAllocationEligible,
                     status: data.status,
@@ -601,31 +630,113 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                         </div>
                     </div>
 
-                    {/* Section: Tasting Notes + AI */}
+                    {/* Section: Đặc tính sản phẩm (Wine Profile) */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
-                            ── Tasting Notes
+                            ── Đặc Tính Sản Phẩm (Wine Profile)
                         </p>
-                        <Field label="Ghi chú nếm rượu">
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Giống nho (Grapes)">
+                                <Input
+                                    value={form.grapes ?? ''}
+                                    onChange={e => set('grapes', e.target.value || null)}
+                                    placeholder="Corvina, Rondinella, Corvinone..."
+                                />
+                            </Field>
+                            <Field label="Nhiệt độ phục vụ">
+                                <Input
+                                    value={form.servingTemp ?? ''}
+                                    onChange={e => set('servingTemp', e.target.value || null)}
+                                    placeholder="16°C - 18°C"
+                                />
+                            </Field>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Xuất xứ chi tiết">
+                                <Input
+                                    value={form.originDetail ?? ''}
+                                    onChange={e => set('originDetail', e.target.value || null)}
+                                    placeholder="Veneto, Ý"
+                                />
+                            </Field>
+                            <Field label="Chứng chỉ (Certification)">
+                                <Input
+                                    value={form.certification ?? ''}
+                                    onChange={e => set('certification', e.target.value || null)}
+                                    placeholder="Sustainable practices / Organic..."
+                                />
+                            </Field>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Màu sắc (Color)">
+                                <Input
+                                    value={form.color ?? ''}
+                                    onChange={e => set('color', e.target.value || null)}
+                                    placeholder="Đỏ ruby sẫm màu với ánh tím..."
+                                />
+                            </Field>
+                            <Field label="Phong cách (Style)">
+                                <Input
+                                    value={form.style ?? ''}
+                                    onChange={e => set('style', e.target.value || null)}
+                                    placeholder="Khô, đậm đà mạnh mẽ..."
+                                />
+                            </Field>
+                        </div>
+
+                        <Field label="Hương thơm (Aromas / Nose)">
                             <textarea
-                                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[80px]"
+                                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[60px]"
                                 style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                                value={form.tastingNotes ?? ''}
-                                onChange={e => set('tastingNotes', e.target.value || null)}
-                                placeholder="Deep ruby color, notes of blackcurrant, cedar, and vanilla..."
-                                rows={3}
+                                value={form.aromas ?? ''}
+                                onChange={e => set('aromas', e.target.value || null)}
+                                placeholder="Quả sung khô, mứt anh đào, quả mâm xôi đen, thảo mộc khô..."
+                                rows={2}
                             />
                         </Field>
+
+                        <Field label="Vị giác (Palate)">
+                            <textarea
+                                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[60px]"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                value={form.palate ?? ''}
+                                onChange={e => set('palate', e.target.value || null)}
+                                placeholder="Mềm mượt, đậm đà (full-bodied), tannin mịn màng..."
+                                rows={2}
+                            />
+                        </Field>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Món ăn kèm (Food Pairings)">
+                                <Input
+                                    value={form.foodPairings ?? ''}
+                                    onChange={e => set('foodPairings', e.target.value || null)}
+                                    placeholder="Thịt bò nướng, cừu quay, phô mai lâu năm..."
+                                />
+                            </Field>
+                            <Field label="Phù hợp với (Best Suited For)">
+                                <Input
+                                    value={form.bestSuitedFor ?? ''}
+                                    onChange={e => set('bestSuitedFor', e.target.value || null)}
+                                    placeholder="Những ai say mê dòng vang đỏ Amarone..."
+                                />
+                            </Field>
+                        </div>
+
                         <button
+                            type="button"
                             onClick={async () => {
                                 setGeneratingAI(true)
-                                setAiDescription(null)
+                                setAiProfile(null)
                                 const { generateProductDescription } = await import('@/lib/ai-service')
                                 if (editingId) {
                                     const res = await generateProductDescription(editingId)
                                     setGeneratingAI(false)
-                                    if (res.success) {
-                                        setAiDescription({ vi: res.descriptionVI ?? '', en: res.descriptionEN ?? '' })
+                                    if (res.success && res.profile) {
+                                        setAiProfile(res.profile)
                                     } else {
                                         toast.error(`AI Error: ${res.error} `)
                                     }
@@ -636,12 +747,11 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                         wineType: form.wineType ?? '',
                                         vintage: form.vintage ?? undefined,
                                         abv: form.abv ?? undefined,
-                                        tastingNotes: form.tastingNotes ?? undefined,
                                         countryCode: form.countryCode ?? undefined,
                                     })
                                     setGeneratingAI(false)
-                                    if (res.success) {
-                                        setAiDescription({ vi: res.descriptionVI ?? '', en: res.descriptionEN ?? '' })
+                                    if (res.success && res.profile) {
+                                        setAiProfile(res.profile)
                                     } else {
                                         toast.error(`AI Error: ${res.error} `)
                                     }
@@ -651,24 +761,42 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all w-full justify-center disabled:opacity-60"
                             style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
                             {generatingAI ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                            {generatingAI ? 'AI đang viết mô tả...' : '✨ AI Tạo Mô Tả (Gemini)'}
+                            {generatingAI ? 'AI đang phân tích & gợi ý đặc tính...' : '✨ Tự Động Phân Tích Đặc Tính Bằng AI'}
                         </button>
-                        {aiDescription && (
+                        {aiProfile && (
                             <div className="space-y-3 p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold" style={{ color: '#667eea' }}>🤖 Mô tả AI</span>
+                                    <span className="text-xs font-bold" style={{ color: '#667eea' }}>🤖 Gợi Ý Đặc Tính Từ AI</span>
                                     <button
-                                        onClick={() => { set('tastingNotes', aiDescription.vi); setAiDescription(null) }}
-                                        className="text-[10px] px-2 py-1 rounded font-semibold"
+                                        type="button"
+                                        onClick={() => {
+                                            if (aiProfile.originDetail) set('originDetail', aiProfile.originDetail)
+                                            if (aiProfile.certification) set('certification', aiProfile.certification)
+                                            if (aiProfile.color) set('color', aiProfile.color)
+                                            if (aiProfile.aromas) set('aromas', aiProfile.aromas)
+                                            if (aiProfile.palate) set('palate', aiProfile.palate)
+                                            if (aiProfile.style) set('style', aiProfile.style)
+                                            if (aiProfile.servingTemp) set('servingTemp', aiProfile.servingTemp)
+                                            if (aiProfile.foodPairings) set('foodPairings', aiProfile.foodPairings)
+                                            if (aiProfile.bestSuitedFor) set('bestSuitedFor', aiProfile.bestSuitedFor)
+                                            if (aiProfile.grapes) set('grapes', aiProfile.grapes)
+                                            setAiProfile(null)
+                                            toast.success('Đã áp dụng các đặc tính AI gợi ý!')
+                                        }}
+                                        className="text-[10px] px-2.5 py-1.5 rounded font-bold"
                                         style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
-                                        Áp dụng bản Tiếng Việt
+                                        Áp dụng tất cả đặc tính
                                     </button>
                                 </div>
-                                <div className="text-xs leading-relaxed" style={{ color: '#8AAEBB' }}>
-                                    <p className="font-bold mb-1" style={{ color: '#E8F1F2' }}>🇻🇳 Tiếng Việt:</p>
-                                    <p className="whitespace-pre-wrap mb-3">{aiDescription.vi}</p>
-                                    <p className="font-bold mb-1" style={{ color: '#E8F1F2' }}>🇬🇧 English:</p>
-                                    <p className="whitespace-pre-wrap">{aiDescription.en}</p>
+                                <div className="text-xs leading-relaxed space-y-1.5" style={{ color: '#8AAEBB' }}>
+                                    <p><strong>Xuất xứ:</strong> {aiProfile.originDetail}</p>
+                                    <p><strong>Giống nho:</strong> {aiProfile.grapes}</p>
+                                    <p><strong>Chứng chỉ:</strong> {aiProfile.certification}</p>
+                                    <p><strong>Màu sắc:</strong> {aiProfile.color}</p>
+                                    <p><strong>Hương thơm:</strong> {aiProfile.aromas}</p>
+                                    <p><strong>Vị giác:</strong> {aiProfile.palate}</p>
+                                    <p><strong>Phong cách:</strong> {aiProfile.style}</p>
+                                    <p><strong>Món ăn kèm:</strong> {aiProfile.foodPairings}</p>
                                 </div>
                             </div>
                         )}

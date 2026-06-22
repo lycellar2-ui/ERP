@@ -20,7 +20,7 @@ export async function getQuotationByToken(token: string) {
                             vintage: true,
                             country: true,
                             abvPercent: true,
-                            tastingNotes: true,
+                            profile: true,
                             classification: true,
                             format: true,
                             packagingType: true,

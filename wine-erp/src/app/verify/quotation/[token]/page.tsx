@@ -60,7 +60,19 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
                 vintage: l.product.vintage,
                 country: l.product.country,
                 abvPercent: Number(l.product.abvPercent),
-                tastingNotes: l.product.tastingNotes,
+                tastingNotes: (() => {
+                    const p = (l.product as any).profile
+                    if (!p) return null
+                    return [
+                        p.grapes ? `Giống nho: ${p.grapes}` : null,
+                        p.color ? `Màu sắc: ${p.color}` : null,
+                        p.aromas ? `Hương thơm: ${p.aromas}` : null,
+                        p.palate ? `Vị giác: ${p.palate}` : null,
+                        p.style ? `Phong cách: ${p.style}` : null,
+                        p.foodPairings ? `Ẩm thực: ${p.foodPairings}` : null,
+                        p.servingTemp ? `Phục vụ: ${p.servingTemp}` : null,
+                    ].filter(Boolean).join('. ')
+                })(),
                 classification: l.product.classification,
                 producerName: l.product.producer?.name,
                 supplierName: (l.product as any).supplier?.name || "Ly's Cellars",

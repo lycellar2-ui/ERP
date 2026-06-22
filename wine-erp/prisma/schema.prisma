@@ -247,7 +247,6 @@ model Product {
   storageTempMax       Decimal?
   isAllocationEligible Boolean                @default(false)
   classification       String?
-  tastingNotes         String?
   status               ProductStatus          @default(ACTIVE)
   media                ProductMedia[]
   awards               ProductAward[]
@@ -268,6 +267,7 @@ model Product {
   regulatedDocs        RegulatedDocument[]
   priceRules           CustomerPriceRule[]
   marginPrice          ProductMarginPrice?
+  profile              ProductProfile?
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -292,6 +292,26 @@ model ProductMarginPrice {
   updatedAt      DateTime @updatedAt
 
   @@map("product_margin_prices")
+}
+
+model ProductProfile {
+  id             String   @id @default(cuid())
+  productId      String   @unique
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  originDetail   String?
+  certification  String?
+  color          String?
+  aromas         String?
+  palate         String?
+  style          String?
+  servingTemp    String?
+  foodPairings   String?
+  bestSuitedFor  String?
+  grapes         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("product_profiles")
 }
 
 model ProductMedia {

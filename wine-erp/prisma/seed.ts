@@ -164,23 +164,301 @@ async function main() {
     console.log('  → Creating products...')
 
     const productList = [
-        { id: 'p-petrus-2018', skuCode: 'PETRUS-2018-750', productName: 'Château Pétrus 2018', producerId: petrus.id, vintage: 2018, appellationId: pomerol.id, country: 'FR', abvPercent: 14.5, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 6, hsCode: '2204211000', wineType: 'RED', classification: 'First Growth Equivalent', tastingNotes: 'Opulent, velvety. Plum, truffle, mocha. Legendary.', status: 'ACTIVE' },
-        { id: 'p-opusone-2020', skuCode: 'OPUSONE-2020-750', productName: 'Opus One 2020', producerId: opusOne.id, vintage: 2020, country: 'US', abvPercent: 14.5, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 12, hsCode: '2204211000', wineType: 'RED', classification: 'Napa Valley Blend', tastingNotes: 'Cassis, cedar, graphite. Bordeaux-style elegance.', status: 'ACTIVE' },
-        { id: 'p-mouton-2019', skuCode: 'MOUTON-2019-750', productName: 'Château Mouton Rothschild 2019', producerId: mouton.id, vintage: 2019, appellationId: pauillac.id, country: 'FR', abvPercent: 13.5, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 12, hsCode: '2204211000', wineType: 'RED', classification: 'Premier Cru Classé 1855', tastingNotes: 'Blackcurrant, tobacco, dark chocolate.', status: 'ACTIVE' },
-        { id: 'p-margaux-2018', skuCode: 'CMARGAUX-2018-750', productName: 'Château Margaux 2018', producerId: chateauMargaux.id, vintage: 2018, appellationId: margauxApp.id, country: 'FR', abvPercent: 13.0, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 12, hsCode: '2204211000', wineType: 'RED', classification: 'Premier Grand Cru Classé', tastingNotes: 'Floral violet, silky tannins. The epitome of elegance.', status: 'ACTIVE' },
-        { id: 'p-krug-mv', skuCode: 'KRUG-MV-750', productName: 'Krug Grande Cuvée 171ème Édition', producerId: krug.id, country: 'FR', abvPercent: 12.0, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 6, hsCode: '2204101000', wineType: 'SPARKLING', classification: 'Prestige Non-Vintage Cuvée', tastingNotes: 'Toasted brioche, marzipan, dried apricot.', status: 'ACTIVE' },
-        { id: 'p-veuve-yl', skuCode: 'VEUVE-YL-750', productName: 'Veuve Clicquot Yellow Label Brut NV', producerId: veuve.id, country: 'FR', abvPercent: 12.0, volumeMl: 750, format: 'STANDARD', packagingType: 'CARTON', unitsPerCase: 12, hsCode: '2204101000', barcodeEan: '3049614085392', wineType: 'SPARKLING', tastingNotes: 'Brioche, white peach, toasted almond.', status: 'ACTIVE' },
-        { id: 'p-sassicaia-2019', skuCode: 'SASSICAIA-2019-750', productName: 'Sassicaia 2019', producerId: sassicaia.id, vintage: 2019, country: 'IT', abvPercent: 14.0, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 12, hsCode: '2204211000', wineType: 'RED', classification: 'Bolgheri DOC Superiore', tastingNotes: 'Blackberry, eucalyptus, cedar. The original Super Tuscan.', status: 'ACTIVE' },
-        { id: 'p-drc-2018', skuCode: 'DRC-CC-2018-750', productName: 'DRC Chambolle-Musigny 2018', producerId: drc.id, vintage: 2018, appellationId: chambolle.id, country: 'FR', abvPercent: 13.0, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 6, hsCode: '2204211000', wineType: 'RED', classification: 'Village AOC by DRC', tastingNotes: 'Delicate red berry, rose petals, forest floor.', status: 'ACTIVE' },
-        { id: 'p-petrus-2020', skuCode: 'PETRUS-2020-750', productName: 'Château Pétrus 2020', producerId: petrus.id, vintage: 2020, appellationId: pomerol.id, country: 'FR', abvPercent: 14.0, volumeMl: 750, format: 'STANDARD', packagingType: 'OWC', unitsPerCase: 6, hsCode: '2204211000', wineType: 'RED', classification: 'First Growth Equivalent', tastingNotes: 'Dense, concentrated, immortal structure.', status: 'ALLOCATION_ONLY' },
-        { id: 'p-mouton-mag-2016', skuCode: 'MOUTON-2016-1500', productName: 'Château Mouton Rothschild 2016 Magnum', producerId: mouton.id, vintage: 2016, appellationId: pauillac.id, country: 'FR', abvPercent: 13.5, volumeMl: 1500, format: 'MAGNUM', packagingType: 'OWC', unitsPerCase: 3, hsCode: '2204211000', wineType: 'RED', classification: 'Premier Cru Classé 1855', tastingNotes: '2016 classic Pauillac in magnum — cellar potential to 2050.', status: 'ACTIVE' },
+        {
+            id: 'p-petrus-2018',
+            skuCode: 'PETRUS-2018-750',
+            productName: 'Château Pétrus 2018',
+            producerId: petrus.id,
+            vintage: 2018,
+            appellationId: pomerol.id,
+            country: 'FR',
+            abvPercent: 14.5,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 6,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'First Growth Equivalent',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '100% Merlot',
+                originDetail: 'Pomerol, Bordeaux, France',
+                color: 'Deep ruby-purple',
+                aromas: 'Black currant, blueberry compote, violet, truffle, fragrant earth, exotic spices, cocoa',
+                palate: 'Full-bodied, opulent and deep, sweet and satiny tannins, long finish (plum, dark fruit)',
+                servingTemp: '16-18°C',
+                style: 'Opulent & Legendary Red',
+                foodPairings: 'Roast beef, truffles, venison, duck, rich stews'
+            }
+        },
+        {
+            id: 'p-opusone-2020',
+            skuCode: 'OPUSONE-2020-750',
+            productName: 'Opus One 2020',
+            producerId: opusOne.id,
+            vintage: 2020,
+            country: 'US',
+            abvPercent: 14.5,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 12,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'Napa Valley Blend',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '78% Cabernet Sauvignon, 8% Merlot, 7% Petit Verdot, 6% Cabernet Franc, 1% Malbec',
+                originDetail: 'Napa Valley, California, USA',
+                color: 'Deep garnet-purple',
+                aromas: 'Cassis, blackberry, violet, dried rose petals, cedar, graphite, tobacco, vanilla',
+                palate: 'Full-bodied, satiny texture, fine-grained tannins, black cherry, espresso, cocoa, mineral, long finish',
+                servingTemp: '16-18°C',
+                style: 'Elegant Napa Valley Bordeaux-style Blend',
+                foodPairings: 'Prime rib, grilled steak, lamb chops, roasted duck, aged cheeses'
+            }
+        },
+        {
+            id: 'p-mouton-2019',
+            skuCode: 'MOUTON-2019-750',
+            productName: 'Château Mouton Rothschild 2019',
+            producerId: mouton.id,
+            vintage: 2019,
+            appellationId: pauillac.id,
+            country: 'FR',
+            abvPercent: 13.5,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 12,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'Premier Cru Classé 1855',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '90% Cabernet Sauvignon, 9% Merlot, 1% Petit Verdot',
+                originDetail: 'Pauillac, Bordeaux, France',
+                color: 'Deep purple-red',
+                aromas: 'Crème de cassis, blackberry, violet, star anise, cedar, cigar box, tobacco leaf, graphite, dark chocolate',
+                palate: 'Full-bodied, satin-smooth tannins, concentrated dark fruits, vibrant freshness, long stylish finish',
+                servingTemp: '16-18°C',
+                style: 'Rich & Powerful Bordeaux Grand Cru',
+                foodPairings: 'Roast lamb with herbs, beef Wellington, roasted venison, wild mushroom risotto'
+            }
+        },
+        {
+            id: 'p-margaux-2018',
+            skuCode: 'CMARGAUX-2018-750',
+            productName: 'Château Margaux 2018',
+            producerId: chateauMargaux.id,
+            vintage: 2018,
+            appellationId: margauxApp.id,
+            country: 'FR',
+            abvPercent: 13.0,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 12,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'Premier Grand Cru Classé',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '90% Cabernet Sauvignon, 4% Merlot, 4% Cabernet Franc, 2% Petit Verdot',
+                originDetail: 'Margaux, Bordeaux, France',
+                color: 'Dark ruby-purple',
+                aromas: 'Crème de cassis, wild blueberries, violets, lilacs, rose oil, scorched earth, graphite, tobacco, cedar',
+                palate: 'Full-bodied, silky and caressing texture, rock-solid fine-grained tannins, notable freshness, long finish',
+                servingTemp: '16-18°C',
+                style: 'Ethereal & Silk-Textured Grand Cru',
+                foodPairings: 'Roasted veal, duck breast with berry sauce, grilled beef tenderloin, rack of lamb'
+            }
+        },
+        {
+            id: 'p-krug-mv',
+            skuCode: 'KRUG-MV-750',
+            productName: 'Krug Grande Cuvée 171ème Édition',
+            producerId: krug.id,
+            country: 'FR',
+            abvPercent: 12.0,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 6,
+            hsCode: '2204101000',
+            wineType: 'SPARKLING',
+            classification: 'Prestige Non-Vintage Cuvée',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '45% Pinot Noir, 37% Chardonnay, 18% Meunier',
+                originDetail: 'Champagne, France',
+                color: 'Brilliant light gold',
+                aromas: 'Candied citrus fruits, white peach, toasted brioche, pastry, gingerbread, marzipan, almond paste',
+                palate: 'Vivacious and velvety mousse, lemon, quince, hazelnut, racy acidity, long saline finish',
+                servingTemp: '9-12°C',
+                style: 'Prestige Cuvée Champagne',
+                foodPairings: 'Caviar, oysters, grilled seafood, truffle pasta, aged parmesan'
+            }
+        },
+        {
+            id: 'p-veuve-yl',
+            skuCode: 'VEUVE-YL-750',
+            productName: 'Veuve Clicquot Yellow Label Brut NV',
+            producerId: veuve.id,
+            country: 'FR',
+            abvPercent: 12.0,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'CARTON',
+            unitsPerCase: 12,
+            hsCode: '2204101000',
+            barcodeEan: '3049614085392',
+            wineType: 'SPARKLING',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '50-55% Pinot Noir, 28-33% Chardonnay, 15-20% Pinot Meunier',
+                originDetail: 'Champagne, France',
+                color: 'Golden-yellow',
+                aromas: 'Ripe apple, pear, peach, grapefruit, mandarin, vanilla, toasted brioche',
+                palate: 'Well-structured and vinous, apricot, yellow fruits, creamy texture, refreshing acidity, toasted finish',
+                servingTemp: '8-10°C',
+                style: 'Brut Champagne',
+                foodPairings: 'Oysters, smoked salmon, seafood platter, sashimi, chicken breast'
+            }
+        },
+        {
+            id: 'p-sassicaia-2019',
+            skuCode: 'SASSICAIA-2019-750',
+            productName: 'Sassicaia 2019',
+            producerId: sassicaia.id,
+            vintage: 2019,
+            country: 'IT',
+            abvPercent: 14.0,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 12,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'Bolgheri DOC Superiore',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '85% Cabernet Sauvignon, 15% Cabernet Franc',
+                originDetail: 'Bolgheri, Tuscany, Italy',
+                color: 'Ruby red',
+                aromas: 'Dark cherry, blackcurrant, lavender, rosemary, sage, graphite, tobacco leaf, cedar',
+                palate: 'Silky, polished, medium-to-full-bodied, savory cedar, tobacco, balanced concentration and freshness, long vibrant finish',
+                servingTemp: '16-18°C',
+                style: 'Legendary Super Tuscan',
+                foodPairings: 'Florentine steak, roasted wild boar, venison ragu, aged pecorino cheese'
+            }
+        },
+        {
+            id: 'p-drc-2018',
+            skuCode: 'DRC-CC-2018-750',
+            productName: 'DRC Chambolle-Musigny 2018',
+            producerId: drc.id,
+            vintage: 2018,
+            appellationId: chambolle.id,
+            country: 'FR',
+            abvPercent: 13.0,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 6,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'Village AOC by DRC',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '100% Pinot Noir',
+                originDetail: 'Chambolle-Musigny, Burgundy, France',
+                color: 'Bright translucent ruby',
+                aromas: 'Delicate red cherry, raspberry, rose petals, violet, forest floor, damp earth, subtle spice',
+                palate: 'Silky, ethereal, light-to-medium-bodied, bright acidity, fine lace-like tannins, elegant lingering red fruit and spice finish',
+                servingTemp: '14-16°C',
+                style: 'Ethereal Burgundy Village AOC by DRC',
+                foodPairings: 'Roasted quail, duck confit, grilled salmon with mushroom sauce, beef carpaccio'
+            }
+        },
+        {
+            id: 'p-petrus-2020',
+            skuCode: 'PETRUS-2020-750',
+            productName: 'Château Pétrus 2020',
+            producerId: petrus.id,
+            vintage: 2020,
+            appellationId: pomerol.id,
+            country: 'FR',
+            abvPercent: 14.0,
+            volumeMl: 750,
+            format: 'STANDARD',
+            packagingType: 'OWC',
+            unitsPerCase: 6,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'First Growth Equivalent',
+            status: 'ALLOCATION_ONLY',
+            profile: {
+                grapes: '100% Merlot',
+                originDetail: 'Pomerol, Bordeaux, France',
+                color: 'Opaque purple-ruby',
+                aromas: 'Ripe black plums, blackberries, licorice, violets, crushed rocks, exotic spices, dark chocolate',
+                palate: 'Extremely full-bodied, immense concentration, rock-solid yet velvety tannins, deep finish of legendary proportions',
+                servingTemp: '16-18°C',
+                style: 'Opulent & Immortal Red',
+                foodPairings: 'Prime ribeye, truffle-infused dishes, rich game meats, beef cheek braised in red wine'
+            }
+        },
+        {
+            id: 'p-mouton-mag-2016',
+            skuCode: 'MOUTON-2016-1500',
+            productName: 'Château Mouton Rothschild 2016 Magnum',
+            producerId: mouton.id,
+            vintage: 2016,
+            appellationId: pauillac.id,
+            country: 'FR',
+            abvPercent: 13.5,
+            volumeMl: 1500,
+            format: 'MAGNUM',
+            packagingType: 'OWC',
+            unitsPerCase: 3,
+            hsCode: '2204211000',
+            wineType: 'RED',
+            classification: 'Premier Cru Classé 1855',
+            status: 'ACTIVE',
+            profile: {
+                grapes: '86% Cabernet Sauvignon, 12% Merlot, 2% Cabernet Franc',
+                originDetail: 'Pauillac, Bordeaux, France',
+                color: 'Deep garnet-red',
+                aromas: 'Cassis, blackberry, tobacco leaf, cedar wood, pencil lead, dark cocoa, forest floor',
+                palate: 'Full-bodied, classical Pauillac structure, outstanding precision, tight and muscular tannins, immense cellaring potential',
+                servingTemp: '16-18°C',
+                style: 'Classic Bordeaux in Magnum',
+                foodPairings: 'Roasted lamb loin, prime rib, dry-aged beef, game birds'
+            }
+        },
     ]
 
     for (const p of productList) {
+        const { profile, ...productData } = p
         await prisma.product.upsert({
             where: { skuCode: p.skuCode },
-            update: {},
-            create: p as any,
+            update: {
+                ...productData,
+                profile: profile ? {
+                    upsert: {
+                        create: profile,
+                        update: profile
+                    }
+                } : undefined
+            } as any,
+            create: {
+                ...productData,
+                profile: profile ? {
+                    create: profile
+                } : undefined
+            } as any,
         })
     }
     console.log(`  ✓ ${productList.length} products seeded`)

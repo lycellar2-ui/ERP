@@ -293,7 +293,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                     {loading && !data && (
                         <div className="space-y-3">
                             <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
-                                <Tag size={13} /> Ghi Chú Nếm Rượu (Tasting Notes)
+                                <Tag size={13} /> Đặc Tính Sản Phẩm (Wine Profile)
                             </h4>
                             <div className="p-4 rounded-xl space-y-2 animate-pulse" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                 <div className="h-3 bg-[#2A4355]/30 rounded w-full" />
@@ -302,13 +302,78 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             </div>
                         </div>
                     )}
-                    {data?.tastingNotes && (
+                    {data?.profile && (
                         <div className="space-y-3">
                             <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
-                                <Tag size={13} /> Ghi Chú Nếm Rượu (Tasting Notes)
+                                <Tag size={13} /> Đặc Tính Sản Phẩm (Wine Profile)
                             </h4>
-                            <div className="p-4 rounded-xl text-xs leading-relaxed italic whitespace-pre-wrap" style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB' }}>
-                                "{data.tastingNotes}"
+                            <div className="p-4 rounded-xl space-y-3 text-xs leading-relaxed" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {data.profile.grapes && (
+                                        <div>
+                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Giống nho</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.grapes}</span>
+                                        </div>
+                                    )}
+                                    {data.profile.servingTemp && (
+                                        <div>
+                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Nhiệt độ phục vụ</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.servingTemp}</span>
+                                        </div>
+                                    )}
+                                    {data.profile.originDetail && (
+                                        <div>
+                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Xuất xứ chi tiết</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.originDetail}</span>
+                                        </div>
+                                    )}
+                                    {data.profile.certification && (
+                                        <div>
+                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Chứng chỉ</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.certification}</span>
+                                        </div>
+                                    )}
+                                    {data.profile.color && (
+                                        <div>
+                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Màu sắc</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.color}</span>
+                                        </div>
+                                    )}
+                                    {data.profile.style && (
+                                        <div>
+                                            <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Phong cách</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.style}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {data.profile.aromas && (
+                                    <div className="pt-2 border-t border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Hương thơm (Nose)</span>
+                                        <span style={{ color: '#8AAEBB' }}>{data.profile.aromas}</span>
+                                    </div>
+                                )}
+                                
+                                {data.profile.palate && (
+                                    <div className="pt-2 border-t border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Vị giác (Palate)</span>
+                                        <span style={{ color: '#8AAEBB' }}>{data.profile.palate}</span>
+                                    </div>
+                                )}
+                                
+                                {data.profile.foodPairings && (
+                                    <div className="pt-2 border-t border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Món ăn kèm</span>
+                                        <span style={{ color: '#8AAEBB' }}>{data.profile.foodPairings}</span>
+                                    </div>
+                                )}
+
+                                {data.profile.bestSuitedFor && (
+                                    <div className="pt-2 border-t border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Phù hợp với</span>
+                                        <span style={{ color: '#8AAEBB' }}>{data.profile.bestSuitedFor}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

@@ -199,10 +199,16 @@ async function main() {
             note = generateFallbackNote(p.productName, p.wineType, p.country)
         }
 
-        // Update product tastingNotes field
-        await prisma.product.update({
-            where: { id: p.id },
-            data: { tastingNotes: note }
+        // Update product profile aromas field
+        await prisma.productProfile.upsert({
+            where: { productId: p.id },
+            create: {
+                productId: p.id,
+                aromas: note,
+            },
+            update: {
+                aromas: note,
+            }
         })
 
         console.log(`Updated [${p.skuCode}]: "${p.productName.trim()}"`)

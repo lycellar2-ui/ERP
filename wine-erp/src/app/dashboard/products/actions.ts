@@ -179,6 +179,7 @@ export async function getProductById(id: string) {
         include: {
             producer: { select: { id: true, name: true } },
             appellation: { select: { id: true, name: true } },
+            profile: true,
         },
     })
     if (!p) return null
@@ -202,7 +203,18 @@ export async function getProductById(id: string) {
         storageTempMax: p.storageTempMax ? Number(p.storageTempMax) : null,
         isAllocationEligible: p.isAllocationEligible,
         classification: p.classification,
-        tastingNotes: p.tastingNotes,
+        profile: p.profile ? {
+            originDetail: p.profile.originDetail,
+            certification: p.profile.certification,
+            color: p.profile.color,
+            aromas: p.profile.aromas,
+            palate: p.profile.palate,
+            style: p.profile.style,
+            servingTemp: p.profile.servingTemp,
+            foodPairings: p.profile.foodPairings,
+            bestSuitedFor: p.profile.bestSuitedFor,
+            grapes: p.profile.grapes,
+        } : null,
         status: p.status,
     }
 }
@@ -292,9 +304,20 @@ const productSchema = z.object({
     barcodeEan: z.string().nullable().optional(),
     wineType: z.enum(['RED', 'WHITE', 'ROSE', 'SPARKLING', 'FORTIFIED', 'DESSERT']),
     classification: z.string().nullable().optional(),
-    tastingNotes: z.string().nullable().optional(),
     isAllocationEligible: z.boolean().optional().default(false),
     status: z.enum(['ACTIVE', 'DISCONTINUED', 'ALLOCATION_ONLY']).default('ACTIVE'),
+    profile: z.object({
+        originDetail: z.string().nullable().optional(),
+        certification: z.string().nullable().optional(),
+        color: z.string().nullable().optional(),
+        aromas: z.string().nullable().optional(),
+        palate: z.string().nullable().optional(),
+        style: z.string().nullable().optional(),
+        servingTemp: z.string().nullable().optional(),
+        foodPairings: z.string().nullable().optional(),
+        bestSuitedFor: z.string().nullable().optional(),
+        grapes: z.string().nullable().optional(),
+    }).optional().nullable(),
 })
 
 export type ProductInput = z.infer<typeof productSchema>
@@ -322,9 +345,22 @@ export async function createProduct(input: ProductInput) {
                 barcodeEan: data.barcodeEan ?? null,
                 wineType: data.wineType,
                 classification: data.classification ?? null,
-                tastingNotes: data.tastingNotes ?? null,
                 isAllocationEligible: data.isAllocationEligible ?? false,
                 status: data.status,
+                profile: data.profile ? {
+                    create: {
+                        originDetail: data.profile.originDetail ?? null,
+                        certification: data.profile.certification ?? null,
+                        color: data.profile.color ?? null,
+                        aromas: data.profile.aromas ?? null,
+                        palate: data.profile.palate ?? null,
+                        style: data.profile.style ?? null,
+                        servingTemp: data.profile.servingTemp ?? null,
+                        foodPairings: data.profile.foodPairings ?? null,
+                        bestSuitedFor: data.profile.bestSuitedFor ?? null,
+                        grapes: data.profile.grapes ?? null,
+                    }
+                } : undefined
             },
         })
         const user = await getCurrentUser().catch(() => null)
@@ -349,7 +385,22 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
     try {
         await requirePermission('MDM', 'WRITE')
         const data = productSchema.partial().parse(input)
-        const oldProduct = await prisma.product.findUnique({ where: { id }, select: { skuCode: true, productName: true, status: true, abvPercent: true, volumeMl: true, wineType: true, country: true, classification: true, isAllocationEligible: true, hsCode: true } })
+        const oldProduct = await prisma.product.findUnique({
+            where: { id },
+            select: {
+                skuCode: true,
+                productName: true,
+                status: true,
+                abvPercent: true,
+                volumeMl: true,
+                wineType: true,
+                country: true,
+                classification: true,
+                isAllocationEligible: true,
+                hsCode: true,
+                profile: { select: { id: true } }
+            }
+        })
         await prisma.product.update({
             where: { id },
             data: {
@@ -367,10 +418,39 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 barcodeEan: data.barcodeEan !== undefined ? data.barcodeEan : undefined,
                 ...(data.wineType && { wineType: data.wineType }),
                 classification: data.classification !== undefined ? data.classification : undefined,
-                tastingNotes: data.tastingNotes !== undefined ? data.tastingNotes : undefined,
                 ...(data.isAllocationEligible !== undefined && { isAllocationEligible: data.isAllocationEligible }),
                 ...(data.hsCode && { hsCode: data.hsCode }),
                 ...(data.status && { status: data.status }),
+                ...(data.profile !== undefined && {
+                    profile: data.profile ? {
+                        upsert: {
+                            create: {
+                                originDetail: data.profile.originDetail ?? null,
+                                certification: data.profile.certification ?? null,
+                                color: data.profile.color ?? null,
+                                aromas: data.profile.aromas ?? null,
+                                palate: data.profile.palate ?? null,
+                                style: data.profile.style ?? null,
+                                servingTemp: data.profile.servingTemp ?? null,
+                                foodPairings: data.profile.foodPairings ?? null,
+                                bestSuitedFor: data.profile.bestSuitedFor ?? null,
+                                grapes: data.profile.grapes ?? null,
+                            },
+                            update: {
+                                originDetail: data.profile.originDetail ?? null,
+                                certification: data.profile.certification ?? null,
+                                color: data.profile.color ?? null,
+                                aromas: data.profile.aromas ?? null,
+                                palate: data.profile.palate ?? null,
+                                style: data.profile.style ?? null,
+                                servingTemp: data.profile.servingTemp ?? null,
+                                foodPairings: data.profile.foodPairings ?? null,
+                                bestSuitedFor: data.profile.bestSuitedFor ?? null,
+                                grapes: data.profile.grapes ?? null,
+                            }
+                        }
+                    } : (oldProduct?.profile ? { delete: true } : undefined)
+                })
             },
         })
         const user = await getCurrentUser().catch(() => null)
@@ -910,6 +990,7 @@ export async function getProductEditDetails(id: string) {
             include: {
                 producer: { select: { id: true, name: true } },
                 appellation: { select: { id: true, name: true } },
+                profile: true,
             },
         }),
         prisma.productMedia.findMany({
@@ -946,7 +1027,18 @@ export async function getProductEditDetails(id: string) {
             storageTempMax: p.storageTempMax ? Number(p.storageTempMax) : null,
             isAllocationEligible: p.isAllocationEligible,
             classification: p.classification,
-            tastingNotes: p.tastingNotes,
+            profile: p.profile ? {
+                originDetail: p.profile.originDetail,
+                certification: p.profile.certification,
+                color: p.profile.color,
+                aromas: p.profile.aromas,
+                palate: p.profile.palate,
+                style: p.profile.style,
+                servingTemp: p.profile.servingTemp,
+                foodPairings: p.profile.foodPairings,
+                bestSuitedFor: p.profile.bestSuitedFor,
+                grapes: p.profile.grapes,
+            } : null,
             status: p.status,
         },
         media: media.map(m => ({
@@ -1116,7 +1208,18 @@ export type ProductViewDetails = {
     barcodeEan: string | null
     wineType: string
     classification: string | null
-    tastingNotes: string | null
+    profile: {
+        originDetail: string | null
+        certification: string | null
+        color: string | null
+        aromas: string | null
+        palate: string | null
+        style: string | null
+        servingTemp: string | null
+        foodPairings: string | null
+        bestSuitedFor: string | null
+        grapes: string | null
+    } | null
     status: string
     isAllocationEligible: boolean
     producerName: string
@@ -1138,6 +1241,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                     producer: { select: { name: true } },
                     appellation: { select: { name: true } },
                     marginPrice: { select: { retailPrice: true, wholesalePrice: true } },
+                    profile: true,
                 }
             }),
             prisma.productMedia.findMany({
@@ -1190,7 +1294,18 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
             barcodeEan: p.barcodeEan,
             wineType: p.wineType,
             classification: p.classification,
-            tastingNotes: p.tastingNotes,
+            profile: p.profile ? {
+                originDetail: p.profile.originDetail,
+                certification: p.profile.certification,
+                color: p.profile.color,
+                aromas: p.profile.aromas,
+                palate: p.profile.palate,
+                style: p.profile.style,
+                servingTemp: p.profile.servingTemp,
+                foodPairings: p.profile.foodPairings,
+                bestSuitedFor: p.profile.bestSuitedFor,
+                grapes: p.profile.grapes,
+            } : null,
             status: p.status,
             isAllocationEligible: p.isAllocationEligible,
             producerName: p.producer.name,

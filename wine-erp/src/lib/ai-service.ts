@@ -163,7 +163,6 @@ interface FormDataForAI {
     wineType?: string
     vintage?: number
     abv?: number
-    tastingNotes?: string
     countryCode?: string
 }
 
@@ -172,8 +171,18 @@ export async function generateProductDescription(
     formData?: FormDataForAI,
 ): Promise<{
     success: boolean
-    descriptionVI?: string
-    descriptionEN?: string
+    profile?: {
+        originDetail: string
+        certification: string
+        color: string
+        aromas: string
+        palate: string
+        style: string
+        servingTemp: string
+        foodPairings: string
+        bestSuitedFor: string
+        grapes: string
+    }
     error?: string
 }> {
     let pName = ''
@@ -216,7 +225,7 @@ export async function generateProductDescription(
         return { success: false, error: 'Either productId or formData is required' }
     }
 
-    const prompt = `Viết mô tả chuyên nghiệp cho rượu vang sau (2 phiên bản: Tiếng Việt và English):
+    const prompt = `Hãy phân tích và viết đặc tính chi tiết cho chai rượu vang sau dưới định dạng JSON:
 
 Tên: ${pName}
 SKU: ${pSku}
@@ -227,33 +236,43 @@ Nồng độ: ${pAbv}%
 Classification: ${pClassification}
 Dung tích: ${pVolume}ml
 
-Yêu cầu:
-- Mô tả tasting notes (mắt, mũi, miệng)
-- Gợi ý thực phẩm kết hợp
-- Phong cách chuyên nghiệp, sang trọng
-- Format: 
-  ## Tiếng Việt
-  [nội dung]
-  ## English
-  [nội dung]`
+Trả về một đối tượng JSON duy nhất có các trường sau:
+{
+  "originDetail": "Xuất xứ chi tiết (ví dụ: Veneto, Ý)",
+  "certification": "Chứng chỉ hoặc canh tác bền vững",
+  "color": "Mô tả màu sắc (bằng Tiếng Việt)",
+  "aromas": "Mô tả hương thơm (Nose) (bằng Tiếng Việt)",
+  "palate": "Mô tả vị giác (Palate) (bằng Tiếng Việt)",
+  "style": "Phong cách rượu (ví dụ: Khô, đậm đà mạnh mẽ...)",
+  "servingTemp": "Nhiệt độ phục vụ khuyến nghị (ví dụ: 16°C - 18°C)",
+  "foodPairings": "Gợi ý món ăn kèm (bằng Tiếng Việt)",
+  "bestSuitedFor": "Phù hợp với đối tượng nào (bằng Tiếng Việt)",
+  "grapes": "Giống nho tạo nên chai rượu này"
+}
+
+Chỉ trả về JSON thuần túy, không có mã Markdown hoặc lời dẫn.`
 
     const result = await callGemini({
         prompt,
-        systemPrompt: 'You are a professional sommelier writing wine descriptions for a premium wine import company in Vietnam.',
-        temperature: 0.8,
+        systemPrompt: 'You are a professional sommelier. Respond only with raw JSON text matching the requested schema. No markdown codeblocks, no extra explanation.',
+        temperature: 0.7,
     })
 
     if (!result.success) return { success: false, error: result.error }
 
-    // Split VI/EN
-    const text = result.text ?? ''
-    const viMatch = text.match(/## Tiếng Việt\s*([\s\S]*?)(?=## English|$)/i)
-    const enMatch = text.match(/## English\s*([\s\S]*?)$/i)
-
-    return {
-        success: true,
-        descriptionVI: viMatch?.[1]?.trim() ?? text,
-        descriptionEN: enMatch?.[1]?.trim() ?? '',
+    try {
+        let cleanText = result.text ?? '{}'
+        // Strip markdown backticks if any
+        if (cleanText.includes('```')) {
+            cleanText = cleanText.replace(/```json/g, '').replace(/```/g, '').trim()
+        }
+        const profile = JSON.parse(cleanText)
+        return {
+            success: true,
+            profile,
+        }
+    } catch (err: any) {
+        return { success: false, error: `Parse error: ${err.message}. Raw text: ${result.text}` }
     }
 }
 

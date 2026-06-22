@@ -166,7 +166,7 @@ describe('generateProductDescription', () => {
         expect(result.error).toBe('Product not found')
     })
 
-    it('should generate description with VI/EN split', async () => {
+    it('should generate product profile details successfully', async () => {
         mockPrisma.product.findUnique.mockResolvedValue({
             productName: 'Château Margaux 2018',
             skuCode: 'CM-2018',
@@ -179,13 +179,26 @@ describe('generateProductDescription', () => {
             appellation: { name: 'Margaux' },
         })
 
+        const mockProfileJson = {
+            originDetail: 'Margaux, Bordeaux, France',
+            certification: 'Sustainable',
+            color: 'Deep ruby',
+            aromas: 'Cassis, violets',
+            palate: 'Elegant, structured',
+            style: 'Full-bodied red',
+            servingTemp: '16-18°C',
+            foodPairings: 'Roasted lamb',
+            bestSuitedFor: 'Collectors',
+            grapes: 'Cabernet Sauvignon'
+        }
+
         mockFetch.mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({
                 candidates: [{
                     content: {
                         parts: [{
-                            text: '## Tiếng Việt\nMô tả tiếng Việt rượu vang\n## English\nEnglish wine description',
+                            text: JSON.stringify(mockProfileJson),
                         }],
                     },
                 }],
@@ -196,11 +209,10 @@ describe('generateProductDescription', () => {
         const result = await generateProductDescription('product-001')
 
         expect(result.success).toBe(true)
-        expect(result.descriptionVI).toBe('Mô tả tiếng Việt rượu vang')
-        expect(result.descriptionEN).toBe('English wine description')
+        expect(result.profile).toEqual(mockProfileJson)
     })
 
-    it('should handle missing appellation', async () => {
+    it('should handle JSON parsing errors gracefully', async () => {
         mockPrisma.product.findUnique.mockResolvedValue({
             productName: 'Test Wine',
             skuCode: 'TW-001',
@@ -216,15 +228,14 @@ describe('generateProductDescription', () => {
         mockFetch.mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({
-                candidates: [{ content: { parts: [{ text: 'No sections response' }] } }],
+                candidates: [{ content: { parts: [{ text: 'Invalid JSON Response' }] } }],
                 usageMetadata: { totalTokenCount: 50 },
             }),
         })
 
         const result = await generateProductDescription('product-002')
 
-        expect(result.success).toBe(true)
-        // Falls back to full text when no ## sections found
-        expect(result.descriptionVI).toBe('No sections response')
+        expect(result.success).toBe(false)
+        expect(result.error).toContain('Parse error')
     })
 })
