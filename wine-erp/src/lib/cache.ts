@@ -89,8 +89,15 @@ export function revalidateCache(prefix?: string) {
         cache.clear()
         return
     }
+    
+    // Cross-module invalidation: WMS/inventory updates must invalidate products cache (stock quantities)
+    const prefixes = [prefix]
+    if (prefix === 'wms' || prefix === 'transfers' || prefix === 'stock-count') {
+        prefixes.push('products')
+    }
+
     for (const key of cache.keys()) {
-        if (key.startsWith(prefix)) {
+        if (prefixes.some(p => key.startsWith(p))) {
             cache.delete(key)
         }
     }

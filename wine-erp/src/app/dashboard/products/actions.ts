@@ -1131,37 +1131,47 @@ export type ProductViewDetails = {
 export async function getProductViewDetails(id: string): Promise<ProductViewDetails | null> {
     const cacheKey = `products:detail:${id}`
     return cached(cacheKey, async () => {
-        const p = await prisma.product.findUnique({
-            where: { id },
-            include: {
-                producer: { select: { name: true } },
-                appellation: { select: { name: true } },
-                marginPrice: { select: { retailPrice: true, wholesalePrice: true } },
-                media: { select: { id: true, url: true, isPrimary: true }, orderBy: [{ isPrimary: 'desc' }, { uploadedAt: 'desc' }] },
-                awards: { select: { id: true, source: true, score: true, medal: true, vintage: true, awardedYear: true }, orderBy: [{ awardedYear: 'desc' }, { source: 'asc' }] },
-                stockLots: {
-                    where: { qtyAvailable: { gt: 0 } },
-                    select: {
-                        id: true,
-                        lotNo: true,
-                        qtyAvailable: true,
-                        receivedDate: true,
-                        status: true,
-                        location: {
-                            select: {
-                                locationCode: true,
-                                warehouse: {
-                                    select: {
-                                        name: true
-                                    }
+        const [p, media, awards, stockLots] = await Promise.all([
+            prisma.product.findUnique({
+                where: { id },
+                include: {
+                    producer: { select: { name: true } },
+                    appellation: { select: { name: true } },
+                    marginPrice: { select: { retailPrice: true, wholesalePrice: true } },
+                }
+            }),
+            prisma.productMedia.findMany({
+                where: { productId: id },
+                select: { id: true, url: true, isPrimary: true },
+                orderBy: [{ isPrimary: 'desc' }, { uploadedAt: 'desc' }]
+            }),
+            prisma.productAward.findMany({
+                where: { productId: id },
+                select: { id: true, source: true, score: true, medal: true, vintage: true, awardedYear: true },
+                orderBy: [{ awardedYear: 'desc' }, { source: 'asc' }]
+            }),
+            prisma.stockLot.findMany({
+                where: { productId: id, qtyAvailable: { gt: 0 } },
+                select: {
+                    id: true,
+                    lotNo: true,
+                    qtyAvailable: true,
+                    receivedDate: true,
+                    status: true,
+                    location: {
+                        select: {
+                            locationCode: true,
+                            warehouse: {
+                                select: {
+                                    name: true
                                 }
                             }
                         }
-                    },
-                    orderBy: { receivedDate: 'desc' }
-                }
-            }
-        })
+                    }
+                },
+                orderBy: { receivedDate: 'desc' }
+            })
+        ])
 
         if (!p) return null
 
@@ -1187,8 +1197,8 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
             appellationName: p.appellation?.name ?? null,
             retailPrice: p.marginPrice?.retailPrice ? Number(p.marginPrice.retailPrice) : null,
             wholesalePrice: p.marginPrice?.wholesalePrice ? Number(p.marginPrice.wholesalePrice) : null,
-            media: p.media,
-            awards: p.awards.map(a => ({
+            media,
+            awards: awards.map(a => ({
                 id: a.id,
                 source: a.source,
                 score: a.score ? Number(a.score) : null,
@@ -1197,7 +1207,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                 vintage: a.vintage,
                 awardedYear: a.awardedYear,
             })),
-            stockLots: p.stockLots.map(l => ({
+            stockLots: stockLots.map(l => ({
                 id: l.id,
                 lotNo: l.lotNo,
                 qtyAvailable: Number(l.qtyAvailable),
@@ -1207,6 +1217,6 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                 warehouseName: l.location.warehouse.name
             }))
         }
-    })
+    }, 300_000) // 5 minutes cache TTL
 }
 

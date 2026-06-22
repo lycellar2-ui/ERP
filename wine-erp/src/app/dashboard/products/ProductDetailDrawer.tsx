@@ -57,6 +57,18 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
     const [data, setData] = useState<ProductViewDetails | null>(null)
     const [loading, setLoading] = useState(false)
     const [activeImage, setActiveImage] = useState<string | null>(null)
+    const [animate, setAnimate] = useState(false)
+
+    useEffect(() => {
+        if (open) {
+            const raf = requestAnimationFrame(() => {
+                setAnimate(true)
+            })
+            return () => cancelAnimationFrame(raf)
+        } else {
+            setAnimate(false)
+        }
+    }, [open])
 
     useEffect(() => {
         if (!open || !productId) return
@@ -104,7 +116,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
             <>
                 <div
                     className="fixed inset-0 z-40 transition-opacity duration-300"
-                    style={{ background: 'rgba(10,5,2,0.7)', opacity: 1 }}
+                    style={{ background: 'rgba(10,5,2,0.7)', opacity: animate ? 1 : 0 }}
                     onClick={onClose}
                 />
                 <div
@@ -113,7 +125,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         width: 'min(640px, 95vw)',
                         background: '#0D1E2B',
                         borderLeft: '1px solid #2A4355',
-                        transform: 'translateX(0)',
+                        transform: animate ? 'translateX(0)' : 'translateX(100%)',
                     }}
                 >
                     <Loader2 size={32} className="animate-spin text-[#87CBB9]" />
@@ -135,7 +147,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
         <>
             <div
                 className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.7)', opacity: open ? 1 : 0 }}
+                style={{ background: 'rgba(10,5,2,0.7)', opacity: animate ? 1 : 0 }}
                 onClick={onClose}
             />
 
@@ -145,7 +157,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                     width: 'min(640px, 95vw)',
                     background: '#0D1E2B',
                     borderLeft: '1px solid #2A4355',
-                    transform: open ? 'translateX(0)' : 'translateX(100%)',
+                    transform: animate ? 'translateX(0)' : 'translateX(100%)',
                 }}
             >
                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
