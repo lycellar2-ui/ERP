@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ProductDetailDrawer } from './ProductDetailDrawer'
@@ -99,6 +99,23 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
     const [showMobileFilters, setShowMobileFilters] = useState(false)
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
+    const detailCache = useRef<Record<string, any>>({})
+
+    const prefetchProductDetails = useCallback((id: string) => {
+        if (detailCache.current[id]) return
+        const promise = getProductViewDetails(id)
+            .then(data => {
+                if (data) {
+                    detailCache.current[id] = data
+                }
+                return data
+            })
+            .catch(err => {
+                delete detailCache.current[id]
+                return null
+            })
+        detailCache.current[id] = promise
+    }, [])
 
     const handleSearchChange = (value: string) => {
         setSearch(value)
@@ -373,6 +390,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 onEdit={id => { setEditingId(id); setDrawerOpen(true) }}
                 onDelete={handleDelete}
                 onView={id => { setViewId(id); setViewOpen(true) }}
+                onPrefetchDetails={prefetchProductDetails}
                 canEdit={canEdit}
                 onRefresh={() => applyFilter({})}
                 onPrefetch={prefetchPage}
@@ -388,6 +406,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 open={viewOpen}
                 productId={viewId}
                 initialData={rows.find(r => r.id === viewId) || null}
+                cachedData={viewId ? detailCache.current[viewId] : null}
                 onClose={() => setViewOpen(false)}
                 canEdit={canEdit}
                 onEditTrigger={id => { setEditingId(id); setDrawerOpen(true) }}

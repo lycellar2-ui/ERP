@@ -24,7 +24,7 @@ function EmptyState() {
     )
 }
 
-function ProductTableRow({ row, onEdit, onDelete, onView, canEdit }: { row: ProductRow; onEdit: () => void; onDelete: () => void; onView: () => void; canEdit: boolean }) {
+function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: { row: ProductRow; onEdit: () => void; onDelete: () => void; onView: () => void; onPrefetchDetails?: () => void; canEdit: boolean }) {
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
     const [isVertical, setIsVertical] = useState(false)
@@ -55,7 +55,10 @@ function ProductTableRow({ row, onEdit, onDelete, onView, canEdit }: { row: Prod
         <tr className="group transition-colors duration-100 cursor-pointer"
             style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
             onClick={onView}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
+            onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(61,43,31,0.35)'
+                onPrefetchDetails?.()
+            }}
             onMouseLeave={e => (e.currentTarget.style.background = '')}>
 
             {/* Product */}
@@ -187,14 +190,15 @@ function ProductTableRow({ row, onEdit, onDelete, onView, canEdit }: { row: Prod
     )
 }
 
-function ProductMobileCard({ row, onEdit, onDelete, onView, canEdit }: { row: ProductRow; onEdit: () => void; onDelete: () => void; onView: () => void; canEdit: boolean }) {
+function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: { row: ProductRow; onEdit: () => void; onDelete: () => void; onView: () => void; onPrefetchDetails?: () => void; canEdit: boolean }) {
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
 
     return (
         <div className="p-2.5 flex gap-3 transition-colors duration-100 animate-none cursor-pointer items-center"
             style={{ borderBottom: '1px solid rgba(42,67,85,0.15)', background: '#0D1E2B' }}
-            onClick={onView}>
+            onClick={onView}
+            onTouchStart={onPrefetchDetails}>
             
             {/* 1. Bottle Thumbnail (Compact) */}
             <div className="relative w-10 h-16 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border"
@@ -293,12 +297,13 @@ interface ProductTableProps {
     onEdit: (id: string) => void
     onDelete: (id: string, name: string) => void
     onView: (id: string) => void
+    onPrefetchDetails?: (id: string) => void
     canEdit?: boolean
     onRefresh: () => void
     onPrefetch?: (page: number) => void
 }
 
-export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, canEdit = false, onPrefetch }: ProductTableProps) {
+export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, onPrefetchDetails, canEdit = false, onPrefetch }: ProductTableProps) {
     const totalPages = Math.ceil(total / pageSize)
 
     const sortableHeaders = [
@@ -425,6 +430,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                             onEdit={() => onEdit(row.id)}
                             onDelete={() => onDelete(row.id, row.productName)}
                             onView={() => onView(row.id)}
+                            onPrefetchDetails={() => onPrefetchDetails?.(row.id)}
                             canEdit={canEdit}
                         />
                     ))
@@ -470,6 +476,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                                         onEdit={() => onEdit(row.id)}
                                         onDelete={() => onDelete(row.id, row.productName)}
                                         onView={() => onView(row.id)}
+                                        onPrefetchDetails={() => onPrefetchDetails?.(row.id)}
                                         canEdit={canEdit}
                                     />
                                 ))

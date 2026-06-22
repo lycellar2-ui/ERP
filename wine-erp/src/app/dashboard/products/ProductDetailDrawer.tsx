@@ -13,6 +13,7 @@ interface ProductDetailDrawerProps {
     open: boolean
     productId: string | null
     initialData?: ProductRow | null
+    cachedData?: Promise<ProductViewDetails | null> | ProductViewDetails | null
     onClose: () => void
     canEdit: boolean
     onEditTrigger: (id: string) => void
@@ -52,7 +53,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
     ALLOCATION_ONLY: { label: 'Phân bổ (Allocation)', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
 }
 
-export function ProductDetailDrawer({ open, productId, initialData, onClose, canEdit, onEditTrigger }: ProductDetailDrawerProps) {
+export function ProductDetailDrawer({ open, productId, initialData, cachedData, onClose, canEdit, onEditTrigger }: ProductDetailDrawerProps) {
     const [data, setData] = useState<ProductViewDetails | null>(null)
     const [loading, setLoading] = useState(false)
     const [activeImage, setActiveImage] = useState<string | null>(null)
@@ -64,21 +65,35 @@ export function ProductDetailDrawer({ open, productId, initialData, onClose, can
         setData(null)
         setActiveImage(initialData?.primaryImageUrl || null)
 
-        getProductViewDetails(productId)
-            .then(details => {
-                if (details) {
-                    setData(details)
-                    const primary = details.media.find(m => m.isPrimary)?.url ?? details.media[0]?.url ?? null
-                    setActiveImage(primary)
-                }
-            })
-            .catch(err => {
-                console.error('[ProductDetailDrawer] Error fetching product view:', err)
-            })
-            .finally(() => {
-                setLoading(false)
-            })
-    }, [open, productId, initialData])
+        const handleDetails = (details: ProductViewDetails | null) => {
+            if (details) {
+                setData(details)
+                const primary = details.media.find(m => m.isPrimary)?.url ?? details.media[0]?.url ?? null
+                setActiveImage(primary)
+            }
+            setLoading(false)
+        }
+
+        if (cachedData) {
+            if (cachedData instanceof Promise) {
+                cachedData
+                    .then(handleDetails)
+                    .catch(err => {
+                        console.error('[ProductDetailDrawer] Cache promise error:', err)
+                        setLoading(false)
+                    })
+            } else {
+                handleDetails(cachedData)
+            }
+        } else {
+            getProductViewDetails(productId)
+                .then(handleDetails)
+                .catch(err => {
+                    console.error('[ProductDetailDrawer] Error fetching product view:', err)
+                    setLoading(false)
+                })
+        }
+    }, [open, productId, initialData, cachedData])
 
     if (!open) return null
 
