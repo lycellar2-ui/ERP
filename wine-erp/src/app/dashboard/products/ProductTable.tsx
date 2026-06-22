@@ -194,6 +194,19 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
     const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
     const stockColor = row.totalStock === 0 ? '#8B1A2E' : row.totalStock < 12 ? '#87CBB9' : '#5BA88A'
 
+    const formatLabel = (fmt: string) => {
+        switch (fmt) {
+            case 'STANDARD': return '750ml'
+            case 'MAGNUM': return 'Magnum (1.5L)'
+            case 'JEROBOAM': return 'Jeroboam (3L)'
+            case 'METHUSELAH': return 'Methuselah (6L)'
+            default: return fmt
+        }
+    }
+
+    const pkgLabel = row.packagingType === 'OWC' ? 'Thùng gỗ' : 'Carton'
+    const fmtLabel = formatLabel(row.format)
+
     return (
         <div className="p-2.5 flex gap-3 transition-colors duration-100 animate-none cursor-pointer items-center"
             style={{ borderBottom: '1px solid rgba(42,67,85,0.15)', background: '#0D1E2B' }}
@@ -241,6 +254,18 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                     {row.producerName}
                     {row.appellationName ? ` • ${row.appellationName}` : ''}
                 </p>
+
+                <div className="flex items-center gap-1.5 flex-wrap text-[9px] mt-0.5" style={{ color: '#4A6A7A' }}>
+                    <span className="text-[#8AAEBB]">{fmtLabel}</span>
+                    <span>•</span>
+                    <span>{row.unitsPerCase} chai/{pkgLabel}</span>
+                    {row.classification && (
+                        <>
+                            <span>•</span>
+                            <span className="text-[#D4A853] font-medium">{row.classification}</span>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* 3. Right Side: Stock Level, Status Badge & Action buttons */}
@@ -253,6 +278,11 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                 {/* Wine Type Badge (compact wrapper) */}
                 <div className="scale-90 origin-right">
                     <WineTypeBadge type={row.wineType} />
+                </div>
+
+                {/* Status Badge */}
+                <div className="scale-90 origin-right">
+                    <StatusBadge status={row.status} />
                 </div>
 
                 {/* Actions */}

@@ -477,6 +477,175 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
     )
 }
 
+// ── Mobile Card Component ────────────────────────
+function SalesOrderMobileCard({
+    row,
+    onViewDetail,
+    onApprove,
+    onReject,
+    onConfirm,
+    onEdit,
+    onAcctApprove,
+    onAcctReject,
+    onCancel,
+    actionLoading
+}: {
+    row: SalesOrderRow
+    onViewDetail: () => void
+    onApprove: () => void
+    onReject: () => void
+    onConfirm: () => void
+    onEdit: () => void
+    onAcctApprove: () => void
+    onAcctReject: () => void
+    onCancel: () => void
+    actionLoading: string | null
+}) {
+    const isActLoading = actionLoading === row.id
+
+    return (
+        <div className="p-3.5 flex flex-col gap-2.5 rounded-lg border transition-all duration-150 relative bg-[#0D1E2B]"
+            style={{ borderColor: '#2A4355' }}
+            onClick={onViewDetail}>
+            
+            {/* Header: SO code & Date */}
+            <div className="flex items-center justify-between">
+                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                    {row.soNo}
+                </span>
+                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                    {formatDate(row.createdAt)}
+                </span>
+            </div>
+
+            {/* Customer information */}
+            <div>
+                <p className="text-sm font-semibold leading-snug" style={{ color: '#E8F1F2' }}>
+                    {row.customerName}
+                </p>
+                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                    {row.customerCode}
+                </p>
+            </div>
+
+            {/* Channel, Legal Entity, Sales Rep */}
+            <div className="flex flex-wrap items-center gap-2">
+                {/* Channel Badge */}
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                    style={{ background: 'rgba(135,203,185,0.08)', color: '#8AAEBB' }}>
+                    {CHANNEL_LABEL[row.channel] ?? row.channel}
+                </span>
+
+                {/* Legal Entity Badge */}
+                {row.legalEntityCode && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                        style={{ 
+                            background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(135,203,185,0.12)', 
+                            color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' 
+                        }}>
+                        {row.legalEntityCode}
+                    </span>
+                )}
+
+                {/* Sales Rep Name */}
+                <span className="text-[10px] ml-auto" style={{ color: '#8AAEBB' }}>
+                    Rep: <span className="font-medium">{row.salesRepName}</span>
+                </span>
+            </div>
+
+            {/* Financial summary & Status */}
+            <div className="flex items-center justify-between pt-1.5 border-t border-[#2A4355]/30">
+                {/* Total amount & discount */}
+                <div>
+                    <span className="text-sm font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>
+                        {formatVND(row.totalAmount)}
+                    </span>
+                    {row.orderDiscount > 0 && (
+                        <span className="text-[10px] ml-1.5 font-semibold" style={{ color: '#5BA88A' }}>
+                            (CK {row.orderDiscount}%)
+                        </span>
+                    )}
+                </div>
+
+                {/* StatusBadge component */}
+                <div className="scale-90 origin-right">
+                    <StatusBadge status={row.status} />
+                </div>
+            </div>
+
+            {/* Actions Footer */}
+            <div className="flex items-center justify-end gap-1.5 flex-wrap pt-2 border-t border-[#2A4355]/30"
+                onClick={e => e.stopPropagation() /* Prevent card click onViewDetail */}>
+                
+                {/* Eye Detail button (always shown) */}
+                <button onClick={onViewDetail}
+                    className="p-1.5 rounded transition-all flex items-center justify-center border"
+                    style={{ background: 'rgba(135,203,185,0.06)', color: '#87CBB9', borderColor: 'rgba(135,203,185,0.2)' }}
+                    title="Chi tiết">
+                    <Eye size={12} />
+                </button>
+
+                {/* CEO Approval Actions */}
+                {row.status === 'PENDING_APPROVAL' && (
+                    <>
+                        <button onClick={onApprove} disabled={isActLoading}
+                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
+                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', borderColor: 'rgba(91,168,138,0.3)', borderRadius: '4px' }}>
+                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> Duyệt</>}
+                        </button>
+                        <button onClick={onReject} disabled={isActLoading}
+                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
+                            style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.25)', borderRadius: '4px' }}>
+                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> Từ chối</>}
+                        </button>
+                    </>
+                )}
+
+                {/* Draft Actions */}
+                {row.status === 'DRAFT' && (
+                    <>
+                        <button onClick={onConfirm} disabled={isActLoading}
+                            className="px-2 py-1 text-[11px] font-semibold transition-all border"
+                            style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A', borderColor: 'rgba(91,168,138,0.25)', borderRadius: '4px' }}>
+                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : 'Xác nhận'}
+                        </button>
+                        <button onClick={onEdit}
+                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold transition-all border"
+                            style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', borderColor: 'rgba(212,168,83,0.2)', borderRadius: '4px' }}>
+                            <Pencil size={10} /> Sửa
+                        </button>
+                    </>
+                )}
+
+                {/* Accountant Approval Actions */}
+                {row.status === 'PENDING_ACCOUNTING' && (
+                    <>
+                        <button onClick={onAcctApprove} disabled={isActLoading}
+                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
+                            style={{ background: 'rgba(192,132,252,0.12)', color: '#C084FC', borderColor: 'rgba(192,132,252,0.25)', borderRadius: '4px' }}>
+                            <CheckCircle2 size={10} /> KT Duyệt
+                        </button>
+                        <button onClick={onAcctReject} disabled={isActLoading}
+                            className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
+                            style={{ background: 'rgba(139,26,46,0.1)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.2)', borderRadius: '4px' }}>
+                            {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> Trả về</>}
+                        </button>
+                    </>
+                )}
+
+                {/* Cancel Action */}
+                {['DRAFT', 'CONFIRMED', 'PENDING_ACCOUNTING'].includes(row.status) && (
+                    <button onClick={onCancel} disabled={isActLoading}
+                        className="px-2 py-1 text-[11px] font-semibold transition-all border"
+                        style={{ background: 'rgba(139,26,46,0.08)', color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.2)', borderRadius: '4px' }}>
+                        Huỷ đơn
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
 // ── Main Component ───────────────────────────────
 // Roles allowed to see cost/margin data
 const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN', 'Sales Admin']
@@ -685,8 +854,8 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            {/* Table (Desktop View) */}
+            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 900 }}>
                         <thead>
@@ -781,7 +950,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                                     className="flex items-center gap-1 px-2 py-1 text-xs font-semibold"
                                                     style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}>
                                                     <Pencil size={11} /> Sửa
-                                                </button>
+                                                 </button>
                                             )}
                                             {row.status === 'PENDING_ACCOUNTING' && (
                                                 <button onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
@@ -819,16 +988,69 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                 </div>
             </div>
 
+            {/* Mobile View */}
+            <div className={`block md:hidden space-y-3 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
+                {rows.length === 0 && loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="p-4 space-y-3 rounded-lg border border-[#2A4355]/30 bg-[#0D1E2B] animate-pulse">
+                            <div className="flex justify-between">
+                                <div className="h-4 bg-[#1B2E3D] rounded w-1/3" />
+                                <div className="h-3 bg-[#1B2E3D] rounded w-1/4" />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="h-4 bg-[#1B2E3D] rounded w-3/4" />
+                                <div className="h-3 bg-[#1B2E3D] rounded w-1/2" />
+                            </div>
+                            <div className="flex gap-2">
+                                <div className="h-5 bg-[#1B2E3D] rounded w-16" />
+                                <div className="h-5 bg-[#1B2E3D] rounded w-12" />
+                            </div>
+                            <div className="flex justify-between pt-2 border-t border-[#2A4355]/20">
+                                <div className="h-4 bg-[#1B2E3D] rounded w-24" />
+                                <div className="h-5 bg-[#1B2E3D] rounded w-20" />
+                            </div>
+                        </div>
+                    ))
+                ) : rows.length === 0 ? (
+                    <div className="text-center py-16 rounded-md border border-[#2A4355] bg-[#0D1E2B]" style={{ color: '#4A6A7A' }}>
+                        <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
+                        <p className="text-sm">Chưa có đơn hàng nào</p>
+                    </div>
+                ) : (
+                    rows.map(row => (
+                        <SalesOrderMobileCard
+                            key={row.id}
+                            row={row}
+                            onViewDetail={() => setDetailId(row.id)}
+                            onApprove={() => handleApprove(row.id)}
+                            onReject={() => handleReject(row.id)}
+                            onConfirm={() => handleConfirm(row.id)}
+                            onEdit={() => setEditId(row.id)}
+                            onAcctApprove={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
+                            onAcctReject={async () => {
+                                if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
+                                setActionLoading(row.id)
+                                toast.promise(accountingRejectSO(row.id).then(() => reload()), {
+                                    loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
+                                })
+                            }}
+                            onCancel={() => handleCancel(row.id)}
+                            actionLoading={actionLoading}
+                        />
+                    ))
+                )}
+            </div>
+
             {/* Pagination */}
             {total > 20 && (
-                <div className="flex items-center justify-between">
-                    <p className="text-sm" style={{ color: '#4A6A7A' }}>
-                        Hiển thị {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} / {total} đơn hàng
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-[#142433] border border-[#2A4355] rounded-md animate-none">
+                    <p className="text-xs text-center sm:text-left" style={{ color: '#4A6A7A' }}>
+                        Hiển thị <span style={{ color: '#8AAEBB' }}>{(page - 1) * 20 + 1}–{Math.min(page * 20, total)}</span> trong <span style={{ color: '#8AAEBB' }}>{total}</span> đơn hàng
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {Array.from({ length: Math.ceil(total / 20) }, (_, i) => i + 1).slice(0, 8).map(p => (
                             <button key={p} onClick={() => { setPage(p); reload({ page: p }) }}
-                                className="w-8 h-8 text-sm flex items-center justify-center transition-all"
+                                className="min-w-[32px] h-8 px-2 rounded text-xs font-semibold transition-all"
                                 style={{
                                     background: p === page ? 'rgba(135,203,185,0.15)' : 'transparent',
                                     color: p === page ? '#87CBB9' : '#8AAEBB',
