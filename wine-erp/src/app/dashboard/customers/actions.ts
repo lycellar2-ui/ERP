@@ -26,6 +26,10 @@ export type CustomerRow = {
     status: string
     orderCount: number
     createdAt: Date
+    parentId: string | null
+    parentCode: string | null
+    parentName: string | null
+    childrenCount: number
 }
 
 export type CustomerFilters = {
@@ -91,6 +95,8 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
                 include: {
                     salesRep: { select: { id: true, name: true } },
                     salesOrders: { select: { id: true } },
+                    parent: { select: { id: true, name: true, code: true } },
+                    children: { where: { deletedAt: null }, select: { id: true } },
                 },
                 orderBy,
                 skip: (page - 1) * pageSize,
@@ -114,6 +120,10 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
             status: c.status,
             orderCount: c.salesOrders.length,
             createdAt: c.createdAt,
+            parentId: c.parent?.id ?? null,
+            parentCode: c.parent?.code ?? null,
+            parentName: c.parent?.name ?? null,
+            childrenCount: c.children.length,
         }))
 
         // Client-side sort for computed field
@@ -160,6 +170,7 @@ export async function getCustomerById(id: string) {
         creditLimit: Number(c.creditLimit),
         salesRepId: c.salesRepId,
         status: c.status,
+        parentId: c.parentId,
         contactName: contact?.name ?? null,
         contactTitle: contact?.title ?? null,
         email: contact?.email ?? null,
@@ -247,6 +258,31 @@ export async function getSalesRepList(): Promise<{ id: string; name: string }[]>
     }, 60_000)
 }
 
+export async function getParentCandidates(currentId?: string) {
+    const where: any = {
+        deletedAt: null,
+        status: 'ACTIVE',
+        customerType: { in: ['HORECA', 'WHOLESALE_DISTRIBUTOR'] },
+        parentId: null,
+    }
+
+    if (currentId) {
+        // Also exclude any children of currentId to avoid circular dependency
+        const children = await prisma.customer.findMany({
+            where: { parentId: currentId, deletedAt: null },
+            select: { id: true }
+        })
+        const excludeIds = [currentId, ...children.map(c => c.id)]
+        where.id = { notIn: excludeIds }
+    }
+
+    return prisma.customer.findMany({
+        where,
+        select: { id: true, name: true, code: true },
+        orderBy: { name: 'asc' },
+    })
+}
+
 // ═══════════════════════════════════════════════════
 // EXPORT
 // ═══════════════════════════════════════════════════
@@ -298,6 +334,7 @@ const customerSchema = z.object({
     creditLimit: z.number().default(0),
     salesRepId: z.string().nullable().optional(),
     status: z.enum(['ACTIVE', 'CREDIT_HOLD', 'INACTIVE']).default('ACTIVE'),
+    parentId: z.string().nullable().optional(),
     contactName: z.string().nullable().optional(),
     email: z.string().email('Email không hợp lệ').nullable().optional(),
     phone: z.string().nullable().optional(),
@@ -332,6 +369,7 @@ export async function createCustomer(input: CustomerInput) {
                     creditLimit: data.creditLimit,
                     salesRepId: salesRepId !== undefined ? salesRepId : null,
                     status: data.status,
+                    parentId: data.parentId !== undefined ? data.parentId : null,
                 },
             })
 
@@ -406,6 +444,20 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.creditLimit !== undefined) updateData.creditLimit = customerData.creditLimit
         if (customerData.salesRepId !== undefined) updateData.salesRepId = customerData.salesRepId
         if (customerData.status !== undefined) updateData.status = customerData.status
+        if (customerData.parentId !== undefined) updateData.parentId = customerData.parentId
+
+        if (customerData.parentId) {
+            if (customerData.parentId === id) {
+                return { success: false, error: 'Không thể chọn chính mình làm cha' }
+            }
+            // Prevent circular dependency: check if the chosen parent is a child of this customer
+            const isChild = await prisma.customer.findFirst({
+                where: { id: customerData.parentId, parentId: id, deletedAt: null }
+            })
+            if (isChild) {
+                return { success: false, error: 'Khách hàng được chọn làm cha đang là con của khách hàng này' }
+            }
+        }
 
         await prisma.$transaction(async (tx) => {
             await tx.customer.update({

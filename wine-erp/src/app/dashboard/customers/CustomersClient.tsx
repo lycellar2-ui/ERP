@@ -8,7 +8,7 @@ import {
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
     createCustomer, updateCustomer, getCustomers, getCustomerById,
-    deleteCustomer, exportCustomersData, bulkImportCustomers,
+    deleteCustomer, exportCustomersData, bulkImportCustomers, getParentCandidates,
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
@@ -93,10 +93,17 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const [loading, setLoading] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
 
+    const [parentCandidates, setParentCandidates] = useState<{ id: string; name: string; code: string }[]>([])
+
     const isEdit = !!editingId
 
     useEffect(() => {
         if (!open) return
+
+        getParentCandidates(editingId || undefined)
+            .then(setParentCandidates)
+            .catch(() => {})
+
         if (editingId) {
             setLoading(true)
             getCustomerById(editingId).then(data => {
@@ -112,6 +119,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         creditLimit: data.creditLimit,
                         salesRepId: data.salesRepId,
                         status: data.status as any,
+                        parentId: data.parentId,
                         contactName: data.contactName,
                         email: data.email,
                         phone: data.phone,
@@ -123,7 +131,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 }
             }).finally(() => setLoading(false))
         } else {
-            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: 'ACTIVE', customerType: 'HORECA' })
+            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: 'ACTIVE', customerType: 'HORECA', parentId: null })
         }
         setErrors({})
     }, [open, editingId])
@@ -217,7 +225,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Loại KH</label>
                                     <select className={inputCls} style={inputStyle} value={form.customerType ?? 'HORECA'}
-                                        onChange={e => set('customerType', e.target.value as any)}
+                                        onChange={e => {
+                                            const val = e.target.value as any
+                                            setForm(f => ({
+                                                ...f,
+                                                customerType: val,
+                                                ...(val !== 'HORECA' && val !== 'WHOLESALE_DISTRIBUTOR' ? { parentId: null } : {})
+                                            }))
+                                        }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
                                         <option value="HORECA">🏨 HORECA</option>
                                         <option value="WHOLESALE_DISTRIBUTOR">🏭 Phân Phối Sỉ</option>
@@ -226,6 +241,20 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     </select>
                                 </div>
                             </div>
+
+                            {(form.customerType === 'HORECA' || form.customerType === 'WHOLESALE_DISTRIBUTOR') && (
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Khách hàng cha (Chuỗi / Hệ thống)</label>
+                                    <select className={inputCls} style={inputStyle} value={form.parentId ?? ''}
+                                        onChange={e => set('parentId', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        <option value="">— Chọn Khách Hàng Cha (Nếu có) —</option>
+                                        {parentCandidates.map(c => (
+                                            <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên Khách Hàng <span style={{ color: '#8B1A2E' }}>*</span></label>
@@ -622,8 +651,31 @@ export function CustomersClient({ initialRows, initialTotal, stats, channels, sa
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                     <td className="px-4 py-3">
-                                        <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                        {row.parentId ? (
+                                            <>
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
+                                                <div className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: '#4A6A7A' }}>
+                                                    <span style={{ fontFamily: '"DM Mono", monospace' }}>{row.code}</span>
+                                                    <span>·</span>
+                                                    <span style={{ color: '#8AAEBB' }}>↳ Chi nhánh của {row.parentCode}</span>
+                                                </div>
+                                            </>
+                                        ) : row.childrenCount > 0 ? (
+                                            <>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ color: '#0A1926', background: '#D4A853' }}>
+                                                        Cha ({row.childrenCount} nhánh)
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
+                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                            </>
+                                        )}
                                     </td>
                                     <td className="px-3 py-3"><TypeBadge type={row.customerType} /></td>
                                     <td className="px-3 py-3 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.taxId ?? '—'}</td>

@@ -369,7 +369,7 @@ export async function resolveCustomerProductPrice(
     // 2. Fetch Customer Info
     const customer = await prisma.customer.findUnique({
         where: { id: customerId },
-        select: { channel: true },
+        select: { channel: true, parentId: true },
     })
     const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
 
@@ -381,9 +381,13 @@ export async function resolveCustomerProductPrice(
     const basePrice = await getChannelBasePrice(productId, targetChannel, now)
 
     // 5. Look up active approved price rules
-    const rules = await prisma.customerPriceRule.findMany({
+    const customerWhere = customer?.parentId
+        ? { in: [customerId, customer.parentId] }
+        : customerId
+
+    const allRules = await prisma.customerPriceRule.findMany({
         where: {
-            customerId,
+            customerId: customerWhere,
             productId,
             status: 'APPROVED',
             startDate: { lte: now },
@@ -394,6 +398,13 @@ export async function resolveCustomerProductPrice(
         },
         orderBy: { createdAt: 'desc' },
     })
+
+    // Filter rules: if the child has any rules, use them. Otherwise, if the parent has rules, use them.
+    let rules = allRules
+    if (customer?.parentId) {
+        const childRules = allRules.filter(r => r.customerId === customerId)
+        rules = childRules.length > 0 ? childRules : allRules.filter(r => r.customerId === customer.parentId)
+    }
 
     // Priority 1: SPECIAL_PRICE (Campaign pricing with expiry date)
     const specialRule = rules.find(r => r.ruleType === 'SPECIAL_PRICE')
@@ -533,7 +544,7 @@ export async function getCustomerResolvedPrices(
     // 3. Get customer channel and target price list
     const customer = await prisma.customer.findUnique({
         where: { id: customerId },
-        select: { channel: true }
+        select: { channel: true, parentId: true }
     })
     const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
     const mapping = await getChannelPriceMapping()
@@ -574,10 +585,14 @@ export async function getCustomerResolvedPrices(
         }
     }
 
-    // 5. Fetch approved customer price rules
-    const rules = await prisma.customerPriceRule.findMany({
+    // 5. Fetch approved customer price rules for both customer and its parent
+    const customerWhere = customer?.parentId
+        ? { in: [customerId, customer.parentId] }
+        : customerId
+
+    const allRules = await prisma.customerPriceRule.findMany({
         where: {
-            customerId,
+            customerId: customerWhere,
             status: 'APPROVED',
             startDate: { lte: now },
             OR: [
@@ -587,6 +602,18 @@ export async function getCustomerResolvedPrices(
         },
         orderBy: { createdAt: 'desc' }
     })
+
+    // Filter rules so child rules override parent rules on a per-product basis
+    let rules = allRules
+    if (customer?.parentId) {
+        const childRules = allRules.filter(r => r.customerId === customerId)
+        const parentRules = allRules.filter(r => r.customerId === customer.parentId)
+        const childRuleProductIds = new Set(childRules.map(r => r.productId))
+        rules = [
+            ...childRules,
+            ...parentRules.filter(r => !childRuleProductIds.has(r.productId))
+        ]
+    }
 
     // Apply rules in reverse precedence order so higher priority rules overwrite lower ones
     // 5.1. Apply FIXED_DISCOUNT rules

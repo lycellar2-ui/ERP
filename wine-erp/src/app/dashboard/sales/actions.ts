@@ -251,7 +251,25 @@ export async function getCustomersForSO() {
     return cached('sales:customers', async () => {
         return prisma.customer.findMany({
             where: { status: 'ACTIVE', deletedAt: null },
-            select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true },
+            select: {
+                id: true,
+                name: true,
+                code: true,
+                creditLimit: true,
+                creditHold: true,
+                paymentTerm: true,
+                channel: true,
+                parentId: true,
+                parent: {
+                    select: {
+                        id: true,
+                        name: true,
+                        code: true,
+                        creditLimit: true,
+                        creditHold: true,
+                    }
+                }
+            },
             orderBy: { name: 'asc' },
         })
     }, 60_000)

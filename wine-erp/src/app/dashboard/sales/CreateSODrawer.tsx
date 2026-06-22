@@ -53,7 +53,24 @@ const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
     }
 }
 
-interface Customer { id: string; name: string; code: string; creditLimit: number; paymentTerm: string; channel: string | null; defaultLegalEntityId: string | null }
+interface Customer {
+    id: string
+    name: string
+    code: string
+    creditLimit: number
+    creditHold: boolean
+    paymentTerm: string
+    channel: string | null
+    defaultLegalEntityId: string | null
+    parentId: string | null
+    parent?: {
+        id: string
+        name: string
+        code: string
+        creditLimit: number
+        creditHold: boolean
+    } | null
+}
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
 interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null }
 
@@ -69,6 +86,33 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const [customers, setCustomers] = useState<Customer[]>([])
     const [products, setProducts] = useState<ProductItem[]>([])
     const [loadingData, setLoadingData] = useState(false)
+
+    const sortedCustomersForSelect = useMemo(() => {
+        const parentsAndStandalone = customers.filter(c => !c.parentId)
+        const result: typeof customers = []
+
+        parentsAndStandalone.forEach(parent => {
+            result.push(parent)
+            const children = customers.filter(c => c.parentId === parent.id)
+            children.forEach(child => {
+                result.push({
+                    ...child,
+                    name: `\u00A0\u00A0\u00A0↳ ${child.name}`
+                })
+            })
+        })
+
+        const childIds = result.map(r => r.id)
+        const orphans = customers.filter(c => c.parentId && !childIds.includes(c.id))
+        orphans.forEach(child => {
+            result.push({
+                ...child,
+                name: `\u00A0\u00A0\u00A0↳ ${child.name}`
+            })
+        })
+
+        return result
+    }, [customers])
 
     const [customerId, setCustomerId] = useState('')
     const [channel, setChannel] = useState<SalesChannel>('HORECA')
@@ -221,8 +265,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     }, 0)
     const finalTotal = subtotal * (1 - orderDiscount / 100)
 
-    const creditAvailable = selectedCustomer ? Number(selectedCustomer.creditLimit) - arBalance : 0
-    const creditWarning = selectedCustomer && finalTotal > creditAvailable
+    const effectiveCreditLimit = selectedCustomer
+        ? (selectedCustomer.parentId && Number(selectedCustomer.creditLimit) === 0 && selectedCustomer.parent)
+            ? Number(selectedCustomer.parent.creditLimit)
+            : Number(selectedCustomer.creditLimit)
+        : 0
+    const creditAvailable = selectedCustomer ? effectiveCreditLimit - arBalance : 0
+    const isCreditHold = selectedCustomer?.creditHold || (selectedCustomer?.parent?.creditHold ?? false)
+    const creditWarning = selectedCustomer && (finalTotal > creditAvailable || isCreditHold)
 
     const handleSave = async () => {
         if (!customerId) return toast.error('Vui lòng chọn khách hàng')
@@ -312,7 +362,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                     style={{ ...inputStyle }}
                                 >
                                     <option value="">-- Chọn khách hàng --</option>
-                                    {customers.map(c => (
+                                    {sortedCustomersForSelect.map(c => (
                                         <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
                                     ))}
                                 </select>
@@ -324,14 +374,20 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                     <div className="flex items-center gap-2 mb-1">
                                         {creditWarning && <AlertCircle size={14} style={{ color: '#8B1A2E' }} />}
                                         <p className="text-xs font-semibold" style={{ color: creditWarning ? '#8B1A2E' : '#5BA88A' }}>
-                                            {creditWarning ? '⚠️ Vượt Credit Limit' : '✅ Credit OK'}
+                                            {isCreditHold 
+                                                ? '⚠️ Khách hàng đang bị GIỮ TÍN DỤNG (Credit Hold)' 
+                                                : creditWarning 
+                                                    ? '⚠️ Vượt Credit Limit' 
+                                                    : '✅ Credit OK'}
                                         </p>
                                     </div>
                                     <div className="grid grid-cols-3 gap-3 text-xs">
                                         <div>
-                                            <p style={{ color: '#4A6A7A' }}>Credit Limit</p>
+                                            <p style={{ color: '#4A6A7A' }}>
+                                                Credit Limit {selectedCustomer.parentId && Number(selectedCustomer.creditLimit) === 0 && ' (Cha)'}
+                                            </p>
                                             <p className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
-                                                {formatVND(Number(selectedCustomer.creditLimit))}
+                                                {formatVND(effectiveCreditLimit)}
                                             </p>
                                         </div>
                                         <div>

@@ -1065,7 +1065,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
 
             <CreateSODrawer open={createOpen} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); reload() }} userId={userId} />
             {detailId && <SODetailDrawer soId={detailId} onClose={() => setDetailId(null)} onClone={handleClone} canSeeMargin={canSeeMargin} />}
-            {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} />}
+            {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} userId={userId} />}
 
             {/* Accounting Approval Modal */}
             {acctModalId && (
