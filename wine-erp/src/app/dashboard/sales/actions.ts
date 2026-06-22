@@ -63,65 +63,75 @@ export async function getSalesOrders(filters: {
     dateTo?: string
 } = {}): Promise<{ rows: SalesOrderRow[]; total: number }> {
     const { status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', dateFrom, dateTo } = filters
-    const skip = (page - 1) * pageSize
 
-    const user = await getCurrentUser()
-    const where: any = {}
+    // Cache the default page-load (page 1, no filters) for instant tab switches
+    const isDefaultLoad = page === 1 && !status && !search && !dateFrom && !dateTo && sortBy === 'createdAt' && sortDir === 'desc'
 
-    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
-        where.salesRepId = user.id
+    const fetchData = async () => {
+        const skip = (page - 1) * pageSize
+        const user = await getCurrentUser()
+        const where: any = {}
+
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            where.salesRepId = user.id
+        }
+
+        if (status) where.status = status
+        if (search) {
+            where.OR = [
+                { soNo: { contains: search, mode: 'insensitive' } },
+                { customer: { name: { contains: search, mode: 'insensitive' } } },
+                { customer: { code: { contains: search, mode: 'insensitive' } } },
+            ]
+        }
+        if (dateFrom || dateTo) {
+            where.createdAt = {}
+            if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+            if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+        }
+
+        const orderBy: any = sortBy === 'soNo' ? { soNo: sortDir } : { [sortBy]: sortDir }
+
+        const [orders, total] = await Promise.all([
+            prisma.salesOrder.findMany({
+                where, skip, take: pageSize,
+                orderBy,
+                include: {
+                    customer: { select: { name: true, code: true } },
+                    salesRep: { select: { name: true } },
+                    legalEntity: { select: { name: true, code: true } },
+                    _count: { select: { lines: true } },
+                },
+            }),
+            prisma.salesOrder.count({ where }),
+        ])
+
+        return {
+            rows: orders.map((o) => ({
+                id: o.id,
+                soNo: o.soNo,
+                customerName: o.customer.name,
+                customerCode: o.customer.code,
+                channel: o.channel as SalesChannel,
+                status: o.status as SOStatus,
+                totalAmount: Number(o.totalAmount),
+                orderDiscount: Number(o.orderDiscount),
+                paymentTerm: o.paymentTerm,
+                salesRepName: o.salesRep.name,
+                legalEntityName: (o as any).legalEntity?.name ?? null,
+                legalEntityCode: (o as any).legalEntity?.code ?? null,
+                lineCount: o._count.lines,
+                notes: (o as any).notes ?? null,
+                createdAt: o.createdAt,
+            })),
+            total,
+        }
     }
 
-    if (status) where.status = status
-    if (search) {
-        where.OR = [
-            { soNo: { contains: search, mode: 'insensitive' } },
-            { customer: { name: { contains: search, mode: 'insensitive' } } },
-            { customer: { code: { contains: search, mode: 'insensitive' } } },
-        ]
+    if (isDefaultLoad) {
+        return cached('sales:orders:default', fetchData, 30_000)
     }
-    if (dateFrom || dateTo) {
-        where.createdAt = {}
-        if (dateFrom) where.createdAt.gte = new Date(dateFrom)
-        if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
-    }
-
-    const orderBy: any = sortBy === 'soNo' ? { soNo: sortDir } : { [sortBy]: sortDir }
-
-    const [orders, total] = await Promise.all([
-        prisma.salesOrder.findMany({
-            where, skip, take: pageSize,
-            orderBy,
-            include: {
-                customer: { select: { name: true, code: true } },
-                salesRep: { select: { name: true } },
-                legalEntity: { select: { name: true, code: true } },
-                _count: { select: { lines: true } },
-            },
-        }),
-        prisma.salesOrder.count({ where }),
-    ])
-
-    return {
-        rows: orders.map((o) => ({
-            id: o.id,
-            soNo: o.soNo,
-            customerName: o.customer.name,
-            customerCode: o.customer.code,
-            channel: o.channel as SalesChannel,
-            status: o.status as SOStatus,
-            totalAmount: Number(o.totalAmount),
-            orderDiscount: Number(o.orderDiscount),
-            paymentTerm: o.paymentTerm,
-            salesRepName: o.salesRep.name,
-            legalEntityName: (o as any).legalEntity?.name ?? null,
-            legalEntityCode: (o as any).legalEntity?.code ?? null,
-            lineCount: o._count.lines,
-            notes: (o as any).notes ?? null,
-            createdAt: o.createdAt,
-        })),
-        total,
-    }
+    return fetchData()
 }
 
 // ── Fetch single SO detail ───────────────────────
@@ -1585,20 +1595,23 @@ export async function exportSalesOrdersCSV(filters: {
 // ── Status counts for quick filter tabs ───────────
 export async function getSOStatusCounts(): Promise<Record<string, number>> {
     const user = await getCurrentUser()
-    const where: any = {}
-    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
-        where.salesRepId = user.id
-    }
+    const isSalesRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
+    const cacheKey = isSalesRep ? `sales:status-counts:${user.id}` : 'sales:status-counts:all'
 
-    const counts = await prisma.salesOrder.groupBy({
-        by: ['status'],
-        where,
-        _count: { _all: true },
-    })
-    const result: Record<string, number> = { ALL: 0 }
-    for (const c of counts) {
-        result[c.status] = c._count._all
-        result.ALL += c._count._all
-    }
-    return result
+    return cached(cacheKey, async () => {
+        const where: any = {}
+        if (isSalesRep) where.salesRepId = user.id
+
+        const counts = await prisma.salesOrder.groupBy({
+            by: ['status'],
+            where,
+            _count: { _all: true },
+        })
+        const result: Record<string, number> = { ALL: 0 }
+        for (const c of counts) {
+            result[c.status] = c._count._all
+            result.ALL += c._count._all
+        }
+        return result
+    }, 30_000)
 }

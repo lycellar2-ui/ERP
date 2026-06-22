@@ -24,45 +24,52 @@ export async function getARInvoices(filters: {
     status?: string; search?: string; page?: number; pageSize?: number
 } = {}): Promise<{ rows: ARRow[]; total: number }> {
     const { status, search, page = 1, pageSize = 25 } = filters
-    const skip = (page - 1) * pageSize
-    const now = new Date()
+    const isDefaultLoad = page === 1 && !status && !search
 
-    const where: any = {}
-    if (status) where.status = status
-    if (search) where.OR = [
-        { invoiceNo: { contains: search, mode: 'insensitive' } },
-        { customer: { name: { contains: search, mode: 'insensitive' } } },
-    ]
+    const fetchData = async () => {
+        const skip = (page - 1) * pageSize
+        const now = new Date()
 
-    const [invoices, total] = await Promise.all([
-        prisma.aRInvoice.findMany({
-            where, skip, take: pageSize, orderBy: { dueDate: 'asc' },
-            include: {
-                customer: { select: { name: true, code: true } },
-                so: { select: { soNo: true } },
-                payments: { select: { amount: true } },
-            },
-        }),
-        prisma.aRInvoice.count({ where }),
-    ])
+        const where: any = {}
+        if (status) where.status = status
+        if (search) where.OR = [
+            { invoiceNo: { contains: search, mode: 'insensitive' } },
+            { customer: { name: { contains: search, mode: 'insensitive' } } },
+        ]
 
-    return {
-        rows: invoices.map(inv => {
-            const paidAmount = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
-            const outstanding = Number(inv.amount) - paidAmount
-            const daysOverdue = Math.max(0, Math.floor((now.getTime() - inv.dueDate.getTime()) / 86400000))
-            return {
-                id: inv.id, invoiceNo: inv.invoiceNo,
-                customerName: inv.customer.name, customerCode: inv.customer.code,
-                soNo: inv.so?.soNo ?? null,
-                amount: Number(inv.amount), paidAmount, outstanding,
-                dueDate: inv.dueDate, status: inv.status,
-                isOverdue: inv.dueDate < now && !['PAID', 'CANCELLED'].includes(inv.status),
-                daysOverdue, createdAt: inv.createdAt,
-            }
-        }),
-        total,
+        const [invoices, total] = await Promise.all([
+            prisma.aRInvoice.findMany({
+                where, skip, take: pageSize, orderBy: { dueDate: 'asc' },
+                include: {
+                    customer: { select: { name: true, code: true } },
+                    so: { select: { soNo: true } },
+                    payments: { select: { amount: true } },
+                },
+            }),
+            prisma.aRInvoice.count({ where }),
+        ])
+
+        return {
+            rows: invoices.map(inv => {
+                const paidAmount = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
+                const outstanding = Number(inv.amount) - paidAmount
+                const daysOverdue = Math.max(0, Math.floor((now.getTime() - inv.dueDate.getTime()) / 86400000))
+                return {
+                    id: inv.id, invoiceNo: inv.invoiceNo,
+                    customerName: inv.customer.name, customerCode: inv.customer.code,
+                    soNo: inv.so?.soNo ?? null,
+                    amount: Number(inv.amount), paidAmount, outstanding,
+                    dueDate: inv.dueDate, status: inv.status,
+                    isOverdue: inv.dueDate < now && !['PAID', 'CANCELLED'].includes(inv.status),
+                    daysOverdue, createdAt: inv.createdAt,
+                }
+            }),
+            total,
+        }
     }
+
+    if (isDefaultLoad) return cached('finance:ar:default', fetchData, 30_000)
+    return fetchData()
 }
 
 // ── AP Invoices ──────────────────────────────────
@@ -70,49 +77,56 @@ export async function getAPInvoices(filters: {
     status?: string; search?: string; page?: number; pageSize?: number
 } = {}): Promise<{ rows: APRow[]; total: number }> {
     const { status, search, page = 1, pageSize = 25 } = filters
-    const skip = (page - 1) * pageSize
-    const now = new Date()
+    const isDefaultLoad = page === 1 && !status && !search
 
-    const where: any = {}
-    if (status) where.status = status
-    if (search) where.OR = [
-        { invoiceNo: { contains: search, mode: 'insensitive' } },
-        { supplier: { name: { contains: search, mode: 'insensitive' } } },
-    ]
+    const fetchData = async () => {
+        const skip = (page - 1) * pageSize
+        const now = new Date()
 
-    const [invoices, total] = await Promise.all([
-        prisma.aPInvoice.findMany({
-            where, skip, take: pageSize, orderBy: { dueDate: 'asc' },
-            include: {
-                supplier: { select: { name: true, code: true } },
-                po: { select: { poNo: true } },
-                payments: { select: { amount: true } },
-            },
-        }),
-        prisma.aPInvoice.count({ where }),
-    ])
+        const where: any = {}
+        if (status) where.status = status
+        if (search) where.OR = [
+            { invoiceNo: { contains: search, mode: 'insensitive' } },
+            { supplier: { name: { contains: search, mode: 'insensitive' } } },
+        ]
 
-    return {
-        rows: invoices.map(inv => {
-            const paidAmount = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
-            const outstanding = Number(inv.amount) - paidAmount
-            const exRate = Number(inv.exchangeRate)
-            const amountVND = Number(inv.amount) * exRate
-            const outstandingVND = outstanding * exRate
-            return {
-                id: inv.id, invoiceNo: inv.invoiceNo,
-                supplierName: inv.supplier.name, supplierCode: inv.supplier.code,
-                poNo: inv.po?.poNo ?? null,
-                amount: Number(inv.amount), currency: inv.currency,
-                exchangeRate: exRate, amountVND,
-                paidAmount, outstanding, outstandingVND,
-                dueDate: inv.dueDate, status: inv.status,
-                isOverdue: inv.dueDate < now && !['PAID'].includes(inv.status),
-                createdAt: inv.createdAt,
-            }
-        }),
-        total,
+        const [invoices, total] = await Promise.all([
+            prisma.aPInvoice.findMany({
+                where, skip, take: pageSize, orderBy: { dueDate: 'asc' },
+                include: {
+                    supplier: { select: { name: true, code: true } },
+                    po: { select: { poNo: true } },
+                    payments: { select: { amount: true } },
+                },
+            }),
+            prisma.aPInvoice.count({ where }),
+        ])
+
+        return {
+            rows: invoices.map(inv => {
+                const paidAmount = inv.payments.reduce((s, p) => s + Number(p.amount), 0)
+                const outstanding = Number(inv.amount) - paidAmount
+                const exRate = Number(inv.exchangeRate)
+                const amountVND = Number(inv.amount) * exRate
+                const outstandingVND = outstanding * exRate
+                return {
+                    id: inv.id, invoiceNo: inv.invoiceNo,
+                    supplierName: inv.supplier.name, supplierCode: inv.supplier.code,
+                    poNo: inv.po?.poNo ?? null,
+                    amount: Number(inv.amount), currency: inv.currency,
+                    exchangeRate: exRate, amountVND,
+                    paidAmount, outstanding, outstandingVND,
+                    dueDate: inv.dueDate, status: inv.status,
+                    isOverdue: inv.dueDate < now && !['PAID'].includes(inv.status),
+                    createdAt: inv.createdAt,
+                }
+            }),
+            total,
+        }
     }
+
+    if (isDefaultLoad) return cached('finance:ap:default', fetchData, 30_000)
+    return fetchData()
 }
 
 // ── Finance summary KPIs ─────────────────────────

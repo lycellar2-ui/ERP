@@ -48,66 +48,76 @@ export type SupplierFilters = {
 
 export async function getSuppliers(params?: SupplierFilters): Promise<{ rows: SupplierRow[]; total: number }> {
     const { search, type, status, country, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
-    const where: any = { deletedAt: null }
 
-    if (search) {
-        where.OR = [
-            { name: { contains: search, mode: 'insensitive' } },
-            { code: { contains: search, mode: 'insensitive' } },
-            { taxId: { contains: search, mode: 'insensitive' } },
-            {
-                contacts: {
-                    some: {
-                        OR: [
-                            { email: { contains: search, mode: 'insensitive' } },
-                            { phone: { contains: search, mode: 'insensitive' } },
-                            { name: { contains: search, mode: 'insensitive' } },
-                        ]
+    const isDefaultLoad = page === 1 && !search && !type && !status && !country && sortBy === 'name' && sortDir === 'asc'
+
+    const fetchData = async () => {
+        const where: any = { deletedAt: null }
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } },
+                { taxId: { contains: search, mode: 'insensitive' } },
+                {
+                    contacts: {
+                        some: {
+                            OR: [
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { phone: { contains: search, mode: 'insensitive' } },
+                                { name: { contains: search, mode: 'insensitive' } },
+                            ]
+                        }
                     }
-                }
-            },
-        ]
+                },
+            ]
+        }
+        if (type) where.type = type
+        if (status) where.status = status
+        if (country) where.country = country
+
+        let orderBy: any = { name: 'asc' }
+        if (sortBy === 'leadTimeDays') orderBy = { leadTimeDays: sortDir }
+        else if (sortBy === 'createdAt') orderBy = { createdAt: sortDir }
+        else if (sortBy === 'name') orderBy = { name: sortDir }
+
+        const [items, total] = await Promise.all([
+            prisma.supplier.findMany({
+                where,
+                include: {
+                    purchaseOrders: { select: { id: true } },
+                    contacts: { where: { isPrimary: true }, take: 1 },
+                },
+                orderBy,
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+            }),
+            prisma.supplier.count({ where }),
+        ])
+
+        let rows: SupplierRow[] = items.map(s => ({
+            id: s.id, code: s.code, name: s.name, type: s.type,
+            country: s.country, taxId: s.taxId,
+            tradeAgreement: s.tradeAgreement, coFormType: s.coFormType,
+            paymentTerm: s.paymentTerm, defaultCurrency: s.defaultCurrency,
+            incoterms: s.incoterms, leadTimeDays: s.leadTimeDays ?? 45,
+            status: s.status, poCount: s.purchaseOrders.length,
+            contactName: s.contacts[0]?.name ?? null,
+            contactEmail: s.contacts[0]?.email ?? null,
+            createdAt: s.createdAt,
+        }))
+
+        if (sortBy === 'poCount') {
+            rows.sort((a, b) => sortDir === 'asc' ? a.poCount - b.poCount : b.poCount - a.poCount)
+        }
+
+        return { rows, total }
     }
-    if (type) where.type = type
-    if (status) where.status = status
-    if (country) where.country = country
 
-    let orderBy: any = { name: 'asc' }
-    if (sortBy === 'leadTimeDays') orderBy = { leadTimeDays: sortDir }
-    else if (sortBy === 'createdAt') orderBy = { createdAt: sortDir }
-    else if (sortBy === 'name') orderBy = { name: sortDir }
-
-    const [items, total] = await Promise.all([
-        prisma.supplier.findMany({
-            where,
-            include: {
-                purchaseOrders: { select: { id: true } },
-                contacts: { where: { isPrimary: true }, take: 1 },
-            },
-            orderBy,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
-        }),
-        prisma.supplier.count({ where }),
-    ])
-
-    let rows: SupplierRow[] = items.map(s => ({
-        id: s.id, code: s.code, name: s.name, type: s.type,
-        country: s.country, taxId: s.taxId,
-        tradeAgreement: s.tradeAgreement, coFormType: s.coFormType,
-        paymentTerm: s.paymentTerm, defaultCurrency: s.defaultCurrency,
-        incoterms: s.incoterms, leadTimeDays: s.leadTimeDays ?? 45,
-        status: s.status, poCount: s.purchaseOrders.length,
-        contactName: s.contacts[0]?.name ?? null,
-        contactEmail: s.contacts[0]?.email ?? null,
-        createdAt: s.createdAt,
-    }))
-
-    if (sortBy === 'poCount') {
-        rows.sort((a, b) => sortDir === 'asc' ? a.poCount - b.poCount : b.poCount - a.poCount)
+    if (isDefaultLoad) {
+        return cached('suppliers:list:default', fetchData, 30_000)
     }
-
-    return { rows, total }
+    return fetchData()
 }
 
 // ═══════════════════════════════════════════════════

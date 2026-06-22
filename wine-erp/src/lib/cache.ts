@@ -90,10 +90,16 @@ export function revalidateCache(prefix?: string) {
         return
     }
     
-    // Cross-module invalidation: WMS/inventory updates must invalidate products cache (stock quantities)
+    // Cross-module invalidation map
     const prefixes = [prefix]
     if (prefix === 'wms' || prefix === 'transfers' || prefix === 'stock-count') {
         prefixes.push('products')
+    }
+    if (prefix === 'sales') {
+        prefixes.push('finance') // SO invoicing creates AR invoices
+    }
+    if (prefix === 'procurement') {
+        prefixes.push('finance') // PO invoicing creates AP invoices
     }
 
     for (const key of cache.keys()) {

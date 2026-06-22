@@ -45,79 +45,89 @@ export type CustomerFilters = {
 
 export async function getCustomers(params?: CustomerFilters): Promise<{ rows: CustomerRow[]; total: number }> {
     const { search, type, status, channel, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
-    const where: any = { deletedAt: null }
 
-    const user = await getCurrentUser()
-    if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
-        where.salesRepId = user.id
-    }
+    const isDefaultLoad = page === 1 && !search && !type && !status && !channel && sortBy === 'name' && sortDir === 'asc'
 
-    if (search) {
-        where.OR = [
-            { name: { contains: search, mode: 'insensitive' } },
-            { code: { contains: search, mode: 'insensitive' } },
-            { taxId: { contains: search, mode: 'insensitive' } },
-            { shortName: { contains: search, mode: 'insensitive' } },
-            {
-                contacts: {
-                    some: {
-                        OR: [
-                            { email: { contains: search, mode: 'insensitive' } },
-                            { phone: { contains: search, mode: 'insensitive' } },
-                        ]
+    const fetchData = async () => {
+        const where: any = { deletedAt: null }
+
+        const user = await getCurrentUser()
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            where.salesRepId = user.id
+        }
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } },
+                { taxId: { contains: search, mode: 'insensitive' } },
+                { shortName: { contains: search, mode: 'insensitive' } },
+                {
+                    contacts: {
+                        some: {
+                            OR: [
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { phone: { contains: search, mode: 'insensitive' } },
+                            ]
+                        }
                     }
-                }
-            },
-        ]
+                },
+            ]
+        }
+        if (type) where.customerType = type
+        if (status) where.status = status
+        if (channel) where.channel = channel
+
+        // Dynamic sort
+        let orderBy: any = { name: 'asc' }
+        if (sortBy === 'creditLimit') orderBy = { creditLimit: sortDir }
+        else if (sortBy === 'createdAt') orderBy = { createdAt: sortDir }
+        else if (sortBy === 'name') orderBy = { name: sortDir }
+        // orderCount is computed, sort after fetch for now
+
+        const [items, total] = await Promise.all([
+            prisma.customer.findMany({
+                where,
+                include: {
+                    salesRep: { select: { id: true, name: true } },
+                    salesOrders: { select: { id: true } },
+                },
+                orderBy,
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+            }),
+            prisma.customer.count({ where }),
+        ])
+
+        let rows: CustomerRow[] = items.map(c => ({
+            id: c.id,
+            code: c.code,
+            name: c.name,
+            shortName: c.shortName,
+            taxId: c.taxId,
+            customerType: c.customerType,
+            channel: c.channel,
+            paymentTerm: c.paymentTerm,
+            creditLimit: Number(c.creditLimit),
+            salesRepId: c.salesRepId,
+            salesRepName: c.salesRep?.name ?? null,
+            status: c.status,
+            orderCount: c.salesOrders.length,
+            createdAt: c.createdAt,
+        }))
+
+        // Client-side sort for computed field
+        if (sortBy === 'orderCount') {
+            rows.sort((a, b) => sortDir === 'asc' ? a.orderCount - b.orderCount : b.orderCount - a.orderCount)
+        }
+
+        return { rows, total }
     }
-    if (type) where.customerType = type
-    if (status) where.status = status
-    if (channel) where.channel = channel
 
-    // Dynamic sort
-    let orderBy: any = { name: 'asc' }
-    if (sortBy === 'creditLimit') orderBy = { creditLimit: sortDir }
-    else if (sortBy === 'createdAt') orderBy = { createdAt: sortDir }
-    else if (sortBy === 'name') orderBy = { name: sortDir }
-    // orderCount is computed, sort after fetch for now
-
-    const [items, total] = await Promise.all([
-        prisma.customer.findMany({
-            where,
-            include: {
-                salesRep: { select: { id: true, name: true } },
-                salesOrders: { select: { id: true } },
-            },
-            orderBy,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
-        }),
-        prisma.customer.count({ where }),
-    ])
-
-    let rows: CustomerRow[] = items.map(c => ({
-        id: c.id,
-        code: c.code,
-        name: c.name,
-        shortName: c.shortName,
-        taxId: c.taxId,
-        customerType: c.customerType,
-        channel: c.channel,
-        paymentTerm: c.paymentTerm,
-        creditLimit: Number(c.creditLimit),
-        salesRepId: c.salesRepId,
-        salesRepName: c.salesRep?.name ?? null,
-        status: c.status,
-        orderCount: c.salesOrders.length,
-        createdAt: c.createdAt,
-    }))
-
-    // Client-side sort for computed field
-    if (sortBy === 'orderCount') {
-        rows.sort((a, b) => sortDir === 'asc' ? a.orderCount - b.orderCount : b.orderCount - a.orderCount)
+    if (isDefaultLoad) {
+        return cached('customers:list:default', fetchData, 30_000)
     }
-
-    return { rows, total }
+    return fetchData()
 }
 
 // ═══════════════════════════════════════════════════
@@ -212,25 +222,29 @@ export async function getCustomerStats(): Promise<CustomerStats> {
 // ═══════════════════════════════════════════════════
 
 export async function getCustomerChannels(): Promise<{ channel: string; count: number }[]> {
-    const groups = await prisma.customer.groupBy({
-        by: ['channel'],
-        where: { deletedAt: null, channel: { not: null } },
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-    })
-    return groups.map(g => ({ channel: g.channel!, count: g._count.id }))
+    return cached('customers:channels', async () => {
+        const groups = await prisma.customer.groupBy({
+            by: ['channel'],
+            where: { deletedAt: null, channel: { not: null } },
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+        })
+        return groups.map(g => ({ channel: g.channel!, count: g._count.id }))
+    }, 60_000)
 }
 
 export async function getSalesRepList(): Promise<{ id: string; name: string }[]> {
-    const users = await prisma.user.findMany({
-        where: {
-            status: 'ACTIVE',
-            roles: { some: { role: { name: { in: ['ADMIN', 'SALES_REP', 'SALES_MANAGER', 'SALES_MGR', 'Sales Rep', 'Sales Manager', 'Sales Admin', 'SALES_ADMIN'] } } } },
-        },
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-    })
-    return users.map(u => ({ id: u.id, name: u.name ?? 'Unnamed' }))
+    return cached('customers:sales-reps', async () => {
+        const users = await prisma.user.findMany({
+            where: {
+                status: 'ACTIVE',
+                roles: { some: { role: { name: { in: ['ADMIN', 'SALES_REP', 'SALES_MANAGER', 'SALES_MGR', 'Sales Rep', 'Sales Manager', 'Sales Admin', 'SALES_ADMIN'] } } } },
+            },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' },
+        })
+        return users.map(u => ({ id: u.id, name: u.name ?? 'Unnamed' }))
+    }, 60_000)
 }
 
 // ═══════════════════════════════════════════════════

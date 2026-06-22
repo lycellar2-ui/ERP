@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { prisma } from '@/lib/db'
 
@@ -11,7 +12,9 @@ export type SessionUser = {
 }
 
 // Get current authenticated user with roles & permissions
-export async function getCurrentUser(): Promise<SessionUser | null> {
+// Wrapped with React cache() for per-request deduplication — avoids duplicate
+// Supabase + Prisma calls when multiple server functions need the user in one render.
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<SessionUser | null> {
     try {
         const supabase = await createServerSupabaseClient()
         const { data: { user: authUser } } = await supabase.auth.getUser()
@@ -61,7 +64,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     } catch {
         return null
     }
-}
+})
 
 export const ROLE_NAME_MAP: Record<string, string> = {
     'Kế Toán': 'KE_TOAN',

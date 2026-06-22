@@ -56,68 +56,69 @@ export type LocationRow = {
 
 // ─── Warehouses ───────────────────────────────────
 export async function getWarehouses(): Promise<WarehouseRow[]> {
-    try {
-        // Simple query — avoid nested stockLots include (Prisma column mapping issue)
-        const warehouses = await prisma.warehouse.findMany({
-            include: {
-                _count: { select: { locations: true } },
-            },
-            orderBy: { name: 'asc' },
-        })
+    return cached('wms:warehouses', async () => {
+        try {
+            // Simple query — avoid nested stockLots include (Prisma column mapping issue)
+            const warehouses = await prisma.warehouse.findMany({
+                include: {
+                    _count: { select: { locations: true } },
+                },
+                orderBy: { name: 'asc' },
+            })
 
-        // Get stock aggregates per warehouse using a separate query
-        const stockByWarehouse = await prisma.stockLot.groupBy({
-            by: ['locationId'],
-            where: { status: { in: ['AVAILABLE', 'RESERVED'] } },
-            _sum: { qtyAvailable: true },
-            _count: true,
-        })
+            // Get stock aggregates per warehouse using a separate query
+            const [stockByWarehouse, locationWH, lotsForValue] = await Promise.all([
+                prisma.stockLot.groupBy({
+                    by: ['locationId'],
+                    where: { status: { in: ['AVAILABLE', 'RESERVED'] } },
+                    _sum: { qtyAvailable: true },
+                    _count: true,
+                }),
+                prisma.location.findMany({
+                    select: { id: true, warehouseId: true },
+                }),
+                prisma.stockLot.findMany({
+                    where: { status: { in: ['AVAILABLE', 'RESERVED'] }, qtyAvailable: { gt: 0 } },
+                    select: { locationId: true, qtyAvailable: true, unitLandedCost: true },
+                }),
+            ])
 
-        // Map locationId → warehouseId
-        const locationWH = await prisma.location.findMany({
-            select: { id: true, warehouseId: true },
-        })
-        const locToWH = new Map(locationWH.map(l => [l.id, l.warehouseId]))
+            const locToWH = new Map(locationWH.map(l => [l.id, l.warehouseId]))
 
-        // Aggregate per warehouse
-        const whStock = new Map<string, { qty: number; lotCount: number }>()
-        for (const row of stockByWarehouse) {
-            const whId = locToWH.get(row.locationId)
-            if (!whId) continue
-            const existing = whStock.get(whId) || { qty: 0, lotCount: 0 }
-            existing.qty += Number(row._sum.qtyAvailable ?? 0)
-            existing.lotCount += row._count
-            whStock.set(whId, existing)
+            // Aggregate per warehouse
+            const whStock = new Map<string, { qty: number; lotCount: number }>()
+            for (const row of stockByWarehouse) {
+                const whId = locToWH.get(row.locationId)
+                if (!whId) continue
+                const existing = whStock.get(whId) || { qty: 0, lotCount: 0 }
+                existing.qty += Number(row._sum.qtyAvailable ?? 0)
+                existing.lotCount += row._count
+                whStock.set(whId, existing)
+            }
+
+            const whValue = new Map<string, number>()
+            for (const lot of lotsForValue) {
+                const whId = locToWH.get(lot.locationId)
+                if (!whId) continue
+                whValue.set(whId, (whValue.get(whId) || 0) + Number(lot.qtyAvailable) * Number(lot.unitLandedCost))
+            }
+
+            return warehouses.map(w => ({
+                id: w.id,
+                code: w.code,
+                name: w.name,
+                address: w.address,
+                locationCount: w._count.locations,
+                lotCount: whStock.get(w.id)?.lotCount ?? 0,
+                totalStock: whStock.get(w.id)?.qty ?? 0,
+                totalValue: whValue.get(w.id) ?? 0,
+                createdAt: w.createdAt,
+            }))
+        } catch (err) {
+            console.error('[WMS] getWarehouses error:', err)
+            return []
         }
-
-        // Get total value per warehouse
-        const lotsForValue = await prisma.stockLot.findMany({
-            where: { status: { in: ['AVAILABLE', 'RESERVED'] }, qtyAvailable: { gt: 0 } },
-            select: { locationId: true, qtyAvailable: true, unitLandedCost: true },
-        })
-
-        const whValue = new Map<string, number>()
-        for (const lot of lotsForValue) {
-            const whId = locToWH.get(lot.locationId)
-            if (!whId) continue
-            whValue.set(whId, (whValue.get(whId) || 0) + Number(lot.qtyAvailable) * Number(lot.unitLandedCost))
-        }
-
-        return warehouses.map(w => ({
-            id: w.id,
-            code: w.code,
-            name: w.name,
-            address: w.address,
-            locationCount: w._count.locations,
-            lotCount: whStock.get(w.id)?.lotCount ?? 0,
-            totalStock: whStock.get(w.id)?.qty ?? 0,
-            totalValue: whValue.get(w.id) ?? 0,
-            createdAt: w.createdAt,
-        }))
-    } catch (err) {
-        console.error('[WMS] getWarehouses error:', err)
-        return []
-    }
+    }, 30_000)
 }
 
 // ─── Stock inventory view ─────────────────────────
