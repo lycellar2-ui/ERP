@@ -113,31 +113,44 @@ export async function getDashboardStats(range: DateRange = 'month') {
 export async function getMonthlyRevenue() {
     return cached('dashboard:monthly-revenue', async () => {
         const now = new Date()
+        const sixMonthsAgo = startOfMonth(subMonths(now, 5))
+
+        // Fetch all matching orders for the last 6 months in a single query
+        const orders = await prisma.salesOrder.findMany({
+            where: {
+                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                createdAt: { gte: sixMonthsAgo },
+            },
+            select: { createdAt: true, totalAmount: true },
+        })
+
         const months = Array.from({ length: 6 }, (_, i) => {
             const d = subMonths(now, 5 - i)
             return {
                 from: startOfMonth(d),
                 to: endOfMonth(d),
                 label: d.toLocaleDateString('vi-VN', { month: 'short', year: '2-digit' }),
+                revenue: 0,
             }
         })
 
-        const results = await Promise.all(
-            months.map(m =>
-                prisma.salesOrder.aggregate({
-                    where: {
-                        status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-                        createdAt: { gte: m.from, lte: m.to },
-                    },
-                    _sum: { totalAmount: true },
-                }).then(r => ({
-                    label: m.label,
-                    revenue: Number(r._sum.totalAmount ?? 0),
-                }))
-            )
-        )
+        for (const o of orders) {
+            const oDate = new Date(o.createdAt)
+            const oTime = oDate.getTime()
+            const amount = Number(o.totalAmount ?? 0)
 
-        return results
+            for (const m of months) {
+                if (oTime >= m.from.getTime() && oTime <= m.to.getTime()) {
+                    m.revenue += amount
+                    break
+                }
+            }
+        }
+
+        return months.map(m => ({
+            label: m.label,
+            revenue: m.revenue,
+        }))
     }, 60_000) // Cache 60s — chart data changes slowly
 }
 
@@ -288,24 +301,25 @@ export async function getPLSummary() {
         const from = startOfMonth(now)
         const to = endOfMonth(now)
 
-        // Sum journal lines grouped by account prefix for current month
-        const lines = await prisma.journalLine.findMany({
+        // Group journal lines by account on the DB side for performance
+        const groups = await prisma.journalLine.groupBy({
+            by: ['account'],
             where: {
                 entry: {
                     postedAt: { gte: from, lte: to },
                 },
             },
-            select: { account: true, debit: true, credit: true },
+            _sum: { debit: true, credit: true },
         })
 
         let revenue = 0    // TK 511 = Revenue
         let cogs = 0       // TK 632 = COGS
         let expenses = 0   // TK 641, 642, 635, 811
 
-        for (const l of lines) {
-            const acc = l.account.split(' - ')[0]?.trim() ?? l.account
-            const debit = Number(l.debit)
-            const credit = Number(l.credit)
+        for (const g of groups) {
+            const acc = g.account.split(' - ')[0]?.trim() ?? g.account
+            const debit = Number(g._sum.debit ?? 0)
+            const credit = Number(g._sum.credit ?? 0)
 
             if (acc.startsWith('511')) {
                 revenue += credit - debit // Revenue is Credit-side
@@ -491,9 +505,11 @@ export async function getCostWaterfall() {
         const from = startOfMonth(now)
         const to = endOfMonth(now)
 
-        const lines = await prisma.journalLine.findMany({
+        // Group journal lines by account on the DB side for performance
+        const groups = await prisma.journalLine.groupBy({
+            by: ['account'],
             where: { entry: { postedAt: { gte: from, lte: to } } },
-            select: { account: true, debit: true, credit: true },
+            _sum: { debit: true, credit: true },
         })
 
         let revenue = 0
@@ -503,10 +519,10 @@ export async function getCostWaterfall() {
         let financialExp = 0 // TK 635
         let otherExp = 0     // TK 811
 
-        for (const l of lines) {
-            const acc = l.account.split(' - ')[0]?.trim() ?? l.account
-            const debit = Number(l.debit)
-            const credit = Number(l.credit)
+        for (const g of groups) {
+            const acc = g.account.split(' - ')[0]?.trim() ?? g.account
+            const debit = Number(g._sum.debit ?? 0)
+            const credit = Number(g._sum.credit ?? 0)
 
             if (acc.startsWith('511')) revenue += credit - debit
             else if (acc.startsWith('632')) cogs += debit - credit
@@ -544,30 +560,42 @@ export async function getRevenueYoY() {
         const thisYear = now.getFullYear()
         const lastYear = thisYear - 1
 
-        const fetchYear = async (year: number) => {
-            const results = await Promise.all(
-                Array.from({ length: 12 }, (_, i) => {
-                    const m = new Date(year, i, 1)
-                    return prisma.salesOrder.aggregate({
-                        where: {
-                            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-                            createdAt: { gte: startOfMonth(m), lte: endOfMonth(m) },
-                        },
-                        _sum: { totalAmount: true },
-                    }).then(r => ({
-                        month: i + 1,
-                        label: `T${i + 1}`,
-                        revenue: Number(r._sum.totalAmount ?? 0),
-                    }))
-                })
-            )
-            return results
-        }
+        // Fetch all matching orders for both years in a single query
+        const orders = await prisma.salesOrder.findMany({
+            where: {
+                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                createdAt: {
+                    gte: new Date(lastYear, 0, 1),
+                    lte: new Date(thisYear, 11, 31, 23, 59, 59, 999),
+                },
+            },
+            select: { createdAt: true, totalAmount: true },
+        })
 
-        const [current, previous] = await Promise.all([
-            fetchYear(thisYear),
-            fetchYear(lastYear),
-        ])
+        const current = Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1,
+            label: `T${i + 1}`,
+            revenue: 0,
+        }))
+
+        const previous = Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1,
+            label: `T${i + 1}`,
+            revenue: 0,
+        }))
+
+        for (const o of orders) {
+            const date = new Date(o.createdAt)
+            const year = date.getFullYear()
+            const monthIdx = date.getMonth()
+            const amount = Number(o.totalAmount ?? 0)
+
+            if (year === thisYear) {
+                current[monthIdx].revenue += amount
+            } else if (year === lastYear) {
+                previous[monthIdx].revenue += amount
+            }
+        }
 
         const totalCurrent = current.reduce((s, m) => s + m.revenue, 0)
         const totalPrevious = previous.reduce((s, m) => s + m.revenue, 0)

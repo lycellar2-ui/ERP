@@ -72,15 +72,28 @@ export default async function DashboardPage() {
     const dashConfig = await getDashboardConfig(roles)
     const has = (s: DashboardSection) => dashConfig.sections.includes(s)
 
-    // Batch 1
-    const [stats, plSummary, cashPosition, kpiSummary] = await Promise.all([
+    // Fetch all dashboard sections in parallel for optimal cold-start performance
+    const [
+        stats,
+        plSummary,
+        cashPosition,
+        kpiSummary,
+        arAging,
+        pendingApprovalReqs,
+        waterfall,
+        yoy,
+        topCust,
+        topProd,
+        channelData,
+        mySales,
+        warehouseData,
+        complianceWarnings,
+        pendingProposals,
+    ] = await Promise.all([
         getDashboardStats('month'),
         has('pl_summary') ? getPLSummary() : null,
         has('cash_position') ? getCashPosition() : null,
         has('kpi_targets') ? getKpiSummary() : null,
-    ])
-    // Batch 2
-    const [arAging, pendingApprovalReqs, waterfall, yoy, topCust, topProd, channelData] = await Promise.all([
         has('ar_aging') ? getARAgingChart() : null,
         has('pending_approvals') ? getPendingApprovalDetails() : [],
         has('cost_waterfall') ? getCostWaterfall() : [],
@@ -88,9 +101,6 @@ export default async function DashboardPage() {
         has('pl_summary') ? getTopCustomers() : [],
         has('pl_summary') ? getTopProducts() : [],
         has('revenue_chart') ? getRevenueByChannel() : null,
-    ])
-    // Batch 3 (parallelized — was sequential, 4x ~100ms = ~400ms waste)
-    const [mySales, warehouseData, complianceWarnings, pendingProposals] = await Promise.all([
         has('my_sales') && user ? getMySales(user.id) : null,
         has('warehouse_summary') ? getWarehouseDashboard() : null,
         has('legal_compliance') ? getComplianceWarnings() : [],
@@ -157,8 +167,8 @@ export default async function DashboardPage() {
                     accentColor="#8B1A2E" />
             </div>
 
-            {/* ═══ AI CEO BRIEFING ═══ */}
-            {roles.includes('CEO') && <AICeoSummary />}
+            {/* ═══ AI CEO BRIEFING (Temporarily hidden) ═══ */}
+            {/* {roles.includes('CEO') && <AICeoSummary />} */}
 
             {/* ═══ LAYER 2 — FINANCIAL PULSE (2 cols) ═══ */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
