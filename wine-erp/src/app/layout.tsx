@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Cormorant_Garamond, DM_Mono, DM_Sans } from 'next/font/google'
+import { Cormorant_Garamond, JetBrains_Mono, Inter } from 'next/font/google'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -11,16 +11,16 @@ const cormorant = Cormorant_Garamond({
   preload: true,
 })
 
-const dmMono = DM_Mono({
-  subsets: ['latin', 'latin-ext', 'vietnamese'] as any,
-  weight: ['400', '500'],
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '700'],
   variable: '--font-mono',
   display: 'swap',
   preload: true,
 })
 
-const dmSans = DM_Sans({
-  subsets: ['latin', 'latin-ext', 'vietnamese'] as any,
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${cormorant.variable} ${dmMono.variable} ${dmSans.variable}`}
+      className={`${cormorant.variable} ${jetbrainsMono.variable} ${inter.variable}`}
     >
       <body>
         {children}

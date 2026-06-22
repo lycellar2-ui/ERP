@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300..500;1,300..500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -43,14 +43,73 @@
   /* Typography — next/font injects these as CSS vars on <html class="...">.
      Define fallbacks here; the actual font name comes from next/font at runtime. */
   --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-mono: "DM Mono", Menlo, ui-monospace, monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, ui-monospace, monospace;
 
   /* Border radius — Sharp/Luxury */
   --radius: 6px;
   --radius-sm: 4px;
   --radius-lg: 10px;
   --radius-full: 9999px;
+}
+
+/* ── Compatibility Font Mappings (Alias DM Sans -> Inter & DM Mono -> JetBrains Mono) ── */
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("Inter"), local("Inter-Regular"),
+       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local("Inter Medium"), local("Inter-Medium"),
+       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fMZg.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local("Inter SemiBold"), local("Inter-SemiBold"),
+       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuGKYMZg.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local("Inter Bold"), local("Inter-Bold"),
+       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZg.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("JetBrains Mono"), local("JetBrainsMono"),
+       url("https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPQ.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local("JetBrains Mono Medium"), local("JetBrainsMono-Medium"),
+       url("https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8-qxjPQ.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local("JetBrains Mono Bold"), local("JetBrainsMono-Bold"),
+       url("https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8L6tjPQ.ttf") format("truetype");
 }
 
 /* ── Base Reset ── */
@@ -301,9 +360,10 @@ body {
 /* ── Number/mono figures ── */
 [class*="font-mono"],
 [style*="DM Mono"],
+[style*="JetBrains Mono"],
 [style*="font-mono"] {
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
 }
 
 /* ── Input/select reset ── */
