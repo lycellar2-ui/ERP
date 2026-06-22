@@ -348,3 +348,229 @@ export async function notifyQuotationSent(input: {
         telegramMsg,
     )
 }
+
+export async function notifySOCreated(input: {
+    soNo: string
+    customerName: string
+    totalAmount: number
+    salesRepName: string
+    recipientEmails: string | string[]
+}) {
+    const telegramMsg = `🔔 <b>Đơn hàng mới đã được xác nhận</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số SO: <b>${input.soNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Tổng tiền: <b>${formatVND(input.totalAmount)}</b>
+🧑‍💼 NV Bán hàng: ${input.salesRepName}`
+
+    return sendNotification(
+        {
+            to: input.recipientEmails,
+            subject: `🔔 [Đơn hàng mới] ${input.soNo} — ${input.customerName}`,
+            html: `
+            <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
+                <div style="background: #0891B2; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: white; margin: 0;">🔔 Đơn hàng mới đã được xác nhận</h2>
+                </div>
+                <div style="background: #1B2E3D; padding: 24px; border-radius: 0 0 8px 8px; color: #E8F1F2;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Số SO:</td><td style="padding: 8px; font-weight: bold;">${input.soNo}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Khách hàng:</td><td style="padding: 8px;">${input.customerName}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Tổng tiền:</td><td style="padding: 8px; font-weight: bold;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">NV Bán hàng:</td><td style="padding: 8px;">${input.salesRepName}</td></tr>
+                    </table>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard/sales" 
+                           style="display: inline-block; background: #0891B2; color: white; padding: 12px 32px; 
+                                  border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Xem trên ERP
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `,
+        },
+        telegramMsg,
+    )
+}
+
+export async function notifySOPendingAdmin(input: {
+    soNo: string
+    customerName: string
+    totalAmount: number
+    salesRepName: string
+    recipientEmails: string | string[]
+}) {
+    const telegramMsg = `⏳ <b>Yêu cầu duyệt đơn hàng (Cấp 1 - Sale Admin)</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số SO: <b>${input.soNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Tổng tiền: <b>${formatVND(input.totalAmount)}</b>
+🧑‍💼 NV Bán hàng: ${input.salesRepName}`
+
+    return sendNotification(
+        {
+            to: input.recipientEmails,
+            subject: `⏳ [Chờ duyệt Cấp 1] Đơn hàng ${input.soNo} — ${input.customerName}`,
+            html: `
+            <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
+                <div style="background: #D4A853; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: #0A1926; margin: 0; font-size: 20px;">⏳ Yêu cầu duyệt đơn hàng (Cấp 1)</h2>
+                </div>
+                <div style="background: #1B2E3D; padding: 24px; border-radius: 0 0 8px 8px; color: #E8F1F2;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Số SO:</td><td style="padding: 8px; font-weight: bold;">${input.soNo}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Khách hàng:</td><td style="padding: 8px;">${input.customerName}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Tổng tiền:</td><td style="padding: 8px; font-weight: bold; color: #D4A853;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">NV Bán hàng:</td><td style="padding: 8px;">${input.salesRepName}</td></tr>
+                    </table>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard/sales" 
+                           style="display: inline-block; background: #D4A853; color: #0A1926; padding: 12px 32px; 
+                                  border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Xem & Duyệt Đơn
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `,
+        },
+        telegramMsg,
+    )
+}
+
+export async function notifySOPendingCEO(input: {
+    soNo: string
+    customerName: string
+    totalAmount: number
+    salesRepName: string
+    approverEmail: string
+}) {
+    const telegramMsg = `👑 <b>Yêu cầu duyệt đơn hàng lớn (Cấp 2 - CEO)</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số SO: <b>${input.soNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Tổng tiền: <b>${formatVND(input.totalAmount)}</b>
+🧑‍💼 NV Bán hàng: ${input.salesRepName}`
+
+    return sendNotification(
+        {
+            to: input.approverEmail,
+            subject: `👑 [Chờ duyệt Cấp 2] Đơn hàng lớn ${input.soNo} — ${input.customerName}`,
+            html: `
+            <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
+                <div style="background: #0891B2; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: white; margin: 0; font-size: 20px;">👑 Yêu cầu duyệt đơn hàng lớn (Cấp 2)</h2>
+                </div>
+                <div style="background: #1B2E3D; padding: 24px; border-radius: 0 0 8px 8px; color: #E8F1F2;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Số SO:</td><td style="padding: 8px; font-weight: bold;">${input.soNo}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Khách hàng:</td><td style="padding: 8px;">${input.customerName}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Tổng tiền:</td><td style="padding: 8px; font-weight: bold; color: #87CBB9;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">NV Bán hàng:</td><td style="padding: 8px;">${input.salesRepName}</td></tr>
+                    </table>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard/sales" 
+                           style="display: inline-block; background: #0891B2; color: white; padding: 12px 32px; 
+                                  border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Xem & Phê Duyệt
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `,
+        },
+        telegramMsg,
+    )
+}
+
+export async function notifySOPendingAccounting(input: {
+    soNo: string
+    customerName: string
+    totalAmount: number
+    salesRepName: string
+    recipientEmails: string | string[]
+}) {
+    const telegramMsg = `💸 <b>Đơn hàng chờ duyệt tài chính (Kế Toán)</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số SO: <b>${input.soNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Tổng tiền: <b>${formatVND(input.totalAmount)}</b>
+🧑‍💼 NV Bán hàng: ${input.salesRepName}`
+
+    return sendNotification(
+        {
+            to: input.recipientEmails,
+            subject: `💸 [Chờ KT Duyệt] Đơn hàng ${input.soNo} — ${input.customerName}`,
+            html: `
+            <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
+                <div style="background: #C084FC; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: #0A1926; margin: 0; font-size: 20px;">💸 Đơn hàng chờ duyệt tài chính</h2>
+                </div>
+                <div style="background: #1B2E3D; padding: 24px; border-radius: 0 0 8px 8px; color: #E8F1F2;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Số SO:</td><td style="padding: 8px; font-weight: bold;">${input.soNo}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Khách hàng:</td><td style="padding: 8px;">${input.customerName}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Tổng tiền:</td><td style="padding: 8px; font-weight: bold; color: #C084FC;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">NV Bán hàng:</td><td style="padding: 8px;">${input.salesRepName}</td></tr>
+                    </table>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard/sales" 
+                           style="display: inline-block; background: #C084FC; color: #0A1926; padding: 12px 32px; 
+                                  border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Kiểm Tra & Xuất Hóa Đơn
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `,
+        },
+        telegramMsg,
+    )
+}
+
+export async function notifySOConfirmed(input: {
+    soNo: string
+    customerName: string
+    totalAmount: number
+    salesRepName: string
+    recipientEmails: string | string[]
+}) {
+    const telegramMsg = `📦 <b>Đơn hàng đã được xác nhận (Chờ đóng gói & xuất kho)</b>
+━━━━━━━━━━━━━━━━━━
+📋 Số SO: <b>${input.soNo}</b>
+👤 Khách hàng: ${input.customerName}
+💰 Tổng tiền: <b>${formatVND(input.totalAmount)}</b>
+🧑‍💼 NV Bán hàng: ${input.salesRepName}`
+
+    return sendNotification(
+        {
+            to: input.recipientEmails,
+            subject: `📦 [Đã xác nhận] Đơn hàng ${input.soNo} sẵn sàng xuất kho`,
+            html: `
+            <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
+                <div style="background: #5BA88A; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: #0A1926; margin: 0; font-size: 20px;">📦 Đơn hàng sẵn sàng xuất kho</h2>
+                </div>
+                <div style="background: #1B2E3D; padding: 24px; border-radius: 0 0 8px 8px; color: #E8F1F2;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Số SO:</td><td style="padding: 8px; font-weight: bold;">${input.soNo}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Khách hàng:</td><td style="padding: 8px;">${input.customerName}</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">Tổng tiền:</td><td style="padding: 8px; font-weight: bold; color: #87CBB9;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
+                        <tr><td style="padding: 8px; color: #8AAEBB;">NV Bán hàng:</td><td style="padding: 8px;">${input.salesRepName}</td></tr>
+                    </table>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard/sales" 
+                           style="display: inline-block; background: #87CBB9; color: #0A1926; padding: 12px 32px; 
+                                  border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Xem trên ERP
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `,
+        },
+        telegramMsg,
+    )
+}
+

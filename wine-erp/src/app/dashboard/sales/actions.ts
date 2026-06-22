@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { generateSoNo } from '@/lib/utils'
 import { logAudit } from '@/lib/audit'
 import { submitForApproval } from '@/lib/approval'
+import { notifySOApprovalRequired, notifySOCreated, notifySOPendingAdmin, notifySOPendingCEO, notifySOPendingAccounting, notifySOConfirmed } from '@/lib/notifications'
 import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
 import { serialize } from '@/lib/serialize'
 import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
@@ -29,6 +30,7 @@ export interface SalesOrderRow {
     lineCount: number
     notes: string | null
     createdAt: Date
+    approvalStep?: number | null
 }
 
 export interface SOLineCreate {
@@ -106,6 +108,13 @@ export async function getSalesOrders(filters: {
             prisma.salesOrder.count({ where }),
         ])
 
+        const orderIds = orders.map(o => o.id)
+        const approvalRequests = await prisma.approvalRequest.findMany({
+            where: { docType: 'SALES_ORDER', docId: { in: orderIds }, status: 'PENDING' },
+            select: { docId: true, currentStep: true }
+        })
+        const approvalMap = Object.fromEntries(approvalRequests.map(r => [r.docId, r.currentStep]))
+
         return {
             rows: orders.map((o) => ({
                 id: o.id,
@@ -123,6 +132,7 @@ export async function getSalesOrders(filters: {
                 lineCount: o._count.lines,
                 notes: (o as any).notes ?? null,
                 createdAt: o.createdAt,
+                approvalStep: approvalMap[o.id] ?? null,
             })),
             total,
         }
@@ -157,7 +167,15 @@ export async function getSalesOrderDetail(id: string) {
         }
     }
 
-    return serialize(raw)
+    const approvalReq = await prisma.approvalRequest.findFirst({
+        where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
+        select: { currentStep: true }
+    })
+
+    return serialize({
+        ...raw,
+        approvalStep: approvalReq?.currentStep ?? null
+    })
 }
 
 // ── Combined detail + margin (single server action, 2 queries instead of N+1) ──
@@ -240,8 +258,16 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     const totalMargin = totalRevenue - totalCOGS
     const totalMarginPct = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0
 
+    const approvalReq = await prisma.approvalRequest.findFirst({
+        where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
+        select: { currentStep: true }
+    })
+
     return serialize({
-        detail,
+        detail: {
+            ...detail,
+            approvalStep: approvalReq?.currentStep ?? null
+        },
         margin: canSeeMargin ? { lines: marginLines, totalRevenue, totalCOGS, totalMargin, totalMarginPct, hasNegativeMargin } : null,
     })
 }
@@ -665,7 +691,16 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
         const user = await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
-            select: { totalAmount: true, salesRepId: true, soNo: true, status: true, orderDiscount: true, lines: { select: { qtyOrdered: true, unitPrice: true, lineDiscountPct: true } } },
+            select: { 
+                totalAmount: true, 
+                salesRepId: true, 
+                soNo: true, 
+                status: true, 
+                orderDiscount: true, 
+                customer: { select: { name: true } },
+                salesRep: { select: { name: true } },
+                lines: { select: { qtyOrdered: true, unitPrice: true, lineDiscountPct: true } } 
+            },
         })
         if (!so) return { success: false, error: 'SO not found' }
         if (so.status !== 'DRAFT') return { success: false, error: `Không thể xác nhận SO ở trạng thái ${so.status}` }
@@ -678,72 +713,298 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
 
         const amount = Number(so.totalAmount)
 
-        // Calculate effective discount rate
-        const grossTotal = so.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
-        const effectiveDiscount = grossTotal > 0 ? ((grossTotal - amount) / grossTotal) * 100 : 0
-        const needsDiscountApproval = effectiveDiscount > DISCOUNT_APPROVAL_THRESHOLD
+        // ALL orders confirmed by Sales go to PENDING_APPROVAL for Sale Admin/Manager approval
+        await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_APPROVAL' } })
 
-        // If above threshold OR excessive discount, route to Approval Engine
-        if (amount >= SO_APPROVAL_THRESHOLD || needsDiscountApproval) {
-            const reason = needsDiscountApproval
-                ? `Discount ${effectiveDiscount.toFixed(1)}% > ${DISCOUNT_APPROVAL_THRESHOLD}%`
-                : `Amount ${amount.toLocaleString('vi-VN')} >= ${SO_APPROVAL_THRESHOLD.toLocaleString('vi-VN')}`
-            await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_APPROVAL' } })
-            const result = await submitForApproval({
-                docType: 'SALES_ORDER',
-                docId: id,
-                docValue: amount,
-                requestedBy: so.salesRepId,
-            })
-            if (!result.success) {
-                await logAudit({ userId: so.salesRepId, action: 'STATUS_CHANGE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'PENDING_APPROVAL', reason } }).catch(() => { })
+        // Submit to Approval Engine (starts at step 1: Sales Admin/Manager)
+        await submitForApproval({
+            docType: 'SALES_ORDER',
+            docId: id,
+            docValue: amount,
+            requestedBy: so.salesRepId,
+        })
+
+        // Log audit
+        await logAudit({
+            userId: so.salesRepId,
+            action: 'CONFIRM',
+            entityType: 'SalesOrder',
+            entityId: id,
+            newValue: { status: 'PENDING_APPROVAL' }
+        }).catch(() => { })
+
+        // Trigger notifications asynchronously to Sales Admin and Manager (Chờ duyệt cấp 1)
+        ;(async () => {
+            try {
+                const admins = await prisma.user.findMany({
+                    where: {
+                        roles: {
+                            some: {
+                                role: { name: { in: ['Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR'] } }
+                            }
+                        },
+                        status: 'ACTIVE'
+                    },
+                    select: { email: true }
+                })
+                const emails = admins.map(u => u.email)
+                if (emails.length > 0) {
+                    await notifySOPendingAdmin({
+                        soNo: so.soNo,
+                        customerName: so.customer.name,
+                        totalAmount: amount,
+                        salesRepName: so.salesRep.name,
+                        recipientEmails: emails
+                    })
+                }
+            } catch (notifyErr) {
+                console.error('[Notification Error]', notifyErr)
             }
-            revalidatePath('/dashboard/sales')
-            revalidatePath('/dashboard')
-            revalidateCache('sales')
-            revalidateCache('dashboard')
-            return { success: true, needsApproval: true }
-        }
+        })()
 
-        // Direct confirm for small orders → go to PENDING_ACCOUNTING
-        await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_ACCOUNTING' } })
-        await logAudit({ userId: so.salesRepId, action: 'CONFIRM', entityType: 'SalesOrder', entityId: id, newValue: { status: 'PENDING_ACCOUNTING' } }).catch(() => { })
         revalidatePath('/dashboard/sales')
         revalidateCache('sales')
         revalidateCache('dashboard')
-        return { success: true }
+        return { success: true, needsApproval: true }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
 }
 
-// ── CEO Approve PENDING_APPROVAL → CONFIRMED ─────
+// ── CEO/Admin Approve PENDING_APPROVAL ─────
 export async function approveSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
-            select: { status: true, soNo: true, salesRepId: true, totalAmount: true },
+            select: { 
+                status: true, 
+                soNo: true, 
+                salesRepId: true, 
+                totalAmount: true,
+                orderDiscount: true,
+                customer: { select: { name: true } },
+                salesRep: { select: { name: true } },
+                lines: { select: { qtyOrdered: true, unitPrice: true, lineDiscountPct: true } }
+            },
         })
         if (!so) return { success: false, error: 'SO not found' }
         if (so.status !== 'PENDING_APPROVAL') return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
 
-        await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_ACCOUNTING' } })
-        await logAudit({ action: 'APPROVE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'PENDING_ACCOUNTING', soNo: so.soNo, amount: Number(so.totalAmount) } }).catch(() => { })
-        revalidatePath('/dashboard/sales')
-        revalidatePath('/dashboard')
-        revalidateCache('sales')
-        revalidateCache('dashboard')
-        return { success: true }
+        const amount = Number(so.totalAmount)
+
+        // Find the active approval request for this SO
+        const approvalReq = await prisma.approvalRequest.findFirst({
+            where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
+            include: { template: { include: { steps: { orderBy: { stepOrder: 'asc' } } } } }
+        })
+
+        if (!approvalReq) {
+            return { success: false, error: 'Không tìm thấy yêu cầu duyệt của đơn hàng này' }
+        }
+
+        const isCEO = hasRole(user, 'CEO')
+        const isSaleAdminOrMgr = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR')
+
+        if (!isCEO && !isSaleAdminOrMgr) {
+            return { success: false, error: 'Bạn không có quyền duyệt đơn hàng này' }
+        }
+
+        const grossTotal = so.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+        const effectiveDiscount = grossTotal > 0 ? ((grossTotal - amount) / grossTotal) * 100 : 0
+        const needsCEO = amount >= SO_APPROVAL_THRESHOLD || effectiveDiscount > DISCOUNT_APPROVAL_THRESHOLD
+
+        if (approvalReq.currentStep === 1) {
+            // Sale Admin / Sales Manager is approving
+            if (!isSaleAdminOrMgr && !isCEO) {
+                return { success: false, error: 'Quyền duyệt cấp 1 thuộc về bộ phận Sale Admin' }
+            }
+
+            // Log step 1 approval
+            await prisma.approvalLog.create({
+                data: {
+                    requestId: approvalReq.id,
+                    step: 1,
+                    action: 'APPROVE',
+                    approvedBy: user.id,
+                    comment: 'Sale Admin phê duyệt cấp 1'
+                }
+            })
+
+            if (needsCEO) {
+                // Large order: transition to step 2 (CEO approval)
+                await prisma.approvalRequest.update({
+                    where: { id: approvalReq.id },
+                    data: { currentStep: 2 }
+                })
+
+                await logAudit({
+                    userId: user.id,
+                    action: 'APPROVE',
+                    entityType: 'SalesOrder',
+                    entityId: id,
+                    newValue: { step: 1, status: 'PENDING_APPROVAL', nextStep: 'CEO' }
+                }).catch(() => { })
+
+                // Notify CEO
+                ;(async () => {
+                    try {
+                        const ceos = await prisma.user.findMany({
+                            where: {
+                                roles: {
+                                    some: { role: { name: 'CEO' } }
+                                },
+                                status: 'ACTIVE'
+                            },
+                            select: { email: true }
+                        })
+                        for (const ceo of ceos) {
+                            await notifySOPendingCEO({
+                                soNo: so.soNo,
+                                customerName: so.customer.name,
+                                totalAmount: amount,
+                                salesRepName: so.salesRep.name,
+                                approverEmail: ceo.email
+                            })
+                        }
+                    } catch (notifyErr) {
+                        console.error('[Notification Error]', notifyErr)
+                    }
+                })()
+
+                revalidatePath('/dashboard/sales')
+                revalidateCache('sales')
+                return { success: true }
+            } else {
+                // Small order: auto approve completely and go to Kế Toán
+                await prisma.approvalRequest.update({
+                    where: { id: approvalReq.id },
+                    data: { status: 'APPROVED' }
+                })
+
+                await prisma.salesOrder.update({
+                    where: { id },
+                    data: { status: 'PENDING_ACCOUNTING' }
+                })
+
+                await logAudit({
+                    userId: user.id,
+                    action: 'APPROVE',
+                    entityType: 'SalesOrder',
+                    entityId: id,
+                    newValue: { step: 1, status: 'PENDING_ACCOUNTING' }
+                }).catch(() => { })
+
+                // Notify Accountant
+                ;(async () => {
+                    try {
+                        const accountants = await prisma.user.findMany({
+                            where: {
+                                roles: {
+                                    some: { role: { name: { in: ['Kế Toán', 'KE_TOAN'] } } }
+                                },
+                                status: 'ACTIVE'
+                            },
+                            select: { email: true }
+                        })
+                        const acctEmails = accountants.map(u => u.email)
+                        if (acctEmails.length > 0) {
+                            await notifySOPendingAccounting({
+                                soNo: so.soNo,
+                                customerName: so.customer.name,
+                                totalAmount: amount,
+                                salesRepName: so.salesRep.name,
+                                recipientEmails: acctEmails
+                            })
+                        }
+                    } catch (notifyErr) {
+                        console.error('[Notification Error]', notifyErr)
+                    }
+                })()
+
+                revalidatePath('/dashboard/sales')
+                revalidateCache('sales')
+                return { success: true }
+            }
+        } else if (approvalReq.currentStep === 2) {
+            // CEO is approving
+            if (!isCEO) {
+                return { success: false, error: 'Quyền duyệt cấp 2 thuộc về CEO' }
+            }
+
+            // Log step 2 approval
+            await prisma.approvalLog.create({
+                data: {
+                    requestId: approvalReq.id,
+                    step: 2,
+                    action: 'APPROVE',
+                    approvedBy: user.id,
+                    comment: 'CEO phê duyệt cấp 2'
+                }
+            })
+
+            // Mark approval request as APPROVED
+            await prisma.approvalRequest.update({
+                where: { id: approvalReq.id },
+                data: { status: 'APPROVED' }
+            })
+
+            // Transition SO to PENDING_ACCOUNTING
+            await prisma.salesOrder.update({
+                where: { id },
+                data: { status: 'PENDING_ACCOUNTING' }
+            })
+
+            await logAudit({
+                userId: user.id,
+                action: 'APPROVE',
+                entityType: 'SalesOrder',
+                entityId: id,
+                newValue: { step: 2, status: 'PENDING_ACCOUNTING' }
+            }).catch(() => { })
+
+            // Notify Accountant
+            ;(async () => {
+                try {
+                    const accountants = await prisma.user.findMany({
+                        where: {
+                            roles: {
+                                some: { role: { name: { in: ['Kế Toán', 'KE_TOAN'] } } }
+                            },
+                            status: 'ACTIVE'
+                        },
+                        select: { email: true }
+                    })
+                    const acctEmails = accountants.map(u => u.email)
+                    if (acctEmails.length > 0) {
+                        await notifySOPendingAccounting({
+                            soNo: so.soNo,
+                            customerName: so.customer.name,
+                            totalAmount: amount,
+                            salesRepName: so.salesRep.name,
+                            recipientEmails: acctEmails
+                        })
+                    }
+                } catch (notifyErr) {
+                    console.error('[Notification Error]', notifyErr)
+                }
+            })()
+
+            revalidatePath('/dashboard/sales')
+            revalidateCache('sales')
+            return { success: true }
+        }
+
+        return { success: false, error: 'Bước duyệt không hợp lệ' }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
 }
 
-// ── CEO Reject PENDING_APPROVAL → CANCELLED ──────
+// ── CEO/Admin Reject PENDING_APPROVAL → CANCELLED ──────
 export async function rejectSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
             select: { status: true, soNo: true, totalAmount: true },
@@ -751,8 +1012,39 @@ export async function rejectSalesOrder(id: string): Promise<{ success: boolean; 
         if (!so) return { success: false, error: 'SO not found' }
         if (so.status !== 'PENDING_APPROVAL') return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
 
+        const isCEO = hasRole(user, 'CEO')
+        const isSaleAdminOrMgr = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR')
+
+        if (!isCEO && !isSaleAdminOrMgr) {
+            return { success: false, error: 'Bạn không có quyền từ chối đơn hàng này' }
+        }
+
+        // Find active approval request
+        const approvalReq = await prisma.approvalRequest.findFirst({
+            where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' }
+        })
+
+        if (approvalReq) {
+            // Log rejection
+            await prisma.approvalLog.create({
+                data: {
+                    requestId: approvalReq.id,
+                    step: approvalReq.currentStep,
+                    action: 'REJECT',
+                    approvedBy: user.id,
+                    comment: 'Từ chối phê duyệt đơn hàng'
+                }
+            })
+
+            // Mark approval request as REJECTED
+            await prisma.approvalRequest.update({
+                where: { id: approvalReq.id },
+                data: { status: 'REJECTED' }
+            })
+        }
+
         await prisma.salesOrder.update({ where: { id }, data: { status: 'CANCELLED' } })
-        await logAudit({ action: 'REJECT', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CANCELLED', soNo: so.soNo, amount: Number(so.totalAmount) } }).catch(() => { })
+        await logAudit({ userId: user.id, action: 'REJECT', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CANCELLED', soNo: so.soNo, amount: Number(so.totalAmount) } }).catch(() => { })
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard')
         revalidateCache('sales')
@@ -798,10 +1090,18 @@ export async function getLegalEntities(): Promise<LegalEntityRow[]> {
 // Kế toán có thể thay đổi pháp nhân trước khi duyệt
 export async function accountingApproveSO(id: string, legalEntityId?: string): Promise<{ success: boolean; error?: string }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
-            select: { status: true, soNo: true, totalAmount: true, legalEntityId: true },
+            select: { 
+                status: true, 
+                soNo: true, 
+                totalAmount: true, 
+                legalEntityId: true,
+                salesRepId: true,
+                customer: { select: { name: true } },
+                salesRep: { select: { name: true, email: true } }
+            },
         })
         if (!so) return { success: false, error: 'SO không tồn tại' }
         if (so.status !== 'PENDING_ACCOUNTING') return { success: false, error: `SO không ở trạng thái Chờ KT Duyệt (hiện: ${so.status})` }
@@ -824,6 +1124,38 @@ export async function accountingApproveSO(id: string, legalEntityId?: string): P
                 entityChanged: legalEntityId && legalEntityId !== so.legalEntityId,
             },
         }).catch(() => { })
+
+        // Trigger notifications asynchronously to Warehouse (Thủ kho) and Sales Rep
+        ;(async () => {
+            try {
+                // Find Thủ Kho
+                const warehouseKeepers = await prisma.user.findMany({
+                    where: {
+                        roles: {
+                            some: { role: { name: { in: ['Thủ Kho', 'THU_KHO'] } } }
+                        },
+                        status: 'ACTIVE'
+                    },
+                    select: { email: true }
+                })
+                const keeperEmails = warehouseKeepers.map(u => u.email)
+                
+                // Recipient list includes both warehouse keepers and the sales rep who created the order
+                const recipientEmails = [...new Set([...keeperEmails, so.salesRep.email])]
+
+                if (recipientEmails.length > 0) {
+                    await notifySOConfirmed({
+                        soNo: so.soNo,
+                        customerName: so.customer.name,
+                        totalAmount: Number(so.totalAmount),
+                        salesRepName: so.salesRep.name,
+                        recipientEmails: recipientEmails
+                    })
+                }
+            } catch (notifyErr) {
+                console.error('[Notification Error]', notifyErr)
+            }
+        })()
 
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard')
@@ -1676,3 +2008,68 @@ export async function getSOStatusCounts(): Promise<Record<string, number>> {
         return result
     }, 30_000)
 }
+
+// ── Delete Sales Order (DRAFT only) ──────────────
+export async function deleteSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const so = await prisma.salesOrder.findUnique({
+            where: { id },
+            select: { status: true, salesRepId: true, soNo: true }
+        })
+        if (!so) return { success: false, error: 'Đơn hàng không tồn tại' }
+        if (so.status !== 'DRAFT') {
+            return { success: false, error: 'Chỉ có thể xóa đơn hàng ở trạng thái Nháp (DRAFT)' }
+        }
+
+        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            if (so.salesRepId !== user.id) {
+                return { success: false, error: 'Bạn không có quyền xóa đơn hàng của Sales khác.' }
+            }
+        }
+
+        // Release allocation quotas linked to this SO if any
+        const soLines = await prisma.salesOrderLine.findMany({
+            where: { soId: id },
+            include: { allocationLogs: { where: { action: 'USE' } } },
+        })
+
+        for (const line of soLines) {
+            for (const log of line.allocationLogs) {
+                await prisma.$transaction([
+                    prisma.allocationQuota.update({
+                        where: { id: log.quotaId },
+                        data: { qtySold: { decrement: Number(log.qtyUsed) } },
+                    }),
+                    prisma.allocationLog.create({
+                        data: {
+                            quotaId: log.quotaId,
+                            soLineId: line.id,
+                            qtyUsed: Number(log.qtyUsed),
+                            action: 'RELEASE',
+                        },
+                    }),
+                ])
+            }
+        }
+
+        // Perform cascading delete in database transaction
+        await prisma.$transaction([
+            prisma.salesOrderLine.deleteMany({ where: { soId: id } }),
+            prisma.salesOrder.delete({ where: { id } })
+        ])
+
+        try {
+            await logAudit({ userId: user.id, action: 'DELETE', entityType: 'SalesOrder', entityId: id, newValue: { soNo: so.soNo } })
+        } catch { /* silent */ }
+
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/allocation')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+

@@ -23,6 +23,7 @@ const mockPrisma = {
     aRInvoice: { aggregate: vi.fn() },
     stockLot: { findMany: vi.fn() },
     customer: { findUnique: vi.fn(), findMany: vi.fn() },
+    user: { findMany: vi.fn() },
     $transaction: vi.fn(async (ops: any) => Promise.all(ops)),
 }
 
@@ -42,6 +43,7 @@ beforeEach(() => {
     vi.clearAllMocks()
     mockPrisma.customer.findUnique.mockResolvedValue({ creditLimit: 0, name: 'Test Customer', defaultLegalEntityId: null })
     mockPrisma.customer.findMany.mockResolvedValue([])
+    mockPrisma.user.findMany.mockResolvedValue([])
 })
 
 // ═══════════════════════════════════════════════════
@@ -136,7 +138,7 @@ describe('SYS-02: confirmSalesOrder — Approval Threshold', () => {
         })
     })
 
-    it('should directly confirm SO under threshold (<100M)', async () => {
+    it('should submit SO under threshold (<100M) for approval', async () => {
         mockPrisma.salesOrder.findUnique.mockResolvedValue({
             totalAmount: 50_000_000, salesRepId: 'rep-1', soNo: 'SO-02', status: 'DRAFT', lines: []
         })
@@ -145,10 +147,10 @@ describe('SYS-02: confirmSalesOrder — Approval Threshold', () => {
         const result = await confirmSalesOrder('so-small')
 
         expect(result.success).toBe(true)
-        expect(result.needsApproval).toBe(undefined)
+        expect(result.needsApproval).toBe(true)
         expect(mockPrisma.salesOrder.update).toHaveBeenCalledWith({
             where: { id: 'so-small' },
-            data: { status: 'PENDING_ACCOUNTING' },
+            data: { status: 'PENDING_APPROVAL' },
         })
     })
 

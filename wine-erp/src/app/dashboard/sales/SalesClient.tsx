@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow } from './actions'
+import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 
@@ -18,8 +18,8 @@ const EditSODrawer = dynamic(() => import('./EditSODrawer').then(m => m.EditSODr
 
 const STATUS_CFG: Record<SOStatus, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: FileText },
-    PENDING_APPROVAL: { label: 'Chờ CEO', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
-    PENDING_ACCOUNTING: { label: 'Chờ KT Duyệt', color: '#C084FC', bg: 'rgba(192,132,252,0.12)', icon: Clock },
+    PENDING_APPROVAL: { label: 'Chờ Duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
+    PENDING_ACCOUNTING: { label: 'Chờ KT Duyệt', color: '#0891B2', bg: 'rgba(8,145,178,0.12)', icon: Clock },
     CONFIRMED: { label: 'Đã Xác Nhận', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: CheckCircle2 },
     PARTIALLY_DELIVERED: { label: 'Giao 1 Phần', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Truck },
     DELIVERED: { label: 'Đã Giao', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)', icon: Truck },
@@ -66,14 +66,24 @@ const getPriceBadgeLabel = (source: string | null) => {
     }
 }
 
-function StatusBadge({ status }: { status: SOStatus }) {
+function StatusBadge({ status, approvalStep }: { status: SOStatus; approvalStep?: number | null }) {
     const cfg = STATUS_CFG[status]
     const Icon = cfg.icon
+    let label = cfg.label
+    if (status === 'PENDING_APPROVAL') {
+        if (approvalStep === 1) {
+            label = 'Chờ Sale Admin duyệt'
+        } else if (approvalStep === 2) {
+            label = 'Chờ CEO duyệt'
+        } else {
+            label = 'Chờ Duyệt'
+        }
+    }
     return (
         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold rounded-full"
             style={{ color: cfg.color, background: cfg.bg }}>
             <Icon size={11} />
-            {cfg.label}
+            {label}
         </span>
     )
 }
@@ -198,7 +208,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                         {detail && (
                             <div className="flex items-center gap-2 mt-1">
                                 <p className="text-xs" style={{ color: '#4A6A7A' }}>{detail.customer.name} · {detail.paymentTerm}</p>
-                                <StatusBadge status={detail.status as SOStatus} />
+                                <StatusBadge status={detail.status as SOStatus} approvalStep={(detail as any).approvalStep} />
                             </div>
                         )}
                     </div>
@@ -485,9 +495,12 @@ function SalesOrderMobileCard({
     onReject,
     onConfirm,
     onEdit,
+    onDelete,
     onAcctApprove,
     onAcctReject,
     onCancel,
+    canApprove,
+    canAcctApprove,
     actionLoading
 }: {
     row: SalesOrderRow
@@ -496,9 +509,12 @@ function SalesOrderMobileCard({
     onReject: () => void
     onConfirm: () => void
     onEdit: () => void
+    onDelete: () => void
     onAcctApprove: () => void
     onAcctReject: () => void
     onCancel: () => void
+    canApprove: boolean
+    canAcctApprove: boolean
     actionLoading: string | null
 }) {
     const isActLoading = actionLoading === row.id
@@ -569,7 +585,7 @@ function SalesOrderMobileCard({
 
                 {/* StatusBadge component */}
                 <div className="scale-90 origin-right">
-                    <StatusBadge status={row.status} />
+                    <StatusBadge status={row.status} approvalStep={row.approvalStep} />
                 </div>
             </div>
 
@@ -585,8 +601,8 @@ function SalesOrderMobileCard({
                     <Eye size={12} />
                 </button>
 
-                {/* CEO Approval Actions */}
-                {row.status === 'PENDING_APPROVAL' && (
+                {/* Approval Actions */}
+                {row.status === 'PENDING_APPROVAL' && canApprove && (
                     <>
                         <button onClick={onApprove} disabled={isActLoading}
                             className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
@@ -618,11 +634,11 @@ function SalesOrderMobileCard({
                 )}
 
                 {/* Accountant Approval Actions */}
-                {row.status === 'PENDING_ACCOUNTING' && (
+                {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
                     <>
                         <button onClick={onAcctApprove} disabled={isActLoading}
                             className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold transition-all border"
-                            style={{ background: 'rgba(192,132,252,0.12)', color: '#C084FC', borderColor: 'rgba(192,132,252,0.25)', borderRadius: '4px' }}>
+                            style={{ background: 'rgba(8,145,178,0.12)', color: '#0891B2', borderColor: 'rgba(8,145,178,0.25)', borderRadius: '4px' }}>
                             <CheckCircle2 size={10} /> KT Duyệt
                         </button>
                         <button onClick={onAcctReject} disabled={isActLoading}
@@ -633,13 +649,21 @@ function SalesOrderMobileCard({
                     </>
                 )}
 
-                {/* Cancel Action */}
-                {['DRAFT', 'CONFIRMED', 'PENDING_ACCOUNTING'].includes(row.status) && (
-                    <button onClick={onCancel} disabled={isActLoading}
+                {/* Delete / Cancel Actions */}
+                {row.status === 'DRAFT' ? (
+                    <button onClick={onDelete} disabled={isActLoading}
                         className="px-2 py-1 text-[11px] font-semibold transition-all border"
-                        style={{ background: 'rgba(139,26,46,0.08)', color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.2)', borderRadius: '4px' }}>
-                        Huỷ đơn
+                        style={{ background: 'rgba(220,38,38,0.08)', color: '#EF4444', borderColor: 'rgba(220,38,38,0.2)', borderRadius: '4px' }}>
+                        Xóa
                     </button>
+                ) : (
+                    ['PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(row.status) && (
+                        <button onClick={onCancel} disabled={isActLoading}
+                            className="px-2 py-1 text-[11px] font-semibold transition-all border"
+                            style={{ background: 'rgba(139,26,46,0.08)', color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.2)', borderRadius: '4px' }}>
+                            Huỷ
+                        </button>
+                    )
                 )}
             </div>
         </div>
@@ -661,6 +685,10 @@ interface Props {
 
 export function SalesClient({ initialRows, initialTotal, stats, userId, userRoles, statusCounts }: Props) {
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
+    const isCEO = userRoles.includes('CEO')
+    const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
+    const canAcctApprove = userRoles.includes('Kế Toán') || userRoles.includes('KE_TOAN')
+
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -755,6 +783,20 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
         setActionLoading(id)
         toast.promise(rejectSalesOrder(id).then(() => reload()), {
             loading: 'Đang từ chối...', success: 'Đã từ chối!', error: 'Không thể từ chối', finally: () => setActionLoading(null)
+        })
+    }
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Xóa vĩnh viễn đơn hàng nháp này?')) return
+        setActionLoading(id)
+        toast.promise(deleteSalesOrder(id).then((r) => {
+            if (!r.success) throw new Error(r.error || 'Lỗi không xác định')
+            reload()
+        }), {
+            loading: 'Đang xóa đơn nháp...',
+            success: 'Đã xóa đơn hàng nháp thành công!',
+            error: (e: any) => `Không thể xóa: ${e.message}`,
+            finally: () => setActionLoading(null)
         })
     }
 
@@ -914,7 +956,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                         {row.orderDiscount > 0 && <p className="text-xs" style={{ color: '#5BA88A' }}>CK {row.orderDiscount}%</p>}
                                     </td>
                                     <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
-                                    <td className="px-4 py-3"><StatusBadge status={row.status} /></td>
+                                    <td className="px-4 py-3"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
                                     <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>{formatDate(row.createdAt)}</td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-1 flex-wrap">
@@ -924,55 +966,68 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.1)')}>
                                                 <Eye size={13} />
                                             </button>
+                                            <button onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')} className="p-1.5 rounded" title="In đơn hàng"
+                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.2)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.1)')}>
+                                                <Printer size={13} />
+                                            </button>
                                             {row.status === 'PENDING_APPROVAL' && (
-                                                <button onClick={() => handleApprove(row.id)} disabled={actionLoading === row.id}
-                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                    style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)', borderRadius: '5px' }}>
-                                                    {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><CheckCircle2 size={12} /> Duyệt</>}
-                                                </button>
-                                            )}
-                                            {row.status === 'PENDING_APPROVAL' && (
-                                                <button onClick={() => handleReject(row.id)} disabled={actionLoading === row.id}
-                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                    style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)', borderRadius: '5px' }}>
-                                                    {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><XCircle size={12} /> Từ Chối</>}
-                                                </button>
+                                                ((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))
+                                            ) && (
+                                                <>
+                                                    <button onClick={() => handleApprove(row.id)} disabled={actionLoading === row.id}
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)', borderRadius: '5px' }}>
+                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><CheckCircle2 size={12} /> Duyệt</>}
+                                                    </button>
+                                                    <button onClick={() => handleReject(row.id)} disabled={actionLoading === row.id}
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                        style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)', borderRadius: '5px' }}>
+                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><XCircle size={12} /> Từ Chối</>}
+                                                    </button>
+                                                </>
                                             )}
                                             {row.status === 'DRAFT' && (
-                                                <button onClick={() => handleConfirm(row.id)} disabled={actionLoading === row.id}
-                                                    className="px-2 py-1 text-xs font-semibold"
-                                                    style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}>
-                                                    {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : 'Xác Nhận'}
-                                                </button>
+                                                <>
+                                                    <button onClick={() => handleConfirm(row.id)} disabled={actionLoading === row.id}
+                                                        className="px-2 py-1 text-xs font-semibold"
+                                                        style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}>
+                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : 'Xác Nhận'}
+                                                    </button>
+                                                    <button onClick={() => setEditId(row.id)}
+                                                        className="flex items-center gap-1 px-2 py-1 text-xs font-semibold"
+                                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}>
+                                                        <Pencil size={11} /> Sửa
+                                                    </button>
+                                                    <button onClick={() => handleDelete(row.id)} disabled={actionLoading === row.id}
+                                                        className="px-2 py-1 text-xs font-semibold border"
+                                                        style={{ background: 'rgba(220,38,38,0.1)', color: '#EF4444', borderColor: 'rgba(220,38,38,0.25)', borderRadius: '4px' }}>
+                                                        Xóa
+                                                    </button>
+                                                </>
                                             )}
-                                            {row.status === 'DRAFT' && (
-                                                <button onClick={() => setEditId(row.id)}
-                                                    className="flex items-center gap-1 px-2 py-1 text-xs font-semibold"
-                                                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}>
-                                                    <Pencil size={11} /> Sửa
-                                                 </button>
+                                            {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
+                                                <>
+                                                    <button onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                        style={{ background: 'rgba(8,145,178,0.15)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.35)', borderRadius: '5px' }}>
+                                                        <CheckCircle2 size={12} /> KT Duyệt
+                                                    </button>
+                                                    <button onClick={async () => {
+                                                        if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
+                                                        setActionLoading(row.id)
+                                                        toast.promise(accountingRejectSO(row.id).then(() => reload()), {
+                                                            loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
+                                                        })
+                                                    }} disabled={actionLoading === row.id}
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
+                                                        style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.3)', borderRadius: '5px' }}>
+                                                        <XCircle size={12} /> KT Trả Về
+                                                    </button>
+                                                </>
                                             )}
-                                            {row.status === 'PENDING_ACCOUNTING' && (
-                                                <button onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
-                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                    style={{ background: 'rgba(192,132,252,0.15)', color: '#C084FC', border: '1px solid rgba(192,132,252,0.35)', borderRadius: '5px' }}>
-                                                    <CheckCircle2 size={12} /> KT Duyệt
-                                                </button>
-                                            )}
-                                            {row.status === 'PENDING_ACCOUNTING' && (
-                                                <button onClick={async () => {
-                                                    if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
-                                                    setActionLoading(row.id)
-                                                    toast.promise(accountingRejectSO(row.id).then(() => reload()), {
-                                                        loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
-                                                    })
-                                                }} disabled={actionLoading === row.id}
-                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                    style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.3)', borderRadius: '5px' }}>
-                                                    <XCircle size={12} /> KT Trả Về
-                                                </button>
-                                            )}
-                                            {['DRAFT', 'CONFIRMED', 'PENDING_ACCOUNTING'].includes(row.status) && (
+                                            {['PENDING_APPROVAL', 'CONFIRMED'].includes(row.status) && (
                                                 <button onClick={() => handleCancel(row.id)} disabled={actionLoading === row.id}
                                                     className="px-2 py-1 text-xs font-semibold"
                                                     style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '4px' }}>
@@ -1026,6 +1081,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                             onReject={() => handleReject(row.id)}
                             onConfirm={() => handleConfirm(row.id)}
                             onEdit={() => setEditId(row.id)}
+                            onDelete={() => handleDelete(row.id)}
                             onAcctApprove={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
                             onAcctReject={async () => {
                                 if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
@@ -1035,6 +1091,8 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                 })
                             }}
                             onCancel={() => handleCancel(row.id)}
+                            canApprove={((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))}
+                            canAcctApprove={canAcctApprove}
                             actionLoading={actionLoading}
                         />
                     ))
@@ -1108,8 +1166,8 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
                                     finally: () => setActionLoading(null),
                                 })
                             }}
-                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold"
-                                style={{ background: '#C084FC', color: '#0A1926', borderRadius: '6px' }}>
+                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white"
+                                style={{ background: '#0891B2', borderRadius: '6px' }}>
                                 <CheckCircle2 size={14} /> Duyệt & Xác Nhận
                             </button>
                         </div>
