@@ -119,6 +119,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     const [paymentTerm, setPaymentTerm] = useState('NET30')
     const [orderDiscount, setOrderDiscount] = useState(0)
     const [lines, setLines] = useState<SOLine[]>([])
+    const [notes, setNotes] = useState('')
 
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
     const [arBalance, setArBalance] = useState(0)
@@ -137,11 +138,17 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
 
     const getFilteredProducts = useCallback((query: string) => {
         const q = query.trim().toLowerCase()
-        if (!q) return products.slice(0, 100)
-        return products.filter(p =>
-            p.productName.toLowerCase().includes(q) ||
-            p.skuCode.toLowerCase().includes(q)
-        )
+        if (!q) return products.slice(0, 15)
+        
+        // High-performance filter with early exit to resolve typing lag
+        const results = []
+        for (const p of products) {
+            if (p.productName.toLowerCase().includes(q) || p.skuCode.toLowerCase().includes(q)) {
+                results.push(p)
+                if (results.length >= 15) break
+            }
+        }
+        return results
     }, [products])
 
     useEffect(() => {
@@ -287,6 +294,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
             channel,
             paymentTerm,
             orderDiscount,
+            notes,
             lines: lines.map(l => ({
                 productId: l.productId,
                 qtyOrdered: l.qtyOrdered,
@@ -315,6 +323,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
         setArBalance(0); setPriceMap({}); setLegalEntityId(''); setSearchQueries({})
+        setNotes('')
     }
 
     if (!open) return null
@@ -442,6 +451,21 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                 </div>
                             </div>
 
+                            {/* Diễn giải đơn hàng */}
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
+                                    Diễn Giải Đơn Hàng
+                                </label>
+                                <textarea
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                    placeholder="Nhập diễn giải/ghi chú đơn hàng..."
+                                    rows={2}
+                                    className="w-full px-3 py-2.5 text-sm outline-none"
+                                    style={{ ...inputStyle }}
+                                />
+                            </div>
+
                             {/* SO Lines */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
@@ -460,131 +484,269 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                         <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có sản phẩm — Click "+ Thêm dòng"</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2">
-                                        {lines.map((line, i) => {
-                                            const lineTotal = line.qtyOrdered * line.unitPrice * (1 - line.lineDiscountPct / 100)
-                                            const lowStock = line.productId ? line.qtyOrdered > line.stock : false
-                                            const alloc = allocations.find(a => a.productId === line.productId)
-                                            const quotaExceeded = alloc && line.qtyOrdered > alloc.remaining
-                                            const resolved = priceMap[line.productId]
-                                            const hasAutoPrice = resolved !== undefined && resolved.source !== 'DEFAULT_ZERO'
-                                            return (
-                                                <div key={i} className="p-3 rounded-md space-y-2"
-                                                    style={{ background: '#142433', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(139,26,46,0.35)' : '#2A4355'}` }}>
-                                                    <div className="flex items-start gap-2">
-                                                        <div className="flex-1 relative">
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Gõ mã SKU hoặc tên sản phẩm..."
-                                                                value={searchQueries[i] ?? ''}
-                                                                onFocus={() => {
-                                                                    setActiveDropdownIndex(i)
-                                                                }}
-                                                                onBlur={() => {
-                                                                    setTimeout(() => {
-                                                                        setActiveDropdownIndex(null)
-                                                                        if (line.productId) {
-                                                                            setSearchQueries(prev => ({
-                                                                                ...prev,
-                                                                                [i]: `[${line.skuCode}] ${line.productName}`
-                                                                            }))
-                                                                        } else {
-                                                                            setSearchQueries(prev => ({ ...prev, [i]: '' }))
-                                                                        }
-                                                                    }, 200)
-                                                                }}
-                                                                onChange={e => {
-                                                                    const val = e.target.value
-                                                                    setSearchQueries(prev => ({ ...prev, [i]: val }))
-                                                                    setActiveDropdownIndex(i)
-                                                                }}
-                                                                className="w-full px-3 py-2 text-xs outline-none"
-                                                                style={{ ...inputStyle, minWidth: 0 }}
-                                                            />
-                                                            
-                                                            {activeDropdownIndex === i && (
-                                                                <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-lg border"
-                                                                     style={{ background: '#142433', borderColor: '#2A4355' }}>
-                                                                    {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
-                                                                        <div className="px-3 py-2 text-xs text-gray-500">
-                                                                            Không tìm thấy sản phẩm
-                                                                        </div>
-                                                                    ) : (
-                                                                        getFilteredProducts(searchQueries[i] ?? '').map(p => (
-                                                                            <div
-                                                                                key={p.id}
-                                                                                onMouseDown={() => {
-                                                                                    updateLine(i, 'productId', p.id)
+                                    <>
+                                        {/* Desktop Table View */}
+                                        <div className="hidden md:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
+                                            <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
+                                                <thead>
+                                                    <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
+                                                        <th className="px-3 py-2.5">Sản Phẩm *</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">Tồn Kho</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">SL</th>
+                                                        <th className="px-3 py-2.5 w-28 text-right">Đơn Giá</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">CK %</th>
+                                                        <th className="px-3 py-2.5 w-28 text-right">Thành Tiền</th>
+                                                        <th className="px-3 py-2.5 w-10 text-center"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[#2A4355]/40">
+                                                    {lines.map((line, i) => {
+                                                        const lineTotal = line.qtyOrdered * line.unitPrice * (1 - line.lineDiscountPct / 100)
+                                                        const lowStock = line.productId ? line.qtyOrdered > line.stock : false
+                                                        const alloc = allocations.find(a => a.productId === line.productId)
+                                                        const quotaExceeded = alloc && line.qtyOrdered > alloc.remaining
+                                                        const resolved = priceMap[line.productId]
+                                                        const hasAutoPrice = resolved !== undefined && resolved.source !== 'DEFAULT_ZERO'
+                                                        return (
+                                                            <tr key={i} className={`hover:bg-[#1B2E3D]/30 transition-colors ${lowStock || quotaExceeded ? 'bg-red-950/10' : ''}`}>
+                                                                <td className="px-3 py-2 relative">
+                                                                    <div className="relative">
+                                                                        <input
+                                                                            type="text"
+                                                                            placeholder="Gõ SKU hoặc tên sản phẩm..."
+                                                                            value={searchQueries[i] ?? ''}
+                                                                            onFocus={() => setActiveDropdownIndex(i)}
+                                                                            onBlur={() => {
+                                                                                setTimeout(() => {
                                                                                     setActiveDropdownIndex(null)
-                                                                                }}
-                                                                                className="px-3 py-2 text-xs cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left"
-                                                                                style={{ color: '#E8F1F2' }}
-                                                                            >
-                                                                                <span className="font-bold text-[#87CBB9] mr-1.5">[{p.skuCode}]</span>
-                                                                                <span>{p.productName}</span>
-                                                                                <span className="ml-2 text-gray-400 text-[10px]">(Tồn: {p.totalStock})</span>
+                                                                                    if (line.productId) {
+                                                                                        setSearchQueries(prev => ({
+                                                                                            ...prev,
+                                                                                            [i]: `[${line.skuCode}] ${line.productName}`
+                                                                                        }))
+                                                                                    } else {
+                                                                                        setSearchQueries(prev => ({ ...prev, [i]: '' }))
+                                                                                    }
+                                                                                }, 200)
+                                                                            }}
+                                                                            onChange={e => {
+                                                                                const val = e.target.value
+                                                                                setSearchQueries(prev => ({ ...prev, [i]: val }))
+                                                                                setActiveDropdownIndex(i)
+                                                                            }}
+                                                                            className="w-full px-2.5 py-1.5 text-xs outline-none bg-[#0D1E2B] border border-[#2A4355] text-white rounded"
+                                                                        />
+                                                                        
+                                                                        {activeDropdownIndex === i && (
+                                                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-[#142433] border border-[#2A4355]">
+                                                                                {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
+                                                                                    <div className="px-3 py-2 text-xs text-gray-500">
+                                                                                        Không tìm thấy sản phẩm
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    getFilteredProducts(searchQueries[i] ?? '').map(p => (
+                                                                                        <div
+                                                                                            key={p.id}
+                                                                                            onMouseDown={() => {
+                                                                                                updateLine(i, 'productId', p.id)
+                                                                                                setActiveDropdownIndex(null)
+                                                                                            }}
+                                                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left text-white"
+                                                                                        >
+                                                                                            <span className="font-bold text-[#87CBB9] mr-1.5">[{p.skuCode}]</span>
+                                                                                            <span>{p.productName}</span>
+                                                                                            <span className="ml-2 text-gray-400 text-[10px]">(Tồn: {p.totalStock})</span>
+                                                                                        </div>
+                                                                                    ))
+                                                                                )}
                                                                             </div>
-                                                                        ))
-                                                                    )}
-                                                                </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                                        {alloc && (
+                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                                                                                <ShieldAlert size={10} />
+                                                                                {alloc.campaignName}: {quotaExceeded ? `Vượt! Còn ${alloc.remaining}` : `Còn ${alloc.remaining}`}
+                                                                            </span>
+                                                                        )}
+                                                                        {hasAutoPrice && (
+                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
+                                                                                style={getPriceBadgeStyle(resolved.source)}>
+                                                                                <Tag size={10} /> {getPriceBadgeLabel(resolved, channel)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-[#8AAEBB]'}`}>
+                                                                        {line.productId ? line.stock : '—'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={line.qtyOrdered}
+                                                                        onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
+                                                                        className="w-14 px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                    />
+                                                                    {lowStock && <p className="text-[10px] text-red-500 mt-0.5">Vượt tồn!</p>}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-right font-mono text-[#8AAEBB]">
+                                                                    {formatVND(line.unitPrice)}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        max="100"
+                                                                        value={line.lineDiscountPct}
+                                                                        onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
+                                                                        className="w-12 px-1 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-3 py-2 text-right font-mono font-bold text-[#87CBB9]">
+                                                                    {formatVND(lineTotal)}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <button onClick={() => removeLine(i)} className="text-red-500 hover:text-red-400 p-1.5 rounded transition-all" type="button">
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Mobile Card View */}
+                                        <div className="block md:hidden space-y-2">
+                                            {lines.map((line, i) => {
+                                                const lineTotal = line.qtyOrdered * line.unitPrice * (1 - line.lineDiscountPct / 100)
+                                                const lowStock = line.productId ? line.qtyOrdered > line.stock : false
+                                                const alloc = allocations.find(a => a.productId === line.productId)
+                                                const quotaExceeded = alloc && line.qtyOrdered > alloc.remaining
+                                                const resolved = priceMap[line.productId]
+                                                const hasAutoPrice = resolved !== undefined && resolved.source !== 'DEFAULT_ZERO'
+                                                return (
+                                                    <div key={i} className="p-3 rounded-md space-y-2"
+                                                        style={{ background: '#142433', border: `1px solid ${lowStock || quotaExceeded ? 'rgba(139,26,46,0.35)' : '#2A4355'}` }}>
+                                                        <div className="flex items-start gap-2">
+                                                            <div className="flex-1 relative">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Gõ mã SKU hoặc tên sản phẩm..."
+                                                                    value={searchQueries[i] ?? ''}
+                                                                    onFocus={() => {
+                                                                        setActiveDropdownIndex(i)
+                                                                    }}
+                                                                    onBlur={() => {
+                                                                        setTimeout(() => {
+                                                                            setActiveDropdownIndex(null)
+                                                                            if (line.productId) {
+                                                                                setSearchQueries(prev => ({
+                                                                                    ...prev,
+                                                                                    [i]: `[${line.skuCode}] ${line.productName}`
+                                                                                }))
+                                                                            } else {
+                                                                                setSearchQueries(prev => ({ ...prev, [i]: '' }))
+                                                                            }
+                                                                        }, 200)
+                                                                    }}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value
+                                                                        setSearchQueries(prev => ({ ...prev, [i]: val }))
+                                                                        setActiveDropdownIndex(i)
+                                                                    }}
+                                                                    className="w-full px-3 py-2 text-xs outline-none"
+                                                                    style={{ ...inputStyle, minWidth: 0 }}
+                                                                />
+                                                                
+                                                                {activeDropdownIndex === i && (
+                                                                    <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-md shadow-lg border"
+                                                                         style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                                                        {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
+                                                                            <div className="px-3 py-2 text-xs text-gray-500">
+                                                                                Không tìm thấy sản phẩm
+                                                                            </div>
+                                                                        ) : (
+                                                                            getFilteredProducts(searchQueries[i] ?? '').map(p => (
+                                                                                <div
+                                                                                    key={p.id}
+                                                                                    onMouseDown={() => {
+                                                                                        updateLine(i, 'productId', p.id)
+                                                                                        setActiveDropdownIndex(null)
+                                                                                    }}
+                                                                                    className="px-3 py-2 text-xs cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left"
+                                                                                    style={{ color: '#E8F1F2' }}
+                                                                                >
+                                                                                    <span className="font-bold text-[#87CBB9] mr-1.5">[{p.skuCode}]</span>
+                                                                                    <span>{p.productName}</span>
+                                                                                    <span className="ml-2 text-gray-400 text-[10px]">(Tồn: {p.totalStock})</span>
+                                                                                </div>
+                                                                            ))
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <button onClick={() => removeLine(i)} style={{ color: '#8B1A2E', padding: '8px' }} type="button">
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                        {/* Allocation & Price badges */}
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {alloc && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                                                                    style={{ background: quotaExceeded ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.12)', color: quotaExceeded ? '#8B1A2E' : '#D4A853', border: `1px solid ${quotaExceeded ? 'rgba(139,26,46,0.3)' : 'rgba(212,168,83,0.25)'}` }}>
+                                                                    <ShieldAlert size={11} />
+                                                                    {alloc.campaignName}: {quotaExceeded ? `Vượt! Còn ${alloc.remaining}` : `Còn ${alloc.remaining}`}
+                                                                </span>
+                                                            )}
+                                                            {hasAutoPrice && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                                                                    style={getPriceBadgeStyle(resolved.source)}>
+                                                                    <Tag size={11} /> {getPriceBadgeLabel(resolved, channel)}
+                                                                </span>
                                                             )}
                                                         </div>
-                                                        <button onClick={() => removeLine(i)} style={{ color: '#8B1A2E', padding: '8px' }} type="button">
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                    {/* Allocation & Price badges */}
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {alloc && (
-                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
-                                                                style={{ background: quotaExceeded ? 'rgba(139,26,46,0.15)' : 'rgba(212,168,83,0.12)', color: quotaExceeded ? '#8B1A2E' : '#D4A853', border: `1px solid ${quotaExceeded ? 'rgba(139,26,46,0.3)' : 'rgba(212,168,83,0.25)'}` }}>
-                                                                <ShieldAlert size={11} />
-                                                                {alloc.campaignName}: {quotaExceeded ? `Vượt! Còn ${alloc.remaining}` : `Còn ${alloc.remaining}`}
-                                                            </span>
-                                                        )}
-                                                        {hasAutoPrice && (
-                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
-                                                                style={getPriceBadgeStyle(resolved.source)}>
-                                                                <Tag size={11} /> {getPriceBadgeLabel(resolved, channel)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <div>
-                                                            <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Số Lượng</p>
-                                                            <input type="number" min="1" value={line.qtyOrdered}
-                                                                onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
-                                                                className="w-full px-2.5 py-1.5 text-sm outline-none"
-                                                                style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(139,26,46,0.5)' : '#2A4355'}` }}
-                                                            />
-                                                            {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ Vượt tồn kho ({line.stock})</p>}
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Số Lượng</p>
+                                                                <input type="number" min="1" value={line.qtyOrdered}
+                                                                    onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
+                                                                    className="w-full px-2.5 py-1.5 text-sm outline-none"
+                                                                    style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(139,26,46,0.5)' : '#2A4355'}` }}
+                                                                />
+                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ Vượt tồn kho ({line.stock})</p>}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá (VND){hasAutoPrice && <span style={{ color: '#5BA88A' }}> ✦</span>}</p>
+                                                                <input type="number" min="0" value={line.unitPrice}
+                                                                    readOnly
+                                                                    className="w-full px-2.5 py-1.5 text-sm outline-none opacity-70 cursor-not-allowed"
+                                                                    style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>CK Dòng (%)</p>
+                                                                <input type="number" min="0" max="100" value={line.lineDiscountPct}
+                                                                    onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
+                                                                    className="w-full px-2.5 py-1.5 text-sm outline-none"
+                                                                    style={{ ...inputStyle }}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá (VND){hasAutoPrice && <span style={{ color: '#5BA88A' }}> ✦</span>}</p>
-                                                            <input type="number" min="0" value={line.unitPrice}
-                                                                readOnly
-                                                                className="w-full px-2.5 py-1.5 text-sm outline-none opacity-70 cursor-not-allowed"
-                                                                style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>CK Dòng (%)</p>
-                                                            <input type="number" min="0" max="100" value={line.lineDiscountPct}
-                                                                onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
-                                                                className="w-full px-2.5 py-1.5 text-sm outline-none"
-                                                                style={{ ...inputStyle }}
-                                                            />
+                                                        <div className="flex justify-end">
+                                                            <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                                = {formatVND(lineTotal)}
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex justify-end">
-                                                        <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
-                                                            = {formatVND(lineTotal)}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </>
                                 )}
                             </div>
 

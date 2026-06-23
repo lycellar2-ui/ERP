@@ -72,43 +72,85 @@ export async function getSalesOrders(filters: {
 
     const fetchData = async () => {
         const skip = (page - 1) * pageSize
-        const where: any = {}
+        
+        const params: any[] = []
+        let paramIndex = 1
+        const conditions: string[] = []
 
         if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
-            where.salesRepId = user.id
+            conditions.push(`so."salesRepId" = $${paramIndex++}`)
+            params.push(user.id)
         }
 
-        if (status) where.status = status
+        if (status) {
+            conditions.push(`so.status = $${paramIndex++}`)
+            params.push(status)
+        }
+
         if (search) {
-            where.OR = [
-                { soNo: { contains: search, mode: 'insensitive' } },
-                { customer: { name: { contains: search, mode: 'insensitive' } } },
-                { customer: { code: { contains: search, mode: 'insensitive' } } },
-            ]
-        }
-        if (dateFrom || dateTo) {
-            where.createdAt = {}
-            if (dateFrom) where.createdAt.gte = new Date(dateFrom)
-            if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+            conditions.push(`(so."soNo" ILIKE $${paramIndex} OR c.name ILIKE $${paramIndex} OR c.code ILIKE $${paramIndex})`)
+            params.push(`%${search}%`)
+            paramIndex++
         }
 
-        const orderBy: any = sortBy === 'soNo' ? { soNo: sortDir } : { [sortBy]: sortDir }
+        if (dateFrom) {
+            conditions.push(`so."createdAt" >= $${paramIndex++}`)
+            params.push(new Date(dateFrom))
+        }
+        if (dateTo) {
+            conditions.push(`so."createdAt" <= $${paramIndex++}`)
+            params.push(new Date(dateTo + 'T23:59:59.999Z'))
+        }
 
-        const [orders, total] = await Promise.all([
-            prisma.salesOrder.findMany({
-                where, skip, take: pageSize,
-                orderBy,
-                include: {
-                    customer: { select: { name: true, code: true } },
-                    salesRep: { select: { name: true } },
-                    legalEntity: { select: { name: true, code: true } },
-                    _count: { select: { lines: true } },
-                },
-            }),
-            prisma.salesOrder.count({ where }),
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+        // Sort validation
+        const validSortFields = ['createdAt', 'totalAmount', 'soNo']
+        const validSortDirs = ['asc', 'desc']
+        
+        const validatedSortBy = validSortFields.includes(sortBy) ? sortBy : 'createdAt'
+        const validatedSortDir = validSortDirs.includes(sortDir.toLowerCase()) ? sortDir.toLowerCase() : 'desc'
+
+        let sortCol = `so."createdAt"`
+        if (validatedSortBy === 'totalAmount') sortCol = `so."totalAmount"`
+        if (validatedSortBy === 'soNo') sortCol = `so."soNo"`
+
+        const limitIndex = paramIndex++
+        const offsetIndex = paramIndex++
+        const queryParams = [...params, pageSize, skip]
+
+        const query = `
+            SELECT so.id, so."soNo", so."totalAmount", so.channel, so.status, so."paymentTerm", so."orderDiscount", NULL as notes, so."createdAt", 
+                   c.name as customer_name, c.code as customer_code,
+                   u.name as sales_rep_name,
+                   le.name as legal_entity_name, le.code as legal_entity_code,
+                   (SELECT COUNT(*)::int FROM sales_order_lines sol WHERE sol."soId" = so.id) as line_count
+            FROM sales_orders so
+            JOIN customers c ON c.id = so."customerId"
+            JOIN users u ON u.id = so."salesRepId"
+            JOIN legal_entities le ON le.id = so."legalEntityId"
+            ${whereClause}
+            ORDER BY ${sortCol} ${validatedSortDir}
+            LIMIT $${limitIndex} OFFSET $${offsetIndex}
+        `
+
+        const countQuery = `
+            SELECT COUNT(*)::int as total
+            FROM sales_orders so
+            JOIN customers c ON c.id = so."customerId"
+            JOIN users u ON u.id = so."salesRepId"
+            JOIN legal_entities le ON le.id = so."legalEntityId"
+            ${whereClause}
+        `
+
+        const [orders, countResult] = await Promise.all([
+            prisma.$queryRawUnsafe<any[]>(query, ...queryParams),
+            prisma.$queryRawUnsafe<any[]>(countQuery, ...params),
         ])
 
-        const orderIds = orders.map(o => o.id)
+        const total = countResult[0]?.total ?? 0
+
+        const orderIds = orders.map((o: any) => o.id)
         const approvalRequests = await prisma.approvalRequest.findMany({
             where: { docType: 'SALES_ORDER', docId: { in: orderIds }, status: 'PENDING' },
             select: { docId: true, currentStep: true }
@@ -116,21 +158,21 @@ export async function getSalesOrders(filters: {
         const approvalMap = Object.fromEntries(approvalRequests.map(r => [r.docId, r.currentStep]))
 
         return {
-            rows: orders.map((o) => ({
+            rows: orders.map((o: any) => ({
                 id: o.id,
                 soNo: o.soNo,
-                customerName: o.customer.name,
-                customerCode: o.customer.code,
+                customerName: o.customer_name,
+                customerCode: o.customer_code,
                 channel: o.channel as SalesChannel,
                 status: o.status as SOStatus,
                 totalAmount: Number(o.totalAmount),
                 orderDiscount: Number(o.orderDiscount),
                 paymentTerm: o.paymentTerm,
-                salesRepName: o.salesRep.name,
-                legalEntityName: (o as any).legalEntity?.name ?? null,
-                legalEntityCode: (o as any).legalEntity?.code ?? null,
-                lineCount: o._count.lines,
-                notes: (o as any).notes ?? null,
+                salesRepName: o.sales_rep_name,
+                legalEntityName: o.legal_entity_name,
+                legalEntityCode: o.legal_entity_code,
+                lineCount: o.line_count,
+                notes: null,
                 createdAt: o.createdAt,
                 approvalStep: approvalMap[o.id] ?? null,
             })),
@@ -549,6 +591,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 totalAmount: finalAmount,
                 status: 'DRAFT',
                 legalEntityId: input.legalEntityId,
+                notes: input.notes ?? null,
                 lines: {
                     create: input.lines.map((l, idx) => {
                         const qc = quotaChecks.find(q => q.lineIdx === idx)
@@ -658,6 +701,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     orderDiscount: input.orderDiscount ?? 0,
                     totalAmount: finalAmount,
                     legalEntityId: input.legalEntityId,
+                    notes: input.notes ?? null,
                 },
             }),
             // Create new lines

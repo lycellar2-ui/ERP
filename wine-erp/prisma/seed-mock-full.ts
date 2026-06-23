@@ -10,7 +10,9 @@ import pg from 'pg'
 import * as dotenv from 'dotenv'
 import { calculateDueDate } from '../src/lib/utils'
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 dotenv.config({ path: '.env.local' })
+
 
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL!.replace('?sslmode=require', ''),

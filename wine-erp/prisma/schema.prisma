@@ -165,6 +165,10 @@ model ApprovalRequest {
   logs        ApprovalLog[]
   createdAt   DateTime         @default(now())
 
+  @@index([docType, docId])
+  @@index([requestedBy])
+  @@index([status])
+  @@index([status, requestedBy])
   @@map("approval_requests")
 }
 
@@ -179,6 +183,8 @@ model ApprovalLog {
   comment    String?
   createdAt  DateTime        @default(now())
 
+  @@index([requestId])
+  @@index([approvedBy])
   @@map("approval_logs")
 }
 
@@ -1403,6 +1409,7 @@ model SalesOrder {
   totalAmount       Decimal             @default(0)
   orderDiscount     Decimal             @default(0)
   status            SOStatus            @default(DRAFT)
+  notes             String?
   lines             SalesOrderLine[]
   deliveryOrders    DeliveryOrder[]
   arInvoices        ARInvoice[]
@@ -1412,6 +1419,12 @@ model SalesOrder {
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
+  @@index([customerId])
+  @@index([salesRepId])
+  @@index([contractId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([status, createdAt])
   @@map("sales_orders")
 }
 
@@ -1429,6 +1442,8 @@ model SalesOrderLine {
   allocationCampaign   AllocationCampaign? @relation(fields: [allocationCampaignId], references: [id])
   allocationLogs       AllocationLog[]
 
+  @@index([soId])
+  @@index([productId])
   @@map("sales_order_lines")
 }
 

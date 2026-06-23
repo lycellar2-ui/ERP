@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder } from './actions'
+import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesStats, getSOStatusCounts } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 
@@ -683,7 +683,7 @@ interface Props {
     statusCounts: Record<string, number>
 }
 
-export function SalesClient({ initialRows, initialTotal, stats, userId, userRoles, statusCounts }: Props) {
+export function SalesClient({ initialRows, initialTotal, stats: initialStats, userId, userRoles, statusCounts: initialStatusCounts }: Props) {
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const isCEO = userRoles.includes('CEO')
     const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
@@ -691,7 +691,7 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
 
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(initialRows.length === 0)
     const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<SOStatus | ''>('')
@@ -712,7 +712,8 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
     const [editId, setEditId] = useState<string | null>(null)
-    const [counts, setCounts] = useState(statusCounts)
+    const [stats, setStats] = useState(initialStats)
+    const [counts, setCounts] = useState(initialStatusCounts)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
     const [acctEntityId, setAcctEntityId] = useState('')
@@ -725,22 +726,35 @@ export function SalesClient({ initialRows, initialTotal, stats, userId, userRole
     const reload = useCallback(async (overrides?: Partial<{ search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string }>) => {
         setLoading(true)
         try {
-            const result = await getSalesOrders({
-                search: (overrides?.search ?? search) || undefined,
-                status: (overrides?.status ?? statusFilter) as SOStatus || undefined,
-                page: overrides?.page ?? page,
-                pageSize: 20,
-                sortBy: (overrides?.sortBy ?? sortBy) as any,
-                sortDir: (overrides?.sortDir ?? sortDir) as any,
-                dateFrom: (overrides?.dateFrom ?? dateFrom) || undefined,
-                dateTo: (overrides?.dateTo ?? dateTo) || undefined,
-            })
+            const [result, newStats, newCounts] = await Promise.all([
+                getSalesOrders({
+                    search: (overrides?.search ?? search) || undefined,
+                    status: (overrides?.status ?? statusFilter) as SOStatus || undefined,
+                    page: overrides?.page ?? page,
+                    pageSize: 20,
+                    sortBy: (overrides?.sortBy ?? sortBy) as any,
+                    sortDir: (overrides?.sortDir ?? sortDir) as any,
+                    dateFrom: (overrides?.dateFrom ?? dateFrom) || undefined,
+                    dateTo: (overrides?.dateTo ?? dateTo) || undefined,
+                }),
+                getSalesStats(),
+                getSOStatusCounts(),
+            ])
             setRows(result.rows)
             setTotal(result.total)
+            setStats(newStats)
+            setCounts(newCounts)
         } finally {
             setLoading(false)
         }
     }, [search, statusFilter, page, sortBy, sortDir, dateFrom, dateTo])
+
+    // Load initial sales data on mount
+    useEffect(() => {
+        if (initialRows.length === 0) {
+            reload()
+        }
+    }, [initialRows.length, reload])
 
     const handleSort = (field: string) => {
         const newDir = sortBy === field && sortDir === 'desc' ? 'asc' : 'desc'
