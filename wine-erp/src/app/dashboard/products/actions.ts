@@ -1,11 +1,11 @@
 // Server Actions cho Products module — khớp với Prisma schema
 'use server'
 
-import { prisma, dbPool } from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth, getCurrentUser, requirePermission, hasPermission } from '@/lib/session'
+import { getCurrentUser, requirePermission, hasPermission } from '@/lib/session'
 import { logAudit, logAuditWithDiff } from '@/lib/audit'
 
 // ─── Types ────────────────────────────────────────
@@ -50,145 +50,92 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
     rows: ProductRow[]
     total: number
 }> {
-    const { search, wineType, status, country, vintage, producerId, sortBy, sortDir, page = 1, pageSize = 20 } = filters
+    const cacheKey = `products:list:${JSON.stringify(filters)}`
+    return cached(cacheKey, async () => {
+        const { search, wineType, status, country, vintage, producerId, sortBy, sortDir, page = 1, pageSize = 20 } = filters
 
-    const whereClauses: string[] = ['p."deletedAt" IS NULL']
-    const params: any[] = []
-    let paramIdx = 1
+        const where: any = {
+            deletedAt: null,
+        }
 
-    if (search) {
-        whereClauses.push(`(
-            p."skuCode" ILIKE $${paramIdx} OR 
-            p."productName" ILIKE $${paramIdx} OR 
-            p."barcodeEan" ILIKE $${paramIdx} OR 
-            pr.name ILIKE $${paramIdx}
-        )`)
-        params.push(`%${search}%`)
-        paramIdx++
-    }
-    if (wineType) {
-        whereClauses.push(`p."wineType" = $${paramIdx}`)
-        params.push(wineType)
-        paramIdx++
-    }
-    if (status) {
-        whereClauses.push(`p.status = $${paramIdx}`)
-        params.push(status)
-        paramIdx++
-    }
-    if (country) {
-        whereClauses.push(`p.country = $${paramIdx}`)
-        params.push(country)
-        paramIdx++
-    }
-    if (vintage) {
-        whereClauses.push(`p.vintage = $${paramIdx}`)
-        params.push(Number(vintage))
-        paramIdx++
-    }
-    if (producerId) {
-        whereClauses.push(`p."producerId" = $${paramIdx}`)
-        params.push(producerId)
-        paramIdx++
-    }
+        if (search) {
+            where.OR = [
+                { skuCode: { contains: search, mode: 'insensitive' } },
+                { productName: { contains: search, mode: 'insensitive' } },
+                { barcodeEan: { contains: search, mode: 'insensitive' } },
+                { producerName: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+        if (wineType) {
+            where.wineType = wineType
+        }
+        if (status) {
+            where.status = status
+        }
+        if (country) {
+            where.country = country
+        }
+        if (vintage) {
+            where.vintage = Number(vintage)
+        }
+        if (producerId) {
+            where.producerId = producerId
+        }
 
-    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
+        // Dynamic sort
+        const orderBy: any = {}
+        if (sortBy === 'name') {
+            orderBy.productName = sortDir === 'asc' ? 'asc' : 'desc'
+        } else if (sortBy === 'vintage') {
+            orderBy.vintage = sortDir === 'asc' ? 'asc' : 'desc'
+        } else if (sortBy === 'abv') {
+            orderBy.abvPercent = sortDir === 'asc' ? 'asc' : 'desc'
+        } else if (sortBy === 'stock') {
+            orderBy.totalStock = sortDir === 'asc' ? 'asc' : 'desc'
+        } else {
+            orderBy.createdAt = sortDir === 'asc' ? 'asc' : 'desc'
+        }
 
-    // Dynamic sort
-    const sortMap: Record<string, string> = {
-        name: 'p."productName"',
-        vintage: 'p.vintage',
-        abv: 'p."abvPercent"',
-        created: 'p."createdAt"',
-    }
-    const sortCol = sortBy ? sortMap[sortBy] ?? 'p."createdAt"' : 'p."createdAt"'
-    const sortOrder = sortDir === 'asc' ? 'ASC' : 'DESC'
+        const take = pageSize
+        const skip = (page - 1) * pageSize
 
-    const limit = pageSize
-    const offset = (page - 1) * pageSize
+        const [rowsRes, total] = await Promise.all([
+            prisma.productRowView.findMany({
+                where,
+                orderBy,
+                take,
+                skip,
+            }),
+            prisma.productRowView.count({
+                where,
+            }),
+        ])
 
-    const rowsQuery = `
-        SELECT 
-            p.id,
-            p."skuCode" AS "skuCode",
-            p."productName" AS "productName",
-            p.vintage,
-            p."wineType" AS "wineType",
-            p.format,
-            p."packagingType" AS "packagingType",
-            p."unitsPerCase" AS "unitsPerCase",
-            p."abvPercent"::float AS "abvPercent",
-            p.country,
-            p."barcodeEan" AS "barcodeEan",
-            p.classification,
-            p.status,
-            p."createdAt" AS "createdAt",
-            pr.name AS "producerName",
-            pr.country AS "producerCountry",
-            ap.name AS "appellationName",
-            (
-                SELECT COALESCE(SUM(sl."qtyAvailable"), 0)::int
-                FROM stock_lots sl
-                WHERE sl."productId" = p.id AND sl.status = 'AVAILABLE'
-            ) AS "totalStock",
-            (
-                SELECT COUNT(*)::int
-                FROM product_media pm
-                WHERE pm."productId" = p.id
-            ) AS "mediaCount",
-            (
-                SELECT pm.url
-                FROM product_media pm
-                WHERE pm."productId" = p.id AND pm."isPrimary" = true
-                LIMIT 1
-            ) AS "primaryImageUrl"
-        FROM products p
-        JOIN producers pr ON p."producerId" = pr.id
-        LEFT JOIN appellations ap ON p."appellationId" = ap.id
-        ${whereSql}
-        ORDER BY ${sortCol} ${sortOrder}
-        LIMIT $${paramIdx} OFFSET $${paramIdx + 1};
-    `
+        const rows: ProductRow[] = rowsRes.map((r) => ({
+            id: r.id,
+            skuCode: r.skuCode,
+            productName: r.productName,
+            vintage: r.vintage,
+            wineType: r.wineType,
+            format: r.format,
+            packagingType: r.packagingType,
+            unitsPerCase: r.unitsPerCase,
+            abvPercent: r.abvPercent,
+            producerName: r.producerName,
+            producerCountry: r.producerCountry,
+            appellationName: r.appellationName,
+            country: r.country,
+            barcodeEan: r.barcodeEan,
+            classification: r.classification,
+            status: r.status,
+            mediaCount: r.mediaCount,
+            primaryImageUrl: r.primaryImageUrl,
+            totalStock: r.totalStock,
+            createdAt: r.createdAt,
+        }))
 
-    const countQuery = `
-        SELECT COUNT(*)::int 
-        FROM products p
-        JOIN producers pr ON p."producerId" = pr.id
-        LEFT JOIN appellations ap ON p."appellationId" = ap.id
-        ${whereSql};
-    `
-
-    const rowsPromise = dbPool.query(rowsQuery, [...params, limit, offset])
-    const countPromise = dbPool.query(countQuery, params)
-
-    const [rowsRes, countRes] = await Promise.all([rowsPromise, countPromise])
-
-    const rows: ProductRow[] = rowsRes.rows.map((row) => ({
-        id: row.id,
-        skuCode: row.skuCode,
-        productName: row.productName,
-        vintage: row.vintage,
-        wineType: row.wineType,
-        format: row.format,
-        packagingType: row.packagingType,
-        unitsPerCase: row.unitsPerCase,
-        abvPercent: row.abvPercent,
-        producerName: row.producerName,
-        producerCountry: row.producerCountry,
-        appellationName: row.appellationName,
-        country: row.country,
-        barcodeEan: row.barcodeEan,
-        classification: row.classification,
-        status: row.status,
-        mediaCount: row.mediaCount,
-        primaryImageUrl: row.primaryImageUrl,
-        totalStock: row.totalStock,
-        createdAt: row.createdAt,
-    }))
-
-    const total = countRes.rows[0].count
-
-    return { rows, total }
+        return { rows, total }
+    }, 30_000)
 }
 
 // ─── Product Stats (aggregated from DB) ───────────
@@ -544,6 +491,7 @@ export async function deleteProduct(id: string) {
     })
     const user = await getCurrentUser().catch(() => null)
     logAudit({ userId: user?.id, userName: user?.name, action: 'DELETE', entityType: 'Product', entityId: id, oldValue: { skuCode: product?.skuCode, productName: product?.productName, status: product?.status } })
+    revalidateCache('products')
     revalidatePath('/dashboard/products')
 }
 
@@ -1302,129 +1250,103 @@ export type ProductViewDetails = {
 }
 
 export async function getProductViewDetails(id: string): Promise<ProductViewDetails | null> {
-    const productPromise = dbPool.query(`
-        SELECT 
-            p.id, p."skuCode", p."productName", p.vintage, p.country,
-            p."abvPercent"::float AS "abvPercent", p."volumeMl", p.format, p."packagingType" AS "packagingType",
-            p."unitsPerCase" AS "unitsPerCase", p."hsCode", p."barcodeEan" AS "barcodeEan", p."wineType" AS "wineType",
-            p.classification, p.status, p."isAllocationEligible",
-            pr.name AS "producerName",
-            ap.name AS "appellationName",
-            mp."retailPrice"::float AS "retailPrice",
-            mp."wholesalePrice"::float AS "wholesalePrice",
-            prof."originDetail", prof.certification, prof.color,
-            prof.aromas, prof.palate, prof.style, prof."servingTemp",
-            prof."foodPairings", prof."bestSuitedFor", prof.grapes
-        FROM products p
-        JOIN producers pr ON p."producerId" = pr.id
-        LEFT JOIN appellations ap ON p."appellationId" = ap.id
-        LEFT JOIN product_margin_prices mp ON p.id = mp."productId"
-        LEFT JOIN product_profiles prof ON p.id = prof."productId"
-        WHERE p.id = $1 AND p."deletedAt" IS NULL
-        LIMIT 1;
-    `, [id])
+    const cacheKey = `products:details:${id}`
+    return cached(cacheKey, async () => {
+        const [p, mediaRes, awardsRes, stockRes] = await Promise.all([
+            prisma.productDetailView.findUnique({
+                where: { id },
+            }),
+            prisma.productMedia.findMany({
+                where: { productId: id },
+                select: { id: true, url: true, isPrimary: true },
+                orderBy: [{ isPrimary: 'desc' }, { uploadedAt: 'desc' }],
+            }),
+            prisma.productAward.findMany({
+                where: { productId: id },
+                select: { id: true, source: true, score: true, medal: true, vintage: true, awardedYear: true },
+                orderBy: [{ awardedYear: 'desc' }, { source: 'asc' }],
+            }),
+            prisma.stockLot.findMany({
+                where: { productId: id, qtyAvailable: { gt: 0 } },
+                include: {
+                    location: {
+                        include: {
+                            warehouse: true
+                        }
+                    }
+                },
+                orderBy: { receivedDate: 'desc' }
+            })
+        ])
 
-    const mediaPromise = dbPool.query(`
-        SELECT id, url, "isPrimary"
-        FROM product_media
-        WHERE "productId" = $1
-        ORDER BY "isPrimary" DESC, "uploadedAt" DESC;
-    `, [id])
+        if (!p || p.deletedAt) return null
 
-    const awardsPromise = dbPool.query(`
-        SELECT id, source, score::float, medal, vintage, "awardedYear"
-        FROM product_awards
-        WHERE "productId" = $1
-        ORDER BY "awardedYear" DESC, source ASC;
-    `, [id])
+        const MEDAL_LABEL: Record<string, string> = {
+            GOLD: 'Huy chương Vàng',
+            SILVER: 'Huy chương Bạc',
+            BRONZE: 'Huy chương Đồng',
+            COMMENDED: 'Được tuyên dương',
+            TROPHY: 'Cúp vô địch'
+        }
 
-    const stockLotsPromise = dbPool.query(`
-        SELECT 
-            sl.id, sl."lotNo", sl."qtyAvailable"::float AS "qtyAvailable", sl."receivedDate", sl.status,
-            loc."locationCode",
-            wh.name AS "warehouseName"
-        FROM stock_lots sl
-        JOIN locations loc ON sl."locationId" = loc.id
-        JOIN warehouses wh ON loc."warehouseId" = wh.id
-        WHERE sl."productId" = $1 AND sl."qtyAvailable" > 0
-        ORDER BY sl."receivedDate" DESC;
-    `, [id])
-
-    const [prodRes, mediaRes, awardsRes, stockRes] = await Promise.all([
-        productPromise,
-        mediaPromise,
-        awardsPromise,
-        stockLotsPromise
-    ])
-
-    const p = prodRes.rows[0]
-    if (!p) return null
-
-    const MEDAL_LABEL: Record<string, string> = {
-        GOLD: 'Huy chương Vàng',
-        SILVER: 'Huy chương Bạc',
-        BRONZE: 'Huy chương Đồng',
-        COMMENDED: 'Được tuyên dương',
-        TROPHY: 'Cúp vô địch'
-    }
-
-    return {
-        id: p.id,
-        skuCode: p.skuCode,
-        productName: p.productName,
-        vintage: p.vintage,
-        country: p.country,
-        abvPercent: p.abvPercent,
-        volumeMl: p.volumeMl,
-        format: p.format,
-        packagingType: p.packagingType,
-        unitsPerCase: p.unitsPerCase,
-        hsCode: p.hsCode,
-        barcodeEan: p.barcodeEan,
-        wineType: p.wineType,
-        classification: p.classification,
-        status: p.status,
-        isAllocationEligible: p.isAllocationEligible,
-        producerName: p.producerName,
-        appellationName: p.appellationName,
-        retailPrice: p.retailPrice,
-        wholesalePrice: p.wholesalePrice,
-        profile: p.grapes || p.servingTemp || p.originDetail || p.certification || p.color || p.style || p.aromas || p.palate || p.foodPairings || p.bestSuitedFor ? {
-            originDetail: p.originDetail,
-            certification: p.certification,
-            color: p.color,
-            aromas: p.aromas,
-            palate: p.palate,
-            style: p.style,
-            servingTemp: p.servingTemp,
-            foodPairings: p.foodPairings,
-            bestSuitedFor: p.bestSuitedFor,
-            grapes: p.grapes,
-        } : null,
-        media: mediaRes.rows.map((m: any) => ({
-            id: m.id,
-            url: m.url,
-            isPrimary: m.isPrimary
-        })),
-        awards: awardsRes.rows.map((a: any) => ({
-            id: a.id,
-            source: a.source,
-            score: a.score,
-            medal: a.medal,
-            medalLabel: a.medal ? MEDAL_LABEL[a.medal] ?? a.medal : null,
-            vintage: a.vintage,
-            awardedYear: a.awardedYear
-        })),
-        stockLots: stockRes.rows.map((l: any) => ({
-            id: l.id,
-            lotNo: l.lotNo,
-            qtyAvailable: l.qtyAvailable,
-            receivedDate: l.receivedDate,
-            status: l.status,
-            locationCode: l.locationCode,
-            warehouseName: l.warehouseName
-        }))
-    }
+        return {
+            id: p.id,
+            skuCode: p.skuCode,
+            productName: p.productName,
+            vintage: p.vintage,
+            country: p.country,
+            abvPercent: p.abvPercent,
+            volumeMl: p.volumeMl,
+            format: p.format,
+            packagingType: p.packagingType,
+            unitsPerCase: p.unitsPerCase,
+            hsCode: p.hsCode,
+            barcodeEan: p.barcodeEan,
+            wineType: p.wineType,
+            classification: p.classification,
+            status: p.status,
+            isAllocationEligible: p.isAllocationEligible,
+            producerName: p.producerName,
+            appellationName: p.appellationName,
+            retailPrice: p.retailPrice,
+            wholesalePrice: p.wholesalePrice,
+            profile: p.grapes || p.servingTemp || p.originDetail || p.certification || p.color || p.style || p.aromas || p.palate || p.foodPairings || p.bestSuitedFor ? {
+                originDetail: p.originDetail ?? null,
+                certification: p.certification ?? null,
+                color: p.color ?? null,
+                aromas: p.aromas ?? null,
+                palate: p.palate ?? null,
+                style: p.style ?? null,
+                servingTemp: p.servingTemp ?? null,
+                foodPairings: p.foodPairings ?? null,
+                bestSuitedFor: p.bestSuitedFor ?? null,
+                grapes: p.grapes ?? null,
+            } : null,
+            media: mediaRes.map(m => ({
+                id: m.id,
+                url: m.url,
+                isPrimary: m.isPrimary
+            })),
+            awards: awardsRes.map(a => ({
+                id: a.id,
+                source: a.source,
+                score: a.score ? Number(a.score) : null,
+                medal: a.medal,
+                medalLabel: a.medal ? MEDAL_LABEL[a.medal] ?? a.medal : null,
+                vintage: a.vintage,
+                awardedYear: a.awardedYear
+            })),
+            stockLots: stockRes.map(l => ({
+                id: l.id,
+                lotNo: l.lotNo,
+                qtyAvailable: Number(l.qtyAvailable),
+                receivedDate: l.receivedDate,
+                status: l.status,
+                locationCode: l.location.locationCode,
+                warehouseName: l.location.warehouse.name
+            }))
+        }
+    }, 30_000)
 }
 
 // ── Combined product page data fetching ──

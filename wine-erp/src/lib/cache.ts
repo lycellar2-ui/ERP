@@ -92,10 +92,11 @@ export function revalidateCache(prefix?: string) {
     
     // Cross-module invalidation map
     const prefixes = [prefix]
-    if (prefix === 'wms' || prefix === 'transfers' || prefix === 'stock-count') {
-        // Only invalidate products list and statistics, keep reference lists cached
+    if (prefix === 'wms' || prefix === 'transfers' || prefix === 'stock-count' || prefix === 'sales') {
+        // Invalidate products list, stats, and details when stock movements/orders happen
         prefixes.push('products:list')
         prefixes.push('products:stats')
+        prefixes.push('products:details')
     }
     if (prefix === 'sales') {
         prefixes.push('finance') // SO invoicing creates AR invoices
