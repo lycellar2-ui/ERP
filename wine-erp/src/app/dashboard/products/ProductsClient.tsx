@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProductVintages, getProducers } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ProductDetailDrawer } from './ProductDetailDrawer'
@@ -72,10 +72,10 @@ function StatCard({ label, value, icon: Icon, accent }: {
 interface ProductsClientProps {
     initialRows: ProductRow[]
     initialTotal: number
-    initialStats: ProductStats
-    initialCountries: { code: string; count: number }[]
-    initialVintages: number[]
-    initialProducers: { id: string; name: string }[]
+    initialStats?: ProductStats
+    initialCountries?: { code: string; count: number }[]
+    initialVintages?: number[]
+    initialProducers?: { id: string; name: string }[]
     canEdit?: boolean
 }
 
@@ -90,10 +90,10 @@ export function ProductsClient({
 }: ProductsClientProps) {
     const [rows, setRows] = useState<ProductRow[]>(initialRows)
     const [total, setTotal] = useState(initialTotal)
-    const [stats, setStats] = useState<ProductStats>(initialStats)
-    const [countries, setCountries] = useState(initialCountries)
-    const [vintages, setVintages] = useState(initialVintages)
-    const [producers, setProducers] = useState(initialProducers)
+    const [stats, setStats] = useState<ProductStats>(initialStats || { total: initialTotal, active: initialTotal, outOfStock: 0, topTypes: [] })
+    const [countries, setCountries] = useState<{ code: string; count: number }[]>(initialCountries || [])
+    const [vintages, setVintages] = useState<number[]>(initialVintages || [])
+    const [producers, setProducers] = useState<{ id: string; name: string }[]>(initialProducers || [])
     const [loading, setLoading] = useState(false)
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -109,6 +109,21 @@ export function ProductsClient({
     const [producerFilter, setProducerFilter] = useState('')
     const [exporting, setExporting] = useState(false)
     const [showMobileFilters, setShowMobileFilters] = useState(false)
+
+    useEffect(() => {
+        // Fetch reference metadata and stats dynamically in the background on mount
+        Promise.all([
+            getProductStats().catch(() => ({ total: initialTotal, active: initialTotal, outOfStock: 0, topTypes: [] })),
+            getProductCountries().catch(() => []),
+            getProductVintages().catch(() => []),
+            getProducers().catch(() => []),
+        ]).then(([s, c, v, p]) => {
+            setStats(s)
+            setCountries(c)
+            setVintages(v)
+            setProducers(p)
+        })
+    }, [initialTotal])
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
     const detailCache = useRef<Record<string, any>>({})
@@ -162,13 +177,19 @@ export function ProductsClient({
     const reloadPageData = useCallback(async () => {
         setLoading(true)
         try {
-            const data = await getProductsPageData(filters)
-            setRows(data.rows)
-            setTotal(data.total)
-            setStats(data.stats)
-            setCountries(data.countries)
-            setVintages(data.vintages)
-            setProducers(data.producers)
+            const [pageData, s, c, v, p] = await Promise.all([
+                getProductsPageData(filters).catch(() => ({ rows: [] as ProductRow[], total: 0 })),
+                getProductStats().catch(() => ({ total: 0, active: 0, outOfStock: 0, topTypes: [] as any[] })),
+                getProductCountries().catch(() => []),
+                getProductVintages().catch(() => []),
+                getProducers().catch(() => []),
+            ])
+            setRows(pageData.rows)
+            setTotal(pageData.total)
+            setStats(s)
+            setCountries(c)
+            setVintages(v)
+            setProducers(p)
         } finally {
             setLoading(false)
         }

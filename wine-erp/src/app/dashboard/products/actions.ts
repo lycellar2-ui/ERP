@@ -1333,13 +1333,9 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
 
 // ── Combined product page data fetching ──
 export async function getProductsPageData(filters: ProductFilters = {}) {
-    const [user, productsRes, stats, countries, vintages, producers] = await Promise.all([
+    const [user, productsRes] = await Promise.all([
         getCurrentUser().catch(() => null),
         getProducts(filters).catch(() => ({ rows: [] as ProductRow[], total: 0 })),
-        getProductStats().catch(() => ({ total: 0, active: 0, outOfStock: 0, topTypes: [] as any[] })),
-        getProductCountries().catch(() => []),
-        getProductVintages().catch(() => []),
-        getProducers().catch(() => []),
     ])
     
     const canEdit = user ? hasPermission(user, 'MDM', 'WRITE') : false
@@ -1347,10 +1343,6 @@ export async function getProductsPageData(filters: ProductFilters = {}) {
     return {
         rows: productsRes.rows,
         total: productsRes.total,
-        stats,
-        countries,
-        vintages,
-        producers,
         canEdit,
     }
 }
