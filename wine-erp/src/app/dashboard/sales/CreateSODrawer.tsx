@@ -353,12 +353,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(10,25,38,0.8)' }}>
             {/* Backdrop */}
-            <div className="flex-1 bg-black/50" onClick={onClose} />
+            <div className="hidden md:block md:flex-1" onClick={onClose} />
 
             {/* Drawer */}
-            <div className="w-full max-w-2xl flex flex-col overflow-hidden"
+            <div className="w-full md:max-w-2xl h-full flex flex-col overflow-hidden"
                 style={{ background: '#1B2E3D', borderLeft: '1px solid #2A4355' }}>
 
                 {/* Header */}

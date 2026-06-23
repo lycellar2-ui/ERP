@@ -374,8 +374,8 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
     return (
         <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(10,25,38,0.8)' }}>
-            <div className="flex-1" onClick={onClose} />
-            <div className="w-full max-w-2xl h-full overflow-y-auto" style={{ background: '#0F2133', borderLeft: '1px solid #2A4355' }}>
+            <div className="hidden md:block md:flex-1" onClick={onClose} />
+            <div className="w-full md:max-w-2xl h-full overflow-y-auto" style={{ background: '#0F2133', borderLeft: '1px solid #2A4355' }}>
                 <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid #2A4355' }}>
                     <div>
                         <h2 className="text-lg font-bold" style={{ color: '#D4A853' }}>Sửa Đơn Hàng</h2>
@@ -495,46 +495,140 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         <p className="text-xs" style={{ color: '#4A6A7A' }}>Tìm kiếm sản phẩm ở trên để thêm</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2">
-                                        {lines.map((l, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 p-3 rounded" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>{l.skuCode}</p>
-                                                    <p className="text-xs truncate" style={{ color: '#4A6A7A' }}>{l.productName}</p>
-                                                    {l.stock < l.qtyOrdered && (
-                                                        <p className="text-xs mt-0.5" style={{ color: '#D4A853' }}>⚠ Tồn: {l.stock}</p>
-                                                    )}
-                                                    {priceMap[l.productId] && priceMap[l.productId].source !== 'DEFAULT_ZERO' && (
-                                                        <div className="mt-1">
-                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                                                                style={getPriceBadgeStyle(priceMap[l.productId].source)}>
-                                                                <Tag size={9} /> {getPriceBadgeLabel(priceMap[l.productId], channel)}
-                                                            </span>
+                                    <>
+                                        {/* Desktop Table View */}
+                                        <div className="hidden md:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
+                                            <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
+                                                <thead>
+                                                    <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
+                                                        <th className="px-3 py-2.5">Sản Phẩm</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">Tồn Kho</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">SL</th>
+                                                        <th className="px-3 py-2.5 w-28 text-right">Đơn Giá</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">CK %</th>
+                                                        <th className="px-3 py-2.5 w-28 text-right">Thành Tiền</th>
+                                                        <th className="px-3 py-2.5 w-10 text-center"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[#2A4355]/40">
+                                                    {lines.map((l, idx) => {
+                                                        const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
+                                                        const lowStock = l.stock < l.qtyOrdered
+                                                        const priceSource = priceMap[l.productId]?.source ?? l.priceSource
+                                                        const hasPriceBadge = priceSource && priceSource !== 'DEFAULT_ZERO'
+                                                        return (
+                                                            <tr key={idx} className={`hover:bg-[#1B2E3D]/30 transition-colors ${lowStock ? 'bg-red-950/10' : ''}`}>
+                                                                <td className="px-3 py-2">
+                                                                    <p className="font-semibold text-white">{l.skuCode}</p>
+                                                                    <p className="text-[11px] text-[#4A6A7A] truncate max-w-xs">{l.productName}</p>
+                                                                    {hasPriceBadge && (
+                                                                        <div className="mt-1">
+                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                                                style={getPriceBadgeStyle(priceSource)}>
+                                                                                <Tag size={9} /> {getPriceBadgeLabel({ source: priceSource }, channel)}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-[#8AAEBB]'}`}>{l.stock}</span>
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <input type="number" min={1} value={l.qtyOrdered}
+                                                                        onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value))}
+                                                                        className="w-14 px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                        style={inputStyle}
+                                                                    />
+                                                                </td>
+                                                                <td className="px-3 py-2 text-right font-mono text-[#8AAEBB]">
+                                                                    {formatVND(l.unitPrice)}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <input type="number" min={0} max={100} value={l.lineDiscountPct}
+                                                                        onChange={e => updateLine(idx, 'lineDiscountPct', Math.min(100, Math.max(0, +e.target.value)))}
+                                                                        className="w-12 px-1 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                        style={inputStyle}
+                                                                    />
+                                                                </td>
+                                                                <td className="px-3 py-2 text-right font-mono font-bold text-[#87CBB9]">
+                                                                    {formatVND(lineTotal)}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <button onClick={() => removeLine(idx)} className="text-red-500 hover:text-red-400 p-1.5 rounded transition-all">
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Mobile Card View */}
+                                        <div className="block md:hidden space-y-2">
+                                            {lines.map((l, idx) => {
+                                                const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
+                                                const lowStock = l.stock < l.qtyOrdered
+                                                const priceSource = priceMap[l.productId]?.source ?? l.priceSource
+                                                const hasPriceBadge = priceSource && priceSource !== 'DEFAULT_ZERO'
+                                                return (
+                                                    <div key={idx} className="p-3 rounded-md space-y-2"
+                                                        style={{ background: '#142433', border: `1px solid ${lowStock ? 'rgba(139,26,46,0.35)' : '#2A4355'}` }}>
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-sm font-semibold text-[#E8F1F2] truncate">{l.skuCode}</p>
+                                                                <p className="text-xs text-[#4A6A7A] truncate">{l.productName}</p>
+                                                            </div>
+                                                            <button onClick={() => removeLine(idx)} style={{ color: '#8B1A2E', padding: '4px' }} type="button">
+                                                                <Trash2 size={14} />
+                                                            </button>
                                                         </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <input type="number" min={1} value={l.qtyOrdered}
-                                                        onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value))}
-                                                        className="w-14 px-2 py-1 text-xs text-center" style={inputStyle} />
-                                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>×</span>
-                                                    <input type="number" min={0} value={l.unitPrice}
-                                                        readOnly
-                                                        className="w-24 px-2 py-1 text-xs text-right opacity-70 cursor-not-allowed" style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }} />
-                                                    <div className="flex items-center gap-0.5">
-                                                        <Tag size={10} style={{ color: '#D4A853' }} />
-                                                        <input type="number" min={0} max={100} value={l.lineDiscountPct}
-                                                            onChange={e => updateLine(idx, 'lineDiscountPct', Math.min(100, Math.max(0, +e.target.value)))}
-                                                            className="w-12 px-1 py-1 text-xs text-center" style={inputStyle} />
-                                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>%</span>
+                                                        {hasPriceBadge && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                                    style={getPriceBadgeStyle(priceSource)}>
+                                                                    <Tag size={9} /> {getPriceBadgeLabel({ source: priceSource }, channel)}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>SL (Tồn: {l.stock})</p>
+                                                                <input type="number" min={1} value={l.qtyOrdered}
+                                                                    onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value))}
+                                                                    className="w-full px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                    style={{ ...inputStyle, borderColor: lowStock ? '#8B1A2E' : '#2A4355' }}
+                                                                />
+                                                                {lowStock && <p className="text-[10px] text-red-500 mt-0.5">Vượt tồn!</p>}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
+                                                                <input type="number" min={0} value={l.unitPrice}
+                                                                    readOnly
+                                                                    className="w-full px-2 py-1 text-xs text-right opacity-70 cursor-not-allowed bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                    style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>CK (%)</p>
+                                                                <input type="number" min={0} max={100} value={l.lineDiscountPct}
+                                                                    onChange={e => updateLine(idx, 'lineDiscountPct', Math.min(100, Math.max(0, +e.target.value)))}
+                                                                    className="w-full px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                    style={inputStyle}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex justify-end pt-1">
+                                                            <p className="text-xs font-bold text-[#87CBB9]" style={{ fontFamily: '"DM Mono"' }}>
+                                                                = {formatVND(lineTotal)}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <button onClick={() => removeLine(idx)} className="p-1 rounded hover:bg-white/5">
-                                                        <Trash2 size={14} style={{ color: '#8B1A2E' }} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </>
                                 )}
                             </div>
 

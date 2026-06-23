@@ -195,7 +195,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
     return (
         <>
             <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(720px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+            <div className="fixed top-0 right-0 h-full z-50 flex flex-col w-full md:w-[720px]" style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                     <div>
@@ -257,7 +257,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                         </div>
                                     </div>
                                 )}
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {[
                                         { label: 'Tổng Tiền', value: formatVND(Number(detail.totalAmount)), color: '#87CBB9' },
                                         { label: 'Sales Rep', value: detail.salesRep.name, color: '#8AAEBB' },
@@ -270,7 +270,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                     ))}
                                 </div>
                                 {marginData && canSeeMargin && (
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                         <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                             <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu</p>
                                             <p className="text-xs font-bold mt-1" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalRevenue)}</p>
@@ -297,7 +297,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                     </div>
                                 )}
                                 {marginData && !canSeeMargin && (
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                             <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu</p>
                                             <p className="text-xs font-bold mt-1" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalRevenue)}</p>
@@ -328,11 +328,11 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                             }}>
                                                             {isDone ? '✓' : stepIdx + 1}
                                                         </div>
-                                                        <p className="text-[9px] mt-1 text-center" style={{ color: isDone ? '#87CBB9' : '#4A6A7A' }}>
+                                                        <p className="text-[9px] mt-1 text-center hidden sm:block" style={{ color: isDone ? '#87CBB9' : '#4A6A7A' }}>
                                                             {STATUS_CFG[s]?.label}
                                                         </p>
                                                     </div>
-                                                    {i < 5 && <div className="h-[2px] flex-1 rounded" style={{ background: isDone && stepIdx < currentIdx ? '#5BA88A' : '#2A4355', marginBottom: 16 }} />}
+                                                    {i < 5 && <div className="h-[2px] flex-1 rounded mb-0 sm:mb-4" style={{ background: isDone && stepIdx < currentIdx ? '#5BA88A' : '#2A4355' }} />}
                                                 </div>
                                             )
                                         })}
@@ -345,7 +345,9 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                         {activeTab === 'products' && (
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Sản Phẩm {canSeeMargin ? '& Biên Lợi Nhuận' : ''} ({detail.lines.length} dòng)</p>
-                                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                
+                                {/* Desktop Table View */}
+                                <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                                     <div style={{ overflowX: 'auto' }}>
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
                                             <thead><tr style={{ background: '#142433' }}>
@@ -407,6 +409,69 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                             </tbody>
                                         </table>
                                     </div>
+                                </div>
+
+                                {/* Mobile Card View */}
+                                <div className="block md:hidden space-y-2.5">
+                                    {(marginData?.lines ?? detail.lines.map(l => ({
+                                        lineId: l.id, skuCode: l.product.skuCode, productName: l.product.productName,
+                                        qty: Number(l.qtyOrdered), unitPrice: Number(l.unitPrice), lineDiscountPct: Number(l.lineDiscountPct),
+                                        revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
+                                        avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
+                                        priceSource: (l as any).priceSource ?? null,
+                                    }))).map(ml => (
+                                        <div key={ml.lineId} className="p-3.5 rounded-md space-y-2" 
+                                            style={{ background: '#1B2E3D', border: `1px solid ${ml.isNegative ? 'rgba(220,38,38,0.35)' : '#2A4355'}` }}>
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold text-[#87CBB9] font-mono">{ml.skuCode}</p>
+                                                    <p className="text-xs text-[#E8F1F2] mt-0.5 truncate" title={ml.productName}>{ml.productName}</p>
+                                                </div>
+                                                {ml.priceSource && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                                                        style={getPriceBadgeStyle(ml.priceSource)}>
+                                                        {getPriceBadgeLabel(ml.priceSource)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#2A4355]/30 text-xs">
+                                                <div>
+                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Số Lượng</p>
+                                                    <p className="font-bold font-mono text-[#E8F1F2] mt-0.5">{ml.qty}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
+                                                    <p className="font-semibold font-mono text-[#E8F1F2] mt-0.5">{formatVND(ml.unitPrice)}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Thành Tiền</p>
+                                                    <p className="font-bold font-mono text-[#87CBB9] mt-0.5">{formatVND(ml.revenue)}</p>
+                                                </div>
+                                            </div>
+
+                                            {canSeeMargin && ml.avgCost > 0 && (
+                                                <div className="grid grid-cols-3 gap-2 pt-1.5 border-t border-[#2A4355]/20 text-xs">
+                                                    <div>
+                                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Giá Vốn TB</p>
+                                                        <p className="font-semibold font-mono text-[#D4A853] mt-0.5">{formatVND(ml.avgCost)}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Lãi Gộp</p>
+                                                        <p className="font-bold font-mono mt-0.5" style={{ color: ml.margin >= 0 ? '#5BA88A' : '#EF4444' }}>
+                                                            {ml.margin >= 0 ? '' : '-'}{formatVND(Math.abs(ml.margin))}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Biên LN %</p>
+                                                        <p className="font-bold font-mono mt-0.5" style={{ color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444' }}>
+                                                            {ml.marginPct.toFixed(1)}%
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
