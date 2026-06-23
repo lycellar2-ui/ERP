@@ -11,40 +11,40 @@ if (process.env.NODE_ENV === 'development' || process.env.VERCEL) {
 
 const IS_SERVERLESS = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
 
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is not set')
+}
+
+// Transaction Pooler (port 6543 + pgBouncer)
+// Serverless: max 2 — each Vercel function gets its own pool,
+//   so with 10+ concurrent invocations, 2 × 10 = 20 is already near the limit.
+// Dev/long-lived: max 5 — single process reuses connections.
+export const dbPool = new pg.Pool({
+    connectionString,
+    ssl: { rejectUnauthorized: false },
+    max: IS_SERVERLESS ? 2 : 5,
+    idleTimeoutMillis: IS_SERVERLESS ? 5000 : 10000,
+    connectionTimeoutMillis: 15000,
+    allowExitOnIdle: true,
+    statement_timeout: 30000,      // 30s query timeout to prevent hung queries
+})
+
+dbPool.on('error', (err) => {
+    console.error('[DB Pool] Unexpected error on idle client:', err.message)
+})
+
+// Graceful shutdown — release connections back to pgBouncer on process exit
+const cleanup = () => {
+    dbPool.end().catch(() => { })
+}
+process.once('SIGTERM', cleanup)
+process.once('SIGINT', cleanup)
+// Vercel serverless functions receive beforeExit when the function is about to freeze
+process.once('beforeExit', cleanup)
+
 function createPrismaClient() {
-    const connectionString = process.env.DATABASE_URL
-    if (!connectionString) {
-        throw new Error('DATABASE_URL environment variable is not set')
-    }
-
-    // Transaction Pooler (port 6543 + pgBouncer)
-    // Serverless: max 2 — each Vercel function gets its own pool,
-    //   so with 10+ concurrent invocations, 2 × 10 = 20 is already near the limit.
-    // Dev/long-lived: max 5 — single process reuses connections.
-    const pool = new pg.Pool({
-        connectionString,
-        ssl: { rejectUnauthorized: false },
-        max: IS_SERVERLESS ? 2 : 5,
-        idleTimeoutMillis: IS_SERVERLESS ? 5000 : 10000,
-        connectionTimeoutMillis: 15000,
-        allowExitOnIdle: true,
-        statement_timeout: 30000,      // 30s query timeout to prevent hung queries
-    })
-
-    pool.on('error', (err) => {
-        console.error('[DB Pool] Unexpected error on idle client:', err.message)
-    })
-
-    // Graceful shutdown — release connections back to pgBouncer on process exit
-    const cleanup = () => {
-        pool.end().catch(() => { })
-    }
-    process.once('SIGTERM', cleanup)
-    process.once('SIGINT', cleanup)
-    // Vercel serverless functions receive beforeExit when the function is about to freeze
-    process.once('beforeExit', cleanup)
-
-    const adapter = new PrismaPg(pool)
+    const adapter = new PrismaPg(dbPool)
     return new PrismaClient({
         adapter,
         log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],

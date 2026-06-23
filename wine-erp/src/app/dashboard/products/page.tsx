@@ -16,6 +16,10 @@ export default async function ProductsPage() {
                 <ProductsClient
                     initialRows={data.rows}
                     initialTotal={data.total}
+                    initialStats={data.stats}
+                    initialCountries={data.countries}
+                    initialVintages={data.vintages}
+                    initialProducers={data.producers}
                     canEdit={data.canEdit}
                 />
             </Suspense>

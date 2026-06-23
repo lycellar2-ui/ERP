@@ -229,6 +229,11 @@ export async function GET(req: NextRequest) {
             font-size: 12.5px;
             opacity: 1;
         }
+        .header-logo-img {
+            height: 38px;
+            width: auto;
+            object-fit: contain;
+        }
 
         /* ═══════════ TITLE BAR ═══════════ */
         .title-bar {
@@ -331,12 +336,15 @@ export async function GET(req: NextRequest) {
         .cell-total { width: 115px; font-family: 'Consolas', 'Courier New', monospace; font-weight: 700; color: ${t.textStrong}; font-size: 13px; }
 
         .product-img {
-            width: 64px;
             height: 48px;
+            width: auto;
+            max-width: 64px;
             object-fit: contain;
             border-radius: 4px;
             background: ${isDark ? '#112130' : '#F5F7F9'};
             border: 1px solid ${t.border};
+            display: block;
+            margin: 0 auto;
         }
         .product-img-placeholder {
             width: 64px;
@@ -495,17 +503,13 @@ export async function GET(req: NextRequest) {
     <!-- HEADER -->
     <div class="header">
         <div class="header-brand">
-            <div class="header-logo">🍷</div>
-            <div>
-                <div class="header-name">LY's Cellars</div>
-                <div class="header-sub">FINE WINE SPECIALIST</div>
-            </div>
+            <img src="/logo/logo_tagline_white_green.png" alt="LY's Cellars Logo" class="header-logo-img" />
         </div>
         <div class="header-info">
-            <strong>LY'S CELLARS CO., LTD</strong>
-            Tax Code: 0312345678<br/>
-            123 Pasteur Street, District 1, Ho Chi Minh City<br/>
-            ☎ 028 1234 5678 &nbsp;|&nbsp; ✉ info@lyscellars.com
+            <strong>CÔNG TY TNHH LY'S CELLARS</strong>
+            MST: 0313456789<br/>
+            123 Đường Pasteur, Phường Bến Nghé, Quận 1, TP. HCM<br/>
+            Hotline: 090 9999 999 &nbsp;|&nbsp; Email: orders@lyscellars.com
         </div>
     </div>
 
@@ -590,6 +594,16 @@ export async function GET(req: NextRequest) {
             <div class="vat-note">${qt.vatIncluded ? 'VAT Included' : 'VAT Excluded (10%)'}</div>
         </div>
     </div>` : ''}
+
+    <!-- BANK TRANSFER DETAILS -->
+    <div class="terms-section" style="background: ${isDark ? '#162736' : '#F9FAFB'}; border-bottom: 1px solid ${t.border};">
+        <div class="terms-title">Thông tin chuyển khoản (Payment Transfer Details)</div>
+        <div class="terms-content" style="font-size: 12px; line-height: 1.6;">
+            Chủ tài khoản: <strong>CÔNG TY TNHH LY'S CELLARS</strong><br/>
+            Số tài khoản: <strong>1023456789</strong> &nbsp;|&nbsp; Ngân hàng: <strong>Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh</strong><br/>
+            Nội dung chuyển khoản: <strong>Thanh toán báo giá ${qt.quotationNo}</strong>
+        </div>
+    </div>
 
     <!-- TERMS & NOTES -->
     ${qt.terms ? `

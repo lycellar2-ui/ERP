@@ -111,7 +111,11 @@ export function ProductsClient({
     const [showMobileFilters, setShowMobileFilters] = useState(false)
 
     useEffect(() => {
-        // Fetch reference metadata and stats dynamically in the background on mount
+        // If metadata is already provided by server, skip mount fetch
+        if (initialStats || initialCountries || initialVintages || initialProducers) {
+            return
+        }
+        // Fetch reference metadata and stats dynamically in the background on mount if not provided
         Promise.all([
             getProductStats().catch(() => ({ total: initialTotal, active: initialTotal, outOfStock: 0, topTypes: [] })),
             getProductCountries().catch(() => []),
@@ -123,7 +127,7 @@ export function ProductsClient({
             setVintages(v)
             setProducers(p)
         })
-    }, [initialTotal])
+    }, [initialTotal, initialStats, initialCountries, initialVintages, initialProducers])
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
     const detailCache = useRef<Record<string, any>>({})
