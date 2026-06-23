@@ -134,14 +134,21 @@ export async function getSalesOrders(filters: {
             LIMIT $${limitIndex} OFFSET $${offsetIndex}
         `
 
-        const countQuery = `
-            SELECT COUNT(*)::int as total
-            FROM sales_orders so
-            JOIN customers c ON c.id = so."customerId"
-            JOIN users u ON u.id = so."salesRepId"
-            JOIN legal_entities le ON le.id = so."legalEntityId"
-            ${whereClause}
-        `
+        let countQuery = ''
+        if (search) {
+            countQuery = `
+                SELECT COUNT(*)::int as total
+                FROM sales_orders so
+                JOIN customers c ON c.id = so."customerId"
+                ${whereClause}
+            `
+        } else {
+            countQuery = `
+                SELECT COUNT(*)::int as total
+                FROM sales_orders so
+                ${whereClause}
+            `
+        }
 
         const [orders, countResult] = await Promise.all([
             prisma.$queryRawUnsafe<any[]>(query, ...queryParams),
@@ -2085,6 +2092,30 @@ export async function getSOStatusCounts(): Promise<Record<string, number>> {
         }
         return result
     }, 30_000)
+}
+
+// ── Combined page data fetching for dashboard and tabs ──
+export async function getSalesPageData(filters: {
+    status?: SOStatus
+    search?: string
+    page?: number
+    pageSize?: number
+    sortBy?: 'createdAt' | 'totalAmount' | 'soNo'
+    sortDir?: 'asc' | 'desc'
+    dateFrom?: string
+    dateTo?: string
+} = {}) {
+    const [ordersResult, stats, statusCounts] = await Promise.all([
+        getSalesOrders(filters),
+        getSalesStats(),
+        getSOStatusCounts(),
+    ])
+    return {
+        rows: ordersResult.rows,
+        total: ordersResult.total,
+        stats,
+        statusCounts,
+    }
 }
 
 // ── Delete Sales Order (DRAFT only) ──────────────

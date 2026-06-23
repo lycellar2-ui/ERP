@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesStats, getSOStatusCounts } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 
@@ -788,24 +788,20 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
     const reload = useCallback(async (overrides?: Partial<{ search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string }>) => {
         setLoading(true)
         try {
-            const [result, newStats, newCounts] = await Promise.all([
-                getSalesOrders({
-                    search: (overrides?.search ?? search) || undefined,
-                    status: (overrides?.status ?? statusFilter) as SOStatus || undefined,
-                    page: overrides?.page ?? page,
-                    pageSize: 20,
-                    sortBy: (overrides?.sortBy ?? sortBy) as any,
-                    sortDir: (overrides?.sortDir ?? sortDir) as any,
-                    dateFrom: (overrides?.dateFrom ?? dateFrom) || undefined,
-                    dateTo: (overrides?.dateTo ?? dateTo) || undefined,
-                }),
-                getSalesStats(),
-                getSOStatusCounts(),
-            ])
+            const result = await getSalesPageData({
+                search: (overrides?.search ?? search) || undefined,
+                status: (overrides?.status ?? statusFilter) as SOStatus || undefined,
+                page: overrides?.page ?? page,
+                pageSize: 20,
+                sortBy: (overrides?.sortBy ?? sortBy) as any,
+                sortDir: (overrides?.sortDir ?? sortDir) as any,
+                dateFrom: (overrides?.dateFrom ?? dateFrom) || undefined,
+                dateTo: (overrides?.dateTo ?? dateTo) || undefined,
+            })
             setRows(result.rows)
             setTotal(result.total)
-            setStats(newStats)
-            setCounts(newCounts)
+            setStats(result.stats)
+            setCounts(result.statusCounts)
         } finally {
             setLoading(false)
         }

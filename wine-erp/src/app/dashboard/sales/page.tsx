@@ -1,5 +1,6 @@
 import { SalesClient } from './SalesClient'
 import { getCurrentUser } from '@/lib/session'
+import { getSalesPageData } from './actions'
 
 export const metadata = {
     title: 'Đơn Bán Hàng | Wine ERP',
@@ -10,28 +11,17 @@ export default async function SalesPage() {
     const user = await getCurrentUser()
     const userRoles = user?.roles ?? []
 
-    // Pass default empty initial props. SalesClient will trigger dynamic load on mount.
-    const initialRows: any[] = []
-    const initialTotal = 0
-    const stats = {
-        monthRevenue: 0,
-        monthOrders: 0,
-        pendingApproval: 0,
-        draft: 0,
-        confirmed: 0,
-    }
-    const statusCounts = {
-        ALL: 0,
-    }
+    // Pre-fetch initial data on server (defaults to page 1, 20 items)
+    const data = await getSalesPageData({ page: 1, pageSize: 20 })
 
     return (
         <SalesClient
-            initialRows={initialRows}
-            initialTotal={initialTotal}
-            stats={stats}
+            initialRows={data.rows}
+            initialTotal={data.total}
+            stats={data.stats}
             userId={user?.id ?? ''}
             userRoles={userRoles}
-            statusCounts={statusCounts}
+            statusCounts={data.statusCounts}
         />
     )
 }
