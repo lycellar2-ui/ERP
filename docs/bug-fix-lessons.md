@@ -24,6 +24,7 @@
 15. [BUG-015: Toàn Hệ Thống Chậm — 11 Action Files Thiếu Cache](#bug-015-toàn-hệ-thống-chậm--11-action-files-thiếu-cache--3-pages-thiếu-loadingtsx)
 16. [BUG-016: force-dynamic Trên Layout Giết Router Cache](#bug-016-force-dynamic-trên-layout-giết-router-cache)
 17. [BUG-017: Floor Plan Drawing Tools Bị Chặn — pointerEvents + ESC + Pan](#bug-017-floor-plan-drawing-tools-bị-chặn--pointerevents--esc--pan)
+18. [BUG-018: Sales Order Tab Loading Chậm — Multi-Waterfall Server Actions & SQL Count Joins](#bug-018-sales-order-tab-loading-chậm--multi-waterfall-server-actions--sql-count-joins)
 
 ---
 
@@ -946,3 +947,56 @@ useEffect(() => {
 > ⚠️ **RULE 34: Keyboard handlers cho canvas đặt ở `useEffect` global (`window.addEventListener`), KHÔNG trong `sr-only` div.**
 > `sr-only` div không bao giờ có focus → keyboard events không được capture.
 > `useEffect` + `window.addEventListener` hoạt động ở mọi trường hợp.
+
+---
+
+## BUG-018: Sales Order Tab Loading Chậm — Multi-Waterfall Server Actions & SQL Count Joins
+
+**Ngày:** 2026-06-23
+**Severity:** 🔴 Critical — Load trang bị nghẽn (10-15s), hiển thị Skeleton quá lâu
+
+### Triệu chứng
+- Khi mở tab Đơn bán hàng, giao diện hiển thị Skeleton loader xoay rất lâu (10-15 giây).
+- Xảy ra thường xuyên trên production, gây cạn kiệt số lượng kết nối cơ sở dữ liệu (connection pool exhaustion).
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Multi-Waterfall Server Actions** | Component `SalesClient` (Client Component) khi mount kích hoạt đồng thời 3 cuộc gọi Server Action (`getSalesOrders`, `getSalesStats`, `getSOStatusCounts`) qua client-side `Promise.all`. Trình duyệt gửi 3 request HTTP POST riêng biệt, buộc máy chủ Next.js khởi tạo 3 DB connections đồng thời, gây ra nghẽn hàng đợi (connection pool exhaustion). |
+| **Không tải trước dữ liệu** | Server Component `page.tsx` truyền props rỗng xuống Client Component, làm mất lợi thế kết xuất phía máy chủ (SSR/RSC) và buộc trình duyệt phải fetch dữ liệu động sau khi tải trang. |
+| **JOIN dư thừa trong SQL Count** | Truy vấn đếm số lượng bản ghi (`countQuery`) thực hiện các lệnh `JOIN customers`, `JOIN users`, và `JOIN legal_entities` dư thừa ngay cả khi không sử dụng bộ lọc tìm kiếm `search`. |
+
+### Cách fix
+
+1. **Pre-fetch dữ liệu phía Server:** Thực hiện gọi hàm `getSalesPageData` ngay trên Server Component `page.tsx` và truyền dữ liệu thu được làm giá trị khởi tạo `initialRows`, `initialTotal`, `stats`, `statusCounts` cho Client Component. Nhờ đó, trang tải lên có sẵn dữ liệu và **loại bỏ hoàn toàn Skeleton loading khi tải trang đầu**.
+2. **Gộp Server Actions:** Tạo hàm hợp nhất `getSalesPageData` trên server để chạy song song các truy vấn thông qua cùng một kết nối DB ấm, giảm số lượng kết nối từ trình duyệt từ 3 xuống còn 1.
+3. **Loại bỏ JOIN dư thừa trong câu đếm:**
+   ```typescript
+   let countQuery = ''
+   if (search) {
+       countQuery = `
+           SELECT COUNT(*)::int as total
+           FROM sales_orders so
+           JOIN customers c ON c.id = so."customerId"
+           ${whereClause}
+       `
+   } else {
+       countQuery = `
+           SELECT COUNT(*)::int as total
+           FROM sales_orders so
+           ${whereClause}
+       `
+   }
+   ```
+
+### Bài học
+
+> ⚠️ **RULE 35: Hạn chế gọi nhiều Server Actions song song trên Client Component cùng lúc khi vào trang.**
+> Gộp chúng lại thành 1 action duy nhất (ví dụ: `getPageData`) để giảm số lượng HTTP request và tối ưu lượng DB connection đồng thời.
+
+> ⚠️ **RULE 36: Luôn ưu tiên pre-fetch dữ liệu trong Server Component trước khi truyền xuống Client Component.**
+> Tránh truyền props rỗng và để Client Component tự động gọi fetch dữ liệu trong `useEffect` khi mount.
+
+> ⚠️ **RULE 37: Tối ưu hoá SQL Count.**
+> Chỉ thực hiện `JOIN` khi các điều kiện trong `WHERE` thực sự tham chiếu tới bảng được liên kết. Đếm số dòng trên bảng chính không JOIN sẽ giúp tăng tốc độ đáng kể.
