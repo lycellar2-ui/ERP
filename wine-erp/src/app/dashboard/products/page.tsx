@@ -1,41 +1,26 @@
 import { Suspense } from 'react'
-import { getProducts, getProductStats, getProductCountries, getProductVintages, getProducers } from './actions'
+import { getProductsPageData } from './actions'
 import { ProductsClient } from './ProductsClient'
 import { AICatalogAnalysis } from './AICatalogAnalysis'
-import { getCurrentUser, hasPermission } from '@/lib/session'
 
 export const metadata = { title: 'Danh Mục Sản Phẩm | Wine ERP' }
 
 export default async function ProductsPage() {
-    // Server-side: fetch paginated rows + aggregated stats + filter options in parallel
-    const [user, { rows, total }, stats, countries, vintages, producers] = await Promise.all([
-        getCurrentUser().catch(() => null),
-        getProducts({ page: 1, pageSize: 20 }).catch(() => ({
-            rows: [] as any[],
-            total: 0,
-        })),
-        getProductStats().catch(() => ({
-            total: 0, active: 0, outOfStock: 0, topTypes: [] as any[],
-        })),
-        getProductCountries().catch(() => []),
-        getProductVintages().catch(() => []),
-        getProducers().catch(() => []),
-    ])
-
-    const canEdit = user ? hasPermission(user, 'MDM', 'WRITE') : false
+    // Fetch consolidated page data in a single unified action
+    const data = await getProductsPageData({ page: 1, pageSize: 20 })
 
     return (
         <div>
             {/* <AICatalogAnalysis /> */}
             <Suspense fallback={<ProductsPageSkeleton />}>
                 <ProductsClient
-                    initialRows={rows}
-                    initialTotal={total}
-                    stats={stats}
-                    countries={countries}
-                    vintages={vintages}
-                    producers={producers}
-                    canEdit={canEdit}
+                    initialRows={data.rows}
+                    initialTotal={data.total}
+                    initialStats={data.stats}
+                    initialCountries={data.countries}
+                    initialVintages={data.vintages}
+                    initialProducers={data.producers}
+                    canEdit={data.canEdit}
                 />
             </Suspense>
         </div>

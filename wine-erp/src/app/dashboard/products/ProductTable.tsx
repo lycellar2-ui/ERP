@@ -336,6 +336,20 @@ interface ProductTableProps {
 export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, onPrefetchDetails, canEdit = false, onPrefetch }: ProductTableProps) {
     const totalPages = Math.ceil(total / pageSize)
 
+    const [isMobile, setIsMobile] = useState<boolean | null>(null)
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+        handleResize()
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
+    const showMobile = isMobile === null ? true : isMobile
+    const showDesktop = isMobile === null ? true : !isMobile
+
     const sortableHeaders = [
         { key: 'name' as const, label: 'Sản phẩm', cls: 'px-4 py-3 w-[340px]', sortable: true },
         { key: 'vintage' as const, label: 'Vintage', cls: 'px-3 py-3 w-[60px] text-center', sortable: true },
@@ -435,7 +449,8 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
             {renderPagination('top')}
 
             {/* Mobile Card List View: visible on small screens, hidden on md (768px) and up */}
-            <div className={`block md:hidden divide-y divide-[#2A4355]/30 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
+            {showMobile && (
+                <div className={`block md:hidden divide-y divide-[#2A4355]/30 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
                 {rows.length === 0 && loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="p-4 space-y-3" style={{ borderBottom: '1px solid rgba(42,67,85,0.2)', background: '#0D1E2B' }}>
@@ -465,10 +480,12 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                         />
                     ))
                 )}
-            </div>
+                </div>
+            )}
 
             {/* Desktop Table View: hidden on small screens, visible on md (768px) and up */}
-            <div className="hidden md:block overflow-x-auto">
+            {showDesktop && (
+                <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
@@ -514,6 +531,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                     </tbody>
                 </table>
             </div>
+            )}
 
             {renderPagination('bottom')}
         </div>

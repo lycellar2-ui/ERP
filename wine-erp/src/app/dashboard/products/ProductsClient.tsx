@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ProductDetailDrawer } from './ProductDetailDrawer'
@@ -72,16 +72,28 @@ function StatCard({ label, value, icon: Icon, accent }: {
 interface ProductsClientProps {
     initialRows: ProductRow[]
     initialTotal: number
-    stats: ProductStats
-    countries: { code: string; count: number }[]
-    vintages: number[]
-    producers: { id: string; name: string }[]
+    initialStats: ProductStats
+    initialCountries: { code: string; count: number }[]
+    initialVintages: number[]
+    initialProducers: { id: string; name: string }[]
     canEdit?: boolean
 }
 
-export function ProductsClient({ initialRows, initialTotal, stats, countries, vintages, producers, canEdit = false }: ProductsClientProps) {
+export function ProductsClient({ 
+    initialRows, 
+    initialTotal, 
+    initialStats, 
+    initialCountries, 
+    initialVintages, 
+    initialProducers, 
+    canEdit = false 
+}: ProductsClientProps) {
     const [rows, setRows] = useState<ProductRow[]>(initialRows)
     const [total, setTotal] = useState(initialTotal)
+    const [stats, setStats] = useState<ProductStats>(initialStats)
+    const [countries, setCountries] = useState(initialCountries)
+    const [vintages, setVintages] = useState(initialVintages)
+    const [producers, setProducers] = useState(initialProducers)
     const [loading, setLoading] = useState(false)
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -147,12 +159,27 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
         }
     }, [filters])
 
+    const reloadPageData = useCallback(async () => {
+        setLoading(true)
+        try {
+            const data = await getProductsPageData(filters)
+            setRows(data.rows)
+            setTotal(data.total)
+            setStats(data.stats)
+            setCountries(data.countries)
+            setVintages(data.vintages)
+            setProducers(data.producers)
+        } finally {
+            setLoading(false)
+        }
+    }, [filters])
+
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Xóa sản phẩm "${name}"?\n\nSản phẩm sẽ bị ẩn khỏi danh sách (soft delete).`)) return
         try {
             await deleteProduct(id)
             toast.success(`Đã xóa "${name}"`)
-            applyFilter({})
+            reloadPageData()
         } catch {
             toast.error('Không thể xóa sản phẩm')
         }
@@ -392,14 +419,14 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                 onView={id => { setViewId(id); setViewOpen(true) }}
                 onPrefetchDetails={prefetchProductDetails}
                 canEdit={canEdit}
-                onRefresh={() => applyFilter({})}
+                onRefresh={reloadPageData}
                 onPrefetch={prefetchPage}
             />
 
             <ProductDrawer
                 open={drawerOpen} editingId={editingId}
                 onClose={() => setDrawerOpen(false)}
-                onSaved={() => { setDrawerOpen(false); applyFilter({}) }}
+                onSaved={() => { setDrawerOpen(false); reloadPageData() }}
             />
 
             <ProductDetailDrawer
@@ -433,7 +460,7 @@ export function ProductsClient({ initialRows, initialTotal, stats, countries, vi
                     { header: 'Classification', sample: 'Premier Cru Classé' },
                 ]}
                 onImport={bulkImportProducts}
-                onComplete={() => applyFilter({})}
+                onComplete={reloadPageData}
             />
         </div>
     )
