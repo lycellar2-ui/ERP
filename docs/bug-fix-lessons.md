@@ -722,6 +722,7 @@ export async function getStockLots() {
 | 37 | **Tối ưu hóa SQL Count không lạm dụng JOIN dư thừa** | Database Query |
 | 38 | **Tách biệt cache invalidation dữ liệu danh sách động và metadata dropdowns tĩnh** | Caching |
 | 39 | **Dùng React hook (isMobile) để kết xuất giao diện di động hoặc máy tính có điều kiện thay vì CSS display hidden** | DOM Rendering |
+| 40 | **Tránh nghẽn hàng đợi kết nối DB trên Serverless bằng cách trì hoãn (lazy-load) dữ liệu phi trọng yếu** | Connection Queue |
 
 ---
 
@@ -1023,12 +1024,15 @@ useEffect(() => {
 | Yếu tố | Chi tiết |
 |---------|----------|
 | **Xóa nhầm cache dropdown tham chiếu** | Khi có cập nhật kho hàng (`wms`, `transfers`, `stock-count`), module `cache.ts` tự động xóa sạch mọi key bắt đầu bằng `products`. Điều này vô tình xóa luôn cache các dữ liệu dropdown tĩnh ít thay đổi (`products:countries`, `products:vintages`, `products:producers`), khiến mỗi lần có biến động kho, server component load trang lại bị dội một loạt truy vấn cold start song song xuống Supabase Singapore. |
+| **Quá tải truy vấn chặn Server (Server Connection Queue)** | Server Component phải chờ toàn bộ 10 truy vấn DB hoàn tất (bao gồm cả danh sách sản phẩm, các stats, và tất cả danh sách trong dropdown quốc gia, vintages, nhà sản xuất) mới trả về HTML. Trên môi trường serverless (Vercel) với giới hạn connection pool (`max: 2`), việc chạy 10 query song song gây ra nghẽn hàng đợi kết nối, dẫn tới 8 giây chờ đợi. |
 | **Giao diện Responsive DOM kép** | `ProductTable.tsx` chứa cả Desktop View (`hidden md:block` table) và Mobile View (`block md:hidden` card list) song song trong DOM. Trình duyệt di động, dù chỉ hiển thị 20 mobile cards, vẫn phải tải và decode ảnh cho 20 product rows tương ứng của Desktop Table ẩn, dẫn đến quá tải luồng decode hình ảnh và chiếm dụng tài nguyên CPU di động. |
 
 ### Cách fix
 
 1. **Selective Invalidation Cache:** Cấu trúc lại `revalidateCache` trong `cache.ts` để khi có biến động kho hàng (`wms`, `transfers`, `stock-count`), hệ thống chỉ xóa cache danh sách sản phẩm `products:list` và stats `products:stats`, bảo lưu cache dữ liệu tham chiếu tĩnh.
-2. **Gom Server Action:** Tạo `getProductsPageData` trong `actions.ts` để gộp toàn bộ 5 Promise queries trên server thành một cuộc gọi tập trung, trả đầy đủ dữ liệu trang (rows, stats, filters, canEdit) trong một chu kỳ mạng.
+2. **Lazy-loading Dữ liệu bộ lọc & Thống kê ở Client Component:**
+   - Tinh chỉnh `getProductsPageData` trong `actions.ts` chỉ thực hiện 3 truy vấn quan trọng nhất (kiểm tra session và lấy danh sách sản phẩm trang 1). Loại bỏ việc query stats, countries, vintages, và producers khỏi server load block.
+   - Thêm React `useEffect` trong `ProductsClient.tsx` thực hiện background fetch bất đồng bộ các dữ liệu tham chiếu bổ sung sau khi trang đã mount xong ở client. Người dùng thấy bảng sản phẩm ngay lập tức (~0.2s - 1.2s), các stats và bộ lọc sẽ tự động điền vào sau đó vài trăm mili-giây.
 3. **Responsive DOM Rendering:** Cấu trúc lại `ProductTable.tsx` sử dụng React hook `isMobile` để unmount hoàn toàn giao diện Desktop trên Mobile (và ngược lại), loại bỏ hơn 50% số DOM nodes dư thừa và triệt tiêu hành vi tải hình ảnh ẩn trên di động.
 
 ### Bài học
@@ -1038,3 +1042,6 @@ useEffect(() => {
 
 > ⚠️ **RULE 39: Dùng React hook để kết xuất giao diện di động hoặc máy tính có điều kiện thay vì CSS display hidden.**
 > Rất nguy hiểm nếu nhồi nhét cả cấu trúc Table phức tạp cùng hàng chục hình ảnh vào DOM rồi dùng CSS `display: none` ẩn đi. Sử dụng mount check để unmount cấu trúc không dùng giúp tiết kiệm băng thông và tài nguyên CPU đáng kể cho di động.
+
+> ⚠️ **RULE 40: Tránh nghẽn hàng đợi kết nối cơ sở dữ liệu trên Serverless bằng cách trì hoãn (lazy-load) dữ liệu tham chiếu phi trọng yếu lên client.**
+> Với các trang có nhiều dropdown filter tĩnh và chỉ số thống kê, chỉ nên tải dữ liệu chính (bảng chính) ở server để trả về HTML lập tức. Các dropdown/stats phụ có thể fetch bất đồng bộ ở client-side `useEffect` sau khi trang đã mount.
