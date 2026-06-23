@@ -98,7 +98,7 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
                 style={{ borderBottom: '1px solid #2A4355', minHeight: '64px' }}
             >
                 <Image
-                    src="/logo/logo_icon_white_green.png"
+                    src="/logo/Ly's Cellars - Logo_icon blue green.png"
                     alt="LY's Cellars"
                     width={20}
                     height={36}
@@ -115,7 +115,7 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
             style={{ borderBottom: '1px solid #2A4355', minHeight: '64px' }}
         >
             <Image
-                src="/logo/logo_tagline_white_green.png"
+                src="/logo/Ly's Cellars - Logo_tagline blue green.png"
                 alt="LY's Cellars"
                 width={130}
                 height={36}

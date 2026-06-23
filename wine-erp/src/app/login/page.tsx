@@ -49,7 +49,7 @@ export default function LoginPage() {
                 <div className="text-center mb-10">
                     <div className="flex justify-center mb-4">
                         <Image
-                            src="/logo/logo_tagline_white_green.png"
+                            src="/logo/Ly's Cellars - Logo_tagline blue green.png"
                             alt="LY's Cellars"
                             width={252}
                             height={70}
