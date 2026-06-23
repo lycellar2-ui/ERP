@@ -194,7 +194,17 @@ export async function getSalesOrderDetail(id: string) {
             shippingAddress: true,
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, wineType: true, country: true } },
+                    product: {
+                        include: {
+                            media: {
+                                where: { isPrimary: true },
+                                select: { url: true }
+                            },
+                            profile: {
+                                select: { grapes: true }
+                            }
+                        }
+                    },
                 },
             },
             deliveryOrders: { select: { id: true, doNo: true, status: true } },
@@ -234,7 +244,17 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
             shippingAddress: true,
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, wineType: true, country: true } },
+                    product: {
+                        include: {
+                            media: {
+                                where: { isPrimary: true },
+                                select: { url: true }
+                            },
+                            profile: {
+                                select: { grapes: true }
+                            }
+                        }
+                    },
                 },
             },
             deliveryOrders: { select: { id: true, doNo: true, status: true } },
