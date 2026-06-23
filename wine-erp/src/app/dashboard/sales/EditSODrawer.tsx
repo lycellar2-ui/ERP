@@ -226,13 +226,12 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     }, [products]) // eslint-disable-line
 
     // Load customer-resolved prices or fallback channel prices
-    const loadPrices = useCallback(async (custId: string | null, ch: SalesChannel) => {
+    const loadPrices = useCallback(async (custId: string | null, ch: SalesChannel, updateLines: boolean = false) => {
         try {
             if (custId) {
                 const resolvedPrices = await getCustomerResolvedPrices(custId)
                 setPriceMap(resolvedPrices)
-                // Auto-update existing lines to resolved prices and source ONLY if not loading SO
-                if (!loadingSO) {
+                if (updateLines) {
                     setLines(prev => prev.map(l => {
                         const resolved = resolvedPrices[l.productId]
                         if (resolved) {
@@ -251,8 +250,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                     }
                 }
                 setPriceMap(converted)
-                // Auto-update existing lines to resolved prices and source ONLY if not loading SO
-                if (!loadingSO) {
+                if (updateLines) {
                     setLines(prev => prev.map(l => {
                         const resolved = converted[l.productId]
                         if (resolved) {
@@ -265,23 +263,32 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         } catch (err) {
             console.error("Lỗi load bảng giá:", err)
         }
-    }, [loadingSO])
+    }, [])
 
     useEffect(() => {
-        if (open && products.length > 0) {
-            loadPrices(customerId || null, channel)
+        if (open && !loadingSO && !loadingData) {
+            loadPrices(customerId || null, channel, false)
         }
-    }, [open, customerId, channel, products, loadPrices])
+    }, [open, loadingSO, loadingData])
 
     const handleCustomerChange = async (cId: string) => {
         setCustomerId(cId)
         const c = customers.find(c => c.id === cId)
         setSelectedCustomer(c ?? null)
         if (c) {
-            if (c.channel) setChannel(c.channel as SalesChannel)
+            const nextChannel = (c.channel ?? 'HORECA') as SalesChannel
+            setChannel(nextChannel)
             if (c.paymentTerm) setPaymentTerm(c.paymentTerm)
             setArBalance(await getCustomerARBalance(cId))
+            loadPrices(cId, nextChannel, true)
+        } else {
+            loadPrices(null, channel, true)
         }
+    }
+
+    const handleChannelChange = async (newChannel: SalesChannel) => {
+        setChannel(newChannel)
+        loadPrices(customerId || null, newChannel, true)
     }
 
     const addLine = (productId: string) => {
@@ -396,7 +403,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
                                     <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Kênh bán</label>
-                                    <select value={channel} onChange={e => setChannel(e.target.value as SalesChannel)}
+                                    <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
                                         className="w-full px-3 py-2 text-sm" style={inputStyle}>
                                         {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                                     </select>

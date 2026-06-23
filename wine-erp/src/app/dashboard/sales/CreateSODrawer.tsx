@@ -213,9 +213,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
 
     useEffect(() => {
         if (open) {
-            loadPrices(customerId || null, channel)
+            loadPrices(null, 'HORECA')
         }
-    }, [open, customerId, channel, loadPrices])
+    }, [open, loadPrices])
 
     // Load allocation info when products change
     useEffect(() => {
@@ -231,13 +231,37 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
         setSelectedCustomer(c ?? null)
         if (c) {
             setPaymentTerm(c.paymentTerm)
-            setChannel((c.channel ?? 'HORECA') as SalesChannel)
+            const nextChannel = (c.channel ?? 'HORECA') as SalesChannel
+            setChannel(nextChannel)
             setLegalEntityId(c.defaultLegalEntityId ?? '')
             setLoadingAR(true)
-            const bal = await getCustomerARBalance(id)
+            
+            // Parallelize balance and customer prices fetch to eliminate waterfalls
+            const [bal, resolvedPrices] = await Promise.all([
+                getCustomerARBalance(id),
+                getCustomerResolvedPrices(id)
+            ])
+            
             setArBalance(bal)
             setLoadingAR(false)
+            setPriceMap(resolvedPrices)
+            
+            // Auto-update existing lines to resolved prices and source
+            setLines(prev => prev.map(l => {
+                const resolved = resolvedPrices[l.productId]
+                if (resolved) {
+                    return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
+                }
+                return l
+            }))
+        } else {
+            loadPrices(null, channel)
         }
+    }
+
+    const handleChannelChange = async (newChannel: SalesChannel) => {
+        setChannel(newChannel)
+        loadPrices(customerId || null, newChannel)
     }
 
     const addLine = () => {
@@ -421,7 +445,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                     <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
                                         Kênh Bán
                                     </label>
-                                    <select value={channel} onChange={e => setChannel(e.target.value as SalesChannel)}
+                                    <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
                                         className="w-full px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }}>
                                         {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                                     </select>

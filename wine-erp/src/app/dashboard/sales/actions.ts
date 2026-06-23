@@ -334,6 +334,20 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     })
 }
 
+export async function getSalesOrderDetailWithMarginAndTimeline(id: string): Promise<{
+    detail: Awaited<ReturnType<typeof getSalesOrderDetailWithMargin>>['detail']
+    margin: SOMarginData | null
+    timeline: SOTimelineEvent[]
+}> {
+    const detailAndMargin = await getSalesOrderDetailWithMargin(id)
+    const timeline = await getSOTimeline(id)
+    return {
+        ...detailAndMargin,
+        timeline
+    }
+}
+
+
 // ── Customers for dropdown ───────────────────────
 export async function getCustomersForSO() {
     return cached('sales:customers', async () => {

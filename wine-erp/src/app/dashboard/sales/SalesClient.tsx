@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesStats, getSOStatusCounts } from './actions'
+import { SalesOrderRow, SOStatus, getSalesOrders, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesStats, getSOStatusCounts } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 
@@ -170,14 +170,11 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
         let cancelled = false
         setLoading(true)
         setActiveTab('overview')
-        Promise.all([
-            getSalesOrderDetailWithMargin(soId),
-            getSOTimeline(soId),
-        ]).then(([result, tl]) => {
+        getSalesOrderDetailWithMarginAndTimeline(soId).then(result => {
             if (cancelled) return
             setDetail(result.detail)
             setMarginData(result.margin)
-            setTimeline(tl)
+            setTimeline(result.timeline)
             setLoading(false)
         })
         return () => { cancelled = true }
