@@ -25,6 +25,7 @@
 16. [BUG-016: force-dynamic Trên Layout Giết Router Cache](#bug-016-force-dynamic-trên-layout-giết-router-cache)
 17. [BUG-017: Floor Plan Drawing Tools Bị Chặn — pointerEvents + ESC + Pan](#bug-017-floor-plan-drawing-tools-bị-chặn--pointerevents--esc--pan)
 18. [BUG-018: Sales Order Tab Loading Chậm — Multi-Waterfall Server Actions & SQL Count Joins](#bug-018-sales-order-tab-loading-chậm--multi-waterfall-server-actions--sql-count-joins)
+19. [BUG-019: Trang Danh Mục Sản Phẩm Tải Chậm Trên Điện Thoại (8s) — Invalidation Cache Sai & Responsive DOM Overhead](#bug-019-trang-danh-mục-sản-phẩm-tải-chậm-trên-điện-thoại-8s--invalidation-cache-sai--responsive-dom-overhead)
 
 ---
 
@@ -713,9 +714,14 @@ export async function getStockLots() {
 | 29 | **Mọi action file READ function PHẢI wrap trong `cached()` — `grep 'from.*cache'` để verify** | Performance |
 | 30 | **Tạo module mới → PHẢI tạo `loading.tsx` cùng lúc (skeleton shimmer)** | Performance UX |
 | 31 | **KHÔNG đặt `force-dynamic` trên layout — chỉ đặt trên page nếu cần** | Router Cache |
-| 32 | **`staleTimes.dynamic` trong next.config PHẢI ≥ 60s cho dashboard** | Router Cache |
+| 32 | `staleTimes.dynamic` trong next.config PHẢI ≥ 60s cho dashboard | Router Cache |
 | 33 | **Interactive elements (location blocks, zone labels) PHẢI có `pointerEvents: 'none'` khi drawing tool active** | Canvas Interaction |
 | 34 | **Keyboard handlers cho canvas đặt ở `useEffect` global, KHÔNG trong `sr-only` div** | Event Handling |
+| 35 | **Hạn chế gọi nhiều Server Actions song song trên Client Component cùng lúc** | Server Actions |
+| 36 | **Luôn ưu tiên pre-fetch dữ liệu trong Server Component trước khi truyền xuống Client** | SSR/RSC |
+| 37 | **Tối ưu hóa SQL Count không lạm dụng JOIN dư thừa** | Database Query |
+| 38 | **Tách biệt cache invalidation dữ liệu danh sách động và metadata dropdowns tĩnh** | Caching |
+| 39 | **Dùng React hook (isMobile) để kết xuất giao diện di động hoặc máy tính có điều kiện thay vì CSS display hidden** | DOM Rendering |
 
 ---
 
@@ -1000,3 +1006,35 @@ useEffect(() => {
 
 > ⚠️ **RULE 37: Tối ưu hoá SQL Count.**
 > Chỉ thực hiện `JOIN` khi các điều kiện trong `WHERE` thực sự tham chiếu tới bảng được liên kết. Đếm số dòng trên bảng chính không JOIN sẽ giúp tăng tốc độ đáng kể.
+
+---
+
+## BUG-019: Trang Danh Mục Sản Phẩm Tải Chậm Trên Điện Thoại (8s) — Invalidation Cache Sai & Responsive DOM Overhead
+
+**Ngày:** 2026-06-23
+**Severity:** 🟠 Medium — Trải nghiệm di động kém, lag giao diện tải trang
+
+### Triệu chứng
+- Khi truy cập Danh mục sản phẩm (`/dashboard/products`) bằng điện thoại, trang bị đơ ở Skeleton loading rất lâu (tầm 8s).
+- Không cải thiện bằng việc nén hình ảnh (vì dung lượng ảnh ImgBB vốn đã nhỏ, ~12KB).
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Xóa nhầm cache dropdown tham chiếu** | Khi có cập nhật kho hàng (`wms`, `transfers`, `stock-count`), module `cache.ts` tự động xóa sạch mọi key bắt đầu bằng `products`. Điều này vô tình xóa luôn cache các dữ liệu dropdown tĩnh ít thay đổi (`products:countries`, `products:vintages`, `products:producers`), khiến mỗi lần có biến động kho, server component load trang lại bị dội một loạt truy vấn cold start song song xuống Supabase Singapore. |
+| **Giao diện Responsive DOM kép** | `ProductTable.tsx` chứa cả Desktop View (`hidden md:block` table) và Mobile View (`block md:hidden` card list) song song trong DOM. Trình duyệt di động, dù chỉ hiển thị 20 mobile cards, vẫn phải tải và decode ảnh cho 20 product rows tương ứng của Desktop Table ẩn, dẫn đến quá tải luồng decode hình ảnh và chiếm dụng tài nguyên CPU di động. |
+
+### Cách fix
+
+1. **Selective Invalidation Cache:** Cấu trúc lại `revalidateCache` trong `cache.ts` để khi có biến động kho hàng (`wms`, `transfers`, `stock-count`), hệ thống chỉ xóa cache danh sách sản phẩm `products:list` và stats `products:stats`, bảo lưu cache dữ liệu tham chiếu tĩnh.
+2. **Gom Server Action:** Tạo `getProductsPageData` trong `actions.ts` để gộp toàn bộ 5 Promise queries trên server thành một cuộc gọi tập trung, trả đầy đủ dữ liệu trang (rows, stats, filters, canEdit) trong một chu kỳ mạng.
+3. **Responsive DOM Rendering:** Cấu trúc lại `ProductTable.tsx` sử dụng React hook `isMobile` để unmount hoàn toàn giao diện Desktop trên Mobile (và ngược lại), loại bỏ hơn 50% số DOM nodes dư thừa và triệt tiêu hành vi tải hình ảnh ẩn trên di động.
+
+### Bài học
+
+> ⚠️ **RULE 38: Tách biệt cache invalidation dữ liệu danh sách động và metadata dropdowns tĩnh.**
+> Việc cập nhật số lượng kho hàng hoặc giao dịch không được phép làm invalid các danh mục dropdown tĩnh ít thay đổi, tránh gây dội query cold-start hàng loạt.
+
+> ⚠️ **RULE 39: Dùng React hook để kết xuất giao diện di động hoặc máy tính có điều kiện thay vì CSS display hidden.**
+> Rất nguy hiểm nếu nhồi nhét cả cấu trúc Table phức tạp cùng hàng chục hình ảnh vào DOM rồi dùng CSS `display: none` ẩn đi. Sử dụng mount check để unmount cấu trúc không dùng giúp tiết kiệm băng thông và tài nguyên CPU đáng kể cho di động.
