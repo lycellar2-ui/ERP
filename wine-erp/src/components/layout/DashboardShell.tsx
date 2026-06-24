@@ -71,6 +71,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                 style={isMobile ? { transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)' } : {}}
             >
                 <Sidebar
+                    currentUser={currentUser}
                     collapsed={isMobile ? false : collapsed}
                     onToggle={() => {
                         if (isMobile) setMobileOpen(false)

@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useCallback, useRef, useState } from 'react'
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react'
 import { signOut } from '@/app/login/actions'
+import { type SessionUser } from '@/lib/session'
 import {
     LayoutDashboard, Package, Users, ShoppingCart, Warehouse,
     Truck, DollarSign, FileText, BarChart3, Settings, ChevronLeft,
@@ -14,7 +15,19 @@ import {
     Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText
 } from 'lucide-react'
 
-const NAV_GROUPS = [
+interface NavItem {
+    href: string
+    icon: React.FC<any>
+    label: string
+    permission?: string
+}
+
+interface NavGroup {
+    label: string
+    items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
     {
         label: 'Tổng Quan',
         items: [
@@ -25,66 +38,66 @@ const NAV_GROUPS = [
     {
         label: 'Danh Mục',
         items: [
-            { href: '/dashboard/products', icon: Package, label: 'Sản Phẩm' },
-            { href: '/dashboard/suppliers', icon: Building2, label: 'Nhà Cung Cấp' },
-            { href: '/dashboard/customers', icon: Users, label: 'Khách Hàng' },
-            { href: '/dashboard/contracts', icon: FileSignature, label: 'Hợp Đồng' },
+            { href: '/dashboard/products', icon: Package, label: 'Sản Phẩm', permission: 'MDM:READ' },
+            { href: '/dashboard/suppliers', icon: Building2, label: 'Nhà Cung Cấp', permission: 'MDM:READ' },
+            { href: '/dashboard/customers', icon: Users, label: 'Khách Hàng', permission: 'MDM:READ' },
+            { href: '/dashboard/contracts', icon: FileSignature, label: 'Hợp Đồng', permission: 'CNT:READ' },
         ]
     },
     {
         label: 'Mua Hàng',
         items: [
-            { href: '/dashboard/procurement', icon: ShoppingCart, label: 'Đơn Mua Hàng' },
-            { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng' },
-            { href: '/dashboard/agency', icon: Globe, label: 'Agency Portal' },
-            { href: '/dashboard/tax', icon: Layers, label: 'Tra Cứu Thuế' },
-            { href: '/dashboard/costing', icon: Calculator, label: 'Tính Giá Vốn (CST)' },
+            { href: '/dashboard/procurement', icon: ShoppingCart, label: 'Đơn Mua Hàng', permission: 'PRC:READ' },
+            { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng', permission: 'PRC:READ' },
+            { href: '/dashboard/agency', icon: Globe, label: 'Agency Portal', permission: 'AGN:READ' },
+            { href: '/dashboard/tax', icon: Layers, label: 'Tra Cứu Thuế', permission: 'TAX:READ' },
+            { href: '/dashboard/costing', icon: Calculator, label: 'Tính Giá Vốn (CST)', permission: 'CST:READ' },
         ]
     },
     {
         label: 'Kho & Bán Hàng',
         items: [
-            { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng' },
-            { href: '/dashboard/transfers', icon: ArrowRightLeft, label: 'Chuyển Kho' },
-            { href: '/dashboard/stock-count', icon: ClipboardList, label: 'Kiểm Kê' },
-            { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng' },
-            { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá' },
-            { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá' },
-            { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin' },
-            { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng' },
-            { href: '/dashboard/pipeline', icon: Target, label: 'Sales Pipeline' },
-            { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)' },
-            { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine' },
-            { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển' },
-            { href: '/dashboard/returns', icon: ShoppingCart, label: 'Trả Hàng & CN' },
-            { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom' },
-            { href: '/dashboard/qr-codes', icon: QrCode, label: 'QR Truy Xuất' },
+            { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', permission: 'WMS:READ' },
+            { href: '/dashboard/transfers', icon: ArrowRightLeft, label: 'Chuyển Kho', permission: 'TRS:READ' },
+            { href: '/dashboard/stock-count', icon: ClipboardList, label: 'Kiểm Kê', permission: 'WMS:READ' },
+            { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng', permission: 'SLS:READ' },
+            { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá', permission: 'SLS:READ' },
+            { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá', permission: 'SLS:READ' },
+            { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin', permission: 'SLS:READ' },
+            { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng', permission: 'CRM:READ' },
+            { href: '/dashboard/pipeline', icon: Target, label: 'Sales Pipeline', permission: 'SLS:READ' },
+            { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', permission: 'CSG:READ' },
+            { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine', permission: 'SLS:READ' },
+            { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển', permission: 'SLS:READ' },
+            { href: '/dashboard/returns', icon: ShoppingCart, label: 'Trả Hàng & CN', permission: 'SLS:READ' },
+            { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', permission: 'SLS:READ' },
+            { href: '/dashboard/qr-codes', icon: QrCode, label: 'QR Truy Xuất', permission: 'SLS:READ' },
         ]
     },
     {
         label: 'Tài Chính',
         items: [
-            { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán' },
-            { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế' },
-            { href: '/dashboard/stamps', icon: Stamp, label: 'Quản Lý Tem' },
-            { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo' },
-            { href: '/dashboard/market-price', icon: TrendingUp, label: 'Giá Thị Trường' },
-            { href: '/dashboard/kpi', icon: Target, label: 'KPI Chỉ Tiêu' },
+            { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', permission: 'FIN:READ' },
+            { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },
+            { href: '/dashboard/stamps', icon: Stamp, label: 'Quản Lý Tem', permission: 'STM:READ' },
+            { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo', permission: 'RPT:READ' },
+            { href: '/dashboard/market-price', icon: TrendingUp, label: 'Giá Thị Trường', permission: 'RPT:READ' },
+            { href: '/dashboard/kpi', icon: Target, label: 'KPI Chỉ Tiêu', permission: 'KPI:READ' },
         ]
     },
     {
         label: 'Marketing',
         items: [
-            { href: '/dashboard/media', icon: ImageIcon, label: 'Thư Viện Ảnh' },
+            { href: '/dashboard/media', icon: ImageIcon, label: 'Thư Viện Ảnh', permission: 'MDM:READ' },
         ]
     },
     {
         label: 'Hệ Thống',
         items: [
-            { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống' },
-            { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt' },
-            { href: '/dashboard/settings/approval-matrix', icon: Shield, label: 'Ma Trận Phân Quyền' },
-            { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC' },
+            { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống', permission: 'SYS:READ' },
+            { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt', permission: 'SYS:ADMIN' },
+            { href: '/dashboard/settings/approval-matrix', icon: Shield, label: 'Ma Trận Phân Quyền', permission: 'SYS:ADMIN' },
+            { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC', permission: 'SYS:ADMIN' },
         ]
     }
 ]
@@ -127,16 +140,29 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
 }
 
 interface SidebarProps {
+    currentUser: SessionUser | null
     collapsed: boolean
     onToggle: () => void
     onNavigate?: () => void
 }
 
-export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
+export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const prefetchedRef = useRef(new Set<string>())
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+    const filteredGroups = useMemo(() => {
+        return NAV_GROUPS.map(group => {
+            const visibleItems = group.items.filter(item => {
+                if (!item.permission) return true
+                if (!currentUser) return false
+                if (currentUser.roles.includes('CEO') || currentUser.roles.includes('CEO Secondary')) return true
+                return currentUser.permissions.includes(item.permission)
+            })
+            return { ...group, items: visibleItems }
+        }).filter(group => group.items.length > 0)
+    }, [currentUser])
 
     const handleLogout = useCallback(async () => {
         setIsLoggingOut(true)
@@ -161,7 +187,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
     // Auto-prefetch ALL sidebar links after current page loads
     // This ensures every link click is instant from Router Cache
     useEffect(() => {
-        const allHrefs = NAV_GROUPS.flatMap(g => g.items.map(i => i.href))
+        const allHrefs = filteredGroups.flatMap(g => g.items.map(i => i.href))
 
         // Stagger prefetching to avoid thundering herd
         const timers: ReturnType<typeof setTimeout>[] = []
@@ -175,7 +201,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
         })
 
         return () => timers.forEach(clearTimeout)
-    }, [pathname, router])
+    }, [pathname, router, filteredGroups])
 
     return (
         <aside
@@ -191,7 +217,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-3">
-                {NAV_GROUPS.map((group) => (
+                {filteredGroups.map((group) => (
                     <div key={group.label} className="mb-1">
                         {!collapsed && (
                             <p
