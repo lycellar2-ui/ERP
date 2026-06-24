@@ -12,6 +12,7 @@ import {
     getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate
 } from './actions'
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
+import { type SessionUser } from '@/lib/session'
 
 // ── Shared Style Tokens ──────────────────────────
 const card = { background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '8px' }
@@ -40,6 +41,7 @@ interface Props {
     initialRoles: RoleRow[]
     permissions: PermissionRow[]
     stats: { users: number; roles: number; activeUsers: number; pendingApprovals: number }
+    currentUser: SessionUser | null
 }
 
 // ── Create User Drawer ───────────────────────────
@@ -237,8 +239,185 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     )
 }
 
+// ── User Detail / Edit Drawer ─────────────────────
+interface UserDetailDrawerProps {
+    open: boolean
+    onClose: () => void
+    user: UserRow | null
+    roles: RoleRow[]
+    currentUser: SessionUser | null
+    onUpdated: () => void
+}
+
+function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }: UserDetailDrawerProps) {
+    const [saving, setSaving] = useState(false)
+    const [error, setError] = useState('')
+    const [form, setForm] = useState({ name: '', status: 'ACTIVE', roleIds: [] as string[] })
+
+    React.useEffect(() => {
+        if (user) {
+            const userRoleIds = roles
+                .filter(r => user.roles.includes(r.name))
+                .map(r => r.id)
+            setForm({
+                name: user.name || '',
+                status: user.status,
+                roleIds: userRoleIds
+            })
+            setError('')
+        }
+    }, [user, roles])
+
+    if (!open || !user) return null
+
+    const isAdmin = currentUser?.permissions.includes('SYS:ADMIN') || false
+    const statusCfg = STATUS_CFG[user.status] ?? STATUS_CFG.ACTIVE
+
+    const toggleRole = (id: string) => {
+        if (!isAdmin) return
+        setForm(f => ({
+            ...f,
+            roleIds: f.roleIds.includes(id) ? f.roleIds.filter(r => r !== id) : [...f.roleIds, id]
+        }))
+    }
+
+    async function handleSave() {
+        if (!isAdmin || !user) return
+        setSaving(true)
+        setError('')
+        try {
+            const resUser = await updateUser(user.id, { name: form.name, status: form.status as any })
+            if (resUser.success) {
+                const resRoles = await updateUserRoles(user.id, form.roleIds)
+                if (resRoles.success) {
+                    onUpdated()
+                    onClose()
+                } else {
+                    setError(resRoles.error || 'Lỗi cập nhật vai trò')
+                }
+            } else {
+                setError(resUser.error || 'Lỗi cập nhật thông tin')
+            }
+        } catch (err: any) {
+            setError(err.message || 'Lỗi hệ thống')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl transition-all duration-300" style={{ background: '#0D1B25', borderLeft: '1px solid #2A4355' }}>
+                <div>
+                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #142433' }}>
+                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                            {isAdmin ? 'Chỉnh Sửa Người Dùng' : 'Thông Tin Chi Tiết'}
+                        </h3>
+                        <button onClick={onClose} className="hover:opacity-80 transition-opacity"><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    </div>
+
+                    {error && (
+                        <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
+                            style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)', color: '#f87171' }}>
+                            <AlertCircle size={14} /> {error}
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
+                            <div className="text-sm font-semibold p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                {user.email}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Họ Tên</label>
+                            {isAdmin ? (
+                                <input style={inputStyle} {...focusHandler} placeholder="Họ và tên"
+                                    value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                            ) : (
+                                <div className="text-sm font-semibold p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                    {user.name || '—'}
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Trạng Thái</label>
+                            {isAdmin ? (
+                                <select style={inputStyle} {...focusHandler}
+                                    value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}>
+                                    <option value="ACTIVE">Hoạt Động</option>
+                                    <option value="INACTIVE">Ngưng Hoạt Động</option>
+                                    <option value="SUSPENDED">Khoá</option>
+                                </select>
+                            ) : (
+                                <div className="p-3 rounded-md flex items-center" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <span className="text-xs px-2 py-0.5 rounded font-bold"
+                                        style={{ background: statusCfg.bg, color: statusCfg.color }}>
+                                        {statusCfg.label}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#8AAEBB' }}>Vai Trò</label>
+                            {isAdmin ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                    {roles.map(r => {
+                                        const selected = form.roleIds.includes(r.id)
+                                        return (
+                                            <button key={r.id} onClick={() => toggleRole(r.id)}
+                                                className="text-left px-3 py-2 rounded text-xs font-semibold transition-all"
+                                                style={{
+                                                    background: selected ? 'rgba(135,203,185,0.15)' : '#142433',
+                                                    border: selected ? '1px solid #87CBB9' : '1px solid #2A4355',
+                                                    color: selected ? '#87CBB9' : '#8AAEBB',
+                                                }}>
+                                                {selected && <CheckCircle2 size={12} className="inline mr-1" />}
+                                                {r.name}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex flex-wrap gap-1.5 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    {user.roles.map(r => (
+                                        <span key={r} className="text-xs px-2 py-0.5 rounded font-semibold"
+                                            style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>
+                                            {r}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Ngày Tạo</label>
+                            <div className="text-sm p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB' }}>
+                                {new Date(user.createdAt).toLocaleString('vi-VN')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {isAdmin && (
+                    <button onClick={handleSave} disabled={saving}
+                        className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
 // ── Main Settings Client ─────────────────────────
-export function SettingsClient({ initialUsers, initialRoles, permissions, stats }: Props) {
+export function SettingsClient({ initialUsers, initialRoles, permissions, stats, currentUser }: Props) {
     const [tab, setTab] = useState<Tab>('users')
     const [users, setUsers] = useState(initialUsers)
     const [roles, setRoles] = useState(initialRoles)
@@ -254,6 +433,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
     const [expandedLogId, setExpandedLogId] = useState<string | null>(null)
     const [fieldChanges, setFieldChanges] = useState<any[]>([])
     const [loadingChanges, setLoadingChanges] = useState(false)
+    const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
 
     const reload = useCallback(async () => {
         const [u, r] = await Promise.all([getUsers(), getRoles()])
@@ -406,7 +586,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
                                         <tr key={u.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                            <td className="px-3 py-2.5 text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                            <td className="px-3 py-2.5 text-sm font-semibold cursor-pointer hover:underline hover:text-[#87CBB9] transition-all"
+                                                style={{ color: '#E8F1F2' }}
+                                                onClick={() => setSelectedUser(u)}>
                                                 {u.name || '—'}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>
@@ -434,8 +616,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
                                             <td className="px-3 py-2.5">
                                                 <select
                                                     value={u.status}
+                                                    disabled={!currentUser?.permissions.includes('SYS:ADMIN')}
                                                     onChange={e => handleStatusChange(u.id, e.target.value as any)}
-                                                    className="text-xs px-2 py-1 rounded cursor-pointer"
+                                                    className="text-xs px-2 py-1 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                     style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB', outline: 'none' }}>
                                                     <option value="ACTIVE">Hoạt Động</option>
                                                     <option value="INACTIVE">Ngưng</option>
@@ -678,6 +861,14 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats 
             {/* Drawers */}
             <CreateUserDrawer open={showCreateUser} onClose={() => setShowCreateUser(false)} onCreated={reload} roles={roles} />
             <CreateRoleDrawer open={showCreateRole} onClose={() => setShowCreateRole(false)} onCreated={reload} permissions={permissions} />
+            <UserDetailDrawer
+                open={!!selectedUser}
+                onClose={() => setSelectedUser(null)}
+                user={selectedUser}
+                roles={roles}
+                currentUser={currentUser}
+                onUpdated={reload}
+            />
         </div>
     )
 }

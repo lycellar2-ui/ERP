@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
 import { Menu } from 'lucide-react'
+import { type SessionUser } from '@/lib/session'
 
 function PageSkeleton() {
     return (
@@ -41,7 +42,7 @@ function useIsMobile() {
     return isMobile
 }
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({ children, currentUser }: { children: React.ReactNode; currentUser: SessionUser | null }) {
     const [collapsed, setCollapsed] = useState(false)
     const isMobile = useIsMobile()
     const [mobileOpen, setMobileOpen] = useState(false)
@@ -81,6 +82,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
                 <Header
+                    currentUser={currentUser}
                     mobileMenuButton={isMobile ? (
                         <button
                             onClick={() => setMobileOpen(true)}

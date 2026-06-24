@@ -143,9 +143,12 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
         try {
             await signOut()
         } catch (err) {
-            console.error('Đăng xuất thất bại:', err)
-            setIsLoggingOut(false)
+            // Next.js redirect throws an error internally. Catching it and forcing
+            // a hard client-side redirect ensures the Next.js router cache is fully cleared.
+            window.location.href = '/login'
+            return
         }
+        window.location.href = '/login'
     }, [])
 
     // Smart prefetch: prefetch on hover (with debounce to avoid spam)
