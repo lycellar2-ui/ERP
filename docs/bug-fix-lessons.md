@@ -1045,3 +1045,38 @@ useEffect(() => {
 
 > ⚠️ **RULE 40: Tránh nghẽn hàng đợi kết nối cơ sở dữ liệu trên Serverless bằng cách trì hoãn (lazy-load) dữ liệu tham chiếu phi trọng yếu lên client.**
 > Với các trang có nhiều dropdown filter tĩnh và chỉ số thống kê, chỉ nên tải dữ liệu chính (bảng chính) ở server để trả về HTML lập tức. Các dropdown/stats phụ có thể fetch bất đồng bộ ở client-side `useEffect` sau khi trang đã mount.
+
+---
+
+## BUG-020: 504 MIDDLEWARE_INVOCATION_TIMEOUT Trên Điện Thoại / Khách Hàng Truy Cập Lần Đầu
+
+**Ngày:** 2026-07-11
+**Severity:** 🔴 Critical — Không thể truy cập trang web (lỗi 504) khi Database đang ở trạng thái ngủ
+
+### Triệu chứng
+- Khi truy cập ứng dụng lần đầu tiên hoặc sau một khoảng thời gian không có hoạt động, trình duyệt báo lỗi `504: GATEWAY_TIMEOUT` với mã `MIDDLEWARE_INVOCATION_TIMEOUT` từ Vercel.
+- Lỗi xảy ra đặc biệt thường xuyên trên thiết bị di động của người dùng truy cập lần đầu.
+- Tuy nhiên, sau một vài giây, các lượt truy cập tiếp theo (hoặc truy cập trên máy tính) lại hoạt động bình thường.
+
+### Nguyên nhân gốc rễ
+
+| Yếu tố | Chi tiết |
+|---------|----------|
+| **Supabase Free Tier** | Cơ sở dữ liệu tự động đi ngủ (Cold Start) sau thời gian không hoạt động. Cần 10-20 giây để đánh thức. |
+| **Vercel Edge Timeout** | Vercel Edge Middleware có thời gian chờ (timeout) rất nghiêm ngặt là 1.5 giây. |
+| **Kiểm tra auth quá sớm** | Middleware gọi `supabase.auth.getUser()` trên mọi request trước cả khi lọc các trang công cộng (`publicPaths`), API (`/api/*`), portal (`/portal/*`). |
+| **Không lọc cookie** | Gọi Supabase API xác thực ngay cả đối với người dùng chưa đăng nhập (không có cookie `sb-*`), làm tăng nguy cơ kích hoạt cold-start. |
+
+### Cách fix
+
+1. **Kiểm tra loại route trước:** Chỉ thực hiện xác thực đối với các route không phải API (`/api/*`) hoặc Portal (`/portal/*`).
+2. **Kiểm tra cookie phiên (Quick check):** Nếu request không chứa bất kỳ cookie nào bắt đầu bằng `sb-` (cookie của Supabase), bỏ qua việc gọi `supabase.auth.getUser()`, gán `user = null` và xử lý chuyển hướng hoặc cho qua ngay lập tức. Điều này giúp giảm tải cho database và loại bỏ hoàn toàn 504 đối với khách truy cập chưa đăng nhập.
+3. **Bọc try-catch:** Đảm bảo lỗi kết nối Supabase không làm crash toàn bộ middleware.
+
+### Bài học
+
+> ⚠️ **RULE 41: Luôn tối ưu hóa Middleware để tránh gọi dịch vụ ngoài.**
+> Việc gọi API ngoài trong Middleware (đặc biệt là Edge Middleware có timeout 1.5s) phải được hạn chế tối đa bằng cách kiểm tra trước điều kiện (như kiểm tra cookie hoặc route).
+
+> ⚠️ **RULE 42: Không gọi Auth cho các trang public hoặc API không cần thiết.**
+> Tách biệt rõ ràng các route cần kiểm tra auth và skip gọi API khi không sử dụng kết quả xác thực.

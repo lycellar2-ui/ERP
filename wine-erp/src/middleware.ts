@@ -49,30 +49,50 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next()
     }
 
-    const { createServerClient } = await import('@supabase/ssr')
-    let supabaseResponse = NextResponse.next({ request })
-
-    const supabase = createServerClient(supabaseUrl, supabaseKey, {
-        cookies: {
-            getAll() {
-                return request.cookies.getAll()
-            },
-            setAll(cookiesToSet) {
-                cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-                supabaseResponse = NextResponse.next({ request })
-                cookiesToSet.forEach(({ name, value, options }) =>
-                    supabaseResponse.cookies.set(name, value, options)
-                )
-            },
-        },
-    })
-
-    const { data: { user } } = await supabase.auth.getUser()
-
     const publicPaths = ['/login', '/forgot-password', '/reset-password']
     const isPublic = publicPaths.some(p => request.nextUrl.pathname.startsWith(p))
     const isAgencyPath = request.nextUrl.pathname.startsWith('/portal')
     const isApiPath = request.nextUrl.pathname.startsWith('/api')
+
+    // Determine if we need to verify auth session in the middleware
+    // We only check auth for protected routes (non-public, non-agency, non-api)
+    // or public routes (to redirect logged-in users away from login/reset pages)
+    const needsAuthCheck = !isApiPath && !isAgencyPath
+
+    let user = null
+    let supabaseResponse = NextResponse.next({ request })
+
+    if (needsAuthCheck) {
+        // Quick check: If there are no Supabase auth cookies, the user is definitely not logged in.
+        // This avoids calling Supabase API (which could trigger database cold starts / 504 timeouts)
+        // for first-time visitors or logged-out users.
+        const hasSessionCookie = request.cookies.getAll().some(cookie => cookie.name.startsWith('sb-'))
+
+        if (hasSessionCookie) {
+            const { createServerClient } = await import('@supabase/ssr')
+            const supabase = createServerClient(supabaseUrl, supabaseKey, {
+                cookies: {
+                    getAll() {
+                        return request.cookies.getAll()
+                    },
+                    setAll(cookiesToSet) {
+                        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+                        supabaseResponse = NextResponse.next({ request })
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            supabaseResponse.cookies.set(name, value, options)
+                        )
+                    },
+                },
+            })
+
+            try {
+                const { data: { user: authUser } } = await supabase.auth.getUser()
+                user = authUser
+            } catch (error) {
+                console.error('Middleware auth check error:', error)
+            }
+        }
+    }
 
     // Redirect unauthenticated users to login (skip API + public + agency paths)
     if (!user && !isPublic && !isAgencyPath && !isApiPath) {
