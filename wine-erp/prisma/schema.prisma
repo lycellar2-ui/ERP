@@ -2829,6 +2829,25 @@ view ProductRowView {
   producerCountry  String
   appellationId    String?
   appellationName  String?
+  // Technical fields for instant detail drawer
+  volumeMl         Int?
+  hsCode           String?
+  isAllocationEligible Boolean?
+  // Pricing (from product_margin_prices)
+  retailPrice      Float?
+  wholesalePrice   Float?
+  // Wine profile (from product_profiles)
+  originDetail     String?
+  certification    String?
+  color            String?
+  aromas           String?
+  palate           String?
+  style            String?
+  servingTemp      String?
+  foodPairings     String?
+  bestSuitedFor    String?
+  grapes           String?
+  // Aggregated
   totalStock       Int
   mediaCount       Int
   primaryImageUrl  String?

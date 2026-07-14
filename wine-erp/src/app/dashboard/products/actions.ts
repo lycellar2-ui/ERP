@@ -30,6 +30,24 @@ export type ProductRow = {
     primaryImageUrl: string | null
     totalStock: number
     createdAt: Date
+    // Instant detail drawer fields (from expanded v_product_rows view)
+    volumeMl: number | null
+    hsCode: string | null
+    isAllocationEligible: boolean | null
+    retailPrice: number | null
+    wholesalePrice: number | null
+    profile: {
+        originDetail: string | null
+        certification: string | null
+        color: string | null
+        aromas: string | null
+        palate: string | null
+        style: string | null
+        servingTemp: string | null
+        foodPairings: string | null
+        bestSuitedFor: string | null
+        grapes: string | null
+    } | null
 }
 
 export type ProductFilters = {
@@ -111,28 +129,48 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
             }),
         ])
 
-        const rows: ProductRow[] = rowsRes.map((r) => ({
-            id: r.id,
-            skuCode: r.skuCode,
-            productName: r.productName,
-            vintage: r.vintage,
-            wineType: r.wineType,
-            format: r.format,
-            packagingType: r.packagingType,
-            unitsPerCase: r.unitsPerCase,
-            abvPercent: r.abvPercent,
-            producerName: r.producerName,
-            producerCountry: r.producerCountry,
-            appellationName: r.appellationName,
-            country: r.country,
-            barcodeEan: r.barcodeEan,
-            classification: r.classification,
-            status: r.status,
-            mediaCount: r.mediaCount,
-            primaryImageUrl: r.primaryImageUrl,
-            totalStock: r.totalStock,
-            createdAt: r.createdAt,
-        }))
+        const rows: ProductRow[] = rowsRes.map((r) => {
+            const hasProfile = r.grapes || r.servingTemp || r.originDetail || r.certification || r.color || r.style || r.aromas || r.palate || r.foodPairings || r.bestSuitedFor
+            return {
+                id: r.id,
+                skuCode: r.skuCode,
+                productName: r.productName,
+                vintage: r.vintage,
+                wineType: r.wineType,
+                format: r.format,
+                packagingType: r.packagingType,
+                unitsPerCase: r.unitsPerCase,
+                abvPercent: r.abvPercent,
+                producerName: r.producerName,
+                producerCountry: r.producerCountry,
+                appellationName: r.appellationName,
+                country: r.country,
+                barcodeEan: r.barcodeEan,
+                classification: r.classification,
+                status: r.status,
+                mediaCount: r.mediaCount,
+                primaryImageUrl: r.primaryImageUrl,
+                totalStock: r.totalStock,
+                createdAt: r.createdAt,
+                volumeMl: r.volumeMl ?? null,
+                hsCode: r.hsCode ?? null,
+                isAllocationEligible: r.isAllocationEligible ?? null,
+                retailPrice: r.retailPrice ?? null,
+                wholesalePrice: r.wholesalePrice ?? null,
+                profile: hasProfile ? {
+                    originDetail: r.originDetail ?? null,
+                    certification: r.certification ?? null,
+                    color: r.color ?? null,
+                    aromas: r.aromas ?? null,
+                    palate: r.palate ?? null,
+                    style: r.style ?? null,
+                    servingTemp: r.servingTemp ?? null,
+                    foodPairings: r.foodPairings ?? null,
+                    bestSuitedFor: r.bestSuitedFor ?? null,
+                    grapes: r.grapes ?? null,
+                } : null,
+            }
+        })
 
         return { rows, total }
     }, 30_000)

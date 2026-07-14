@@ -5,7 +5,8 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 dotenv.config({ path: '.env.local' })
 
 const sql = `
--- 1. Create View for Product Rows (List)
+-- 1. Create View for Product Rows (List) — includes price + profile for instant detail drawer
+DROP VIEW IF EXISTS v_product_rows;
 CREATE OR REPLACE VIEW v_product_rows AS
 SELECT 
     p.id,
@@ -28,6 +29,24 @@ SELECT
     pr.country AS "producerCountry",
     p."appellationId" AS "appellationId",
     ap.name AS "appellationName",
+    -- Technical fields for instant detail drawer
+    p."volumeMl" AS "volumeMl",
+    p."hsCode" AS "hsCode",
+    p."isAllocationEligible" AS "isAllocationEligible",
+    -- Pricing (1-to-1 join, negligible cost)
+    mp."retailPrice"::float AS "retailPrice",
+    mp."wholesalePrice"::float AS "wholesalePrice",
+    -- Wine profile (1-to-1 join, negligible cost)
+    prof."originDetail" AS "originDetail",
+    prof.certification AS certification,
+    prof.color AS color,
+    prof.aromas AS aromas,
+    prof.palate AS palate,
+    prof.style AS style,
+    prof."servingTemp" AS "servingTemp",
+    prof."foodPairings" AS "foodPairings",
+    prof."bestSuitedFor" AS "bestSuitedFor",
+    prof.grapes AS grapes,
     (
         SELECT COALESCE(SUM(sl."qtyAvailable"), 0)::int
         FROM stock_lots sl
@@ -46,7 +65,9 @@ SELECT
     ) AS "primaryImageUrl"
 FROM products p
 JOIN producers pr ON p."producerId" = pr.id
-LEFT JOIN appellations ap ON p."appellationId" = ap.id;
+LEFT JOIN appellations ap ON p."appellationId" = ap.id
+LEFT JOIN product_margin_prices mp ON p.id = mp."productId"
+LEFT JOIN product_profiles prof ON p.id = prof."productId";
 
 -- 2. Create View for Product Details (Drawer)
 CREATE OR REPLACE VIEW v_product_details AS

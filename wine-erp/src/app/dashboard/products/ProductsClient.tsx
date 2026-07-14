@@ -148,6 +148,31 @@ export function ProductsClient({
         detailCache.current[id] = promise
     }, [])
 
+    // Eager prefetch: batch-load details for all visible rows on page render
+    useEffect(() => {
+        if (rows.length === 0) return
+        const uncachedIds = rows
+            .map(r => r.id)
+            .filter(id => !detailCache.current[id])
+        if (uncachedIds.length === 0) return
+
+        // Stagger prefetch in small batches to avoid overwhelming the server
+        const BATCH_SIZE = 5
+        let cancelled = false
+        const runBatches = async () => {
+            for (let i = 0; i < uncachedIds.length; i += BATCH_SIZE) {
+                if (cancelled) break
+                const batch = uncachedIds.slice(i, i + BATCH_SIZE)
+                batch.forEach(id => prefetchProductDetails(id))
+                if (i + BATCH_SIZE < uncachedIds.length) {
+                    await new Promise(r => setTimeout(r, 100))
+                }
+            }
+        }
+        runBatches()
+        return () => { cancelled = true }
+    }, [rows, prefetchProductDetails])
+
     const handleSearchChange = (value: string) => {
         setSearch(value)
         if (debounceRef.current) clearTimeout(debounceRef.current)

@@ -142,6 +142,13 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
     const totalStockQty = 'totalStock' in activeProduct 
         ? (activeProduct as any).totalStock 
         : (data ? data.stockLots.reduce((sum, l) => sum + l.qtyAvailable, 0) : 0)
+    // Use initialData fields when detail data hasn't loaded yet
+    const effectiveVolumeMl = data?.volumeMl ?? activeProduct.volumeMl ?? null
+    const effectiveHsCode = data?.hsCode ?? activeProduct.hsCode ?? null
+    const effectiveRetailPrice = data?.retailPrice ?? activeProduct.retailPrice ?? null
+    const effectiveWholesalePrice = data?.wholesalePrice ?? activeProduct.wholesalePrice ?? null
+    const effectiveIsAllocation = data?.isAllocationEligible ?? activeProduct.isAllocationEligible ?? false
+    const effectiveProfile = data?.profile ?? activeProduct.profile ?? null
 
     return (
         <>
@@ -208,7 +215,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         {statusBadge.label}
                                     </span>
                                 )}
-                                {data?.isAllocationEligible && (
+                                {effectiveIsAllocation && (
                                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
                                         Allocation
                                     </span>
@@ -242,18 +249,14 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 { label: 'Độ cồn (ABV)', value: activeProduct.abvPercent ? `${activeProduct.abvPercent}°` : '—' },
                                 { 
                                     label: 'Dung tích', 
-                                    value: data ? `${data.volumeMl} ml` : (
-                                        <div className="h-3.5 w-12 bg-[#2A4355]/30 animate-pulse rounded inline-block" />
-                                    ) 
+                                    value: effectiveVolumeMl ? `${effectiveVolumeMl} ml` : '—'
                                 },
                                 { label: 'Quy cách đóng chai', value: activeProduct.format },
                                 { label: 'Loại thùng đóng gói', value: activeProduct.packagingType === 'OWC' ? 'OWC (Thùng Gỗ)' : 'Carton' },
                                 { label: 'Số chai mỗi thùng', value: `${activeProduct.unitsPerCase} chai` },
                                 { 
                                     label: 'Mã HS Code', 
-                                    value: data ? data.hsCode : (
-                                        <div className="h-3.5 w-20 bg-[#2A4355]/30 animate-pulse rounded inline-block" />
-                                    ) 
+                                    value: effectiveHsCode ?? '—'
                                 },
                                 { label: 'Mã vạch EAN', value: activeProduct.barcodeEan ?? '—' },
                                 { label: 'Phân hạng rượu', value: activeProduct.classification ?? '—' },
@@ -274,104 +277,89 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                 <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#4A6A7A' }}>Giá Bán Lẻ Niêm Yết</span>
                                 <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#87CBB9' }}>
-                                    {data ? (data.retailPrice ? formatVND(data.retailPrice) : 'Chưa thiết lập') : (
-                                        <div className="h-7 w-28 bg-[#2A4355]/30 animate-pulse rounded mt-1" />
-                                    )}
+                                    {effectiveRetailPrice ? formatVND(effectiveRetailPrice) : 'Chưa thiết lập'}
                                 </span>
                             </div>
                             <div className="p-3.5 rounded-xl flex flex-col justify-between" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                 <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#4A6A7A' }}>Giá Bán Buôn (Wholesale)</span>
                                 <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#87CBB9' }}>
-                                    {data ? (data.wholesalePrice ? formatVND(data.wholesalePrice) : 'Chưa thiết lập') : (
-                                        <div className="h-7 w-28 bg-[#2A4355]/30 animate-pulse rounded mt-1" />
-                                    )}
+                                    {effectiveWholesalePrice ? formatVND(effectiveWholesalePrice) : 'Chưa thiết lập'}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {loading && !data && (
-                        <div className="space-y-3">
-                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
-                                <Tag size={13} /> Đặc Tính Sản Phẩm (Wine Profile)
-                            </h4>
-                            <div className="p-4 rounded-xl space-y-2 animate-pulse" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <div className="h-3 bg-[#2A4355]/30 rounded w-full" />
-                                <div className="h-3 bg-[#2A4355]/30 rounded w-5/6" />
-                                <div className="h-3 bg-[#2A4355]/30 rounded w-4/6" />
-                            </div>
-                        </div>
-                    )}
-                    {data?.profile && (
+
+                    {effectiveProfile && (
                         <div className="space-y-3">
                             <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
                                 <Tag size={13} /> Đặc Tính Sản Phẩm (Wine Profile)
                             </h4>
                             <div className="p-4 rounded-xl space-y-3 text-xs leading-relaxed" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {data.profile.grapes && (
+                                    {effectiveProfile.grapes && (
                                         <div>
                                             <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Giống nho</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.grapes}</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.grapes}</span>
                                         </div>
                                     )}
-                                    {data.profile.servingTemp && (
+                                    {effectiveProfile.servingTemp && (
                                         <div>
                                             <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Nhiệt độ phục vụ</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.servingTemp}</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.servingTemp}</span>
                                         </div>
                                     )}
-                                    {data.profile.originDetail && (
+                                    {effectiveProfile.originDetail && (
                                         <div>
                                             <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Xuất xứ chi tiết</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.originDetail}</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.originDetail}</span>
                                         </div>
                                     )}
-                                    {data.profile.certification && (
+                                    {effectiveProfile.certification && (
                                         <div>
                                             <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Chứng chỉ</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.certification}</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.certification}</span>
                                         </div>
                                     )}
-                                    {data.profile.color && (
+                                    {effectiveProfile.color && (
                                         <div>
                                             <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Màu sắc</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.color}</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.color}</span>
                                         </div>
                                     )}
-                                    {data.profile.style && (
+                                    {effectiveProfile.style && (
                                         <div>
                                             <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Phong cách</span>
-                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{data.profile.style}</span>
+                                            <span style={{ color: '#E8F1F2' }} className="font-medium">{effectiveProfile.style}</span>
                                         </div>
                                     )}
                                 </div>
                                 
-                                {data.profile.aromas && (
+                                {effectiveProfile.aromas && (
                                     <div className="pt-2 border-t border-[#2A4355]/20">
                                         <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Hương thơm (Nose)</span>
-                                        <span style={{ color: '#8AAEBB' }}>{data.profile.aromas}</span>
+                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.aromas}</span>
                                     </div>
                                 )}
                                 
-                                {data.profile.palate && (
+                                {effectiveProfile.palate && (
                                     <div className="pt-2 border-t border-[#2A4355]/20">
                                         <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Vị giác (Palate)</span>
-                                        <span style={{ color: '#8AAEBB' }}>{data.profile.palate}</span>
+                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.palate}</span>
                                     </div>
                                 )}
                                 
-                                {data.profile.foodPairings && (
+                                {effectiveProfile.foodPairings && (
                                     <div className="pt-2 border-t border-[#2A4355]/20">
                                         <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Món ăn kèm</span>
-                                        <span style={{ color: '#8AAEBB' }}>{data.profile.foodPairings}</span>
+                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.foodPairings}</span>
                                     </div>
                                 )}
 
-                                {data.profile.bestSuitedFor && (
+                                {effectiveProfile.bestSuitedFor && (
                                     <div className="pt-2 border-t border-[#2A4355]/20">
                                         <span style={{ color: '#4A6A7A' }} className="block uppercase text-[10px] font-bold">Phù hợp với</span>
-                                        <span style={{ color: '#8AAEBB' }}>{data.profile.bestSuitedFor}</span>
+                                        <span style={{ color: '#8AAEBB' }}>{effectiveProfile.bestSuitedFor}</span>
                                     </div>
                                 )}
                             </div>
