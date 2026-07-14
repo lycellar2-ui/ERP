@@ -124,7 +124,6 @@ erDiagram
         sku_code        string
         product_name    string
         producer_id     uuid FK
-        vintage         int
         appellation_id  uuid FK
         country         string
         abv_percent     decimal
@@ -359,6 +358,7 @@ erDiagram
         qty_available   decimal
         unit_landed_cost decimal
         received_date   date
+        vintage         int
         status          enum
     }
     GoodsReceipt {

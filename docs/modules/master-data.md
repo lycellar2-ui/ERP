@@ -19,7 +19,6 @@ Mỗi sản phẩm rượu vang có các thuộc tính đặc thù ngành mà ER
 | `sku_code` | String (unique) | Mã SKU nội bộ (tự sinh) | ✅ |
 | `product_name` | String | Tên rượu (Château Margaux) | ✅ |
 | `producer` | String | Nhà sản xuất / Château / Winery | ✅ |
-| `vintage` | Integer | Năm thu hoạch (2018, 2019...) Null = Non-vintage | |
 | `appellation` | String | Vùng trồng chứng nhận (Bordeaux AOC, Burgundy AOC) | |
 | `region` | String | Vùng địa lý (Bordeaux, Bourgogne, Barossa Valley) | |
 | `country_of_origin` | String | Quốc gia (France, Italy, Australia...) | ✅ |

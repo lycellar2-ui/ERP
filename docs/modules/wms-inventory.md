@@ -266,7 +266,7 @@ searchProductLocations(warehouseId, term) → Find product → return locationId
 ### 11.3 Backend (actions-nxt.ts)
 
 ```
-getProductSearchOptions(search?)          → ProductOption[] (SKU, name, vintage)
+getProductSearchOptions(search?)          → ProductOption[] (SKU, name)
 getStockMovements(filters)                → { movements: StockMovementRow[], summary: NXTSummary }
 getProductStockByLocation(productId)      → Current lots with location details
 ```
@@ -277,7 +277,7 @@ getProductStockByLocation(productId)      → Current lots with location details
 
 ```
 Warehouse → Zone → Rack → Bin (Location)
-StockLot { lot_no, sku, shipment_id, qty, unit_cost, received_date, location_id, status }
+StockLot { lot_no, sku, shipment_id, qty, unit_cost, received_date, location_id, vintage, status }
 StockMove { lot_id, from_location, to_location, qty, move_type, reference_id, created_at }
 GoodsReceipt { gr_no, po_id, warehouse_id, status, confirmed_by, confirmed_at }
 GoodsReceiptLine { gr_id, sku, lot_id, qty_expected, qty_received, variance }

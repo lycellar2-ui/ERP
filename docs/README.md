@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-07-14 20:55 | Wine ERP v7.3 — 26 modules, 114 models, 42 action files, Product Detail View Drawer, and Middleware 504 Promise.race cold-start timeout fix live*
+*Last updated: 2026-07-14 22:15 | Wine ERP v7.4 — 26 modules, 114 models, 42 action files, Product Detail View Drawer, and Vintage (Product → StockLot) re-architecture live*
