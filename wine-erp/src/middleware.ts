@@ -60,6 +60,7 @@ export async function middleware(request: NextRequest) {
     const needsAuthCheck = !isApiPath && !isAgencyPath
 
     let user = null
+    let authTimedOut = false
     let supabaseResponse = NextResponse.next({ request })
 
     if (needsAuthCheck) {
@@ -86,16 +87,26 @@ export async function middleware(request: NextRequest) {
             })
 
             try {
-                const { data: { user: authUser } } = await supabase.auth.getUser()
+                // Set a strict timeout to prevent 504 Gateway Timeout if Supabase is cold-starting
+                const authPromise = supabase.auth.getUser()
+                const timeoutPromise = new Promise<{ data: { user: null } }>((_, reject) =>
+                    setTimeout(() => reject(new Error('Auth check timeout')), 1200)
+                )
+
+                const { data: { user: authUser } } = await Promise.race([authPromise, timeoutPromise])
                 user = authUser
             } catch (error) {
-                console.error('Middleware auth check error:', error)
+                console.error('Middleware auth check error/timeout:', error)
+                if (error instanceof Error && error.message === 'Auth check timeout') {
+                    authTimedOut = true
+                }
             }
         }
     }
 
     // Redirect unauthenticated users to login (skip API + public + agency paths)
-    if (!user && !isPublic && !isAgencyPath && !isApiPath) {
+    // Only redirect if auth did NOT time out. If it timed out, let the server component/page actions handle it
+    if (!user && !authTimedOut && !isPublic && !isAgencyPath && !isApiPath) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         url.searchParams.set('redirect', request.nextUrl.pathname)

@@ -26,6 +26,8 @@
 17. [BUG-017: Floor Plan Drawing Tools Bị Chặn — pointerEvents + ESC + Pan](#bug-017-floor-plan-drawing-tools-bị-chặn--pointerevents--esc--pan)
 18. [BUG-018: Sales Order Tab Loading Chậm — Multi-Waterfall Server Actions & SQL Count Joins](#bug-018-sales-order-tab-loading-chậm--multi-waterfall-server-actions--sql-count-joins)
 19. [BUG-019: Trang Danh Mục Sản Phẩm Tải Chậm Trên Điện Thoại (8s) — Invalidation Cache Sai & Responsive DOM Overhead](#bug-019-trang-danh-mục-sản-phẩm-tải-chậm-trên-điện-thoại-8s--invalidation-cache-sai--responsive-dom-overhead)
+20. [BUG-020: 504 MIDDLEWARE_INVOCATION_TIMEOUT Trên Điện Thoại / Khách Hàng Truy Cập Lần Đầu](#bug-020-504-middleware_invocation_timeout-trên-điện-thoại--khách-hàng-truy-cập-lần-đầu)
+21. [BUG-021: 504 MIDDLEWARE_INVOCATION_TIMEOUT Khi Đã Có Cookie và DB Đang Ngủ (Cold Start) — Promise.race Timeout](#bug-021-504-middleware_invocation_timeout-khi-đã-có-cookie-và-db-đang-ngủ-cold-start--promiserace-timeout)
 
 ---
 
@@ -1080,3 +1082,28 @@ useEffect(() => {
 
 > ⚠️ **RULE 42: Không gọi Auth cho các trang public hoặc API không cần thiết.**
 > Tách biệt rõ ràng các route cần kiểm tra auth và skip gọi API khi không sử dụng kết quả xác thực.
+
+---
+
+## BUG-021: 504 MIDDLEWARE_INVOCATION_TIMEOUT Khi Đã Có Cookie và DB Đang Ngủ (Cold Start) — Promise.race Timeout
+
+**Ngày:** 2026-07-14
+**Severity:** 🔴 Critical — Không thể truy cập trang web (lỗi 504) cho người dùng đã đăng nhập khi database ở trạng thái nghỉ
+
+### Triệu chứng
+- Người dùng đã có cookie phiên đăng nhập (`sb-*`) truy cập trang web sau một khoảng thời gian dài không hoạt động bị lỗi `504: GATEWAY_TIMEOUT` với mã `MIDDLEWARE_INVOCATION_TIMEOUT`.
+- Xảy ra do Supabase Free Tier mất 10-20 giây để đánh thức DB, vượt quá giới hạn 1.5 giây của Vercel Edge Middleware.
+
+### Nguyên nhân gốc rễ
+- Ở bản sửa trước (BUG-020), hệ thống chỉ kiểm tra sự hiện diện của cookie đăng nhập.
+- Tuy nhiên, nếu trình duyệt đã có cookie đăng nhập, middleware vẫn gọi `supabase.auth.getUser()`. Cuộc gọi API này tiếp tục bị nghẽn (block) và bị Vercel hủy bằng lỗi 504 trước khi DB kịp thức giấc.
+
+### Cách fix
+1. Sử dụng `Promise.race` để đặt giới hạn thời gian chờ (timeout) cho cuộc gọi `supabase.auth.getUser()` trong middleware là **1200ms**.
+2. Nếu quá 1.2 giây mà Supabase chưa phản hồi, bắt lỗi timeout và thiết lập cờ `authTimedOut = true`.
+3. Cho phép request vượt qua middleware để đi thẳng vào Server Component thay vì trả về lỗi 504 hoặc tự động chuyển hướng về `/login`. Server Component chạy trên môi trường serverless thông thường có timeout dài hơn sẽ đợi DB thức giấc thành công và tải trang bình thường.
+
+### Bài học
+
+> ⚠️ **RULE 43: Luôn giới hạn thời gian chờ (Timeout) cho các cuộc gọi API ngoài trong Middleware.**
+> Tránh việc nghẽn hoàn toàn luồng routing của Next.js khi dịch vụ phía sau (như Supabase) phản hồi chậm hoặc đang ở trạng thái ngủ (cold-start).
