@@ -253,11 +253,6 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 { label: 'Quy cách đóng chai', value: activeProduct.format },
                                 { label: 'Loại thùng đóng gói', value: activeProduct.packagingType === 'OWC' ? 'OWC (Thùng Gỗ)' : 'Carton' },
                                 { label: 'Số chai mỗi thùng', value: `${activeProduct.unitsPerCase} chai` },
-                                { 
-                                    label: 'Mã HS Code', 
-                                    value: effectiveHsCode ?? '—'
-                                },
-                                { label: 'Mã vạch EAN', value: activeProduct.barcodeEan ?? '—' },
                                 { label: 'Phân hạng rượu', value: activeProduct.classification ?? '—' },
                             ].map((spec, i) => (
                                 <div key={i} className="flex justify-between py-1.5 border-b border-[#2A4355]/20 last:border-b-0">

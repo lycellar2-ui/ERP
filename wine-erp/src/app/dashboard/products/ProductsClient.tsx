@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getRegions, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ProductDetailDrawer } from './ProductDetailDrawer'
@@ -107,6 +107,10 @@ export function ProductsClient({
     const [showMobileFilters, setShowMobileFilters] = useState(false)
 
     useEffect(() => {
+        // Warm reference data cache for drawer on client load
+        getRegions().catch(() => [])
+        getSuppliers().catch(() => [])
+
         // If metadata is already provided by server, skip mount fetch
         if (initialStats || initialCountries || initialProducers) {
             return
@@ -140,6 +144,9 @@ export function ProductsClient({
                 return null
             })
         detailCache.current[id] = promise
+
+        // Warm server cache for edit details in background
+        getProductEditDetails(id).catch(() => {})
     }, [])
 
     // Eager prefetch: batch-load details for all visible rows on page render
@@ -358,7 +365,7 @@ export function ProductsClient({
                         <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                         <input
                             type="text"
-                            placeholder="Tìm theo tên, SKU, barcode, nhà SX..."
+                            placeholder="Tìm theo tên, SKU, nhà SX..."
                             value={search}
                             onChange={e => handleSearchChange(e.target.value)}
                             className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
@@ -487,7 +494,6 @@ export function ProductsClient({
                     { header: 'Format', sample: 'STANDARD' },
                     { header: 'Đóng Gói', sample: 'OWC' },
                     { header: 'Chai/Thùng', sample: '6' },
-                    { header: 'Barcode', sample: '3760076009012' },
                     { header: 'Classification', sample: 'Premier Cru Classé' },
                 ]}
                 onImport={bulkImportProducts}

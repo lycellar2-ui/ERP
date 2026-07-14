@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, Sparkles } from 'lucide-react'
+import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus } from 'lucide-react'
 import { compressImage } from '@/lib/compress-image'
 import { uploadToImgBBDirect } from '@/lib/imgbb-client'
 import { toast } from 'sonner'
@@ -159,9 +159,6 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
     const [awardYear, setAwardYear] = useState('')
     const [savingAward, setSavingAward] = useState(false)
 
-    // AI description state
-    const [generatingAI, setGeneratingAI] = useState(false)
-    const [aiProfile, setAiProfile] = useState<any | null>(null)
 
     // Inline producer creation
     const [showNewProducer, setShowNewProducer] = useState(false)
@@ -421,14 +418,6 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                 </Select>
                             </Field>
                         </div>
-                        <Field label="Barcode EAN-13">
-                            <Input
-                                value={form.barcodeEan ?? ''}
-                                onChange={e => set('barcodeEan', e.target.value || null)}
-                                placeholder="3760076009012"
-                                style={{ fontFamily: '"DM Mono", monospace' }}
-                            />
-                        </Field>
                     </div>
 
                     {/* Section: Xuất xứ */}
@@ -549,14 +538,6 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
                             ── Giá, Phân Loại & Trạng Thái
                         </p>
-                        <Field label="HS Code (Mã thuế hải quan)">
-                            <Input
-                                value={form.hsCode ?? '2204211000'}
-                                onChange={e => set('hsCode', e.target.value)}
-                                placeholder="2204211000"
-                                style={{ fontFamily: '"DM Mono", monospace' }}
-                            />
-                        </Field>
                         <div className="grid grid-cols-2 gap-4">
                             <Field label="Giá bán lẻ (VND)">
                                 <Input
@@ -575,22 +556,6 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                 </Select>
                             </Field>
                         </div>
-                        {/* Allocation Eligible checkbox */}
-                        <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                            <input
-                                type="checkbox"
-                                checked={form.isAllocationEligible ?? false}
-                                onChange={e => set('isAllocationEligible', e.target.checked)}
-                                className="w-4 h-4 rounded accent-emerald-500"
-                            />
-                            <div>
-                                <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>Allocation Eligible</p>
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Cho phép phân bổ quota cho SKU này (rượu khan hiếm)</p>
-                            </div>
-                        </label>
                     </div>
 
                     {/* Section: Drinking window */}
@@ -714,79 +679,7 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                             </Field>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                setGeneratingAI(true)
-                                setAiProfile(null)
-                                const { generateProductDescription } = await import('@/lib/ai-service')
-                                if (editingId) {
-                                    const res = await generateProductDescription(editingId)
-                                    setGeneratingAI(false)
-                                    if (res.success && res.profile) {
-                                        setAiProfile(res.profile)
-                                    } else {
-                                        toast.error(`AI Error: ${res.error} `)
-                                    }
-                                } else {
-                                    // Create mode: generate based on form data
-                                    const res = await generateProductDescription(undefined, {
-                                        name: form.name ?? '',
-                                        wineType: form.wineType ?? '',
-                                        abv: form.abv ?? undefined,
-                                        countryCode: form.countryCode ?? undefined,
-                                    })
-                                    setGeneratingAI(false)
-                                    if (res.success && res.profile) {
-                                        setAiProfile(res.profile)
-                                    } else {
-                                        toast.error(`AI Error: ${res.error} `)
-                                    }
-                                }
-                            }}
-                            disabled={generatingAI || (!editingId && !form.name?.trim())}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all w-full justify-center disabled:opacity-60"
-                            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-                            {generatingAI ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                            {generatingAI ? 'AI đang phân tích & gợi ý đặc tính...' : '✨ Tự Động Phân Tích Đặc Tính Bằng AI'}
-                        </button>
-                        {aiProfile && (
-                            <div className="space-y-3 p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold" style={{ color: '#667eea' }}>🤖 Gợi Ý Đặc Tính Từ AI</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (aiProfile.originDetail) set('originDetail', aiProfile.originDetail)
-                                            if (aiProfile.certification) set('certification', aiProfile.certification)
-                                            if (aiProfile.color) set('color', aiProfile.color)
-                                            if (aiProfile.aromas) set('aromas', aiProfile.aromas)
-                                            if (aiProfile.palate) set('palate', aiProfile.palate)
-                                            if (aiProfile.style) set('style', aiProfile.style)
-                                            if (aiProfile.servingTemp) set('servingTemp', aiProfile.servingTemp)
-                                            if (aiProfile.foodPairings) set('foodPairings', aiProfile.foodPairings)
-                                            if (aiProfile.bestSuitedFor) set('bestSuitedFor', aiProfile.bestSuitedFor)
-                                            if (aiProfile.grapes) set('grapes', aiProfile.grapes)
-                                            setAiProfile(null)
-                                            toast.success('Đã áp dụng các đặc tính AI gợi ý!')
-                                        }}
-                                        className="text-[10px] px-2.5 py-1.5 rounded font-bold"
-                                        style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
-                                        Áp dụng tất cả đặc tính
-                                    </button>
-                                </div>
-                                <div className="text-xs leading-relaxed space-y-1.5" style={{ color: '#8AAEBB' }}>
-                                    <p><strong>Xuất xứ:</strong> {aiProfile.originDetail}</p>
-                                    <p><strong>Giống nho:</strong> {aiProfile.grapes}</p>
-                                    <p><strong>Chứng chỉ:</strong> {aiProfile.certification}</p>
-                                    <p><strong>Màu sắc:</strong> {aiProfile.color}</p>
-                                    <p><strong>Hương thơm:</strong> {aiProfile.aromas}</p>
-                                    <p><strong>Vị giác:</strong> {aiProfile.palate}</p>
-                                    <p><strong>Phong cách:</strong> {aiProfile.style}</p>
-                                    <p><strong>Món ăn kèm:</strong> {aiProfile.foodPairings}</p>
-                                </div>
-                            </div>
-                        )}
+
                     </div>
 
                     {/* Section: Hình ảnh sản phẩm */}

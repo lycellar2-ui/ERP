@@ -1107,3 +1107,28 @@ useEffect(() => {
 
 > ⚠️ **RULE 43: Luôn giới hạn thời gian chờ (Timeout) cho các cuộc gọi API ngoài trong Middleware.**
 > Tránh việc nghẽn hoàn toàn luồng routing của Next.js khi dịch vụ phía sau (như Supabase) phản hồi chậm hoặc đang ở trạng thái ngủ (cold-start).
+
+---
+
+## BUG-022: Trễ tải dữ liệu khi mở Drawer Chỉnh sửa Sản phẩm
+
+**Ngày:** 2026-07-14
+**Severity:** 🟡 Medium — Trải nghiệm người dùng bị chậm khi chỉnh sửa sản phẩm
+
+### Triệu chứng
+- Khi nhấn nút Chỉnh sửa (Edit) một sản phẩm, Drawer mở ra nhưng hiển thị trạng thái tải (loading spinner) khá lâu (từ 500ms đến hơn 1s) trước khi dữ liệu sản phẩm hiển thị đầy đủ.
+
+### Nguyên nhân gốc rễ
+1. Hàm Server Action `getProductEditDetails` thực hiện truy vấn trực tiếp cơ sở dữ liệu (sử dụng `Promise.all` gom 3 truy vấn: thông tin sản phẩm kèm theo producer/appellation/profile, hình ảnh `productMedia`, và các giải thưởng `productAward`) mỗi khi được gọi mà không sử dụng cache.
+2. Các danh mục dữ liệu tham chiếu bổ trợ (`producers`, `regions`, `suppliers`) chỉ bắt đầu được tải khi Drawer mở lần đầu tiên, làm tăng thêm thời gian chờ.
+
+### Cách fix
+1. Sử dụng helper `cached` để cache kết quả của hàm `getProductEditDetails` server-side với TTL 60 giây và key prefix `products:details:edit:${id}`. Cache này tự động bị vô hiệu hóa khi có thay đổi/cập nhật sản phẩm do mutation gọi `revalidateCache('products')`.
+2. Tải trước (prefetch) `getRegions()` và `getSuppliers()` ngay khi trang danh sách sản phẩm (`ProductsClient`) được mount để lưu sẵn vào cache máy chủ.
+3. Làm ấm cache máy chủ (warm cache) bằng cách gọi hàm `getProductEditDetails(id)` trong nền khi người dùng di chuột (hover) trên dòng sản phẩm (bên trong hàm `prefetchProductDetails`). Khi người dùng click nút Chỉnh sửa, dữ liệu đã sẵn sàng trong cache máy chủ và hiển thị tức thì (< 5ms).
+
+### Bài học
+
+> ⚠️ **RULE 44: Luôn kết hợp lưu cache server-side và tải trước (prefetch) trên giao diện đối với các thao tác Drawer/Modal.**
+> Caching giúp giảm thiểu truy vấn trùng lặp tới DB, còn prefetch khi hover giúp triệt tiêu hoàn toàn thời gian trễ mạng trước khi người dùng thực hiện thao tác click.
+
