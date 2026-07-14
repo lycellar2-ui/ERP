@@ -11,7 +11,7 @@ import {
     saveProductMediaUrl,
     getProductAwards, addProductAward, deleteProductAward,
     getProductById, createProducerInline, getProductEditDetails,
-    type ProductMediaRow, type ProductAwardRow,
+    type ProductMediaRow, type ProductAwardRow, type ProductRow,
 } from './actions'
 
 // ── Form field ─────────────────────────────────────
@@ -60,7 +60,6 @@ function Select({ children, className = '', ...props }: React.SelectHTMLAttribut
 }
 
 // ── Types ──────────────────────────────────────────
-import type { ProductRow } from './ProductsClient'
 
 interface ProductDrawerProps {
     open: boolean
@@ -199,9 +198,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 packagingType: initialData.packagingType,
                 bottlesPerCase: initialData.unitsPerCase,
                 countryCode: initialData.country,
-                producerId: initialData.producerId,
+                producerId: null,
                 supplierId: null,
-                regionId: initialData.appellationId,
+                regionId: null,
                 classification: null,
                 status: initialData.status,
             })
