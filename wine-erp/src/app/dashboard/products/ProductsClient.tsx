@@ -130,7 +130,7 @@ export function ProductsClient({
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
     const detailCache = useRef<Record<string, any>>({})
 
-    const prefetchProductDetails = useCallback((id: string) => {
+    const prefetchProductDetails = useCallback((id: string, isEager = false) => {
         if (detailCache.current[id]) return
         const promise = getProductViewDetails(id)
             .then(data => {
@@ -145,8 +145,10 @@ export function ProductsClient({
             })
         detailCache.current[id] = promise
 
-        // Warm server cache for edit details in background
-        getProductEditDetails(id).catch(() => {})
+        // Warm server cache for edit details ONLY on active hover (not during eager page-load prefetch)
+        if (!isEager) {
+            getProductEditDetails(id).catch(() => {})
+        }
     }, [])
 
     // Eager prefetch: batch-load details for all visible rows on page render
@@ -164,7 +166,7 @@ export function ProductsClient({
             for (let i = 0; i < uncachedIds.length; i += BATCH_SIZE) {
                 if (cancelled) break
                 const batch = uncachedIds.slice(i, i + BATCH_SIZE)
-                batch.forEach(id => prefetchProductDetails(id))
+                batch.forEach(id => prefetchProductDetails(id, true))
                 if (i + BATCH_SIZE < uncachedIds.length) {
                     await new Promise(r => setTimeout(r, 100))
                 }
