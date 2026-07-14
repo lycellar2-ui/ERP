@@ -30,7 +30,6 @@ async function main() {
                 skuCode: 'TST-E2E-001',
                 productName: 'Chateau Test Bordeaux 2022',
                 producerId: producer.id,
-                vintage: 2022,
                 country: 'France',
                 abvPercent: 13.5,
                 volumeMl: 750,

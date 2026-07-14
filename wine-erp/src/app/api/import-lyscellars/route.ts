@@ -102,11 +102,6 @@ export async function POST(req: NextRequest) {
                     producerCache.set(vendor.toLowerCase(), producerId)
                 }
 
-                // Extract vintage from body_html
-                let vintage: number | null = null
-                const vintageStr = extractFromHtml(bodyHtml, /Vintage:?\s*<\/strong>\s*(?:&nbsp;)?(\d{4})/i)
-                    || extractFromHtml(bodyHtml, /Vintage:?\s*(?:&nbsp;)?(\d{4})/i)
-                if (vintageStr) vintage = parseInt(vintageStr)
 
                 // Extract ABV from body_html
                 let abv: number | null = null
@@ -123,7 +118,6 @@ export async function POST(req: NextRequest) {
                         skuCode: sku,
                         productName: name,
                         producerId,
-                        vintage,
                         country,
                         abvPercent: abv ?? 13.0,
                         volumeMl: 750,

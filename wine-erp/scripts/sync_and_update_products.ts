@@ -362,7 +362,6 @@ async function main() {
                 producerId,
                 supplierId,
                 appellationId,
-                vintage,
                 country: countryCode,
                 abvPercent: abv,
                 volumeMl: wineNameLower.includes('375 ml') || wineNameLower.includes('375ml') ? 375 : 750,

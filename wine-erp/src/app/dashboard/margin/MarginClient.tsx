@@ -396,7 +396,6 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                 `"${r.product.productName.replace(/"/g, '""')}"`,
                 r.product.wineType,
                 r.product.country,
-                r.product.vintage ?? 'NV',
                 r.product.costPrice,
                 r.product.retailPrice,
                 r.product.wholesalePrice,
@@ -591,7 +590,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
                                     <span className="text-xs">{COUNTRY_FLAGS[activeProduct.country] ?? '🌍'}</span>
                                     <WineTypeBadge type={activeProduct.wineType} />
-                                    <span className="text-[10px] text-slate-400 font-sans font-medium">V:{activeProduct.vintage ?? 'NV'}</span>
+
                                 </div>
                             </div>
                         </div>
@@ -1067,8 +1066,6 @@ function SimulatedTableRow({
                         <p className="text-[10px] mt-0.5 text-slate-400 font-sans flex items-center gap-1 flex-wrap">
                             <span className="text-[#8AAEBB] font-bold">{p.skuCode}</span>
                             <span>•</span>
-                            <span className="font-semibold">V:{p.vintage ?? 'NV'}</span>
-                            <span>•</span>
                             <span>{flag}</span>
                         </p>
                     </div>
@@ -1297,7 +1294,7 @@ function MobileSimulatedCard({
                     <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-[10px]">{flag}</span>
                         <WineTypeBadge type={p.wineType} />
-                        <span className="text-[9px] text-slate-400 font-sans font-semibold">V:{p.vintage ?? 'NV'}</span>
+
                     </div>
                 </div>
                 

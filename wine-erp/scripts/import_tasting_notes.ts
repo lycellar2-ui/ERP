@@ -52,7 +52,6 @@ type DBProduct = {
     skuCode: string
     productName: string
     producerName: string
-    vintage: number | null
 }
 
 function findBestMatch(fileRelativePath: string, dbProducts: DBProduct[]): { product: DBProduct; score: number } | null {
@@ -222,7 +221,6 @@ async function main() {
         skuCode: p.skuCode,
         productName: p.productName,
         producerName: p.producer.name,
-        vintage: p.vintage,
     }));
 
     console.log(`Loaded ${productsList.length} active products from database.\n`);

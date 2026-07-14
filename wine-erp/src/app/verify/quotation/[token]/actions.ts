@@ -17,7 +17,6 @@ export async function getQuotationByToken(token: string) {
                             productName: true,
                             wineType: true,
                             volumeMl: true,
-                            vintage: true,
                             country: true,
                             abvPercent: true,
                             profile: true,

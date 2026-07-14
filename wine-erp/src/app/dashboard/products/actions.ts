@@ -13,7 +13,6 @@ export type ProductRow = {
     id: string
     skuCode: string
     productName: string
-    vintage: number | null
     wineType: string
     format: string
     packagingType: string
@@ -55,9 +54,8 @@ export type ProductFilters = {
     wineType?: string
     status?: string
     country?: string
-    vintage?: number
     producerId?: string
-    sortBy?: 'name' | 'vintage' | 'abv' | 'stock' | 'created'
+    sortBy?: 'name' | 'abv' | 'stock' | 'created'
     sortDir?: 'asc' | 'desc'
     page?: number
     pageSize?: number
@@ -70,7 +68,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
 }> {
     const cacheKey = `products:list:${JSON.stringify(filters)}`
     return cached(cacheKey, async () => {
-        const { search, wineType, status, country, vintage, producerId, sortBy, sortDir, page = 1, pageSize = 20 } = filters
+        const { search, wineType, status, country, producerId, sortBy, sortDir, page = 1, pageSize = 20 } = filters
 
         const where: any = {
             deletedAt: null,
@@ -93,9 +91,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
         if (country) {
             where.country = country
         }
-        if (vintage) {
-            where.vintage = Number(vintage)
-        }
+
         if (producerId) {
             where.producerId = producerId
         }
@@ -104,8 +100,6 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
         const orderBy: any = {}
         if (sortBy === 'name') {
             orderBy.productName = sortDir === 'asc' ? 'asc' : 'desc'
-        } else if (sortBy === 'vintage') {
-            orderBy.vintage = sortDir === 'asc' ? 'asc' : 'desc'
         } else if (sortBy === 'abv') {
             orderBy.abvPercent = sortDir === 'asc' ? 'asc' : 'desc'
         } else if (sortBy === 'stock') {
@@ -135,7 +129,6 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
                 id: r.id,
                 skuCode: r.skuCode,
                 productName: r.productName,
-                vintage: r.vintage,
                 wineType: r.wineType,
                 format: r.format,
                 packagingType: r.packagingType,
@@ -243,7 +236,6 @@ export async function getProductById(id: string) {
         skuCode: p.skuCode,
         productName: p.productName,
         producerId: p.producerId,
-        vintage: p.vintage,
         appellationId: p.appellationId,
         country: p.country,
         abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
@@ -287,17 +279,7 @@ export async function getProductCountries(): Promise<{ code: string; count: numb
     }, 60_000) // 60s — reference data hiếm thay đổi
 }
 
-// ─── Get unique vintages from products ────────────
-export async function getProductVintages(): Promise<number[]> {
-    return cached('products:vintages', async () => {
-        const result = await prisma.product.groupBy({
-            by: ['vintage'],
-            where: { deletedAt: null, vintage: { not: null } },
-            orderBy: { vintage: 'desc' },
-        })
-        return result.map(r => r.vintage!).filter(Boolean)
-    }, 60_000) // 60s — reference data hiếm thay đổi
-}
+
 
 // ─── Create producer inline ───────────────────────
 export async function createProducerInline(name: string, country: string): Promise<{ id: string; name: string }> {
@@ -324,7 +306,7 @@ export async function exportProductsData() {
         SKU: p.skuCode,
         'Tên SP': p.productName,
         'Nhà SX': p.producer.name,
-        Vintage: p.vintage ?? '',
+
         Loại: p.wineType,
         'Quốc Gia': p.country,
         ABV: p.abvPercent ? Number(p.abvPercent) : '',
@@ -347,7 +329,7 @@ const productSchema = z.object({
     productName: z.string().min(2, 'Tên sản phẩm bắt buộc'),
     producerId: z.string().min(1, 'Nhà sản xuất bắt buộc'),
     supplierId: z.string().nullable().optional(),
-    vintage: z.number().int().min(1800).max(2030).nullable().optional(),
+
     appellationId: z.string().nullable().optional(),
     country: z.string().min(2).max(2),
     abvPercent: z.number().min(0).max(100).nullable().optional(),
@@ -388,7 +370,7 @@ export async function createProduct(input: ProductInput) {
                 productName: data.productName,
                 producerId: data.producerId,
                 supplierId: data.supplierId ?? null,
-                vintage: data.vintage ?? null,
+
                 appellationId: data.appellationId ?? null,
                 country: data.country,
                 abvPercent: data.abvPercent ?? 13.0,
@@ -463,7 +445,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 ...(data.productName && { productName: data.productName }),
                 ...(data.producerId && { producerId: data.producerId }),
                 supplierId: data.supplierId !== undefined ? data.supplierId : undefined,
-                vintage: data.vintage !== undefined ? data.vintage : undefined,
+
                 appellationId: data.appellationId !== undefined ? data.appellationId : undefined,
                 ...(data.country && { country: data.country }),
                 abvPercent: data.abvPercent !== undefined ? (data.abvPercent ?? 13.0) : undefined,
@@ -595,7 +577,7 @@ export async function bulkImportProducts(rows: Record<string, any>[]): Promise<I
                     skuCode: sku,
                     productName: name,
                     producerId,
-                    vintage: r['Vintage'] ? Number(r['Vintage']) : null,
+
                     country,
                     abvPercent: r['ABV'] ? Number(r['ABV']) : 13.0,
                     volumeMl: Number(r['Dung Tích'] ?? r['volumeMl'] ?? 750),
@@ -1068,7 +1050,7 @@ export async function getProductEditDetails(id: string) {
             productName: p.productName,
             producerId: p.producerId,
             supplierId: p.supplierId,
-            vintage: p.vintage,
+
             appellationId: p.appellationId,
             country: p.country,
             abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
@@ -1245,6 +1227,7 @@ export type ProductStockLotViewRow = {
     qtyAvailable: number
     receivedDate: Date
     status: string
+    vintage: number | null
     locationCode: string
     warehouseName: string
 }
@@ -1253,7 +1236,7 @@ export type ProductViewDetails = {
     id: string
     skuCode: string
     productName: string
-    vintage: number | null
+
     country: string
     abvPercent: number | null
     volumeMl: number
@@ -1331,7 +1314,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
             id: p.id,
             skuCode: p.skuCode,
             productName: p.productName,
-            vintage: p.vintage,
+
             country: p.country,
             abvPercent: p.abvPercent,
             volumeMl: p.volumeMl,
@@ -1380,6 +1363,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                 qtyAvailable: Number(l.qtyAvailable),
                 receivedDate: l.receivedDate,
                 status: l.status,
+                vintage: l.vintage ?? null,
                 locationCode: l.location.locationCode,
                 warehouseName: l.location.warehouse.name
             }))
@@ -1389,12 +1373,11 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
 
 // ── Combined product page data fetching ──
 export async function getProductsPageData(filters: ProductFilters = {}) {
-    const [user, productsRes, stats, countries, vintages, producers] = await Promise.all([
+    const [user, productsRes, stats, countries, producers] = await Promise.all([
         getCurrentUser().catch(() => null),
         getProducts(filters).catch(() => ({ rows: [] as ProductRow[], total: 0 })),
         getProductStats().catch(() => ({ total: 0, active: 0, outOfStock: 0, topTypes: [] })),
         getProductCountries().catch(() => []),
-        getProductVintages().catch(() => []),
         getProducers().catch(() => []),
     ])
     
@@ -1405,7 +1388,6 @@ export async function getProductsPageData(filters: ProductFilters = {}) {
         total: productsRes.total,
         stats,
         countries,
-        vintages,
         producers,
         canEdit,
     }

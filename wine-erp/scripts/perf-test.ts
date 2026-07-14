@@ -6,7 +6,7 @@ async function runPerfTest() {
     
     // Dynamic import to ensure dotenv.config has run first
     const { prisma } = await import('../src/lib/db')
-    const { getProducts, getProductStats, getProductCountries, getProductVintages, getProducers } = await import('../src/app/dashboard/products/actions')
+    const { getProducts, getProductStats, getProductCountries, getProducers } = await import('../src/app/dashboard/products/actions')
 
     // Test 1: Prisma raw connection check
     const startConn = performance.now()
@@ -28,12 +28,7 @@ async function runPerfTest() {
     const countriesRes = await getProductCountries()
     console.log(`- getProductCountries: ${(performance.now() - startCountries).toFixed(1)}ms`)
 
-    // Test 5: getProductVintages
-    const startVintages = performance.now()
-    const vintagesRes = await getProductVintages()
-    console.log(`- getProductVintages: ${(performance.now() - startVintages).toFixed(1)}ms`)
-
-    // Test 6: getProducers
+    // Test 5: getProducers
     const startProducers = performance.now()
     const producersRes = await getProducers()
     console.log(`- getProducers: ${(performance.now() - startProducers).toFixed(1)}ms`)

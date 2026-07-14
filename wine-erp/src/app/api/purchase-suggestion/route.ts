@@ -53,7 +53,6 @@ export async function POST() {
                     id: true,
                     productName: true,
                     skuCode: true,
-                    vintage: true,
                     country: true,
                 },
             })
@@ -80,7 +79,6 @@ export async function POST() {
             return {
                 name: p.productName,
                 sku: p.skuCode ?? '',
-                vintage: p.vintage,
                 country: p.country ?? '',
                 currentStock,
                 totalSold3Months: totalSold3m,

@@ -168,9 +168,6 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                                 onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                                 <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{p.skuCode}</span>
                                                 <span className="text-xs truncate flex-1" style={{ color: '#E8F1F2' }}>{p.productName}</span>
-                                                {p.vintage && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853' }}>{p.vintage}</span>
-                                                )}
                                             </button>
                                         ))}
                                     </div>

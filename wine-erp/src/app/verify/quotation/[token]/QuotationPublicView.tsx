@@ -117,12 +117,6 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
                         
                         {/* Subtitles & Badges */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-                            {line.vintage ? (
-                                <span style={{ color: '#D4A853', fontSize: 13, fontWeight: 700, letterSpacing: '0.05em' }}>{line.vintage}</span>
-                            ) : (
-                                <span style={{ color: '#4A6A7A', fontSize: 12, fontWeight: 500 }}>N/V</span>
-                            )}
-                            <span style={{ color: '#4A6A7A', fontSize: 12 }}>•</span>
                             <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <MapPin size={11} style={{ color: '#87CBB9' }} /> {originParts.join(', ')}
                             </span>
@@ -930,14 +924,6 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div>
                                 {/* Appellation & Classification */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-                                    {activeModalLine.vintage ? (
-                                        <span style={{ color: '#D4A853', fontSize: 14, fontWeight: 700, letterSpacing: '0.05em' }}>
-                                            {activeModalLine.vintage}
-                                        </span>
-                                    ) : (
-                                        <span style={{ color: '#4A6A7A', fontSize: 13, fontWeight: 500 }}>N/V</span>
-                                    )}
-                                    <span style={{ color: '#4A6A7A', fontSize: 11 }}>•</span>
                                     <span style={{ color: '#8AAEBB', fontSize: 13, fontWeight: 500 }}>
                                         {[activeModalLine.appellationName, activeModalLine.regionName !== activeModalLine.appellationName ? activeModalLine.regionName : null, activeModalLine.country].filter(Boolean).join(', ')}
                                     </span>

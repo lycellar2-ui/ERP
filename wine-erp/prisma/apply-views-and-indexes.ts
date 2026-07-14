@@ -12,7 +12,6 @@ SELECT
     p.id,
     p."skuCode" AS "skuCode",
     p."productName" AS "productName",
-    p.vintage,
     p."wineType" AS "wineType",
     p.format,
     p."packagingType" AS "packagingType",
@@ -70,9 +69,10 @@ LEFT JOIN product_margin_prices mp ON p.id = mp."productId"
 LEFT JOIN product_profiles prof ON p.id = prof."productId";
 
 -- 2. Create View for Product Details (Drawer)
+DROP VIEW IF EXISTS v_product_details;
 CREATE OR REPLACE VIEW v_product_details AS
 SELECT 
-    p.id, p."skuCode", p."productName", p.vintage, p.country,
+    p.id, p."skuCode", p."productName", p.country,
     p."abvPercent"::float AS "abvPercent", p."volumeMl", p.format, p."packagingType" AS "packagingType",
     p."unitsPerCase" AS "unitsPerCase", p."hsCode", p."barcodeEan" AS "barcodeEan", p."wineType" AS "wineType",
     p.classification, p.status, p."isAllocationEligible", p."deletedAt",

@@ -20,7 +20,6 @@ export async function POST() {
                     skuCode: true,
                     productName: true,
                     wineType: true,
-                    vintage: true,
                     abvPercent: true,
                     volumeMl: true,
                     format: true,
@@ -254,7 +253,6 @@ export async function POST() {
                 name: p.productName,
                 sku: p.skuCode,
                 type: p.wineType,
-                vintage: p.vintage,
                 abv: Number(p.abvPercent),
                 volume: p.volumeMl,
                 classification: p.classification,
@@ -346,7 +344,7 @@ export async function POST() {
                 const priceInfo = p.prices.length > 0 ? `Prices: ${p.prices.join(', ')}` : 'No prices set'
                 const awardInfo = p.awards.length > 0 ? `Awards: ${p.awards.join(', ')}` : ''
 
-                return `${p.name} | SKU: ${p.sku} | ${p.type} ${p.vintage ?? 'NV'} | Producer: ${p.producer} (${p.producerCountry}) | Region: ${p.appellation ?? 'N/A'} (${p.country}) | ABV: ${p.abv}% | ${p.volume}ml | Classification: ${p.classification ?? 'N/A'} | ${salesInfo} | ${stockInfo} | ${priceInfo} | Quotations: ${p.quotationCount} | ${p.isAllocation ? '🎯ALLOCATION' : ''} ${awardInfo} | Status: ${p.status}`
+                return `${p.name} | SKU: ${p.sku} | ${p.type} | Producer: ${p.producer} (${p.producerCountry}) | Region: ${p.appellation ?? 'N/A'} (${p.country}) | ABV: ${p.abv}% | ${p.volume}ml | Classification: ${p.classification ?? 'N/A'} | ${salesInfo} | ${stockInfo} | ${priceInfo} | Quotations: ${p.quotationCount} | ${p.isAllocation ? '🎯ALLOCATION' : ''} ${awardInfo} | Status: ${p.status}`
             }).join('\n')
 
         const supplierList = enrichedSuppliers

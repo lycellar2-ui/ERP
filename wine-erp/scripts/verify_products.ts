@@ -31,7 +31,6 @@ async function main() {
         select: {
             skuCode: true,
             productName: true,
-            vintage: true,
             country: true,
             wineType: true,
             classification: true,
@@ -52,7 +51,7 @@ async function main() {
     console.log("\n=== DATABASE PRODUCTS SAMPLE ===");
     sampleProducts.forEach((p, idx) => {
         console.log(`[${idx+1}] SKU: ${p.skuCode} | Name: "${p.productName}"`);
-        console.log(`    Producer: "${p.producer.name}" | SupplierId: ${p.supplierId} | SupplierName: "${p.supplier?.name}" | Vintage: ${p.vintage} | Country: ${p.country} | Type: ${p.wineType} | Class: ${p.classification}`);
+        console.log(`    Producer: "${p.producer.name}" | SupplierId: ${p.supplierId} | SupplierName: "${p.supplier?.name}" | Country: ${p.country} | Type: ${p.wineType} | Class: ${p.classification}`);
     });
 }
 

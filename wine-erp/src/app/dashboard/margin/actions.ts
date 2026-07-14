@@ -19,7 +19,6 @@ export type MarginProductRow = {
     productName: string
     wineType: string
     country: string
-    vintage: number | null
     primaryImageUrl: string | null
     // Pre-tax prices
     costPrice: number
@@ -84,7 +83,6 @@ export async function getMarginProducts(): Promise<MarginProductRow[]> {
             productName: p.productName,
             wineType: p.wineType,
             country: p.country,
-            vintage: p.vintage,
             primaryImageUrl: p.media.find(m => m.isPrimary)?.url ?? p.media[0]?.url ?? null,
             costPrice,
             retailPrice,

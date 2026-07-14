@@ -40,7 +40,6 @@ export interface ProductOption {
     productName: string
     wineType: string
     country: string
-    vintage: number | null
 }
 
 // ── Get products for search/select ────────────────
@@ -57,7 +56,7 @@ export async function getProductSearchOptions(search?: string): Promise<ProductO
             where,
             select: {
                 id: true, skuCode: true, productName: true,
-                wineType: true, country: true, vintage: true,
+                wineType: true, country: true,
             },
             take: 30,
             orderBy: { skuCode: 'asc' },
@@ -68,7 +67,6 @@ export async function getProductSearchOptions(search?: string): Promise<ProductO
             productName: p.productName,
             wineType: p.wineType,
             country: p.country,
-            vintage: p.vintage,
         }))
     }, 30_000)
 }

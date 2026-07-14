@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProductVintages, getProducers } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers } from './actions'
 import { ProductTable } from './ProductTable'
 import { ProductDrawer } from './ProductDrawer'
 import { ProductDetailDrawer } from './ProductDetailDrawer'
@@ -74,7 +74,6 @@ interface ProductsClientProps {
     initialTotal: number
     initialStats?: ProductStats
     initialCountries?: { code: string; count: number }[]
-    initialVintages?: number[]
     initialProducers?: { id: string; name: string }[]
     canEdit?: boolean
 }
@@ -84,7 +83,6 @@ export function ProductsClient({
     initialTotal, 
     initialStats, 
     initialCountries, 
-    initialVintages, 
     initialProducers, 
     canEdit = false 
 }: ProductsClientProps) {
@@ -92,7 +90,6 @@ export function ProductsClient({
     const [total, setTotal] = useState(initialTotal)
     const [stats, setStats] = useState<ProductStats>(initialStats || { total: initialTotal, active: initialTotal, outOfStock: 0, topTypes: [] })
     const [countries, setCountries] = useState<{ code: string; count: number }[]>(initialCountries || [])
-    const [vintages, setVintages] = useState<number[]>(initialVintages || [])
     const [producers, setProducers] = useState<{ id: string; name: string }[]>(initialProducers || [])
     const [loading, setLoading] = useState(false)
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
@@ -105,29 +102,26 @@ export function ProductsClient({
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
     const [countryFilter, setCountryFilter] = useState('')
-    const [vintageFilter, setVintageFilter] = useState('')
     const [producerFilter, setProducerFilter] = useState('')
     const [exporting, setExporting] = useState(false)
     const [showMobileFilters, setShowMobileFilters] = useState(false)
 
     useEffect(() => {
         // If metadata is already provided by server, skip mount fetch
-        if (initialStats || initialCountries || initialVintages || initialProducers) {
+        if (initialStats || initialCountries || initialProducers) {
             return
         }
         // Fetch reference metadata and stats dynamically in the background on mount if not provided
         Promise.all([
             getProductStats().catch(() => ({ total: initialTotal, active: initialTotal, outOfStock: 0, topTypes: [] })),
             getProductCountries().catch(() => []),
-            getProductVintages().catch(() => []),
             getProducers().catch(() => []),
-        ]).then(([s, c, v, p]) => {
+        ]).then(([s, c, p]) => {
             setStats(s)
             setCountries(c)
-            setVintages(v)
             setProducers(p)
         })
-    }, [initialTotal, initialStats, initialCountries, initialVintages, initialProducers])
+    }, [initialTotal, initialStats, initialCountries, initialProducers])
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
     const detailCache = useRef<Record<string, any>>({})
@@ -206,18 +200,16 @@ export function ProductsClient({
     const reloadPageData = useCallback(async () => {
         setLoading(true)
         try {
-            const [pageData, s, c, v, p] = await Promise.all([
+            const [pageData, s, c, p] = await Promise.all([
                 getProductsPageData(filters).catch(() => ({ rows: [] as ProductRow[], total: 0 })),
                 getProductStats().catch(() => ({ total: 0, active: 0, outOfStock: 0, topTypes: [] as any[] })),
                 getProductCountries().catch(() => []),
-                getProductVintages().catch(() => []),
                 getProducers().catch(() => []),
             ])
             setRows(pageData.rows)
             setTotal(pageData.total)
             setStats(s)
             setCountries(c)
-            setVintages(v)
             setProducers(p)
         } finally {
             setLoading(false)
@@ -291,7 +283,6 @@ export function ProductsClient({
         typeFilter,
         statusFilter,
         countryFilter,
-        vintageFilter,
         producerFilter,
     ].filter(Boolean).length
 
@@ -426,16 +417,6 @@ export function ProductsClient({
                             </option>
                         ))}
                     </select>
-                    {/* Vintage filter — dynamic from DB */}
-                    <select value={vintageFilter}
-                        onChange={e => { setVintageFilter(e.target.value); applyFilter({ vintage: e.target.value ? Number(e.target.value) : undefined }) }}
-                        className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: vintageFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                        <option value="">Tất cả vintage</option>
-                        {vintages.map(v => (
-                            <option key={v} value={v}>{v}</option>
-                        ))}
-                    </select>
                     {/* Producer/NCC filter — dynamic from DB */}
                     <select value={producerFilter}
                         onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
@@ -446,10 +427,10 @@ export function ProductsClient({
                             <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                     </select>
-                    {(search || typeFilter || statusFilter || countryFilter || vintageFilter || producerFilter) && (
+                    {(search || typeFilter || statusFilter || countryFilter || producerFilter) && (
                         <button onClick={() => {
-                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setVintageFilter(''); setProducerFilter('')
-                            applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, vintage: undefined, producerId: undefined })
+                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setProducerFilter('')
+                            applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined })
                         }} className="px-3 py-1.5 rounded-lg text-xs font-semibold"
                             style={{ color: '#E05252', border: '1px solid rgba(224,82,82,0.3)', background: 'rgba(224,82,82,0.05)' }}>
                             Xóa bộ lọc
@@ -498,7 +479,7 @@ export function ProductsClient({
                     { header: 'SKU', sample: 'MOUTON-2018-750', required: true },
                     { header: 'Tên SP', sample: 'Château Mouton Rothschild 2018', required: true },
                     { header: 'Nhà SX', sample: 'Château Mouton Rothschild', required: true },
-                    { header: 'Vintage', sample: '2018' },
+
                     { header: 'Loại', sample: 'RED', required: true },
                     { header: 'Quốc Gia', sample: 'FR', required: true },
                     { header: 'ABV', sample: '13.5' },

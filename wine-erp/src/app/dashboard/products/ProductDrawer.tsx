@@ -71,7 +71,6 @@ interface ProductDrawerProps {
 interface ProductFormState {
     sku?: string          // → skuCode
     name?: string         // → productName
-    vintage?: number | null
     abv?: number | null   // → abvPercent
     wineType?: string
     volumeMl?: number
@@ -108,7 +107,6 @@ function formToInput(f: ProductFormState): ProductInput {
         productName: f.name ?? '',
         producerId: f.producerId ?? '',
         supplierId: f.supplierId ?? null,
-        vintage: f.vintage ?? null,
         appellationId: f.regionId ?? null,
         country: f.countryCode ?? 'FR',
         abvPercent: f.abv ?? null,
@@ -210,7 +208,6 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                 setForm({
                     sku: data.skuCode,
                     name: data.productName,
-                    vintage: data.vintage,
                     abv: data.abvPercent,
                     wineType: data.wineType,
                     volumeMl: data.volumeMl,
@@ -356,17 +353,8 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                 <Input
                                     value={form.sku ?? ''}
                                     onChange={e => set('sku', e.target.value.toUpperCase())}
-                                    placeholder="CHATEAU-PETRUS-2018-750"
+                                    placeholder="CHATEAU-PETRUS-750"
                                     style={{ fontFamily: '"DM Mono", monospace' }}
-                                />
-                            </Field>
-                            <Field label="Vintage (Năm)">
-                                <Input
-                                    type="number"
-                                    value={form.vintage ?? ''}
-                                    onChange={e => set('vintage', e.target.value ? Number(e.target.value) : null)}
-                                    placeholder="2018"
-                                    min={1800} max={2030}
                                 />
                             </Field>
                         </div>
@@ -745,7 +733,6 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                                     const res = await generateProductDescription(undefined, {
                                         name: form.name ?? '',
                                         wineType: form.wineType ?? '',
-                                        vintage: form.vintage ?? undefined,
                                         abv: form.abv ?? undefined,
                                         countryCode: form.countryCode ?? undefined,
                                     })

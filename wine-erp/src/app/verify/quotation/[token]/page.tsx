@@ -57,7 +57,6 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
                 skuCode: l.product.skuCode,
                 wineType: l.product.wineType as string,
                 volumeMl: l.product.volumeMl,
-                vintage: l.product.vintage,
                 country: l.product.country,
                 abvPercent: Number(l.product.abvPercent),
                 tastingNotes: (() => {

@@ -97,7 +97,6 @@ export const ProductCreateSchema = z.object({
     category: z.string().min(1),
     country: z.string().min(1),
     region: z.string().optional(),
-    vintage: z.number().int().min(1900).max(2030).optional(),
     abv: z.number().min(0).max(100).optional(),
     volumeMl: z.number().int().positive().optional(),
     grapeVariety: z.string().optional(),

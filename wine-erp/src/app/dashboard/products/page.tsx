@@ -18,7 +18,6 @@ export default async function ProductsPage() {
                     initialTotal={data.total}
                     initialStats={data.stats}
                     initialCountries={data.countries}
-                    initialVintages={data.vintages}
                     initialProducers={data.producers}
                     canEdit={data.canEdit}
                 />

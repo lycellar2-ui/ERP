@@ -161,7 +161,6 @@ async function logRunSafe(
 interface FormDataForAI {
     name: string
     wineType?: string
-    vintage?: number
     abv?: number
     countryCode?: string
 }
@@ -199,7 +198,7 @@ export async function generateProductDescription(
             where: { id: productId },
             select: {
                 productName: true, skuCode: true, wineType: true,
-                country: true, vintage: true, abvPercent: true,
+                country: true, abvPercent: true,
                 volumeMl: true, classification: true,
                 appellation: { select: { name: true } },
             },
@@ -209,7 +208,6 @@ export async function generateProductDescription(
         pName = product.productName
         pSku = product.skuCode
         wType = product.wineType ?? 'N/A'
-        pVintage = product.vintage ?? 'N/A'
         pAbv = product.abvPercent ? Number(product.abvPercent) : 'N/A'
         pClassification = product.classification ?? 'N/A'
         pVolume = product.volumeMl ? Number(product.volumeMl) : 'N/A'
@@ -217,7 +215,6 @@ export async function generateProductDescription(
     } else if (formData) {
         pName = formData.name
         wType = formData.wineType || 'N/A'
-        pVintage = formData.vintage ?? 'N/A'
         pAbv = formData.abv ?? 'N/A'
         pRegion = formData.countryCode || 'N/A'
         if (!pName) return { success: false, error: 'Product name is required' }

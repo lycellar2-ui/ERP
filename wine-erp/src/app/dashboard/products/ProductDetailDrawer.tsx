@@ -245,7 +245,6 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             {[
                                 { label: 'Xuất xứ', value: `${flag} ${countryName}` },
                                 { label: 'Vùng trồng (Appellation)', value: activeProduct.appellationName ?? '—' },
-                                { label: 'Niên vụ (Vintage)', value: activeProduct.vintage ?? 'Không niên vụ (NV)' },
                                 { label: 'Độ cồn (ABV)', value: activeProduct.abvPercent ? `${activeProduct.abvPercent}°` : '—' },
                                 { 
                                     label: 'Dung tích', 
@@ -451,7 +450,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                             <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                                 <thead>
                                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
-                                                        {['Kho', 'Vị Trí', 'Mã Lô', 'Trạng Thái', 'Tồn Kho'].map((h, idx) => (
+                                                        {['Kho', 'Vị Trí', 'Mã Lô', 'Vintage', 'Trạng Thái', 'Tồn Kho'].map((h, idx) => (
                                                             <th key={idx} className="px-3 py-2 uppercase font-semibold text-[10px]" style={{ color: '#4A6A7A' }}>{h}</th>
                                                         ))}
                                                     </tr>
@@ -464,6 +463,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                                                 <td className="px-3 py-2 font-medium" style={{ color: '#E8F1F2' }}>{lot.warehouseName}</td>
                                                                 <td className="px-3 py-2 font-sans font-semibold" style={{ color: '#8AAEBB' }}>{lot.locationCode}</td>
                                                                 <td className="px-3 py-2 font-sans" style={{ color: '#4A6A7A' }}>{lot.lotNo}</td>
+                                                                <td className="px-3 py-2 font-sans font-semibold" style={{ color: lot.vintage ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>{lot.vintage ?? 'NV'}</td>
                                                                 <td className="px-3 py-2">
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold inline-block" style={{ color: statusCfg.color, background: statusCfg.bg }}>
                                                                         {statusCfg.label}

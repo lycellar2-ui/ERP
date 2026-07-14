@@ -5,9 +5,8 @@ import pg from 'pg'
 // Supabase pooler uses a certificate chain that Node.js v24 rejects.
 // pg.Pool ssl.rejectUnauthorized=false is ignored by PrismaPg adapter.
 // This is the only reliable fix — scoped to run before any DB connection.
-if (process.env.NODE_ENV === 'development' || process.env.VERCEL) {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-}
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 
 const IS_SERVERLESS = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
 

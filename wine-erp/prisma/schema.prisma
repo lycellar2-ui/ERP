@@ -237,7 +237,6 @@ model Product {
   producer             Producer               @relation(fields: [producerId], references: [id])
   supplierId           String?
   supplier             Supplier?              @relation(fields: [supplierId], references: [id])
-  vintage              Int?
   appellationId        String?
   appellation          Appellation?           @relation(fields: [appellationId], references: [id])
   country              String
@@ -281,7 +280,6 @@ model Product {
   @@index([deletedAt])
   @@index([status])
   @@index([country])
-  @@index([vintage])
   @@index([producerId])
   @@map("products")
 }
@@ -1211,6 +1209,7 @@ model StockLot {
   qtyAvailable   Decimal
   unitLandedCost Decimal             @default(0)
   receivedDate   DateTime
+  vintage        Int?
   status         LotStatus           @default(AVAILABLE)
   grLines        GoodsReceiptLine[]
   doLines        DeliveryOrderLine[]
@@ -2812,7 +2811,6 @@ view ProductRowView {
   id               String        @unique
   skuCode          String
   productName      String
-  vintage          Int?
   wineType         WineType
   format           WineFormat
   packagingType    PackagingType
@@ -2859,7 +2857,6 @@ view ProductDetailView {
   id                   String        @unique
   skuCode              String
   productName          String
-  vintage              Int?
   country              String
   abvPercent           Float?
   volumeMl             Int

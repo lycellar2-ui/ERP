@@ -151,7 +151,7 @@ export async function getStockInventory(filters: {
     const lots = await prisma.stockLot.findMany({
         where,
         include: {
-            product: { select: { productName: true, skuCode: true, country: true, vintage: true, wineType: true } },
+            product: { select: { productName: true, skuCode: true, country: true, wineType: true } },
             location: {
                 include: {
                     warehouse: { select: { id: true, name: true } },
@@ -169,7 +169,7 @@ export async function getStockInventory(filters: {
         productName: l.product.productName,
         skuCode: l.product.skuCode,
         country: l.product.country,
-        vintage: l.product.vintage,
+        vintage: l.vintage,
         wineType: l.product.wineType,
         locationCode: l.location.locationCode,
         warehouseId: l.location.warehouse.id,
@@ -1371,7 +1371,6 @@ export type ScanResult = {
         productName: string
         wineType: string
         country: string
-        vintage: number | null
     }
     stock?: {
         totalAvailable: number
@@ -1401,7 +1400,7 @@ export async function scanBarcode(code: string): Promise<ScanResult> {
         },
         select: {
             id: true, skuCode: true, productName: true, wineType: true,
-            country: true, vintage: true,
+            country: true,
         },
     })
 
@@ -1435,7 +1434,7 @@ export async function scanBarcode(code: string): Promise<ScanResult> {
     const lot = await prisma.stockLot.findFirst({
         where: { lotNo: trimmed },
         include: {
-            product: { select: { id: true, skuCode: true, productName: true, wineType: true, country: true, vintage: true } },
+            product: { select: { id: true, skuCode: true, productName: true, wineType: true, country: true } },
             location: { select: { locationCode: true } },
         },
     })

@@ -14,8 +14,8 @@ export async function generateQRCodesForGR(grId: string): Promise<{ success: boo
                 shipment: { select: { billOfLading: true } },
                 lines: {
                     include: {
-                        product: { select: { skuCode: true, productName: true, country: true, vintage: true, wineType: true } },
-                        lot: { select: { lotNo: true, receivedDate: true } },
+                        product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
+                        lot: { select: { lotNo: true, receivedDate: true, vintage: true } },
                     },
                 },
             },
@@ -40,7 +40,7 @@ export async function generateQRCodesForGR(grId: string): Promise<{ success: boo
                     lotNo: line.lot.lotNo,
                     skuCode: line.product.skuCode,
                     productName: line.product.productName,
-                    vintage: line.product.vintage,
+                    vintage: line.lot.vintage,
                     country: line.product.country,
                     wineType: line.product.wineType,
                     shipmentNo: gr.shipment?.billOfLading ?? 'N/A',

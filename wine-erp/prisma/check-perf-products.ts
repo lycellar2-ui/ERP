@@ -4,7 +4,7 @@ dotenv.config({ path: '.env.local' })
 
 async function test() {
     console.log('--- Measuring Products page queries ---')
-    const { getProducts, getProductStats, getProductCountries, getProductVintages, getProducers } = await import('../src/app/dashboard/products/actions')
+    const { getProducts, getProductStats, getProductCountries, getProducers } = await import('../src/app/dashboard/products/actions')
 
     for (let i = 1; i <= 3; i++) {
         console.log(`\n--- Iteration ${i} ---`)
@@ -23,11 +23,6 @@ async function test() {
         await getProductCountries()
         const t5 = performance.now()
         console.log(`getProductCountries: ${(t5 - t4).toFixed(1)}ms`)
-
-        const t6 = performance.now()
-        await getProductVintages()
-        const t7 = performance.now()
-        console.log(`getProductVintages: ${(t7 - t6).toFixed(1)}ms`)
 
         const t8 = performance.now()
         await getProducers()

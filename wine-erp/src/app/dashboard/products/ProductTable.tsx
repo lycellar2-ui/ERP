@@ -106,9 +106,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                                     <div className="text-center w-full min-w-0">
                                         <p className="text-xs font-bold truncate text-ellipsis" style={{ color: '#E8F1F2' }}>{row.productName}</p>
                                         <p className="text-[10px] mt-1" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{row.skuCode}</p>
-                                        <p className="text-[10px] font-bold mt-1 inline-block px-2 py-0.5 rounded" style={{ background: row.vintage ? 'rgba(135,203,185,0.1)' : 'rgba(74,106,122,0.1)', color: row.vintage ? '#87CBB9' : '#4A6A7A' }}>
-                                            {row.vintage ? `Năm: ${row.vintage}` : 'Không niên vụ (NV)'}
-                                        </p>
+
                                     </div>
                                 </div>
                             </>
@@ -127,12 +125,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                 </div>
             </td>
 
-            {/* Vintage */}
-            <td className="px-3 py-3 text-center">
-                <span className="text-sm font-semibold" style={{ color: row.vintage ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
-                    {row.vintage ?? 'NV'}
-                </span>
-            </td>
+
 
             {/* Type */}
             <td className="px-3 py-3"><WineTypeBadge type={row.wineType} /></td>
@@ -235,9 +228,7 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                     <h4 className="text-xs font-bold leading-tight truncate max-w-[190px]" style={{ color: '#E8F1F2' }}>
                         {row.productName}
                     </h4>
-                    <span className="text-[9px] font-bold" style={{ color: row.vintage ? '#87CBB9' : '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
-                        {row.vintage ? `'${String(row.vintage).slice(-2)}` : 'NV'}
-                    </span>
+
                 </div>
                 
                 <div className="flex items-center gap-2 mt-0.5 text-[10px]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
@@ -352,7 +343,6 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
 
     const sortableHeaders = [
         { key: 'name' as const, label: 'Sản phẩm', cls: 'px-4 py-3 w-[340px]', sortable: true },
-        { key: 'vintage' as const, label: 'Vintage', cls: 'px-3 py-3 w-[60px] text-center', sortable: true },
         { key: undefined, label: 'Loại', cls: 'px-3 py-3 w-[80px]', sortable: false },
         { key: undefined, label: 'Nhà SX / Vùng', cls: 'px-3 py-3 w-[220px]', sortable: false },
         { key: 'abv' as const, label: 'ABV', cls: 'px-3 py-3 w-[60px] text-center', sortable: true },

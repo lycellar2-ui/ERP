@@ -93,7 +93,7 @@ export async function getQuotationDetail(id: string): Promise<{ success: true; d
                         product: {
                             select: {
                                 skuCode: true, productName: true, wineType: true, volumeMl: true,
-                                vintage: true, country: true, abvPercent: true, profile: true, classification: true,
+                                country: true, abvPercent: true, profile: true, classification: true,
                                 producer: { select: { name: true } },
                                 supplier: { select: { name: true } },
                                 appellation: { select: { name: true, region: { select: { name: true } } } },
