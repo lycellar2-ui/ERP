@@ -60,9 +60,12 @@ function Select({ children, className = '', ...props }: React.SelectHTMLAttribut
 }
 
 // ── Types ──────────────────────────────────────────
+import type { ProductRow } from './ProductsClient'
+
 interface ProductDrawerProps {
     open: boolean
     editingId: string | null
+    initialData?: ProductRow | null
     onClose: () => void
     onSaved: () => void
 }
@@ -136,7 +139,7 @@ function formToInput(f: ProductFormState): ProductInput {
 }
 
 // ── Drawer ─────────────────────────────────────────
-export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDrawerProps) {
+export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }: ProductDrawerProps) {
     const isEdit = !!editingId
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
@@ -176,11 +179,48 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
         isAllocationEligible: false,
     })
 
-    // Load reference data + product data for edit
+    // Reset/Initialize form state immediately when open state changes
     useEffect(() => {
         if (!open) return
 
-        // ⚡ Optimization 1: Only fetch reference lists once per page lifecycle, rather than on every single drawer open
+        setErrors({})
+        setMediaList([])
+        setAwards([])
+
+        if (editingId && initialData) {
+            // Populate form immediately with data we already have on the client (0ms lag!)
+            setForm({
+                sku: initialData.skuCode,
+                name: initialData.productName,
+                abv: initialData.abvPercent,
+                wineType: initialData.wineType,
+                volumeMl: 750, // default, will be overridden by details query
+                format: initialData.format,
+                packagingType: initialData.packagingType,
+                bottlesPerCase: initialData.unitsPerCase,
+                countryCode: initialData.country,
+                producerId: initialData.producerId,
+                supplierId: null,
+                regionId: initialData.appellationId,
+                classification: null,
+                status: initialData.status,
+            })
+        } else if (!editingId) {
+            // New product mode
+            setForm({
+                status: 'ACTIVE',
+                format: 'STANDARD',
+                packagingType: 'CARTON',
+                bottlesPerCase: 12,
+                volumeMl: 750,
+            })
+        }
+    }, [open, editingId, initialData])
+
+    // Load reference data once per drawer lifecycle
+    useEffect(() => {
+        if (!open) return
+
         if (producers.length === 0 || regions.length === 0 || suppliers.length === 0) {
             Promise.all([getProducers(), getRegions(), getSuppliers()]).then(([p, r, s]) => {
                 setProducers(p)
@@ -188,66 +228,59 @@ export function ProductDrawer({ open, editingId, onClose, onSaved }: ProductDraw
                 setSuppliers(s)
             })
         }
+    }, [open, producers.length, regions.length, suppliers.length])
 
-        if (editingId) {
-            setLoading(true)
-            // ⚡ Optimization 2: Use the new consolidated server action to load everything (Product, Media, Awards) in ONE single network roundtrip!
-            getProductEditDetails(editingId).then(details => {
-                if (!details) {
-                    setLoading(false)
-                    return
-                }
-                
-                const { product: data, media, awards: aw } = details
-                setMediaList(media)
-                setAwards(aw)
-
-                setForm({
-                    sku: data.skuCode,
-                    name: data.productName,
-                    abv: data.abvPercent,
-                    wineType: data.wineType,
-                    volumeMl: data.volumeMl,
-                    format: data.format,
-                    packagingType: data.packagingType,
-                    bottlesPerCase: data.unitsPerCase,
-                    barcodeEan: data.barcodeEan,
-                    countryCode: data.country,
-                    producerId: data.producerId,
-                    supplierId: data.supplierId,
-                    regionId: data.appellationId,
-                    classification: data.classification,
-                    originDetail: data.profile?.originDetail ?? null,
-                    certification: data.profile?.certification ?? null,
-                    color: data.profile?.color ?? null,
-                    aromas: data.profile?.aromas ?? null,
-                    palate: data.profile?.palate ?? null,
-                    style: data.profile?.style ?? null,
-                    servingTemp: data.profile?.servingTemp ?? null,
-                    foodPairings: data.profile?.foodPairings ?? null,
-                    bestSuitedFor: data.profile?.bestSuitedFor ?? null,
-                    grapes: data.profile?.grapes ?? null,
-                    hsCode: data.hsCode,
-                    isAllocationEligible: data.isAllocationEligible,
-                    status: data.status,
-                })
-                setLoading(false)
-            }).catch(() => {
-                setLoading(false)
-            })
-        } else {
-            setMediaList([])
-            setAwards([])
-        }
-    }, [open, editingId, producers.length, regions.length])
-
-    // Reset form when opening for new
+    // Fetch full product edit details in background
     useEffect(() => {
-        if (open && !editingId) {
-            setForm({ status: 'ACTIVE', format: 'STANDARD', packagingType: 'CARTON', bottlesPerCase: 12, volumeMl: 750, hsCode: '2204211000', isAllocationEligible: false })
-            setErrors({})
+        if (!open || !editingId) return
+
+        // Only show spinner if we don't have initialData to display
+        if (!initialData) {
+            setLoading(true)
         }
-    }, [open, editingId])
+
+        getProductEditDetails(editingId).then(details => {
+            if (!details) {
+                setLoading(false)
+                return
+            }
+            
+            const { product: data, media, awards: aw } = details
+            setMediaList(media)
+            setAwards(aw)
+
+            setForm(f => ({
+                ...f,
+                sku: data.skuCode,
+                name: data.productName,
+                abv: data.abvPercent,
+                wineType: data.wineType,
+                volumeMl: data.volumeMl,
+                format: data.format,
+                packagingType: data.packagingType,
+                bottlesPerCase: data.unitsPerCase,
+                countryCode: data.country,
+                producerId: data.producerId,
+                supplierId: data.supplierId,
+                regionId: data.appellationId,
+                classification: data.classification,
+                originDetail: data.profile?.originDetail ?? null,
+                certification: data.profile?.certification ?? null,
+                color: data.profile?.color ?? null,
+                aromas: data.profile?.aromas ?? null,
+                palate: data.profile?.palate ?? null,
+                style: data.profile?.style ?? null,
+                servingTemp: data.profile?.servingTemp ?? null,
+                foodPairings: data.profile?.foodPairings ?? null,
+                bestSuitedFor: data.profile?.bestSuitedFor ?? null,
+                grapes: data.profile?.grapes ?? null,
+                status: data.status,
+            }))
+            setLoading(false)
+        }).catch(() => {
+            setLoading(false)
+        })
+    }, [open, editingId, initialData])
 
     const set = (key: keyof ProductFormState, val: any) =>
         setForm(f => ({ ...f, [key]: val }))

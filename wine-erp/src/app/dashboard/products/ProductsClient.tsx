@@ -465,6 +465,7 @@ export function ProductsClient({
 
             <ProductDrawer
                 open={drawerOpen} editingId={editingId}
+                initialData={rows.find(r => r.id === editingId) || null}
                 onClose={() => setDrawerOpen(false)}
                 onSaved={() => { setDrawerOpen(false); reloadPageData() }}
             />
