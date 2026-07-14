@@ -49,8 +49,8 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { href: '/dashboard/procurement', icon: ShoppingCart, label: 'Đơn Mua Hàng', permission: 'PRC:READ' },
             { href: '/dashboard/shipments', icon: Ship, label: 'Lô Hàng', permission: 'PRC:READ' },
-            { href: '/dashboard/agency', icon: Globe, label: 'Agency Portal', permission: 'AGN:READ' },
-            { href: '/dashboard/tax', icon: Layers, label: 'Tra Cứu Thuế', permission: 'TAX:READ' },
+            // { href: '/dashboard/agency', icon: Globe, label: 'Agency Portal', permission: 'AGN:READ' },
+            // { href: '/dashboard/tax', icon: Layers, label: 'Tra Cứu Thuế', permission: 'TAX:READ' },
             { href: '/dashboard/costing', icon: Calculator, label: 'Tính Giá Vốn (CST)', permission: 'CST:READ' },
         ]
     },
@@ -67,28 +67,28 @@ const NAV_GROUPS: NavGroup[] = [
             { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng', permission: 'CRM:READ' },
             { href: '/dashboard/pipeline', icon: Target, label: 'Sales Pipeline', permission: 'SLS:READ' },
             { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', permission: 'CSG:READ' },
-            { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine', permission: 'SLS:READ' },
-            { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển', permission: 'SLS:READ' },
+            // { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine', permission: 'SLS:READ' },
+            // { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển', permission: 'SLS:READ' },
             { href: '/dashboard/returns', icon: ShoppingCart, label: 'Trả Hàng & CN', permission: 'SLS:READ' },
             { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', permission: 'SLS:READ' },
-            { href: '/dashboard/qr-codes', icon: QrCode, label: 'QR Truy Xuất', permission: 'SLS:READ' },
+            // { href: '/dashboard/qr-codes', icon: QrCode, label: 'QR Truy Xuất', permission: 'SLS:READ' },
         ]
     },
     {
         label: 'Tài Chính',
         items: [
             { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', permission: 'FIN:READ' },
-            { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },
-            { href: '/dashboard/stamps', icon: Stamp, label: 'Quản Lý Tem', permission: 'STM:READ' },
+            // { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },
+            // { href: '/dashboard/stamps', icon: Stamp, label: 'Quản Lý Tem', permission: 'STM:READ' },
             { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo', permission: 'RPT:READ' },
-            { href: '/dashboard/market-price', icon: TrendingUp, label: 'Giá Thị Trường', permission: 'RPT:READ' },
+            // { href: '/dashboard/market-price', icon: TrendingUp, label: 'Giá Thị Trường', permission: 'RPT:READ' },
             { href: '/dashboard/kpi', icon: Target, label: 'KPI Chỉ Tiêu', permission: 'KPI:READ' },
         ]
     },
     {
         label: 'Marketing',
         items: [
-            { href: '/dashboard/media', icon: ImageIcon, label: 'Thư Viện Ảnh', permission: 'MDM:READ' },
+            // { href: '/dashboard/media', icon: ImageIcon, label: 'Thư Viện Ảnh', permission: 'MDM:READ' },
         ]
     },
     {
