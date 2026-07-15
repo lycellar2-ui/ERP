@@ -164,12 +164,10 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
     const [marginData, setMarginData] = useState<SOMarginData | null>(null)
     const [timeline, setTimeline] = useState<SOTimelineEvent[]>([])
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'docs' | 'history'>('overview')
 
     useEffect(() => {
         let cancelled = false
         setLoading(true)
-        setActiveTab('overview')
         getSalesOrderDetailWithMarginAndTimeline(soId).then(result => {
             if (cancelled) return
             setDetail(result.detail)
@@ -180,13 +178,6 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
         return () => { cancelled = true }
     }, [soId])
 
-    const TABS = [
-        { key: 'overview', label: 'Tổng Quan' },
-        { key: 'products', label: `Sản Phẩm (${detail?.lines.length ?? 0})` },
-        { key: 'docs', label: 'Giao Hàng & Tài Chính' },
-        { key: 'history', label: `Lịch Sử (${timeline.length})` },
-    ] as const
-
     const ACTION_ICON: Record<string, string> = {
         CREATE: '📝', UPDATE: '✏️', CONFIRM: '✅', APPROVE: '👍', REJECT: '❌',
         STATUS_CHANGE: '🔄', DELETE: '🗑️', EXPORT: '📤', SIGN: '🖊️',
@@ -195,7 +186,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
     return (
         <>
             <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col w-full md:w-[720px]" style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+            <div className="fixed top-0 right-0 h-full z-50 flex flex-col w-full md:w-[740px]" style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                     <div>
@@ -230,20 +221,6 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                     </div>
                 </div>
 
-                {/* Tabs */}
-                {!loading && detail && (
-                    <div className="flex gap-0 px-6" style={{ borderBottom: '1px solid #2A4355' }}>
-                        {TABS.map(t => (
-                            <button key={t.key} onClick={() => setActiveTab(t.key)}
-                                className="px-4 py-2.5 text-xs font-semibold transition-all relative"
-                                style={{ color: activeTab === t.key ? '#87CBB9' : '#4A6A7A' }}>
-                                {t.label}
-                                {activeTab === t.key && <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full" style={{ background: '#87CBB9' }} />}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
                 {loading ? (
                     <div className="flex items-center justify-center flex-1">
                         <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
@@ -251,305 +228,304 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                 ) : !detail ? (
                     <p className="text-center py-8" style={{ color: '#4A6A7A' }}>Không tìm thấy đơn</p>
                 ) : (
-                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-                        {/* ── TAB: Overview ── */}
-                        {activeTab === 'overview' && (
-                            <>
-                                {marginData?.hasNegativeMargin && canSeeMargin && (
-                                    <div className="flex items-center gap-3 px-4 py-3 rounded-md"
-                                        style={{ background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.35)' }}>
-                                        <AlertTriangle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
-                                        <div>
-                                            <p className="text-sm font-bold" style={{ color: '#EF4444' }}>⚠ Cảnh Báo Biên Âm</p>
-                                            <p className="text-xs mt-0.5" style={{ color: '#FCA5A5' }}>Một hoặc nhiều dòng có giá bán thấp hơn giá vốn!</p>
-                                        </div>
-                                    </div>
-                                )}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    {[
-                                        { label: 'Tổng Tiền', value: formatVND(Number(detail.totalAmount)), color: '#87CBB9' },
-                                        { label: 'Sales Rep', value: detail.salesRep.name, color: '#8AAEBB' },
-                                        { label: 'Kênh', value: CHANNEL_LABEL[detail.channel] ?? detail.channel, color: '#8AAEBB' },
-                                    ].map(kpi => (
-                                        <div key={kpi.label} className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>{kpi.label}</p>
-                                            <p className="text-sm font-bold mt-1" style={{ color: kpi.color, fontFamily: '"DM Mono"' }}>{kpi.value}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                                {marginData && canSeeMargin && (
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                        <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                            <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu</p>
-                                            <p className="text-xs font-bold mt-1" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalRevenue)}</p>
-                                        </div>
-                                        <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                            <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Giá Vốn</p>
-                                            <p className="text-xs font-bold mt-1" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalCOGS)}</p>
-                                        </div>
-                                        <div className="p-2.5 rounded-md" style={{ background: marginData.totalMargin >= 0 ? 'rgba(91,168,138,0.08)' : 'rgba(220,38,38,0.08)', border: `1px solid ${marginData.totalMargin >= 0 ? 'rgba(91,168,138,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
-                                            <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Lãi Gộp</p>
-                                            <p className="text-xs font-bold mt-1" style={{ color: marginData.totalMargin >= 0 ? '#5BA88A' : '#EF4444', fontFamily: '"DM Mono"' }}>
-                                                {marginData.totalMargin >= 0 ? '' : '-'}{formatVND(Math.abs(marginData.totalMargin))}
-                                            </p>
-                                        </div>
-                                        <div className="p-2.5 rounded-md flex items-center gap-2" style={{ background: marginData.totalMarginPct >= 0 ? 'rgba(91,168,138,0.08)' : 'rgba(220,38,38,0.08)', border: `1px solid ${marginData.totalMarginPct >= 0 ? 'rgba(91,168,138,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
-                                            <div>
-                                                <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Biên LN</p>
-                                                <p className="text-xs font-bold mt-1" style={{ color: marginData.totalMarginPct >= 0 ? '#5BA88A' : '#EF4444', fontFamily: '"DM Mono"' }}>
-                                                    {marginData.totalMarginPct.toFixed(1)}%
-                                                </p>
-                                            </div>
-                                            {marginData.totalMarginPct >= 0 ? <TrendingUp size={14} style={{ color: '#5BA88A' }} /> : <TrendingDown size={14} style={{ color: '#EF4444' }} />}
-                                        </div>
-                                    </div>
-                                )}
-                                {marginData && !canSeeMargin && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                            <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu</p>
-                                            <p className="text-xs font-bold mt-1" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalRevenue)}</p>
-                                        </div>
-                                        <div className="p-3 rounded-md flex items-center gap-2" style={{ background: 'rgba(74,106,122,0.08)', border: '1px dashed #2A4355' }}>
-                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>🔒 Chi phí & biên lợi nhuận chỉ hiển thị cho Ban Giám Đốc</span>
-                                        </div>
-                                    </div>
-                                )}
-                                {/* Status Progress */}
-                                <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                    <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Tiến Trình</p>
-                                    <div className="flex items-center gap-1">
-                                        {(['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] as SOStatus[]).map((s, i) => {
-                                            const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
-                                            const currentIdx = steps.indexOf(detail.status as SOStatus)
-                                            const stepIdx = i
-                                            const isDone = stepIdx <= currentIdx
-                                            const isCurrent = s === detail.status
-                                            return (
-                                                <div key={s} className="flex items-center gap-1 flex-1">
-                                                    <div className="flex flex-col items-center flex-1">
-                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
-                                                            style={{
-                                                                background: isDone ? 'rgba(91,168,138,0.25)' : 'rgba(42,67,85,0.5)',
-                                                                color: isDone ? '#5BA88A' : '#4A6A7A',
-                                                                border: isCurrent ? '2px solid #87CBB9' : '1px solid transparent',
-                                                            }}>
-                                                            {isDone ? '✓' : stepIdx + 1}
-                                                        </div>
-                                                        <p className="text-[9px] mt-1 text-center hidden sm:block" style={{ color: isDone ? '#87CBB9' : '#4A6A7A' }}>
-                                                            {STATUS_CFG[s]?.label}
-                                                        </p>
-                                                    </div>
-                                                    {i < 5 && <div className="h-[2px] flex-1 rounded mb-0 sm:mb-4" style={{ background: isDone && stepIdx < currentIdx ? '#5BA88A' : '#2A4355' }} />}
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        {/* ── TAB: Products ── */}
-                        {activeTab === 'products' && (
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Sản Phẩm {canSeeMargin ? '& Biên Lợi Nhuận' : ''} ({detail.lines.length} dòng)</p>
-                                
-                                {/* Desktop Table View */}
-                                <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                                    <div style={{ overflowX: 'auto' }}>
-                                        <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
-                                            <thead><tr style={{ background: '#142433' }}>
-                                                {(canSeeMargin ? ['SKU', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền', 'Giá Vốn TB', 'Margin', 'Biên %'] : ['SKU', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền']).map(h => (
-                                                    <th key={h} className="px-2.5 py-2 text-left font-semibold whitespace-nowrap" style={{ color: '#4A6A7A' }}>{h}</th>
-                                                ))}
-                                            </tr></thead>
-                                            <tbody>
-                                                {(marginData?.lines ?? detail.lines.map(l => ({
-                                                    lineId: l.id, skuCode: l.product.skuCode, productName: l.product.productName,
-                                                    qty: Number(l.qtyOrdered), unitPrice: Number(l.unitPrice), lineDiscountPct: Number(l.lineDiscountPct),
-                                                    revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
-                                                    avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
-                                                    priceSource: (l as any).priceSource ?? null,
-                                                }))).map(ml => (
-                                                    <tr key={ml.lineId} style={{ borderTop: '1px solid #2A4355', background: ml.isNegative ? 'rgba(220,38,38,0.06)' : 'transparent' }}>
-                                                        <td className="px-2.5 py-2" title={ml.productName}>
-                                                            <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{ml.skuCode}</span>
-                                                            {ml.isNegative && <AlertTriangle size={10} className="inline ml-1" style={{ color: '#EF4444' }} />}
-                                                        </td>
-                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{ml.qty}</td>
-                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(ml.unitPrice)}</td>
-                                                        <td className="px-2.5 py-2">
-                                                            {ml.priceSource ? (
-                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                                                                    style={getPriceBadgeStyle(ml.priceSource)}>
-                                                                    {getPriceBadgeLabel(ml.priceSource)}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>Mặc định</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(ml.revenue)}</td>
-                                                        {canSeeMargin && (
-                                                            <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
-                                                                {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#2A4355' }}>—</span>}
-                                                            </td>
-                                                        )}
-                                                        {canSeeMargin && (
-                                                            <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#4A6A7A', fontFamily: '"DM Mono"' }}>
-                                                                {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatVND(Math.abs(ml.margin)) : '—'}
-                                                            </td>
-                                                        )}
-                                                        {canSeeMargin && (
-                                                            <td className="px-2.5 py-2 text-right">
-                                                                {ml.avgCost > 0 ? (
-                                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
-                                                                        background: ml.marginPct >= 20 ? 'rgba(91,168,138,0.15)' : ml.marginPct >= 0 ? 'rgba(212,168,83,0.15)' : 'rgba(220,38,38,0.15)',
-                                                                        color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444',
-                                                                    }}>
-                                                                        {ml.marginPct >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
-                                                                        {ml.marginPct.toFixed(1)}%
-                                                                    </span>
-                                                                ) : <span style={{ color: '#2A4355' }}>—</span>}
-                                                            </td>
-                                                        )}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* Mobile Card View */}
-                                <div className="block md:hidden space-y-2.5">
-                                    {(marginData?.lines ?? detail.lines.map(l => ({
-                                        lineId: l.id, skuCode: l.product.skuCode, productName: l.product.productName,
-                                        qty: Number(l.qtyOrdered), unitPrice: Number(l.unitPrice), lineDiscountPct: Number(l.lineDiscountPct),
-                                        revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
-                                        avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
-                                        priceSource: (l as any).priceSource ?? null,
-                                    }))).map(ml => (
-                                        <div key={ml.lineId} className="p-3.5 rounded-md space-y-2" 
-                                            style={{ background: '#1B2E3D', border: `1px solid ${ml.isNegative ? 'rgba(220,38,38,0.35)' : '#2A4355'}` }}>
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-semibold text-[#87CBB9] font-mono">{ml.skuCode}</p>
-                                                    <p className="text-xs text-[#E8F1F2] mt-0.5 truncate" title={ml.productName}>{ml.productName}</p>
-                                                </div>
-                                                {ml.priceSource && (
-                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold"
-                                                        style={getPriceBadgeStyle(ml.priceSource)}>
-                                                        {getPriceBadgeLabel(ml.priceSource)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#2A4355]/30 text-xs">
-                                                <div>
-                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Số Lượng</p>
-                                                    <p className="font-bold font-mono text-[#E8F1F2] mt-0.5">{ml.qty}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
-                                                    <p className="font-semibold font-mono text-[#E8F1F2] mt-0.5">{formatVND(ml.unitPrice)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Thành Tiền</p>
-                                                    <p className="font-bold font-mono text-[#87CBB9] mt-0.5">{formatVND(ml.revenue)}</p>
-                                                </div>
-                                            </div>
-
-                                            {canSeeMargin && ml.avgCost > 0 && (
-                                                <div className="grid grid-cols-3 gap-2 pt-1.5 border-t border-[#2A4355]/20 text-xs">
-                                                    <div>
-                                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Giá Vốn TB</p>
-                                                        <p className="font-semibold font-mono text-[#D4A853] mt-0.5">{formatVND(ml.avgCost)}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Lãi Gộp</p>
-                                                        <p className="font-bold font-mono mt-0.5" style={{ color: ml.margin >= 0 ? '#5BA88A' : '#EF4444' }}>
-                                                            {ml.margin >= 0 ? '' : '-'}{formatVND(Math.abs(ml.margin))}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Biên LN %</p>
-                                                        <p className="font-bold font-mono mt-0.5" style={{ color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444' }}>
-                                                            {ml.marginPct.toFixed(1)}%
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+                        
+                        {/* 1. WARNING BANNER & PROGRESS STATUS */}
+                        {marginData?.hasNegativeMargin && canSeeMargin && (
+                            <div className="flex items-center gap-3 px-4 py-3 rounded-md"
+                                style={{ background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.35)' }}>
+                                <AlertTriangle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
+                                <div>
+                                    <p className="text-sm font-bold" style={{ color: '#EF4444' }}>⚠️ Cảnh Báo Biên Âm</p>
+                                    <p className="text-xs mt-0.5" style={{ color: '#FCA5A5' }}>Một hoặc nhiều dòng có giá bán thấp hơn giá vốn!</p>
                                 </div>
                             </div>
                         )}
 
-                        {/* ── TAB: Delivery & Finance ── */}
-                        {activeTab === 'docs' && (
-                            <>
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Lệnh Giao Hàng ({detail.deliveryOrders.length})</p>
-                                    {detail.deliveryOrders.length === 0 ? (
-                                        <p className="text-xs py-4 text-center" style={{ color: '#2A4355' }}>Chưa tạo DO</p>
-                                    ) : (
-                                        <div className="space-y-1">
-                                            {detail.deliveryOrders.map(do_ => (
-                                                <div key={do_.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                    <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{do_.doNo}</span>
-                                                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>{do_.status}</span>
+                        <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Tiến Trình Đơn Hàng</p>
+                            <div className="flex items-center gap-1">
+                                {(['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] as SOStatus[]).map((s, i) => {
+                                    const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
+                                    const currentIdx = steps.indexOf(detail.status as SOStatus)
+                                    const stepIdx = i
+                                    const isDone = stepIdx <= currentIdx
+                                    const isCurrent = s === detail.status
+                                    return (
+                                        <div key={s} className="flex items-center gap-1 flex-1">
+                                            <div className="flex flex-col items-center flex-1">
+                                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                                                    style={{
+                                                        background: isDone ? 'rgba(91,168,138,0.25)' : 'rgba(42,67,85,0.5)',
+                                                        color: isDone ? '#5BA88A' : '#4A6A7A',
+                                                        border: isCurrent ? '2px solid #87CBB9' : '1px solid transparent',
+                                                    }}>
+                                                    {isDone ? '✓' : stepIdx + 1}
                                                 </div>
-                                            ))}
+                                                <p className="text-[9px] mt-1 text-center hidden sm:block" style={{ color: isDone ? '#87CBB9' : '#4A6A7A' }}>
+                                                    {STATUS_CFG[s]?.label}
+                                                </p>
+                                            </div>
+                                            {i < 5 && <div className="h-[2px] flex-1 rounded mb-0 sm:mb-4" style={{ background: isDone && stepIdx < currentIdx ? '#5BA88A' : '#2A4355' }} />}
                                         </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Hóa Đơn AR ({detail.arInvoices.length})</p>
-                                    {detail.arInvoices.length === 0 ? (
-                                        <p className="text-xs py-4 text-center" style={{ color: '#2A4355' }}>Chưa có hóa đơn</p>
-                                    ) : (
-                                        <div className="space-y-1">
-                                            {detail.arInvoices.map(inv => (
-                                                <div key={inv.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                    <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{inv.invoiceNo}</span>
-                                                    <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{formatVND(Number(inv.amount))}</span>
-                                                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{inv.status}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
+                                    )
+                                })}
+                            </div>
+                        </div>
 
-                        {/* ── TAB: Timeline ── */}
-                        {activeTab === 'history' && (
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Lịch Sử Hoạt Động</p>
-                                {timeline.length === 0 ? (
-                                    <p className="text-xs py-8 text-center" style={{ color: '#2A4355' }}>Chưa có lịch sử</p>
-                                ) : (
-                                    <div className="space-y-0 relative">
-                                        <div className="absolute left-3 top-2 bottom-2 w-[2px]" style={{ background: '#2A4355' }} />
-                                        {timeline.map((ev, i) => (
-                                            <div key={ev.id} className="flex gap-3 py-2 relative">
-                                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-sm flex-shrink-0 z-10"
-                                                    style={{ background: '#1B2E3D', border: '2px solid #2A4355' }}>
-                                                    {ACTION_ICON[ev.action] ?? '●'}
+                        {/* 2. GENERAL INFO & FINANCES MARGIN */}
+                        <div className="space-y-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông Tin Tổng Quan</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {[
+                                    { label: 'Tổng Giá Trị Đơn', value: formatVND(Number(detail.totalAmount)), color: '#87CBB9' },
+                                    { label: 'Nhân Viên Kinh Doanh', value: detail.salesRep.name, color: '#8AAEBB' },
+                                    { label: 'Kênh Bán Hàng', value: CHANNEL_LABEL[detail.channel] ?? detail.channel, color: '#8AAEBB' },
+                                ].map(kpi => (
+                                    <div key={kpi.label} className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{kpi.label}</p>
+                                        <p className="text-sm font-bold mt-1" style={{ color: kpi.color, fontFamily: '"DM Mono"' }}>{kpi.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {marginData && canSeeMargin && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                        <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu Net</p>
+                                        <p className="text-xs font-bold mt-1" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalRevenue)}</p>
+                                    </div>
+                                    <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                        <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Tổng Giá Vốn</p>
+                                        <p className="text-xs font-bold mt-1" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalCOGS)}</p>
+                                    </div>
+                                    <div className="p-2.5 rounded-md" style={{ background: marginData.totalMargin >= 0 ? 'rgba(91,168,138,0.08)' : 'rgba(220,38,38,0.08)', border: `1px solid ${marginData.totalMargin >= 0 ? 'rgba(91,168,138,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
+                                        <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Lợi Nhuận Gộp</p>
+                                        <p className="text-xs font-bold mt-1" style={{ color: marginData.totalMargin >= 0 ? '#5BA88A' : '#EF4444', fontFamily: '"DM Mono"' }}>
+                                            {marginData.totalMargin >= 0 ? '' : '-'}{formatVND(Math.abs(marginData.totalMargin))}
+                                        </p>
+                                    </div>
+                                    <div className="p-2.5 rounded-md flex items-center justify-between gap-1" style={{ background: marginData.totalMarginPct >= 0 ? 'rgba(91,168,138,0.08)' : 'rgba(220,38,38,0.08)', border: `1px solid ${marginData.totalMarginPct >= 0 ? 'rgba(91,168,138,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Biên Lợi Nhuận</p>
+                                            <p className="text-xs font-bold mt-1" style={{ color: marginData.totalMarginPct >= 0 ? '#5BA88A' : '#EF4444', fontFamily: '"DM Mono"' }}>
+                                                {marginData.totalMarginPct.toFixed(1)}%
+                                            </p>
+                                        </div>
+                                        {marginData.totalMarginPct >= 0 ? <TrendingUp size={14} style={{ color: '#5BA88A' }} /> : <TrendingDown size={14} style={{ color: '#EF4444' }} />}
+                                    </div>
+                                </div>
+                            )}
+
+                            {marginData && !canSeeMargin && (
+                                <div className="p-3 rounded-md flex items-center justify-center gap-2" style={{ background: 'rgba(74,106,122,0.08)', border: '1px dashed #2A4355' }}>
+                                    <span className="text-xs text-center" style={{ color: '#4A6A7A' }}>🔒 Chi tiết giá vốn và biên lợi nhuận được ẩn đối với tài khoản phân quyền Sales Rep/Sales Admin.</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 3. PRODUCTS LIST */}
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-2.5" style={{ color: '#4A6A7A' }}>Sản Phẩm Trong Đơn Hàng ({detail.lines.length} dòng)</p>
+                            
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
+                                        <thead><tr style={{ background: '#142433' }}>
+                                            {(canSeeMargin ? ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền', 'Giá Vốn', 'Lãi Gộp', 'Biên %'] : ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền']).map(h => (
+                                                <th key={h} className="px-2.5 py-2 text-left font-semibold whitespace-nowrap" style={{ color: '#4A6A7A' }}>{h}</th>
+                                            ))}
+                                        </tr></thead>
+                                        <tbody>
+                                            {(marginData?.lines ?? detail.lines.map(l => ({
+                                                lineId: l.id, skuCode: l.product.skuCode, productName: l.product.productName,
+                                                qty: Number(l.qtyOrdered), unitPrice: Number(l.unitPrice), lineDiscountPct: Number(l.lineDiscountPct),
+                                                revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
+                                                avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
+                                                priceSource: (l as any).priceSource ?? null,
+                                            }))).map(ml => (
+                                                <tr key={ml.lineId} style={{ borderTop: '1px solid #2A4355', background: ml.isNegative ? 'rgba(220,38,38,0.06)' : 'transparent' }}>
+                                                    <td className="px-2.5 py-2">
+                                                        <div className="font-semibold text-[#87CBB9] font-mono">{ml.skuCode}</div>
+                                                        <div className="text-[10px] text-[#8AAEBB] mt-0.5 max-w-[200px] truncate" title={ml.productName}>{ml.productName}</div>
+                                                    </td>
+                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{ml.qty}</td>
+                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(ml.unitPrice)}</td>
+                                                    <td className="px-2.5 py-2">
+                                                        {ml.priceSource ? (
+                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                                style={getPriceBadgeStyle(ml.priceSource)}>
+                                                                {getPriceBadgeLabel(ml.priceSource)}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>Mặc định</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(ml.revenue)}</td>
+                                                    {canSeeMargin && (
+                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                                            {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                        </td>
+                                                    )}
+                                                    {canSeeMargin && (
+                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                            {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatVND(Math.abs(ml.margin)) : '—'}
+                                                        </td>
+                                                    )}
+                                                    {canSeeMargin && (
+                                                        <td className="px-2.5 py-2 text-right">
+                                                            {ml.avgCost > 0 ? (
+                                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
+                                                                    background: ml.marginPct >= 20 ? 'rgba(91,168,138,0.15)' : ml.marginPct >= 0 ? 'rgba(212,168,83,0.15)' : 'rgba(220,38,38,0.15)',
+                                                                    color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444',
+                                                                }}>
+                                                                    {ml.marginPct >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
+                                                                    {ml.marginPct.toFixed(1)}%
+                                                                </span>
+                                                            ) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Mobile Card View */}
+                            <div className="block md:hidden space-y-2">
+                                {(marginData?.lines ?? detail.lines.map(l => ({
+                                    lineId: l.id, skuCode: l.product.skuCode, productName: l.product.productName,
+                                    qty: Number(l.qtyOrdered), unitPrice: Number(l.unitPrice), lineDiscountPct: Number(l.lineDiscountPct),
+                                    revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
+                                    avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
+                                    priceSource: (l as any).priceSource ?? null,
+                                }))).map(ml => (
+                                    <div key={ml.lineId} className="p-3 rounded-md space-y-1.5" 
+                                        style={{ background: '#1B2E3D', border: `1px solid ${ml.isNegative ? 'rgba(220,38,38,0.35)' : '#2A4355'}` }}>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-semibold text-[#87CBB9] font-mono">{ml.skuCode}</p>
+                                                <p className="text-[11px] text-[#E8F1F2] truncate mt-0.5" title={ml.productName}>{ml.productName}</p>
+                                            </div>
+                                            {ml.priceSource && (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                                                    style={getPriceBadgeStyle(ml.priceSource)}>
+                                                    {getPriceBadgeLabel(ml.priceSource)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#2A4355]/30 text-xs">
+                                            <div>
+                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Số Lượng</p>
+                                                <p className="font-bold font-mono text-[#E8F1F2] mt-0.5">{ml.qty}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
+                                                <p className="font-semibold font-mono text-[#E8F1F2] mt-0.5">{formatVND(ml.unitPrice)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Thành Tiền</p>
+                                                <p className="font-bold font-mono text-[#87CBB9] mt-0.5">{formatVND(ml.revenue)}</p>
+                                            </div>
+                                        </div>
+
+                                        {canSeeMargin && ml.avgCost > 0 && (
+                                            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#2A4355]/20 text-xs">
+                                                <div>
+                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Giá Vốn</p>
+                                                    <p className="font-semibold font-mono text-[#D4A853] mt-0.5">{formatVND(ml.avgCost)}</p>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{ev.action}</span>
-                                                        {ev.userName && <span className="text-xs" style={{ color: '#4A6A7A' }}>— {ev.userName}</span>}
-                                                    </div>
-                                                    {ev.description && <p className="text-xs mt-0.5 truncate" style={{ color: '#8AAEBB' }}>{ev.description}</p>}
-                                                    <p className="text-[10px] mt-0.5" style={{ color: '#2A4355' }}>{formatDate(ev.createdAt)}</p>
+                                                <div>
+                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Lãi Gộp</p>
+                                                    <p className="font-bold font-mono mt-0.5" style={{ color: ml.margin >= 0 ? '#5BA88A' : '#EF4444' }}>
+                                                        {ml.margin >= 0 ? '' : '-'}{formatVND(Math.abs(ml.margin))}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Biên %</p>
+                                                    <p className="font-bold font-mono mt-0.5" style={{ color: ml.marginPct >= 20 ? '#5BA88A' : ml.marginPct >= 0 ? '#D4A853' : '#EF4444' }}>
+                                                        {ml.marginPct.toFixed(1)}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 4. DELIVERY ORDERS & AR INVOICES */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Lệnh Giao Hàng (DO)</p>
+                                {detail.deliveryOrders.length === 0 ? (
+                                    <p className="text-xs py-4 text-center" style={{ color: '#4A6A7A' }}>Chưa có lệnh giao hàng</p>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        {detail.deliveryOrders.map(do_ => (
+                                            <div key={do_.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{do_.doNo}</span>
+                                                <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>{do_.status}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Hóa Đơn Công Nợ (AR)</p>
+                                {detail.arInvoices.length === 0 ? (
+                                    <p className="text-xs py-4 text-center" style={{ color: '#4A6A7A' }}>Chưa xuất hóa đơn</p>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        {detail.arInvoices.map(inv => (
+                                            <div key={inv.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                <div>
+                                                    <span className="text-xs font-bold font-mono block" style={{ color: '#87CBB9' }}>{inv.invoiceNo}</span>
+                                                    <span className="text-[10px] block mt-0.5" style={{ color: '#4A6A7A' }}>Hạn: {formatDate(inv.dueDate)}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-xs font-bold font-mono block" style={{ color: '#E8F1F2' }}>{formatVND(Number(inv.amount))}</span>
+                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold inline-block mt-0.5" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{inv.status}</span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
-                        )}
+                        </div>
+
+                        {/* 5. HISTORY & AUDIT LOGS */}
+                        <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Nhật Ký Đơn Hàng (Timeline)</p>
+                            {timeline.length === 0 ? (
+                                <p className="text-xs py-4 text-center" style={{ color: '#4A6A7A' }}>Chưa ghi nhận hoạt động nào</p>
+                            ) : (
+                                <div className="space-y-0 relative pl-1">
+                                    <div className="absolute left-3 top-2 bottom-2 w-[1px]" style={{ background: '#2A4355' }} />
+                                    {timeline.map((ev, i) => (
+                                        <div key={ev.id} className="flex gap-3 py-2 relative">
+                                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 z-10"
+                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                {ACTION_ICON[ev.action] ?? '●'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{ev.action}</span>
+                                                    {ev.userName && <span className="text-[10px]" style={{ color: '#4A6A7A' }}>— {ev.userName}</span>}
+                                                    <span className="text-[9px] ml-auto" style={{ color: '#4A6A7A' }}>{formatDate(ev.createdAt)}</span>
+                                                </div>
+                                                {ev.description && <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>{ev.description}</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                     </div>
                 )}
             </div>
@@ -742,7 +718,7 @@ function SalesOrderMobileCard({
 
 // ── Main Component ───────────────────────────────
 // Roles allowed to see cost/margin data
-const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN', 'Sales Admin']
+const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager']
 
 interface Props {
     initialRows: SalesOrderRow[]

@@ -276,7 +276,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
         }
     }
 
-    const canSeeMargin = hasRole(user, 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN')
+    const canSeeMargin = hasRole(user, 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Manager', 'SALES_MGR')
 
     // Single batch query for ALL product costs (eliminates N+1)
     const productIds = [...new Set(detail.lines.map(l => l.productId))]
@@ -1359,7 +1359,7 @@ export type SOMarginData = {
 
 export async function getSOMarginData(soId: string): Promise<SOMarginData | null> {
     const user = await requireAuth()
-    if (!hasRole(user, 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN')) {
+    if (!hasRole(user, 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Manager', 'SALES_MGR')) {
         return null
     }
 
