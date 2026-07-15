@@ -211,12 +211,20 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                     </div>
                     <div className="flex items-center gap-2">
                         {detail && (
-                            <button onClick={() => onClone(soId)}
-                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
-                                style={{ background: 'rgba(138,174,187,0.12)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)' }}
-                                title="Tạo đơn tương tự">
-                                <Copy size={12} /> Clone
-                            </button>
+                            <>
+                                <button onClick={() => window.open(`/dashboard/sales/print?id=${soId}`, '_blank')}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
+                                    style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)' }}
+                                    title="In ấn đơn hàng">
+                                    <Printer size={12} /> In Đơn
+                                </button>
+                                <button onClick={() => onClone(soId)}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
+                                    style={{ background: 'rgba(138,174,187,0.12)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)' }}
+                                    title="Tạo đơn tương tự">
+                                    <Copy size={12} /> Clone
+                                </button>
+                            </>
                         )}
                         <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
                     </div>
