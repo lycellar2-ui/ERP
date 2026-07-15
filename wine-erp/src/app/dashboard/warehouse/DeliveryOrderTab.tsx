@@ -222,15 +222,31 @@ function CreateDODrawer({ warehouses, onClose, onCreated }: {
             setLotsMap({})
             return
         }
+        let active = true
         const fetchLots = async () => {
-            const map: any = {}
-            for (const line of selectedSO.lines) {
-                const lots = await getAvailableLotsForProduct(line.productId, warehouseId, line.vintage)
-                map[line.productId] = lots
+            const map: Record<string, any[]> = {}
+            try {
+                await Promise.all(
+                    selectedSO.lines.map(async (line) => {
+                        const lots = await getAvailableLotsForProduct(line.productId, warehouseId, line.vintage)
+                        if (active) {
+                            map[line.productId] = lots
+                        }
+                    })
+                )
+                if (active) {
+                    setLotsMap(map)
+                }
+            } catch (err: any) {
+                if (active) {
+                    toast.error('Lỗi khi tải danh sách lô hàng: ' + err.message)
+                }
             }
-            setLotsMap(map)
         }
         fetchLots()
+        return () => {
+            active = false
+        }
     }, [selectedSO, warehouseId])
 
     useEffect(() => { getSOsForDelivery().then(data => setSOs(data as any)) }, [])
