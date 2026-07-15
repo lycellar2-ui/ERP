@@ -1437,6 +1437,7 @@ model SalesOrderLine {
   unitPrice            Decimal
   priceSource          String?
   lineDiscountPct      Decimal             @default(0)
+  vintage              Int?                // Selected vintage year for this order line
   allocationCampaignId String?
   allocationCampaign   AllocationCampaign? @relation(fields: [allocationCampaignId], references: [id])
   allocationLogs       AllocationLog[]

@@ -78,6 +78,7 @@ export async function getSOsForDelivery() {
                     id: true, productId: true,
                     product: { select: { productName: true, skuCode: true } },
                     qtyOrdered: true,
+                    vintage: true, // Selected vintage by Sale Admin
                 },
             },
         },
@@ -235,4 +236,38 @@ export async function getDODetail(doId: string) {
             qtyPicked: Number(l.qtyPicked), qtyShipped: Number(l.qtyShipped),
         })),
     }
+}
+
+// ── Get available lots for a product in a warehouse (filtered by vintage) ──
+export async function getAvailableLotsForProduct(
+    productId: string, 
+    warehouseId: string, 
+    vintage?: number | null
+) {
+    const where: any = {
+        productId,
+        status: 'AVAILABLE',
+        qtyAvailable: { gt: 0 },
+        location: { warehouseId }
+    }
+    if (vintage !== undefined && vintage !== null) {
+        where.vintage = vintage
+    }
+    
+    const lots = await prisma.stockLot.findMany({
+        where,
+        include: {
+            location: { select: { locationCode: true } }
+        },
+        orderBy: { receivedDate: 'asc' } // FIFO sorting
+    })
+    
+    return lots.map(l => ({
+        id: l.id,
+        lotNo: l.lotNo,
+        locationId: l.locationId,
+        locationCode: l.location.locationCode,
+        qtyAvailable: Number(l.qtyAvailable),
+        vintage: l.vintage
+    }))
 }

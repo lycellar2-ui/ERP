@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 
@@ -779,6 +779,7 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
     const [acctEntityId, setAcctEntityId] = useState('')
+    const [approvalModalId, setApprovalModalId] = useState<string | null>(null)
 
     // Load legal entities on mount
     useEffect(() => {
@@ -844,10 +845,7 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
     }
 
     const handleApprove = async (id: string) => {
-        setActionLoading(id)
-        toast.promise(approveSalesOrder(id).then(() => reload()), {
-            loading: 'Đang phê duyệt...', success: 'Đã phê duyệt!', error: 'Không thể phê duyệt', finally: () => setActionLoading(null)
-        })
+        setApprovalModalId(id)
     }
 
     const handleReject = async (id: string) => {
@@ -1196,6 +1194,13 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
             <CreateSODrawer open={createOpen} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); reload() }} userId={userId} />
             {detailId && <SODetailDrawer soId={detailId} onClose={() => setDetailId(null)} onClone={handleClone} canSeeMargin={canSeeMargin} />}
             {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} userId={userId} />}
+            {approvalModalId && (
+                <ApproveSOModal
+                    soId={approvalModalId}
+                    onClose={() => setApprovalModalId(null)}
+                    onApproved={() => { setApprovalModalId(null); reload() }}
+                />
+            )}
 
             {/* Accounting Approval Modal */}
             {acctModalId && (
@@ -1248,4 +1253,181 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
             )}
         </div>
     )
+}
+
+// ── Approve SO Modal with Vintage Selection ──────
+function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
+    const [detail, setDetail] = useState<any>(null)
+    const [availableVintages, setAvailableVintages] = useState<Record<string, number[]>>({})
+    const [selectedVintages, setSelectedVintages] = useState<Record<string, number>>({})
+    const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
+
+    useEffect(() => {
+        let active = true
+        setLoading(true)
+        getSalesOrderDetailWithMargin(soId).then(async (res) => {
+            if (!active) return
+            if (res.detail) {
+                setDetail(res.detail)
+                const initialVintages: Record<string, number> = {}
+                for (const line of res.detail.lines) {
+                    initialVintages[line.id] = (line as any).vintage || 0
+                }
+                setSelectedVintages(initialVintages)
+                
+                const productIds = res.detail.lines.map(l => l.productId)
+                const vintagesData = await getAvailableVintagesForProducts(productIds)
+                if (active) {
+                    setAvailableVintages(vintagesData)
+                }
+            }
+            if (active) setLoading(false)
+        }).catch(err => {
+            if (active) {
+                toast.error('Lỗi khi tải chi tiết đơn hàng: ' + err.message)
+                setLoading(false)
+            }
+        })
+        return () => { active = false }
+    }, [soId])
+
+    const handleConfirm = async () => {
+        if (!detail) return
+        
+        const vintagesList: { lineId: string; vintage: number }[] = []
+        for (const line of detail.lines) {
+            const avail = availableVintages[line.productId] || []
+            const selected = selectedVintages[line.id]
+            if (avail.length > 0 && !selected) {
+                toast.error(`Vui lòng chỉ định Vintage cho: ${line.product.productName}`)
+                return
+            }
+            if (selected) {
+                vintagesList.push({ lineId: line.id, vintage: Number(selected) })
+            }
+        }
+
+        setSubmitting(true)
+        try {
+            const res = await approveSalesOrder(soId, vintagesList)
+            if (res.success) {
+                toast.success('Đã duyệt đơn hàng thành công!')
+                onApproved()
+            } else {
+                toast.error(res.error || 'Lỗi khi duyệt đơn')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi hệ thống')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    return (
+        <>
+            <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-lg shadow-2xl"
+                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between mb-4 border-b border-[#2A4355] pb-3">
+                    <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                        Duyệt Đơn Hàng & Chỉ Định Vintage
+                    </h3>
+                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                </div>
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-2 text-sm" style={{ color: '#8AAEBB' }}>
+                        <Loader2 size={24} className="animate-spin text-[#87CBB9]" />
+                        Đang tải thông tin sản phẩm và tồn kho...
+                    </div>
+                ) : !detail ? (
+                    <p className="text-center py-8 text-sm" style={{ color: '#4A6A7A' }}>Không tìm thấy đơn hàng</p>
+                ) : (
+                    <div className="space-y-4">
+                        <p className="text-xs" style={{ color: '#8AAEBB' }}>
+                            Mã đơn: <span className="font-bold text-[#87CBB9]">{detail.soNo}</span> · Khách hàng: <span className="font-semibold text-white">{detail.customer.name}</span>
+                        </p>
+                        
+                        <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
+                            {detail.lines.map((line: any) => {
+                                const avail = availableVintages[line.productId] || []
+                                return (
+                                    <div key={line.id} className="p-3 rounded-lg flex flex-col gap-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold truncate text-[#E8F1F2]" title={line.product.productName}>
+                                                    {line.product.productName}
+                                                </p>
+                                                <p className="text-[10px] text-[#4A6A7A] mt-0.5 font-mono">
+                                                    SKU: {line.product.skuCode} · Số lượng: {Number(line.qtyOrdered)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2">
+                                            <label className="text-[10px] uppercase font-semibold whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                                Vintage *
+                                            </label>
+                                            {avail.length > 0 ? (
+                                                <select
+                                                    value={selectedVintages[line.id] || ''}
+                                                    onChange={e => {
+                                                        const val = Number(e.target.value)
+                                                        setSelectedVintages(prev => ({ ...prev, [line.id]: val }))
+                                                    }}
+                                                    className="flex-1 px-2.5 py-1.5 text-xs outline-none rounded"
+                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                >
+                                                    <option value="">— Chọn Vintage khả dụng —</option>
+                                                    {avail.map(v => (
+                                                        <option key={v} value={v}>{v}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[10px]">
+                                                    <AlertTriangle size={12} /> Không có sẵn tồn kho Vintage
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-3 border-t border-[#2A4355]">
+                            <button onClick={onClose} disabled={submitting}
+                                className="px-4 py-2 text-xs rounded transition-all"
+                                style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.05)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                                Huỷ
+                            </button>
+                            <button onClick={handleConfirm} disabled={submitting}
+                                className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded text-[#0A1926] transition-all"
+                                style={{ background: '#87CBB9' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                                onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                                {submitting ? (
+                                    <>
+                                        <Loader2 size={12} className="animate-spin" /> Đang duyệt...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 size={13} /> Duyệt Đơn Hàng
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </>
+    )
+}
+
+interface ApproveSOModalProps {
+    soId: string
+    onClose: () => void
+    onApproved: () => void
 }

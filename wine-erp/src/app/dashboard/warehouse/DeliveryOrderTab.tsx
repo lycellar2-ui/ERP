@@ -6,13 +6,13 @@ import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
     getDeliveryOrders, getSOsForDelivery, createDeliveryOrder, confirmDeliveryOrder,
-    getDODetail,
+    getDODetail, getAvailableLotsForProduct,
 } from './actions'
 import { formatDate } from '@/lib/utils'
 
 type SOOption = {
     id: string; soNo: string; customerName: string
-    lines: { productId: string; productName: string; skuCode: string; qtyOrdered: number }[]
+    lines: { productId: string; productName: string; skuCode: string; qtyOrdered: number; vintage: number | null }[]
 }
 
 type AvailableLot = {
@@ -215,6 +215,23 @@ function CreateDODrawer({ warehouses, onClose, onCreated }: {
     const [warehouseId, setWarehouseId] = useState('')
     const [lines, setLines] = useState<{ productId: string; lotId: string; locationId: string; qtyPicked: number }[]>([])
     const [saving, setSaving] = useState(false)
+    const [lotsMap, setLotsMap] = useState<Record<string, any[]>>({})
+
+    useEffect(() => {
+        if (!selectedSO || !warehouseId) {
+            setLotsMap({})
+            return
+        }
+        const fetchLots = async () => {
+            const map: any = {}
+            for (const line of selectedSO.lines) {
+                const lots = await getAvailableLotsForProduct(line.productId, warehouseId, line.vintage)
+                map[line.productId] = lots
+            }
+            setLotsMap(map)
+        }
+        fetchLots()
+    }, [selectedSO, warehouseId])
 
     useEffect(() => { getSOsForDelivery().then(data => setSOs(data as any)) }, [])
 
@@ -292,13 +309,31 @@ function CreateDODrawer({ warehouses, onClose, onCreated }: {
                                         </p>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
-                                                <label className="text-[10px] block mb-0.5" style={{ color: '#4A6A7A' }}>Lot ID (FIFO)</label>
-                                                <input type="text" placeholder="lot_id" value={lines[i]?.lotId ?? ''}
+                                                <label className="text-[10px] block mb-0.5" style={{ color: '#4A6A7A' }}>Chọn Lô Hàng (FIFO)</label>
+                                                <select
+                                                    value={lines[i]?.lotId ?? ''}
                                                     onChange={e => {
-                                                        const v = [...lines]; v[i] = { ...v[i], lotId: e.target.value }; setLines(v)
+                                                        const lotId = e.target.value
+                                                        const availLots = lotsMap[sol.productId] || []
+                                                        const chosenLot = availLots.find(l => l.id === lotId)
+                                                        const v = [...lines]
+                                                        v[i] = { 
+                                                            ...v[i], 
+                                                            lotId, 
+                                                            locationId: chosenLot?.locationId ?? '' 
+                                                        }
+                                                        setLines(v)
                                                     }}
-                                                    className="w-full px-2 py-1.5 rounded text-xs"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853' }} />
+                                                    className="w-full px-2 py-1.5 rounded text-xs outline-none"
+                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853' }}
+                                                >
+                                                    <option value="">— Chọn Lô Hàng —</option>
+                                                    {(lotsMap[sol.productId] || []).map(lot => (
+                                                        <option key={lot.id} value={lot.id}>
+                                                            {lot.lotNo} ({lot.locationCode}) · SL: {lot.qtyAvailable} {lot.vintage ? `· VTG: ${lot.vintage}` : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div>
                                                 <label className="text-[10px] block mb-0.5" style={{ color: '#4A6A7A' }}>SL Pick</label>
