@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 
@@ -157,26 +157,53 @@ function SortHeader({ label, field, current, dir, onSort }: { label: string; fie
 }
 
 // ── SO Detail Drawer (Enhanced with Tabs) ────────
-type DetailType = Awaited<ReturnType<typeof getSalesOrderDetailWithMargin>>['detail']
+type DetailType = Awaited<ReturnType<typeof getSalesOrderDetail>>
 
 function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string; onClose: () => void; onClone: (id: string) => void; canSeeMargin: boolean }) {
     const [detail, setDetail] = useState<DetailType>(null)
     const [marginData, setMarginData] = useState<SOMarginData | null>(null)
     const [timeline, setTimeline] = useState<SOTimelineEvent[]>([])
     const [loading, setLoading] = useState(true)
+    const [timelineLoading, setTimelineLoading] = useState(true)
 
     useEffect(() => {
         let cancelled = false
         setLoading(true)
-        getSalesOrderDetailWithMarginAndTimeline(soId).then(result => {
+        setTimelineLoading(true)
+        setMarginData(null)
+        setTimeline([])
+
+        // 1. Fetch basic details concurrently (Instant response!)
+        getSalesOrderDetail(soId).then(detailData => {
             if (cancelled) return
-            setDetail(result.detail)
-            setMarginData(result.margin)
-            setTimeline(result.timeline)
+            setDetail(detailData)
             setLoading(false)
+        }).catch(err => {
+            if (!cancelled) {
+                toast.error('Lỗi khi tải chi tiết đơn hàng: ' + err.message)
+                setLoading(false)
+            }
         })
+
+        // 2. Fetch timeline concurrently
+        getSOTimeline(soId).then(timelineData => {
+            if (cancelled) return
+            setTimeline(timelineData)
+            setTimelineLoading(false)
+        }).catch(() => {
+            if (!cancelled) setTimelineLoading(false)
+        })
+
+        // 3. Fetch margins concurrently (only if allowed)
+        if (canSeeMargin) {
+            getSalesOrderDetailWithMargin(soId).then(res => {
+                if (cancelled) return
+                setMarginData(res.margin)
+            }).catch(() => {})
+        }
+
         return () => { cancelled = true }
-    }, [soId])
+    }, [soId, canSeeMargin])
 
     const ACTION_ICON: Record<string, string> = {
         CREATE: '📝', UPDATE: '✏️', CONFIRM: '✅', APPROVE: '👍', REJECT: '❌',
@@ -276,6 +303,14 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                         {/* 2. GENERAL INFO & FINANCES MARGIN */}
                         <div className="space-y-3">
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông Tin Tổng Quan</p>
+                            
+                            {canSeeMargin && !marginData && (
+                                <div className="p-3 rounded-md flex items-center justify-center gap-2" style={{ background: '#142433', border: '1px dashed #2A4355' }}>
+                                    <Loader2 size={12} className="animate-spin text-[#D4A853]" />
+                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>Đang tính toán giá vốn & margin trong nền...</span>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {[
                                     { label: 'Tổng Giá Trị Đơn', value: formatVND(Number(detail.totalAmount)), color: '#87CBB9' },
@@ -501,7 +536,12 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                         {/* 5. HISTORY & AUDIT LOGS */}
                         <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Nhật Ký Đơn Hàng (Timeline)</p>
-                            {timeline.length === 0 ? (
+                            {timelineLoading ? (
+                                <div className="flex items-center justify-center py-6 gap-2 text-xs" style={{ color: '#4A6A7A' }}>
+                                    <Loader2 size={14} className="animate-spin text-[#87CBB9]" />
+                                    <span>Đang tải nhật ký hoạt động...</span>
+                                </div>
+                            ) : timeline.length === 0 ? (
                                 <p className="text-xs py-4 text-center" style={{ color: '#4A6A7A' }}>Chưa ghi nhận hoạt động nào</p>
                             ) : (
                                 <div className="space-y-0 relative pl-1">
@@ -1248,10 +1288,19 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
     const [selectedVintages, setSelectedVintages] = useState<Record<string, number>>({})
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+    const [warehouses, setWarehouses] = useState<any[]>([])
+    const [selectedWarehouseId, setSelectedWarehouseId] = useState('')
 
     useEffect(() => {
         let active = true
         setLoading(true)
+        // Load warehouses
+        getSimpleWarehouses().then((whs) => {
+            if (active) {
+                setWarehouses(whs)
+            }
+        })
+        
         getSalesOrderDetailWithMargin(soId).then(async (res) => {
             if (!active) return
             const detailObj = res.detail
@@ -1292,6 +1341,13 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
     const handleConfirm = async () => {
         if (!detail) return
         
+        // Filter warehouses owned by the SO's LegalEntity
+        const filteredWarehouses = warehouses.filter(w => w.legalEntityId === detail.legalEntityId)
+        if (filteredWarehouses.length > 0 && !selectedWarehouseId) {
+            toast.error('Vui lòng chọn Kho xuất hàng')
+            return
+        }
+
         const vintagesList: { lineId: string; vintage: number }[] = []
         for (const line of detail.lines) {
             const avail = availableVintages[line.productId] || []
@@ -1307,7 +1363,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
 
         setSubmitting(true)
         try {
-            const res = await approveSalesOrder(soId, vintagesList)
+            const res = await approveSalesOrder(soId, vintagesList, selectedWarehouseId || undefined)
             if (res.success) {
                 toast.success('Đã duyệt đơn hàng thành công!')
                 onApproved()
@@ -1345,6 +1401,27 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                         <p className="text-xs" style={{ color: '#8AAEBB' }}>
                             Mã đơn: <span className="font-bold text-[#87CBB9]">{detail.soNo}</span> · Khách hàng: <span className="font-semibold text-white">{detail.customer.name}</span>
                         </p>
+
+                        {/* Warehouse selector */}
+                        <div className="p-3 rounded-lg flex flex-col gap-1.5" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.2)' }}>
+                            <label className="text-xs font-semibold" style={{ color: '#D4A853' }}>
+                                Kho Xuất Hàng * (Pháp nhân: {detail.legalEntity?.name || detail.legalEntity?.code || '—'})
+                            </label>
+                            <select
+                                value={selectedWarehouseId}
+                                onChange={e => setSelectedWarehouseId(e.target.value)}
+                                className="w-full px-3 py-2 text-xs outline-none rounded"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            >
+                                <option value="">— Chọn kho xuất hàng —</option>
+                                {warehouses
+                                    .filter(w => w.legalEntityId === detail.legalEntityId)
+                                    .map(w => (
+                                        <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
+                                    ))
+                                }
+                            </select>
+                        </div>
                         
                         <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
                             {detail.lines.map((line: any) => {

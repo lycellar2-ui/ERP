@@ -4,12 +4,14 @@ import React, { useState, useCallback } from 'react'
 import {
     Shield, Users, Settings, Bell, Plus, X, Save, Loader2,
     User, ChevronDown, CheckCircle2, AlertCircle, Search, Eye,
-    ClipboardCheck, Check, XCircle
+    ClipboardCheck, Check, XCircle, Building2, CreditCard
 } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     UserRow, RoleRow, createUser, updateUser, updateUserRoles,
     createRole, updateRolePermissions, getUsers, getRoles,
-    getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate
+    getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate,
+    getLegalEntitiesList, updateLegalEntity, getSystemWarehouses, updateWarehouseLegalEntity
 } from './actions'
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 import { type SessionUser } from '@/lib/session'
@@ -32,7 +34,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
     SUSPENDED: { label: 'Khoá', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
 }
 
-type Tab = 'users' | 'roles' | 'approvals' | 'audit'
+type Tab = 'users' | 'roles' | 'approvals' | 'audit' | 'entities'
 
 type PermissionRow = { id: string; code: string; module: string; action: string }
 
@@ -435,6 +437,50 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
     const [loadingChanges, setLoadingChanges] = useState(false)
     const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
 
+    // Legal Entities Tab States
+    const [entities, setEntities] = useState<any[]>([])
+    const [warehouses, setWarehouses] = useState<any[]>([])
+    const [entitiesLoaded, setEntitiesLoaded] = useState(false)
+    const [editingEntity, setEditingEntity] = useState<any | null>(null)
+    const [savingEntity, setSavingEntity] = useState(false)
+
+    const loadEntities = useCallback(async () => {
+        try {
+            const [ents, whs] = await Promise.all([
+                getLegalEntitiesList(),
+                getSystemWarehouses()
+            ])
+            setEntities(ents)
+            setWarehouses(whs)
+            setEntitiesLoaded(true)
+        } catch (err: any) {
+            toast.error('Lỗi khi tải thông tin Pháp nhân và Kho: ' + err.message)
+        }
+    }, [])
+
+    const handleSaveEntity = async (id: string, data: any) => {
+        setSavingEntity(true)
+        const res = await updateLegalEntity(id, data)
+        if (res.success) {
+            toast.success('Đã cập nhật pháp nhân thành công!')
+            setEditingEntity(null)
+            await loadEntities()
+        } else {
+            toast.error(res.error || 'Lỗi cập nhật pháp nhân')
+        }
+        setSavingEntity(false)
+    }
+
+    const handleUpdateWarehouseLE = async (warehouseId: string, legalEntityId: string | null) => {
+        const res = await updateWarehouseLegalEntity(warehouseId, legalEntityId)
+        if (res.success) {
+            toast.success('Đã gán pháp nhân cho kho thành công!')
+            await loadEntities()
+        } else {
+            toast.error(res.error || 'Lỗi gán pháp nhân')
+        }
+    }
+
     const reload = useCallback(async () => {
         const [u, r] = await Promise.all([getUsers(), getRoles()])
         setUsers(u)
@@ -484,6 +530,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         { key: 'users', label: 'Người Dùng', icon: Users },
         { key: 'roles', label: 'Vai Trò & Phân Quyền', icon: Shield },
         { key: 'approvals', label: 'Quy Trình Duyệt', icon: ClipboardCheck },
+        { key: 'entities', label: 'Pháp Nhân & Kho', icon: Building2 },
         { key: 'audit', label: 'Nhật Ký Hệ Thống', icon: Eye },
     ]
 
@@ -534,7 +581,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                     const active = tab === t.key
                     return (
                         <button key={t.key}
-                            onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit(); if (t.key === 'approvals' && !approvalsLoaded) loadApprovals() }}
+                            onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit(); if (t.key === 'approvals' && !approvalsLoaded) loadApprovals(); if (t.key === 'entities' && !entitiesLoaded) loadEntities() }}
                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded transition-all"
                             style={{
                                 background: active ? '#1B2E3D' : 'transparent',
@@ -858,7 +905,99 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 </div>
             )}
 
+            {tab === 'entities' && (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Legal Entities Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Danh Sách Pháp Nhân</h3>
+                            <div className="space-y-4">
+                                {entities.map(ent => (
+                                    <div key={ent.id} className="p-5 rounded-lg flex flex-col justify-between" style={{ ...card, background: '#1B2E3D' }}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h4 className="font-bold text-base" style={{ color: '#E8F1F2' }}>{ent.name}</h4>
+                                                <p className="text-xs font-mono mt-0.5" style={{ color: '#8AAEBB' }}>Mã: {ent.code} · MST: {ent.taxId || '(chưa nhập)'}</p>
+                                            </div>
+                                            <button onClick={() => setEditingEntity(ent)}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-md transition-all"
+                                                style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                                                Chỉnh sửa
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="space-y-2 border-t border-[#2A4355] pt-3 text-xs" style={{ color: '#8AAEBB' }}>
+                                            <div className="flex justify-between">
+                                                <span>Địa chỉ:</span>
+                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.address || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Ngân hàng:</span>
+                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.bankName || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Chủ tài khoản:</span>
+                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.bankAccountName || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Số tài khoản:</span>
+                                                <span className="text-[#87CBB9] font-mono font-bold">{ent.bankAccountNumber || '—'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Warehouses Mapping Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Ánh Xạ Kho Xuất Hàng</h3>
+                            <div className="p-5 rounded-lg space-y-4" style={card}>
+                                <p className="text-xs leading-relaxed" style={{ color: '#8AAEBB' }}>
+                                    Ánh xạ từng kho xuất hàng vật lý về một pháp nhân cụ thể. Khi Sale Admin phê duyệt đơn hàng, danh sách kho sẽ tự động lọc theo đúng pháp nhân của đơn để chọn.
+                                </p>
+                                <div className="space-y-4">
+                                    {warehouses.map(w => (
+                                        <div key={w.id} className="flex flex-col gap-2 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{w.name}</p>
+                                                    <p className="text-[10px] font-mono mt-0.5" style={{ color: '#4A6A7A' }}>Mã: {w.code}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <label className="text-[10px] uppercase font-semibold whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                                    Pháp nhân quản lý
+                                                </label>
+                                                <select
+                                                    value={w.legalEntityId || ''}
+                                                    onChange={e => handleUpdateWarehouseLE(w.id, e.target.value || null)}
+                                                    className="flex-1 px-3 py-1.5 text-xs outline-none rounded-md"
+                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                >
+                                                    <option value="">— Chưa gán / Không thuộc pháp nhân nào —</option>
+                                                    {entities.map(ent => (
+                                                        <option key={ent.id} value={ent.id}>{ent.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Drawers */}
+            <EditEntityDrawer
+                open={!!editingEntity}
+                onClose={() => setEditingEntity(null)}
+                onSave={handleSaveEntity}
+                entity={editingEntity}
+                saving={savingEntity}
+            />
             <CreateUserDrawer open={showCreateUser} onClose={() => setShowCreateUser(false)} onCreated={reload} roles={roles} />
             <CreateRoleDrawer open={showCreateRole} onClose={() => setShowCreateRole(false)} onCreated={reload} permissions={permissions} />
             <UserDetailDrawer
@@ -869,6 +1008,83 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 currentUser={currentUser}
                 onUpdated={reload}
             />
+        </div>
+    )
+}
+
+// ── Edit Legal Entity Drawer ──────────────────────
+function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
+    open: boolean; onClose: () => void; onSave: (id: string, data: any) => void; entity: any; saving: boolean
+}) {
+    const [form, setForm] = useState({
+        name: '', taxId: '', address: '', bankName: '', bankAccountName: '', bankAccountNumber: ''
+    })
+
+    React.useEffect(() => {
+        if (entity) {
+            setForm({
+                name: entity.name || '',
+                taxId: entity.taxId || '',
+                address: entity.address || '',
+                bankName: entity.bankName || '',
+                bankAccountName: entity.bankAccountName || '',
+                bankAccountNumber: entity.bankAccountNumber || ''
+            })
+        }
+    }, [entity])
+
+    if (!open || !entity) return null
+    return (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between" style={{ background: '#0D1B25', borderLeft: '1px solid #2A4355' }}>
+                <div>
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", Georgia, serif' }}>Cấu Hình Pháp Nhân</h3>
+                        <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Tên Pháp Nhân *</label>
+                            <input style={inputStyle} {...focusHandler} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Mã Số Thuế</label>
+                            <input style={inputStyle} {...focusHandler} value={form.taxId} onChange={e => setForm(f => ({ ...f, taxId: e.target.value }))} />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Địa Chỉ</label>
+                            <input style={inputStyle} {...focusHandler} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+                        </div>
+                        <div className="pt-4 border-t border-[#2A4355]">
+                            <p className="text-xs font-bold uppercase mb-3 flex items-center gap-1.5" style={{ color: '#D4A853' }}>
+                                <CreditCard size={12} /> Tài khoản thanh toán
+                            </p>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Tên Ngân Hàng (kèm chi nhánh)</label>
+                                    <input style={inputStyle} {...focusHandler} placeholder="e.g. Vietcombank - Chi nhánh HCM" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Chủ Tài Khoản</label>
+                                    <input style={inputStyle} {...focusHandler} placeholder="e.g. CONG TY TNHH LY'S CELLARS" value={form.bankAccountName} onChange={e => setForm(f => ({ ...f, bankAccountName: e.target.value }))} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Số Tài Khoản</label>
+                                    <input style={inputStyle} {...focusHandler} placeholder="e.g. 1023456789" value={form.bankAccountNumber} onChange={e => setForm(f => ({ ...f, bankAccountNumber: e.target.value }))} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onClick={() => onSave(entity.id, form)} disabled={saving}
+                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
+                    style={{ background: '#87CBB9', color: '#0A1926' }}>
+                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                </button>
+            </div>
         </div>
     )
 }

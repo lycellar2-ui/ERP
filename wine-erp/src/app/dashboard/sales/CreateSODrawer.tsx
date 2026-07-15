@@ -514,7 +514,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
-                                                        <th className="px-3 py-2.5">Sản Phẩm *</th>
+                                                        <th className="px-3 py-2.5" style={{ minWidth: '320px' }}>Sản Phẩm *</th>
                                                         <th className="px-3 py-2.5 w-20 text-center">Tồn Kho</th>
                                                         <th className="px-3 py-2.5 w-20 text-center">SL</th>
                                                         <th className="px-3 py-2.5 w-28 text-right">Đơn Giá</th>
@@ -562,7 +562,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                                                         />
                                                                         
                                                                         {activeDropdownIndex === i && (
-                                                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-[#142433] border border-[#2A4355]">
+                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-[#142433] border border-[#2A4355] w-[450px]">
                                                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                                     <div className="px-3 py-2 text-xs text-gray-500">
                                                                                         Không tìm thấy sản phẩm

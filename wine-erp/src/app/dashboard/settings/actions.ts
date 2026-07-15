@@ -537,3 +537,61 @@ export async function getApprovalHistory(docType: string, docId: string) {
         })),
     }))
 }
+
+// ── Legal Entities Settings ──────────────────────
+export async function getLegalEntitiesList() {
+    await requirePermission('SYS', 'ADMIN')
+    const list = await prisma.legalEntity.findMany({
+        orderBy: { code: 'asc' }
+    })
+    return serialize(list)
+}
+
+export async function updateLegalEntity(id: string, data: {
+    name: string
+    taxId: string | null
+    address: string | null
+    bankName: string | null
+    bankAccountName: string | null
+    bankAccountNumber: string | null
+}) {
+    try {
+        await requirePermission('SYS', 'ADMIN')
+        const updated = await prisma.legalEntity.update({
+            where: { id },
+            data
+        })
+        revalidateCache('settings')
+        revalidateCache('sales') // clear sales order details cache
+        revalidatePath('/dashboard/settings')
+        return { success: true, legalEntity: serialize(updated) }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getSystemWarehouses() {
+    await requirePermission('SYS', 'ADMIN')
+    const list = await prisma.warehouse.findMany({
+        select: { id: true, code: true, name: true, legalEntityId: true },
+        orderBy: { name: 'asc' }
+    })
+    return serialize(list)
+}
+
+export async function updateWarehouseLegalEntity(warehouseId: string, legalEntityId: string | null) {
+    try {
+        await requirePermission('SYS', 'ADMIN')
+        const updated = await prisma.warehouse.update({
+            where: { id: warehouseId },
+            data: { legalEntityId }
+        })
+        revalidateCache('settings')
+        revalidateCache('wms:warehouses')
+        revalidatePath('/dashboard/settings')
+        return { success: true, warehouse: serialize(updated) }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+

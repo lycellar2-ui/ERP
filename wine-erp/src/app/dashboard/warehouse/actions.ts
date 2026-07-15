@@ -681,6 +681,7 @@ export async function getSOsForDelivery() {
         select: {
             id: true,
             soNo: true,
+            warehouseId: true,
             customer: { select: { name: true } },
             lines: {
                 select: {

@@ -196,6 +196,8 @@ export async function getSalesOrderDetail(id: string) {
     const raw = await prisma.salesOrder.findUnique({
         where: { id },
         include: {
+            legalEntity: true,
+            warehouse: true,
             customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
@@ -246,6 +248,8 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     const detail = await prisma.salesOrder.findUnique({
         where: { id },
         include: {
+            legalEntity: true,
+            warehouse: true,
             customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
@@ -277,6 +281,23 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     }
 
     const canSeeMargin = hasRole(user, 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Manager', 'SALES_MGR')
+
+    const approvalReq = await prisma.approvalRequest.findFirst({
+        where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
+        select: { currentStep: true }
+    })
+
+    const detailWithStep = {
+        ...detail,
+        approvalStep: approvalReq?.currentStep ?? null
+    }
+
+    if (!canSeeMargin) {
+        return serialize({
+            detail: detailWithStep,
+            margin: null
+        })
+    }
 
     // Single batch query for ALL product costs (eliminates N+1)
     const productIds = [...new Set(detail.lines.map(l => l.productId))]
@@ -327,17 +348,9 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     const totalMargin = totalRevenue - totalCOGS
     const totalMarginPct = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0
 
-    const approvalReq = await prisma.approvalRequest.findFirst({
-        where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
-        select: { currentStep: true }
-    })
-
     return serialize({
-        detail: {
-            ...detail,
-            approvalStep: approvalReq?.currentStep ?? null
-        },
-        margin: canSeeMargin ? { lines: marginLines, totalRevenue, totalCOGS, totalMargin, totalMarginPct, hasNegativeMargin } : null,
+        detail: detailWithStep,
+        margin: { lines: marginLines, totalRevenue, totalCOGS, totalMargin, totalMarginPct, hasNegativeMargin }
     })
 }
 
@@ -876,7 +889,8 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
 // ── CEO/Admin Approve PENDING_APPROVAL ─────
 export async function approveSalesOrder(
     id: string, 
-    vintages?: { lineId: string; vintage: number }[]
+    vintages?: { lineId: string; vintage: number }[],
+    warehouseId?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const user = await requireAuth()
@@ -943,9 +957,13 @@ export async function approveSalesOrder(
         })
 
         // Transition SO directly to PENDING_ACCOUNTING
+        const updateData: any = { status: 'PENDING_ACCOUNTING' }
+        if (warehouseId) {
+            updateData.warehouseId = warehouseId
+        }
         await prisma.salesOrder.update({
             where: { id },
-            data: { status: 'PENDING_ACCOUNTING' }
+            data: updateData
         })
 
         await logAudit({
@@ -2012,24 +2030,24 @@ export async function getSalesPageData(filters: {
 } = {}, onlyRows = false) {
     if (onlyRows) {
         const ordersResult = await getSalesOrders(filters)
-        return {
+        return serialize({
             rows: ordersResult.rows,
             total: ordersResult.total,
             stats: { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 },
             statusCounts: {} as Record<string, number>,
-        }
+        })
     }
     const [ordersResult, stats, statusCounts] = await Promise.all([
         getSalesOrders(filters),
         getSalesStats(),
         getSOStatusCounts(),
     ])
-    return {
+    return serialize({
         rows: ordersResult.rows,
         total: ordersResult.total,
         stats,
         statusCounts,
-    }
+    })
 }
 
 // ── Delete Sales Order (DRAFT only) ──────────────
@@ -2095,4 +2113,14 @@ export async function deleteSalesOrder(id: string): Promise<{ success: boolean; 
         return { success: false, error: err.message }
     }
 }
+
+// ── Simple Warehouse list for dropdown filtering ─────────
+export async function getSimpleWarehouses() {
+    const list = await prisma.warehouse.findMany({
+        select: { id: true, code: true, name: true, legalEntityId: true },
+        orderBy: { name: 'asc' }
+    })
+    return serialize(list)
+}
+
 

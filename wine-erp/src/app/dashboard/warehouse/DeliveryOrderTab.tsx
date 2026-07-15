@@ -261,6 +261,9 @@ function CreateDODrawer({ warehouses, onClose, onCreated }: {
                 locationId: '',
                 qtyPicked: l.qtyOrdered,
             })))
+            if ((so as any).warehouseId) {
+                setWarehouseId((so as any).warehouseId)
+            }
         }
     }
 

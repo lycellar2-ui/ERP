@@ -58,12 +58,12 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
             return () => clearTimeout(timer)
         }
 
-        getSalesOrderDetailWithMargin(id)
+        getSalesOrderDetail(id)
             .then((res) => {
-                if (!res.detail) {
+                if (!res) {
                     setError('Không tìm thấy đơn hàng')
                 } else {
-                    setOrder(res.detail as OrderDetailType)
+                    setOrder(res as OrderDetailType)
                 }
             })
             .catch((err) => {
@@ -156,12 +156,14 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         <img 
                             src="/logo/Ly's Cellars - Logo_tagline blue green.png" 
                             alt="Ly's Cellars Logo" 
-                            className="h-12 w-auto object-contain mb-3"
+                            className="h-12 w-auto object-contain mb-2"
                         />
-                        <p className="text-[10px] text-slate-600 leading-relaxed">
-                            Địa chỉ: 123 Đường Pasteur, Phường Bến Nghé, Quận 1, TP. HCM<br />
-                            Điện thoại: 028 1234 5678 &nbsp;|&nbsp; Hotline: 090 9999 999<br />
-                            Email: orders@lyscellars.com &nbsp;|&nbsp; MST: 0313456789
+                        <h2 className="font-bold text-[11px] text-slate-800 uppercase tracking-wide">
+                            {(order as any).legalEntity?.name || "LY'S CELLARS"}
+                        </h2>
+                        <p className="text-[10px] text-slate-600 leading-relaxed mt-0.5">
+                            Địa chỉ: {(order as any).legalEntity?.address || "123 Đường Pasteur, Phường Bến Nghé, Quận 1, TP. HCM"}<br />
+                            MST: {(order as any).legalEntity?.taxId || "0313456789"} &nbsp;|&nbsp; Email: orders@lyscellars.com
                         </p>
                     </div>
                     <div className="text-right">
@@ -321,15 +323,21 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         <tbody>
                             <tr>
                                 <td className="text-slate-500 w-24">Chủ tài khoản:</td>
-                                <td className="font-semibold text-slate-800">CÔNG TY TNHH LY&apos;S CELLARS</td>
+                                <td className="font-semibold text-slate-800">
+                                    {(order as any).legalEntity?.bankAccountName || "CÔNG TY TNHH LY'S CELLARS"}
+                                </td>
                             </tr>
                             <tr>
                                 <td className="text-slate-500">Số tài khoản:</td>
-                                <td className="font-semibold font-mono text-slate-800">1023456789</td>
+                                <td className="font-semibold font-mono text-slate-800">
+                                    {(order as any).legalEntity?.bankAccountNumber || "1023456789"}
+                                </td>
                             </tr>
                             <tr>
                                 <td className="text-slate-500">Ngân hàng:</td>
-                                <td className="text-slate-800 font-semibold">Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh</td>
+                                <td className="text-slate-800 font-semibold">
+                                    {(order as any).legalEntity?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh"}
+                                </td>
                             </tr>
                             <tr>
                                 <td className="text-slate-500">Nội dung CK:</td>
