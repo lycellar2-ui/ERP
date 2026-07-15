@@ -346,8 +346,10 @@ export async function getSalesOrderDetailWithMarginAndTimeline(id: string): Prom
     margin: SOMarginData | null
     timeline: SOTimelineEvent[]
 }> {
-    const detailAndMargin = await getSalesOrderDetailWithMargin(id)
-    const timeline = await getSOTimeline(id)
+    const [detailAndMargin, timeline] = await Promise.all([
+        getSalesOrderDetailWithMargin(id),
+        getSOTimeline(id)
+    ])
     return {
         ...detailAndMargin,
         timeline
@@ -392,44 +394,24 @@ export async function getProductsWithStock() {
             select: {
                 id: true, skuCode: true, productName: true, wineType: true, country: true,
                 stockLots: { where: { status: 'AVAILABLE' }, select: { qtyAvailable: true } },
-                marginPrice: true,
-                media: { select: { url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
-                supplier: { select: { name: true } },
             },
             orderBy: { productName: 'asc' },
         })
 
         return products.map((p) => {
-            let costPrice = 0
-            let retailPrice = 0
-            let wholesalePrice = 0
-
-            if (p.marginPrice) {
-                costPrice = Number(p.marginPrice.costPrice)
-                retailPrice = Number(p.marginPrice.retailPrice)
-                wholesalePrice = Number(p.marginPrice.wholesalePrice)
-            } else {
-                // Robust hash-based fallback data to avoid empty prices
-                const hash = p.productName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-                const generatedCost = 250000 + (hash % 15) * 50000
-                costPrice = Math.round(generatedCost)
-                retailPrice = Math.round(generatedCost * 1.6)
-                wholesalePrice = Math.round(retailPrice * 0.8)
-            }
-
             return {
                 id: p.id,
                 skuCode: p.skuCode,
                 productName: p.productName,
                 wineType: p.wineType,
                 country: p.country,
-                listPrice: wholesalePrice,
+                listPrice: 0,
                 totalStock: p.stockLots.reduce((sum: number, l: any) => sum + Number(l.qtyAvailable), 0),
-                costPrice,
-                retailPrice,
-                wholesalePrice,
-                primaryImageUrl: p.media.find(m => m.isPrimary)?.url ?? p.media[0]?.url ?? null,
-                supplierName: p.supplier?.name || "Ly's Cellars",
+                costPrice: 0,
+                retailPrice: 0,
+                wholesalePrice: 0,
+                primaryImageUrl: null,
+                supplierName: "Ly's Cellars",
             }
         })
     }, 60_000)
