@@ -905,9 +905,6 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
                     <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
                         Đơn Bán Hàng (SLS)
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Quản lý toàn bộ chu trình — Quotation → SO → Delivery → Invoice → Payment
-                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={handleExport}
