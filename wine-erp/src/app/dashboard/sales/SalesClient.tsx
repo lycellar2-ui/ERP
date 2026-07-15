@@ -794,7 +794,10 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
         getLegalEntities().then(setLegalEntities).catch(() => { })
     }, [])
 
-    const reload = useCallback(async (overrides?: Partial<{ search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string }>) => {
+    const reload = useCallback(async (
+        overrides?: Partial<{ search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string }>,
+        onlyRows = false
+    ) => {
         setLoading(true)
         try {
             const result = await getSalesPageData({
@@ -806,11 +809,13 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
                 sortDir: (overrides?.sortDir ?? sortDir) as any,
                 dateFrom: (overrides?.dateFrom ?? dateFrom) || undefined,
                 dateTo: (overrides?.dateTo ?? dateTo) || undefined,
-            })
+            }, onlyRows)
             setRows(result.rows)
             setTotal(result.total)
-            setStats(result.stats)
-            setCounts(result.statusCounts)
+            if (!onlyRows) {
+                setStats(result.stats)
+                setCounts(result.statusCounts)
+            }
         } finally {
             setLoading(false)
         }
@@ -827,14 +832,14 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
         const newDir = sortBy === field && sortDir === 'desc' ? 'asc' : 'desc'
         setSortBy(field as any)
         setSortDir(newDir)
-        reload({ sortBy: field, sortDir: newDir, page: 1 })
+        reload({ sortBy: field, sortDir: newDir, page: 1 }, true)
         setPage(1)
     }
 
     const handleStatusTab = (s: SOStatus | '') => {
         setStatusFilter(s)
         setPage(1)
-        reload({ status: s, page: 1 })
+        reload({ status: s, page: 1 }, true)
     }
 
     const handleConfirm = async (id: string) => {
@@ -949,7 +954,7 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
                             debounceRef.current = setTimeout(() => {
                                 setSearch(val)
                                 setPage(1)
-                                reload({ search: val, page: 1 })
+                                reload({ search: val, page: 1 }, true)
                             }, 300)
                         }}
                         className="w-full pl-9 pr-4 py-2.5 text-sm outline-none"
@@ -960,12 +965,12 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
                 <div className="flex items-center gap-2">
                     <Calendar size={14} style={{ color: '#4A6A7A' }} />
                     <input type="date" value={dateFrom}
-                        onChange={e => { setDateFrom(e.target.value); setPage(1); reload({ dateFrom: e.target.value, page: 1 }) }}
+                        onChange={e => { setDateFrom(e.target.value); setPage(1); reload({ dateFrom: e.target.value, page: 1 }, true) }}
                         className="px-2.5 py-2 text-xs outline-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }} />
                     <span className="text-xs" style={{ color: '#4A6A7A' }}>→</span>
                     <input type="date" value={dateTo}
-                        onChange={e => { setDateTo(e.target.value); setPage(1); reload({ dateTo: e.target.value, page: 1 }) }}
+                        onChange={e => { setDateTo(e.target.value); setPage(1); reload({ dateTo: e.target.value, page: 1 }, true) }}
                         className="px-2.5 py-2 text-xs outline-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }} />
                 </div>
@@ -1182,7 +1187,7 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-1">
                         {Array.from({ length: Math.ceil(total / 20) }, (_, i) => i + 1).slice(0, 8).map(p => (
-                            <button key={p} onClick={() => { setPage(p); reload({ page: p }) }}
+                            <button key={p} onClick={() => { setPage(p); reload({ page: p }, true) }}
                                 className="min-w-[32px] h-8 px-2 rounded text-xs font-semibold transition-all"
                                 style={{
                                     background: p === page ? 'rgba(135,203,185,0.15)' : 'transparent',

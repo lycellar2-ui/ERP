@@ -2009,7 +2009,16 @@ export async function getSalesPageData(filters: {
     sortDir?: 'asc' | 'desc'
     dateFrom?: string
     dateTo?: string
-} = {}) {
+} = {}, onlyRows = false) {
+    if (onlyRows) {
+        const ordersResult = await getSalesOrders(filters)
+        return {
+            rows: ordersResult.rows,
+            total: ordersResult.total,
+            stats: { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 },
+            statusCounts: {} as Record<string, number>,
+        }
+    }
     const [ordersResult, stats, statusCounts] = await Promise.all([
         getSalesOrders(filters),
         getSalesStats(),
