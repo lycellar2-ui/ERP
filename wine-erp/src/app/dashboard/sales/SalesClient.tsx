@@ -1268,18 +1268,29 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
         setLoading(true)
         getSalesOrderDetailWithMargin(soId).then(async (res) => {
             if (!active) return
-            if (res.detail) {
-                setDetail(res.detail)
+            const detailObj = res.detail
+            if (detailObj) {
+                setDetail(detailObj)
                 const initialVintages: Record<string, number> = {}
-                for (const line of res.detail.lines) {
+                for (const line of detailObj.lines) {
                     initialVintages[line.id] = (line as any).vintage || 0
                 }
                 setSelectedVintages(initialVintages)
                 
-                const productIds = res.detail.lines.map(l => l.productId)
+                const productIds = detailObj.lines.map(l => l.productId)
                 const vintagesData = await getAvailableVintagesForProducts(productIds)
                 if (active) {
                     setAvailableVintages(vintagesData)
+                    setSelectedVintages(prev => {
+                        const updated = { ...prev }
+                        for (const line of detailObj.lines) {
+                            const avail = vintagesData[line.productId] || []
+                            if (avail.length > 0 && !updated[line.id]) {
+                                updated[line.id] = avail[0] // Default to the lowest (first) vintage
+                            }
+                        }
+                        return updated
+                    })
                 }
             }
             if (active) setLoading(false)
@@ -1385,8 +1396,8 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                                     ))}
                                                 </select>
                                             ) : (
-                                                <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[10px]">
-                                                    <AlertTriangle size={12} /> Không có sẵn tồn kho Vintage
+                                                <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px]" style={{ background: 'rgba(138,174,187,0.06)', color: '#8AAEBB', border: '1px dashed rgba(138,174,187,0.2)' }}>
+                                                    Không Vintage (Sản phẩm không Vintage hoặc Hết tồn kho)
                                                 </div>
                                             )}
                                         </div>
