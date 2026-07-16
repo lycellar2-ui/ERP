@@ -1,6 +1,8 @@
 import { getTelegramBotStatus } from './actions'
 import { TelegramSettingsClient } from './TelegramSettingsClient'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = { title: 'Cài Đặt Telegram Bot | Wine ERP' }
 
 export default async function TelegramSettingsPage() {
