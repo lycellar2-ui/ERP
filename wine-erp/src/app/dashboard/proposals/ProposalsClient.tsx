@@ -98,7 +98,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display), Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Tờ Trình & Đề Xuất
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -125,7 +125,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 ].map(s => (
                     <div key={s.label} className="rounded-md p-4" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${s.accent}` }}>
                         <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-2xl font-bold mt-1" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>{s.value}</p>
+                        <p className="text-2xl font-bold mt-1" style={{ color: '#E8F1F2' }}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -225,7 +225,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             onMouseLeave={e => e.currentTarget.style.background = isPending && isCEOLevel ? 'rgba(212,168,83,0.03)' : 'transparent'}
                                         >
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9', whiteSpace: 'nowrap' }}>
+                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9', whiteSpace: 'nowrap' }}>
                                                     {p.proposalNo}
                                                 </span>
                                             </td>
@@ -250,7 +250,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 </span>
                                             </td>
                                             <td className="px-3 py-3 text-right" style={{ verticalAlign: 'middle', overflow: 'hidden' }}>
-                                                <span className="text-sm font-bold block truncate" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>
+                                                <span className="text-sm font-bold block truncate" style={{ color: '#E8F1F2' }}>
                                                     {p.estimatedAmount ? formatCompactVND(p.estimatedAmount) : '—'}
                                                 </span>
                                             </td>
@@ -540,7 +540,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
                         {/* Title + Meta */}
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>
+                                <span className="text-sm font-bold" style={{ color: '#87CBB9' }}>
                                     {detail.proposalNo}
                                 </span>
                                 <span className="text-xs px-2 py-0.5 rounded-full font-bold"

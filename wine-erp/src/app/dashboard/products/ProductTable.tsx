@@ -105,7 +105,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                                     </div>
                                     <div className="text-center w-full min-w-0">
                                         <p className="text-xs font-bold truncate text-ellipsis" style={{ color: '#E8F1F2' }}>{row.productName}</p>
-                                        <p className="text-[10px] mt-1" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{row.skuCode}</p>
+                                        <p className="text-[10px] mt-1 font-mono" style={{ color: '#8AAEBB' }}>{row.skuCode}</p>
 
                                     </div>
                                 </div>
@@ -118,7 +118,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                         <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.productName}>
                             {row.productName}
                         </p>
-                        <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                        <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>
                             {row.skuCode}
                         </p>
                     </div>
@@ -140,14 +140,14 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
 
             {/* ABV */}
             <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                <span className="text-xs font-mono" style={{ color: '#8AAEBB' }}>
                     {row.abvPercent != null ? `${row.abvPercent}°` : '—'}
                 </span>
             </td>
 
             {/* Stock */}
             <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                <span className="text-sm font-bold" style={{ color: stockColor, fontFamily: '"DM Mono", monospace' }}>
+                <span className="text-sm font-bold font-mono" style={{ color: stockColor }}>
                     {row.totalStock}
                 </span>
                 <span className="text-[10px] ml-1" style={{ color: '#4A6A7A' }}>chai</span>
@@ -231,7 +231,7 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
 
                 </div>
                 
-                <div className="flex items-center gap-2 mt-0.5 text-[10px]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                <div className="flex items-center gap-2 mt-0.5 text-[10px] font-mono" style={{ color: '#4A6A7A' }}>
                     <span className="font-medium text-[#8AAEBB]">{row.skuCode}</span>
                     {row.abvPercent != null && (
                         <span className="px-1 py-0.2 rounded bg-[#1B2E3D]" style={{ color: '#8AAEBB' }}>
@@ -246,7 +246,7 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                     {row.appellationName ? ` • ${row.appellationName}` : ''}
                 </p>
 
-                <div className="flex items-center gap-1.5 flex-wrap text-[9px] mt-0.5" style={{ color: '#4A6A7A' }}>
+                <div className="flex items-center gap-1.5 flex-wrap text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
                     <span className="text-[#8AAEBB]">{fmtLabel}</span>
                     <span>•</span>
                     <span>{row.unitsPerCase} chai/{pkgLabel}</span>
@@ -263,7 +263,7 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
             <div className="flex flex-col items-end justify-center gap-1 flex-shrink-0 min-w-[85px]">
                 {/* Stock info */}
                 <div className="text-[11px] font-medium" style={{ color: '#8AAEBB' }}>
-                    Tồn: <span className="font-bold text-xs" style={{ color: stockColor, fontFamily: '"DM Mono", monospace' }}>{row.totalStock}</span>
+                    Tồn: <span className="font-bold text-xs font-mono" style={{ color: stockColor }}>{row.totalStock}</span>
                 </div>
 
                 {/* Wine Type Badge (compact wrapper) */}

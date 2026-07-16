@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/session'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, ARPaymentCreateSchema, APPaymentSchema, ExpenseCreateSchema, JournalEntrySchema, CODCollectionSchema, BadDebtWriteOffSchema } from '@/lib/validations'
+import { findHierarchicalTaxRate } from '@/lib/tax-utils'
 
 export interface ARRow {
     id: string; invoiceNo: string; customerName: string; customerCode: string
@@ -647,12 +648,13 @@ export async function getAccountLedger(
 }
 
 // ── Get or create accounting period ───────────────
-async function getOrCreatePeriod(year: number, month: number) {
-    let period = await prisma.accountingPeriod.findUnique({
+export async function getOrCreatePeriod(year: number, month: number, txClient?: any) {
+    const client = txClient || prisma
+    let period = await client.accountingPeriod.findUnique({
         where: { year_month: { year, month } },
     })
     if (!period) {
-        period = await prisma.accountingPeriod.create({
+        period = await client.accountingPeriod.create({
             data: { year, month },
         })
     }
@@ -664,18 +666,21 @@ async function getOrCreatePeriod(year: number, month: number) {
 }
 
 // ── Generate Journal Entry Number ─────────────────
-async function nextEntryNo(prefix: string): Promise<string> {
-    const count = await prisma.journalEntry.count()
+export async function nextEntryNo(prefix: string, txClient?: any): Promise<string> {
+    const client = txClient || prisma
+    const count = await client.journalEntry.count()
     return `${prefix}-${String(count + 1).padStart(6, '0')}`
 }
 
 // ── Auto-generate: Goods Receipt → DR 156 / CR 331
 export async function generateGoodsReceiptJournal(
     grId: string,
-    createdBy: string
+    createdBy: string,
+    txClient?: any
 ): Promise<{ success: boolean; entryId?: string; error?: string }> {
+    const client = txClient || prisma
     try {
-        const gr = await prisma.goodsReceipt.findUnique({
+        const gr = await client.goodsReceipt.findUnique({
             where: { id: grId },
             include: {
                 lines: {
@@ -686,14 +691,14 @@ export async function generateGoodsReceiptJournal(
         if (!gr) return { success: false, error: 'GR không tồn tại' }
 
         const now = new Date()
-        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
-        const entryNo = await nextEntryNo('JE-GR')
+        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1, client)
+        const entryNo = await nextEntryNo('JE-GR', client)
 
         const totalValue = gr.lines.reduce(
-            (s, l) => s + Number(l.lot?.unitLandedCost ?? 0) * Number(l.lot?.qtyReceived ?? 0), 0
+            (s: number, l: any) => s + Number(l.lot?.unitLandedCost ?? 0) * Number(l.lot?.qtyReceived ?? 0), 0
         )
 
-        const entry = await prisma.journalEntry.create({
+        const entry = await client.journalEntry.create({
             data: {
                 entryNo,
                 docType: 'GOODS_RECEIPT',
@@ -881,10 +886,12 @@ export async function closeAccountingPeriod(
 // ── Auto-generate: Delivery Order → DR 632 (COGS) / CR 156 (Hàng tồn kho)
 export async function generateDeliveryOrderCOGSJournal(
     doId: string,
-    createdBy: string
+    createdBy: string,
+    txClient?: any
 ): Promise<{ success: boolean; entryId?: string; error?: string }> {
+    const client = txClient || prisma
     try {
-        const deliveryOrder = await prisma.deliveryOrder.findUnique({
+        const deliveryOrder = await client.deliveryOrder.findUnique({
             where: { id: doId },
             include: {
                 lines: {
@@ -895,16 +902,16 @@ export async function generateDeliveryOrderCOGSJournal(
         if (!deliveryOrder) return { success: false, error: 'DO không tồn tại' }
 
         const now = new Date()
-        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
-        const entryNo = await nextEntryNo('JE-COGS')
+        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1, client)
+        const entryNo = await nextEntryNo('JE-COGS', client)
 
         const totalCOGS = deliveryOrder.lines.reduce(
-            (s, l) => s + Number(l.qtyShipped ?? l.qtyPicked) * Number(l.lot?.unitLandedCost ?? 0), 0
+            (s: number, l: any) => s + Number(l.qtyShipped ?? l.qtyPicked) * Number(l.lot?.unitLandedCost ?? 0), 0
         )
 
         if (totalCOGS <= 0) return { success: true } // No cost to record
 
-        const entry = await prisma.journalEntry.create({
+        const entry = await client.journalEntry.create({
             data: {
                 entryNo,
                 docType: 'COGS',
@@ -2616,7 +2623,7 @@ export async function getSCTDeclaration(year?: number, month?: number): Promise<
     const goodsReceipts = await prisma.goodsReceipt.findMany({
         where: {
             status: 'CONFIRMED',
-            createdAt: { gte: startDate, lte: endDate },
+            confirmedAt: { gte: startDate, lte: endDate },
         },
         include: {
             po: {
@@ -2654,9 +2661,7 @@ export async function getSCTDeclaration(year?: number, month?: number): Promise<
             const cifLineVND = qty * unitPrice * exchangeRate
 
             // Find matching tax rate
-            const taxRate = taxRates.find(t =>
-                t.hsCode === product.hsCode && t.countryOfOrigin === product.country
-            )
+            const taxRate = findHierarchicalTaxRate(taxRates, product.hsCode ?? '', product.country)
 
             const importTaxRate = Number(taxRate?.importTaxRate ?? 15)
             const sctRate = Number(taxRate?.sctRate ?? 35)

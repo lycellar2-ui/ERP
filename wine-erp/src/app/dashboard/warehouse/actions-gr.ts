@@ -139,13 +139,23 @@ export async function createGoodsReceipt(input: {
                 const poLine = po.lines.find(l => l.productId === line.productId)
                 const qtyExpected = poLine ? Number(poLine.qtyOrdered) : line.qtyReceived
 
-                // Generate unique lot number (atomic — collision-safe)
+                // Generate unique lot number (atomic — collision-safe within month)
+                const lotPrefix = `LOT-${yy}${mm}-`
                 const lastLot = await tx.stockLot.findFirst({
+                    where: { lotNo: { startsWith: lotPrefix } },
                     orderBy: { lotNo: 'desc' },
                     select: { lotNo: true },
                 })
-                const nextLotSeq = lastLot ? parseInt(lastLot.lotNo.replace(/\D/g, '').slice(-5)) + 1 : 1
-                const lotNo = `LOT-${yy}${mm}-${String(nextLotSeq).padStart(5, '0')}`
+                let nextLotSeq = 1
+                if (lastLot) {
+                    const parts = lastLot.lotNo.split('-')
+                    const seqStr = parts[parts.length - 1]
+                    const parsed = parseInt(seqStr, 10)
+                    if (!isNaN(parsed)) {
+                        nextLotSeq = parsed + 1
+                    }
+                }
+                const lotNo = `${lotPrefix}${String(nextLotSeq).padStart(5, '0')}`
 
                 const lot = await tx.stockLot.create({
                     data: {
@@ -155,10 +165,10 @@ export async function createGoodsReceipt(input: {
                         shipmentId: shipmentId ?? null,
                         locationId: line.locationId,
                         qtyReceived: line.qtyReceived,
-                        qtyAvailable: line.qtyReceived,
+                        qtyAvailable: 0,
                         unitLandedCost: line.unitLandedCost ?? 0,
                         receivedDate: now,
-                        status: 'AVAILABLE',
+                        status: 'PENDING',
                     },
                 })
 
@@ -193,12 +203,36 @@ export async function confirmGoodsReceipt(
     try {
         let grNo = ''
         await prisma.$transaction(async (tx) => {
+            const existingGR = await tx.goodsReceipt.findUnique({
+                where: { id: grId },
+            })
+            if (!existingGR) throw new Error('Đơn nhập kho không tồn tại')
+            if (existingGR.status !== 'DRAFT') {
+                throw new Error('Đơn nhập kho đã được xác nhận trước đó')
+            }
+
             const gr = await tx.goodsReceipt.update({
                 where: { id: grId },
                 data: { status: 'CONFIRMED', confirmedBy: confirmerId, confirmedAt: new Date() },
                 include: { po: true },
             })
             grNo = gr.grNo
+
+            // Activate associated stock lots
+            const grLinesCreated = await tx.goodsReceiptLine.findMany({
+                where: { grId },
+            })
+            for (const line of grLinesCreated) {
+                if (line.lotId) {
+                    await tx.stockLot.update({
+                        where: { id: line.lotId },
+                        data: {
+                            status: 'AVAILABLE',
+                            qtyAvailable: line.qtyReceived,
+                        },
+                    })
+                }
+            }
 
             const poLines = await tx.purchaseOrderLine.findMany({ where: { poId: gr.poId } })
             const grLines = await tx.goodsReceiptLine.findMany({

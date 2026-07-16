@@ -328,7 +328,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                     <div className="space-y-4">
                         <div>
                             <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
-                            <div className="text-sm font-semibold p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                                 {user.email}
                             </div>
                         </div>
@@ -505,7 +505,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
     const handleApproval = async (requestId: string, action: 'APPROVE' | 'REJECT') => {
         setProcessingId(requestId)
-        await processApproval({ requestId, action, approverId: 'system' })
+        await processApproval({ requestId, action })
         await loadApprovals()
         setProcessingId(null)
     }
@@ -538,8 +538,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Cài Đặt & Phân Quyền (SYS/RBAC)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -568,7 +567,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 <Icon size={16} style={{ color: c.accent }} />
                                 <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{c.label}</span>
                             </div>
-                            <p className="text-2xl font-bold" style={{ fontFamily: '"DM Mono"', color: c.accent }}>{c.value}</p>
+                            <p className="text-2xl font-bold font-mono" style={{ color: c.accent }}>{c.value}</p>
                         </div>
                     )
                 })}
@@ -638,7 +637,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 onClick={() => setSelectedUser(u)}>
                                                 {u.name || '—'}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
                                                 {u.email}
                                             </td>
                                             <td className="px-3 py-2.5">
@@ -844,7 +843,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     setFieldChanges([])
                                                 }
                                             }}>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
                                                 {new Date(log.createdAt).toLocaleString('vi-VN')}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>
@@ -861,7 +860,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#87CBB9' }}>
                                                 {log.entityType}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
                                                 {log.entityId?.slice(-8) || '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
@@ -1039,7 +1038,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
             <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between" style={{ background: '#0D1B25', borderLeft: '1px solid #2A4355' }}>
                 <div>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", Georgia, serif' }}>Cấu Hình Pháp Nhân</h3>
+                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Cấu Hình Pháp Nhân</h3>
                         <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
                     </div>
 

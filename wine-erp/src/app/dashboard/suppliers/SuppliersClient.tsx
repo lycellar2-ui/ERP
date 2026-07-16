@@ -130,7 +130,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             <Building2 size={16} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                                 {isEdit ? 'Chỉnh Sửa NCC' : 'Thêm Nhà Cung Cấp'}
                             </h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -414,7 +414,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>Nhà Cung Cấp</h2>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>Nhà Cung Cấp</h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>Winery, Négociant, Distributor, Forwarder — {stats.total} đối tác</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -450,7 +450,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-xl font-bold mt-0.5" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{s.value}</p>
+                            <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                         </div>
                     </div>
                 ))}
@@ -536,7 +536,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                         onClick={() => { setDetailId(row.id); setDetailOpen(true) }}>
                                         <td className="px-4 py-3">
                                             <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                            <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                            <p className="text-xs mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
                                             {row.contactName && <p className="text-[10px] mt-0.5" style={{ color: '#4A8FAB' }}>👤 {row.contactName}</p>}
                                         </td>
                                         <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
@@ -545,10 +545,10 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                             <p className="text-xs font-semibold" style={{ color: row.tradeAgreement ? '#5BA88A' : '#2A4355' }}>{row.tradeAgreement ?? 'MFN'}</p>
                                             <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{row.coFormType ?? '—'}</p>
                                         </td>
-                                        <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{row.paymentTerm ?? '—'}</td>
+                                        <td className="px-4 py-3 text-xs font-mono" style={{ color: '#8AAEBB' }}>{row.paymentTerm ?? '—'}</td>
                                         <td className="px-4 py-3"><span className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}><Clock size={12} /> {row.leadTimeDays} ngày</span></td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-bold" style={{ color: row.poCount > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>{row.poCount}</span>
+                                            <span className="text-sm font-bold font-mono" style={{ color: row.poCount > 0 ? '#87CBB9' : '#2A4355' }}>{row.poCount}</span>
                                         </td>
                                         <td className="px-4 py-3"><StatusDot status={row.status} /></td>
                                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
@@ -617,12 +617,12 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                                     <div className="w-16 h-1.5 rounded-full" style={{ background: '#2A4355' }}>
                                                         <div className="h-full rounded-full" style={{ background: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E', width: `${Math.min(sc.onTimeRate, 100)}%` }} />
                                                     </div>
-                                                    <span className="text-xs font-bold" style={{ color: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E', fontFamily: '"DM Mono"' }}>{sc.onTimeRate.toFixed(0)}%</span>
+                                                    <span className="text-xs font-bold" style={{ color: sc.onTimeRate >= 90 ? '#5BA88A' : sc.onTimeRate >= 70 ? '#D4A853' : '#8B1A2E' }}>{sc.onTimeRate.toFixed(0)}%</span>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3"><span className="text-xs font-bold" style={{ color: sc.qualityScore >= 90 ? '#5BA88A' : '#D4A853', fontFamily: '"DM Mono"' }}>{sc.qualityScore.toFixed(0)}/100</span></td>
-                                            <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{sc.avgLeadTimeDays.toFixed(0)} ngày</td>
-                                            <td className="px-4 py-3 text-xs text-center" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{sc.totalPOs}</td>
+                                            <td className="px-4 py-3"><span className="text-xs font-bold" style={{ color: sc.qualityScore >= 90 ? '#5BA88A' : '#D4A853' }}>{sc.qualityScore.toFixed(0)}/100</span></td>
+                                            <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB' }}>{sc.avgLeadTimeDays.toFixed(0)} ngày</td>
+                                            <td className="px-4 py-3 text-xs text-center" style={{ color: '#87CBB9' }}>{sc.totalPOs}</td>
                                             <td className="px-4 py-3"><span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold" style={{ background: gc.bg, color: gc.color }}>{sc.grade}</span></td>
                                         </tr>
                                     )
@@ -645,7 +645,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                     <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full" style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)' }}>
                                         {dup.type === 'PRODUCT' ? '📦 Sản phẩm' : dup.type === 'CUSTOMER' ? '👤 Khách hàng' : '🏭 NCC'}
                                     </span>
-                                    <span className="text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{dup.similarity}% giống</span>
+                                    <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{dup.similarity}% giống</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-2 rounded" style={{ background: '#142433' }}>

@@ -50,6 +50,7 @@ const DEFAULT_THRESHOLDS: ThresholdConfig[] = [
 
 // ─── Load full approval matrix ───────────────────
 export async function getApprovalMatrix(): Promise<ApprovalMatrixData> {
+    await requirePermission('SYS', 'ADMIN')
     return cached('settings:approvalMatrix', async () => {
         const configs = await prisma.approvalConfig.findMany()
         const configMap = new Map(configs.map(c => [c.configKey, c.value]))

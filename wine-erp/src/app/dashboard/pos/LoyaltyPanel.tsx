@@ -35,7 +35,7 @@ export function LoyaltyPanel() {
             {/* Search */}
             <div className="flex items-center gap-2">
                 <Star size={18} style={{ color: '#D4A853' }} />
-                <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>
                     Chương Trình Loyalty
                 </h3>
             </div>
@@ -76,7 +76,7 @@ export function LoyaltyPanel() {
                                 </span>
                             </div>
                             <div className="text-right">
-                                <p className="text-2xl font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                <p className="text-2xl font-bold" style={{ color: '#D4A853' }}>
                                     {info.pointsBalance.toLocaleString('vi-VN')}
                                 </p>
                                 <p className="text-xs" style={{ color: '#4A6A7A' }}>điểm khả dụng</p>
@@ -90,7 +90,7 @@ export function LoyaltyPanel() {
                                 { label: 'Giá Trị Quy Đổi', value: formatVND(info.redeemableValue), color: '#87CBB9' },
                             ].map(s => (
                                 <div key={s.label} className="text-center p-2 rounded" style={{ background: '#0D1E2B' }}>
-                                    <p className="text-sm font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>{s.value}</p>
+                                    <p className="text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
                                     <p className="text-xs" style={{ color: '#4A6A7A' }}>{s.label}</p>
                                 </div>
                             ))}
@@ -117,13 +117,10 @@ export function LoyaltyPanel() {
                                             <span className="text-xs" style={{ color: '#E8F1F2' }}>{h.description}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs font-bold" style={{
-                                                color: h.type === 'EARN' ? '#5BA88A' : '#C07434',
-                                                fontFamily: '"DM Mono"',
-                                            }}>
+                                            <span className="text-xs font-bold" style={{ color: h.type === 'EARN' ? '#5BA88A' : '#C07434' }}>
                                                 {h.type === 'EARN' ? '+' : ''}{h.points}
                                             </span>
-                                            <span className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>
                                                 {new Date(h.date).toLocaleDateString('vi-VN')}
                                             </span>
                                         </div>

@@ -105,8 +105,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <Shield size={24} style={{ color: '#E05252' }} />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold"
-                            style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                        <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                             Ma Trận Phân Quyền Phê Duyệt
                         </h2>
                         <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -344,7 +343,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             {thresholds.filter(t => t.key.startsWith('so.')).map(t => (
                                 <div key={t.key} className="flex justify-between">
                                     <span style={{ color: '#8AAEBB' }}>{t.label.replace('SO: ', '')}</span>
-                                    <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                    <span className="font-bold" style={{ color: '#E8F1F2' }}>
                                         {t.key.includes('discount') ? `${t.value}%` : `${(t.value / 1e6).toFixed(0)}M`}
                                     </span>
                                 </div>
@@ -360,7 +359,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             {thresholds.filter(t => t.key.startsWith('po.')).map(t => (
                                 <div key={t.key} className="flex justify-between">
                                     <span style={{ color: '#8AAEBB' }}>{t.label.replace('PO: ', '')}</span>
-                                    <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                    <span className="font-bold" style={{ color: '#E8F1F2' }}>
                                         {`${(t.value / 1e6).toFixed(0)}M`}
                                     </span>
                                 </div>
@@ -375,19 +374,19 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <div className="space-y-1.5 text-xs">
                             <div className="flex justify-between">
                                 <span style={{ color: '#8AAEBB' }}>Số loại 3 cấp</span>
-                                <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                <span className="font-bold" style={{ color: '#E8F1F2' }}>
                                     {(routes ?? []).filter(r => (r.levels ?? []).length === 3).length}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span style={{ color: '#8AAEBB' }}>Số loại 2 cấp</span>
-                                <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                <span className="font-bold" style={{ color: '#E8F1F2' }}>
                                     {(routes ?? []).filter(r => (r.levels ?? []).length === 2).length}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span style={{ color: '#8AAEBB' }}>CEO trực tiếp</span>
-                                <span className="font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>
+                                <span className="font-bold" style={{ color: '#E05252' }}>
                                     {(routes ?? []).filter(r => (r.levels ?? []).length === 1 && r.levels?.[0] === 3).length}
                                 </span>
                             </div>

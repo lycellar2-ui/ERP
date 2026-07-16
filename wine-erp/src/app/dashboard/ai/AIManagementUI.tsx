@@ -114,7 +114,7 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                                 }} />
                             </div>
                             <p className="text-[11px] font-semibold" style={{ color: active ? '#E8F1F2' : '#4A6A7A' }}>{mod.label}</p>
-                            <p className="text-[9px]" style={{ color: '#4A6A7A' }}>{mod.desc}</p>
+                            <p className="text-xs" style={{ color: '#4A6A7A' }}>{mod.desc}</p>
                         </button>
                     )
                 })}
@@ -210,11 +210,11 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                                         {report.isPinned && <Pin size={10} style={{ color: '#D4A853' }} />}
                                         <ModIcon size={13} style={{ color: '#87CBB9' }} />
                                         <span className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{report.title}</span>
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded capitalize"
+                                        <span className="text-xs px-1.5 py-0.5 rounded capitalize"
                                             style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>{report.module}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <span className="text-[9px]" style={{ color: '#4A6A7A' }}>
+                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>
                                             <Clock size={9} className="inline mr-0.5" />
                                             {new Date(report.createdAt).toLocaleDateString('vi-VN')}
                                         </span>

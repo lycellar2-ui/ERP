@@ -134,7 +134,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                             <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(135,203,185,0.1)', border: '1px solid #87CBB9' }}>
                                 <Package size={14} style={{ color: '#87CBB9' }} />
                                 <div className="flex-1 min-w-0">
-                                    <span className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{selectedProduct.skuCode}</span>
+                                    <span className="text-sm font-bold font-mono" style={{ color: '#87CBB9' }}>{selectedProduct.skuCode}</span>
                                     <span className="text-xs ml-2 truncate" style={{ color: '#8AAEBB' }}>{selectedProduct.productName}</span>
                                 </div>
                                 <button onClick={() => { setSelectedProduct(null); setMovements([]); setSummary(null); setLoaded(false) }}
@@ -166,7 +166,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                                 style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.08)')}
                                                 onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{p.skuCode}</span>
+                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{p.skuCode}</span>
                                                 <span className="text-xs truncate flex-1" style={{ color: '#E8F1F2' }}>{p.productName}</span>
                                             </button>
                                         ))}
@@ -234,7 +234,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                             </div>
                             <div className="min-w-0">
                                 <p className="text-[10px] uppercase tracking-wide font-semibold truncate" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-base font-bold leading-tight truncate" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{s.value}</p>
+                                <p className="text-base font-bold leading-tight truncate font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                             </div>
                         </div>
                     ))}
@@ -297,7 +297,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                                             </span>
                                                         </td>
                                                         <td className="px-3 py-2.5">
-                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{m.docNo}</span>
+                                                            <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{m.docNo}</span>
                                                         </td>
                                                         <td className="px-3 py-2.5">
                                                             <span className="text-xs" style={{ color: '#8AAEBB' }}>{m.warehouseName}</span>
@@ -310,23 +310,20 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                                         </td>
                                                         <td className="px-3 py-2.5 text-center">
                                                             {m.qtyIn > 0 ? (
-                                                                <span className="text-sm font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono", monospace' }}>
+                                                                <span className="text-sm font-bold font-mono" style={{ color: '#5BA88A' }}>
                                                                     +{m.qtyIn.toLocaleString()}
                                                                 </span>
                                                             ) : <span style={{ color: '#2A4355' }}>—</span>}
                                                         </td>
                                                         <td className="px-3 py-2.5 text-center">
                                                             {m.qtyOut > 0 ? (
-                                                                <span className="text-sm font-bold" style={{ color: '#C74B50', fontFamily: '"DM Mono", monospace' }}>
+                                                                <span className="text-sm font-bold font-mono" style={{ color: '#C74B50' }}>
                                                                     -{m.qtyOut.toLocaleString()}
                                                                 </span>
                                                             ) : <span style={{ color: '#2A4355' }}>—</span>}
                                                         </td>
                                                         <td className="px-3 py-2.5 text-center">
-                                                            <span className="text-sm font-bold" style={{
-                                                                color: m.balance > 0 ? '#87CBB9' : m.balance < 0 ? '#C74B50' : '#4A6A7A',
-                                                                fontFamily: '"DM Mono", monospace',
-                                                            }}>
+                                                            <span className="text-sm font-bold font-mono" style={{ color: m.balance > 0 ? '#87CBB9' : m.balance < 0 ? '#C74B50' : '#4A6A7A' }}>
                                                                 {m.balance.toLocaleString()}
                                                             </span>
                                                         </td>
@@ -356,14 +353,10 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                 {stockLocations.map((loc: any, i: number) => (
                                     <div key={i} className="p-3 rounded-xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                         <div className="flex items-center justify-between mb-1.5">
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-lg"
-                                                style={{ background: '#1B2E3D', color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-lg font-mono" style={{ background: '#1B2E3D', color: '#87CBB9' }}>
                                                 <MapPin size={10} className="inline mr-1" />{loc.locationCode}
                                             </span>
-                                            <span className="text-xs font-bold" style={{
-                                                color: loc.status === 'QUARANTINE' ? '#D4A853' : '#5BA88A',
-                                                fontFamily: '"DM Mono", monospace',
-                                            }}>
+                                            <span className="text-xs font-bold font-mono" style={{ color: loc.status === 'QUARANTINE' ? '#D4A853' : '#5BA88A' }}>
                                                 {loc.qtyAvailable.toLocaleString()} chai
                                             </span>
                                         </div>

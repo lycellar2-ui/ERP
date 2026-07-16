@@ -213,8 +213,7 @@ export function AgencyClient() {
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div>
-                <h2 className="text-2xl font-bold"
-                    style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                     Import Agency Portal (AGN)
                 </h2>
                 <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -237,7 +236,7 @@ export function AgencyClient() {
                             <Icon size={20} style={{ color: s.color }} />
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -418,10 +417,10 @@ export function AgencyClient() {
                                                     <span className="text-xs font-semibold px-2 py-0.5 rounded"
                                                         style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
                                                 </td>
-                                                <td className="px-3 py-3 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                     {sub.shipmentBol || '—'}
                                                 </td>
-                                                <td className="px-3 py-3 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>
                                                     {sub.declarationNo || '—'}
                                                 </td>
                                                 <td className="px-3 py-3 text-xs font-bold" style={{ color: sub.documentCount > 0 ? '#5BA88A' : '#4A6A7A' }}>
@@ -656,7 +655,7 @@ export function AgencyClient() {
                                 <tbody>
                                     {assignShipments.map(s => (
                                         <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                            <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{s.billOfLading}</td>
+                                            <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>{s.billOfLading}</td>
                                             <td className="px-3 py-3 text-xs" style={{ color: '#E8F1F2' }}>{s.vesselName ?? '—'}</td>
                                             <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{s.eta ? formatDate(s.eta) : '—'}</td>
                                             <td className="px-3 py-3">
@@ -763,7 +762,7 @@ export function AgencyClient() {
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
                                                 <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{p.name}</p>
-                                                <p className="text-xs" style={{ fontFamily: '"DM Mono"', color: '#4A6A7A' }}>{p.code}</p>
+                                                <p className="text-xs" style={{ color: '#4A6A7A' }}>{p.code}</p>
                                             </div>
                                             <span className="text-xs font-semibold px-2 py-0.5 rounded"
                                                 style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>

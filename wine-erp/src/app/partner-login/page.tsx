@@ -67,7 +67,7 @@ export default function PartnerLoginPage() {
                                 <Shield size={20} style={{ color: '#87CBB9' }} />
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                                <h1 className="text-lg font-bold font-brand" style={{ color: '#E8F1F2' }}>
                                     {partner.name}
                                 </h1>
                                 <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -117,7 +117,7 @@ export default function PartnerLoginPage() {
                                                         <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
                                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                                            <td className="px-4 py-3 text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                            <td className="px-4 py-3 text-sm font-bold" style={{ color: '#87CBB9' }}>
                                                                 {s.billOfLading}
                                                             </td>
                                                             <td className="px-4 py-3 text-sm" style={{ color: '#E8F1F2' }}>{s.vesselName ?? '—'}</td>
@@ -160,7 +160,7 @@ export default function PartnerLoginPage() {
                                                     const st = STATUS_MAP[s.status] ?? { label: s.status, color: '#4A6A7A' }
                                                     return (
                                                         <tr key={s.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                                            <td className="px-4 py-3 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                            <td className="px-4 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                                 {s.shipmentBol ?? '—'}
                                                             </td>
                                                             <td className="px-4 py-3 text-sm" style={{ color: '#E8F1F2' }}>{s.declarationNo ?? '—'}</td>
@@ -196,7 +196,7 @@ export default function PartnerLoginPage() {
                         style={{ background: 'rgba(135,203,185,0.12)', border: '1px solid #2A4355' }}>
                         <Shield size={28} style={{ color: '#87CBB9' }} />
                     </div>
-                    <h1 className="text-2xl font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                    <h1 className="text-2xl font-bold font-brand" style={{ color: '#E8F1F2' }}>
                         Partner Portal
                     </h1>
                     <p className="text-sm mt-1" style={{ color: '#4A6A7A' }}>

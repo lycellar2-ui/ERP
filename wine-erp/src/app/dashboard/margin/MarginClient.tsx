@@ -740,7 +740,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             {/* Bảng check margin Section Title & Action Button */}
             <div className="border-b border-[#2A4355]/40 pb-2 mt-6 space-y-2">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-slate-100" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                    <h3 className="text-base font-bold text-slate-100">
                         Danh sách check margin
                     </h3>
                     <span className="text-xs px-2 py-0.5 bg-[#1B2E3D] border border-[#2A4355]/60 text-slate-300 rounded-full font-normal font-sans" style={{ fontFamily: 'var(--font-sans)' }}>
@@ -794,12 +794,12 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] w-[140px]">Mã SKU</th>
-                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A]">Tên sản phẩm</th>
-                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Giá Wholesale</th>
-                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Special Price</th>
-                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[100px]">Margin</th>
-                                        <th className="px-3 py-2.5 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[140px]">Vs Wholesale</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] w-[140px]">Mã SKU</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A]">Tên sản phẩm</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Giá Wholesale</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Special Price</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[100px]">Margin</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[140px]">Vs Wholesale</th>
                                         <th className="px-3 py-2.5 w-[50px]"></th>
                                     </tr>
                                 </thead>
@@ -909,33 +909,33 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr style={{ background: '#102435', borderBottom: '1px solid rgba(42, 67, 85, 0.4)' }}>
-                                        <th colSpan={4} className="px-3 py-1.5 text-[9px] uppercase font-extrabold tracking-wider text-slate-400 text-center border-r border-[#2A4355]/40">
+                                        <th colSpan={4} className="px-3 py-1.5 text-xs uppercase font-extrabold tracking-wider text-slate-400 text-center border-r border-[#2A4355]/40">
                                             Thông tin tham chiếu
                                         </th>
-                                        <th colSpan={6} className="px-3 py-1.5 text-[9px] uppercase font-extrabold tracking-wider text-emerald-400 bg-[#132A3E]/40 text-center border-r border-[#2A4355]/40">
+                                        <th colSpan={6} className="px-3 py-1.5 text-xs uppercase font-extrabold tracking-wider text-emerald-400 bg-[#132A3E]/40 text-center border-r border-[#2A4355]/40">
                                             Nhập liệu & Tinh chỉnh
                                         </th>
-                                        <th colSpan={6} className="px-3 py-1.5 text-[9px] uppercase font-extrabold tracking-wider text-[#87CBB9] text-center">
+                                        <th colSpan={6} className="px-3 py-1.5 text-xs uppercase font-extrabold tracking-wider text-[#87CBB9] text-center">
                                             Kết quả mô phỏng (Pre-tax)
                                         </th>
                                     </tr>
                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                        <th className="px-3 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] w-[280px] min-w-[280px]">Sản phẩm</th>
-                                        <th className="px-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px]">Cost</th>
-                                        <th className="px-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px]">Retail</th>
-                                        <th className="px-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px] border-r border-[#2A4355]/40">Wholesale</th>
+                                        <th className="px-3 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] w-[280px] min-w-[280px]">Sản phẩm</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px]">Cost</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px]">Retail</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px] border-r border-[#2A4355]/40">Wholesale</th>
                                         
-                                        <th className="px-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[100px]">Special Price</th>
-                                        <th className="px-1 py-2 text-[9px] uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[65px]">C.Khấu D (%)</th>
-                                        <th className="px-1 py-2 text-[9px] uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[42px]">Buy</th>
-                                        <th className="px-1 py-2 text-[9px] uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[42px]">FOC</th>
-                                        <th className="px-1 py-2 text-[9px] uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-center w-[65px]">% Inc</th>
-                                        <th className="px-1 py-2 text-[9px] uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-right w-[80px] border-r border-[#2A4355]/40">Inc VNĐ</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[100px]">Special Price</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[65px]">C.Khấu D (%)</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[42px]">Buy</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-amber-400 bg-[#132A3E]/20 text-center w-[42px]">FOC</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-center w-[65px]">% Inc</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-right w-[80px] border-r border-[#2A4355]/40">Inc VNĐ</th>
                                         
-                                        <th className="px-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-[#87CBB9] text-right w-[95px]">Special Price</th>
-                                        <th className="px-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[95px]">Lãi gộp</th>
-                                        <th className="px-1 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[70px]">Margin</th>
-                                        <th className="px-1 py-2 text-[9px] uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[70px]">% Giảm vs Wholesale</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#87CBB9] text-right w-[95px]">Special Price</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[95px]">Lãi gộp</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[70px]">Margin</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[70px]">% Giảm vs Wholesale</th>
                                         <th className="px-2.5 py-2 text-center w-[40px]"></th>
                                     </tr>
                                 </thead>
@@ -1111,7 +1111,7 @@ function SimulatedTableRow({
                         className="w-[40px] px-0.5 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-[11px] text-emerald-300 outline-none focus:border-[#87CBB9]"
                         placeholder="0"
                     />
-                    <span className="text-[9px] text-[#4A6A7A] ml-0.5">%</span>
+                    <span className="text-xs text-[#4A6A7A] ml-0.5">%</span>
                 </div>
             </td>
 
@@ -1152,7 +1152,7 @@ function SimulatedTableRow({
                         className="w-[40px] px-0.5 py-0.5 bg-[#142433] border border-[#2A4355] rounded text-center font-sans text-[11px] text-sky-300 outline-none focus:border-[#8AAEBB]"
                         placeholder="0"
                     />
-                    <span className="text-[9px] text-[#4A6A7A] ml-0.5">%</span>
+                    <span className="text-xs text-[#4A6A7A] ml-0.5">%</span>
                 </div>
             </td>
 
@@ -1310,15 +1310,15 @@ function MobileSimulatedCard({
             {/* Static Base Prices Reference Row */}
             <div className="grid grid-cols-3 gap-1 bg-[#142433]/40 p-2 rounded-lg border border-[#2A4355]/20 text-center font-sans text-[10px]">
                 <div>
-                    <span className="text-slate-400 block text-[8px] uppercase">Cost</span>
+                    <span className="text-slate-400 block text-xs uppercase">Cost</span>
                     <span className="font-bold text-slate-300 block">{formatNumberOnly(p.costPrice)}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[8px] uppercase">Wholesale</span>
+                    <span className="text-slate-400 block text-xs uppercase">Wholesale</span>
                     <span className="font-bold text-[#D4A853] block">{formatNumberOnly(p.wholesalePrice)}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[8px] uppercase">Retail</span>
+                    <span className="text-slate-400 block text-xs uppercase">Retail</span>
                     <span className="font-bold text-slate-200 block">{formatNumberOnly(p.retailPrice)}</span>
                 </div>
             </div>
@@ -1327,7 +1327,7 @@ function MobileSimulatedCard({
             <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                 {/* Pair 1 Left: Special Price */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[8px] uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Special Price</span>
+                    <span className="text-xs uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Special Price</span>
                     <input
                         type="text"
                         value={row.sellingPrice === 0 ? '' : formatNumberString(row.sellingPrice)}
@@ -1339,7 +1339,7 @@ function MobileSimulatedCard({
 
                 {/* Pair 1 Right: Discount */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[8px] uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Discount</span>
+                    <span className="text-xs uppercase font-bold text-emerald-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">Discount</span>
                     <div className="relative flex-1 min-w-0">
                         <input
                             type="number"
@@ -1351,13 +1351,13 @@ function MobileSimulatedCard({
                             className="w-full pl-1.5 pr-4 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-emerald-300 focus:outline-none focus:border-[#87CBB9]"
                             placeholder="0"
                         />
-                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-[#4A6A7A] font-bold">%</span>
+                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-[#4A6A7A] font-bold">%</span>
                     </div>
                 </div>
 
                 {/* Pair 2 Left: BUY */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[8px] uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">BUY</span>
+                    <span className="text-xs uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">BUY</span>
                     <input
                         type="number"
                         min="1"
@@ -1370,7 +1370,7 @@ function MobileSimulatedCard({
 
                 {/* Pair 2 Right: FOC */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[8px] uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">FOC</span>
+                    <span className="text-xs uppercase font-bold text-amber-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">FOC</span>
                     <input
                         type="number"
                         min="0"
@@ -1383,7 +1383,7 @@ function MobileSimulatedCard({
 
                 {/* Pair 3 Left: INC % */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[8px] uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC %</span>
+                    <span className="text-xs uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC %</span>
                     <div className="relative flex-1 min-w-0">
                         <input
                             type="number"
@@ -1395,13 +1395,13 @@ function MobileSimulatedCard({
                             className="w-full pl-1.5 pr-4 py-1 bg-[#142433] border border-[#2A4355] rounded text-[11px] font-sans text-sky-300 focus:outline-none focus:border-[#8AAEBB]"
                             placeholder="0"
                         />
-                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-[#4A6A7A] font-bold">%</span>
+                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-[#4A6A7A] font-bold">%</span>
                     </div>
                 </div>
 
                 {/* Pair 3 Right: INC Đ */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[8px] uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC Đ</span>
+                    <span className="text-xs uppercase font-bold text-sky-400 w-[58px] flex-shrink-0 leading-[1.1] text-left">INC Đ</span>
                     <input
                         type="text"
                         value={row.incentiveVnd === 0 ? '' : formatNumberString(row.incentiveVnd)}

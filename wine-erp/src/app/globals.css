@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -45,71 +44,17 @@
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", Menlo, ui-monospace, monospace;
+  
+  /* Semantic Font Tokens */
+  --font-ui: var(--font-sans);
+  --font-brand: var(--font-display);
+  --font-code: var(--font-mono);
 
   /* Border radius — Sharp/Luxury */
   --radius: 6px;
   --radius-sm: 4px;
   --radius-lg: 10px;
   --radius-full: 9999px;
-}
-
-/* ── Compatibility Font Mappings (Alias DM Sans -> Inter & DM Mono -> JetBrains Mono) ── */
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: local("Inter"), local("Inter-Regular"),
-       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: local("Inter Medium"), local("Inter-Medium"),
-       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fMZg.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: local("Inter SemiBold"), local("Inter-SemiBold"),
-       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuGKYMZg.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: local("Inter Bold"), local("Inter-Bold"),
-       url("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZg.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "DM Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: local("JetBrains Mono"), local("JetBrainsMono"),
-       url("https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPQ.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: local("JetBrains Mono Medium"), local("JetBrainsMono-Medium"),
-       url("https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8-qxjPQ.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Mono";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: local("JetBrains Mono Bold"), local("JetBrainsMono-Bold"),
-       url("https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8L6tjPQ.ttf") format("truetype");
 }
 
 /* ── Base Reset ── */
@@ -304,26 +249,79 @@ button[style*="#1b2e3d"]:hover {
 }
 
 
+:root {
+  --font-ui: var(--font-sans);
+  --font-brand: var(--font-display);
+  --font-code: var(--font-mono);
+}
+
 body {
   background-color: var(--color-lys-bg);
   color: var(--color-lys-ivory);
-  font-family: var(--font-sans);
+  font-family: var(--font-ui);
   font-size: 16px;
   line-height: 1.5;
   font-feature-settings: "kern" 1, "liga" 1;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Font utility classes (use these instead of inline fontFamily) ── */
-.font-display {
-  font-family: var(--font-display);
+.font-display,
+.font-brand {
+  font-family: var(--font-brand);
 }
 
-.font-mono {
-  font-family: var(--font-mono);
+.font-mono,
+.font-code {
+  font-family: var(--font-code);
+  font-variant-numeric: tabular-nums;
 }
 
-.font-sans {
-  font-family: var(--font-sans);
+.font-sans,
+.font-ui {
+  font-family: var(--font-ui);
+}
+
+.type-page-title {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 700;
+}
+
+.type-section-title {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.type-body {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 400;
+}
+
+.type-table {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.type-code {
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-money,
+.type-number {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Scrollbar — Oceanic thin ── */

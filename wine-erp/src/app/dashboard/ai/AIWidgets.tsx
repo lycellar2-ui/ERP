@@ -109,7 +109,7 @@ export function DemandForecastWidget() {
                         </div>
                         <div className="flex-1 p-3 rounded-md" style={{ background: '#142433' }}>
                             <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>TB/tháng</p>
-                            <p className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
                                 {result.avgMonthlyDemand} chai
                             </p>
                         </div>
@@ -117,8 +117,8 @@ export function DemandForecastWidget() {
                     {result.forecast.map((f: any) => (
                         <div key={f.month} className="flex items-center justify-between p-2 rounded"
                             style={{ background: '#142433' }}>
-                            <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{f.month}</span>
-                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                            <span className="text-xs" style={{ color: '#8AAEBB' }}>{f.month}</span>
+                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>
                                 {f.predicted} chai
                             </span>
                             <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
@@ -172,7 +172,7 @@ export function PricingWidget() {
                         ].map(s => (
                             <div key={s.label} className="p-2 rounded-md text-center" style={{ background: '#142433' }}>
                                 <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xs font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>{s.value}</p>
+                                <p className="text-xs font-bold" style={{ color: s.color }}>{s.value}</p>
                             </div>
                         ))}
                     </div>
@@ -185,7 +185,7 @@ export function PricingWidget() {
                                     border: result.recommendedTier === t.label ? '1px solid rgba(135,203,185,0.3)' : '1px solid transparent',
                                 }}>
                                 <span className="text-xs" style={{ color: '#8AAEBB' }}>{t.label}</span>
-                                <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>
                                     {formatVND(t.price)}
                                 </span>
                                 {result.recommendedTier === t.label && (

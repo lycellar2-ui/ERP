@@ -131,10 +131,16 @@ export async function createDeliveryOrder(input: {
                         qtyShipped: 0,
                     },
                 })
-                await tx.stockLot.update({
-                    where: { id: line.lotId },
+                const updatedLot = await tx.stockLot.updateMany({
+                    where: {
+                        id: line.lotId,
+                        qtyAvailable: { gte: line.qtyPicked },
+                    },
                     data: { qtyAvailable: { decrement: line.qtyPicked } },
                 })
+                if (updatedLot.count === 0) {
+                    throw new Error(`Không đủ tồn kho khả dụng cho lô hàng (lotId: ${line.lotId}). Yêu cầu: ${line.qtyPicked}.`)
+                }
             }
             return deliveryOrder
         })
@@ -158,12 +164,23 @@ export async function confirmDeliveryOrder(
     try {
         let doNo = ''
         await prisma.$transaction(async (tx) => {
+            const updateCount = await tx.deliveryOrder.updateMany({
+                where: { id: doId, status: 'DRAFT' },
+                data: { status: 'SHIPPED' },
+            })
+            if (updateCount.count === 0) {
+                throw new Error('Đơn xuất kho đã được xác nhận giao hàng hoặc không ở trạng thái DRAFT')
+            }
+
+            const deliveryOrder = await tx.deliveryOrder.findUniqueOrThrow({
+                where: { id: doId },
+            })
+            doNo = deliveryOrder.doNo
+
             const doLines = await tx.deliveryOrderLine.findMany({ where: { doId } })
             for (const line of doLines) {
                 await tx.deliveryOrderLine.update({ where: { id: line.id }, data: { qtyShipped: line.qtyPicked } })
             }
-            const deliveryOrder = await tx.deliveryOrder.update({ where: { id: doId }, data: { status: 'SHIPPED' } })
-            doNo = deliveryOrder.doNo
 
             // ── EVENT-DRIVEN: Auto-derive SO status from delivery reality ──
             // Check total ordered vs total shipped across ALL confirmed DOs for this SO
@@ -191,11 +208,16 @@ export async function confirmDeliveryOrder(
             // Determine correct SO status
             const newSOStatus = totalShipped >= totalOrdered ? 'DELIVERED' : 'PARTIALLY_DELIVERED'
             await tx.salesOrder.update({ where: { id: soId }, data: { status: newSOStatus } })
+
+            // Auto COGS journal entry: DR 632 / CR 156
+            const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
+            const journalResult = await generateDeliveryOrderCOGSJournal(doId, confirmerId, tx)
+            if (!journalResult.success) {
+                throw new Error(journalResult.error || 'Lỗi sinh bút toán giá vốn hàng bán')
+            }
         })
 
         logAudit({ userId: confirmerId, action: 'CONFIRM', entityType: 'DeliveryOrder', entityId: doId, description: `Xuất kho ${doNo}` })
-        const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
-        generateDeliveryOrderCOGSJournal(doId, confirmerId).catch(() => { })
 
         revalidateCache('wms')
         revalidateCache('sales')

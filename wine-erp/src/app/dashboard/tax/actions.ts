@@ -192,6 +192,8 @@ export interface TaxEngineResult {
     rateId: string | null
 }
 
+import { findHierarchicalTaxRate, cleanHSCode } from '@/lib/tax-utils'
+
 /**
  * Tax Engine API — Core business logic
  * 
@@ -207,27 +209,84 @@ export async function calculateTaxEngine(input: TaxEngineInput): Promise<{
     try {
         const { countryOfOrigin, hsCode, abvPercent, cifUsd, exchangeRate, qty } = input
 
-        // Step 1: Find best matching tax rate from DB
+        // Step 1: Find best matching tax rate from DB (Hierarchical matching: 8 digits -> 6 digits -> 4 digits)
         const now = new Date()
-        const dbRate = await prisma.taxRate.findFirst({
-            where: {
-                hsCode: { contains: hsCode.substring(0, 4), mode: 'insensitive' },
-                countryOfOrigin: { contains: countryOfOrigin, mode: 'insensitive' },
-                effectiveDate: { lte: now },
-                OR: [
-                    { expiryDate: null },
-                    { expiryDate: { gt: now } },
-                ],
-            },
-            orderBy: [
-                { tradeAgreement: 'asc' }, // Prefer FTA over MFN
-                { effectiveDate: 'desc' },
-            ],
-        })
+        const cleaned = cleanHSCode(hsCode)
+        let dbRate = null
 
-        // Step 2: Determine SCT rate from ABV
-        // Vietnamese law: < 20° ABV → 35%, >= 20° ABV → 65%
-        const sctRate = abvPercent >= 20 ? 65 : 35
+        // Try matching with country filter first
+        if (cleaned.length >= 8) {
+            dbRate = await prisma.taxRate.findFirst({
+                where: {
+                    hsCode: { startsWith: cleaned.substring(0, 8), mode: 'insensitive' },
+                    countryOfOrigin: { contains: countryOfOrigin, mode: 'insensitive' },
+                    effectiveDate: { lte: now },
+                    OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
+                },
+                orderBy: [{ tradeAgreement: 'asc' }, { effectiveDate: 'desc' }],
+            })
+        }
+        if (!dbRate && cleaned.length >= 6) {
+            dbRate = await prisma.taxRate.findFirst({
+                where: {
+                    hsCode: { startsWith: cleaned.substring(0, 6), mode: 'insensitive' },
+                    countryOfOrigin: { contains: countryOfOrigin, mode: 'insensitive' },
+                    effectiveDate: { lte: now },
+                    OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
+                },
+                orderBy: [{ tradeAgreement: 'asc' }, { effectiveDate: 'desc' }],
+            })
+        }
+        if (!dbRate && cleaned.length >= 4) {
+            dbRate = await prisma.taxRate.findFirst({
+                where: {
+                    hsCode: { startsWith: cleaned.substring(0, 4), mode: 'insensitive' },
+                    countryOfOrigin: { contains: countryOfOrigin, mode: 'insensitive' },
+                    effectiveDate: { lte: now },
+                    OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
+                },
+                orderBy: [{ tradeAgreement: 'asc' }, { effectiveDate: 'desc' }],
+            })
+        }
+
+        // Fallback without country filter
+        if (!dbRate) {
+            if (cleaned.length >= 8) {
+                dbRate = await prisma.taxRate.findFirst({
+                    where: {
+                        hsCode: { startsWith: cleaned.substring(0, 8), mode: 'insensitive' },
+                        effectiveDate: { lte: now },
+                        OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
+                    },
+                    orderBy: [{ tradeAgreement: 'asc' }, { effectiveDate: 'desc' }],
+                })
+            }
+            if (!dbRate && cleaned.length >= 6) {
+                dbRate = await prisma.taxRate.findFirst({
+                    where: {
+                        hsCode: { startsWith: cleaned.substring(0, 6), mode: 'insensitive' },
+                        effectiveDate: { lte: now },
+                        OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
+                    },
+                    orderBy: [{ tradeAgreement: 'asc' }, { effectiveDate: 'desc' }],
+                })
+            }
+            if (!dbRate && cleaned.length >= 4) {
+                dbRate = await prisma.taxRate.findFirst({
+                    where: {
+                        hsCode: { startsWith: cleaned.substring(0, 4), mode: 'insensitive' },
+                        effectiveDate: { lte: now },
+                        OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
+                    },
+                    orderBy: [{ tradeAgreement: 'asc' }, { effectiveDate: 'desc' }],
+                })
+            }
+        }
+
+        // Step 2: Determine SCT rate from DB or ABV fallback
+        // Vietnamese law fallback: < 20° ABV → 35%, >= 20° ABV → 65%
+        const sctRateFallback = abvPercent >= 20 ? 65 : 35
+        const sctRate = (dbRate && dbRate.sctRate !== null && Number(dbRate.sctRate) > 0) ? Number(dbRate.sctRate) : sctRateFallback
 
         // Step 3: Use DB rate or fallback
         const importTaxRate = dbRate ? Number(dbRate.importTaxRate) : 50 // MFN default

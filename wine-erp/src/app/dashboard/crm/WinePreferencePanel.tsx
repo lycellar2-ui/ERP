@@ -172,7 +172,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     {/* Price Range */}
                     <div className="flex items-center gap-2">
                         <span className="text-xs" style={{ color: '#4A6A7A' }}>Tầm giá:</span>
-                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>
                             {formatVND(pref.priceRangeMin)} – {formatVND(pref.priceRangeMax)}
                         </span>
                     </div>

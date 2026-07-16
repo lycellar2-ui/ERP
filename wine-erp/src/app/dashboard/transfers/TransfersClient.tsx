@@ -94,7 +94,7 @@ export function TransfersClient({ initialRows, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Chuyển Kho Nội Bộ
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -116,7 +116,7 @@ export function TransfersClient({ initialRows, stats }: {
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                         <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: s.accent }}>{s.value}</p>
+                        <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -142,12 +142,12 @@ export function TransfersClient({ initialRows, stats }: {
                                     onClick={() => openDetail(r.id)}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.transferNo}</td>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>{r.transferNo}</td>
                                     <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>{r.fromWarehouse}</td>
                                     <td className="px-3 py-2.5"><ArrowRightLeft size={12} className="text-[#4A6A7A]" /></td>
                                     <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>{r.toWarehouse}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.lineCount} SKU</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{r.totalQty}</td>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{r.totalQty}</td>
                                     <td className="px-3 py-2.5">
                                         <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                     </td>
@@ -185,7 +185,7 @@ export function TransfersClient({ initialRows, stats }: {
                     <div className="w-[520px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                     Chi Tiết {detailData?.transferNo ?? '...'}
                                 </h3>
                                 {detailData && (
@@ -224,7 +224,7 @@ export function TransfersClient({ initialRows, stats }: {
                                         <tbody>
                                             {detailData.lines.map(l => (
                                                 <tr key={l.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
-                                                    <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{l.skuCode}</td>
+                                                    <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{l.skuCode}</td>
                                                     <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.productName}</td>
                                                     <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#D4A853' }}>{l.qtyTransferred}</td>
                                                     <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#5BA88A' }}>{l.qtyReceived}</td>
@@ -244,7 +244,7 @@ export function TransfersClient({ initialRows, stats }: {
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
                     <div className="w-[480px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Tạo Lệnh Chuyển Kho</h3>
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Lệnh Chuyển Kho</h3>
                             <button onClick={() => setCreateOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-4">

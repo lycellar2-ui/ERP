@@ -51,6 +51,7 @@ export type CustomerFilters = {
 // ═══════════════════════════════════════════════════
 
 export async function getCustomers(params?: CustomerFilters): Promise<{ rows: CustomerRow[]; total: number }> {
+    await requirePermission('MDM', 'READ')
     const { search, type, status, channel, page = 1, pageSize = 25, sortBy = 'name', sortDir = 'asc' } = params ?? {}
 
     const isDefaultLoad = page === 1 && !search && !type && !status && !channel && sortBy === 'name' && sortDir === 'asc'
@@ -148,6 +149,7 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
 // ═══════════════════════════════════════════════════
 
 export async function getCustomerById(id: string) {
+    await requirePermission('MDM', 'READ')
     const c = await prisma.customer.findUnique({
         where: { id },
         include: {
@@ -198,6 +200,7 @@ export type CustomerStats = {
 }
 
 export async function getCustomerStats(): Promise<CustomerStats> {
+    await requirePermission('MDM', 'READ')
     return cached('customers:stats', async () => {
         const typeLabels: Record<string, string> = {
             HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Phân Phối',
@@ -291,6 +294,7 @@ export async function getParentCandidates(currentId?: string) {
 // ═══════════════════════════════════════════════════
 
 export async function exportCustomersData() {
+    await requirePermission('MDM', 'READ')
     const items = await prisma.customer.findMany({
         where: { deletedAt: null },
         include: {

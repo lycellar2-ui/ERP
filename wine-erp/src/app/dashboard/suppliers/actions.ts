@@ -433,8 +433,11 @@ export async function createSupplier(input: SupplierInput) {
 export async function updateSupplier(id: string, input: Partial<SupplierInput>) {
     try {
         const user = await getCurrentUser().catch(() => null)
-        const { contactName, contactTitle, contactEmail, contactPhone, address, city, region, ...supplierData } = input
+        const data = supplierSchema.partial().parse(input)
+        const { contactName, contactTitle, contactEmail, contactPhone, address, city, region, ...supplierData } = data
         const oldSupplier = await prisma.supplier.findUnique({ where: { id }, select: { code: true, name: true, type: true, paymentTerm: true, defaultCurrency: true, incoterms: true, leadTimeDays: true, status: true, pickupInfo: true, bankAccountInfo: true } })
+
+        if (!oldSupplier) return { success: false, error: 'NCC không tồn tại' }
 
         await prisma.supplier.update({
             where: { id },
@@ -1081,7 +1084,18 @@ export async function getSupplierScorecard(supplierId: string): Promise<Supplier
     const avgLeadTimeDays = totalPOs > 0 ? Math.round(totalLeadDays / totalPOs) : supplier.leadTimeDays
 
     const complaints = await prisma.complaintTicket.count({
-        where: { type: 'QUALITY' },
+        where: {
+            type: 'QUALITY',
+            so: {
+                lines: {
+                    some: {
+                        product: {
+                            supplierId: supplierId,
+                        },
+                    },
+                },
+            },
+        },
     })
     const qualityScore = Math.max(0, 100 - complaints * 5)
 

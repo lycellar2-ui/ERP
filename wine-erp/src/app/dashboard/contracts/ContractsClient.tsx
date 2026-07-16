@@ -107,7 +107,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                             <FileSignature size={16} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>Tạo Hợp Đồng Mới</h3>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>Tạo Hợp Đồng Mới</h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>Nhập thông tin hợp đồng</p>
                         </div>
                     </div>
@@ -369,7 +369,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                             <Icon size={20} style={{ color: s.accent }} />
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -430,7 +430,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
                                                 {row.isExpiringSoon && <AlertCircle size={12} style={{ color: '#D4A853' }} />}
-                                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.contractNo}</span>
+                                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.contractNo}</span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
@@ -445,7 +445,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                 {row.counterpartyType === 'supplier' ? '🏭 NCC' : '🏨 KH'}
                                             </p>
                                         </td>
-                                        <td className="px-4 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                        <td className="px-4 py-3 text-sm font-bold" style={{ color: '#E8F1F2' }}>
                                             {row.currency === 'VND' ? formatVND(row.value) : `$${row.value.toLocaleString()} ${row.currency}`}
                                         </td>
                                         <td className="px-4 py-3">
@@ -483,7 +483,7 @@ export function ContractsClient({ initialRows, initialTotal, stats }: Props) {
                                                                 ].map(x => (
                                                                     <div key={x.l}>
                                                                         <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{x.l}</p>
-                                                                        <p className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{x.v}</p>
+                                                                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{x.v}</p>
                                                                     </div>
                                                                 ))}
                                                             </div>

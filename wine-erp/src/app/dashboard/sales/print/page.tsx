@@ -271,7 +271,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                                 className="h-12 w-auto object-contain mx-auto border border-slate-100 rounded bg-white p-0.5 shadow-sm"
                                             />
                                         ) : (
-                                            <span className="text-[9px] text-slate-400 italic">No pic</span>
+                                            <span className="text-xs text-slate-400 italic">No pic</span>
                                         )}
                                     </td>
                                     <td className="px-2 py-3">
@@ -359,7 +359,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                     </div>
                 ) : (
                     /* Signatures for confirmed Sales Orders */
-                    <div className="grid grid-cols-5 gap-1 text-center text-[9px] mt-10 pt-4 border-t border-dashed border-slate-300">
+                    <div className="grid grid-cols-5 gap-1 text-center text-xs mt-10 pt-4 border-t border-dashed border-slate-300">
                         <div className="flex flex-col justify-between h-24">
                             <p className="font-bold text-slate-800 uppercase tracking-wide">Người lập đơn</p>
                             <p className="font-semibold text-slate-700">{order.salesRep.name}</p>

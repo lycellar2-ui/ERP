@@ -545,7 +545,7 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                                                 {loc.locationCode}
                                             </span>
                                             {loc.tempControlled && (
-                                                <span className="text-[9px]" title="Kiểm soát nhiệt độ">❄️</span>
+                                                <span className="text-xs" title="Kiểm soát nhiệt độ">❄️</span>
                                             )}
                                         </div>
                                         {/* Occupancy bar */}
@@ -557,7 +557,7 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                                             <span className="text-[10px] font-medium" style={{ color: oc.text }}>
                                                 {loc.totalQty > 0 ? formatNumber(loc.totalQty) : '—'}
                                             </span>
-                                            <span className="text-[9px] font-semibold" style={{ color: oc.text }}>
+                                            <span className="text-xs font-semibold" style={{ color: oc.text }}>
                                                 {loc.occupancyPct}%
                                             </span>
                                         </div>

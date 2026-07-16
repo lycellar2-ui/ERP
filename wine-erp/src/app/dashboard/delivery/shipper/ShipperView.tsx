@@ -53,7 +53,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                         style={{ background: 'rgba(135,203,185,0.15)' }}>
                         <Truck size={28} style={{ color: '#87CBB9' }} />
                     </div>
-                    <h1 className="text-xl font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                    <h1 className="text-xl font-bold" style={{ color: '#E8F1F2' }}>
                         Giao Hàng
                     </h1>
                     <p className="text-sm mt-1" style={{ color: '#4A6A7A' }}>Chọn tài xế để xem lộ trình hôm nay</p>
@@ -181,19 +181,19 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                 <div className="grid grid-cols-3 gap-2 mt-3">
                     <div className="p-2 rounded-lg text-center" style={{ background: '#0D1E2B' }}>
                         <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng Điểm</p>
-                        <p className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                        <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                             {manifest.totalStops}
                         </p>
                     </div>
                     <div className="p-2 rounded-lg text-center" style={{ background: '#0D1E2B' }}>
                         <p className="text-xs" style={{ color: '#4A6A7A' }}>Đã Giao</p>
-                        <p className="text-lg font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>
+                        <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>
                             {manifest.deliveredStops}
                         </p>
                     </div>
                     <div className="p-2 rounded-lg text-center" style={{ background: '#0D1E2B' }}>
                         <p className="text-xs" style={{ color: '#4A6A7A' }}>COD</p>
-                        <p className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                        <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
                             {formatVND(manifest.totalCod)}
                         </p>
                     </div>
@@ -229,14 +229,14 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                         <MapPin size={10} className="inline mr-1" />{stop.address}
                                     </p>
                                     <div className="flex items-center gap-3 mt-1.5">
-                                        <span className="text-[10px]" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>
+                                        <span className="text-[10px]" style={{ color: '#8AAEBB' }}>
                                             {stop.soNo}
                                         </span>
                                         <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
                                             {stop.itemCount} SP
                                         </span>
                                         {stop.codAmount > 0 && (
-                                            <span className="text-[10px] font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                            <span className="text-[10px] font-bold" style={{ color: '#D4A853' }}>
                                                 COD: {formatVND(stop.codAmount)}
                                             </span>
                                         )}
@@ -356,10 +356,10 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                     <MapPin size={10} className="inline mr-1" />{stop.address}
                 </p>
                 <div className="flex gap-4">
-                    <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{stop.soNo}</span>
+                    <span className="text-xs" style={{ color: '#8AAEBB' }}>{stop.soNo}</span>
                     <span className="text-xs" style={{ color: '#4A6A7A' }}>{stop.itemCount} sản phẩm</span>
                     {stop.codAmount > 0 && (
-                        <span className="text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                        <span className="text-xs font-bold" style={{ color: '#D4A853' }}>
                             COD: {formatVND(stop.codAmount)}
                         </span>
                     )}

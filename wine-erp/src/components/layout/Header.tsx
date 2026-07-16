@@ -129,10 +129,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             <div className="flex items-center">
                 {mobileMenuButton}
                 <div>
-                    <h1
-                        className="font-semibold text-lg leading-tight"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}
-                    >
+                    <h1 className="font-semibold text-lg leading-tight" style={{ color: '#E8F1F2' }}>
                         {title}
                     </h1>
                 </div>
@@ -274,12 +271,12 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                 <p className="text-sm font-semibold truncate" style={{ color: '#E8F1F2' }}>
                                     {currentUser?.name || 'Admin'}
                                 </p>
-                                <p className="text-xs truncate mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                <p className="text-xs truncate mt-0.5" style={{ color: '#4A6A7A' }}>
                                     {currentUser?.email || 'admin@lyscellars.com'}
                                 </p>
                                 <div className="flex flex-wrap gap-1 mt-2.5">
                                     {(currentUser?.roles || ['Admin']).map(r => (
-                                        <span key={r} className="text-[9px] px-1.5 py-0.5 rounded font-bold"
+                                        <span key={r} className="text-xs px-1.5 py-0.5 rounded font-bold"
                                             style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
                                             {r}
                                         </span>

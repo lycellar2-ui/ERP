@@ -519,7 +519,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                         {selectedAddr.ward && `, ${selectedAddr.ward}`}
                                                         {selectedAddr.district && `, ${selectedAddr.district}`}
                                                         {selectedAddr.city && `, ${selectedAddr.city}`}
-                                                        {selectedAddr.isDefault && <span className="ml-2 inline-block px-1.5 py-0.5 text-[9px] bg-[#5BA88A]/20 text-[#5BA88A] rounded border border-[#5BA88A]/30">Mặc định</span>}
+                                                        {selectedAddr.isDefault && <span className="ml-2 inline-block px-1.5 py-0.5 text-xs bg-[#5BA88A]/20 text-[#5BA88A] rounded border border-[#5BA88A]/30">Mặc định</span>}
                                                     </div>
                                                 )
                                             })()}
@@ -749,7 +749,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             </div>
                                                         </div>
                                                         <div className="flex justify-end pt-1">
-                                                            <p className="text-xs font-bold text-[#87CBB9]" style={{ fontFamily: '"DM Mono"' }}>
+                                                            <p className="text-xs font-bold text-[#87CBB9]">
                                                                 = {formatVND(lineTotal)}
                                                             </p>
                                                         </div>
@@ -772,7 +772,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 <div className="flex-1" />
                                 <div className="text-right">
                                     <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng cộng</p>
-                                    <p className="text-lg font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                    <p className="text-lg font-bold" style={{ color: '#D4A853' }}>
                                         {formatVND(finalTotal)}
                                     </p>
                                 </div>

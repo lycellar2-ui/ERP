@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { serialize } from '@/lib/serialize'
 import { cached, revalidateCache } from '@/lib/cache'
+import crypto from 'crypto'
 
 // ═══════════════════════════════════════════════════
 // AGENCY PORTAL — External Partner Integration
@@ -98,13 +99,17 @@ export async function createAgencyPartner(input: {
     passwordHash: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        const salt = crypto.randomBytes(16).toString('hex')
+        const hash = crypto.scryptSync(input.passwordHash, salt, 64).toString('hex')
+        const securePasswordHash = `${salt}:${hash}`
+
         const partner = await prisma.externalPartner.create({
             data: {
                 code: input.code,
                 name: input.name,
                 type: input.type,
                 email: input.email,
-                passwordHash: input.passwordHash,
+                passwordHash: securePasswordHash,
             },
         })
         revalidatePath('/dashboard/agency')
@@ -239,8 +244,20 @@ export async function authenticatePartner(
         if (!partner) return { success: false, error: 'Email không tồn tại trong hệ thống' }
         if (partner.status !== 'ACTIVE') return { success: false, error: 'Tài khoản đã bị vô hiệu hóa' }
 
-        // Simple comparison — passwordHash is stored as-is in this codebase
-        const valid = partner.passwordHash === password
+        const storedHash = partner.passwordHash ?? ''
+        let valid = false
+
+        if (storedHash.includes(':')) {
+            const [salt, hash] = storedHash.split(':')
+            if (salt && hash) {
+                const checkHash = crypto.scryptSync(password, salt, 64).toString('hex')
+                valid = crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(checkHash, 'hex'))
+            }
+        } else {
+            // Fallback for legacy plaintext passwords
+            valid = storedHash === password
+        }
+
         if (!valid) return { success: false, error: 'Mật khẩu không đúng' }
 
         return {

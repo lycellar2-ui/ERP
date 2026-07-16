@@ -119,34 +119,34 @@ export function AICRMAnalysis() {
                         <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 mb-3">
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Users size={11} style={{ color: '#87CBB9' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{stats.totalCustomers}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Khách Hàng</p>
+                                <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>{stats.totalCustomers}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Khách Hàng</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><DollarSign size={11} style={{ color: '#D4A853' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#D4A853', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.totalRevenue)}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Tổng Doanh Thu</p>
+                                <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{fmtVND(stats.totalRevenue)}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng Doanh Thu</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                                <p className="text-lg font-bold" style={{ color: stats.revenueGrowth >= 0 ? '#5BA88A' : '#E05252', fontFamily: 'var(--font-mono)' }}>
+                                <p className="text-lg font-bold font-mono" style={{ color: stats.revenueGrowth >= 0 ? '#5BA88A' : '#E05252' }}>
                                     {stats.revenueGrowth >= 0 ? '+' : ''}{stats.revenueGrowth}%
                                 </p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>MoM Growth</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>MoM Growth</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.totalOverdue > 0 ? 'rgba(224,82,82,0.06)' : '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><CreditCard size={11} style={{ color: stats.totalOverdue > 0 ? '#E05252' : '#4A6A7A' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: stats.totalOverdue > 0 ? '#E05252' : '#8AAEBB', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.totalOverdue)}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>AR Quá Hạn</p>
+                                <p className="text-lg font-bold" style={{ color: stats.totalOverdue > 0 ? '#E05252' : '#8AAEBB' }}>{fmtVND(stats.totalOverdue)}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>AR Quá Hạn</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.churningCount > 0 ? 'rgba(224,82,82,0.06)' : '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><UserX size={11} style={{ color: stats.churningCount > 0 ? '#E05252' : '#4A6A7A' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: stats.churningCount > 0 ? '#E05252' : '#4A6A7A', fontFamily: 'var(--font-mono)' }}>{stats.churningCount}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Churning</p>
+                                <p className="text-lg font-bold" style={{ color: stats.churningCount > 0 ? '#E05252' : '#4A6A7A' }}>{stats.churningCount}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Churning</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.complaintsOpen > 0 ? 'rgba(224,82,82,0.06)' : '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.complaintsOpen > 0 ? '#E05252' : '#4A6A7A' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: stats.complaintsOpen > 0 ? '#E05252' : '#4A6A7A', fontFamily: 'var(--font-mono)' }}>{stats.complaintsOpen}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Complaints</p>
+                                <p className="text-lg font-bold font-mono" style={{ color: stats.complaintsOpen > 0 ? '#E05252' : '#4A6A7A' }}>{stats.complaintsOpen}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Complaints</p>
                             </div>
                         </div>
 
@@ -162,10 +162,10 @@ export function AICRMAnalysis() {
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded" style={{ background: '#142433' }}>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
-                                    Tháng này: <span style={{ color: '#D4A853', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.monthRevenue)}</span>
+                                    Tháng này: <span style={{ color: '#D4A853' }}>{fmtVND(stats.monthRevenue)}</span>
                                 </span>
                                 <span className="text-[10px] font-semibold" style={{ color: '#4A6A7A' }}>
-                                    vs trước: <span style={{ color: '#8AAEBB', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.prevMonthRevenue)}</span>
+                                    vs trước: <span style={{ color: '#8AAEBB' }}>{fmtVND(stats.prevMonthRevenue)}</span>
                                 </span>
                             </div>
                         </div>

@@ -66,6 +66,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
     rows: ProductRow[]
     total: number
 }> {
+    await requirePermission('MDM', 'READ')
     const cacheKey = `products:list:${JSON.stringify(filters)}`
     return cached(cacheKey, async () => {
         const { search, wineType, status, country, producerId, sortBy, sortDir, page = 1, pageSize = 20 } = filters
@@ -192,6 +193,7 @@ export type ProductStats = {
 }
 
 export async function getProductStats(): Promise<ProductStats> {
+    await requirePermission('MDM', 'READ')
     return cached('products:stats', async () => {
         // Count products that have NO available stock lots (efficient subquery)
         // Instead of loading ALL products + their lots and filtering in JS
@@ -236,6 +238,7 @@ export async function getProductStats(): Promise<ProductStats> {
 
 // ─── Get product by ID (for edit mode) ────────────
 export async function getProductById(id: string) {
+    await requirePermission('MDM', 'READ')
     const p = await prisma.product.findUnique({
         where: { id },
         include: {
@@ -297,6 +300,7 @@ export async function getProductCountries(): Promise<{ code: string; count: numb
 
 // ─── Create producer inline ───────────────────────
 export async function createProducerInline(name: string, country: string): Promise<{ id: string; name: string }> {
+    await requirePermission('MDM', 'WRITE')
     const producer = await prisma.producer.create({
         data: { name, country },
         select: { id: true, name: true },
@@ -306,6 +310,7 @@ export async function createProducerInline(name: string, country: string): Promi
 
 // ─── Export products to JSON (for Excel conversion) ─
 export async function exportProductsData() {
+    await requirePermission('MDM', 'READ')
     const products = await prisma.product.findMany({
         where: { deletedAt: null },
         include: {
@@ -1036,6 +1041,7 @@ export async function getProductAwards(productId: string): Promise<ProductAwardR
 }
 
 export async function getProductEditDetails(id: string) {
+    await requirePermission('MDM', 'READ')
     return cached(`products:details:edit:${id}`, async () => {
         const [p, media, awards] = await Promise.all([
             prisma.product.findUnique({
@@ -1287,6 +1293,7 @@ export type ProductViewDetails = {
 }
 
 export async function getProductViewDetails(id: string): Promise<ProductViewDetails | null> {
+    await requirePermission('MDM', 'READ')
     const cacheKey = `products:details:${id}`
     return cached(cacheKey, async () => {
         const [p, mediaRes, awardsRes, stockRes] = await Promise.all([

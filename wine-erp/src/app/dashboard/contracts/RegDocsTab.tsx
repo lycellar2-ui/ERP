@@ -169,7 +169,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                             {isRenew ? <RefreshCw size={16} style={{ color: '#4A8FAB' }} /> : <Shield size={16} style={{ color: '#87CBB9' }} />}
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                                 {isRenew ? `Gia Hạn: ${renewFrom.name}` : 'Thêm Giấy Tờ Pháp Lý'}
                             </h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -388,7 +388,7 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
                         </div>
                         <div>
                             <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Version</p>
-                            <p className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>v{doc.version}</p>
+                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>v{doc.version}</p>
                         </div>
                     </div>
 
@@ -529,7 +529,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                             <Icon size={20} style={{ color: s.accent }} />
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -606,7 +606,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                         <td className="px-3 py-3">
-                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.docNo}</span>
+                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.docNo}</span>
                                         </td>
                                         <td className="px-3 py-3">
                                             <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
@@ -625,7 +625,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                                             {row.expiryDate ? formatDate(row.expiryDate) : 'Vô hạn'}
                                         </td>
                                         <td className="px-3 py-3">
-                                            <span className="text-xs font-bold" style={{ color: getDaysColor(row.daysRemaining), fontFamily: '"DM Mono"' }}>
+                                            <span className="text-xs font-bold" style={{ color: getDaysColor(row.daysRemaining) }}>
                                                 {getDaysLabel(row.daysRemaining)}
                                             </span>
                                         </td>

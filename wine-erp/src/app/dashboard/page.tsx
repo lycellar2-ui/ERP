@@ -31,7 +31,7 @@ function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#87CBB9' }:
         <div className="rounded-md p-5 relative overflow-hidden"
             style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${accentColor}` }}>
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#4A6A7A' }}>{label}</p>
-            <p className="text-2xl font-bold mb-0.5" style={{ fontFamily: 'var(--font-mono), monospace', color: '#E8F1F2' }}>{value}</p>
+            <p className="text-2xl font-bold mb-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
             {sub && <p className="text-[11px]" style={{ color: '#4A6A7A' }}>{sub}</p>}
             {trend && (
                 <div className="flex items-center gap-1 mt-1.5">
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
             {/* ═══ HEADER ═══ */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display), Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         {dashConfig.greeting}
                     </h2>
                     <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -188,7 +188,7 @@ export default async function DashboardPage() {
                                 {r.line && <div className="mb-2" style={{ borderTop: '1px dashed #2A4355' }} />}
                                 <div className="flex justify-between items-center">
                                     <span className={`text-xs ${r.bold ? 'font-bold' : ''}`} style={{ color: r.bold ? r.color : '#8AAEBB' }}>{r.label}</span>
-                                    <span className={`text-sm ${r.bold ? 'font-bold' : 'font-medium'}`} style={{ fontFamily: 'var(--font-mono)', color: r.color }}>
+                                    <span className={`text-sm ${r.bold ? 'font-bold' : 'font-medium'}`} style={{ color: r.color }}>
                                         {r.neg ? '−' : ''}{formatVND(Math.abs(r.value))}
                                     </span>
                                 </div>
@@ -205,26 +205,26 @@ export default async function DashboardPage() {
                     <SectionHead icon={<Wallet size={15} style={{ color: '#87CBB9' }} />} title="Vị Thế Tiền Mặt" />
                     <div className="p-3 rounded-md mb-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                         <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#4A6A7A' }}>Dòng Tiền Ròng Tháng</p>
-                        <p className="text-xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: cash.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E' }}>
+                        <p className="text-xl font-bold" style={{ color: cash.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E' }}>
                             {cash.netCashFlow >= 0 ? '+' : ''}{formatVND(cash.netCashFlow)}
                         </p>
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(91,168,138,0.06)' }}>
                             <div className="flex items-center gap-2"><ArrowDownLeft size={13} style={{ color: '#5BA88A' }} /><span className="text-xs" style={{ color: '#5BA88A' }}>Thu AR</span></div>
-                            <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#5BA88A' }}>+{formatVND(cash.cashIn)}</span>
+                            <span className="text-xs font-bold" style={{ color: '#5BA88A' }}>+{formatVND(cash.cashIn)}</span>
                         </div>
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(139,26,46,0.04)' }}>
                             <div className="flex items-center gap-2"><ArrowUpRight size={13} style={{ color: '#E05252' }} /><span className="text-xs" style={{ color: '#E05252' }}>Trả NCC</span></div>
-                            <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#E05252' }}>−{formatVND(cash.cashOutAP)}</span>
+                            <span className="text-xs font-bold" style={{ color: '#E05252' }}>−{formatVND(cash.cashOutAP)}</span>
                         </div>
                         <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(139,26,46,0.04)' }}>
                             <div className="flex items-center gap-2"><ArrowUpRight size={13} style={{ color: '#D4A853' }} /><span className="text-xs" style={{ color: '#D4A853' }}>Chi phí</span></div>
-                            <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#D4A853' }}>−{formatVND(cash.cashOutExpenses)}</span>
+                            <span className="text-xs font-bold" style={{ color: '#D4A853' }}>−{formatVND(cash.cashOutExpenses)}</span>
                         </div>
                         <div style={{ borderTop: '1px solid #2A4355' }} className="pt-2 flex justify-between text-xs">
                             <span style={{ color: '#4A6A7A' }}>AR chưa thu / AP chưa trả</span>
-                            <span style={{ fontFamily: 'var(--font-mono)', color: '#8AAEBB' }}>{formatVND(cash.arOutstanding)} / {formatVND(cash.apOutstanding)}</span>
+                            <span style={{ color: '#8AAEBB' }}>{formatVND(cash.arOutstanding)} / {formatVND(cash.apOutstanding)}</span>
                         </div>
                     </div>
                 </div>
@@ -246,11 +246,11 @@ export default async function DashboardPage() {
                                     <div key={s.id} className="p-2.5" style={{ background: '#142433', border: '1px solid #2A4355', borderRadius: '6px' }}>
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{s.billOfLading}</p>
+                                                <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>{s.billOfLading}</p>
                                                 <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>ETA: {s.eta ? new Date(s.eta).toLocaleDateString('vi-VN') : '--'}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>${s.cifAmount.toLocaleString()} {s.cifCurrency}</p>
+                                                <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>${s.cifAmount.toLocaleString()} {s.cifCurrency}</p>
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: `${cfg.color}20`, color: cfg.color }}>{cfg.label}</span>
                                             </div>
                                         </div>
@@ -267,14 +267,14 @@ export default async function DashboardPage() {
                         badge={<span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>{ar.invoiceCount} HĐ</span>} />
                     <div className="p-2.5 rounded mb-3" style={{ background: '#142433' }}>
                         <p className="text-[10px] uppercase mb-0.5" style={{ color: '#4A6A7A' }}>Tổng Công Nợ</p>
-                        <p className="text-lg font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#D4A853' }}>{formatVND(ar.totalOutstanding)}</p>
+                        <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{formatVND(ar.totalOutstanding)}</p>
                     </div>
                     <div className="space-y-2.5">
                         {ar.buckets.map(b => (
                             <div key={b.label}>
                                 <div className="flex justify-between mb-0.5">
                                     <span className="text-[11px]" style={{ color: '#8AAEBB' }}>{b.label}</span>
-                                    <span className="text-[11px] font-bold" style={{ fontFamily: 'var(--font-mono)', color: b.color }}>{b.amount > 0 ? formatVND(b.amount) : '—'}</span>
+                                    <span className="text-[11px] font-bold" style={{ color: b.color }}>{b.amount > 0 ? formatVND(b.amount) : '—'}</span>
                                 </div>
                                 <div className="h-2 rounded-full" style={{ background: '#142433' }}>
                                     <div className="h-full rounded-full" style={{ width: `${Math.max(b.amount > 0 ? 4 : 0, (b.amount / arMax) * 100)}%`, background: b.color }} />
@@ -301,7 +301,7 @@ export default async function DashboardPage() {
                                         <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#D4A853' : '#4A6A7A' }}>{i + 1}.</span>
                                         <span className="text-xs truncate" style={{ color: '#E8F1F2' }}>{c.name}</span>
                                     </div>
-                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>{(c.revenue / 1e6).toFixed(0)}M</span>
+                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>{(c.revenue / 1e6).toFixed(0)}M</span>
                                 </div>
                             ))}
                         </div>
@@ -320,7 +320,7 @@ export default async function DashboardPage() {
                                         <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#D4A853' : '#4A6A7A' }}>{i + 1}.</span>
                                         <span className="text-xs truncate" style={{ color: '#E8F1F2' }}>{p.name}</span>
                                     </div>
-                                    <span className="text-[10px] flex-shrink-0" style={{ fontFamily: 'var(--font-mono)', color: '#8AAEBB' }}>{p.qty} chai · {(p.revenue / 1e6).toFixed(0)}M</span>
+                                    <span className="text-[10px] flex-shrink-0" style={{ color: '#8AAEBB' }}>{p.qty} chai · {(p.revenue / 1e6).toFixed(0)}M</span>
                                 </div>
                             ))}
                         </div>
@@ -352,14 +352,14 @@ export default async function DashboardPage() {
                                             <div className="flex items-center gap-1.5 mb-0.5">
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: prioCfg.bg, color: prioCfg.color }}>{prioCfg.label}</span>
                                                 <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>{CATEGORY_LABELS[p.category] ?? p.category}</span>
-                                                <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>{p.proposalNo}</span>
+                                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{p.proposalNo}</span>
                                             </div>
                                             <p className="text-sm truncate" style={{ color: '#E8F1F2' }}>{p.title}</p>
                                             <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{p.creatorName}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 flex-shrink-0">
-                                        {p.estimatedAmount && <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>{formatVND(p.estimatedAmount)}</span>}
+                                        {p.estimatedAmount && <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{formatVND(p.estimatedAmount)}</span>}
                                         <Link href="/dashboard/proposals" className="px-2.5 py-1 text-xs font-semibold rounded" style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>Xem & Duyệt</Link>
                                     </div>
                                 </div>
@@ -389,7 +389,7 @@ export default async function DashboardPage() {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
-                                        <p className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>{formatVND(so.amount)}</p>
+                                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{formatVND(so.amount)}</p>
                                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{so.customerName}</p>
                                     </div>
                                     <div className="flex gap-1.5">
@@ -426,16 +426,16 @@ export default async function DashboardPage() {
                                     <div key={kpi.metric} className="space-y-1.5">
                                         <div className="flex items-center justify-between">
                                             <p className="text-[10px] font-semibold truncate" style={{ color: '#8AAEBB' }}>{kpi.label}</p>
-                                            <span className="text-[9px] px-1 py-0.5 rounded font-bold" style={{ background: `${sc}18`, color: sc }}>{sl}</span>
+                                            <span className="text-xs px-1 py-0.5 rounded font-bold" style={{ background: `${sc}18`, color: sc }}>{sl}</span>
                                         </div>
                                         <div className="h-2 rounded-full" style={{ background: '#142433' }}>
                                             <div className="h-full rounded-full" style={{ width: `${pct}%`, background: kpi.color ?? '#87CBB9' }} />
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-[10px] font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#E8F1F2' }}>
+                                            <span className="text-[10px] font-bold" style={{ color: '#E8F1F2' }}>
                                                 {kpi.unit === 'VND' ? `${(kpi.actual / 1e6).toFixed(0)}M` : kpi.actual}
                                             </span>
-                                            <span className="text-[9px]" style={{ color: '#4A6A7A' }}>/ {kpi.unit === 'VND' ? `${(kpi.target / 1e6).toFixed(0)}M` : kpi.target}</span>
+                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>/ {kpi.unit === 'VND' ? `${(kpi.target / 1e6).toFixed(0)}M` : kpi.target}</span>
                                         </div>
                                     </div>
                                 )
@@ -455,8 +455,8 @@ export default async function DashboardPage() {
                                         <div className="flex justify-between mb-0.5">
                                             <span className="text-xs" style={{ color: '#8AAEBB' }}>{ch.label}</span>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-bold" style={{ fontFamily: 'var(--font-mono)', color: ch.color }}>{(ch.revenue / 1e6).toFixed(0)}M</span>
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
+                                                <span className="text-[10px] font-bold" style={{ color: ch.color }}>{(ch.revenue / 1e6).toFixed(0)}M</span>
+                                                <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
                                             </div>
                                         </div>
                                         <div className="h-2 rounded-full" style={{ background: '#142433' }}>
@@ -493,19 +493,19 @@ export default async function DashboardPage() {
                                                     <div className="flex-1 rounded-t-sm" style={{ height: prevH, background: '#2A4355' }} />
                                                     <div className="flex-1 rounded-t-sm" style={{ height: m.month > cm ? 0 : curH, background: m.month > cm ? 'transparent' : m.revenue > prev.revenue ? '#87CBB9' : '#D4A853' }} />
                                                 </div>
-                                                <span className="text-[8px]" style={{ color: m.month === cm ? '#87CBB9' : '#4A6A7A' }}>{m.label}</span>
+                                                <span className="text-xs" style={{ color: m.month === cm ? '#87CBB9' : '#4A6A7A' }}>{m.label}</span>
                                             </div>
                                         )
                                     })}
                                 </div>
                                 <div className="flex justify-center gap-6 pt-2" style={{ borderTop: '1px solid #2A4355' }}>
                                     <div className="text-center">
-                                        <p className="text-[9px] uppercase" style={{ color: '#4A6A7A' }}>{yoyData.thisYear}</p>
-                                        <p className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#87CBB9' }}>{formatVND(yoyData.totalCurrent)}</p>
+                                        <p className="text-xs uppercase" style={{ color: '#4A6A7A' }}>{yoyData.thisYear}</p>
+                                        <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>{formatVND(yoyData.totalCurrent)}</p>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-[9px] uppercase" style={{ color: '#4A6A7A' }}>{yoyData.lastYear}</p>
-                                        <p className="text-xs font-bold" style={{ fontFamily: 'var(--font-mono)', color: '#4A6A7A' }}>{formatVND(yoyData.totalPrevious)}</p>
+                                        <p className="text-xs uppercase" style={{ color: '#4A6A7A' }}>{yoyData.lastYear}</p>
+                                        <p className="text-xs font-bold" style={{ color: '#4A6A7A' }}>{formatVND(yoyData.totalPrevious)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -525,13 +525,13 @@ export default async function DashboardPage() {
                                 const barH = Math.max(6, (Math.abs(bar.value) / absMax) * 120)
                                 return (
                                     <div key={bar.label} className="flex-1 flex flex-col items-center gap-0.5">
-                                        <span className="text-[8px] font-bold" style={{ color: bar.color, fontFamily: 'var(--font-mono)' }}>
+                                        <span className="text-xs font-bold" style={{ color: bar.color }}>
                                             {bar.value !== 0 ? `${(Math.abs(bar.value) / 1e6).toFixed(0)}M` : '0'}
                                         </span>
                                         <div className="w-full relative" style={{ height: 120 }}>
                                             <div className="absolute bottom-0 w-full rounded-t-sm" style={{ height: barH, background: `${bar.color}${bar.type === 'negative' ? '35' : '60'}`, borderLeft: `2px solid ${bar.color}`, borderTop: `2px solid ${bar.color}`, borderRight: `2px solid ${bar.color}` }} />
                                         </div>
-                                        <p className="text-[8px] text-center leading-tight" style={{ color: '#8AAEBB' }}>{bar.label.split(' (')[0]}</p>
+                                        <p className="text-xs text-center leading-tight" style={{ color: '#8AAEBB' }}>{bar.label.split(' (')[0]}</p>
                                     </div>
                                 )
                             })}
@@ -545,8 +545,8 @@ export default async function DashboardPage() {
                             ].map(l => (
                                 <div key={l.label} className="flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color }} />
-                                    <span className="text-[9px]" style={{ color: '#4A6A7A' }}>{l.label}</span>
-                                    <span className="text-[9px] font-bold" style={{ color: l.color, fontFamily: 'var(--font-mono)' }}>{formatVND(Math.abs(l.val))}</span>
+                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>{l.label}</span>
+                                    <span className="text-xs font-bold" style={{ color: l.color }}>{formatVND(Math.abs(l.val))}</span>
                                 </div>
                             ))}
                         </div>
@@ -572,7 +572,7 @@ export default async function DashboardPage() {
                                                 <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{REG_DOC_TYPE_LABELS[w.type] ?? w.type}</p>
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-bold flex-shrink-0" style={{ color: sev.c, fontFamily: 'var(--font-mono)' }}>
+                                        <span className="text-[10px] font-bold flex-shrink-0" style={{ color: sev.c }}>
                                             {w.daysRemaining !== null && w.daysRemaining <= 0 ? `Quá hạn ${Math.abs(w.daysRemaining)}d` : `${w.daysRemaining}d`}
                                         </span>
                                     </div>
@@ -606,17 +606,17 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between mb-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#D4A853' }}>📊 Doanh Số Của Tôi</p>
                         <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{mySales.orderCount} đơn</span>
-                            <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: 'var(--font-mono)' }}>{formatVND(mySales.totalRevenue)}</span>
+                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{mySales.orderCount} đơn</span>
+                            <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{formatVND(mySales.totalRevenue)}</span>
                         </div>
                     </div>
                     <div className="space-y-1 max-h-[200px] overflow-y-auto">
                         {mySales.orders.map(o => (
                             <div key={o.soNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
-                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{o.soNo}</span>
+                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{o.soNo}</span>
                                 <span className="text-xs" style={{ color: '#8AAEBB' }}>{o.customerName}</span>
                                 <span className="text-[10px] px-1 py-0.5 rounded" style={{ background: o.status === 'PAID' ? 'rgba(91,168,138,0.15)' : 'rgba(138,174,187,0.15)', color: o.status === 'PAID' ? '#5BA88A' : '#8AAEBB' }}>{o.status}</span>
-                                <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: 'var(--font-mono)' }}>{formatVND(o.amount)}</span>
+                                <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{formatVND(o.amount)}</span>
                             </div>
                         ))}
                         {mySales.orders.length === 0 && <p className="text-xs text-center py-3" style={{ color: '#4A6A7A' }}>Chưa có đơn hàng</p>}
@@ -637,7 +637,7 @@ export default async function DashboardPage() {
                             { label: 'DO Chờ', value: warehouseData.pendingDeliveryOrders, color: '#5BA88A' },
                         ].map(s => (
                             <div key={s.label} className="text-center p-2.5 rounded" style={{ background: '#142433' }}>
-                                <p className="text-lg font-bold" style={{ color: s.color, fontFamily: 'var(--font-mono)' }}>{s.value}</p>
+                                <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
                                 <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>{s.label}</p>
                             </div>
                         ))}

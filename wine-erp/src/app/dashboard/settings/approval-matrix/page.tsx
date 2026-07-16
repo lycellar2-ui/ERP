@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import { getApprovalMatrix } from './actions'
 import { ApprovalMatrixClient } from './ApprovalMatrixClient'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
     title: 'Ma Trận Phân Quyền | Wine ERP',
 }

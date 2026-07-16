@@ -133,7 +133,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Chi Phí ({items.length})</p>
-                <p className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>Σ {fmtNum(totalVND)} ₫</p>
+                <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Σ {fmtNum(totalVND)} ₫</p>
             </div>
             {items.length > 0 && (
                 <div className="space-y-1">
@@ -150,7 +150,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                             </div>
                             <div className="flex items-center gap-3 flex-shrink-0">
                                 <div className="text-right">
-                                    <p className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                    <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>
                                         {c.currency === 'VND' ? `${fmtNum(c.amount)} ₫` : `${c.currency} ${fmtNum(c.amount)}`}
                                     </p>
                                     {c.currency !== 'VND' && <p className="text-[10px]" style={{ color: '#4A6A7A' }}>≈ {fmtNum(c.amountVND)} ₫</p>}
@@ -261,7 +261,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                                     ].map(t => (
                                         <div key={t.label}>
                                             <p className="text-[10px] uppercase" style={{ color: '#D4A853' }}>{t.label}{(t as any).rate != null ? ` (${(t as any).rate}%)` : ''}</p>
-                                            <p className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{t.value != null ? fmtNum(t.value) : '—'}</p>
+                                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{t.value != null ? fmtNum(t.value) : '—'}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -455,7 +455,7 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Bộ Chứng Từ NK</p>
-                <span className="text-xs font-bold" style={{ color: uploaded === required && required > 0 ? '#5BA88A' : '#D4A853', fontFamily: '"DM Mono"' }}>
+                <span className="text-xs font-bold" style={{ color: uploaded === required && required > 0 ? '#5BA88A' : '#D4A853' }}>
                     {uploaded}/{required} hoàn tất
                 </span>
             </div>
@@ -596,11 +596,11 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                             <Ship size={18} style={{ color: '#4A8FAB' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                                 {data?.billOfLading ?? 'Lô Hàng'}
                             </h3>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>{data?.poNo}</span>
+                                <span className="text-xs" style={{ color: '#4A6A7A' }}>{data?.poNo}</span>
                                 {statusCfg && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>{statusCfg.label}</span>}
                             </div>
                         </div>
@@ -661,14 +661,14 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                     ].map(c => (
                                         <div key={c.label} className="p-2 rounded text-center" style={{ background: '#142433' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{c.label}</p>
-                                            <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{c.value}</p>
+                                            <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>{c.value}</p>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 rounded-lg" style={{ background: '#142433' }}>
                                         <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Giá trị CIF</p>
-                                        <p className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{data.cifCurrency} {fmtNum(data.cifAmount)}</p>
+                                        <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>{data.cifCurrency} {fmtNum(data.cifAmount)}</p>
                                     </div>
                                     <div className="p-3 rounded-lg" style={{ background: '#142433' }}>
                                         <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Tiến độ</p>
@@ -676,7 +676,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                             <div className="flex-1 h-2 rounded-full" style={{ background: '#2A4355' }}>
                                                 <div className="h-full rounded-full transition-all" style={{ background: '#5BA88A', width: `${data.milestoneProgress}%` }} />
                                             </div>
-                                            <span className="text-sm font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{data.milestoneProgress}%</span>
+                                            <span className="text-sm font-bold" style={{ color: '#5BA88A' }}>{data.milestoneProgress}%</span>
                                         </div>
                                     </div>
                                 </div>

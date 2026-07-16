@@ -142,7 +142,7 @@ export function StockCountClient({ initialRows, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Kiểm Kê / Cycle Count
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -164,7 +164,7 @@ export function StockCountClient({ initialRows, stats }: {
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                         <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: s.accent }}>{s.value}</p>
+                        <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -191,9 +191,9 @@ export function StockCountClient({ initialRows, stats }: {
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.zone ?? '—'}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#87CBB9' }}>{TYPE_LABEL[r.type] ?? r.type}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.lineCount} dòng</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{r.totalSystemQty}</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>{r.totalActualQty || '—'}</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: hasVariance ? (r.totalVariance < 0 ? '#8B1A2E' : '#5BA88A') : '#4A6A7A' }}>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>{r.totalSystemQty}</td>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{r.totalActualQty || '—'}</td>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: hasVariance ? (r.totalVariance < 0 ? '#8B1A2E' : '#5BA88A') : '#4A6A7A' }}>
                                         {hasVariance ? (r.totalVariance > 0 ? '+' : '') + r.totalVariance : '—'}
                                     </td>
                                     <td className="px-3 py-2.5">
@@ -230,7 +230,7 @@ export function StockCountClient({ initialRows, stats }: {
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
                     <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Tạo Phiên Kiểm Kê</h3>
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Phiên Kiểm Kê</h3>
                             <button onClick={() => setCreateOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-4">
@@ -270,7 +270,7 @@ export function StockCountClient({ initialRows, stats }: {
                     <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                     Chi Tiết Kiểm Kê
                                 </h3>
                                 <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -292,10 +292,10 @@ export function StockCountClient({ initialRows, stats }: {
                                     <tbody>
                                         {detail.lines.map((l: StockCountLine) => (
                                             <tr key={l.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                                <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{l.skuCode}</td>
+                                                <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{l.skuCode}</td>
                                                 <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.productName}</td>
                                                 <td className="px-3 py-2 text-xs" style={{ color: '#8AAEBB' }}>{l.locationCode}</td>
-                                                <td className="px-3 py-2 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{l.qtySystem}</td>
+                                                <td className="px-3 py-2 text-xs font-bold" style={{ color: '#E8F1F2' }}>{l.qtySystem}</td>
                                                 <td className="px-3 py-2">
                                                     {detail.status === 'IN_PROGRESS' ? (
                                                         <input type="number" min={0} defaultValue={l.qtyActual ?? ''}
@@ -306,13 +306,10 @@ export function StockCountClient({ initialRows, stats }: {
                                                             className="w-16 px-2 py-1 rounded text-xs text-center"
                                                             style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853' }} />
                                                     ) : (
-                                                        <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>{l.qtyActual ?? '—'}</span>
+                                                        <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{l.qtyActual ?? '—'}</span>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2 text-xs font-bold" style={{
-                                                    fontFamily: '"DM Mono"',
-                                                    color: l.variance === null ? '#4A6A7A' : l.variance < 0 ? '#8B1A2E' : l.variance > 0 ? '#5BA88A' : '#4A6A7A',
-                                                }}>
+                                                <td className="px-3 py-2 text-xs font-bold" style={{ color: l.variance === null ? '#4A6A7A' : l.variance < 0 ? '#8B1A2E' : l.variance > 0 ? '#5BA88A' : '#4A6A7A' }}>
                                                     {l.variance !== null ? (l.variance > 0 ? '+' : '') + l.variance : '—'}
                                                 </td>
                                             </tr>

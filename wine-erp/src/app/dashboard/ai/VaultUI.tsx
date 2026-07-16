@@ -345,12 +345,12 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                             {t.variables.length > 0 && (
                                 <div className="flex gap-1 mt-2 flex-wrap">
                                     {t.variables.map(v => (
-                                        <span key={v} className="text-[9px] px-1.5 py-0.5 rounded font-mono"
+                                        <span key={v} className="text-xs px-1.5 py-0.5 rounded font-mono"
                                             style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>
                                             {`{{${v}}}`}
                                         </span>
                                     ))}
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded"
+                                    <span className="text-xs px-1.5 py-0.5 rounded"
                                         style={{ color: '#4A6A7A' }}>
                                         T={t.temperature} | {t.maxTokens} tokens
                                     </span>
@@ -381,7 +381,7 @@ export function AiUsageCard({ stats }: { stats: { totalRuns: number; monthRuns: 
                 ].map(s => (
                     <div key={s.label} className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
                         <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-sm font-bold" style={{ color: s.color, fontFamily: '"DM Mono", monospace' }}>{s.value}</p>
+                        <p className="text-sm font-bold font-mono" style={{ color: s.color }}>{s.value}</p>
                     </div>
                 ))}
             </div>

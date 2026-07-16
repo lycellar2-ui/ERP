@@ -76,7 +76,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Allocation Engine
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -98,7 +98,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                         <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: s.accent }}>{s.value}</p>
+                        <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -128,7 +128,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
                                             <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{c.name}</p>
-                                            <p className="text-xs" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{c.skuCode}</p>
+                                            <p className="text-xs" style={{ color: '#87CBB9' }}>{c.skuCode}</p>
                                         </div>
                                         <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                     </div>
@@ -139,7 +139,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                         <span>Đã bán: {c.soldQty}/{c.totalQty} {c.unit}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[10px] font-semibold" style={{ color: statusColor }}>{statusLabel}</span>
-                                            <span style={{ fontFamily: '"DM Mono"' }}>{pct.toFixed(0)}%</span>
+                                            <span>{pct.toFixed(0)}%</span>
                                         </div>
                                     </div>
                                 </button>
@@ -160,7 +160,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                             <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
-                                        <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                             {selected.name}
                                         </h3>
                                         <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -176,15 +176,15 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                 {/* Summary bars */}
                                 <div className="grid grid-cols-3 gap-2 mb-3">
                                     <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{selected.totalQty}</p>
+                                        <p className="text-sm font-bold" style={{ color: '#87CBB9' }}>{selected.totalQty}</p>
                                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Tổng {selected.unit}</p>
                                     </div>
                                     <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{selected.allocatedQty}</p>
+                                        <p className="text-sm font-bold" style={{ color: '#D4A853' }}>{selected.allocatedQty}</p>
                                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đã phân bổ</p>
                                     </div>
                                     <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{selected.soldQty}</p>
+                                        <p className="text-sm font-bold" style={{ color: '#5BA88A' }}>{selected.soldQty}</p>
                                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Đã bán</p>
                                     </div>
                                 </div>
@@ -214,14 +214,14 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                         color: q.targetType === 'SALES_REP' ? '#4A8FAB' : '#87CBB9',
                                                     }}>{q.targetType === 'SALES_REP' ? 'Sales Rep' : q.targetType === 'CUSTOMER' ? 'Khách hàng' : 'Kênh'}</span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{q.qtyAllocated}</td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{q.qtySold}</td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"' }}>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{q.qtyAllocated}</td>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#5BA88A' }}>{q.qtySold}</td>
+                                                <td className="px-3 py-2.5 text-xs font-bold">
                                                     <span style={{ color: q.remaining <= 0 ? '#8B1A2E' : q.pctUsed > 70 ? '#D4A853' : '#5BA88A' }}>
                                                         {q.remaining}
                                                     </span>
                                                     {' '}
-                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold" style={{
+                                                    <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{
                                                         ...(q.remaining <= 0
                                                             ? { color: '#8B1A2E', background: 'rgba(139,26,46,0.15)' }
                                                             : q.pctUsed > 70
@@ -239,7 +239,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                                 background: q.pctUsed > 90 ? '#8B1A2E' : q.pctUsed > 70 ? '#D4A853' : '#87CBB9',
                                                             }} />
                                                         </div>
-                                                        <span className="text-xs font-bold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{q.pctUsed.toFixed(0)}%</span>
+                                                        <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{q.pctUsed.toFixed(0)}%</span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -257,7 +257,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
                     <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Tạo Campaign Mới</h3>
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Campaign Mới</h3>
                             <button onClick={() => setCreateOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-3">
@@ -304,7 +304,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
                     <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Thêm Quota</h3>
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Thêm Quota</h3>
                             <button onClick={() => setAddQuotaOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-3">

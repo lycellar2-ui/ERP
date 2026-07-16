@@ -51,8 +51,7 @@ export function CostingClient({ products }: Props) {
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div>
-                <h2 className="text-2xl font-bold"
-                    style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                     Tính Giá Vốn & Đề Xuất Giá (CST)
                 </h2>
                 <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -87,15 +86,15 @@ export function CostingClient({ products }: Props) {
                     <div className="grid grid-cols-3 gap-3">
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>SKU Đang Bán</p>
-                            <p className="text-2xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>{products.length}</p>
+                            <p className="text-2xl font-bold" style={{ color: '#87CBB9' }}>{products.length}</p>
                         </div>
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #5BA88A' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Margin TB</p>
-                            <p className="text-2xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>{avgMargin.toFixed(1)}%</p>
+                            <p className="text-2xl font-bold" style={{ color: '#5BA88A' }}>{avgMargin.toFixed(1)}%</p>
                         </div>
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${lossCount > 0 ? '#8B1A2E' : '#5BA88A'}` }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>SKU Bán Dưới Giá Vốn</p>
-                            <p className="text-2xl font-bold" style={{ fontFamily: '"DM Mono"', color: lossCount > 0 ? '#8B1A2E' : '#5BA88A' }}>
+                            <p className="text-2xl font-bold" style={{ color: lossCount > 0 ? '#8B1A2E' : '#5BA88A' }}>
                                 {lossCount}
                             </p>
                         </div>
@@ -157,10 +156,10 @@ export function CostingClient({ products }: Props) {
                                                             </p>
                                                         )}
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                                         {p.unitLandedCost > 0 ? formatVND(p.unitLandedCost) : '—'}
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>
                                                         {p.listPrice ? formatVND(p.listPrice) : '—'}
                                                     </td>
                                                     <td className="px-3 py-2.5">
@@ -173,7 +172,7 @@ export function CostingClient({ products }: Props) {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
                                                         {p.stockQty.toLocaleString()}
                                                     </td>
                                                 </tr>
@@ -199,7 +198,7 @@ export function CostingClient({ products }: Props) {
                                     <div className="p-3 rounded-md mb-4" style={{ background: '#142433' }}>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-xs" style={{ color: '#4A6A7A' }}>Giá Vốn / Chai (WA)</span>
-                                            <span className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                                 {formatVND(selected.unitLandedCost)}
                                             </span>
                                         </div>
@@ -239,13 +238,13 @@ export function CostingClient({ products }: Props) {
                                                 <div className="flex justify-between items-end">
                                                     <div>
                                                         <p className="text-xs" style={{ color: '#4A6A7A' }}>Chính xác</p>
-                                                        <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                                        <p className="text-sm font-bold" style={{ color: '#8AAEBB' }}>
                                                             {formatVND(s.price)}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-xs" style={{ color: '#4A6A7A' }}>Làm tròn (±50k)</p>
-                                                        <p className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                                        <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>
                                                             {formatVND(s.rounded)}
                                                         </p>
                                                     </div>
@@ -368,9 +367,9 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                                 const marginDown = (sc.marginDelta ?? 0) < 0
                                 return (
                                     <tr key={r.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.skuCode}</td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>{formatVND(r.currentUnitCost)}</td>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: costUp ? '#E85D5D' : '#5BA88A' }}>{formatVND(sc.newUnitCost)}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>{r.skuCode}</td>
+                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{formatVND(r.currentUnitCost)}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: costUp ? '#E85D5D' : '#5BA88A' }}>{formatVND(sc.newUnitCost)}</td>
                                         <td className="px-3 py-2.5">
                                             <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{
                                                 background: costUp ? 'rgba(232,93,93,0.15)' : 'rgba(91,168,138,0.15)',
@@ -379,8 +378,8 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                                                 {sc.costDeltaPct > 0 ? '+' : ''}{sc.costDeltaPct.toFixed(1)}%
                                             </span>
                                         </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>{r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}</td>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: marginDown ? '#E85D5D' : '#5BA88A' }}>{sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}</td>
+                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}</td>
+                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: marginDown ? '#E85D5D' : '#5BA88A' }}>{sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}</td>
                                         <td className="px-3 py-2.5">
                                             {sc.marginDelta !== null ? (
                                                 <div className="flex items-center gap-1">

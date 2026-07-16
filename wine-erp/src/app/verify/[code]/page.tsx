@@ -32,11 +32,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                     <div style={{ fontSize: '48px', marginBottom: '8px' }}>
                         {data.isFirstScan ? '✅' : '⚠️'}
                     </div>
-                    <h1 style={{
-                        color: data.isFirstScan ? '#5BA88A' : '#D4A853',
-                        fontSize: '18px', fontWeight: 700,
-                        fontFamily: '"Cormorant Garamond", Georgia, serif',
-                    }}>
+                    <h1 className="font-brand" style={{ color: data.isFirstScan ? '#5BA88A' : '#D4A853', fontSize: '18px', fontWeight: 700 }}>
                         {data.isFirstScan ? 'Sản Phẩm Chính Hãng' : 'Đã Được Quét Trước Đó'}
                     </h1>
                     <p style={{ color: '#4A6A7A', fontSize: '12px', marginTop: '4px' }}>
@@ -48,11 +44,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
 
                 {/* Product Info */}
                 <div style={{ padding: '20px' }}>
-                    <h2 style={{
-                        color: '#E8F1F2', fontSize: '20px', fontWeight: 700,
-                        fontFamily: '"Cormorant Garamond", Georgia, serif',
-                        marginBottom: '16px',
-                    }}>
+                    <h2 className="font-brand" style={{ color: '#E8F1F2', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>
                         {product.name}
                     </h2>
 
@@ -71,7 +63,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                                 <p style={{ color: '#4A6A7A', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                     {item.label}
                                 </p>
-                                <p style={{ color: '#E8F1F2', fontSize: '13px', fontWeight: 600, fontFamily: '"DM Mono", monospace' }}>
+                                <p className="font-mono" style={{ color: '#E8F1F2', fontSize: '13px', fontWeight: 600 }}>
                                     {item.value}
                                 </p>
                             </div>
@@ -87,7 +79,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                     <p style={{ color: '#4A6A7A', fontSize: '10px', letterSpacing: '0.5px' }}>
                         LYS CELLARS — Hệ Thống Truy Xuất Nguồn Gốc
                     </p>
-                    <p style={{ color: '#2A4355', fontSize: '9px', marginTop: '4px', fontFamily: '"DM Mono"' }}>
+                    <p style={{ color: '#2A4355', fontSize: 12, marginTop: '4px' }}>
                         QR: {code}
                     </p>
                 </div>

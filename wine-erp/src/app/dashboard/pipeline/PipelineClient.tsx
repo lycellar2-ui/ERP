@@ -205,7 +205,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Sales Pipeline
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -264,7 +264,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{s.value}</p>
+                            <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
                         </div>
                     </div>
                 ))}
@@ -288,7 +288,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                 </span>
                             </div>
                             <div className="px-2 py-1">
-                                <p className="text-[10px] text-right" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                <p className="text-[10px] text-right" style={{ color: '#4A6A7A' }}>
                                     {formatVND(stageValue)}
                                 </p>
                             </div>
@@ -304,7 +304,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                             onClick={() => openDetail(row.id)}>
                                             <p className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{row.name}</p>
                                             <p className="text-[10px] mt-0.5 truncate" style={{ color: '#4A6A7A' }}>{row.customerName}</p>
-                                            <p className="text-xs font-bold mt-1" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                            <p className="text-xs font-bold mt-1" style={{ color: '#D4A853' }}>
                                                 {formatVND(row.expectedValue)}
                                             </p>
                                             <div className="flex items-center justify-between mt-2">
@@ -357,7 +357,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                             <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
                                                 className="w-full text-lg font-bold px-2 py-1 outline-none" style={{ ...inputStyle, fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }} />
                                         ) : (
-                                            <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                                 {detail.name}
                                             </h3>
                                         )}
@@ -423,21 +423,18 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                             <input type="number" value={editForm.expectedValue} onChange={e => setEditForm(f => ({ ...f, expectedValue: e.target.value }))}
                                                 className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, fontFamily: '"DM Mono"', color: '#D4A853' }} />
                                         ) : (
-                                            <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                            <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                                 {formatVND(detail.expectedValue)}
                                             </p>
                                         )}
                                         <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Giá Trị</p>
                                     </div>
                                     <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
-                                        <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>{detail.probability}%</p>
+                                        <p className="text-sm font-bold" style={{ color: '#87CBB9' }}>{detail.probability}%</p>
                                         <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Xác suất</p>
                                     </div>
                                     <div className="p-3 rounded-md text-center" style={{ background: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? 'rgba(224,82,82,0.06)' : '#142433' }}>
-                                        <p className="text-sm font-bold" style={{
-                                            fontFamily: '"DM Mono"',
-                                            color: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? '#E05252' : '#8AAEBB'
-                                        }}>
+                                        <p className="text-sm font-bold" style={{ color: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? '#E05252' : '#8AAEBB' }}>
                                             {detail.daysInStage}d
                                         </p>
                                         <p className="text-[10px] mt-0.5 flex items-center justify-center gap-1" style={{ color: '#4A6A7A' }}>
@@ -446,7 +443,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
-                                        <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>{detail.totalAge}d</p>
+                                        <p className="text-sm font-bold" style={{ color: '#8AAEBB' }}>{detail.totalAge}d</p>
                                         <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Tổng Thời Gian</p>
                                     </div>
                                 </div>

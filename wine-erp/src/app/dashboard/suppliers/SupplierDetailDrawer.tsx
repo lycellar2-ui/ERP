@@ -51,7 +51,7 @@ function MiniCard({ label, value, accent }: { label: string; value: string | num
     return (
         <div className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
             <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: '#4A6A7A' }}>{label}</p>
-            <p className="text-lg font-bold mt-0.5" style={{ color: accent, fontFamily: '"DM Mono", monospace' }}>{value}</p>
+            <p className="text-lg font-bold mt-0.5 font-mono" style={{ color: accent }}>{value}</p>
         </div>
     )
 }
@@ -260,10 +260,10 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             <Building2 size={20} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                            <h3 className="font-bold text-lg" style={{ color: '#E8F1F2' }}>
                                 {detail?.supplier.name ?? 'Đang tải...'}
                             </h3>
-                            <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                            <p className="text-xs font-mono" style={{ color: '#4A6A7A' }}>
                                 {detail?.supplier.code ?? ''}
                             </p>
                         </div>
@@ -389,7 +389,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{c.name}</span>
-                                                                {c.isPrimary && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Chính</span>}
+                                                                {c.isPrimary && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Chính</span>}
                                                             </div>
                                                             {!c.isPrimary && (
                                                                 <button onClick={() => handleDeleteContact(c.id, c.name)}
@@ -426,7 +426,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         
                                                         {/* Label Select Dropdown */}
                                                         <div>
-                                                            <label className="block text-[9px] uppercase tracking-wider font-bold mb-1" style={{ color: '#4A6A7A' }}>Loại địa chỉ</label>
+                                                            <label className="block text-xs uppercase tracking-wider font-bold mb-1" style={{ color: '#4A6A7A' }}>Loại địa chỉ</label>
                                                             <select value={addressLabel} onChange={e => setAddressLabel(e.target.value)}
                                                                 className="w-full px-2 py-1.5 rounded bg-[#1B2E3D] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none cursor-pointer">
                                                                 <option value="Warehouse">Warehouse (Kho hàng)</option>
@@ -480,7 +480,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{a.label}</span>
-                                                                {a.isDefault && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Mặc định</span>}
+                                                                {a.isDefault && <span className="text-xs px-1.5 py-0.5 rounded-full font-bold" style={{ color: '#5BA88A', background: 'rgba(91,168,138,0.15)' }}>Mặc định</span>}
                                                             </div>
                                                             {!a.isDefault && (
                                                                 <button onClick={() => handleDeleteAddress(a.id, a.label)}
@@ -544,11 +544,11 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                     {pos.map(po => (
                                                         <div key={po.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                                             <div>
-                                                                <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{po.poNo}</span>
+                                                                <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{po.poNo}</span>
                                                                 <span className="text-xs ml-3" style={{ color: '#4A6A7A' }}>{fmtDate(po.createdAt)}</span>
                                                             </div>
                                                             <div className="flex items-center gap-3">
-                                                                <span className="text-xs font-semibold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                                <span className="text-xs font-semibold" style={{ color: '#87CBB9' }}>
                                                                     {fmtCurrency(po.totalValue, po.currency)}
                                                                 </span>
                                                                 <StatusBadge status={po.status} />
@@ -568,11 +568,11 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                     <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#142433' }}>
                                                         <div>
                                                             <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{p.productName}</span>
-                                                            <span className="text-[10px] ml-2" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>{p.skuCode}</span>
+                                                            <span className="text-[10px] ml-2" style={{ color: '#4A6A7A' }}>{p.skuCode}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3 text-[10px]">
                                                             <span style={{ color: '#8AAEBB' }}>{p.totalQty.toLocaleString()} chai</span>
-                                                            <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>~${p.avgUnitPrice}</span>
+                                                            <span style={{ color: '#87CBB9' }}>~${p.avgUnitPrice}</span>
                                                             <span style={{ color: '#4A6A7A' }}>{p.orderCount} PO</span>
                                                         </div>
                                                     </div>
@@ -592,8 +592,8 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                     <div key={i} className="flex items-center justify-between text-xs py-1.5 px-3 rounded" style={{ background: i % 2 === 0 ? '#142433' : 'transparent' }}>
                                                         <span style={{ color: '#4A6A7A' }}>{fmtDate(p.date)}</span>
                                                         <span style={{ color: '#8AAEBB' }}>{p.productName.slice(0, 30)}</span>
-                                                        <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{p.currency} {p.unitPrice}</span>
-                                                        <span style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>×{p.qty}</span>
+                                                        <span style={{ color: '#87CBB9' }}>{p.currency} {p.unitPrice}</span>
+                                                        <span style={{ color: '#4A6A7A' }}>×{p.qty}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -617,12 +617,12 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                 {invoices.map(inv => (
                                                     <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                                         <div>
-                                                            <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{inv.invoiceNo}</span>
+                                                            <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{inv.invoiceNo}</span>
                                                             <span className="text-xs ml-2" style={{ color: '#4A6A7A' }}>PO: {inv.poNo}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3">
                                                             <span className="text-xs" style={{ color: '#4A6A7A' }}>Due: {fmtDate(inv.dueDate)}</span>
-                                                            <span className="text-xs font-semibold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                            <span className="text-xs font-semibold" style={{ color: '#87CBB9' }}>
                                                                 {fmtCurrency(inv.amount, inv.currency)}
                                                             </span>
                                                             <StatusBadge status={inv.status} />
@@ -643,7 +643,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             contracts.map(c => (
                                                 <div key={c.id} className="p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                                     <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{c.contractNo}</span>
+                                                        <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{c.contractNo}</span>
                                                         <StatusBadge status={c.status} />
                                                     </div>
                                                     <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
@@ -719,9 +719,9 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                             </div>
                                                             <div className="flex gap-4 text-xs" style={{ color: '#8AAEBB' }}>
                                                                 <span>{REG_DOC_TYPE_LABELS[d.type] ?? d.type}</span>
-                                                                <span style={{ fontFamily: '"DM Mono"', color: '#4A6A7A' }}>{d.docNo}</span>
+                                                                <span style={{ color: '#4A6A7A' }}>{d.docNo}</span>
                                                                 {d.expiryDate && (
-                                                                    <span style={{ color: statusColor, fontFamily: '"DM Mono"' }}>
+                                                                    <span style={{ color: statusColor }}>
                                                                         {d.daysRemaining !== null && d.daysRemaining <= 0
                                                                             ? `Quá hạn ${Math.abs(d.daysRemaining)}d`
                                                                             : d.daysRemaining !== null

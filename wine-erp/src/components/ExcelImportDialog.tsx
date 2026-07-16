@@ -138,7 +138,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                 <FileSpreadsheet size={18} style={{ color: '#4A8FAB' }} />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-base" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                                <h3 className="font-semibold text-base" style={{ color: '#E8F1F2' }}>
                                     {title}
                                 </h3>
                                 <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -228,15 +228,15 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                 {/* Summary */}
                                 <div className="grid grid-cols-3 gap-3">
                                     <div className="p-3 rounded-lg text-center" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                        <p className="text-xl font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{result.total}</p>
+                                        <p className="text-xl font-bold font-mono" style={{ color: '#E8F1F2' }}>{result.total}</p>
                                         <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: '#4A6A7A' }}>Tổng dòng</p>
                                     </div>
                                     <div className="p-3 rounded-lg text-center" style={{ background: 'rgba(91,168,138,0.08)', border: '1px solid rgba(91,168,138,0.3)' }}>
-                                        <p className="text-xl font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono", monospace' }}>{result.success}</p>
+                                        <p className="text-xl font-bold font-mono" style={{ color: '#5BA88A' }}>{result.success}</p>
                                         <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: '#5BA88A' }}>Thành công</p>
                                     </div>
                                     <div className="p-3 rounded-lg text-center" style={{ background: result.errors.length > 0 ? 'rgba(224,82,82,0.08)' : '#142433', border: `1px solid ${result.errors.length > 0 ? 'rgba(224,82,82,0.3)' : '#2A4355'}` }}>
-                                        <p className="text-xl font-bold" style={{ color: result.errors.length > 0 ? '#E05252' : '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{result.errors.length}</p>
+                                        <p className="text-xl font-bold font-mono" style={{ color: result.errors.length > 0 ? '#E05252' : '#4A6A7A' }}>{result.errors.length}</p>
                                         <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: result.errors.length > 0 ? '#E05252' : '#4A6A7A' }}>Lỗi</p>
                                     </div>
                                 </div>
@@ -263,7 +263,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                             {result.errors.map((err, idx) => (
                                                 <div key={idx} className="flex items-start gap-3 px-4 py-2.5 text-xs"
                                                     style={{ borderBottom: idx < result.errors.length - 1 ? '1px solid #1B2E3D' : 'none' }}>
-                                                    <span className="font-bold flex-shrink-0 w-14" style={{ color: '#E05252', fontFamily: '"DM Mono", monospace' }}>
+                                                    <span className="font-bold flex-shrink-0 w-14 font-mono" style={{ color: '#E05252' }}>
                                                         {err.row > 0 ? `Dòng ${err.row}` : 'Chung'}
                                                     </span>
                                                     <span style={{ color: '#8AAEBB' }}>{err.message}</span>

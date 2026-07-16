@@ -91,7 +91,7 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
                             <Ship size={18} style={{ color: '#4A8FAB' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>Tạo Lô Hàng Mới</h3>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>Tạo Lô Hàng Mới</h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>Tạo shipment từ PO đã duyệt</p>
                         </div>
                     </div>
@@ -201,7 +201,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
             <div className="p-6 rounded-xl w-[640px] max-h-[80vh] overflow-auto" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-5">
-                    <h3 className="font-semibold flex items-center gap-2" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                    <h3 className="font-semibold flex items-center gap-2" style={{ color: '#E8F1F2', fontSize: 18 }}>
                         <BarChart3 size={18} style={{ color: '#D4A853' }} /> Phân Tích Giá Vốn Nhập Kho
                     </h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={16} /></button>
@@ -222,7 +222,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                             ].map(c => (
                                 <div key={c.label} className="p-3 rounded-lg text-center" style={{ background: '#142433' }}>
                                     <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>{c.label}</p>
-                                    <p className="text-sm font-bold mt-1" style={{ color: c.color, fontFamily: '"DM Mono"' }}>{c.value}</p>
+                                    <p className="text-sm font-bold mt-1" style={{ color: c.color }}>{c.value}</p>
                                 </div>
                             ))}
                         </div>
@@ -234,7 +234,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                                 {data.costsByCategory.map((c: any) => (
                                     <div key={c.category} className="flex items-center justify-between px-3 py-2 rounded" style={{ background: '#142433' }}>
                                         <span className="text-xs" style={{ color: '#8AAEBB' }}>{c.label}</span>
-                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{fmtNum(c.totalVND)} ₫</span>
+                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{fmtNum(c.totalVND)} ₫</span>
                                     </div>
                                 ))}
                             </div>
@@ -252,7 +252,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                                 ].map(t => (
                                     <div key={t.label} className="p-2 rounded" style={{ background: 'rgba(212,168,83,0.08)' }}>
                                         <p className="text-[10px]" style={{ color: '#D4A853' }}>{t.label}</p>
-                                        <p className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{fmtNum(t.value)}</p>
+                                        <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{fmtNum(t.value)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -272,11 +272,11 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                                 <tbody>
                                     {data.productBreakdown.map((p: any) => (
                                         <tr key={p.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
-                                            <td className="px-2 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{p.skuCode}</td>
+                                            <td className="px-2 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{p.skuCode}</td>
                                             <td className="px-2 py-2 text-xs truncate max-w-[140px]" style={{ color: '#E8F1F2' }}>{p.productName}</td>
-                                            <td className="px-2 py-2 text-xs text-center" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{p.qty}</td>
-                                            <td className="px-2 py-2 text-xs text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{fmtNum(p.unitCIF)}</td>
-                                            <td className="px-2 py-2 text-xs text-right font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{fmtNum(p.estimatedLandedCost)} ₫</td>
+                                            <td className="px-2 py-2 text-xs text-center" style={{ color: '#8AAEBB' }}>{p.qty}</td>
+                                            <td className="px-2 py-2 text-xs text-right" style={{ color: '#8AAEBB' }}>{fmtNum(p.unitCIF)}</td>
+                                            <td className="px-2 py-2 text-xs text-right font-bold" style={{ color: '#D4A853' }}>{fmtNum(p.estimatedLandedCost)} ₫</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -286,7 +286,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                         {/* Average */}
                         <div className="flex justify-between items-center px-4 py-3 rounded-lg" style={{ background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(135,203,185,0.2)' }}>
                             <span className="text-sm font-semibold" style={{ color: '#87CBB9' }}>Giá vốn BQ / chai</span>
-                            <span className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{fmtNum(data.avgLandedCostPerUnit)} ₫</span>
+                            <span className="text-lg font-bold" style={{ color: '#E8F1F2' }}>{fmtNum(data.avgLandedCostPerUnit)} ₫</span>
                         </div>
                     </div>
                 )}
@@ -337,7 +337,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Quản Lý Lô Hàng
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -362,7 +362,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                         <s.icon size={18} style={{ color: s.accent }} />
                         <div className="text-left">
                             <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{s.value}</p>
+                            <p className="text-lg font-bold font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                         </div>
                     </button>
                 ))}
@@ -428,21 +428,21 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                                             {row.billOfLading}
                                         </button>
                                     </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.poNo}</td>
+                                    <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{row.poNo}</td>
                                     <td className="px-3 py-3 text-xs" style={{ color: '#E8F1F2' }}>{row.supplierName}</td>
                                     <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{row.vesselName ?? '—'}</td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>{row.containerNo ?? '—'}</td>
+                                    <td className="px-3 py-3 text-xs" style={{ color: '#4A6A7A' }}>{row.containerNo ?? '—'}</td>
                                     <td className="px-3 py-3">
                                         <div className="text-[10px]" style={{ color: '#4A6A7A' }}>{row.portOfLoading ?? '—'}</div>
                                         <div className="text-[10px]" style={{ color: '#8AAEBB' }}>→ {row.portOfDischarge ?? '—'}</div>
                                     </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{fmtDate(row.eta)}</td>
+                                    <td className="px-3 py-3 text-xs" style={{ color: '#87CBB9' }}>{fmtDate(row.eta)}</td>
                                     <td className="px-3 py-3">
                                         <div className="flex items-center gap-2">
                                             <div className="w-14 h-1.5 rounded-full" style={{ background: '#2A4355' }}>
                                                 <div className="h-full rounded-full transition-all" style={{ background: '#5BA88A', width: `${row.milestoneProgress}%` }} />
                                             </div>
-                                            <span className="text-[10px] font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{row.milestoneProgress}%</span>
+                                            <span className="text-[10px] font-bold" style={{ color: '#5BA88A' }}>{row.milestoneProgress}%</span>
                                         </div>
                                     </td>
                                     <td className="px-3 py-3">

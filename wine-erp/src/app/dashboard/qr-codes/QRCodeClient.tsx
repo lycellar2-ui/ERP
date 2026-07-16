@@ -29,8 +29,7 @@ export function QRCodeClient({ initialData, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         QR Code Truy Xuất
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -67,7 +66,7 @@ export function QRCodeClient({ initialData, stats }: {
                         <s.icon size={20} style={{ color: s.color }} />
                         <div>
                             <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: s.color }}>{s.value}</p>
+                            <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
                         </div>
                     </div>
                 ))}
@@ -125,20 +124,19 @@ export function QRCodeClient({ initialData, stats }: {
                                         }}
                                         className="w-3.5 h-3.5 accent-emerald-500" />
                                 </td>
-                                <td className="px-3 py-2.5 text-xs" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                <td className="px-3 py-2.5 text-xs" style={{ color: '#87CBB9' }}>
                                     {qr.code.split('-')[0]}...
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                     {qr.lotNo}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>
+                                <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
                                     {qr.skuCode}
                                 </td>
                                 <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>
                                     {qr.productName}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold"
-                                    style={{ color: qr.scanCount === 0 ? '#4A6A7A' : qr.scanCount === 1 ? '#5BA88A' : '#D4A853', fontFamily: '"DM Mono"' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: qr.scanCount === 0 ? '#4A6A7A' : qr.scanCount === 1 ? '#5BA88A' : '#D4A853' }}>
                                     {qr.scanCount}
                                 </td>
                                 <td className="px-3 py-2.5">

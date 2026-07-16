@@ -51,7 +51,7 @@ export function MarketPriceClient({ initialRows, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Giá Thị Trường
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -74,7 +74,7 @@ export function MarketPriceClient({ initialRows, stats }: {
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                         <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: s.accent }}>{s.value}</p>
+                        <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -109,15 +109,15 @@ export function MarketPriceClient({ initialRows, stats }: {
                                 borderBottom: '1px solid rgba(42,67,85,0.5)',
                                 background: r.isBelowCost ? 'rgba(139,26,46,0.04)' : 'transparent',
                             }}>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.skuCode}</td>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>{r.skuCode}</td>
                                 <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>{r.productName}</td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                     {formatVND(r.marketPrice)}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#8AAEBB' }}>
                                     {r.landedCost !== null ? formatVND(r.landedCost) : '—'}
                                 </td>
-                                <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: r.isBelowCost ? '#8B1A2E' : '#5BA88A' }}>
+                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: r.isBelowCost ? '#8B1A2E' : '#5BA88A' }}>
                                     {r.listPrice !== null ? formatVND(r.listPrice) : '—'}
                                 </td>
                                 <td className="px-3 py-2.5">
@@ -126,10 +126,7 @@ export function MarketPriceClient({ initialRows, stats }: {
                                             {r.marginGap >= 0
                                                 ? <TrendingUp size={12} style={{ color: '#5BA88A' }} />
                                                 : <TrendingDown size={12} style={{ color: '#8B1A2E' }} />}
-                                            <span className="text-xs font-bold" style={{
-                                                fontFamily: '"DM Mono"',
-                                                color: r.marginGap >= 20 ? '#5BA88A' : r.marginGap >= 0 ? '#D4A853' : '#8B1A2E',
-                                            }}>
+                                            <span className="text-xs font-bold" style={{ color: r.marginGap >= 20 ? '#5BA88A' : r.marginGap >= 0 ? '#D4A853' : '#8B1A2E' }}>
                                                 {r.marginGap > 0 ? '+' : ''}{r.marginGap.toFixed(1)}%
                                             </span>
                                         </div>
@@ -156,7 +153,7 @@ export function MarketPriceClient({ initialRows, stats }: {
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
                     <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Thêm Giá Thị Trường</h3>
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Thêm Giá Thị Trường</h3>
                             <button onClick={() => setDrawerOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-4">

@@ -93,7 +93,7 @@ export function ReturnsClient({ initialRows, stats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Trả Hàng & Credit Note
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -122,7 +122,7 @@ export function ReturnsClient({ initialRows, stats }: {
                             </div>
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold mt-0.5" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -146,15 +146,15 @@ export function ReturnsClient({ initialRows, stats }: {
                             const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
                             return (
                                 <tr key={r.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.returnNo}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{r.soNo}</td>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>{r.returnNo}</td>
+                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.soNo}</td>
                                     <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>{r.customerName}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.reason}</td>
                                     <td className="px-3 py-2.5">
                                         <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                     </td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(r.totalAmount)}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: r.creditNoteNo ? '#5BA88A' : '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{formatVND(r.totalAmount)}</td>
+                                    <td className="px-3 py-2.5 text-xs font-mono" style={{ color: r.creditNoteNo ? '#5BA88A' : '#4A6A7A' }}>
                                         {r.creditNoteNo ?? '—'}
                                     </td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{formatDate(r.createdAt)}</td>
@@ -176,7 +176,7 @@ export function ReturnsClient({ initialRows, stats }: {
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
                     <div className="w-[520px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Tạo Đơn Trả Hàng</h3>
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Đơn Trả Hàng</h3>
                             <button onClick={() => setCreateOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="p-5 space-y-4">
@@ -205,7 +205,7 @@ export function ReturnsClient({ initialRows, stats }: {
                                             <div key={l.productId} className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div>
-                                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{l.product.skuCode}</span>
+                                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{l.product.skuCode}</span>
                                                         <span className="text-xs ml-2" style={{ color: '#8AAEBB' }}>{l.product.productName}</span>
                                                     </div>
                                                     <span className="text-xs" style={{ color: '#4A6A7A' }}>Đã mua: {Number(l.qtyOrdered)}</span>
@@ -247,7 +247,7 @@ export function ReturnsClient({ initialRows, stats }: {
                                     {returnLines.some(l => l.qtyReturned > 0) && (
                                         <div className="mt-3 p-3 rounded flex items-center justify-between" style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.2)' }}>
                                             <span className="text-xs" style={{ color: '#D4A853' }}>Tổng giá trị trả lại:</span>
-                                            <span className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                                 {formatVND(returnLines.filter((l: any) => l.qtyReturned > 0).reduce((s: number, l: any) => s + l.qtyReturned * l.unitPrice, 0))}
                                             </span>
                                         </div>

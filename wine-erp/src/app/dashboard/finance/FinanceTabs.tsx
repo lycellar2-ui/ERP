@@ -188,19 +188,19 @@ export function JournalEntryTab() {
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                     <p className="text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>Số bút toán</p>
-                                    <p className="text-xl font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                    <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>
                                         {exportStats.count}
                                     </p>
                                 </div>
                                 <div className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                     <p className="text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>Tổng Nợ (Debit)</p>
-                                    <p className="text-lg font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>
+                                    <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>
                                         {formatVND(exportStats.totalDebit)}
                                     </p>
                                 </div>
                                 <div className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                     <p className="text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>Tổng Có (Credit)</p>
-                                    <p className="text-lg font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>
+                                    <p className="text-lg font-bold" style={{ color: '#E05252' }}>
                                         {formatVND(exportStats.totalCredit)}
                                     </p>
                                 </div>
@@ -277,7 +277,7 @@ export function JournalEntryTab() {
                                         onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                         onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
                                         <td className="px-3 py-2.5">
-                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{e.entryNo}</span>
+                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{e.entryNo}</span>
                                         </td>
                                         <td className="px-3 py-2.5">
                                             <span className="text-xs px-2 py-0.5 rounded font-semibold"
@@ -288,16 +288,16 @@ export function JournalEntryTab() {
                                         <td className="px-3 py-2.5 text-xs max-w-[200px] truncate" style={{ color: '#E8F1F2' }}>
                                             {e.description ?? '—'}
                                         </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
                                             {e.periodLabel}
                                         </td>
                                         <td className="px-3 py-2.5 text-right">
-                                            <span className="text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>
+                                            <span className="text-xs font-bold" style={{ color: '#5BA88A' }}>
                                                 {e.totalDebit > 0 ? formatVND(e.totalDebit) : '—'}
                                             </span>
                                         </td>
                                         <td className="px-3 py-2.5 text-right">
-                                            <span className="text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>
+                                            <span className="text-xs font-bold" style={{ color: '#E05252' }}>
                                                 {e.totalCredit > 0 ? formatVND(e.totalCredit) : '—'}
                                             </span>
                                         </td>
@@ -415,7 +415,7 @@ export function ProfitLossTab() {
                         ].map(s => (
                             <div key={s.label} className="p-3 rounded-md" style={card}>
                                 <p className="text-xs uppercase mb-1" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-lg font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>
+                                <p className="text-lg font-bold" style={{ color: s.color }}>
                                     {formatVND(s.value)}
                                 </p>
                             </div>
@@ -440,7 +440,7 @@ export function ProfitLossTab() {
                                             {row.type === 'expense' && <span className="ml-4">↳ </span>}
                                             {row.label}
                                         </td>
-                                        <td className="px-4 py-2.5 text-right" style={{ fontFamily: '"DM Mono"' }}>
+                                        <td className="px-4 py-2.5 text-right">
                                             <span className="text-sm" style={{
                                                 color: row.amount > 0 ? '#5BA88A' : row.amount < 0 ? '#E05252' : '#4A6A7A',
                                             }}>
@@ -480,7 +480,7 @@ export function ProfitLossTab() {
                                             if (val === null) return <span className="text-xs" style={{ color: '#4A6A7A' }}>—</span>
                                             const positive = val >= 0
                                             return (
-                                                <span className="text-xs font-bold" style={{ color: positive ? '#5BA88A' : '#E05252', fontFamily: '"DM Mono"' }}>
+                                                <span className="text-xs font-bold font-mono" style={{ color: positive ? '#5BA88A' : '#E05252' }}>
                                                     {positive ? '↑' : '↓'}{Math.abs(val)}%
                                                 </span>
                                             )
@@ -488,7 +488,7 @@ export function ProfitLossTab() {
                                         return (
                                             <tr key={r.label} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
                                                 <td className="px-4 py-2 text-xs font-semibold" style={{ color: '#8AAEBB' }}>{r.label}</td>
-                                                <td className="px-4 py-2 text-right text-xs" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{formatVND(r.curr)}</td>
+                                                <td className="px-4 py-2 text-right text-xs" style={{ color: '#E8F1F2' }}>{formatVND(r.curr)}</td>
                                                 <td className="px-4 py-2 text-right">{chgBadge(r.prevChg)}</td>
                                                 <td className="px-4 py-2 text-right">{chgBadge(r.lyChg)}</td>
                                             </tr>
@@ -664,12 +664,12 @@ export function ExpenseTab({ userId }: { userId: string }) {
                                     <tr key={e.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}
                                         onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                         onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
-                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{e.expenseNo}</td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{e.expenseNo}</td>
                                         <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{e.categoryLabel}</td>
-                                        <td className="px-3 py-2 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>{e.account.split(' - ')[0]}</td>
-                                        <td className="px-3 py-2 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{formatVND(e.amount)}</td>
+                                        <td className="px-3 py-2 text-xs" style={{ color: '#4A6A7A' }}>{e.account.split(' - ')[0]}</td>
+                                        <td className="px-3 py-2 text-sm font-bold" style={{ color: '#E8F1F2' }}>{formatVND(e.amount)}</td>
                                         <td className="px-3 py-2 text-xs max-w-[180px] truncate" style={{ color: '#8AAEBB' }}>{e.description}</td>
-                                        <td className="px-3 py-2 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>{e.periodLabel}</td>
+                                        <td className="px-3 py-2 text-xs" style={{ color: '#4A6A7A' }}>{e.periodLabel}</td>
                                         <td className="px-3 py-2">
                                             <span className="text-xs px-2 py-0.5 rounded font-semibold"
                                                 style={{ color: st.color, background: `${st.color}18` }}>{st.label}</span>
@@ -794,7 +794,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     {item.amount > 0 && (
-                                        <span className="text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                        <span className="text-xs font-bold" style={{ color: '#D4A853' }}>
                                             {formatVND(item.amount)}
                                         </span>
                                     )}
@@ -935,7 +935,7 @@ export function BalanceSheetTab() {
                         ].map(s => (
                             <div key={s.prefix} className="p-4 rounded-md" style={card}>
                                 <p className="text-xs uppercase mb-1 font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>
+                                <p className="text-xl font-bold" style={{ color: s.color }}>
                                     {formatVND(s.value)}
                                 </p>
                             </div>
@@ -977,7 +977,7 @@ export function BalanceSheetTab() {
                                             }}>
                                                 {line.label}
                                             </td>
-                                            <td className="px-4 py-2.5 text-right" style={{ fontFamily: '"DM Mono"' }}>
+                                            <td className="px-4 py-2.5 text-right">
                                                 <span className="text-sm" style={{
                                                     color: isSummary ? '#E8F1F2' : categoryColor(line.category),
                                                     fontWeight: isSummary ? 700 : 500,
@@ -995,15 +995,15 @@ export function BalanceSheetTab() {
                     {/* Equation */}
                     <div className="flex items-center justify-center gap-4 py-3 rounded-md text-sm" style={card}>
                         <span style={{ color: '#87CBB9', fontWeight: 700 }}>
-                            Tài sản <span style={{ fontFamily: '"DM Mono"' }}>{formatVND(data.totalAssets)}</span>
+                            Tài sản <span>{formatVND(data.totalAssets)}</span>
                         </span>
                         <span style={{ color: '#4A6A7A', fontSize: 18 }}>=</span>
                         <span style={{ color: '#D4A853', fontWeight: 700 }}>
-                            Nợ <span style={{ fontFamily: '"DM Mono"' }}>{formatVND(data.totalLiabilities)}</span>
+                            Nợ <span>{formatVND(data.totalLiabilities)}</span>
                         </span>
                         <span style={{ color: '#4A6A7A', fontSize: 18 }}>+</span>
                         <span style={{ color: '#5BA88A', fontWeight: 700 }}>
-                            Vốn <span style={{ fontFamily: '"DM Mono"' }}>{formatVND(data.totalEquity)}</span>
+                            Vốn <span>{formatVND(data.totalEquity)}</span>
                         </span>
                     </div>
                 </div>
@@ -1068,7 +1068,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
                 {candidates.length > 0 && (
                     <div className="text-right">
                         <p className="text-xs" style={{ color: '#4A6A7A' }}>{candidates.length} hóa đơn</p>
-                        <p className="text-sm font-bold" style={{ color: '#8B1A2E', fontFamily: '"DM Mono"' }}>
+                        <p className="text-sm font-bold" style={{ color: '#8B1A2E' }}>
                             {formatVND(totalOutstanding)}
                         </p>
                     </div>
@@ -1098,7 +1098,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                     {c.invoiceNo}
                                                 </span>
                                                 <span className="text-sm font-medium" style={{ color: '#E8F1F2' }}>
@@ -1112,7 +1112,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="text-right">
-                                            <p className="text-sm font-bold" style={{ color: sColor, fontFamily: '"DM Mono"' }}>
+                                            <p className="text-sm font-bold" style={{ color: sColor }}>
                                                 {formatVND(c.outstanding)}
                                             </p>
                                             <p className="text-[10px]" style={{ color: '#4A6A7A' }}>còn lại</p>
@@ -1194,8 +1194,8 @@ export function CashFlowTab() {
     if (!cashPos && !loading) load()
 
     const trendArrow = (val: number) => {
-        if (val > 0) return <span style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>↑ {formatVND(Math.abs(val))}</span>
-        if (val < 0) return <span style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>↓ {formatVND(Math.abs(val))}</span>
+        if (val > 0) return <span style={{ color: '#5BA88A' }}>↑ {formatVND(Math.abs(val))}</span>
+        if (val < 0) return <span style={{ color: '#E05252' }}>↓ {formatVND(Math.abs(val))}</span>
         return <span style={{ color: '#4A6A7A' }}>—</span>
     }
 
@@ -1283,7 +1283,7 @@ export function CashFlowTab() {
                             ].map(c => (
                                 <div key={c.label} className="p-4 rounded-md" style={card}>
                                     <p className="text-xs uppercase mb-1.5 font-semibold" style={{ color: '#4A6A7A' }}>{c.label}</p>
-                                    <p className="text-xl font-bold" style={{ color: c.color, fontFamily: '"DM Mono"' }}>
+                                    <p className="text-xl font-bold" style={{ color: c.color }}>
                                         {formatVND(c.value)}
                                     </p>
                                     {c.trend !== null && (
@@ -1299,12 +1299,12 @@ export function CashFlowTab() {
                         {cashPos.pettyCash > 0 && (
                             <div className="flex items-center gap-4 px-4 py-2.5 mt-3 rounded-md" style={card}>
                                 <span className="text-xs" style={{ color: '#4A6A7A' }}>Quỹ tiền mặt (TK 111):</span>
-                                <span className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                <span className="text-sm font-bold" style={{ color: '#87CBB9' }}>
                                     {formatVND(cashPos.pettyCash)}
                                 </span>
                                 <span className="text-xs" style={{ color: '#4A6A7A' }}>|</span>
                                 <span className="text-xs" style={{ color: '#4A6A7A' }}>Tổng tiền sẵn sàng:</span>
-                                <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
                                     {formatVND(cashPos.totalCash)}
                                 </span>
                             </div>
@@ -1342,7 +1342,7 @@ export function CashFlowTab() {
                                     <tr style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: 'rgba(135,203,185,0.06)' }}>
                                         <td className="px-4 py-2.5 text-sm font-bold" style={{ color: '#E8F1F2' }}>Tiền hiện tại</td>
                                         <td className="px-4 py-2.5 text-right" colSpan={4}></td>
-                                        <td className="px-4 py-2.5 text-right text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                        <td className="px-4 py-2.5 text-right text-sm font-bold" style={{ color: '#87CBB9' }}>
                                             {formatVND(forecast.currentCash)}
                                         </td>
                                     </tr>
@@ -1353,17 +1353,13 @@ export function CashFlowTab() {
                                                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                                 <td className="px-4 py-2.5 text-sm font-semibold" style={{ color: '#E8F1F2' }}>{b.period}</td>
-                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>+{formatVND(b.arExpected)}</td>
-                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>-{formatVND(b.apDue)}</td>
-                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>-{formatVND(b.expenseEstimate)}</td>
-                                                <td className="px-4 py-2.5 text-right text-sm font-bold" style={{
-                                                    color: b.netCashFlow >= 0 ? '#5BA88A' : '#E05252', fontFamily: '"DM Mono"'
-                                                }}>
+                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#5BA88A' }}>+{formatVND(b.arExpected)}</td>
+                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#D4A853' }}>-{formatVND(b.apDue)}</td>
+                                                <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#8AAEBB' }}>-{formatVND(b.expenseEstimate)}</td>
+                                                <td className="px-4 py-2.5 text-right text-sm font-bold" style={{ color: b.netCashFlow >= 0 ? '#5BA88A' : '#E05252' }}>
                                                     {b.netCashFlow >= 0 ? '+' : ''}{formatVND(b.netCashFlow)}
                                                 </td>
-                                                <td className="px-4 py-2.5 text-right text-sm font-bold" style={{
-                                                    color: riskColor, fontFamily: '"DM Mono"'
-                                                }}>
+                                                <td className="px-4 py-2.5 text-right text-sm font-bold" style={{ color: riskColor }}>
                                                     {formatVND(b.cumulative)}
                                                 </td>
                                             </tr>
@@ -1385,9 +1381,7 @@ export function CashFlowTab() {
                                     borderLeft: `3px solid ${p.risk ? '#E05252' : p.value > 500_000_000 ? '#5BA88A' : '#D4A853'}`,
                                 }}>
                                     <p className="text-xs uppercase mb-1" style={{ color: '#4A6A7A' }}>Số dư {p.label}</p>
-                                    <p className="text-lg font-bold" style={{
-                                        color: p.risk ? '#E05252' : '#E8F1F2', fontFamily: '"DM Mono"',
-                                    }}>
+                                    <p className="text-lg font-bold" style={{ color: p.risk ? '#E05252' : '#E8F1F2' }}>
                                         {formatVND(p.value)}
                                     </p>
                                     {p.risk && <p className="text-xs mt-1 font-semibold" style={{ color: '#E05252' }}>⚠ Rủi ro thiếu tiền</p>}
@@ -1440,13 +1434,13 @@ export function CashFlowTab() {
                                         {creditResults.map(r => (
                                             <tr key={r.customerId} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: r.wasHeld ? 'rgba(224,82,82,0.04)' : 'transparent' }}>
                                                 <td className="px-4 py-2.5 text-sm font-medium" style={{ color: '#E8F1F2' }}>{r.customerName}</td>
-                                                <td className="px-4 py-2.5 text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(r.creditLimit)}</td>
-                                                <td className="px-4 py-2.5 text-sm font-bold" style={{ color: r.isOverLimit ? '#E05252' : '#5BA88A', fontFamily: '"DM Mono"' }}>
+                                                <td className="px-4 py-2.5 text-sm" style={{ color: '#8AAEBB' }}>{formatVND(r.creditLimit)}</td>
+                                                <td className="px-4 py-2.5 text-sm font-bold font-mono" style={{ color: r.isOverLimit ? '#E05252' : '#5BA88A' }}>
                                                     {formatVND(r.currentAR)}
                                                 </td>
                                                 <td className="px-4 py-2.5">
                                                     {r.overAmount > 0 && (
-                                                        <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ color: '#E05252', background: 'rgba(224,82,82,0.15)', fontFamily: '"DM Mono"' }}>
+                                                        <span className="text-xs px-2 py-0.5 rounded font-bold font-mono" style={{ color: '#E05252', background: 'rgba(224,82,82,0.15)' }}>
                                                             +{formatVND(r.overAmount)}
                                                         </span>
                                                     )}
@@ -1558,26 +1552,26 @@ export function TrialBalanceTab() {
                                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                     <td className="px-3 py-2" style={{ borderRight: '1px solid #2A4355' }}>
-                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.accountCode}</span>
+                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{r.accountCode}</span>
                                         <span className="text-xs ml-2" style={{ color: '#8AAEBB' }}>{r.accountName}</span>
                                     </td>
-                                    <td className="px-2 py-2 text-right text-xs" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{r.openingDebit > 0 ? formatVND(r.openingDebit) : ''}</td>
-                                    <td className="px-2 py-2 text-right text-xs" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{r.openingCredit > 0 ? formatVND(r.openingCredit) : ''}</td>
-                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{r.periodDebit > 0 ? formatVND(r.periodDebit) : ''}</td>
-                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{r.periodCredit > 0 ? formatVND(r.periodCredit) : ''}</td>
-                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{r.closingDebit > 0 ? formatVND(r.closingDebit) : ''}</td>
-                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>{r.closingCredit > 0 ? formatVND(r.closingCredit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs" style={{ color: '#5BA88A' }}>{r.openingDebit > 0 ? formatVND(r.openingDebit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-mono" style={{ color: '#E05252', borderRight: '1px solid #2A4355' }}>{r.openingCredit > 0 ? formatVND(r.openingCredit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#5BA88A' }}>{r.periodDebit > 0 ? formatVND(r.periodDebit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold font-mono" style={{ color: '#E05252', borderRight: '1px solid #2A4355' }}>{r.periodCredit > 0 ? formatVND(r.periodCredit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#5BA88A' }}>{r.closingDebit > 0 ? formatVND(r.closingDebit) : ''}</td>
+                                    <td className="px-2 py-2 text-right text-xs font-bold" style={{ color: '#E05252' }}>{r.closingCredit > 0 ? formatVND(r.closingCredit) : ''}</td>
                                 </tr>
                             ))}
                             {/* Totals row */}
                             <tr style={{ background: 'rgba(135,203,185,0.08)', borderTop: '2px solid #2A4355' }}>
                                 <td className="px-3 py-2.5 text-xs font-bold uppercase" style={{ color: '#E8F1F2', borderRight: '1px solid #2A4355' }}>Tổng Cộng</td>
-                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.openingDebit)}</td>
-                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{formatVND(data.totals.openingCredit)}</td>
-                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.periodDebit)}</td>
-                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"', borderRight: '1px solid #2A4355' }}>{formatVND(data.totals.periodCredit)}</td>
-                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.closingDebit)}</td>
-                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>{formatVND(data.totals.closingCredit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A' }}>{formatVND(data.totals.openingDebit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold font-mono" style={{ color: '#E05252', borderRight: '1px solid #2A4355' }}>{formatVND(data.totals.openingCredit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A' }}>{formatVND(data.totals.periodDebit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold font-mono" style={{ color: '#E05252', borderRight: '1px solid #2A4355' }}>{formatVND(data.totals.periodCredit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A' }}>{formatVND(data.totals.closingDebit)}</td>
+                                <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252' }}>{formatVND(data.totals.closingCredit)}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1647,19 +1641,19 @@ export function AccountLedgerTab() {
                     {/* Account info */}
                     <div className="flex items-center gap-4 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                         <div>
-                            <span className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{data.accountCode}</span>
+                            <span className="text-lg font-bold" style={{ color: '#87CBB9' }}>{data.accountCode}</span>
                             <span className="text-sm ml-2" style={{ color: '#8AAEBB' }}>{data.accountName}</span>
                         </div>
                         <div className="ml-auto flex gap-6">
                             <div className="text-right">
                                 <p className="text-xs uppercase" style={{ color: '#4A6A7A' }}>Dư đầu kỳ</p>
-                                <p className="text-sm font-bold" style={{ color: data.openingBalance >= 0 ? '#5BA88A' : '#E05252', fontFamily: '"DM Mono"' }}>
+                                <p className="text-sm font-bold" style={{ color: data.openingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
                                     {formatVND(Math.abs(data.openingBalance))} {data.openingBalance >= 0 ? 'Nợ' : 'Có'}
                                 </p>
                             </div>
                             <div className="text-right">
                                 <p className="text-xs uppercase" style={{ color: '#4A6A7A' }}>Dư cuối kỳ</p>
-                                <p className="text-sm font-bold" style={{ color: data.closingBalance >= 0 ? '#5BA88A' : '#E05252', fontFamily: '"DM Mono"' }}>
+                                <p className="text-sm font-bold" style={{ color: data.closingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
                                     {formatVND(Math.abs(data.closingBalance))} {data.closingBalance >= 0 ? 'Nợ' : 'Có'}
                                 </p>
                             </div>
@@ -1687,9 +1681,9 @@ export function AccountLedgerTab() {
                                         <td colSpan={4} className="px-3 py-2 text-xs font-bold italic" style={{ color: '#4A6A7A' }}>
                                             Số dư đầu kỳ
                                         </td>
-                                        <td className="px-3 py-2 text-right text-xs" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}></td>
-                                        <td className="px-3 py-2 text-right text-xs" style={{ fontFamily: '"DM Mono"', color: '#E05252' }}></td>
-                                        <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: data.openingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
+                                        <td className="px-3 py-2 text-right text-xs" style={{ color: '#5BA88A' }}></td>
+                                        <td className="px-3 py-2 text-right text-xs" style={{ color: '#E05252' }}></td>
+                                        <td className="px-3 py-2 text-right text-xs font-bold" style={{ color: data.openingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
                                             {formatVND(Math.abs(data.openingBalance))}
                                         </td>
                                     </tr>
@@ -1698,20 +1692,20 @@ export function AccountLedgerTab() {
                                             onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                             onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
                                             <td className="px-3 py-2 text-xs" style={{ color: '#8AAEBB' }}>{formatDate(e.date)}</td>
-                                            <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{e.entryNo}</td>
+                                            <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{e.entryNo}</td>
                                             <td className="px-3 py-2">
                                                 <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: '#D4A853', background: 'rgba(212,168,83,0.15)' }}>
                                                     {DOC_TYPE_LABEL[e.docType] ?? e.docType}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-2 text-xs max-w-[250px] truncate" style={{ color: '#E8F1F2' }}>{e.description || '—'}</td>
-                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>
+                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ color: '#5BA88A' }}>
                                                 {e.debit > 0 ? formatVND(e.debit) : ''}
                                             </td>
-                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E05252' }}>
+                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ color: '#E05252' }}>
                                                 {e.credit > 0 ? formatVND(e.credit) : ''}
                                             </td>
-                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: e.balance >= 0 ? '#5BA88A' : '#E05252' }}>
+                                            <td className="px-3 py-2 text-right text-xs font-bold" style={{ color: e.balance >= 0 ? '#5BA88A' : '#E05252' }}>
                                                 {formatVND(Math.abs(e.balance))}
                                             </td>
                                         </tr>
@@ -1721,13 +1715,13 @@ export function AccountLedgerTab() {
                                         <td colSpan={4} className="px-3 py-2.5 text-xs font-bold uppercase" style={{ color: '#E8F1F2' }}>
                                             Số dư cuối kỳ
                                         </td>
-                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>
+                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ color: '#5BA88A' }}>
                                             {formatVND(data.entries.reduce((s, e) => s + e.debit, 0))}
                                         </td>
-                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E05252' }}>
+                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ color: '#E05252' }}>
                                             {formatVND(data.entries.reduce((s, e) => s + e.credit, 0))}
                                         </td>
-                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: data.closingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
+                                        <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ color: data.closingBalance >= 0 ? '#5BA88A' : '#E05252' }}>
                                             {formatVND(Math.abs(data.closingBalance))}
                                         </td>
                                     </tr>

@@ -9,7 +9,7 @@ vi.mock('@/lib/session', () => ({
 }))
 
 const mockTx = {
-    salesOrder: { count: vi.fn(), create: vi.fn(), update: vi.fn() },
+    salesOrder: { count: vi.fn(), create: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
     salesOrderLine: { create: vi.fn() },
     aRInvoice: { create: vi.fn(), update: vi.fn() },
     aRPayment: { create: vi.fn() },
@@ -34,6 +34,7 @@ const mockPrisma = {
     priceListLine: { findFirst: vi.fn(), findMany: vi.fn() },
     legalEntity: { findUnique: vi.fn(), findFirst: vi.fn() },
     aRInvoice: { findFirst: vi.fn(), count: vi.fn(), create: vi.fn() },
+    pOSShift: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
     $transaction: vi.fn(async (cb: any) => {
         if (typeof cb === 'function') return cb(mockTx)
         return Promise.all(cb)
@@ -52,6 +53,7 @@ beforeEach(() => {
     vi.clearAllMocks()
     mockPrisma.legalEntity.findFirst.mockResolvedValue({ id: 'le-lys-cellar' })
     mockPrisma.legalEntity.findUnique.mockResolvedValue({ id: 'le-lys-cellar' })
+    mockPrisma.pOSShift.findFirst.mockResolvedValue({ id: 'shift-1', cashierId: 'u1', status: 'OPEN' })
 })
 
 describe('POS-01: processPOSSale', () => {

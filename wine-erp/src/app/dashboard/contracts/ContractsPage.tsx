@@ -43,8 +43,7 @@ export function ContractsPage({
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-3"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold flex items-center gap-3" style={{ color: '#E8F1F2' }}>
                         <Scale size={24} style={{ color: '#87CBB9' }} />
                         Trung Tâm Pháp Lý & Tuân Thủ
                     </h2>

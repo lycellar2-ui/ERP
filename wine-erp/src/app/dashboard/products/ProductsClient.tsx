@@ -64,8 +64,7 @@ function StatCard({ label, value, icon: Icon, accent }: {
             </div>
             <div>
                 <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5"
-                    style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{value}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
             </div>
         </div>
     )
@@ -270,8 +269,7 @@ export function ProductsClient({
             <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0D1E2B]/40 p-3 rounded-xl border border-[#2A4355]/30">
                 <div className="flex flex-wrap items-center gap-4">
                     <div>
-                        <h2 className="text-lg font-bold"
-                            style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                        <h2 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                             Danh Mục Sản Phẩm
                         </h2>
                     </div>

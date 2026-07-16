@@ -312,13 +312,24 @@ export async function updateLandedCostCampaign(input: {
 }
 
 // ── Calculate & Allocate — Proration Engine ───────
-// Distributes total cost across products proportionally by qty
+// Distributes total cost across products proportionally by CIF value and excludes VAT
 export async function calculateLandedCostProration(
     campaignId: string
 ): Promise<{ success: boolean; allocations?: LandedCostAllocationRow[]; error?: string }> {
     try {
         const campaign = await prisma.landedCostCampaign.findUnique({
             where: { id: campaignId },
+            include: {
+                shipment: {
+                    include: {
+                        po: {
+                            include: {
+                                lines: true,
+                            },
+                        },
+                    },
+                },
+            },
         })
         if (!campaign) return { success: false, error: 'Campaign không tồn tại' }
         if (campaign.status === 'ALLOCATED') {
@@ -336,8 +347,29 @@ export async function calculateLandedCostProration(
         }
 
         const totalQty = lots.reduce((s, l) => s + Number(l.qtyReceived), 0)
+        
+        // Exclude VAT (totalVat) from landed cost calculation!
         const totalCost = Number(campaign.totalImportTax) + Number(campaign.totalSct)
-            + Number(campaign.totalVat) + Number(campaign.totalOtherCost)
+            + Number(campaign.totalOtherCost)
+
+        const poLines = campaign.shipment.po.lines
+        const exchangeRate = Number(campaign.shipment.po.exchangeRate ?? 24500)
+
+        // Calculate CIF VND per product in PO
+        const productCifMap = new Map<string, number>()
+        let totalCifVND = 0
+        for (const line of poLines) {
+            const cif = Number(line.qtyOrdered) * Number(line.unitPrice) * exchangeRate
+            productCifMap.set(line.productId, (productCifMap.get(line.productId) ?? 0) + cif)
+            totalCifVND += cif
+        }
+
+        const getRatio = (productId: string, qty: number) => {
+            if (totalCifVND > 0) {
+                return (productCifMap.get(productId) ?? 0) / totalCifVND
+            }
+            return qty / totalQty
+        }
 
         // Group by product, sum qty
         const productMap = new Map<string, { qty: number; name: string; sku: string }>()
@@ -359,9 +391,13 @@ export async function calculateLandedCostProration(
 
         const allocations: LandedCostAllocationRow[] = []
         for (const [productId, data] of productMap) {
-            const ratio = data.qty / totalQty
+            const ratio = getRatio(productId, data.qty)
             const allocatedCost = totalCost * ratio
-            const unitCost = allocatedCost / data.qty
+            
+            // unitLandedCost = CIF unit price + prorated taxes/other cost per unit
+            const poLine = poLines.find(l => l.productId === productId)
+            const unitCIFVND = poLine ? Number(poLine.unitPrice) * exchangeRate : 0
+            const unitCost = (allocatedCost / data.qty) + unitCIFVND
 
             const alloc = await prisma.landedCostAllocation.create({
                 data: {
@@ -415,14 +451,57 @@ export async function finalizeLandedCostCampaign(
         }
 
         await prisma.$transaction(async (tx) => {
-            // Update unitLandedCost on StockLots
+            const shipmentLots = await tx.stockLot.findMany({
+                where: { shipmentId: campaign.shipmentId },
+            })
+
+            let totalCOGSAdjustment = 0
+
+            // Update unitLandedCost on StockLots and calculate adjustment for sold units
             for (const alloc of campaign.allocations) {
+                const correspondingLots = shipmentLots.filter(l => l.productId === alloc.productId)
+                for (const lot of correspondingLots) {
+                    const oldUnitCost = Number(lot.unitLandedCost)
+                    const newUnitCost = Number(alloc.unitLandedCost)
+                    const qtySold = Number(lot.qtyReceived) - Number(lot.qtyAvailable)
+
+                    if (qtySold > 0 && newUnitCost > oldUnitCost) {
+                        const diff = newUnitCost - oldUnitCost
+                        totalCOGSAdjustment += diff * qtySold
+                    }
+                }
+
                 await tx.stockLot.updateMany({
                     where: {
                         shipmentId: campaign.shipmentId,
                         productId: alloc.productId,
                     },
                     data: { unitLandedCost: alloc.unitLandedCost },
+                })
+            }
+
+            // If there's a positive adjustment amount, create the COGS adjustment journal entry
+            if (totalCOGSAdjustment > 0) {
+                const now = new Date()
+                const { getOrCreatePeriod, nextEntryNo } = await import('../finance/actions')
+                const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1, tx)
+                const entryNo = await nextEntryNo('JE-ADJ', tx)
+
+                await tx.journalEntry.create({
+                    data: {
+                        entryNo,
+                        docType: 'COGS',
+                        docId: campaignId,
+                        periodId: period.id,
+                        description: `Điều chỉnh chênh lệch giá vốn bán hàng trước phân bổ - Campaign ${campaignId}`,
+                        createdBy: 'system',
+                        lines: {
+                            create: [
+                                { account: '632 - Giá vốn hàng bán', debit: Math.round(totalCOGSAdjustment), credit: 0 },
+                                { account: '156 - Hàng tồn kho', debit: 0, credit: Math.round(totalCOGSAdjustment) },
+                            ],
+                        },
+                    },
                 })
             }
 

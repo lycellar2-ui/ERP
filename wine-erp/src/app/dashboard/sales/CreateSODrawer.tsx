@@ -421,7 +421,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 <div className="flex items-center justify-between px-6 py-4"
                     style={{ borderBottom: '1px solid #2A4355' }}>
                     <div>
-                        <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                             Tạo Đơn Bán Hàng
                         </h3>
                         <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Sales Order — SLS</p>
@@ -573,7 +573,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             {canOverride && (
                                                 <button
                                                     onClick={() => setOverrideMode(!overrideMode)}
-                                                    className="text-[9px] px-1.5 py-0.5 rounded transition-all"
+                                                    className="text-xs px-1.5 py-0.5 rounded transition-all"
                                                     style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}
                                                 >
                                                     {overrideMode ? 'Xong' : 'Thay đổi'}
@@ -925,7 +925,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                             </div>
                                                         </div>
                                                         <div className="flex justify-end">
-                                                            <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                            <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                                 = {formatVND(lineTotal)}
                                                             </p>
                                                         </div>
@@ -950,7 +950,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                     </div>
                                     <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid #2A4355' }}>
                                         <p className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>Tổng Cộng</p>
-                                        <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                        <p className="text-xl font-bold" style={{ color: '#87CBB9' }}>
                                             {formatVND(finalTotal)}
                                         </p>
                                     </div>

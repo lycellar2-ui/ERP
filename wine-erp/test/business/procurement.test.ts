@@ -15,12 +15,18 @@ const mockPrisma = {
         update: vi.fn(),
         findUnique: vi.fn(),
         findMany: vi.fn(),
+        findFirst: vi.fn(),
     },
     purchaseOrderLine: { findMany: vi.fn() },
     user: { findFirst: vi.fn(), create: vi.fn() },
     department: { findFirst: vi.fn(), create: vi.fn() },
     legalEntity: { findFirst: vi.fn() },
     supplier: { findUnique: vi.fn() },
+    $transaction: vi.fn(async (cb: any) => {
+        if (typeof cb === 'function') return cb(mockPrisma)
+        return Promise.all(cb)
+    }),
+    $executeRaw: vi.fn(),
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))

@@ -73,19 +73,19 @@ export function AIPurchaseSuggestion() {
             {stats && !loading && (
                 <div className="grid grid-cols-4 gap-2 px-5 pt-4">
                     <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                        <p className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{stats.totalProducts}</p>
+                        <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>{stats.totalProducts}</p>
                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Sản phẩm</p>
                     </div>
                     <div className="text-center p-2 rounded" style={{ background: 'rgba(224,82,82,0.06)', border: stats.urgentReorder > 0 ? '1px solid rgba(224,82,82,0.2)' : 'none' }}>
-                        <p className="text-lg font-bold" style={{ color: '#E05252', fontFamily: 'var(--font-mono)' }}>{stats.urgentReorder}</p>
+                        <p className="text-lg font-bold" style={{ color: '#E05252' }}>{stats.urgentReorder}</p>
                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Cần nhập gấp</p>
                     </div>
                     <div className="text-center p-2 rounded" style={{ background: 'rgba(212,168,83,0.06)' }}>
-                        <p className="text-lg font-bold" style={{ color: '#D4A853', fontFamily: 'var(--font-mono)' }}>{stats.lowStock}</p>
+                        <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{stats.lowStock}</p>
                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Sắp hết</p>
                     </div>
                     <div className="text-center p-2 rounded" style={{ background: 'rgba(74,143,171,0.06)' }}>
-                        <p className="text-lg font-bold" style={{ color: '#4A8FAB', fontFamily: 'var(--font-mono)' }}>{stats.overstock}</p>
+                        <p className="text-lg font-bold" style={{ color: '#4A8FAB' }}>{stats.overstock}</p>
                         <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Tồn cao</p>
                     </div>
                 </div>

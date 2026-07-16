@@ -69,7 +69,7 @@ function TaxRateForm({ existing, onClose, onSaved }: {
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
             <div className="w-full max-w-lg p-6 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                 <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                         {isEdit ? 'Sửa Thuế Suất' : 'Thêm Thuế Suất Mới'}
                     </h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
@@ -231,15 +231,15 @@ function TaxEnginePanel() {
                     <div className="grid grid-cols-3 gap-2 p-3 rounded" style={{ background: '#142433' }}>
                         <div className="text-center">
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>NK</p>
-                            <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>{result.importTaxRate}%</p>
+                            <p className="text-sm font-bold" style={{ color: '#D4A853' }}>{result.importTaxRate}%</p>
                         </div>
                         <div className="text-center">
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>TTĐB ({abv >= 20 ? '≥20°' : '<20°'})</p>
-                            <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#C45A2A' }}>{result.sctRate}%</p>
+                            <p className="text-sm font-bold" style={{ color: '#C45A2A' }}>{result.sctRate}%</p>
                         </div>
                         <div className="text-center">
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>VAT</p>
-                            <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#A5DED0' }}>{result.vatRate}%</p>
+                            <p className="text-sm font-bold" style={{ color: '#A5DED0' }}>{result.vatRate}%</p>
                         </div>
                     </div>
 
@@ -252,7 +252,7 @@ function TaxEnginePanel() {
                     ].map(item => (
                         <div key={item.label} className="flex justify-between items-center">
                             <span className="text-xs" style={{ color: '#8AAEBB' }}>{item.label}</span>
-                            <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: item.color }}>
+                            <span className="text-xs font-bold" style={{ color: item.color }}>
                                 {item.value}
                             </span>
                         </div>
@@ -260,7 +260,7 @@ function TaxEnginePanel() {
 
                     <div className="flex justify-between items-center pt-2 mt-2" style={{ borderTop: '1px solid #2A4355' }}>
                         <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Giá Vốn / Chai</span>
-                        <span className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                        <span className="text-lg font-bold" style={{ color: '#87CBB9' }}>
                             {formatVND(result.unitLandedCost)}
                         </span>
                     </div>
@@ -351,7 +351,7 @@ function EVFTARoadmapPanel() {
             <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                 <div className="flex items-center gap-3 mb-3">
                     <CalendarRange size={20} style={{ color: '#5BA88A' }} />
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                         Lộ Trình Giảm Thuế EVFTA (2020–2027)
                     </h3>
                 </div>
@@ -382,10 +382,7 @@ function EVFTARoadmapPanel() {
                         <div className="flex items-end gap-1 mb-2" style={{ paddingLeft: 160 }}>
                             {years.map(y => (
                                 <div key={y} className="flex-1 text-center">
-                                    <span className="text-xs font-bold" style={{
-                                        color: y === currentYear ? '#87CBB9' : y < currentYear ? '#4A6A7A' : '#8AAEBB',
-                                        fontFamily: '"DM Mono"',
-                                    }}>
+                                    <span className="text-xs font-bold" style={{ color: y === currentYear ? '#87CBB9' : y < currentYear ? '#4A6A7A' : '#8AAEBB' }}>
                                         {y}
                                     </span>
                                     {y === currentYear && (
@@ -415,8 +412,7 @@ function EVFTARoadmapPanel() {
                                                         background: isPast ? `${cat.color}40` : isCurrent ? cat.color : `${cat.color}80`,
                                                         border: isCurrent ? `2px solid ${cat.color}` : 'none',
                                                     }} />
-                                                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold"
-                                                    style={{ color: s.rate === 0 ? '#5BA88A' : '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold font-mono" style={{ color: s.rate === 0 ? '#5BA88A' : '#E8F1F2' }}>
                                                     {s.rate === 0 ? '0%' : `${s.rate}%`}
                                                 </span>
                                             </div>
@@ -442,7 +438,7 @@ function EVFTARoadmapPanel() {
                                     <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{cat.hsCode}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-lg font-bold" style={{ color: cat.color, fontFamily: '"DM Mono"' }}>
+                                    <p className="text-lg font-bold" style={{ color: cat.color }}>
                                         {currentEntry.rate}%
                                     </p>
                                     <p className="text-[10px]" style={{ color: '#4A6A7A' }}>thuế NK {currentYear}</p>
@@ -552,8 +548,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Tra Cứu Thuế Nhập Khẩu (TAX)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -637,7 +632,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                                             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                                         >
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                 {row.hsCode}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>{row.countryOfOrigin}</td>
@@ -647,13 +642,13 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                                                     {row.tradeAgreement}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                                 {row.importTaxRate}%
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#C45A2A' }}>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#C45A2A' }}>
                                                 {row.sctRate}%
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#A5DED0' }}>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#A5DED0' }}>
                                                 {row.vatRate}%
                                             </td>
                                             <td className="px-3 py-2.5">
@@ -739,7 +734,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                                     ].map(item => (
                                         <div key={item.label} className="flex justify-between items-center">
                                             <span className="text-xs" style={{ color: '#8AAEBB' }}>{item.label}</span>
-                                            <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: item.color }}>
+                                            <span className="text-xs font-bold" style={{ color: item.color }}>
                                                 {item.value}
                                             </span>
                                         </div>
@@ -747,7 +742,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                                     <div className="flex justify-between items-center pt-2 mt-2"
                                         style={{ borderTop: '1px solid #2A4355' }}>
                                         <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Giá Vốn / Chai</span>
-                                        <span className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                        <span className="text-lg font-bold" style={{ color: '#87CBB9' }}>
                                             {formatVND(calc.unitLandedCost)}
                                         </span>
                                     </div>
@@ -903,12 +898,12 @@ function BulkUploadPanel({ onDone }: { onDone: () => void }) {
                             <tbody>
                                 {parsed.map((r, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{r.hsCode}</td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{r.hsCode}</td>
                                         <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{r.countryOfOrigin}</td>
                                         <td className="px-3 py-2"><span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>{r.tradeAgreement}</span></td>
-                                        <td className="px-3 py-2 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>{r.importTaxRate}%</td>
-                                        <td className="px-3 py-2 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#C45A2A' }}>{r.sctRate}%</td>
-                                        <td className="px-3 py-2 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#A5DED0' }}>{r.vatRate}%</td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#D4A853' }}>{r.importTaxRate}%</td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#C45A2A' }}>{r.sctRate}%</td>
+                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#A5DED0' }}>{r.vatRate}%</td>
                                         <td className="px-3 py-2 text-xs" style={{ color: '#8AAEBB' }}>{r.effectiveDate}</td>
                                     </tr>
                                 ))}

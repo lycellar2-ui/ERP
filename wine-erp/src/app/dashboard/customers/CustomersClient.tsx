@@ -72,7 +72,7 @@ function StatCard({ label, value, icon: Icon, accent }: { label: string; value: 
             </div>
             <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs uppercase tracking-wide font-semibold truncate" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-sm sm:text-lg font-bold mt-0.5 truncate" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{value}</p>
+                <p className="text-sm sm:text-lg font-bold mt-0.5 truncate font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
             </div>
         </div>
     )
@@ -366,7 +366,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             <Users size={16} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                                 {isEdit ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng'}
                             </h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -722,7 +722,7 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Khách Hàng (CRM)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -887,7 +887,7 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                                             <>
                                                 <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
                                                 <div className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>
-                                                    <span style={{ fontFamily: '"DM Mono", monospace' }} className="whitespace-nowrap">{row.code}</span>
+                                                    <span className="whitespace-nowrap font-mono">{row.code}</span>
                                                     <span>·</span>
                                                     <span style={{ color: '#8AAEBB' }} className="whitespace-nowrap">↳ Chi nhánh của {row.parentCode}</span>
                                                 </div>
@@ -896,30 +896,30 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                                             <>
                                                 <div className="flex items-center gap-2">
                                                     <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
-                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold whitespace-nowrap" style={{ color: '#0A1926', background: '#D4A853' }}>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold whitespace-nowrap" style={{ color: '#0A1926', background: '#D4A853' }}>
                                                         Cha ({row.childrenCount} nhánh)
                                                     </span>
                                                 </div>
-                                                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
                                             </>
                                         ) : (
                                             <>
                                                 <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
-                                                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
                                             </>
                                         )}
                                     </td>
                                     <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.customerType} /></td>
-                                    <td className="px-3 py-1.5 text-[11px] whitespace-nowrap" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.taxId ?? '—'}</td>
+                                    <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#4A6A7A' }}>{row.taxId ?? '—'}</td>
                                     <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
                                         {row.salesRepName ?? '—'}
                                     </td>
-                                    <td className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{row.paymentTerm}</td>
-                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                    <td className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap font-mono" style={{ color: '#8AAEBB' }}>{row.paymentTerm}</td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap font-mono" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#2A4355' }}>
                                         {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
                                     </td>
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <span className="text-xs font-bold" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                        <span className="text-xs font-bold font-mono" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#2A4355' }}>
                                             {row.orderCount}
                                         </span>
                                     </td>

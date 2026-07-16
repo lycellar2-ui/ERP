@@ -125,8 +125,7 @@ export default function DeclarationsPage() {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Tờ Khai Thuế & Hải Quan (DCL)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -149,7 +148,7 @@ export default function DeclarationsPage() {
                                 <Icon size={16} style={{ color: c.accent }} />
                                 <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{c.label}</span>
                             </div>
-                            <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: c.accent }}>{c.value}</p>
+                            <p className="text-xl font-bold font-mono" style={{ color: c.accent }}>{c.value}</p>
                         </div>
                     )
                 })}
@@ -223,7 +222,7 @@ export default function DeclarationsPage() {
                                     <td className="px-3 py-2.5">
                                         <span className="text-xs font-bold" style={{ color: tp.color }}>{tp.icon} {tp.label}</span>
                                     </td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>
                                         {row.periodMonth ? `T${row.periodMonth}/${row.periodYear}` : row.periodYear}
                                     </td>
                                     <td className="px-3 py-2.5">
@@ -253,7 +252,7 @@ export default function DeclarationsPage() {
                     <div className="w-[600px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                     {TYPE_MAP[detailRow.type]?.label ?? detailRow.type}
                                 </h3>
                                 <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -288,17 +287,17 @@ export default function DeclarationsPage() {
                                     <div className="grid grid-cols-3 gap-3">
                                         <div className="p-3 rounded" style={{ background: '#1B2E3D' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Số HĐ</p>
-                                            <p className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{detailData.invoiceCount}</p>
+                                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{detailData.invoiceCount}</p>
                                         </div>
                                         <div className="p-3 rounded" style={{ background: '#1B2E3D' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Tổng Tiền</p>
-                                            <p className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                            <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                                 {detailData.totalAmount?.toLocaleString('vi-VN')} ₫
                                             </p>
                                         </div>
                                         <div className="p-3 rounded" style={{ background: '#1B2E3D' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>VAT</p>
-                                            <p className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                            <p className="text-sm font-bold" style={{ color: '#87CBB9' }}>
                                                 {detailData.totalVat?.toLocaleString('vi-VN')} ₫
                                             </p>
                                         </div>
@@ -306,7 +305,7 @@ export default function DeclarationsPage() {
                                     {detailData.invoices?.map((inv: any) => (
                                         <div key={inv.invoiceNo} className="flex justify-between text-xs p-2 rounded"
                                             style={{ background: '#142433' }}>
-                                            <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{inv.invoiceNo}</span>
+                                            <span style={{ color: '#87CBB9' }}>{inv.invoiceNo}</span>
                                             <span style={{ color: '#D4A853' }}>{inv.amount?.toLocaleString('vi-VN')} ₫</span>
                                             <span style={{ color: '#5BA88A' }}>VAT: {inv.vatAmount?.toLocaleString('vi-VN')} ₫</span>
                                         </div>
@@ -338,25 +337,25 @@ export default function DeclarationsPage() {
                                                     <div className="p-3 rounded-lg" style={{ background: '#1B2E3D' }}>
                                                         <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#4A8FAB' }}>⬇ Đầu Vào (Nhập)</p>
                                                         <p className="text-xs" style={{ color: '#8AAEBB' }}>SL: <b>{sctReport.inputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
-                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>GT: <b style={{ fontFamily: '"DM Mono"' }}>{sctReport.inputSummary.totalValue.toLocaleString('vi-VN')} ₫</b></p>
-                                                        <p className="text-sm font-bold mt-1" style={{ color: '#4A8FAB', fontFamily: '"DM Mono"' }}>
+                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>GT: <b>{sctReport.inputSummary.totalValue.toLocaleString('vi-VN')} ₫</b></p>
+                                                        <p className="text-sm font-bold mt-1" style={{ color: '#4A8FAB' }}>
                                                             TTĐB: {sctReport.inputSummary.totalSCT.toLocaleString('vi-VN')} ₫
                                                         </p>
                                                     </div>
                                                     <div className="p-3 rounded-lg" style={{ background: '#1B2E3D' }}>
                                                         <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#D4A853' }}>⬆ Đầu Ra (Bán)</p>
                                                         <p className="text-xs" style={{ color: '#8AAEBB' }}>SL: <b>{sctReport.outputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
-                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>DT: <b style={{ fontFamily: '"DM Mono"' }}>{sctReport.outputSummary.totalRevenue.toLocaleString('vi-VN')} ₫</b></p>
-                                                        <p className="text-sm font-bold mt-1" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                                        <p className="text-xs" style={{ color: '#8AAEBB' }}>DT: <b>{sctReport.outputSummary.totalRevenue.toLocaleString('vi-VN')} ₫</b></p>
+                                                        <p className="text-sm font-bold mt-1" style={{ color: '#D4A853' }}>
                                                             TTĐB: {sctReport.outputSummary.totalSCT.toLocaleString('vi-VN')} ₫
                                                         </p>
                                                     </div>
                                                     <div className="p-3 rounded-lg" style={{ background: sctReport.netSCTPayable > 0 ? 'rgba(139,26,46,0.08)' : 'rgba(91,168,138,0.08)', border: `1px solid ${sctReport.netSCTPayable > 0 ? 'rgba(139,26,46,0.3)' : 'rgba(91,168,138,0.3)'}` }}>
                                                         <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#5BA88A' }}>💰 Thuế Phải Nộp</p>
-                                                        <p className="text-lg font-bold mt-2" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#5BA88A', fontFamily: '"DM Mono"' }}>
+                                                        <p className="text-lg font-bold mt-2 font-mono" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#5BA88A' }}>
                                                             {sctReport.netSCTPayable.toLocaleString('vi-VN')} ₫
                                                         </p>
-                                                        <p className="text-[9px] mt-1" style={{ color: '#4A6A7A' }}>= Đầu ra − Đầu vào</p>
+                                                        <p className="text-xs mt-1" style={{ color: '#4A6A7A' }}>= Đầu ra − Đầu vào</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -371,30 +370,27 @@ export default function DeclarationsPage() {
                                                         <thead>
                                                             <tr style={{ background: '#142433' }}>
                                                                 {['SKU', 'Sản Phẩm', 'ABV', 'TTĐB%', 'Nhập (SL)', 'TTĐB Nhập', 'Bán (SL)', 'TTĐB Bán', 'Nộp'].map(h => (
-                                                                    <th key={h} className="px-2 py-2 text-[9px] uppercase tracking-wider font-bold" style={{ color: '#4A6A7A', borderBottom: '1px solid #2A4355' }}>{h}</th>
+                                                                    <th key={h} className="px-2 py-2 text-xs uppercase tracking-wider font-bold" style={{ color: '#4A6A7A', borderBottom: '1px solid #2A4355' }}>{h}</th>
                                                                 ))}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {sctReport.lines.map(line => (
                                                                 <tr key={line.skuCode} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
-                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{line.skuCode}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#87CBB9' }}>{line.skuCode}</td>
                                                                     <td className="px-2 py-1.5 text-[10px] truncate max-w-[100px]" style={{ color: '#E8F1F2' }}>{line.productName}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{line.abvPercent}%</td>
+                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: '#8AAEBB' }}>{line.abvPercent}%</td>
                                                                     <td className="px-2 py-1.5">
-                                                                        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{
+                                                                        <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{
                                                                             background: line.sctRate === 65 ? 'rgba(139,26,46,0.2)' : 'rgba(212,168,83,0.2)',
                                                                             color: line.sctRate === 65 ? '#C04E65' : '#D4A853',
                                                                         }}>{line.sctRate}%</span>
                                                                     </td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB', fontFamily: '"DM Mono"' }}>{line.inputQty}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB', fontFamily: '"DM Mono"' }}>{line.inputSCT.toLocaleString('vi-VN')}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{line.outputQty}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{line.outputSCT.toLocaleString('vi-VN')}</td>
-                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{
-                                                                        color: line.netSCT > 0 ? '#C04E65' : '#5BA88A',
-                                                                        fontFamily: '"DM Mono"'
-                                                                    }}>{line.netSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB' }}>{line.inputQty}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#4A8FAB' }}>{line.inputSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853' }}>{line.outputQty}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px]" style={{ color: '#D4A853' }}>{line.outputSCT.toLocaleString('vi-VN')}</td>
+                                                                    <td className="px-2 py-1.5 text-[10px] font-bold" style={{ color: line.netSCT > 0 ? '#C04E65' : '#5BA88A' }}>{line.netSCT.toLocaleString('vi-VN')}</td>
                                                                 </tr>
                                                             ))}
                                                             {sctReport.lines.length === 0 && (
@@ -413,7 +409,7 @@ export default function DeclarationsPage() {
                                             {detailData.lots.map((lot: any) => (
                                                 <div key={lot.lotNo} className="p-2 rounded text-xs" style={{ background: '#142433' }}>
                                                     <div className="flex justify-between">
-                                                        <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{lot.lotNo}</span>
+                                                        <span style={{ color: '#87CBB9' }}>{lot.lotNo}</span>
                                                         <span className="px-2 py-0.5 rounded" style={{
                                                             background: lot.sctRate === 65 ? 'rgba(139,26,46,0.2)' : 'rgba(212,168,83,0.2)',
                                                             color: lot.sctRate === 65 ? '#C04E65' : '#D4A853',
@@ -500,7 +496,7 @@ export default function DeclarationsPage() {
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
                     <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                 Tạo Tờ Khai Mới
                             </h3>
                             <button onClick={() => setCreateOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>

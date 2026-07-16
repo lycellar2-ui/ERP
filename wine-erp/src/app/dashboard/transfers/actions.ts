@@ -90,104 +90,107 @@ export async function createTransferOrder(input: {
 // ── Advance Status ────────────────────────────────
 export async function advanceTransferStatus(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-        const to = await prisma.transferOrder.findUnique({
-            where: { id },
-            include: { lines: { include: { product: { select: { skuCode: true } } } } },
-        })
-        if (!to) return { success: false, error: 'Not found' }
-
-        const nextMap: Record<string, string> = {
-            'DRAFT': 'CONFIRMED',
-            'CONFIRMED': 'IN_TRANSIT',
-            'IN_TRANSIT': 'RECEIVED',
-        }
-        const next = nextMap[to.status]
-        if (!next) return { success: false, error: 'Không thể chuyển trạng thái' }
-
-        if (next === 'CONFIRMED') {
-            // Decrement source warehouse stock (FIFO)
-            for (const line of to.lines) {
-                let remaining = Number(line.qtyTransferred)
-                const lots = await prisma.stockLot.findMany({
-                    where: {
-                        productId: line.productId,
-                        status: 'AVAILABLE',
-                        qtyAvailable: { gt: 0 },
-                        location: { warehouseId: to.fromWarehouseId },
-                    },
-                    orderBy: { receivedDate: 'asc' },
-                })
-
-                for (const lot of lots) {
-                    if (remaining <= 0) break
-                    const take = Math.min(Number(lot.qtyAvailable), remaining)
-                    await prisma.stockLot.update({
-                        where: { id: lot.id },
-                        data: { qtyAvailable: { decrement: take } },
-                    })
-                    remaining -= take
-                }
-                if (remaining > 0) {
-                    return { success: false, error: `Không đủ tồn kho cho ${line.product.skuCode} (thiếu ${remaining})` }
-                }
-            }
-        }
-
-        if (next === 'RECEIVED') {
-            // Create stock lots in destination warehouse
-            const destLocation = await prisma.location.findFirst({
-                where: { warehouseId: to.toWarehouseId },
-                orderBy: { locationCode: 'asc' },
+        const result = await prisma.$transaction(async (tx) => {
+            const to = await tx.transferOrder.findUnique({
+                where: { id },
+                include: { lines: { include: { product: { select: { skuCode: true } } } } },
             })
-            if (!destLocation) return { success: false, error: 'Kho nhận chưa có location' }
+            if (!to) throw new Error('Not found')
 
-            for (const line of to.lines) {
-                // Get the source lots used for FIFO picking and their costs
-                const sourceLots = await prisma.stockLot.findMany({
-                    where: {
-                        productId: line.productId,
-                        status: 'AVAILABLE',
-                        qtyAvailable: { gt: 0 },
-                        location: { warehouseId: to.fromWarehouseId },
-                    },
-                    orderBy: { receivedDate: 'asc' },
-                    take: 1,
-                })
-                const avgLandedCost = sourceLots.length > 0
-                    ? Number(sourceLots[0].unitLandedCost)
-                    : 0
-
-                const lotCount = await prisma.stockLot.count()
-                let ownerEntityId = sourceLots.length > 0 ? sourceLots[0].ownerEntityId : null
-                if (!ownerEntityId) {
-                    const firstLE = await prisma.legalEntity.findFirst()
-                    if (!firstLE) return { success: false, error: 'Không tìm thấy pháp nhân nào trong hệ thống' }
-                    ownerEntityId = firstLE.id
-                }
-                await prisma.stockLot.create({
-                    data: {
-                        lotNo: `TRF-${String(lotCount + 1).padStart(6, '0')}`,
-                        ownerEntityId,
-                        productId: line.productId,
-                        locationId: destLocation.id,
-                        qtyReceived: line.qtyTransferred,
-                        qtyAvailable: line.qtyTransferred,
-                        unitLandedCost: avgLandedCost,
-                        receivedDate: new Date(),
-                        status: 'AVAILABLE',
-                    },
-                })
+            const nextMap: Record<string, string> = {
+                'DRAFT': 'CONFIRMED',
+                'CONFIRMED': 'IN_TRANSIT',
+                'IN_TRANSIT': 'RECEIVED',
             }
-        }
+            const next = nextMap[to.status]
+            if (!next) throw new Error('Không thể chuyển trạng thái')
 
-        const data: any = { status: next }
-        if (next === 'CONFIRMED') data.confirmedAt = new Date()
-        if (next === 'RECEIVED') data.receivedAt = new Date()
+            if (next === 'CONFIRMED') {
+                // Decrement source warehouse stock (FIFO)
+                for (const line of to.lines) {
+                    let remaining = Number(line.qtyTransferred)
+                    const lots = await tx.stockLot.findMany({
+                        where: {
+                            productId: line.productId,
+                            status: 'AVAILABLE',
+                            qtyAvailable: { gt: 0 },
+                            location: { warehouseId: to.fromWarehouseId },
+                        },
+                        orderBy: { receivedDate: 'asc' },
+                    })
 
-        await prisma.transferOrder.update({ where: { id }, data })
+                    for (const lot of lots) {
+                        if (remaining <= 0) break
+                        const take = Math.min(Number(lot.qtyAvailable), remaining)
+                        await tx.stockLot.update({
+                            where: { id: lot.id },
+                            data: { qtyAvailable: { decrement: take } },
+                        })
+                        remaining -= take
+                    }
+                    if (remaining > 0) {
+                        throw new Error(`Không đủ tồn kho cho ${line.product.skuCode} (thiếu ${remaining})`)
+                    }
+                }
+            }
+
+            if (next === 'RECEIVED') {
+                // Create stock lots in destination warehouse
+                const destLocation = await tx.location.findFirst({
+                    where: { warehouseId: to.toWarehouseId },
+                    orderBy: { locationCode: 'asc' },
+                })
+                if (!destLocation) throw new Error('Kho nhận chưa có location')
+
+                for (const line of to.lines) {
+                    // Get the source lots used for FIFO picking and their costs
+                    const sourceLots = await tx.stockLot.findMany({
+                        where: {
+                            productId: line.productId,
+                            status: 'AVAILABLE',
+                            location: { warehouseId: to.fromWarehouseId },
+                        },
+                        orderBy: { receivedDate: 'asc' },
+                        take: 1,
+                    })
+                    const avgLandedCost = sourceLots.length > 0
+                        ? Number(sourceLots[0].unitLandedCost)
+                        : 0
+
+                    const lotCount = await tx.stockLot.count()
+                    let ownerEntityId = sourceLots.length > 0 ? sourceLots[0].ownerEntityId : null
+                    if (!ownerEntityId) {
+                        const firstLE = await tx.legalEntity.findFirst()
+                        if (!firstLE) throw new Error('Không tìm thấy pháp nhân nào trong hệ thống')
+                        ownerEntityId = firstLE.id
+                    }
+                    await tx.stockLot.create({
+                        data: {
+                            lotNo: `TRF-${String(lotCount + 1).padStart(6, '0')}`,
+                            ownerEntityId,
+                            productId: line.productId,
+                            locationId: destLocation.id,
+                            qtyReceived: line.qtyTransferred,
+                            qtyAvailable: line.qtyTransferred,
+                            unitLandedCost: avgLandedCost,
+                            receivedDate: new Date(),
+                            status: 'AVAILABLE',
+                        },
+                    })
+                }
+            }
+
+            const data: any = { status: next }
+            if (next === 'CONFIRMED') data.confirmedAt = new Date()
+            if (next === 'RECEIVED') data.receivedAt = new Date()
+
+            await tx.transferOrder.update({ where: { id }, data })
+            return { success: true }
+        })
+
         revalidatePath('/dashboard/transfers')
         revalidatePath('/dashboard/warehouse')
-        return { success: true }
+        return result
     } catch (err: any) {
         return { success: false, error: err.message }
     }

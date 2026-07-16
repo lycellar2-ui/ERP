@@ -115,7 +115,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                             <CheckCircle2 size={16} style={{ color: '#5BA88A' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                                 E-POD — Xác Nhận Giao Hàng
                             </h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -167,14 +167,14 @@ function EPODDrawer({ open, routeId, onClose }: {
                                 </div>
 
                                 <div className="flex items-center gap-4 mb-2">
-                                    <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>
+                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>
                                         SO: {stop.soNo}
                                     </span>
                                     <span className="text-xs" style={{ color: '#4A6A7A' }}>
                                         {stop.itemCount} dòng SP
                                     </span>
                                     {stop.codAmount > 0 && (
-                                        <span className="text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                        <span className="text-xs font-bold" style={{ color: '#D4A853' }}>
                                             COD: {formatVND(stop.codAmount)}
                                         </span>
                                     )}
@@ -195,7 +195,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                 {(stop as any).photoUrl && (
                                                     <div className="relative rounded overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                                                         <img src={(stop as any).photoUrl} alt="POD" className="w-20 h-20 object-cover" />
-                                                        <div className="absolute bottom-0 left-0 right-0 text-center py-0.5 text-[9px]" style={{ background: 'rgba(0,0,0,0.6)', color: '#87CBB9' }}>
+                                                        <div className="absolute bottom-0 left-0 right-0 text-center py-0.5 text-xs" style={{ background: 'rgba(0,0,0,0.6)', color: '#87CBB9' }}>
                                                             <Camera size={8} className="inline mr-0.5" /> Ảnh GH
                                                         </div>
                                                     </div>
@@ -379,7 +379,7 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
                             <Truck size={16} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                                 Tạo Lộ Trình Mới
                             </h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>Chỉ định tài xế và phương tiện</p>
@@ -503,8 +503,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Vận Chuyển & Giao Hàng (TRS)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -535,7 +534,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                             <Icon size={20} style={{ color: s.accent }} />
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xl font-bold" style={{ color: '#E8F1F2' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -588,9 +587,9 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                     <td className="px-4 py-3 text-sm" style={{ color: '#E8F1F2' }}>{row.driverName}</td>
                                     <td className="px-4 py-3 text-xs" style={{ color: '#8AAEBB' }}>
                                         {VEHICLE_LABEL[row.vehicleType] ?? row.vehicleType}<br />
-                                        <span style={{ fontFamily: '"DM Mono"' }}>{row.vehiclePlate}</span>
+                                        <span>{row.vehiclePlate}</span>
                                     </td>
-                                    <td className="px-4 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                    <td className="px-4 py-3 text-sm font-bold" style={{ color: '#E8F1F2' }}>
                                         {row.stopCount} điểm
                                     </td>
                                     <td className="px-4 py-3">
@@ -601,7 +600,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                             <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{row.deliveredCount}/{row.stopCount}</span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                    <td className="px-4 py-3 text-sm font-bold" style={{ color: '#87CBB9' }}>
                                         {row.totalCod > 0 ? formatVND(row.totalCod) : '—'}
                                     </td>
                                     <td className="px-4 py-3">

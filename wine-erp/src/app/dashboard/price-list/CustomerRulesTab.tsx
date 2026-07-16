@@ -316,7 +316,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                     {typeCfg.label}
                                                 </span>
                                             </td>
-                                            <td className="p-3 font-bold" style={{ fontFamily: '"DM Mono"' }}>
+                                            <td className="p-3 font-bold">
                                                 {rule.ruleType === 'FIXED_DISCOUNT' ? (
                                                     <span className="text-[#D4A853]">-{rule.value}%</span>
                                                 ) : (

@@ -35,6 +35,7 @@ export type ShiftStatus = 'OPEN' | 'CLOSED'
 
 // ── Get products for POS display ──────────────────
 export async function getPOSProducts(search?: string, category?: string, customerId?: string): Promise<POSProduct[]> {
+    await requirePermission('SLS', 'READ')
     const cacheKey = `pos:products:${search ?? ''}:${category ?? ''}:${customerId ?? ''}`
     return cached(cacheKey, async () => {
         const where: any = { status: 'ACTIVE', deletedAt: null }
@@ -107,6 +108,7 @@ export async function getPOSProducts(search?: string, category?: string, custome
 
 // ── Get categories for filter ─────────────────────
 export async function getPOSCategories() {
+    await requirePermission('SLS', 'READ')
     return cached('pos:categories', async () => {
         const types = await prisma.product.groupBy({
             by: ['wineType'],
@@ -137,7 +139,15 @@ export async function processPOSSale(input: {
     error?: string
 }> {
     try {
-        await requirePermission('SLS', 'WRITE')
+        const sessionUser = await requirePermission('SLS', 'WRITE')
+        const activeShift = await prisma.pOSShift.findFirst({
+            where: { cashierId: sessionUser.id, status: 'OPEN' }
+        })
+        if (!activeShift) {
+            return { success: false, error: 'Không tìm thấy ca bán hàng nào đang mở cho tài khoản này. Vui lòng mở ca.' }
+        }
+        const shiftId = activeShift.id
+
         const validated = parseOrThrow(POSSaleSchema, input)
 
         // Calculate total
@@ -158,11 +168,10 @@ export async function processPOSSale(input: {
         }
 
         // Create SO (POS type)
-        const count = await prisma.salesOrder.count()
         const now = new Date()
         const yy = String(now.getFullYear()).slice(-2)
         const mm = String(now.getMonth() + 1).padStart(2, '0')
-        const soNo = `POS-${yy}${mm}-${String(count + 1).padStart(4, '0')}`
+        let soNo = ''
 
         // Use walk-in customer or specified customer
         let customerId = validated.customerId
@@ -222,6 +231,18 @@ export async function processPOSSale(input: {
         let pointsEarned = 0
 
         const so = await prisma.$transaction(async (tx) => {
+            // Concurrency-safe soNo generation using SELECT FOR UPDATE
+            const prefix = `POS-${yy}${mm}-`
+            await tx.$executeRaw`SELECT id FROM sales_orders WHERE "soNo" LIKE ${prefix + '%'} FOR UPDATE`
+
+            const lastSO = await tx.salesOrder.findFirst({
+                where: { soNo: { startsWith: prefix } },
+                orderBy: { soNo: 'desc' },
+                select: { soNo: true },
+            })
+            const nextSeq = lastSO ? parseInt(lastSO.soNo.slice(-4)) + 1 : 1
+            soNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
+
             // Deduct stock FIFO per item with Row Locking to prevent race conditions
             for (const item of validated.items) {
                 await tx.$executeRaw`SELECT id FROM stock_lots WHERE "productId" = ${item.productId} AND status = 'AVAILABLE' AND "qtyAvailable" > 0 FOR UPDATE`
@@ -255,12 +276,13 @@ export async function processPOSSale(input: {
                 data: {
                     soNo,
                     customerId: customerId!,
-                    salesRepId,
+                    salesRepId: sessionUser.id,
                     legalEntityId,
                     channel: 'DIRECT_INDIVIDUAL',
                     paymentTerm: 'COD',
                     totalAmount,
                     status: 'PAID' as any, // POS is immediate
+                    shiftId,
                     lines: {
                         create: validated.items.map(item => ({
                             productId: item.productId,
@@ -323,6 +345,7 @@ export async function processPOSSale(input: {
 
 // ── Get POS shift summary ─────────────────────────
 export async function getPOSShiftSummary(date?: string) {
+    await requirePermission('SLS', 'READ')
     const targetDate = date ? new Date(date) : new Date()
     const dayStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
     const dayEnd = new Date(dayStart.getTime() + 86400000)
@@ -354,6 +377,7 @@ export async function getPOSShiftSummary(date?: string) {
 
 // ── Barcode / SKU Lookup ──────────────────────────
 export async function lookupByBarcode(barcode: string, customerId?: string): Promise<POSProduct | null> {
+    await requirePermission('SLS', 'READ')
     // Try exact SKU match first, then barcode field
     const product = await prisma.product.findFirst({
         where: {
@@ -485,6 +509,7 @@ export type LoyaltyInfo = {
 }
 
 export async function getLoyaltyInfo(customerId: string): Promise<LoyaltyInfo | null> {
+    await requirePermission('SLS', 'READ')
     const customer = await prisma.customer.findUnique({
         where: { id: customerId },
         select: { name: true },
@@ -628,32 +653,34 @@ export async function openShift(input: {
     openingCash: number
 }): Promise<{ success: boolean; shiftId?: string; error?: string }> {
     try {
-        await requirePermission('SLS', 'WRITE')
+        const sessionUser = await requirePermission('SLS', 'WRITE')
 
-        // Check if there is already an open shift (action is CREATE but not yet closed by UPDATE)
-        const lastShiftLog = await prisma.auditLog.findFirst({
-            where: {
-                entityType: 'POS_SHIFT',
-            },
-            orderBy: { createdAt: 'desc' },
+        // Check if there is already an open shift for this cashier
+        const existingOpen = await prisma.pOSShift.findFirst({
+            where: { cashierId: sessionUser.id, status: 'OPEN' }
         })
-
-        if (lastShiftLog && lastShiftLog.action === 'CREATE') {
-            return { success: false, error: 'Hiện tại đang có một ca bán hàng chưa đóng. Vui lòng đóng ca cũ trước.' }
+        if (existingOpen) {
+            return { success: false, error: 'Bạn đang có một ca bán hàng chưa đóng. Vui lòng đóng ca cũ trước.' }
         }
 
-        const shiftId = `SHIFT-${Date.now()}`
+        const shift = await prisma.pOSShift.create({
+            data: {
+                cashierId: sessionUser.id,
+                openingBalance: input.openingCash,
+                status: 'OPEN',
+            }
+        })
 
         logAudit({
-            userId: 'pos-system',
+            userId: sessionUser.id,
             action: 'CREATE',
-            entityType: 'POS_SHIFT',
-            entityId: shiftId,
+            entityType: 'POSShift',
+            entityId: shift.id,
             description: `Ca bán hàng mở bởi ${input.cashierName}. Tiền đầu ca: ${input.openingCash.toLocaleString()}đ`,
             newValue: { cashierName: input.cashierName, openingCash: input.openingCash },
         }).catch(() => { })
 
-        return { success: true, shiftId }
+        return { success: true, shiftId: shift.id }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
@@ -665,53 +692,49 @@ export async function closeShift(input: {
     openingCash: number
 }): Promise<{ success: boolean; summary?: ShiftInfo; error?: string }> {
     try {
-        await requirePermission('SLS', 'WRITE')
-        const today = new Date()
-        const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+        const sessionUser = await requirePermission('SLS', 'WRITE')
 
-        // Find the last opened shift log for this showroom/POS to get the exact start time
-        const lastOpenShiftLog = await prisma.auditLog.findFirst({
-            where: {
-                entityType: 'POS_SHIFT',
-                action: 'CREATE',
-            },
-            orderBy: { createdAt: 'desc' },
+        const activeShift = await prisma.pOSShift.findFirst({
+            where: { cashierId: sessionUser.id, status: 'OPEN' },
+            include: { salesOrders: true }
         })
+        if (!activeShift) {
+            return { success: false, error: 'Không tìm thấy ca bán hàng nào đang mở' }
+        }
 
-        const openedAt = lastOpenShiftLog ? lastOpenShiftLog.createdAt : dayStart
-
-        // Get POS sales created during this shift
-        const posSales = await prisma.salesOrder.findMany({
-            where: {
-                soNo: { startsWith: 'POS-' },
-                createdAt: { gte: openedAt, lte: today },
-            },
-            select: { totalAmount: true },
-        })
-
-        const totalRevenue = posSales.reduce((s, o) => s + Number(o.totalAmount), 0)
-        const expectedCash = input.openingCash + totalRevenue
+        const totalRevenue = activeShift.salesOrders.reduce((s, o) => s + Number(o.totalAmount), 0)
+        const expectedCash = Number(activeShift.openingBalance) + totalRevenue
         const cashVariance = input.closingCash - expectedCash
 
+        const shift = await prisma.pOSShift.update({
+            where: { id: activeShift.id },
+            data: {
+                status: 'CLOSED',
+                closedAt: new Date(),
+                closingBalance: expectedCash,
+                actualBalance: input.closingCash,
+            }
+        })
+
         const summary: ShiftInfo = {
-            id: lastOpenShiftLog ? lastOpenShiftLog.entityId! : `SHIFT-${dayStart.getTime()}`,
+            id: shift.id,
             cashierName: input.cashierName,
-            openedAt: openedAt,
-            closedAt: today,
-            openingCash: input.openingCash,
-            closingCash: input.closingCash,
+            openedAt: shift.openedAt,
+            closedAt: shift.closedAt,
+            openingCash: Number(shift.openingBalance),
+            closingCash: Number(shift.actualBalance),
             expectedCash,
             cashVariance,
-            transactionCount: posSales.length,
+            transactionCount: activeShift.salesOrders.length,
             totalRevenue,
             status: 'CLOSED',
         }
 
         logAudit({
-            userId: 'pos-system',
+            userId: sessionUser.id,
             action: 'UPDATE',
-            entityType: 'POS_SHIFT',
-            entityId: summary.id,
+            entityType: 'POSShift',
+            entityId: shift.id,
             description: `Ca bán hàng đóng bởi ${input.cashierName}. Doanh thu: ${totalRevenue.toLocaleString()}đ. Chênh lệch: ${cashVariance.toLocaleString()}đ`,
             newValue: summary,
         }).catch(() => { })
@@ -739,6 +762,7 @@ export type EndOfDayReport = {
 
 export async function getPOSEndOfDayReport(date?: string): Promise<{ success: boolean; report?: EndOfDayReport; error?: string }> {
     try {
+        await requirePermission('SLS', 'READ')
         const targetDate = date ? new Date(date) : new Date()
         const dayStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
         const dayEnd = new Date(dayStart.getTime() + 86400000)

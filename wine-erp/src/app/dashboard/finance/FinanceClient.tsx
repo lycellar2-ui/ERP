@@ -27,7 +27,7 @@ function FinKpiCard({ label, value, sub, accent, icon: Icon }: {
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>{label}</p>
-                    <p className="text-2xl font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{value}</p>
+                    <p className="text-2xl font-bold font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
                     {sub && <p className="text-xs mt-1" style={{ color: accent }}>{sub}</p>}
                 </div>
                 <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: `${accent}18` }}>
@@ -60,7 +60,7 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
                             <div className="flex justify-between mb-1">
                                 <span className="text-xs" style={{ color: '#8AAEBB' }}>{b.label}</span>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                    <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>
                                         {formatVND(val)}
                                     </span>
                                     <span className="text-xs w-12 text-right" style={{ color: b.color }}>{pct.toFixed(1)}%</span>
@@ -76,7 +76,7 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
             </div>
             <div className="flex justify-between pt-4 mt-4" style={{ borderTop: '1px solid #2A4355' }}>
                 <span className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>Tổng AR Outstanding</span>
-                <span className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                <span className="text-sm font-bold" style={{ color: '#87CBB9' }}>
                     {formatVND(total)}
                 </span>
             </div>
@@ -110,17 +110,17 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                 <td className="px-3 py-3">
                                     <div className="flex items-center gap-1.5">
                                         {row.isOverdue && <AlertCircle size={12} style={{ color: '#8B1A2E' }} />}
-                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.invoiceNo}</span>
+                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.invoiceNo}</span>
                                     </div>
                                 </td>
                                 <td className="px-3 py-3">
                                     <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.customerName}</p>
                                     <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
                                 </td>
-                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.soNo ?? '–'}</td>
-                                <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{formatVND(row.amount)}</td>
-                                <td className="px-3 py-3 text-sm" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>{formatVND(row.paidAmount)}</td>
-                                <td className="px-3 py-3 text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
+                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{row.soNo ?? '–'}</td>
+                                <td className="px-3 py-3 text-sm font-bold" style={{ color: '#E8F1F2' }}>{formatVND(row.amount)}</td>
+                                <td className="px-3 py-3 text-sm" style={{ color: '#5BA88A' }}>{formatVND(row.paidAmount)}</td>
+                                <td className="px-3 py-3 text-sm font-bold" style={{ color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
                                     {formatVND(row.outstanding)}
                                 </td>
                                 <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#8B1A2E' : '#8AAEBB' }}>
@@ -276,7 +276,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Tài Chính & Kế Toán
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -403,18 +403,18 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                                 onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(139,26,46,0.04)' : 'transparent')}
                                             >
-                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.invoiceNo}</td>
+                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>{row.invoiceNo}</td>
                                                 <td className="px-3 py-3">
                                                     <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.supplierName}</p>
                                                     <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.supplierCode}</p>
                                                 </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.poNo ?? '–'}</td>
+                                                <td className="px-3 py-3 text-xs" style={{ color: '#8AAEBB' }}>{row.poNo ?? '–'}</td>
                                                 <td className="px-3 py-3">
-                                                    <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                                    <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
                                                         {isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}
                                                     </p>
                                                     {isMultiCurrency && (
-                                                        <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
                                                             ≈ {formatVND(row.amountVND)}
                                                         </p>
                                                     )}
@@ -422,17 +422,17 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                 <td className="px-3 py-3">
                                                     <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{row.currency}</span>
                                                     {isMultiCurrency && (
-                                                        <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
                                                             ×{row.exchangeRate.toLocaleString()}
                                                         </p>
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
+                                                    <p className="text-sm font-bold" style={{ color: row.outstanding > 0 ? '#D4A853' : '#5BA88A' }}>
                                                         {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
                                                     </p>
                                                     {isMultiCurrency && row.outstanding > 0 && (
-                                                        <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
                                                             ≈ {formatVND(row.outstandingVND)}
                                                         </p>
                                                     )}

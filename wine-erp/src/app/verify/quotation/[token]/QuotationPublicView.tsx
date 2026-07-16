@@ -103,15 +103,7 @@ function ProductLineCard({ line, i, totalCount, showQuantity, onImageClick }: { 
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                     <div>
-                        <h4 style={{ 
-                            color: hovered ? '#87CBB9' : '#E8F1F2', 
-                            fontWeight: 600, 
-                            fontSize: 18, 
-                            margin: 0, 
-                            fontFamily: '"Cormorant Garamond", Georgia, serif',
-                            lineHeight: 1.25,
-                            transition: 'color 0.3s ease'
-                        }}>
+                        <h4 className="font-brand" style={{ color: hovered ? '#87CBB9' : '#E8F1F2', fontWeight: 600, fontSize: 18, margin: 0, lineHeight: 1.25, transition: 'color 0.3s ease' }}>
                             {line.productName}
                         </h4>
                         
@@ -258,7 +250,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(91,168,138,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                                 <CheckCircle2 size={48} style={{ color: '#5BA88A' }} />
                             </div>
-                            <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, fontFamily: '"Cormorant Garamond", Georgia, serif', letterSpacing: '0.02em' }}>Thank You!</h1>
+                            <h1 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, letterSpacing: '0.02em' }}>Thank You!</h1>
                             <p style={{ color: '#8AAEBB', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
                                 The proposal <strong style={{ color: '#87CBB9' }}>{data.quotationNo}</strong> has been successfully approved.
                                 Our LY's Cellars team will contact you shortly to coordinate logistics and delivery.
@@ -269,7 +261,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(139,26,46,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                                 <XCircle size={48} style={{ color: '#8B1A2E' }} />
                             </div>
-                            <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 16, fontFamily: '"Cormorant Garamond", Georgia, serif' }}>Feedback Recorded</h1>
+                            <h1 className="font-brand" style={{ fontSize: 32, fontWeight: 700, marginBottom: 16 }}>Feedback Recorded</h1>
                             <p style={{ color: '#8AAEBB', fontSize: 15, lineHeight: 1.7, margin: 0 }}>
                                 Your request to decline this proposal has been successfully recorded. We will quickly adjust the commercial terms and send a revised offer as soon as possible.
                             </p>
@@ -411,7 +403,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             </svg>
                         </div>
                         <div>
-                            <h1 style={{ color: '#E8F1F2', fontSize: 24, fontWeight: 700, fontFamily: '"Cormorant Garamond", Georgia, serif', margin: 0, letterSpacing: '0.04em' }}>
+                            <h1 className="font-brand" style={{ color: '#E8F1F2', fontSize: 24, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>
                                 LY&apos;s Cellars
                             </h1>
                             <p style={{ color: '#4A6A7A', fontSize: 10, letterSpacing: '0.22em', margin: 0 }}>FINE WINE SPECIALIST</p>
@@ -452,12 +444,12 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 {data.showQuantity ? 'Exclusive Proposal' : 'Frame Pricing Agreement'}
                             </span>
                         </div>
-                        <h2 style={{ color: '#E8F1F2', fontSize: 32, fontWeight: 700, margin: 0, fontFamily: '"Cormorant Garamond", Georgia, serif', letterSpacing: '0.01em' }}>
+                        <h2 className="font-brand" style={{ color: '#E8F1F2', fontSize: 32, fontWeight: 700, margin: 0, letterSpacing: '0.01em' }}>
                             {data.showQuantity ? 'EXCLUSIVE QUOTATION' : 'EXCLUSIVE PRICE LIST'}
                         </h2>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                        <span style={{ color: '#D4A853', fontSize: 16, fontWeight: 700, fontFamily: '"DM Mono", monospace', letterSpacing: '0.05em' }}>
+                        <span className="font-mono" style={{ color: '#D4A853', fontSize: 16, fontWeight: 700, letterSpacing: '0.05em' }}>
                             {data.quotationNo}
                         </span>
                         <div style={{ 
@@ -490,7 +482,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     }}>
                         <div style={{ position: 'absolute', top: 18, right: 18, width: 8, height: 8, borderRadius: '50%', background: '#87CBB9' }} />
                         <h4 style={{ color: '#4A6A7A', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>PREPARED FOR</h4>
-                        <p style={{ color: '#E8F1F2', fontWeight: 600, fontSize: 18, margin: 0, fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+                        <p className="font-brand" style={{ color: '#E8F1F2', fontWeight: 600, fontSize: 18, margin: 0 }}>
                             {data.contactPerson || data.customerName}
                         </p>
                         {data.companyName && <p style={{ color: '#8AAEBB', fontSize: 14, margin: '6px 0 0' }}>{data.companyName}</p>}
@@ -518,13 +510,13 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <Calendar size={13} style={{ color: '#4A6A7A' }} /> Date Issued
                                 </span>
-                                <strong style={{ color: '#E8F1F2', fontSize: 13, fontFamily: '"DM Mono", monospace' }}>{fmtDate(data.createdAt)}</strong>
+                                <strong className="font-mono" style={{ color: '#E8F1F2', fontSize: 13 }}>{fmtDate(data.createdAt)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(42,67,85,0.5)', paddingBottom: 6 }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <Clock size={13} style={{ color: '#4A6A7A' }} /> Valid Until
                                 </span>
-                                <strong style={{ color: data.isExpired ? '#8B1A2E' : '#D4A853', fontSize: 13, fontFamily: '"DM Mono", monospace' }}>{fmtDate(data.validUntil)}</strong>
+                                <strong className="font-mono" style={{ color: data.isExpired ? '#8B1A2E' : '#D4A853', fontSize: 13 }}>{fmtDate(data.validUntil)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -630,20 +622,20 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8AAEBB', fontSize: 14 }}>Subtotal (Before Discount)</span>
-                                <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>{fmt(subtotal)} ₫</span>
+                                <span className="font-mono" style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14 }}>{fmt(subtotal)} ₫</span>
                             </div>
                             
                             {data.orderDiscount > 0 && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ color: '#EF4444', fontSize: 14 }}>Order Discount ({data.orderDiscount}%)</span>
-                                    <span style={{ color: '#EF4444', fontWeight: 600, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>−{fmt(discountAmount)} ₫</span>
+                                    <span className="font-mono" style={{ color: '#EF4444', fontWeight: 600, fontSize: 14 }}>−{fmt(discountAmount)} ₫</span>
                                 </div>
                             )}
 
                             {!data.vatIncluded && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ color: '#8AAEBB', fontSize: 14 }}>Value Added Tax (VAT 10%)</span>
-                                    <span style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14, fontFamily: '"DM Mono", monospace' }}>{fmt(vatAmount)} ₫</span>
+                                    <span className="font-mono" style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14 }}>{fmt(vatAmount)} ₫</span>
                                 </div>
                             )}
 
@@ -661,14 +653,8 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                         {data.vatIncluded ? 'VAT Included' : 'VAT Excluded'}
                                     </p>
                                 </div>
-                                <span style={{ 
-                                    color: '#87CBB9', 
-                                    fontSize: 28, 
-                                    fontWeight: 700, 
-                                    fontFamily: '"DM Mono", monospace',
-                                    letterSpacing: '0.02em'
-                                }}>
-                                    {fmt(grandTotal)} <span style={{ fontSize: 14, fontWeight: 400, fontFamily: '"DM Mono", monospace' }}>₫</span>
+                                <span className="font-mono" style={{ color: '#87CBB9', fontSize: 28, fontWeight: 700, letterSpacing: '0.02em' }}>
+                                    {fmt(grandTotal)} <span className="font-mono" style={{ fontSize: 14, fontWeight: 400 }}>₫</span>
                                 </span>
                             </div>
                         </div>
@@ -930,16 +916,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 </div>
 
                                 {/* Wine Title */}
-                                <h3 style={{ 
-                                    color: '#E8F1F2', 
-                                    fontSize: 24, 
-                                    fontWeight: 700, 
-                                    fontFamily: '"Cormorant Garamond", Georgia, serif', 
-                                    margin: '0 0 12px 0', 
-                                    lineHeight: 1.2,
-                                    borderBottom: '1px solid rgba(42, 67, 85, 0.4)',
-                                    paddingBottom: '12px'
-                                }}>
+                                <h3 className="font-brand" style={{ color: '#E8F1F2', fontSize: 24, fontWeight: 700, margin: '0 0 12px 0', lineHeight: 1.2, borderBottom: '1px solid rgba(42, 67, 85, 0.4)', paddingBottom: '12px' }}>
                                     {activeModalLine.productName}
                                 </h3>
 
@@ -982,18 +959,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                             Sommelier&apos;s Tasting Notes
                                         </span>
                                     </div>
-                                    <p style={{ 
-                                        color: '#E8F1F2', 
-                                        fontSize: 14, 
-                                        lineHeight: 1.6,
-                                        margin: 0,
-                                        fontStyle: 'italic',
-                                        fontFamily: '"Cormorant Garamond", Georgia, serif',
-                                        background: 'linear-gradient(135deg, rgba(212,168,83,0.02) 0%, rgba(135,203,185,0.01) 100%)',
-                                        padding: '12px 16px',
-                                        borderLeft: '2px solid #D4A853',
-                                        borderRadius: '2px'
-                                    }}>
+                                    <p className="font-brand" style={{ color: '#E8F1F2', fontSize: 14, lineHeight: 1.6, margin: 0, fontStyle: 'italic', background: 'linear-gradient(135deg, rgba(212,168,83,0.02) 0%, rgba(135,203,185,0.01) 100%)', padding: '12px 16px', borderLeft: '2px solid #D4A853', borderRadius: '2px' }}>
                                         {activeModalLine.tastingNotes || "No tasting notes available for this specific vintage yet. Please ask our Wine Advisor for professional recommendation."}
                                     </p>
                                 </div>

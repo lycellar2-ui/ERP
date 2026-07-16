@@ -433,8 +433,10 @@ export async function getLandedCostBreakdown(shipmentId: string) {
 
     const cifVND = Number(shipment.cifAmount) * Number(shipment.po.exchangeRate)
     const totalCosts = costItems.reduce((s, c) => s + Number(c.amountVND), 0)
-    const taxTotal = shipment.customsDecl?.totalTax ? Number(shipment.customsDecl.totalTax) : 0
-    const grandTotal = cifVND + totalCosts + taxTotal
+    const importTax = shipment.customsDecl?.importTaxAmount ? Number(shipment.customsDecl.importTaxAmount) : 0
+    const sct = shipment.customsDecl?.sctAmount ? Number(shipment.customsDecl.sctAmount) : 0
+    const landedTaxTotal = importTax + sct
+    const grandTotal = cifVND + totalCosts + landedTaxTotal
     const totalQty = shipment.po.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
 
     return {
@@ -448,7 +450,7 @@ export async function getLandedCostBreakdown(shipmentId: string) {
             importTax: shipment.customsDecl?.importTaxAmount ? Number(shipment.customsDecl.importTaxAmount) : 0,
             sct: shipment.customsDecl?.sctAmount ? Number(shipment.customsDecl.sctAmount) : 0,
             vat: shipment.customsDecl?.vatAmount ? Number(shipment.customsDecl.vatAmount) : 0,
-            total: taxTotal,
+            total: landedTaxTotal,
         },
         totalCosts: Math.round(totalCosts),
         grandTotal: Math.round(grandTotal),

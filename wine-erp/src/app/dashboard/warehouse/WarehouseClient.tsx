@@ -75,7 +75,7 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                 style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                         🏭 Tạo Kho Mới
                     </h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
@@ -127,7 +127,7 @@ function WarehouseCard({
             <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
                     <p className="font-bold text-sm" style={{ color: '#E8F1F2' }}>{warehouse.name}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{warehouse.code}</p>
+                    <p className="text-xs mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{warehouse.code}</p>
                 </div>
                 {isSelected && <ChevronRight size={14} style={{ color: '#87CBB9', flexShrink: 0, marginTop: 2 }} />}
             </div>
@@ -143,7 +143,7 @@ function WarehouseCard({
                     { label: 'Tồn kho', value: warehouse.totalStock.toLocaleString() },
                 ].map(s => (
                     <div key={s.label} className="text-center">
-                        <p className="text-base font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{s.value}</p>
+                        <p className="text-base font-bold font-mono" style={{ color: '#87CBB9' }}>{s.value}</p>
                         <p className="text-xs" style={{ color: '#4A6A7A' }}>{s.label}</p>
                     </div>
                 ))}
@@ -155,7 +155,7 @@ function WarehouseCard({
                     <span className="text-xs" style={{ color: '#4A6A7A' }}>
                         <DollarSign size={10} className="inline mr-0.5" />Giá trị kho
                     </span>
-                    <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
                         {formatVND(warehouse.totalValue)}
                     </span>
                 </div>
@@ -236,7 +236,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                     <td className="px-3 py-2.5">
-                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{lot.lotNo}</span>
+                                        <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{lot.lotNo}</span>
                                     </td>
                                     <td className="px-3 py-2.5">
                                         <p className="text-sm font-medium truncate max-w-[200px]" style={{ color: '#E8F1F2' }}>{lot.productName}</p>
@@ -248,8 +248,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </td>
                                     <td className="px-3 py-2.5 text-center">
                                         {lot.vintage ? (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md"
-                                                style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', fontFamily: '"DM Mono", monospace' }}>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853' }}>
                                                 {lot.vintage}
                                             </span>
                                         ) : (
@@ -257,8 +256,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                         )}
                                     </td>
                                     <td className="px-3 py-2.5">
-                                        <span className="text-xs font-bold px-2 py-1 rounded-lg"
-                                            style={{ background: '#1B2E3D', color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                        <span className="text-xs font-bold px-2 py-1 rounded-lg font-mono" style={{ background: '#1B2E3D', color: '#8AAEBB' }}>
                                             {lot.locationCode}
                                         </span>
                                     </td>
@@ -270,10 +268,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </td>
                                     <td className="px-3 py-2.5 text-center">
                                         <div className="flex items-center gap-2 justify-center">
-                                            <span className="text-sm font-bold" style={{
-                                                color: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#D4A853' : '#5BA88A',
-                                                fontFamily: '"DM Mono", monospace'
-                                            }}>
+                                            <span className="text-sm font-bold font-mono" style={{ color: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#D4A853' : '#5BA88A' }}>
                                                 {lot.qtyAvailable.toLocaleString()}
                                             </span>
                                             <div className="w-10 h-1.5 rounded-full overflow-hidden" style={{ background: '#1B2E3D' }}>
@@ -286,7 +281,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </td>
                                     <td className="px-3 py-2.5 text-right">
                                         {lotValue > 0 ? (
-                                            <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                            <span className="text-xs font-mono" style={{ color: '#8AAEBB' }}>
                                                 {formatVND(lotValue)}
                                             </span>
                                         ) : (
@@ -503,7 +498,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Kho Hàng (WMS)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -530,7 +525,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         </div>
                         <div className="min-w-0">
                             <p className="text-[10px] uppercase tracking-wide font-semibold truncate" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-lg font-bold leading-tight truncate" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{s.value}</p>
+                            <p className="text-lg font-bold leading-tight truncate font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                         </div>
                     </div>
                 ))}
@@ -647,8 +642,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             </p>
                             {selectedWH && (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs px-2 py-1 rounded-lg"
-                                        style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)', fontFamily: '"DM Mono", monospace' }}>
+                                    <span className="text-xs px-2 py-1 rounded-lg font-mono" style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
                                         {filteredLots.length} lô
                                     </span>
                                     <button onClick={() => {

@@ -264,12 +264,7 @@ function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
                             borderBottom: i < fields.length - 1 ? '1px solid rgba(42,67,85,0.5)' : undefined,
                         }}>
                         <span className="text-xs" style={{ color: '#4A6A7A' }}>{f.label}</span>
-                        <span className="text-sm font-semibold"
-                            style={{
-                                color: (f as any).color ?? '#E8F1F2',
-                                fontFamily: (f as any).mono ? '"DM Mono"' : undefined,
-                                fontWeight: (f as any).bold ? 700 : undefined,
-                            }}>
+                        <span className="text-sm font-semibold" style={{ color: (f as any).color ?? '#E8F1F2', fontWeight: (f as any).bold ? 700 : undefined }}>
                             {f.value}
                         </span>
                     </div>
@@ -303,7 +298,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
                 {result.invoiceNo && (
                     <div className="p-3 rounded-lg" style={{ background: '#142433' }}>
                         <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Số Invoice</p>
-                        <p className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{result.invoiceNo}</p>
+                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{result.invoiceNo}</p>
                     </div>
                 )}
                 {result.supplierName && (
@@ -326,7 +321,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
                                 borderBottom: i < result.costItems!.length - 1 ? '1px solid rgba(42,67,85,0.5)' : undefined,
                             }}>
                             <span className="text-xs" style={{ color: '#8AAEBB' }}>{item.description}</span>
-                            <span className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                 {item.amount.toLocaleString()} {item.currency}
                             </span>
                         </div>
@@ -337,7 +332,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
             {result.totalAmount != null && (
                 <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(135,203,185,0.2)' }}>
                     <span className="text-xs font-semibold" style={{ color: '#87CBB9' }}>TỔNG</span>
-                    <span className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                    <span className="text-lg font-bold" style={{ color: '#87CBB9' }}>
                         {result.totalAmount.toLocaleString()} USD
                     </span>
                 </div>

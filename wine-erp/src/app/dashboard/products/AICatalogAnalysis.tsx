@@ -127,38 +127,38 @@ export function AICatalogAnalysis() {
                         <div className="grid grid-cols-3 lg:grid-cols-7 gap-2">
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Package size={11} style={{ color: '#87CBB9' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>{stats.totalProducts}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Sản Phẩm</p>
+                                <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>{stats.totalProducts}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Sản Phẩm</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#D4A853' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#D4A853', fontFamily: 'var(--font-mono)' }}>{fmtVND(stats.totalProductRevenue)}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Tổng Doanh Thu</p>
+                                <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{fmtVND(stats.totalProductRevenue)}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng Doanh Thu</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><BarChart3 size={11} style={{ color: '#5BA88A' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#5BA88A', fontFamily: 'var(--font-mono)' }}>{stats.productsWithSales}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Có Dữ Liệu Bán</p>
+                                <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>{stats.productsWithSales}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Có Dữ Liệu Bán</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.productsNoSales > 0 ? 'rgba(212,168,83,0.06)' : '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><ShoppingBag size={11} style={{ color: stats.productsNoSales > 0 ? '#D4A853' : '#4A6A7A' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: stats.productsNoSales > 0 ? '#D4A853' : '#4A6A7A', fontFamily: 'var(--font-mono)' }}>{stats.productsNoSales}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Chưa Bán</p>
+                                <p className="text-lg font-bold font-mono" style={{ color: stats.productsNoSales > 0 ? '#D4A853' : '#4A6A7A' }}>{stats.productsNoSales}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Chưa Bán</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.outOfStock > 0 ? 'rgba(224,82,82,0.06)' : '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.outOfStock > 0 ? '#E05252' : '#4A6A7A' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: stats.outOfStock > 0 ? '#E05252' : '#4A6A7A', fontFamily: 'var(--font-mono)' }}>{stats.outOfStock}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Hết Hàng</p>
+                                <p className="text-lg font-bold" style={{ color: stats.outOfStock > 0 ? '#E05252' : '#4A6A7A' }}>{stats.outOfStock}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Hết Hàng</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Truck size={11} style={{ color: '#4A8FAB' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#4A8FAB', fontFamily: 'var(--font-mono)' }}>{stats.totalSuppliers}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>NCC</p>
+                                <p className="text-lg font-bold" style={{ color: '#4A8FAB' }}>{stats.totalSuppliers}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>NCC</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Globe size={11} style={{ color: '#8AAEBB' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#8AAEBB', fontFamily: 'var(--font-mono)' }}>{stats.supplierCountries}</p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A' }}>Quốc Gia NCC</p>
+                                <p className="text-lg font-bold" style={{ color: '#8AAEBB' }}>{stats.supplierCountries}</p>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>Quốc Gia NCC</p>
                             </div>
                         </div>
 

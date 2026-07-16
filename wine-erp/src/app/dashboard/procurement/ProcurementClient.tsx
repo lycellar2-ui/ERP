@@ -128,7 +128,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             <ShoppingCart size={16} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>Tạo Đơn Mua Hàng</h3>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>Tạo Đơn Mua Hàng</h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>Đặt hàng từ nhà cung cấp / Winery</p>
                         </div>
                     </div>
@@ -228,8 +228,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     </div>
                                     <div>
                                         <label className="text-xs font-semibold block mb-1" style={{ color: '#4A6A7A' }}>Thành Tiền ({currency})</label>
-                                        <div className="px-3 py-2.5 rounded-lg text-sm font-semibold"
-                                            style={{ background: '#0A1926', border: '1px solid #1B2E3D', color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                                        <div className="px-3 py-2.5 rounded-lg text-sm font-semibold font-mono" style={{ background: '#0A1926', border: '1px solid #1B2E3D', color: '#87CBB9' }}>
                                             {(line.qtyOrdered * line.unitPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                         </div>
                                     </div>
@@ -243,13 +242,13 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         <div className="p-4 rounded-xl space-y-2" style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(135,203,185,0.2)' }}>
                             <div className="flex justify-between text-sm">
                                 <span style={{ color: '#8AAEBB' }}>Tổng FOB ({currency}):</span>
-                                <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>
+                                <span className="font-bold font-mono" style={{ color: '#E8F1F2' }}>
                                     {totalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span style={{ color: '#8AAEBB' }}>Quy đổi VND (ước tính):</span>
-                                <span className="font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                                <span className="font-bold font-mono" style={{ color: '#87CBB9' }}>
                                     {formatVND(totalVND)}
                                 </span>
                             </div>
@@ -472,7 +471,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Đơn Mua Hàng
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -516,7 +515,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-xl font-bold mt-0.5" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{s.value}</p>
+                            <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                         </div>
                     </div>
                 ))}
@@ -580,7 +579,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                     <td className="px-4 py-3">
-                                        <span className="text-sm font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                                        <span className="text-sm font-bold font-mono" style={{ color: '#87CBB9' }}>
                                             {row.poNo}
                                         </span>
                                         <button onClick={() => showDetail(row.id)} className="ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold"
@@ -593,24 +592,24 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         {formatDate(row.createdAt)}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className="text-sm font-bold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                        <span className="text-sm font-bold font-mono" style={{ color: '#8AAEBB' }}>
                                             {row.lineCount} SKU
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className="text-sm" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
+                                        <span className="text-sm font-mono" style={{ color: '#8AAEBB' }}>
                                             {row.totalQty.toLocaleString()} chai
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <span className="text-sm font-semibold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>
+                                        <span className="text-sm font-semibold font-mono" style={{ color: '#E8F1F2' }}>
                                             {row.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency}
                                         </span>
                                         <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
                                             ≈ {formatVND(row.totalAmount * row.exchangeRate)}
                                         </p>
                                     </td>
-                                    <td className="px-4 py-3 text-center text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                                    <td className="px-4 py-3 text-center text-xs font-mono" style={{ color: '#4A6A7A' }}>
                                         {row.exchangeRate.toLocaleString()}
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap">
@@ -638,7 +637,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                             <p className="text-[10px] text-[#4A6A7A]">{l.skuCode}</p>
                                                                         </div>
                                                                         <div className="text-right">
-                                                                            <p className="text-sm text-[#87CBB9] font-bold" style={{ fontFamily: '"DM Mono"' }}>{l.qtyOrdered} {l.uom}</p>
+                                                                            <p className="text-sm text-[#87CBB9] font-bold">{l.qtyOrdered} {l.uom}</p>
                                                                             <p className="text-[10px] text-[#4A6A7A]">{l.unitPrice} {row.currency} / {l.uom}</p>
                                                                         </div>
                                                                     </div>
@@ -723,7 +722,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                         <div className="flex items-center gap-3">
                                                                             <Anchor size={14} style={{ color: '#4A8FAB' }} />
                                                                             <div>
-                                                                                <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{s.billOfLading}</p>
+                                                                                <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>{s.billOfLading}</p>
                                                                                 <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{s.vesselName ?? 'TBC'} • ETA: {s.eta ? new Date(s.eta).toLocaleDateString('vi-VN') : '—'}</p>
                                                                             </div>
                                                                         </div>
@@ -731,7 +730,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                             <div className="w-16 h-1.5 rounded-full" style={{ background: '#2A4355' }}>
                                                                                 <div className="h-full rounded-full" style={{ background: '#5BA88A', width: `${s.milestoneProgress}%` }} />
                                                                             </div>
-                                                                            <span className="text-[10px] font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{s.milestoneProgress}%</span>
+                                                                            <span className="text-[10px] font-bold" style={{ color: '#5BA88A' }}>{s.milestoneProgress}%</span>
                                                                         </div>
                                                                     </button>
                                                                 ))}
@@ -787,16 +786,16 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{fx.poCount} PO</span>
                                     </div>
                                     <div className="space-y-1.5 text-xs">
-                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Trung bình:</span><span className="font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{fx.avgRate.toLocaleString()}</span></div>
-                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Thấp nhất:</span><span style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{fx.minRate.toLocaleString()}</span></div>
-                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Cao nhất:</span><span style={{ color: '#E85D5D', fontFamily: '"DM Mono"' }}>{fx.maxRate.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Trung bình:</span><span className="font-bold" style={{ color: '#87CBB9' }}>{fx.avgRate.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Thấp nhất:</span><span style={{ color: '#5BA88A' }}>{fx.minRate.toLocaleString()}</span></div>
+                                        <div className="flex justify-between"><span style={{ color: '#4A6A7A' }}>Cao nhất:</span><span style={{ color: '#E85D5D' }}>{fx.maxRate.toLocaleString()}</span></div>
                                         <div className="pt-2 mt-2 flex justify-between" style={{ borderTop: '1px solid #2A4355' }}>
                                             <span style={{ color: '#8AAEBB' }}>Tổng {fx.currency}:</span>
-                                            <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{fx.totalForeignValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                            <span className="font-bold" style={{ color: '#E8F1F2' }}>{fx.totalForeignValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span style={{ color: '#8AAEBB' }}>Quy VND:</span>
-                                            <span className="font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(fx.totalVNDValue)}</span>
+                                            <span className="font-bold" style={{ color: '#87CBB9' }}>{formatVND(fx.totalVNDValue)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -828,17 +827,17 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 {vndBreakdown.lines.map((l, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
                                         <td className="px-2 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{l.skuCode}</td>
-                                        <td className="px-2 py-2 text-xs" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{l.qty}</td>
-                                        <td className="px-2 py-2 text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{l.unitPriceForeign.toFixed(2)}</td>
-                                        <td className="px-2 py-2 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(l.unitPriceVND)}</td>
-                                        <td className="px-2 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(l.lineTotalVND)}</td>
+                                        <td className="px-2 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.qty}</td>
+                                        <td className="px-2 py-2 text-xs" style={{ color: '#8AAEBB' }}>{l.unitPriceForeign.toFixed(2)}</td>
+                                        <td className="px-2 py-2 text-xs font-bold" style={{ color: '#D4A853' }}>{formatVND(l.unitPriceVND)}</td>
+                                        <td className="px-2 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{formatVND(l.lineTotalVND)}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                         <div className="flex justify-between mt-3 pt-3" style={{ borderTop: '1px solid #2A4355' }}>
                             <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Tổng VND</span>
-                            <span className="text-lg font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(vndBreakdown.totalVND)}</span>
+                            <span className="text-lg font-bold" style={{ color: '#87CBB9' }}>{formatVND(vndBreakdown.totalVND)}</span>
                         </div>
                     </div>
                 </div>

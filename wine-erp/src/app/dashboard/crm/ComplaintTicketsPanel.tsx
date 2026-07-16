@@ -87,7 +87,7 @@ export function ComplaintTicketsPanel() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <AlertTriangle size={18} style={{ color: '#D4A853' }} />
-                    <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                    <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>
                         Phiếu Khiếu Nại
                     </h3>
                     <span className="text-xs px-2 py-0.5 rounded-full font-bold"
@@ -153,7 +153,7 @@ export function ComplaintTicketsPanel() {
                                 <button onClick={() => setExpandedId(isExpanded ? null : t.id)}
                                     className="w-full text-left p-4 flex items-center justify-between">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <span className="text-xs font-bold flex-shrink-0" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                        <span className="text-xs font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>
                                             {t.ticketNo}
                                         </span>
                                         <span className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>
@@ -194,7 +194,7 @@ export function ComplaintTicketsPanel() {
                                             </div>
                                             <div>
                                                 <p className="text-xs" style={{ color: '#4A6A7A' }}>Ngày tạo</p>
-                                                <p className="text-xs font-medium" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>
+                                                <p className="text-xs font-medium" style={{ color: '#8AAEBB' }}>
                                                     {new Date(t.createdAt).toLocaleDateString('vi-VN')}
                                                 </p>
                                             </div>

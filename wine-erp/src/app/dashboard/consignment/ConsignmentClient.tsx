@@ -64,7 +64,7 @@ function CreateDrawer({ open, onClose, onCreated }: {
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-[480px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                 <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                         Tạo Hợp Đồng Ký Gửi
                     </h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
@@ -202,7 +202,7 @@ function DetailDrawer({ agreement, onClose, onRefresh }: {
                 {/* Header */}
                 <div className="p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                             Chi Tiết Hợp Đồng
                         </h3>
                         <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
@@ -268,7 +268,7 @@ function DetailDrawer({ agreement, onClose, onRefresh }: {
                                 <div key={s.id} className="p-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                     <div className="flex items-center justify-between mb-1">
                                         <div>
-                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{s.skuCode}</span>
+                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{s.skuCode}</span>
                                             <span className="text-xs ml-2" style={{ color: '#E8F1F2' }}>{s.productName}</span>
                                         </div>
                                     </div>
@@ -416,7 +416,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Ký Gửi Hàng Hoá (CSG)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -439,7 +439,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: {
                                 <Icon size={16} style={{ color: c.accent }} />
                                 <span className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{c.label}</span>
                             </div>
-                            <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: c.accent }}>{c.value}</p>
+                            <p className="text-xl font-bold font-mono" style={{ color: c.accent }}>{c.value}</p>
                         </div>
                     )
                 })}
@@ -483,7 +483,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: {
                                         onClick={() => setSelectedAgreement(row)}
                                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>
                                             CSG-{row.id.slice(-6).toUpperCase()}
                                         </td>
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>{row.customerName}</td>
@@ -495,10 +495,10 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: {
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
                                             {FREQ_LABEL[row.reportFrequency] ?? row.reportFrequency}
                                         </td>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                             {row.stockCount}
                                         </td>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>
                                             {row.totalQty.toLocaleString('vi-VN')}
                                         </td>
                                         <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
@@ -531,8 +531,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: {
                                 {alerts.map((a, i) => (
                                     <div key={i} className="flex items-center justify-between py-1.5 px-3 rounded text-xs" style={{ background: '#1B2E3D' }}>
                                         <span style={{ color: '#E8F1F2' }}>{a.customerName}</span>
-                                        <span style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{a.skuCode}</span>
-                                        <span style={{ color: '#8B1A2E', fontFamily: '"DM Mono"', fontWeight: 'bold' }}>Còn {a.qtyRemaining} chai</span>
+                                        <span style={{ color: '#87CBB9' }}>{a.skuCode}</span>
+                                        <span style={{ color: '#8B1A2E', fontWeight: 'bold' }}>Còn {a.qtyRemaining} chai</span>
                                     </div>
                                 ))}
                             </div>
@@ -560,20 +560,20 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: {
                                     return (
                                         <tr key={i} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: isLow ? 'rgba(139,26,46,0.04)' : 'transparent' }}>
                                             <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#E8F1F2' }}>{row.customerName}</td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.skuCode}</td>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>{row.skuCode}</td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{row.productName}</td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{row.qtyConsigned}</td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{row.qtySold}</td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: isLow ? '#8B1A2E' : '#E8F1F2' }}>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{row.qtyConsigned}</td>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#5BA88A' }}>{row.qtySold}</td>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: isLow ? '#8B1A2E' : '#E8F1F2' }}>
                                                 {row.qtyRemaining}
-                                                {isLow && <span className="ml-1 text-[9px] px-1 py-0.5 rounded" style={{ background: 'rgba(139,26,46,0.15)', color: '#8B1A2E' }}>⚠ Thấp</span>}
+                                                {isLow && <span className="ml-1 text-xs px-1 py-0.5 rounded" style={{ background: 'rgba(139,26,46,0.15)', color: '#8B1A2E' }}>⚠ Thấp</span>}
                                             </td>
                                             <td className="px-3 py-2.5">
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex-1 h-1.5 rounded-full" style={{ background: '#142433' }}>
                                                         <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(row.pctSold, 100)}%`, background: barColor }} />
                                                     </div>
-                                                    <span className="text-xs font-bold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{row.pctSold.toFixed(0)}%</span>
+                                                    <span className="text-xs font-bold" style={{ color: '#8AAEBB' }}>{row.pctSold.toFixed(0)}%</span>
                                                 </div>
                                             </td>
                                         </tr>

@@ -96,11 +96,11 @@ export function GoodsReceiptTab({ warehouses }: {
                                     onClick={() => openDetail(gr.id)}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{gr.grNo}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#D4A853', fontFamily: '"DM Mono", monospace' }}>{gr.poNo}</td>
+                                    <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{gr.grNo}</td>
+                                    <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#D4A853' }}>{gr.poNo}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{gr.warehouseName}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{gr.lineCount} SP</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>
+                                    <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#E8F1F2' }}>
                                         {gr.totalQtyReceived.toLocaleString()}
                                     </td>
                                     <td className="px-3 py-2.5">
@@ -140,7 +140,7 @@ export function GoodsReceiptTab({ warehouses }: {
                     <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                     Chi Tiết GR {detailData?.grNo ?? '...'}
                                 </h3>
                                 {detailData && (
@@ -174,7 +174,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         <tbody>
                                             {detailData.lines.map(l => (
                                                 <tr key={l.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
-                                                    <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{l.skuCode}</td>
+                                                    <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{l.skuCode}</td>
                                                     <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.productName}</td>
                                                     <td className="px-3 py-2 text-xs font-mono" style={{ color: '#D4A853' }}>{l.lotNo}</td>
                                                     <td className="px-3 py-2 text-xs font-mono" style={{ color: '#8AAEBB' }}>{l.locationCode}</td>
@@ -265,7 +265,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                 <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Tạo Phiếu Nhập Kho (GR)</h3>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Phiếu Nhập Kho (GR)</h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                 </div>
                 <div className="p-5 space-y-4">

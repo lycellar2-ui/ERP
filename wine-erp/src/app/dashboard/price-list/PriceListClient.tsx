@@ -130,7 +130,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         {activeTab === 'general' ? 'Bảng Giá (PRC)' : 'Chính Sách Giá Khách Hàng (Customer Pricing)'}
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -190,7 +190,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                         <div className="w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color }} />
                                         <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
                                     </div>
-                                    <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{count}</p>
+                                    <p className="text-xl font-bold font-mono" style={{ color: '#E8F1F2' }}>{count}</p>
                                     <p className="text-xs" style={{ color: '#4A6A7A' }}>bảng giá</p>
                                 </div>
                             )
@@ -255,7 +255,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                     {/* Detail header */}
                                     <div className="flex items-center justify-between p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                         <div>
-                                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>{detail.name}</h3>
+                                            <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>{detail.name}</h3>
                                             <div className="flex items-center gap-3 mt-1">
                                                 <ChannelBadge channel={detail.channel} />
                                                 <span className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -296,11 +296,11 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                 ) : detail.lines.map(line => (
                                                     <tr key={line.id} style={{ borderTop: '1px solid #2A4355' }}>
                                                         <td className="px-4 py-2.5">
-                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{line.skuCode}</span>
+                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{line.skuCode}</span>
                                                         </td>
                                                         <td className="px-4 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>{line.productName}</td>
                                                         <td className="px-4 py-2.5">
-                                                            <span className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(line.unitPrice)}</span>
+                                                            <span className="text-sm font-bold" style={{ color: '#D4A853' }}>{formatVND(line.unitPrice)}</span>
                                                         </td>
                                                         <td className="px-4 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>{line.currency}</td>
                                                         <td className="px-4 py-2.5">
@@ -326,7 +326,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                     <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setCreateOpen(false)} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(420px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>Tạo Bảng Giá Mới</h3>
+                            <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>Tạo Bảng Giá Mới</h3>
                             <button onClick={() => setCreateOpen(false)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="flex-1 px-6 py-5 space-y-4">
@@ -389,7 +389,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                             background: addProductId === p.id ? 'rgba(135,203,185,0.12)' : 'transparent',
                                             color: addProductId === p.id ? '#87CBB9' : '#8AAEBB',
                                         }}>
-                                        <span className="font-bold" style={{ fontFamily: '"DM Mono"' }}>{p.skuCode}</span>
+                                        <span className="font-bold">{p.skuCode}</span>
                                         <span className="truncate" style={{ color: '#E8F1F2' }}>{p.productName}</span>
                                     </div>
                                 ))}

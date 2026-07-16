@@ -37,8 +37,7 @@ function StatCard({ label, value, icon: Icon, accent }: {
             </div>
             <div>
                 <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5"
-                    style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{value}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
             </div>
         </div>
     )
@@ -126,8 +125,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h1 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Thư Viện Ảnh
                     </h1>
                     <p className="text-sm mt-1" style={{ color: '#4A6A7A' }}>
@@ -217,14 +215,14 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
 
                             {/* Primary badge */}
                             {item.isPrimary && (
-                                <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                                <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
                                     style={{ background: 'rgba(135,203,185,0.9)', color: '#0A1926' }}>
                                     <Star size={8} /> Chính
                                 </div>
                             )}
 
                             {/* Type badge */}
-                            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-semibold"
                                 style={{ background: 'rgba(10,25,38,0.8)', color: '#8AAEBB' }}>
                                 {MEDIA_TYPE_LABELS[item.mediaType]?.emoji ?? '📸'}
                             </div>
@@ -242,7 +240,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                                 <p className="text-[10px] font-semibold truncate" style={{ color: '#E8F1F2' }}>
                                     {item.product.productName}
                                 </p>
-                                <p className="text-[9px]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>
                                     {item.product.skuCode}
                                 </p>
                             </div>
@@ -402,8 +400,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
                 style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                         Upload Ảnh Sản Phẩm
                     </h3>
                     <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: '#4A6A7A' }}>

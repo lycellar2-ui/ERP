@@ -291,7 +291,7 @@ export function LandedCostTab() {
                                 ].map(s => (
                                     <div key={s.label} className="p-3 rounded-md" style={{ background: '#142433' }}>
                                         <p className="text-xs uppercase mb-0.5" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                        <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: s.color }}>
+                                        <p className="text-sm font-bold" style={{ color: s.color }}>
                                             {s.label === 'CIF' ? `${s.value.toLocaleString('en-US')} ${(s as any).suffix}` : formatVND(s.value)}
                                         </p>
                                     </div>
@@ -301,7 +301,7 @@ export function LandedCostTab() {
                                 <span className="text-xs font-semibold uppercase" style={{ color: '#4A6A7A' }}>
                                     Tổng Chi Phí Thuế & Logistics
                                 </span>
-                                <span className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                <span className="text-lg font-bold" style={{ color: '#D4A853' }}>
                                     {formatVND(detail.totalCost)}
                                 </span>
                             </div>
@@ -390,16 +390,13 @@ export function LandedCostTab() {
                                                 </td>
                                                 <td className="px-3 py-2.5 text-xs font-medium truncate max-w-[200px]"
                                                     style={{ color: '#E8F1F2' }}>{a.productName}</td>
-                                                <td className="px-3 py-2.5 text-xs font-bold"
-                                                    style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#8AAEBB' }}>
                                                     {a.qty.toLocaleString()}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-xs font-bold"
-                                                    style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                                     {formatVND(a.unitLandedCost)}
                                                 </td>
-                                                <td className="px-3 py-2.5 text-xs font-bold"
-                                                    style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>
+                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>
                                                     {formatVND(a.totalCost)}
                                                 </td>
                                                 <td className="px-3 py-2.5">
@@ -410,7 +407,7 @@ export function LandedCostTab() {
                                                                 background: '#87CBB9',
                                                             }} />
                                                         </div>
-                                                        <span className="text-xs" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                        <span className="text-xs" style={{ color: '#87CBB9' }}>
                                                             {pct.toFixed(1)}%
                                                         </span>
                                                     </div>
@@ -422,17 +419,14 @@ export function LandedCostTab() {
                                     <tr style={{ background: 'rgba(135,203,185,0.06)', borderTop: '2px solid #2A4355' }}>
                                         <td colSpan={2} className="px-3 py-3 text-xs font-bold uppercase"
                                             style={{ color: '#87CBB9' }}>Tổng Cộng</td>
-                                        <td className="px-3 py-3 text-xs font-bold"
-                                            style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                        <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>
                                             {detail.allocations.reduce((s: number, a: any) => s + a.qty, 0).toLocaleString()}
                                         </td>
                                         <td className="px-3 py-3 text-xs" style={{ color: '#4A6A7A' }}>—</td>
-                                        <td className="px-3 py-3 text-xs font-bold"
-                                            style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                        <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>
                                             {formatVND(detail.allocations.reduce((s: number, a: any) => s + a.totalCost, 0))}
                                         </td>
-                                        <td className="px-3 py-3 text-xs font-bold"
-                                            style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>100%</td>
+                                        <td className="px-3 py-3 text-xs font-bold" style={{ color: '#87CBB9' }}>100%</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -502,7 +496,7 @@ export function LandedCostTab() {
                                                         {s.supplierName} • {s.poNo} • {s.vesselName || 'No vessel'}
                                                     </p>
                                                     <div className="flex gap-3 mt-1">
-                                                        <span className="text-xs" style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                                        <span className="text-xs" style={{ color: '#8AAEBB' }}>
                                                             CIF: {s.cifAmount.toLocaleString('en-US')} {s.cifCurrency}
                                                         </span>
                                                         <span className="text-xs" style={{ color: '#4A6A7A' }}>
@@ -569,7 +563,7 @@ export function LandedCostTab() {
                                 <span className="text-xs uppercase font-semibold" style={{ color: '#4A6A7A' }}>
                                     Tổng Chi Phí
                                 </span>
-                                <span className="text-base font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                <span className="text-base font-bold" style={{ color: '#D4A853' }}>
                                     {formatVND(
                                         (Number(createForm.importTax) || 0)
                                         + (Number(createForm.sct) || 0)
@@ -635,7 +629,7 @@ export function LandedCostTab() {
                                         onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                         onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
                                         <td className="px-3 py-2.5">
-                                            <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                 {c.shipmentBol || '—'}
                                             </span>
                                         </td>
@@ -647,12 +641,10 @@ export function LandedCostTab() {
                                                 {c.vesselName || '—'}
                                             </p>
                                         </td>
-                                        <td className="px-3 py-2.5 text-xs font-bold"
-                                            style={{ fontFamily: '"DM Mono"', color: '#8AAEBB' }}>
+                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#8AAEBB' }}>
                                             {c.cifAmount > 0 ? `$${c.cifAmount.toLocaleString('en-US')}` : '—'}
                                         </td>
-                                        <td className="px-3 py-2.5 text-sm font-bold"
-                                            style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                        <td className="px-3 py-2.5 text-sm font-bold" style={{ color: '#D4A853' }}>
                                             {formatVND(c.totalCost)}
                                         </td>
                                         <td className="px-3 py-2.5">

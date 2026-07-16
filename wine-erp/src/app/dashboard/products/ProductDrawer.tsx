@@ -341,7 +341,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             <Wine size={16} style={{ color: '#87CBB9' }} />
                         </div>
                         <div>
-                            <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2', fontSize: 18 }}>
+                            <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                                 {isEdit ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}
                             </h3>
                             <p className="text-xs" style={{ color: '#4A6A7A' }}>Điền thông tin đầy đủ về chai rượu</p>
@@ -795,7 +795,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                                                 {/* Primary badge */}
                                                 {m.isPrimary && (
-                                                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                                                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold"
                                                         style={{ background: 'rgba(135,203,185,0.9)', color: '#0A1926' }}>
                                                         <Star size={8} /> Ảnh chính
                                                     </div>
@@ -959,7 +959,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{aw.source}</span>
                                                         {aw.score && (
-                                                            <span className="text-sm font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                                            <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
                                                                 {aw.score}/100
                                                             </span>
                                                         )}

@@ -94,8 +94,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div>
-                <h2 className="text-2xl font-bold"
-                    style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                     Báo Cáo & Phân Tích (RPT)
                 </h2>
                 <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -129,25 +128,25 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu 6 Tháng</p>
-                            <p className="text-xl font-bold mt-1" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                            <p className="text-xl font-bold mt-1" style={{ color: '#87CBB9' }}>
                                 ₫{(totalRevenue / 1e9).toFixed(2)}T
                             </p>
                         </div>
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #5BA88A' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Giá Trị Tồn Kho</p>
-                            <p className="text-xl font-bold mt-1" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>
+                            <p className="text-xl font-bold mt-1" style={{ color: '#5BA88A' }}>
                                 ₫{(stockValuation.totalValue / 1e9).toFixed(2)}T
                             </p>
                         </div>
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #D4A853' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Tổng Tồn Kho</p>
-                            <p className="text-xl font-bold mt-1" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                            <p className="text-xl font-bold mt-1" style={{ color: '#D4A853' }}>
                                 {stockValuation.totalQty.toLocaleString()} chai
                             </p>
                         </div>
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #4A8FAB' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>SKU Đang Có Hàng</p>
-                            <p className="text-xl font-bold mt-1" style={{ fontFamily: '"DM Mono"', color: '#4A8FAB' }}>
+                            <p className="text-xl font-bold mt-1" style={{ color: '#4A8FAB' }}>
                                 {stockValuation.productCount}
                             </p>
                         </div>
@@ -166,7 +165,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                     const pct = maxRevenue > 0 ? (m.revenue / maxRevenue) * 100 : 0
                                     return (
                                         <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
-                                            <p className="text-xs font-bold text-right w-full" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                            <p className="text-xs font-bold text-right w-full" style={{ color: '#87CBB9' }}>
                                                 {m.revenue > 0 ? `${(m.revenue / 1e6).toFixed(0)}M` : '—'}
                                             </p>
                                             <div className="w-full rounded-t-md transition-all duration-500"
@@ -201,7 +200,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                 <div className="flex justify-between mb-1">
                                                     <span className="text-xs" style={{ color: '#E8F1F2' }}>{CHANNEL_LABEL[c.channel] ?? c.channel}</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color }}>
+                                                        <span className="text-xs font-bold" style={{ color }}>
                                                             {(c.revenue / 1e6).toFixed(0)}M
                                                         </span>
                                                         <span className="text-xs" style={{ color: '#4A6A7A' }}>{pct.toFixed(0)}%</span>
@@ -249,7 +248,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                             {sku.productName}
                                                         </span>
                                                     </div>
-                                                    <span className="text-xs font-bold flex-shrink-0" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                                    <span className="text-xs font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>
                                                         {sku.qtyOrdered.toLocaleString()} chai
                                                     </span>
                                                 </div>
@@ -297,8 +296,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                             <td className="px-4 py-3">
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded"
-                                                    style={{ fontFamily: '"DM Mono"', color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded font-mono" style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
                                                     {r.code}
                                                 </span>
                                             </td>
@@ -385,10 +383,10 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>
                                                     {s.lastRunAt ? formatDate(s.lastRunAt) : '—'}
                                                 </td>
-                                                <td className="px-4 py-3 text-xs" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                                <td className="px-4 py-3 text-xs" style={{ color: '#87CBB9' }}>
                                                     {s.nextRunAt ? formatDate(s.nextRunAt) : '—'}
                                                 </td>
                                                 <td className="px-4 py-3">

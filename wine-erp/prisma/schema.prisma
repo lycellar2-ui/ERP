@@ -99,6 +99,7 @@ model User {
   proposalApprovals      ProposalApprovalLog[] @relation("ProposalApprover")
   priceRulesRequested    CustomerPriceRule[] @relation("PriceRuleRequester")
   priceRulesApproved     CustomerPriceRule[] @relation("PriceRuleApprover")
+  posShifts              POSShift[]
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -1425,6 +1426,8 @@ model SalesOrder {
   complaints        ComplaintTicket[]
   returnOrders      ReturnOrder[]
   tastingConversions TastingEventGuest[] @relation("TastingConversion")
+  shiftId           String?
+  shift             POSShift?           @relation(fields: [shiftId], references: [id])
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
@@ -2229,6 +2232,7 @@ enum LocationType {
 }
 
 enum LotStatus {
+  PENDING
   AVAILABLE
   RESERVED
   QUARANTINE
@@ -2897,4 +2901,27 @@ view ProductDetailView {
   grapes               String?
 
   @@map("v_product_details")
+}
+
+model POSShift {
+  id             String        @id @default(cuid())
+  cashierId      String
+  cashier        User          @relation(fields: [cashierId], references: [id])
+  openedAt       DateTime      @default(now())
+  closedAt       DateTime?
+  openingBalance Decimal       @default(0)
+  closingBalance Decimal?
+  actualBalance  Decimal?
+  status         ShiftStatus   @default(OPEN)
+  salesOrders    SalesOrder[]
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("pos_shifts")
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
 }

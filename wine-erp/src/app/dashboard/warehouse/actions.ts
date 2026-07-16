@@ -496,15 +496,25 @@ export async function createGoodsReceipt(input: {
                 const poLine = po.lines.find(l => l.productId === line.productId)
                 const qtyExpected = poLine ? Number(poLine.qtyOrdered) : line.qtyReceived
 
-                // Generate unique lot number (atomic — collision-safe)
+                // Generate unique lot number (atomic — collision-safe within month)
+                const lotPrefix = `LOT-${yy}${mm}-`
                 const lastLot = await tx.stockLot.findFirst({
+                    where: { lotNo: { startsWith: lotPrefix } },
                     orderBy: { lotNo: 'desc' },
                     select: { lotNo: true },
                 })
-                const nextLotSeq = lastLot ? parseInt(lastLot.lotNo.replace(/\D/g, '').slice(-5)) + 1 : 1
-                const lotNo = `LOT-${yy}${mm}-${String(nextLotSeq).padStart(5, '0')}`
+                let nextLotSeq = 1
+                if (lastLot) {
+                    const parts = lastLot.lotNo.split('-')
+                    const seqStr = parts[parts.length - 1]
+                    const parsed = parseInt(seqStr, 10)
+                    if (!isNaN(parsed)) {
+                        nextLotSeq = parsed + 1
+                    }
+                }
+                const lotNo = `${lotPrefix}${String(nextLotSeq).padStart(5, '0')}`
 
-                // Create StockLot
+                // Create StockLot (pending approval/confirmation)
                 const lot = await tx.stockLot.create({
                     data: {
                         lotNo,
@@ -513,10 +523,10 @@ export async function createGoodsReceipt(input: {
                         shipmentId: shipmentId ?? null,
                         locationId: line.locationId,
                         qtyReceived: line.qtyReceived,
-                        qtyAvailable: line.qtyReceived,
+                        qtyAvailable: 0,
                         unitLandedCost: line.unitLandedCost ?? 0,
                         receivedDate: now,
-                        status: 'AVAILABLE',
+                        status: 'PENDING',
                     },
                 })
 
@@ -556,16 +566,39 @@ export async function confirmGoodsReceipt(
     try {
         let grNo = ''
         await prisma.$transaction(async (tx) => {
-            const gr = await tx.goodsReceipt.update({
-                where: { id: grId },
+            const updateCount = await tx.goodsReceipt.updateMany({
+                where: { id: grId, status: 'DRAFT' },
                 data: {
                     status: 'CONFIRMED',
                     confirmedBy: confirmerId,
                     confirmedAt: new Date(),
                 },
+            })
+            if (updateCount.count === 0) {
+                throw new Error('Phiếu nhập kho đã được xác nhận hoặc không ở trạng thái DRAFT')
+            }
+
+            const gr = await tx.goodsReceipt.findUniqueOrThrow({
+                where: { id: grId },
                 include: { po: true },
             })
             grNo = gr.grNo
+
+            // Activate associated stock lots
+            const currentGrLines = await tx.goodsReceiptLine.findMany({
+                where: { grId },
+            })
+            for (const line of currentGrLines) {
+                if (line.lotId) {
+                    await tx.stockLot.update({
+                        where: { id: line.lotId },
+                        data: {
+                            status: 'AVAILABLE',
+                            qtyAvailable: line.qtyReceived,
+                        },
+                    })
+                }
+            }
 
             // Check if all PO lines have been fully received
             const poLines = await tx.purchaseOrderLine.findMany({
@@ -584,6 +617,13 @@ export async function confirmGoodsReceipt(
                 where: { id: gr.poId },
                 data: { status: newStatus as any },
             })
+
+            // Auto journal entry: DR 156 / CR 331
+            const { generateGoodsReceiptJournal } = await import('../finance/actions')
+            const journalResult = await generateGoodsReceiptJournal(grId, confirmerId, tx)
+            if (!journalResult.success) {
+                throw new Error(journalResult.error || 'Lỗi sinh bút toán kế toán nhập kho')
+            }
         })
 
         // Audit log
@@ -594,10 +634,6 @@ export async function confirmGoodsReceipt(
             entityId: grId,
             description: `Xác nhận nhập kho ${grNo}`,
         })
-
-        // Auto journal entry: DR 156 / CR 331
-        const { generateGoodsReceiptJournal } = await import('../finance/actions')
-        generateGoodsReceiptJournal(grId, confirmerId).catch(() => { })
 
         // Auto-generate QR codes for stock lots
         const { generateQRCodesForGR } = await import('../qr-codes/actions')
@@ -789,12 +825,18 @@ export async function createDeliveryOrder(input: {
                 })
 
                 // Reserve stock (reduce available)
-                await tx.stockLot.update({
-                    where: { id: line.lotId },
+                const updatedLot = await tx.stockLot.updateMany({
+                    where: {
+                        id: line.lotId,
+                        qtyAvailable: { gte: line.qtyPicked },
+                    },
                     data: {
                         qtyAvailable: { decrement: line.qtyPicked },
                     },
                 })
+                if (updatedLot.count === 0) {
+                    throw new Error(`Không đủ tồn kho khả dụng cho lô hàng. Yêu cầu: ${line.qtyPicked}.`)
+                }
             }
 
             return deliveryOrder
@@ -819,6 +861,19 @@ export async function confirmDeliveryOrder(
     try {
         let doNo = ''
         await prisma.$transaction(async (tx) => {
+            const updateCount = await tx.deliveryOrder.updateMany({
+                where: { id: doId, status: 'DRAFT' },
+                data: { status: 'SHIPPED' },
+            })
+            if (updateCount.count === 0) {
+                throw new Error('Đơn xuất kho đã được xác nhận giao hàng hoặc không ở trạng thái DRAFT')
+            }
+
+            const deliveryOrder = await tx.deliveryOrder.findUniqueOrThrow({
+                where: { id: doId },
+            })
+            doNo = deliveryOrder.doNo
+
             // Set qtyShipped = qtyPicked per line
             const doLines = await tx.deliveryOrderLine.findMany({ where: { doId } })
             for (const line of doLines) {
@@ -828,18 +883,18 @@ export async function confirmDeliveryOrder(
                 })
             }
 
-            // Update DO status
-            const deliveryOrder = await tx.deliveryOrder.update({
-                where: { id: doId },
-                data: { status: 'SHIPPED' },
-            })
-            doNo = deliveryOrder.doNo
-
             // Update SO status
             await tx.salesOrder.update({
                 where: { id: deliveryOrder.soId },
                 data: { status: 'DELIVERED' },
             })
+
+            // Auto COGS journal entry: DR 632 / CR 156
+            const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
+            const journalResult = await generateDeliveryOrderCOGSJournal(doId, confirmerId ?? 'system', tx)
+            if (!journalResult.success) {
+                throw new Error(journalResult.error || 'Lỗi sinh bút toán giá vốn hàng bán')
+            }
         })
 
         // Audit log
@@ -852,10 +907,6 @@ export async function confirmDeliveryOrder(
                 description: `Xuất kho ${doNo}`,
             })
         }
-
-        // Auto COGS journal entry: DR 632 / CR 156
-        const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
-        generateDeliveryOrderCOGSJournal(doId, confirmerId ?? 'system').catch(() => { })
 
         revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
@@ -878,18 +929,24 @@ export async function transferStock(input: {
     qty: number
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        const lot = await prisma.stockLot.findUnique({ where: { id: input.lotId } })
-        if (!lot) return { success: false, error: 'Lot không tồn tại' }
-        if (Number(lot.qtyAvailable) < input.qty) {
-            return { success: false, error: `Không đủ tồn (available: ${lot.qtyAvailable}, requested: ${input.qty})` }
-        }
-
         await prisma.$transaction(async (tx) => {
+            const lot = await tx.stockLot.findUnique({ where: { id: input.lotId } })
+            if (!lot) throw new Error('Lot không tồn tại')
+            if (Number(lot.qtyAvailable) < input.qty) {
+                throw new Error(`Không đủ tồn (available: ${lot.qtyAvailable}, requested: ${input.qty})`)
+            }
+
             // Reduce from source lot
-            await tx.stockLot.update({
-                where: { id: input.lotId },
+            const updated = await tx.stockLot.updateMany({
+                where: {
+                    id: input.lotId,
+                    qtyAvailable: { gte: input.qty },
+                },
                 data: { qtyAvailable: { decrement: input.qty } },
             })
+            if (updated.count === 0) {
+                throw new Error('Không đủ tồn kho khả dụng để thực hiện chuyển kho hoặc lot không tồn tại')
+            }
 
             // Create new lot at destination (or update existing)
             const existingLot = await tx.stockLot.findFirst({
@@ -1103,25 +1160,31 @@ export async function moveToQuarantine(input: {
     reason: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        const lot = await prisma.stockLot.findUnique({ where: { id: input.lotId } })
-        if (!lot) return { success: false, error: 'Lot không tồn tại' }
-        if (Number(lot.qtyAvailable) < input.qty) {
-            return { success: false, error: `Không đủ tồn (available: ${lot.qtyAvailable})` }
-        }
-
         await prisma.$transaction(async (tx) => {
+            const lot = await tx.stockLot.findUnique({ where: { id: input.lotId } })
+            if (!lot) throw new Error('Lot không tồn tại')
+            if (Number(lot.qtyAvailable) < input.qty) {
+                throw new Error(`Không đủ tồn (available: ${lot.qtyAvailable})`)
+            }
+
             // Reduce available qty
             if (input.qty >= Number(lot.qtyAvailable)) {
                 // Move entire lot to quarantine
-                await tx.stockLot.update({
-                    where: { id: input.lotId },
+                const updated = await tx.stockLot.updateMany({
+                    where: { id: input.lotId, qtyAvailable: lot.qtyAvailable },
                     data: { status: 'QUARANTINE', qtyAvailable: 0 },
                 })
+                if (updated.count === 0) {
+                    throw new Error('Cập nhật thất bại do có giao dịch đồng thời, vui lòng thử lại.')
+                }
             } else {
-                await tx.stockLot.update({
-                    where: { id: input.lotId },
+                const updated = await tx.stockLot.updateMany({
+                    where: { id: input.lotId, qtyAvailable: { gte: input.qty } },
                     data: { qtyAvailable: { decrement: input.qty } },
                 })
+                if (updated.count === 0) {
+                    throw new Error('Cập nhật thất bại do có giao dịch đồng thời, vui lòng thử lại.')
+                }
             }
 
             // Create quarantine lot
@@ -1268,66 +1331,73 @@ export async function adjustStockFromCount(
     sessionId: string
 ): Promise<{ success: boolean; adjustedLines?: number; error?: string }> {
     try {
-        const session = await prisma.stockCountSession.findUnique({
-            where: { id: sessionId },
-            include: { lines: true },
-        })
-        if (!session) return { success: false, error: 'Session không tồn tại' }
-        if (session.status !== 'COMPLETED') {
-            return { success: false, error: 'Phải hoàn tất kiểm kê trước khi điều chỉnh' }
-        }
+        const result = await prisma.$transaction(async (tx) => {
+            const session = await tx.stockCountSession.findUnique({
+                where: { id: sessionId },
+                include: { lines: true },
+            })
+            if (!session) throw new Error('Session không tồn tại')
+            if (session.status !== 'COMPLETED') {
+                throw new Error('Phải hoàn tất kiểm kê trước khi điều chỉnh')
+            }
 
-        let adjustedLines = 0
+            let adjustedLines = 0
 
-        for (const line of session.lines) {
-            if (line.variance === null || Number(line.variance) === 0) continue
+            for (const line of session.lines) {
+                if (line.variance === null || Number(line.variance) === 0) continue
 
-            // Find matching lot by product + location
-            const lots = await prisma.stockLot.findMany({
-                where: {
-                    productId: line.productId,
-                    location: { locationCode: line.locationCode },
-                    status: 'AVAILABLE',
-                    qtyAvailable: { gt: 0 },
-                },
-                orderBy: { receivedDate: 'asc' },
+                // Find matching lot by product + location
+                const lots = await tx.stockLot.findMany({
+                    where: {
+                        productId: line.productId,
+                        location: { locationCode: line.locationCode },
+                        status: 'AVAILABLE',
+                        qtyAvailable: { gt: 0 },
+                    },
+                    orderBy: { receivedDate: 'asc' },
+                })
+
+                if (lots.length === 0) continue
+
+                const variance = Number(line.variance)
+                if (variance < 0) {
+                    // Negative variance — reduce stock (shortage)
+                    let remaining = Math.abs(variance)
+                    for (const lot of lots) {
+                        if (remaining <= 0) break
+                        const available = Number(lot.qtyAvailable)
+                        const reduce = Math.min(available, remaining)
+                        const updated = await tx.stockLot.updateMany({
+                            where: { id: lot.id, qtyAvailable: { gte: reduce } },
+                            data: { qtyAvailable: { decrement: reduce } },
+                        })
+                        if (updated.count === 0) {
+                            throw new Error(`Không đủ tồn kho khả dụng trên lô ${lot.lotNo} để thực hiện điều chỉnh`)
+                        }
+                        remaining -= reduce
+                    }
+                } else {
+                    // Positive variance — increase oldest lot
+                    await tx.stockLot.update({
+                        where: { id: lots[0].id },
+                        data: { qtyAvailable: { increment: variance } },
+                    })
+                }
+                adjustedLines++
+            }
+
+            // Mark session as adjusted
+            await tx.stockCountSession.update({
+                where: { id: sessionId },
+                data: { status: 'COMPLETED' },
             })
 
-            if (lots.length === 0) continue
-
-            const variance = Number(line.variance)
-            if (variance < 0) {
-                // Negative variance — reduce stock (shortage)
-                let remaining = Math.abs(variance)
-                for (const lot of lots) {
-                    if (remaining <= 0) break
-                    const available = Number(lot.qtyAvailable)
-                    const reduce = Math.min(available, remaining)
-                    await prisma.stockLot.update({
-                        where: { id: lot.id },
-                        data: { qtyAvailable: { decrement: reduce } },
-                    })
-                    remaining -= reduce
-                }
-            } else {
-                // Positive variance — increase oldest lot
-                await prisma.stockLot.update({
-                    where: { id: lots[0].id },
-                    data: { qtyAvailable: { increment: variance } },
-                })
-            }
-            adjustedLines++
-        }
-
-        // Mark session as adjusted
-        await prisma.stockCountSession.update({
-            where: { id: sessionId },
-            data: { status: 'COMPLETED' }, // Could add an ADJUSTED status
+            return adjustedLines
         })
 
         revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
-        return { success: true, adjustedLines }
+        return { success: true, adjustedLines: result }
     } catch (err: any) {
         return { success: false, error: err.message }
     }

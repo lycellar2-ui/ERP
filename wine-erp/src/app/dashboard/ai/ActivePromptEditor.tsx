@@ -124,7 +124,7 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                                     <Icon size={14} style={{ color: meta.color }} />
                                     <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{meta.label}</span>
                                     {template._count && template._count.runs > 0 && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded"
+                                        <span className="text-xs px-1.5 py-0.5 rounded"
                                             style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
                                             <Zap size={8} className="inline mr-0.5" />{template._count.runs} runs
                                         </span>
@@ -136,7 +136,7 @@ export function ActivePromptEditor({ prompts }: { prompts: PromptTemplate[] }) {
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[9px]" style={{ color: '#4A6A7A' }}>
+                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
                                         <Thermometer size={9} className="inline mr-0.5" />t={template.temperature}
                                         <Hash size={9} className="inline ml-1.5 mr-0.5" />{template.maxTokens}
                                     </span>

@@ -4,7 +4,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
 const mockTx = {
     landedCostAllocation: { deleteMany: vi.fn() },
-    stockLot: { updateMany: vi.fn() },
+    stockLot: { updateMany: vi.fn(), findMany: vi.fn() },
     landedCostCampaign: { update: vi.fn() },
 }
 
@@ -38,7 +38,10 @@ const {
     updateLandedCostCampaign,
 } = await import('@/app/dashboard/costing/actions')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+    vi.clearAllMocks()
+    mockTx.stockLot.findMany.mockResolvedValue([])
+})
 
 // ═══════════════════════════════════════════════════
 // COST-01: Create Landed Cost Campaign
@@ -100,6 +103,15 @@ describe('COST-02: calculateLandedCostProration', () => {
         mockPrisma.landedCostCampaign.findUnique.mockResolvedValue({
             id: 'camp-1', status: 'DRAFT', shipmentId: 'ship-1',
             totalImportTax: 6_000_000, totalSct: 2_000_000, totalVat: 1_000_000, totalOtherCost: 1_000_000,
+            shipment: {
+                po: {
+                    exchangeRate: 25000,
+                    lines: [
+                        { productId: 'p-bordeaux', qtyOrdered: 100, unitPrice: 10 },
+                        { productId: 'p-barolo', qtyOrdered: 50, unitPrice: 10 },
+                    ]
+                }
+            }
         })
 
         // 2 products, total qty: 100+50 = 150

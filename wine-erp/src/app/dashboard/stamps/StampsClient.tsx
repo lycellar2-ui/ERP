@@ -397,7 +397,7 @@ export default function StampsClient({ purchases, summary }: Props) {
                                             </span>
                                         </td>
                                         <td style={{ ...tdStyle, fontWeight: 600, color: '#E8F1F2' }}>{p.symbol}</td>
-                                        <td style={{ ...tdStyle, fontSize: '12px', fontFamily: 'monospace' }}>
+                                        <td className="font-mono" style={{ ...tdStyle, fontSize: '12px' }}>
                                             {p.serialStart} → {p.serialEnd}
                                         </td>
                                         <td style={{ ...tdStyle, textAlign: 'right' }}>{p.totalQty.toLocaleString()}</td>

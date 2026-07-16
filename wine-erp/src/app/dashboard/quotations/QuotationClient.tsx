@@ -216,7 +216,7 @@ export function QuotationClient({ initialData }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold font-brand" style={{ color: '#E8F1F2' }}>
                         Báo Giá (QTN)
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -243,7 +243,7 @@ export function QuotationClient({ initialData }: Props) {
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                         <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-xl font-bold mt-1" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{s.value}</p>
+                        <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -292,17 +292,17 @@ export function QuotationClient({ initialData }: Props) {
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                     <td className="px-4 py-3">
-                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.quotationNo}</span>
+                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.quotationNo}</span>
                                     </td>
                                     <td className="px-4 py-3">
                                         <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.customerName}</p>
-                                        <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>{row.customerCode}</p>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(135,203,185,0.1)', color: '#8AAEBB' }}>{row.channel}</span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</span>
+                                        <span className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</span>
                                     </td>
                                     <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
                                     <td className="px-4 py-3 text-xs" style={{ color: isExpired ? '#EF4444' : '#4A6A7A' }}>
@@ -368,27 +368,27 @@ export function QuotationClient({ initialData }: Props) {
                         <div key={row.id} className="p-2.5 rounded-lg space-y-2 transition-all" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                             {/* Header: Quotation No & Status */}
                             <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{row.quotationNo}</span>
+                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{row.quotationNo}</span>
                                 <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
                             </div>
 
                             {/* Body: Customer Name & Value */}
                             <div className="flex justify-between items-start gap-2">
                                 <h4 className="text-xs font-bold truncate flex-1" style={{ color: '#E8F1F2' }}>{row.customerName}</h4>
-                                <span className="text-xs font-bold whitespace-nowrap" style={{ fontFamily: '"DM Mono"', color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</span>
+                                <span className="text-xs font-bold whitespace-nowrap font-mono" style={{ color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</span>
                             </div>
 
                             {/* Financials & Timeline Info */}
                             <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] pt-1" style={{ borderTop: '1px solid rgba(42,67,85,0.15)' }}>
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-medium" style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>{row.channel}</span>
+                                    <span className="px-1.5 py-0.2 rounded text-xs font-medium" style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}>{row.channel}</span>
                                     <span style={{ color: '#4A6A7A' }}>{row.customerCode}</span>
                                     <span style={{ color: '#4A6A7A' }}>• Rep: <strong style={{ color: '#8AAEBB' }}>{row.salesRepName}</strong></span>
                                 </div>
                                 <div className="text-right">
                                     <span style={{ color: isExpired ? '#EF4444' : '#8AAEBB' }}>
                                         Hạn: {formatDate(row.validUntil)}
-                                        {isExpired && <span className="ml-1 text-[8px] font-bold text-[#EF4444]">QUÁ HẠN</span>}
+                                        {isExpired && <span className="ml-1 text-xs font-bold text-[#EF4444]">QUÁ HẠN</span>}
                                     </span>
                                 </div>
                             </div>
@@ -396,7 +396,7 @@ export function QuotationClient({ initialData }: Props) {
                             {/* Actions & View count */}
                             <div className="flex items-center justify-end gap-1.5 pt-1.5" style={{ borderTop: '1px solid rgba(42,67,85,0.15)' }}>
                                 {row.viewCount > 0 && (
-                                    <span className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-medium mr-auto"
+                                    <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium mr-auto"
                                         style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}
                                         title={`KH đã xem ${row.viewCount} lần`}>
                                         <Eye size={10} /> {row.viewCount}
@@ -437,7 +437,7 @@ export function QuotationClient({ initialData }: Props) {
                     <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setDetailId(null)} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(580px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                            <h3 className="text-lg font-semibold font-brand" style={{ color: '#E8F1F2' }}>
                                 {detailLoading ? 'Chi Tiết Báo Giá' : `QT: ${detail?.quotationNo}`}
                             </h3>
                             <button onClick={() => setDetailId(null)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
@@ -456,14 +456,14 @@ export function QuotationClient({ initialData }: Props) {
                                     ].map(k => (
                                         <div key={k.label} className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                             <p className="text-xs" style={{ color: '#4A6A7A' }}>{k.label}</p>
-                                            <p className="text-sm font-bold mt-1" style={{ color: k.color, fontFamily: '"DM Mono"' }}>{k.value}</p>
+                                            <p className="text-sm font-bold mt-1" style={{ color: k.color }}>{k.value}</p>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                         <p className="text-xs" style={{ color: '#4A6A7A' }}>Hạn Báo Giá</p>
-                                        <p className="text-sm font-bold mt-1" style={{ color: new Date(detail.validUntil) < new Date() ? '#EF4444' : '#D4A853', fontFamily: '"DM Mono"' }}>
+                                        <p className="text-sm font-bold mt-1 font-mono" style={{ color: new Date(detail.validUntil) < new Date() ? '#EF4444' : '#D4A853' }}>
                                             {formatDate(detail.validUntil)}
                                         </p>
                                     </div>
@@ -497,12 +497,12 @@ export function QuotationClient({ initialData }: Props) {
                                                     const total = Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100)
                                                     return (
                                                         <tr key={l.id} style={{ borderTop: '1px solid #2A4355' }}>
-                                                            <td className="px-3 py-2" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{l.product.skuCode}</td>
+                                                            <td className="px-3 py-2" style={{ color: '#87CBB9' }}>{l.product.skuCode}</td>
                                                             <td className="px-3 py-2" style={{ color: '#E8F1F2' }}>{l.product.productName}</td>
-                                                            <td className="px-3 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{Number(l.qtyOrdered)}</td>
-                                                            <td className="px-3 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(Number(l.unitPrice))}</td>
+                                                            <td className="px-3 py-2 text-right" style={{ color: '#8AAEBB' }}>{Number(l.qtyOrdered)}</td>
+                                                            <td className="px-3 py-2 text-right" style={{ color: '#8AAEBB' }}>{formatVND(Number(l.unitPrice))}</td>
                                                             <td className="px-3 py-2 text-center" style={{ color: '#D4A853' }}>{Number(l.lineDiscountPct) > 0 ? `${Number(l.lineDiscountPct)}%` : '—'}</td>
-                                                            <td className="px-3 py-2 text-right font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(total)}</td>
+                                                            <td className="px-3 py-2 text-right font-bold" style={{ color: '#87CBB9' }}>{formatVND(total)}</td>
                                                         </tr>
                                                     )
                                                 })}
@@ -581,7 +581,7 @@ export function QuotationClient({ initialData }: Props) {
                     <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setCreateOpen(false)} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(520px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>Tạo Báo Giá Mới</h3>
+                            <h3 className="text-lg font-semibold font-brand" style={{ color: '#E8F1F2' }}>Tạo Báo Giá Mới</h3>
                             <button onClick={() => setCreateOpen(false)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -703,17 +703,17 @@ export function QuotationClient({ initialData }: Props) {
                                                     <div className="space-y-2">
                                                         <div className="grid grid-cols-3 gap-2">
                                                             <div>
-                                                                <label className="text-[9px] uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>SL</label>
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>SL</label>
                                                                 <input type="number" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} placeholder="SL"
                                                                     className="w-full px-2 py-1 text-xs outline-none text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>Giá báo khách</label>
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>Giá báo khách</label>
                                                                 <input type="number" value={line.price} onChange={e => updateLine(i, 'price', Number(e.target.value))} placeholder="Giá"
                                                                     className="w-full px-2 py-1 text-xs outline-none text-right" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853', fontFamily: '"DM Mono"', borderRadius: '4px' }} />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>CK%</label>
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>CK%</label>
                                                                 <input type="number" value={line.discount} onChange={e => updateLine(i, 'discount', Number(e.target.value))} placeholder="CK%"
                                                                     className="w-full px-2 py-1 text-xs outline-none text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
                                                             </div>
@@ -761,7 +761,7 @@ export function QuotationClient({ initialData }: Props) {
                     <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setSendDrawerOpen(null)} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(420px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>Gửi Báo Giá</h3>
+                            <h3 className="text-lg font-semibold font-brand" style={{ color: '#E8F1F2' }}>Gửi Báo Giá</h3>
                             <button onClick={() => setSendDrawerOpen(null)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -864,7 +864,7 @@ export function QuotationClient({ initialData }: Props) {
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                                <h3 className="text-lg font-bold font-brand" style={{ color: '#E8F1F2' }}>
                                     🔍 Chọn sản phẩm nhanh
                                 </h3>
                                 <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>

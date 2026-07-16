@@ -34,7 +34,7 @@ export default function GlobalError({
                         Vui lòng thử lại. Nếu lỗi tiếp tục, liên hệ quản trị viên.
                     </p>
                     {error.digest && (
-                        <p style={{ color: '#4A6A7A', fontSize: '11px', marginBottom: '16px', fontFamily: 'monospace' }}>
+                        <p className="font-mono" style={{ color: '#4A6A7A', fontSize: '11px', marginBottom: '16px' }}>
                             Mã lỗi: {error.digest}
                         </p>
                     )}

@@ -78,8 +78,7 @@ export default async function AIPage() {
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div>
-                <h2 className="text-2xl font-bold"
-                    style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                     AI Features & Phân Tích Thông Minh
                 </h2>
                 <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>

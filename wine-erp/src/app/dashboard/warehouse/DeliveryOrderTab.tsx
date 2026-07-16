@@ -100,11 +100,11 @@ export function DeliveryOrderTab({ warehouses }: {
                                     onClick={() => openDetail(d.id)}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{d.doNo}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#D4A853', fontFamily: '"DM Mono", monospace' }}>{d.soNo}</td>
+                                    <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{d.doNo}</td>
+                                    <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#D4A853' }}>{d.soNo}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{d.warehouseName}</td>
                                     <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{d.lineCount} SP</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>
+                                    <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#E8F1F2' }}>
                                         {d.totalQtyShipped.toLocaleString()}
                                     </td>
                                     <td className="px-3 py-2.5">
@@ -138,7 +138,7 @@ export function DeliveryOrderTab({ warehouses }: {
                     <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                                     Chi Tiết DO {detailData?.doNo ?? '...'}
                                 </h3>
                                 {detailData && (
@@ -170,7 +170,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                         <tbody>
                                             {detailData.lines.map(l => (
                                                 <tr key={l.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
-                                                    <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                                                    <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
                                                         {l.skuCode}
                                                     </td>
                                                     <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.productName}</td>
@@ -291,7 +291,7 @@ function CreateDODrawer({ warehouses, onClose, onCreated }: {
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                 <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>Tạo Phiếu Xuất Kho (DO)</h3>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Phiếu Xuất Kho (DO)</h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                 </div>
                 <div className="p-5 space-y-4">

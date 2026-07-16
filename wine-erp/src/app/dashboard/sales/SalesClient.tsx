@@ -99,7 +99,7 @@ function SOStatCard({ label, value, sub, accent }: { label: string; value: strin
             </div>
             <div>
                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{value}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
                 {sub && <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{sub}</p>}
             </div>
         </div>
@@ -218,7 +218,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                     <div>
-                        <h3 className="font-semibold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2', fontSize: 18 }}>
+                        <h3 className="font-semibold" style={{ color: '#E8F1F2', fontSize: 18 }}>
                             {loading ? 'Chi Tiết Đơn Hàng' : `SO: ${detail?.soNo}`}
                         </h3>
                         {detail && (
@@ -408,8 +408,8 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                         <div className="font-semibold text-[#87CBB9] font-mono">{ml.skuCode}</div>
                                                         <div className="text-[10px] text-[#8AAEBB] mt-0.5 max-w-[200px] truncate" title={ml.productName}>{ml.productName}</div>
                                                     </td>
-                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{ml.qty}</td>
-                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB', fontFamily: '"DM Mono"' }}>{formatVND(ml.unitPrice)}</td>
+                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#E8F1F2' }}>{ml.qty}</td>
+                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#8AAEBB' }}>{formatVND(ml.unitPrice)}</td>
                                                     <td className="px-2.5 py-2">
                                                         {ml.priceSource ? (
                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
@@ -420,14 +420,14 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                             <span className="text-[10px]" style={{ color: '#4A6A7A' }}>Mặc định</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(ml.revenue)}</td>
+                                                    <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#87CBB9' }}>{formatVND(ml.revenue)}</td>
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#D4A853' }}>
                                                             {ml.avgCost > 0 ? formatVND(ml.avgCost) : <span style={{ color: '#2A4355' }}>—</span>}
                                                         </td>
                                                     )}
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#5BA88A' : ml.margin < 0 ? '#EF4444' : '#4A6A7A' }}>
                                                             {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatVND(Math.abs(ml.margin)) : '—'}
                                                         </td>
                                                     )}
@@ -468,7 +468,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                 <p className="text-[11px] text-[#E8F1F2] truncate mt-0.5" title={ml.productName}>{ml.productName}</p>
                                             </div>
                                             {ml.priceSource && (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold"
                                                     style={getPriceBadgeStyle(ml.priceSource)}>
                                                     {getPriceBadgeLabel(ml.priceSource)}
                                                 </span>
@@ -547,7 +547,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="text-xs font-bold font-mono block" style={{ color: '#E8F1F2' }}>{formatVND(Number(inv.amount))}</span>
-                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold inline-block mt-0.5" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{inv.status}</span>
+                                                    <span className="text-xs px-1.5 py-0.5 rounded-full font-bold inline-block mt-0.5" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{inv.status}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -579,7 +579,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{ev.action}</span>
                                                     {ev.userName && <span className="text-[10px]" style={{ color: '#4A6A7A' }}>— {ev.userName}</span>}
-                                                    <span className="text-[9px] ml-auto" style={{ color: '#4A6A7A' }}>{formatDate(ev.createdAt)}</span>
+                                                    <span className="text-xs ml-auto" style={{ color: '#4A6A7A' }}>{formatDate(ev.createdAt)}</span>
                                                 </div>
                                                 {ev.description && <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>{ev.description}</p>}
                                             </div>
@@ -635,7 +635,7 @@ function SalesOrderMobileCard({
             
             {/* Header: SO code & Date */}
             <div className="flex items-center justify-between">
-                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>
+                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
                     {row.soNo}
                 </span>
                 <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
@@ -648,7 +648,7 @@ function SalesOrderMobileCard({
                 <p className="text-sm font-semibold leading-snug" style={{ color: '#E8F1F2' }}>
                     {row.customerName}
                 </p>
-                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>
                     {row.customerCode}
                 </p>
             </div>
@@ -682,7 +682,7 @@ function SalesOrderMobileCard({
             <div className="flex items-center justify-between pt-1.5 border-t border-[#2A4355]/30">
                 {/* Total amount & discount */}
                 <div>
-                    <span className="text-sm font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>
+                    <span className="text-sm font-bold font-mono" style={{ color: '#E8F1F2' }}>
                         {formatVND(row.totalAmount)}
                     </span>
                     {row.orderDiscount > 0 && (
@@ -1041,7 +1041,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Đơn Bán Hàng (SLS)
                     </h2>
                 </div>
@@ -1167,11 +1167,11 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                     <td className="px-4 py-1.5 whitespace-nowrap">
-                                        <span className="text-[11px] font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{row.soNo}</span>
+                                        <span className="text-[11px] font-bold font-mono" style={{ color: '#87CBB9' }}>{row.soNo}</span>
                                     </td>
                                     <td className="px-4 py-1.5">
                                         <p className="text-[13px] font-semibold truncate max-w-[240px]" style={{ color: '#E8F1F2' }} title={row.customerName}>{row.customerName}</p>
-                                        <p className="text-[10px]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.customerCode}</p>
+                                        <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
                                     </td>
                                     <td className="px-4 py-1.5 whitespace-nowrap">
                                         <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
@@ -1190,7 +1190,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                                         )}
                                     </td>
                                     <td className="px-4 py-1.5 whitespace-nowrap">
-                                        <p className="text-[13px] font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</p>
+                                        <p className="text-[13px] font-bold font-mono" style={{ color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</p>
                                         {row.orderDiscount > 0 && <p className="text-[10px]" style={{ color: '#5BA88A' }}>CK {row.orderDiscount}%</p>}
                                     </td>
                                     <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
@@ -1376,7 +1376,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                     <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setAcctModalId(null)} />
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                        <h3 className="text-lg font-bold mb-4" style={{ color: '#E8F1F2' }}>
                             Kế Toán Duyệt Đơn
                         </h3>
                         <div className="mb-4">
@@ -1525,7 +1525,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
             <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-lg shadow-2xl"
                 style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                 <div className="flex items-center justify-between mb-4 border-b border-[#2A4355] pb-3">
-                    <h3 className="text-lg font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                         Duyệt Đơn Hàng & Chỉ Định Vintage
                     </h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>

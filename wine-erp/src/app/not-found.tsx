@@ -19,13 +19,7 @@ export default function NotFound() {
                 borderRadius: '12px',
             }}>
                 <div style={{ fontSize: '64px', marginBottom: '16px', lineHeight: 1 }}>🍷</div>
-                <h1 style={{
-                    color: '#87CBB9',
-                    fontSize: '72px',
-                    fontWeight: 700,
-                    fontFamily: '"DM Mono", monospace',
-                    margin: '0 0 8px',
-                }}>
+                <h1 className="font-mono" style={{ color: '#87CBB9', fontSize: '72px', fontWeight: 700, margin: '0 0 8px' }}>
                     404
                 </h1>
                 <h2 style={{ color: '#E8F1F2', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>

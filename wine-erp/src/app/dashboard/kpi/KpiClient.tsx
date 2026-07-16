@@ -94,8 +94,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         KPI Chỉ Tiêu Kinh Doanh
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -128,7 +127,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                             <CheckCircle2 size={20} style={{ color: '#5BA88A' }} />
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Đạt / Vượt KH</p>
-                                <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#5BA88A' }}>{onTrack}/{summaries.length}</p>
+                                <p className="text-xl font-bold" style={{ color: '#5BA88A' }}>{onTrack}/{summaries.length}</p>
                             </div>
                         </div>
                         <div className="p-4 rounded-md flex items-center gap-3"
@@ -136,7 +135,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                             <AlertCircle size={20} style={{ color: '#D4A853' }} />
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Cần Chú Ý</p>
-                                <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                <p className="text-xl font-bold" style={{ color: '#D4A853' }}>
                                     {summaries.filter(s => s.status === 'AT_RISK').length}
                                 </p>
                             </div>
@@ -146,7 +145,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                             <TrendingDown size={20} style={{ color: behind > 0 ? '#8B1A2E' : '#5BA88A' }} />
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Đang Chậm</p>
-                                <p className="text-xl font-bold" style={{ fontFamily: '"DM Mono"', color: behind > 0 ? '#8B1A2E' : '#5BA88A' }}>{behind}</p>
+                                <p className="text-xl font-bold" style={{ color: behind > 0 ? '#8B1A2E' : '#5BA88A' }}>{behind}</p>
                             </div>
                         </div>
                     </div>
@@ -166,7 +165,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                     </div>
                                     <div className="mb-4">
                                         <div className="flex justify-between text-xs mb-1.5">
-                                            <span className="font-bold" style={{ color: kpi.color, fontFamily: '"DM Mono"' }}>
+                                            <span className="font-bold" style={{ color: kpi.color }}>
                                                 {formatValue(kpi.actual, kpi.unit)}
                                             </span>
                                             <span style={{ color: '#4A6A7A' }}>KH: {formatValue(kpi.target, kpi.unit)}</span>
@@ -317,10 +316,10 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                             <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                 {metricInfo?.label ?? t.metric}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#E8F1F2' }}>
                                                 {t.month ? `T${t.month}/${t.year}` : `Năm ${t.year}`}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
+                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>
                                                 {t.targetValue.toLocaleString('vi-VN')}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{t.unit}</td>

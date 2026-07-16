@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { findHierarchicalTaxRate } from '@/lib/tax-utils'
 
 // ─── Types ────────────────────────────────────────
 export type DeclarationRow = {
@@ -150,7 +151,6 @@ export async function getDeclarationData(input: {
         const lots = await prisma.stockLot.findMany({
             where: {
                 receivedDate: { gte: startDate, lte: endDate },
-                status: { not: 'CONSUMED' },
             },
             include: {
                 product: { select: { productName: true, skuCode: true, abvPercent: true } },
@@ -197,14 +197,19 @@ export async function getImportCustomsData(input: { year: number; month?: number
         ? new Date(year, month, 0, 23, 59, 59)
         : new Date(year, 11, 31, 23, 59, 59)
 
-    // Get POs with lines and tax rates
-    const pos = await prisma.purchaseOrder.findMany({
+    // Get confirmed GRs in the period (actual customs reality)
+    const grs = await prisma.goodsReceipt.findMany({
         where: {
-            status: { in: ['RECEIVED', 'PARTIALLY_RECEIVED'] },
-            createdAt: { gte: startDate, lte: endDate },
+            status: 'CONFIRMED',
+            confirmedAt: { gte: startDate, lte: endDate },
         },
         include: {
-            supplier: { select: { name: true, code: true, country: true } },
+            po: {
+                include: {
+                    supplier: { select: { name: true, code: true, country: true } },
+                    lines: true,
+                },
+            },
             lines: {
                 include: {
                     product: {
@@ -216,7 +221,7 @@ export async function getImportCustomsData(input: { year: number; month?: number
                 },
             },
         },
-        orderBy: { createdAt: 'asc' },
+        orderBy: { confirmedAt: 'asc' },
     })
 
     // Get tax rates
@@ -230,17 +235,22 @@ export async function getImportCustomsData(input: { year: number; month?: number
     let totalSCT = 0
     let totalVAT = 0
 
-    for (const po of pos) {
-        for (const line of po.lines) {
+    for (const gr of grs) {
+        if (!gr.po) continue
+        for (const line of gr.lines) {
             const hsCode = line.product.hsCode ?? ''
-            const country = line.product.country ?? po.supplier.country ?? ''
+            const country = line.product.country ?? gr.po.supplier.country ?? ''
 
-            // Find matching tax rate
-            const rate = taxRates.find(t => t.hsCode === hsCode && t.countryOfOrigin === country)
-                ?? taxRates.find(t => t.hsCode === hsCode)
+            // Find matching tax rate hierarchically
+            const rate = findHierarchicalTaxRate(taxRates, hsCode, country)
 
-            const qty = Number(line.qtyOrdered)
-            const cifValue = qty * Number(line.unitPrice) * Number(po.exchangeRate)
+            const qty = Number(line.qtyReceived)
+            
+            // Find corresponding PO line unitPrice (fallback to 0)
+            const poLine = gr.po.lines?.find((l: any) => l.productId === line.productId)
+            const unitPrice = poLine ? Number(poLine.unitPrice) : 0
+            const exchangeRate = Number(gr.po.exchangeRate ?? 1)
+            const cifValue = qty * unitPrice * exchangeRate
 
             const importTaxRate = rate ? Number(rate.importTaxRate) / 100 : 0
             const sctRate = rate ? Number(rate.sctRate) / 100 : 0.35  // Default 35%
@@ -257,16 +267,16 @@ export async function getImportCustomsData(input: { year: number; month?: number
             totalVAT += vat
 
             rows.push({
-                poNo: po.poNo,
-                supplierName: po.supplier.name,
-                supplierCountry: po.supplier.country,
+                poNo: gr.po.poNo,
+                supplierName: gr.po.supplier.name,
+                supplierCountry: gr.po.supplier.country,
                 skuCode: line.product.skuCode,
                 productName: line.product.productName,
                 hsCode,
                 country,
                 qty,
-                unitPrice: Number(line.unitPrice),
-                exchangeRate: Number(po.exchangeRate),
+                unitPrice,
+                exchangeRate,
                 cifValue: Math.round(cifValue),
                 importTaxRate: importTaxRate * 100,
                 importDuty: Math.round(importDuty),
@@ -282,7 +292,7 @@ export async function getImportCustomsData(input: { year: number; month?: number
     return {
         type: 'IMPORT_CUSTOMS',
         period: { year, month },
-        poCount: pos.length,
+        poCount: grs.length,
         lineCount: rows.length,
         totalImportDuty: Math.round(totalImportDuty),
         totalSCT: Math.round(totalSCT),
@@ -337,21 +347,19 @@ export type SCTLineItem = {
     productName: string
     abvPercent: number
     sctRate: number
-    // Input (đầu vào - hàng nhập)
     inputQty: number
     inputValue: number
     inputSCT: number
-    // Output (đầu ra - hàng bán)
+    deductibleInputSCT?: number
     outputQty: number
     outputRevenue: number
     outputSCT: number
-    // Net (thuế phải nộp)
     netSCT: number
 }
 
 export type SCTDetailedReport = {
     period: { year: number; month?: number }
-    inputSummary: { totalQty: number; totalValue: number; totalSCT: number }
+    inputSummary: { totalQty: number; totalValue: number; totalSCT: number; totalDeductibleSCT?: number }
     outputSummary: { totalQty: number; totalRevenue: number; totalSCT: number }
     netSCTPayable: number
     lines: SCTLineItem[]
@@ -412,6 +420,7 @@ export async function getSCTDetailedReport(input: {
                 abvPercent: abv,
                 sctRate: abv >= 20 ? 65 : 35,
                 inputQty: 0, inputValue: 0, inputSCT: 0,
+                deductibleInputSCT: 0,
                 outputQty: 0, outputRevenue: 0, outputSCT: 0,
                 netSCT: 0,
             })
@@ -435,23 +444,32 @@ export async function getSCTDetailedReport(input: {
         const line = getOrInit(sol.product)
         const qty = Number(sol.qtyOrdered)
         const revenue = qty * Number(sol.unitPrice)
-        const sct = revenue * (line.sctRate / 100)
+        // Correct Vietnamese SCT formula: SCT Base = Selling Price excl. VAT / (1 + sctRate)
+        const sctBase = revenue / (1 + line.sctRate / 100)
+        const sct = sctBase * (line.sctRate / 100)
         line.outputQty += qty
         line.outputRevenue += Math.round(revenue)
         line.outputSCT += Math.round(sct)
     }
 
-    // Calculate net SCT per product
-    const lines = Array.from(productMap.values()).map(l => ({
-        ...l,
-        netSCT: l.outputSCT - l.inputSCT,
-    }))
+    // Calculate net SCT per product with proportional input deductions
+    const lines = Array.from(productMap.values()).map(l => {
+        const deductibleInputSCT = l.inputQty > 0
+            ? Math.round((Math.min(l.outputQty, l.inputQty) / l.inputQty) * l.inputSCT)
+            : 0
+        return {
+            ...l,
+            deductibleInputSCT,
+            netSCT: l.outputSCT - deductibleInputSCT,
+        }
+    })
 
     // Summaries
     const inputSummary = {
         totalQty: lines.reduce((s, l) => s + l.inputQty, 0),
         totalValue: lines.reduce((s, l) => s + l.inputValue, 0),
         totalSCT: lines.reduce((s, l) => s + l.inputSCT, 0),
+        totalDeductibleSCT: lines.reduce((s, l) => s + (l.deductibleInputSCT ?? 0), 0),
     }
     const outputSummary = {
         totalQty: lines.reduce((s, l) => s + l.outputQty, 0),
@@ -463,7 +481,7 @@ export async function getSCTDetailedReport(input: {
         period: { year, month },
         inputSummary,
         outputSummary,
-        netSCTPayable: outputSummary.totalSCT - inputSummary.totalSCT,
+        netSCTPayable: outputSummary.totalSCT - inputSummary.totalDeductibleSCT,
         lines: lines.sort((a, b) => b.netSCT - a.netSCT),
     }
 }

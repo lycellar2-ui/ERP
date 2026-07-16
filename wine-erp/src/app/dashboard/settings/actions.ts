@@ -33,6 +33,7 @@ export type RoleRow = {
 
 // ─── List Users ───────────────────────────────────
 export async function getUsers(): Promise<UserRow[]> {
+    await requirePermission('SYS', 'ADMIN')
     return cached('settings:users', async () => {
         const users = await prisma.user.findMany({
             include: {
@@ -73,13 +74,16 @@ export async function createUser(input: UserInput): Promise<{ success: boolean; 
         const existing = await prisma.user.findUnique({ where: { email: data.email } })
         if (existing) return { success: false, error: 'Email đã tồn tại' }
 
-        const hash = crypto.createHash('sha256').update(data.passwordHash).digest('hex')
+        // Securely hash the password using Node.js native scrypt (OWASP recommended)
+        const salt = crypto.randomBytes(16).toString('hex')
+        const hash = crypto.scryptSync(data.passwordHash, salt, 64).toString('hex')
+        const securePasswordHash = `${salt}:${hash}`
 
         const user = await prisma.user.create({
             data: {
                 email: data.email,
                 name: data.name,
-                passwordHash: hash,
+                passwordHash: securePasswordHash,
                 roles: {
                     create: data.roleIds.map(roleId => ({ roleId })),
                 },
@@ -150,6 +154,7 @@ export async function updateUserRoles(
 
 // ─── List Roles ───────────────────────────────────
 export async function getRoles(): Promise<RoleRow[]> {
+    await requirePermission('SYS', 'ADMIN')
     const roles = await prisma.role.findMany({
         orderBy: { name: 'asc' },
     })
@@ -200,6 +205,7 @@ export async function createRole(input: {
 
 // ─── List Permissions ─────────────────────────────
 export async function getPermissions() {
+    await requirePermission('SYS', 'ADMIN')
     const raw = await prisma.permission.findMany({
         orderBy: [{ module: 'asc' }, { action: 'asc' }],
     })
@@ -232,6 +238,7 @@ export async function updateRolePermissions(
 
 // ─── System Stats ─────────────────────────────────
 export async function getSettingsStats() {
+    await requirePermission('SYS', 'ADMIN')
     return cached('settings:stats', async () => {
         const [users, roles, activeUsers, pendingApprovals] = await Promise.all([
             prisma.user.count(),
@@ -249,6 +256,7 @@ export async function getSettingsStats() {
 
 // ── Get approval templates ────────────────────────
 export async function getApprovalTemplates() {
+    await requirePermission('SYS', 'ADMIN')
     const raw = await prisma.approvalTemplate.findMany({
         include: {
             steps: { orderBy: { stepOrder: 'asc' } },
@@ -380,7 +388,6 @@ export async function submitForApproval(input: {
 export async function processApproval(input: {
     requestId: string
     action: 'APPROVE' | 'REJECT'
-    approverId?: string
     comment?: string
 }): Promise<{ success: boolean; finalStatus?: string; error?: string }> {
     try {
@@ -470,6 +477,12 @@ export async function processApproval(input: {
 
 // ── Get pending approvals for a user ──────────────
 export async function getPendingApprovals(userId: string) {
+    const sessionUser = await requireAuth()
+    const isCEO = sessionUser.roles.includes('CEO')
+    const isAdmin = sessionUser.permissions.includes('SYS:ADMIN')
+    if (sessionUser.id !== userId && !isCEO && !isAdmin) {
+        throw new Error('Unauthorized')
+    }
     // Get user's roles
     const userRoles = await prisma.userRole.findMany({
         where: { userId },
@@ -512,6 +525,7 @@ export async function getPendingApprovals(userId: string) {
 
 // ── Audit trail for a document ────────────────────
 export async function getApprovalHistory(docType: string, docId: string) {
+    await requireAuth()
     const requests = await prisma.approvalRequest.findMany({
         where: { docType: docType as any, docId },
         include: {

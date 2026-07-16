@@ -328,7 +328,7 @@ export default function POSClient() {
                 <div style={{ borderTop: '1px solid #2A4355', padding: '16px 20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                         <span style={{ fontSize: '14px', color: '#8AAEBB' }}>Tổng cộng</span>
-                        <span style={{ fontSize: '20px', fontWeight: 800, color: '#E8F1F2', fontFamily: 'var(--font-mono), monospace' }}>
+                        <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#E8F1F2' }}>
                             {formatVND(cartTotal)}
                         </span>
                     </div>

@@ -66,7 +66,7 @@ export function TastingEventsPanel() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Wine size={18} style={{ color: '#D4A853' }} />
-                    <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2', fontFamily: '"Cormorant Garamond", serif' }}>
+                    <h3 className="text-lg font-semibold" style={{ color: '#E8F1F2' }}>
                         Sự Kiện Thử Rượu
                     </h3>
                     <span className="text-xs px-2 py-0.5 rounded-full font-bold"
@@ -146,7 +146,7 @@ export function TastingEventsPanel() {
                                         { label: 'Chuyển đổi', value: ev.conversionCount, color: '#D4A853' },
                                     ].map(m => (
                                         <div key={m.label} className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                                            <p className="text-sm font-bold" style={{ color: m.color, fontFamily: '"DM Mono"' }}>{m.value}</p>
+                                            <p className="text-sm font-bold" style={{ color: m.color }}>{m.value}</p>
                                             <p className="text-xs" style={{ color: '#4A6A7A' }}>{m.label}</p>
                                         </div>
                                     ))}

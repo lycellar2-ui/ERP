@@ -15,7 +15,7 @@ vi.mock('@/app/dashboard/qr-codes/actions', () => ({
 const mockTx = {
     goodsReceipt: { create: vi.fn(), update: vi.fn() },
     goodsReceiptLine: { create: vi.fn() },
-    stockLot: { create: vi.fn(), count: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn() },
+    stockLot: { create: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn() },
     purchaseOrderLine: { findMany: vi.fn() },
     deliveryOrder: { create: vi.fn(), update: vi.fn(), count: vi.fn() },
     deliveryOrderLine: { create: vi.fn(), findMany: vi.fn(), update: vi.fn() },
@@ -56,6 +56,7 @@ beforeEach(() => {
     })
     mockPrisma.goodsReceipt.findFirst.mockResolvedValue(null)
     mockPrisma.deliveryOrder.findFirst.mockResolvedValue(null)
+    mockTx.stockLot.updateMany.mockResolvedValue({ count: 1 })
 })
 
 // ═══════════════════════════════════════════════════
@@ -110,9 +111,9 @@ describe('WMS-01: createGoodsReceipt', () => {
             data: expect.objectContaining({
                 productId: 'p-1',
                 qtyReceived: 100,
-                qtyAvailable: 100,
+                qtyAvailable: 0,
                 unitLandedCost: 250000,
-                status: 'AVAILABLE',
+                status: 'PENDING',
             }),
         })
     })
@@ -234,8 +235,11 @@ describe('createDeliveryOrder', () => {
         })
 
         expect(result.success).toBe(true)
-        expect(mockTx.stockLot.update).toHaveBeenCalledWith({
-            where: { id: 'lot-1' },
+        expect(mockTx.stockLot.updateMany).toHaveBeenCalledWith({
+            where: {
+                id: 'lot-1',
+                qtyAvailable: { gte: 12 },
+            },
             data: { qtyAvailable: { decrement: 12 } },
         })
     })
@@ -247,24 +251,24 @@ describe('createDeliveryOrder', () => {
 
 describe('transferStock', () => {
     it('should reject if lot not found', async () => {
-        mockPrisma.stockLot.findUnique.mockResolvedValue(null)
+        mockTx.stockLot.findUnique.mockResolvedValue(null)
         const result = await transferStock({ lotId: 'lot-ghost', fromLocationId: 'L1', toLocationId: 'L2', qty: 5 })
         expect(result.success).toBe(false)
         expect(result.error).toContain('Lot không tồn tại')
     })
 
     it('should reject if insufficient stock', async () => {
-        mockPrisma.stockLot.findUnique.mockResolvedValue({ id: 'lot-1', qtyAvailable: 3, productId: 'p-1' })
+        mockTx.stockLot.findUnique.mockResolvedValue({ id: 'lot-1', qtyAvailable: 3, productId: 'p-1' })
         const result = await transferStock({ lotId: 'lot-1', fromLocationId: 'L1', toLocationId: 'L2', qty: 10 })
         expect(result.success).toBe(false)
         expect(result.error).toContain('Không đủ tồn')
     })
 
     it('should decrement source and create new lot at destination', async () => {
-        mockPrisma.stockLot.findUnique.mockResolvedValue({
+        mockTx.stockLot.findUnique.mockResolvedValue({
             id: 'lot-1', qtyAvailable: 50, productId: 'p-1', shipmentId: 'ship-1', unitLandedCost: 300000,
         })
-        mockTx.stockLot.update = vi.fn()
+        mockTx.stockLot.updateMany.mockResolvedValue({ count: 1 })
         mockTx.stockLot.findFirst.mockResolvedValue(null) // No existing lot at destination
         mockTx.stockLot.count.mockResolvedValue(100)
         mockTx.stockLot.create = vi.fn()
@@ -272,8 +276,11 @@ describe('transferStock', () => {
         const result = await transferStock({ lotId: 'lot-1', fromLocationId: 'L1', toLocationId: 'L2', qty: 20 })
 
         expect(result.success).toBe(true)
-        expect(mockTx.stockLot.update).toHaveBeenCalledWith({
-            where: { id: 'lot-1' },
+        expect(mockTx.stockLot.updateMany).toHaveBeenCalledWith({
+            where: {
+                id: 'lot-1',
+                qtyAvailable: { gte: 20 },
+            },
             data: { qtyAvailable: { decrement: 20 } },
         })
         expect(mockTx.stockLot.create).toHaveBeenCalledWith({

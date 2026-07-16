@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 import { requireAuth } from '@/lib/session'
+import { findHierarchicalTaxRate } from '@/lib/tax-utils'
 
 // ─── Types ────────────────────────────────────────
 export type PORow = {
@@ -207,31 +208,43 @@ export async function createPurchaseOrder(input: CreatePOInput) {
     }
     const legalEntityId = defaultEntity.id
 
-    // Generate PO number: PO-YYMM-NNNN
+    // Generate PO number: PO-YYMM-NNNN (concurrency-safe transaction)
     const now = new Date()
     const yy = String(now.getFullYear()).slice(-2)
     const mm = String(now.getMonth() + 1).padStart(2, '0')
-    const count = await prisma.purchaseOrder.count()
-    const poNo = `PO-${yy}${mm}-${String(count + 1).padStart(4, '0')}`
+    const prefix = `PO-${yy}${mm}-`
 
-    const po = await prisma.purchaseOrder.create({
-        data: {
-            poNo,
-            supplierId: data.supplierId,
-            currency: data.currency,
-            exchangeRate: data.exchangeRate,
-            status: 'DRAFT',
-            createdBy: userId,
-            legalEntityId,
-            lines: {
-                create: data.lines.map(l => ({
-                    productId: l.productId,
-                    qtyOrdered: l.qtyOrdered,
-                    unitPrice: l.unitPrice,
-                    uom: l.uom,
-                })),
+    const po = await prisma.$transaction(async (tx) => {
+        // Lock matching POs for this month to serialize concurrent creations
+        await tx.$executeRaw`SELECT id FROM purchase_orders WHERE "poNo" LIKE ${prefix + '%'} FOR UPDATE`
+
+        const lastPO = await tx.purchaseOrder.findFirst({
+            where: { poNo: { startsWith: prefix } },
+            orderBy: { poNo: 'desc' },
+            select: { poNo: true },
+        })
+        const nextSeq = lastPO ? parseInt(lastPO.poNo.slice(-4)) + 1 : 1
+        const poNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
+
+        return await tx.purchaseOrder.create({
+            data: {
+                poNo,
+                supplierId: data.supplierId,
+                currency: data.currency,
+                exchangeRate: data.exchangeRate,
+                status: 'DRAFT',
+                createdBy: userId,
+                legalEntityId,
+                lines: {
+                    create: data.lines.map(l => ({
+                        productId: l.productId,
+                        qtyOrdered: l.qtyOrdered,
+                        unitPrice: l.unitPrice,
+                        uom: l.uom,
+                    })),
+                },
             },
-        },
+        })
     })
 
     revalidateCache('procurement')
@@ -453,8 +466,7 @@ export async function calculatePOTax(poId: string) {
         const hsCode = line.product.hsCode ?? ''
         const country = line.product.country ?? po.supplier.country ?? ''
 
-        const rate = taxRates.find(t => t.hsCode === hsCode && t.countryOfOrigin === country)
-            ?? taxRates.find(t => t.hsCode === hsCode)
+        const rate = findHierarchicalTaxRate(taxRates, hsCode, country)
 
         const qty = Number(line.qtyOrdered)
         const cifValue = qty * Number(line.unitPrice) * Number(po.exchangeRate)
@@ -482,7 +494,7 @@ export async function calculatePOTax(poId: string) {
             vatRate: vatRate * 100,
             vat: Math.round(vat),
             totalTax: Math.round(importDuty + sct + vat),
-            landedPerUnit: Math.round((cifValue + importDuty + sct + vat) / qty),
+            landedPerUnit: Math.round((cifValue + importDuty + sct) / qty),
         }
     })
 

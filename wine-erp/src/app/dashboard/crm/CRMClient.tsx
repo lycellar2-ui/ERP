@@ -80,20 +80,20 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
                         )}
                     </div>
                     <p className="font-semibold text-sm truncate" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                    <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                    <p className="text-xs font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
                 </div>
                 <ChevronRight size={14} style={{ color: '#87CBB9', flexShrink: 0, marginTop: 4 }} />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
                 <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                    <p className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                    <p className="text-xs font-bold" style={{ color: '#87CBB9' }}>
                         {row.totalRevenue >= 1e9 ? `${(row.totalRevenue / 1e9).toFixed(2)} tỷ` : row.totalRevenue >= 1e6 ? `${(row.totalRevenue / 1e6).toFixed(0)} tr` : formatVND(row.totalRevenue)}
                     </p>
                     <p className="text-xs" style={{ color: '#4A6A7A' }}>Doanh số</p>
                 </div>
                 <div className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                    <p className="text-xs font-bold" style={{ color: '#5BA88A', fontFamily: '"DM Mono"' }}>{row.totalOrders}</p>
+                    <p className="text-xs font-bold" style={{ color: '#5BA88A' }}>{row.totalOrders}</p>
                     <p className="text-xs" style={{ color: '#4A6A7A' }}>Đơn hàng</p>
                 </div>
             </div>
@@ -252,8 +252,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold"
-                        style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
+                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         CRM – Quan Hệ Khách Hàng
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
@@ -300,7 +299,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                             </div>
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                                <p className="text-xl font-bold mt-0.5" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{s.value}</p>
+                                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
                             </div>
                         </div>
                     )
@@ -405,13 +404,13 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
-                                            <p className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                            <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>
                                                 {totalRevAll >= 1e9 ? `${(totalRevAll / 1e9).toFixed(1)}T` : formatVND(totalRevAll)}
                                             </p>
                                             <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Tổng Doanh Số</p>
                                         </div>
                                         <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
-                                            <p className="text-lg font-bold" style={{ fontFamily: '"DM Mono"', color: '#D4A853' }}>
+                                            <p className="text-lg font-bold" style={{ color: '#D4A853' }}>
                                                 {rows.reduce((s, r) => s + r.totalOrders, 0)}
                                             </p>
                                             <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>Tổng Đơn Hàng</p>
@@ -428,8 +427,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 return (
                                                     <div key={tier} className="flex-1 text-center p-2 rounded" style={{ background: `${cfg.color}08` }}>
                                                         <p className="text-xs">{cfg.icon}</p>
-                                                        <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono"', color: cfg.color }}>{count}</p>
-                                                        <p className="text-[9px]" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
+                                                        <p className="text-sm font-bold" style={{ color: cfg.color }}>{count}</p>
+                                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
                                                     </div>
                                                 )
                                             })}
@@ -454,7 +453,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{cfg.icon} {cfg.label} · {c.totalOrders} đơn</p>
                                                             </div>
                                                         </div>
-                                                        <span className="text-xs font-bold" style={{ fontFamily: '"DM Mono"', color: '#87CBB9' }}>
+                                                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>
                                                             {c.totalRevenue >= 1e9 ? `${(c.totalRevenue / 1e9).toFixed(2)} tỷ` : formatVND(c.totalRevenue)}
                                                         </span>
                                                     </button>
@@ -474,10 +473,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #87CBB9' }}>
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
-                                            <h3 className="text-xl font-bold" style={{ fontFamily: '"Cormorant Garamond", serif', color: '#E8F1F2' }}>
+                                            <h3 className="text-xl font-bold" style={{ color: '#E8F1F2' }}>
                                                 {selectedCustomer.name}
                                             </h3>
-                                            <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono"' }}>
+                                            <p className="text-xs" style={{ color: '#4A6A7A' }}>
                                                 {selectedCustomer.code} · {selectedCustomer.paymentTerm}
                                             </p>
                                         </div>
@@ -495,7 +494,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                             { label: 'Credit Limit', value: formatVND(selectedCustomer.creditLimit), color: '#D4A853' },
                                         ].map(kpi => (
                                             <div key={kpi.label} className="text-center p-3 rounded-md" style={{ background: '#142433' }}>
-                                                <p className="text-lg font-bold" style={{ color: kpi.color, fontFamily: '"DM Mono"' }}>{kpi.value}</p>
+                                                <p className="text-lg font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
                                                 <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{kpi.label}</p>
                                             </div>
                                         ))}
@@ -527,7 +526,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                             <div className="p-3 rounded-md flex items-center justify-between"
                                                 style={{ background: 'rgba(212,168,83,0.08)', border: '1px solid rgba(212,168,83,0.2)' }}>
                                                 <span className="text-xs" style={{ color: '#D4A853' }}>Công nợ chưa thu</span>
-                                                <span className="text-sm font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(profile.arBalance)}</span>
+                                                <span className="text-sm font-bold" style={{ color: '#D4A853' }}>{formatVND(profile.arBalance)}</span>
                                             </div>
                                         )}
                                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
@@ -538,9 +537,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 <div className="space-y-1.5">
                                                     {profile.recentOrders.slice(0, 5).map(o => (
                                                         <div key={o.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
-                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{o.soNo}</span>
+                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{o.soNo}</span>
                                                             <span className="text-xs" style={{ color: '#8AAEBB' }}>{formatDate(o.createdAt)}</span>
-                                                            <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{formatVND(Number(o.totalAmount))}</span>
+                                                            <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{formatVND(Number(o.totalAmount))}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -566,7 +565,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                         { label: 'TB/Đơn', value: formatVND(txHistory.avgOrderValue), color: '#D4A853' },
                                                     ].map(s => (
                                                         <div key={s.label} className="text-center p-2 rounded" style={{ background: '#142433' }}>
-                                                            <p className="text-sm font-bold" style={{ color: s.color, fontFamily: '"DM Mono"' }}>{s.value}</p>
+                                                            <p className="text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
                                                             <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{s.label}</p>
                                                         </div>
                                                     ))}
@@ -584,12 +583,12 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                     <div className="flex items-center gap-2">
                                                                         <span className="text-xs font-bold" style={{ color: i < 3 ? '#D4A853' : '#4A6A7A' }}>#{i + 1}</span>
                                                                         <div>
-                                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{sku.skuCode}</span>
+                                                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{sku.skuCode}</span>
                                                                             <span className="text-xs ml-1" style={{ color: '#8AAEBB' }}>{sku.productName}</span>
                                                                         </div>
                                                                     </div>
                                                                     <div className="text-right">
-                                                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{sku.totalQty} chai</span>
+                                                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{sku.totalQty} chai</span>
                                                                         <span className="text-xs ml-2" style={{ color: '#5BA88A' }}>{sku.totalValue >= 1e9 ? `${(sku.totalValue / 1e9).toFixed(1)} tỷ` : formatVND(sku.totalValue)}</span>
                                                                     </div>
                                                                 </div>
@@ -606,13 +605,13 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div className="space-y-1 max-h-[250px] overflow-y-auto">
                                                         {txHistory.orders.map(o => (
                                                             <div key={o.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
-                                                                <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{o.soNo}</span>
+                                                                <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{o.soNo}</span>
                                                                 <span className="text-xs" style={{ color: '#8AAEBB' }}>{formatDate(o.date)}</span>
                                                                 <span className="text-xs px-1.5 py-0.5 rounded" style={{
                                                                     background: o.status === 'PAID' ? 'rgba(91,168,138,0.15)' : 'rgba(138,174,187,0.15)',
                                                                     color: o.status === 'PAID' ? '#5BA88A' : '#8AAEBB',
                                                                 }}>{o.status}</span>
-                                                                <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{formatVND(o.amount)}</span>
+                                                                <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{formatVND(o.amount)}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -627,7 +626,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                         <div className="space-y-1 max-h-[200px] overflow-y-auto">
                                                             {txHistory.invoices.map(inv => (
                                                                 <div key={inv.invoiceNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#142433' }}>
-                                                                    <span className="text-xs font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{inv.invoiceNo}</span>
+                                                                    <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{inv.invoiceNo}</span>
                                                                     <span className="text-xs" style={{ color: '#8AAEBB' }}>{formatDate(inv.date)}</span>
                                                                     <span className="text-xs px-1.5 py-0.5 rounded" style={{
                                                                         background: inv.status === 'PAID' ? 'rgba(91,168,138,0.15)' :
@@ -636,7 +635,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                             inv.status === 'OVERDUE' ? '#8B1A2E' : '#D4A853',
                                                                     }}>{inv.status}</span>
                                                                     <div className="text-right">
-                                                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>{formatVND(inv.amount)}</span>
+                                                                        <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{formatVND(inv.amount)}</span>
                                                                         <span className="text-[10px] block" style={{ color: '#5BA88A' }}>Đã thu: {formatVND(inv.paidAmount)}</span>
                                                                     </div>
                                                                 </div>
