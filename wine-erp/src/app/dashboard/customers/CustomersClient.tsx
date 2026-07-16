@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
@@ -805,13 +805,26 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const channels = queryData?.channels ?? []
     const salesReps = queryData?.salesReps ?? []
 
+    const debounceRef = useRef<NodeJS.Timeout | null>(null)
+
     useEffect(() => {
         getLegalEntities().then(setLegalEntities).catch(() => { })
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current)
+        }
     }, [])
 
     const applyFilter = useCallback((newFilters: Partial<CustomerFilters>) => {
         setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page ?? 1 }))
     }, [])
+
+    const handleSearchChange = (value: string) => {
+        setSearch(value)
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        debounceRef.current = setTimeout(() => {
+            applyFilter({ search: value || undefined })
+        }, 300)
+    }
 
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Xóa khách hàng "${name}"?\n\nKH sẽ bị đánh dấu Tạm dừng (soft delete). Nếu KH đang có đơn hàng chưa hoàn tất sẽ không xóa được.`)) return
@@ -961,7 +974,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input type="text" placeholder="Tìm theo tên, mã, MST, email, SĐT..."
                         value={search}
-                        onChange={e => { setSearch(e.target.value); applyFilter({ search: e.target.value || undefined }) }}
+                        onChange={e => handleSearchChange(e.target.value)}
                         className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm outline-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
@@ -1002,6 +1015,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     </select>
                     {(search || typeFilter || statusFilter || channelFilter) && (
                         <button onClick={() => {
+                            if (debounceRef.current) clearTimeout(debounceRef.current)
                             setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter('')
                             applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined })
                         }} className="px-3 py-2.5 rounded-lg text-sm border"
