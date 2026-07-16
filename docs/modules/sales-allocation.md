@@ -261,6 +261,25 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Supplier & Country Grouping** | `actions.ts`, `QuotationPublicView.tsx`, `route.ts` (PDF) | Gộp nhóm tự động theo Nhà Cung Cấp + Quốc gia trước khi hiển thị chi tiết sản phẩm trên Link HTML, PDF A4, và Excel |
 | **Show/Hide Quantity Option** | `QuotationClient.tsx`, `QuotationPublicView.tsx`, `route.ts` (PDF), `actions.ts` (Excel) | Báo giá mặc định ẩn số lượng (ẩn cột SL), có tùy chọn hộp kiểm hiển thị số lượng theo nhu cầu |
 
+#### 🆕 Session 10 — Multi-Entity Selection & Order Approvals (15/07/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Multi-Legal Entity Setup** | `CreateSODrawer.tsx` | Chọn pháp nhân (Thắng Ân / Ly's Cellar) và gán tài khoản ngân hàng tương ứng khi tạo đơn |
+| **Warehouse-to-Entity Filter** | `SalesClient.tsx` | Phê duyệt đơn hàng chỉ hiển thị kho xuất trực thuộc pháp nhân của đơn hàng đó |
+| **Asynchronous detail fetch** | `SalesClient.tsx` | Mở xem chi tiết đơn hàng tức thì nhờ tải song song Margin và Lịch sử sau |
+| **Print Invoice dynamic info** | `print/page.tsx` | Tự động điền tài khoản ngân hàng và thông tin pháp nhân động từ DB khi in hóa đơn |
+
+#### 🆕 Session 11 — High Performance & Caching (16/07/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **TanStack Caching & Hydration** | `SalesClient.tsx`, `QuotationClient.tsx` | Chuyển đổi list sang React Query kết hợp hydrate dữ liệu từ Server Component |
+| **LocalStorage Cache Persist** | `query-client.tsx` | Tự động đồng bộ cache xuống localStorage (24h) để render ngay lập tức lúc mở app |
+| **Sidebar Hover Prefetching** | `Sidebar.tsx` | Di chuột qua menu tự động prefetch dữ liệu ngầm trước khi click |
+| **Optimistic UI Status Changes** | `SalesClient.tsx` | Xác nhận/Hủy đơn cập nhật giao diện ngay lập tức mà không chặn người dùng |
+| **Supabase Realtime Sync** | `SalesClient.tsx` | Tự động lắng nghe thay đổi DB của bảng `sales_orders` để invalidate cache ngầm |
+
 ### ❌ Chưa triển khai
 
 | Tính năng | Ưu tiên |
@@ -270,5 +289,5 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Shipment → PO status hook (IN_TRANSIT) | 🟡 P2 |
 | RBAC middleware cho server actions | 🟡 P2 |
 
-*Last updated: 2026-05-30 14:00 | Wine ERP v7.1*
+*Last updated: 2026-07-16 15:00 | Wine ERP v7.5*
 

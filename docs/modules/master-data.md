@@ -44,6 +44,10 @@ Mỗi sản phẩm rượu vang có các thuộc tính đặc thù ngành mà ER
 - **Chi tiết Tồn kho vật lý**: Hiển thị danh sách các lô hàng đang tồn tại trong hệ thống kho: tên kho, mã vị trí cụ thể (Zone/Rack/Bin), số lô, trạng thái (Sẵn sàng/Đặt trước/Cách ly) và số lượng khả dụng.
 - **Giá bán theo kênh**: Hiển thị Giá bán lẻ niêm yết và Giá bán buôn (Wholesale) lấy từ bảng giá margin.
 - **Phân quyền chỉnh sửa**: Đối với người dùng có quyền ghi (`MDM:WRITE`), Drawer xem chi tiết sẽ hiển thị thêm nút "Chỉnh sửa" để mở form cập nhật sản phẩm.
+- **Tối ưu hiệu năng danh sách**:
+  - **Tối giản payload**: Câu lệnh truy vấn danh sách (`getProducts`) sử dụng `select` để loại bỏ các trường mô tả chi tiết có dung lượng lớn (grapes, aromas, certification, food pairings...). Các dữ liệu này chỉ được tải động qua `getProductViewDetails` khi mở Drawer.
+  - **TanStack Caching & Persistence**: Danh mục sản phẩm được đồng bộ vào cache localStorage, giúp tải lại tức thì (0ms) sau khi mở app ngày mới.
+  - **Hover Prefetching**: Khi di chuột qua liên kết "Sản Phẩm" ở sidebar, dữ liệu trang 1 tự động tải ngầm trước vào cache.
 
 ### B. Danh Mục Phụ (Sub-catalogs) — Quản Lý Tập Trung
 Các giá trị này được Admin quản lý tập trung, không hardcode:
