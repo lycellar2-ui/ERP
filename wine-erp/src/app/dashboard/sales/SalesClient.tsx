@@ -143,11 +143,11 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
 }
 
 // ── Sortable Column Header ───────────────────────
-function SortHeader({ label, field, current, dir, onSort }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void }) {
+function SortHeader({ label, field, current, dir, onSort, style }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void; style?: React.CSSProperties }) {
     const isActive = current === field
     return (
-        <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
-            style={{ color: isActive ? '#87CBB9' : '#8AAEBB' }}
+        <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
+            style={{ color: isActive ? '#87CBB9' : '#8AAEBB', ...style }}
             onClick={() => onSort(field)}>
             <span className="inline-flex items-center gap-1">
                 {label}
@@ -1140,15 +1140,15 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 900 }}>
                         <thead>
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} />
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Khách Hàng</th>
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Kênh</th>
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Pháp Nhân</th>
-                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} />
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Sales Rep</th>
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Trạng Thái</th>
-                                <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} />
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Hành Động</th>
+                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '25%' }}>Khách Hàng</th>
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '8%' }}>Kênh</th>
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '8%' }}>Pháp Nhân</th>
+                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '13%' }} />
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '12%' }}>Sales Rep</th>
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Trạng Thái</th>
+                                <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '9%' }} />
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '4%' }}>Hành Động</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1166,80 +1166,80 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                                     style={{ borderBottom: '1px solid rgba(42,67,85,0.5)', background: 'transparent' }}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                                    <td className="px-4 py-3">
-                                        <span className="text-xs font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{row.soNo}</span>
+                                    <td className="px-4 py-1.5 whitespace-nowrap">
+                                        <span className="text-[11px] font-bold" style={{ color: '#87CBB9', fontFamily: '"DM Mono", monospace' }}>{row.soNo}</span>
                                     </td>
-                                    <td className="px-4 py-3">
-                                        <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{row.customerName}</p>
-                                        <p className="text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.customerCode}</p>
+                                    <td className="px-4 py-1.5">
+                                        <p className="text-[13px] font-semibold truncate max-w-[240px]" style={{ color: '#E8F1F2' }} title={row.customerName}>{row.customerName}</p>
+                                        <p className="text-[10px]" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.customerCode}</p>
                                     </td>
-                                    <td className="px-4 py-3">
-                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                                    <td className="px-4 py-1.5 whitespace-nowrap">
+                                        <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
                                             style={{ background: 'rgba(135,203,185,0.1)', color: '#8AAEBB' }}>
                                             {CHANNEL_LABEL[row.channel] ?? row.channel}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-1.5 whitespace-nowrap">
                                         {row.legalEntityCode ? (
-                                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                            <span className="text-[11px] px-1.5 py-0.5 rounded-full font-semibold"
                                                 style={{ background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(135,203,185,0.12)', color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' }}>
                                                 {row.legalEntityCode}
                                             </span>
                                         ) : (
-                                            <span className="text-xs" style={{ color: '#2A4355' }}>—</span>
+                                            <span className="text-[11px]" style={{ color: '#2A4355' }}>—</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3">
-                                        <p className="text-sm font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</p>
-                                        {row.orderDiscount > 0 && <p className="text-xs" style={{ color: '#5BA88A' }}>CK {row.orderDiscount}%</p>}
+                                    <td className="px-4 py-1.5 whitespace-nowrap">
+                                        <p className="text-[13px] font-bold" style={{ fontFamily: '"DM Mono", monospace', color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</p>
+                                        {row.orderDiscount > 0 && <p className="text-[10px]" style={{ color: '#5BA88A' }}>CK {row.orderDiscount}%</p>}
                                     </td>
-                                    <td className="px-4 py-3 text-sm" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
-                                    <td className="px-4 py-3"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
-                                    <td className="px-4 py-3 text-xs" style={{ color: '#4A6A7A' }}>{formatDate(row.createdAt)}</td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-1 flex-wrap">
-                                            <button onClick={() => setDetailId(row.id)} className="p-1.5 rounded" title="Chi tiết"
+                                    <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
+                                    <td className="px-4 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
+                                    <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>{formatDate(row.createdAt)}</td>
+                                    <td className="px-4 py-1.5">
+                                        <div className="flex items-center gap-1 whitespace-nowrap">
+                                            <button onClick={() => setDetailId(row.id)} className="p-1 rounded" title="Chi tiết"
                                                 style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.2)')}
                                                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.1)')}>
-                                                <Eye size={13} />
+                                                <Eye size={12} />
                                             </button>
-                                            <button onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')} className="p-1.5 rounded" title="In đơn hàng"
+                                            <button onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')} className="p-1 rounded" title="In đơn hàng"
                                                 style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.2)')}
                                                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.1)')}>
-                                                <Printer size={13} />
+                                                <Printer size={12} />
                                             </button>
                                             {row.status === 'PENDING_APPROVAL' && (
                                                 ((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))
                                             ) && (
                                                 <>
                                                     <button onClick={() => handleApprove(row.id)} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)', borderRadius: '5px' }}>
-                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><CheckCircle2 size={12} /> Duyệt</>}
+                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
+                                                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)', borderRadius: '4px' }}>
+                                                        {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> Duyệt</>}
                                                     </button>
                                                     <button onClick={() => handleReject(row.id)} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                        style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)', borderRadius: '5px' }}>
-                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><XCircle size={12} /> Từ Chối</>}
+                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
+                                                        style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)', borderRadius: '4px' }}>
+                                                        {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> Từ Chối</>}
                                                     </button>
                                                 </>
                                             )}
                                             {row.status === 'DRAFT' && (
                                                 <>
                                                     <button onClick={() => handleConfirm(row.id)} disabled={actionLoading === row.id}
-                                                        className="px-2 py-1 text-xs font-semibold"
+                                                        className="px-1.5 py-1 text-[10px] font-bold"
                                                         style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', borderRadius: '4px' }}>
-                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : 'Xác Nhận'}
+                                                        {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : 'Xác Nhận'}
                                                     </button>
                                                     <button onClick={() => setEditId(row.id)}
-                                                        className="flex items-center gap-1 px-2 py-1 text-xs font-semibold"
+                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
                                                         style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', borderRadius: '4px' }}>
-                                                        <Pencil size={11} /> Sửa
+                                                        <Pencil size={10} /> Sửa
                                                     </button>
                                                     <button onClick={() => handleDelete(row.id)} disabled={actionLoading === row.id}
-                                                        className="px-2 py-1 text-xs font-semibold border"
+                                                        className="px-1.5 py-1 text-[10px] font-bold border"
                                                         style={{ background: 'rgba(220,38,38,0.1)', color: '#EF4444', borderColor: 'rgba(220,38,38,0.25)', borderRadius: '4px' }}>
                                                         Xóa
                                                     </button>
@@ -1248,9 +1248,9 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                                             {row.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
                                                 <>
                                                     <button onClick={() => { setAcctModalId(row.id); setAcctEntityId((row as any).legalEntityId ?? '') }}
-                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                        style={{ background: 'rgba(8,145,178,0.15)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.35)', borderRadius: '5px' }}>
-                                                        <CheckCircle2 size={12} /> KT Duyệt
+                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
+                                                        style={{ background: 'rgba(8,145,178,0.15)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.35)', borderRadius: '4px' }}>
+                                                        <CheckCircle2 size={10} /> KT Duyệt
                                                     </button>
                                                     <button onClick={async () => {
                                                         if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
@@ -1259,15 +1259,15 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                                                             loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
                                                         })
                                                     }} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold"
-                                                        style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.3)', borderRadius: '5px' }}>
-                                                        <XCircle size={12} /> KT Trả Về
+                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
+                                                        style={{ background: 'rgba(139,26,46,0.12)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.3)', borderRadius: '4px' }}>
+                                                        <XCircle size={10} /> KT Trả Về
                                                     </button>
                                                 </>
                                             )}
                                             {['PENDING_APPROVAL', 'CONFIRMED'].includes(row.status) && (
                                                 <button onClick={() => handleCancel(row.id)} disabled={actionLoading === row.id}
-                                                    className="px-2 py-1 text-xs font-semibold"
+                                                    className="px-1.5 py-1 text-[10px] font-bold"
                                                     style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)', borderRadius: '4px' }}>
                                                     Huỷ
                                                 </button>

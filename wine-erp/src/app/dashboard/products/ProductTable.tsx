@@ -62,7 +62,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
             onMouseLeave={e => (e.currentTarget.style.background = '')}>
 
             {/* Product */}
-            <td className="px-4 py-3">
+            <td className="px-4 py-1.5 whitespace-nowrap">
                 <div className="flex items-center gap-3">
                     <div className="relative group/img w-20 h-11 rounded-lg flex-shrink-0 flex items-center justify-center cursor-zoom-in"
                         style={{ background: '#142433', border: '1px solid #2A4355' }}
@@ -115,10 +115,10 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                         )}
                     </div>
                     <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }}>
+                        <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.productName}>
                             {row.productName}
                         </p>
-                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
+                        <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>
                             {row.skuCode}
                         </p>
                     </div>
@@ -128,53 +128,53 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
 
 
             {/* Type */}
-            <td className="px-3 py-3"><WineTypeBadge type={row.wineType} /></td>
+            <td className="px-3 py-1.5 whitespace-nowrap"><WineTypeBadge type={row.wineType} /></td>
 
             {/* Producer + Region */}
-            <td className="px-3 py-3">
-                <p className="text-sm truncate max-w-[200px]" style={{ color: '#8AAEBB' }}>{row.producerName}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+            <td className="px-3 py-1.5">
+                <p className="text-[13px] truncate max-w-[200px]" style={{ color: '#8AAEBB' }} title={row.producerName}>{row.producerName}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>
                     {flag} {row.appellationName ?? row.country}
                 </p>
             </td>
 
             {/* ABV */}
-            <td className="px-3 py-3 text-center">
+            <td className="px-3 py-1.5 text-center whitespace-nowrap">
                 <span className="text-xs" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>
                     {row.abvPercent != null ? `${row.abvPercent}°` : '—'}
                 </span>
             </td>
 
             {/* Stock */}
-            <td className="px-3 py-3 text-center">
+            <td className="px-3 py-1.5 text-center whitespace-nowrap">
                 <span className="text-sm font-bold" style={{ color: stockColor, fontFamily: '"DM Mono", monospace' }}>
                     {row.totalStock}
                 </span>
-                <span className="text-xs ml-1" style={{ color: '#4A6A7A' }}>chai</span>
+                <span className="text-[10px] ml-1" style={{ color: '#4A6A7A' }}>chai</span>
             </td>
 
             {/* Status */}
-            <td className="px-3 py-3"><StatusBadge status={row.status} /></td>
+            <td className="px-3 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} /></td>
 
             {/* Actions */}
-            <td className="px-3 py-3">
+            <td className="px-3 py-1.5">
                 {canEdit && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all whitespace-nowrap">
                         <button onClick={e => { e.stopPropagation(); onEdit() }}
-                            className="p-1.5 rounded-lg transition-all"
+                            className="p-1 rounded transition-all"
                             style={{ color: '#8AAEBB' }}
                             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
                             onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}
                             title="Chỉnh sửa">
-                            <Edit2 size={14} />
+                            <Edit2 size={13} />
                         </button>
                         <button onClick={e => { e.stopPropagation(); onDelete() }}
-                            className="p-1.5 rounded-lg transition-all"
+                            className="p-1 rounded transition-all"
                             style={{ color: '#4A6A7A' }}
                             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
                             onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#4A6A7A' }}
                             title="Xóa">
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                         </button>
                     </div>
                 )}
@@ -342,13 +342,13 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
     const showDesktop = isMobile === null ? true : !isMobile
 
     const sortableHeaders = [
-        { key: 'name' as const, label: 'Sản phẩm', cls: 'px-4 py-3 w-[340px]', sortable: true },
-        { key: undefined, label: 'Loại', cls: 'px-3 py-3 w-[80px]', sortable: false },
-        { key: undefined, label: 'Nhà SX / Vùng', cls: 'px-3 py-3 w-[220px]', sortable: false },
-        { key: 'abv' as const, label: 'ABV', cls: 'px-3 py-3 w-[60px] text-center', sortable: true },
-        { key: 'stock' as const, label: 'Tồn kho', cls: 'px-3 py-3 w-[85px] text-center', sortable: false },
-        { key: undefined, label: 'Trạng thái', cls: 'px-3 py-3 w-[125px]', sortable: false },
-        { key: undefined, label: '', cls: 'px-3 py-3 w-[70px]', sortable: false },
+        { key: 'name' as const, label: 'Sản phẩm', cls: 'px-4 py-1.5 w-[340px]', sortable: true },
+        { key: undefined, label: 'Loại', cls: 'px-3 py-1.5 w-[80px]', sortable: false },
+        { key: undefined, label: 'Nhà SX / Vùng', cls: 'px-3 py-1.5 w-[220px]', sortable: false },
+        { key: 'abv' as const, label: 'ABV', cls: 'px-3 py-1.5 w-[60px] text-center', sortable: true },
+        { key: 'stock' as const, label: 'Tồn kho', cls: 'px-3 py-1.5 w-[85px] text-center', sortable: false },
+        { key: undefined, label: 'Trạng thái', cls: 'px-3 py-1.5 w-[125px]', sortable: false },
+        { key: undefined, label: '', cls: 'px-3 py-1.5 w-[70px]', sortable: false },
     ]
 
     // Smart pagination: show 1, ..., currentPage±1, ..., last

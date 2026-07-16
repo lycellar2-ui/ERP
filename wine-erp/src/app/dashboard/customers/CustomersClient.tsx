@@ -705,15 +705,15 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
     }
 
     const sortableHeaders: { key: CustomerFilters['sortBy'] | undefined; label: string; cls: string; sortable: boolean }[] = [
-        { key: 'name', label: 'Khách Hàng', cls: 'px-4 py-3 w-[280px]', sortable: true },
-        { key: undefined, label: 'Loại', cls: 'px-3 py-3 w-[120px]', sortable: false },
-        { key: undefined, label: 'MST', cls: 'px-3 py-3 w-[110px]', sortable: false },
-        { key: undefined, label: 'Sales Rep', cls: 'px-3 py-3 w-[130px]', sortable: false },
-        { key: undefined, label: 'Thanh Toán', cls: 'px-3 py-3 w-[90px]', sortable: false },
-        { key: 'creditLimit', label: 'Hạn Mức', cls: 'px-3 py-3 w-[140px]', sortable: true },
-        { key: 'orderCount', label: 'Đơn Hàng', cls: 'px-3 py-3 w-[80px] text-center', sortable: true },
-        { key: undefined, label: 'Trạng Thái', cls: 'px-3 py-3 w-[100px]', sortable: false },
-        { key: undefined, label: '', cls: 'px-3 py-3 w-[70px]', sortable: false },
+        { key: 'name', label: 'Khách Hàng', cls: 'px-4 py-1.5 w-[280px]', sortable: true },
+        { key: undefined, label: 'Loại', cls: 'px-3 py-1.5 w-[120px]', sortable: false },
+        { key: undefined, label: 'MST', cls: 'px-3 py-1.5 w-[110px]', sortable: false },
+        { key: undefined, label: 'Sales Rep', cls: 'px-3 py-1.5 w-[130px]', sortable: false },
+        { key: undefined, label: 'Thanh Toán', cls: 'px-3 py-1.5 w-[90px]', sortable: false },
+        { key: 'creditLimit', label: 'Hạn Mức', cls: 'px-3 py-1.5 w-[140px]', sortable: true },
+        { key: 'orderCount', label: 'Đơn Hàng', cls: 'px-3 py-1.5 w-[80px] text-center', sortable: true },
+        { key: undefined, label: 'Trạng Thái', cls: 'px-3 py-1.5 w-[100px]', sortable: false },
+        { key: undefined, label: '', cls: 'px-3 py-1.5 w-[70px]', sortable: false },
     ]
 
     return (
@@ -882,60 +882,60 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                                     style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-1.5">
                                         {row.parentId ? (
                                             <>
-                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                                <div className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: '#4A6A7A' }}>
-                                                    <span style={{ fontFamily: '"DM Mono", monospace' }}>{row.code}</span>
+                                                <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
+                                                <div className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>
+                                                    <span style={{ fontFamily: '"DM Mono", monospace' }} className="whitespace-nowrap">{row.code}</span>
                                                     <span>·</span>
-                                                    <span style={{ color: '#8AAEBB' }}>↳ Chi nhánh của {row.parentCode}</span>
+                                                    <span style={{ color: '#8AAEBB' }} className="whitespace-nowrap">↳ Chi nhánh của {row.parentCode}</span>
                                                 </div>
                                             </>
                                         ) : row.childrenCount > 0 ? (
                                             <>
                                                 <div className="flex items-center gap-2">
-                                                    <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ color: '#0A1926', background: '#D4A853' }}>
+                                                    <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold whitespace-nowrap" style={{ color: '#0A1926', background: '#D4A853' }}>
                                                         Cha ({row.childrenCount} nhánh)
                                                     </span>
                                                 </div>
-                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
                                             </>
                                         ) : (
                                             <>
-                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{row.name}</p>
-                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
+                                                <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
+                                                <p className="text-[10px] mt-0.5" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.code}</p>
                                             </>
                                         )}
                                     </td>
-                                    <td className="px-3 py-3"><TypeBadge type={row.customerType} /></td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.taxId ?? '—'}</td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
+                                    <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.customerType} /></td>
+                                    <td className="px-3 py-1.5 text-[11px] whitespace-nowrap" style={{ color: '#4A6A7A', fontFamily: '"DM Mono", monospace' }}>{row.taxId ?? '—'}</td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
                                         {row.salesRepName ?? '—'}
                                     </td>
-                                    <td className="px-3 py-3 text-xs font-semibold" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{row.paymentTerm}</td>
-                                    <td className="px-3 py-3 text-sm" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                    <td className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap" style={{ color: '#8AAEBB', fontFamily: '"DM Mono", monospace' }}>{row.paymentTerm}</td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.creditLimit > 0 ? '#87CBB9' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
                                         {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
                                     </td>
-                                    <td className="px-3 py-3 text-center">
-                                        <span className="text-sm font-bold" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
+                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                                        <span className="text-xs font-bold" style={{ color: row.orderCount > 0 ? '#5BA88A' : '#2A4355', fontFamily: '"DM Mono", monospace' }}>
                                             {row.orderCount}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-3"><StatusDot status={row.status} /></td>
-                                    <td className="px-3 py-3">
-                                        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all">
+                                    <td className="px-3 py-1.5 whitespace-nowrap"><StatusDot status={row.status} /></td>
+                                    <td className="px-3 py-1.5">
+                                        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all whitespace-nowrap">
                                             <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
-                                                className="p-1.5 rounded-lg transition-all" style={{ color: '#8AAEBB' }}
+                                                className="p-1 rounded transition-all" style={{ color: '#8AAEBB' }}
                                                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
                                                 onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8AAEBB' }}
-                                                title="Chỉnh sửa"><Edit2 size={14} /></button>
+                                                title="Chỉnh sửa"><Edit2 size={13} /></button>
                                             <button onClick={() => handleDelete(row.id, row.name)}
-                                                className="p-1.5 rounded-lg transition-all" style={{ color: '#4A6A7A' }}
+                                                className="p-1 rounded transition-all" style={{ color: '#4A6A7A' }}
                                                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,26,46,0.15)'; e.currentTarget.style.color = '#E05252' }}
                                                 onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#4A6A7A' }}
-                                                title="Xóa"><Trash2 size={14} /></button>
+                                                title="Xóa"><Trash2 size={13} /></button>
                                         </div>
                                     </td>
                                 </tr>
