@@ -75,9 +75,7 @@ html {
 /* 1. Backgrounds (#0A1926) -> var(--color-lys-bg) */
 [style*="#0A1926"],
 [style*="#0a1926"],
-[style*="rgb(10, 25, 38)"],
-[style*="rgba(10,25,38"],
-[style*="rgba(10, 25, 38"] {
+[style*="rgb(10, 25, 38)"] {
   background: var(--color-lys-bg) !important;
   background-color: var(--color-lys-bg) !important;
 }
