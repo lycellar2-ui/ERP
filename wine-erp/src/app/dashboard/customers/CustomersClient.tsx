@@ -66,13 +66,13 @@ function SortIcon({ column, sortBy, sortDir }: { column: string; sortBy?: string
 
 function StatCard({ label, value, icon: Icon, accent }: { label: string; value: string | number; icon: React.FC<any>; accent: string }) {
     return (
-        <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accent}20` }}>
-                <Icon size={20} style={{ color: accent }} />
+        <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl min-w-0" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accent}20` }}>
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: accent }} />
             </div>
-            <div>
-                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{label}</p>
-                <p className="text-lg font-bold mt-0.5" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{value}</p>
+            <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs uppercase tracking-wide font-semibold truncate" style={{ color: '#4A6A7A' }}>{label}</p>
+                <p className="text-sm sm:text-lg font-bold mt-0.5 truncate" style={{ color: '#E8F1F2', fontFamily: '"DM Mono", monospace' }}>{value}</p>
             </div>
         </div>
     )
@@ -680,7 +680,8 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold" style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', color: '#E8F1F2' }}>
                         Khách Hàng (CRM)
@@ -689,23 +690,23 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                         B2B: Khách sạn, nhà hàng, phân phối, VIP retail — {stats.total} khách hàng
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                     <button onClick={handleExport} disabled={exporting}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                        className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
                         style={{ background: '#1B2E3D', color: '#5BA88A', border: '1px solid #2A4355' }}
                         onMouseEnter={e => { if (!exporting) { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#5BA88A' } }}
                         onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}>
                         <Download size={16} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
                     </button>
                     <button onClick={() => setImportOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                        className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
                         style={{ background: '#1B2E3D', color: '#4A8FAB', border: '1px solid #2A4355' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#142433'; e.currentTarget.style.borderColor = '#4A8FAB' }}
                         onMouseLeave={e => { e.currentTarget.style.background = '#1B2E3D'; e.currentTarget.style.borderColor = '#2A4355' }}>
                         <Upload size={16} /> Import Excel
                     </button>
                     <button onClick={() => { setEditingId(null); setDrawerOpen(true) }}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150"
+                        className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150"
                         style={{ background: '#87CBB9', color: '#0A1926' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
                         onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
@@ -723,8 +724,8 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px]">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+                <div className="relative w-full sm:flex-1 sm:min-w-[240px]">
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input type="text" placeholder="Tìm theo tên, mã, MST, email, SĐT..."
                         value={search}
@@ -734,43 +735,47 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                         onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                 </div>
-                <select value={typeFilter}
-                    onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả loại</option>
-                    <option value="HORECA">🏨 HORECA</option>
-                    <option value="WHOLESALE_DISTRIBUTOR">🏭 Phân Phối</option>
-                    <option value="VIP_RETAIL">👑 VIP Retail</option>
-                    <option value="INDIVIDUAL">👤 Cá Nhân</option>
-                </select>
-                <select value={statusFilter}
-                    onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Trạng thái</option>
-                    <option value="ACTIVE">Hoạt động</option>
-                    <option value="CREDIT_HOLD">Giữ tín dụng</option>
-                    <option value="INACTIVE">Tạm dừng</option>
-                </select>
-                <select value={channelFilter}
-                    onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
-                    className="px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: channelFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                    <option value="">Tất cả kênh</option>
-                    {channels.map(c => (
-                        <option key={c.channel} value={c.channel}>{CHANNEL_LABEL[c.channel] ?? c.channel} ({c.count})</option>
-                    ))}
-                </select>
-                {(search || typeFilter || statusFilter || channelFilter) && (
-                    <button onClick={() => {
-                        setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter('')
-                        applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined })
-                    }} className="px-3 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.3)' }}>
-                        Xóa filter
-                    </button>
-                )}
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 w-full sm:w-auto">
+                    <select value={typeFilter}
+                        onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
+                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Tất cả loại</option>
+                        <option value="HORECA">🏨 HORECA</option>
+                        <option value="WHOLESALE_DISTRIBUTOR">🏭 Phân Phối</option>
+                        <option value="VIP_RETAIL">👑 VIP Retail</option>
+                        <option value="INDIVIDUAL">👤 Cá Nhân</option>
+                    </select>
+                    <select value={statusFilter}
+                        onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
+                        className="w-full sm:w-auto px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Trạng thái</option>
+                        <option value="ACTIVE">Hoạt động</option>
+                        <option value="CREDIT_HOLD">Giữ tín dụng</option>
+                        <option value="INACTIVE">Tạm dừng</option>
+                    </select>
+                </div>
+                <div className="flex gap-3 w-full sm:w-auto">
+                    <select value={channelFilter}
+                        onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
+                        className="flex-1 sm:flex-initial px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: channelFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                        <option value="">Tất cả kênh</option>
+                        {channels.map(c => (
+                            <option key={c.channel} value={c.channel}>{CHANNEL_LABEL[c.channel] ?? c.channel} ({c.count})</option>
+                        ))}
+                    </select>
+                    {(search || typeFilter || statusFilter || channelFilter) && (
+                        <button onClick={() => {
+                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setChannelFilter('')
+                            applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined })
+                        }} className="px-3 py-2.5 rounded-lg text-sm border"
+                            style={{ color: '#8B1A2E', borderColor: 'rgba(139,26,46,0.3)', background: 'transparent' }}>
+                            Xóa
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Table */}
@@ -857,7 +862,7 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                                     </td>
                                     <td className="px-3 py-3"><StatusDot status={row.status} /></td>
                                     <td className="px-3 py-3">
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all">
                                             <button onClick={() => { setEditingId(row.id); setDrawerOpen(true) }}
                                                 className="p-1.5 rounded-lg transition-all" style={{ color: '#8AAEBB' }}
                                                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(135,203,185,0.15)'; e.currentTarget.style.color = '#87CBB9' }}
