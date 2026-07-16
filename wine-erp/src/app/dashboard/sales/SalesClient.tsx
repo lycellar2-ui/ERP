@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
+import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
 const CreateSODrawer = dynamic(() => import('./CreateSODrawer').then(m => m.CreateSODrawer), {
     loading: () => null,
@@ -768,6 +769,7 @@ type Props = {
 }
 
 export function SalesClient({ initialData, userId, userRoles }: Props) {
+    const queryClient = useQueryClient()
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const isCEO = userRoles.includes('CEO')
     const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
@@ -823,12 +825,34 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     const stats = queryData?.stats ?? { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 }
     const counts = queryData?.statusCounts ?? {}
 
-    // Prefetch data used by CreateSODrawer on mount
+    // Realtime Supabase Database Listener + Drawer data prefetching
     useEffect(() => {
         getLegalEntities().then(setLegalEntities).catch(() => { })
         getCustomersForSO().catch(() => { })
         getProductsWithStock().catch(() => { })
-    }, [])
+
+        // Initialize Supabase realtime channel for live sales_orders updates
+        const supabase = createClient()
+        const channel = supabase
+            .channel('realtime_sales_orders')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'sales_orders',
+                },
+                () => {
+                    // Automatically invalidate cache and refresh list in background when orders change
+                    queryClient.invalidateQueries({ queryKey: ['sales'] })
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [queryClient])
 
     // Legacy reload — now triggers query refetch
     const reload = useCallback(async (
@@ -863,18 +887,84 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
         reload({ status: s, page: 1 }, true)
     }
 
+    // Helper function for optimistic update of order status across all cached pages/queries
+    const updateCachedOrderStatus = useCallback(async (id: string, newStatus: SOStatus | null) => {
+        await queryClient.cancelQueries({ queryKey: ['sales'] })
+        const previousQueries = queryClient.getQueriesData({ queryKey: ['sales'] })
+        
+        queryClient.setQueriesData({ queryKey: ['sales'] }, (old: any) => {
+            if (!old) return old
+            return {
+                ...old,
+                rows: newStatus 
+                    ? old.rows.map((row: any) => row.id === id ? { ...row, status: newStatus } : row)
+                    : old.rows.filter((row: any) => row.id !== id),
+                total: newStatus ? old.total : Math.max(0, old.total - 1),
+            }
+        })
+        
+        return { previousQueries }
+    }, [queryClient])
+
+    // Rollback utility in case of mutation errors
+    const rollbackQueries = useCallback((context: any) => {
+        if (context?.previousQueries) {
+            context.previousQueries.forEach(([key, value]: any) => {
+                queryClient.setQueryData(key, value)
+            })
+        }
+    }, [queryClient])
+
+    const confirmMutation = useMutation({
+        mutationFn: confirmSalesOrder,
+        onMutate: (id) => updateCachedOrderStatus(id, 'PENDING_ACCOUNTING'),
+        onError: (err, id, context) => rollbackQueries(context),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['sales'] }),
+    })
+
+    const cancelMutation = useMutation({
+        mutationFn: cancelSalesOrder,
+        onMutate: (id) => updateCachedOrderStatus(id, 'CANCELLED'),
+        onError: (err, id, context) => rollbackQueries(context),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['sales'] }),
+    })
+
+    const rejectMutation = useMutation({
+        mutationFn: rejectSalesOrder,
+        onMutate: (id) => updateCachedOrderStatus(id, 'DRAFT'),
+        onError: (err, id, context) => rollbackQueries(context),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['sales'] }),
+    })
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const r = await deleteSalesOrder(id)
+            if (!r.success) throw new Error(r.error || 'Lỗi không xác định')
+            return r
+        },
+        onMutate: (id) => updateCachedOrderStatus(id, null),
+        onError: (err, id, context) => rollbackQueries(context),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['sales'] }),
+    })
+
     const handleConfirm = async (id: string) => {
         setActionLoading(id)
-        toast.promise(confirmSalesOrder(id).then(() => reload()), {
-            loading: 'Đang xác nhận...', success: 'Đã chuyển sang Chờ KT Duyệt!', error: 'Không thể xác nhận đơn hàng', finally: () => setActionLoading(null)
+        toast.promise(confirmMutation.mutateAsync(id), {
+            loading: 'Đang xác nhận...',
+            success: 'Đã chuyển sang Chờ KT Duyệt (Cập nhật tức thì)!',
+            error: 'Không thể xác nhận đơn hàng',
+            finally: () => setActionLoading(null),
         })
     }
 
     const handleCancel = async (id: string) => {
         if (!confirm('Huỷ đơn hàng này?')) return
         setActionLoading(id)
-        toast.promise(cancelSalesOrder(id).then(() => reload()), {
-            loading: 'Đang huỷ...', success: 'Đã huỷ đơn hàng!', error: 'Không thể huỷ', finally: () => setActionLoading(null)
+        toast.promise(cancelMutation.mutateAsync(id), {
+            loading: 'Đang huỷ...',
+            success: 'Đã huỷ đơn hàng (Cập nhật tức thì)!',
+            error: 'Không thể huỷ',
+            finally: () => setActionLoading(null),
         })
     }
 
@@ -885,22 +975,22 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     const handleReject = async (id: string) => {
         if (!confirm('Từ chối đơn hàng này?')) return
         setActionLoading(id)
-        toast.promise(rejectSalesOrder(id).then(() => reload()), {
-            loading: 'Đang từ chối...', success: 'Đã từ chối!', error: 'Không thể từ chối', finally: () => setActionLoading(null)
+        toast.promise(rejectMutation.mutateAsync(id), {
+            loading: 'Đang từ chối...',
+            success: 'Đã từ chối (Cập nhật tức thì)!',
+            error: 'Không thể từ chối',
+            finally: () => setActionLoading(null),
         })
     }
 
     const handleDelete = async (id: string) => {
         if (!confirm('Xóa vĩnh viễn đơn hàng nháp này?')) return
         setActionLoading(id)
-        toast.promise(deleteSalesOrder(id).then((r) => {
-            if (!r.success) throw new Error(r.error || 'Lỗi không xác định')
-            reload()
-        }), {
+        toast.promise(deleteMutation.mutateAsync(id), {
             loading: 'Đang xóa đơn nháp...',
-            success: 'Đã xóa đơn hàng nháp thành công!',
+            success: 'Đã xóa đơn hàng nháp thành công (Cập nhật tức thì)!',
             error: (e: any) => `Không thể xóa: ${e.message}`,
-            finally: () => setActionLoading(null)
+            finally: () => setActionLoading(null),
         })
     }
 

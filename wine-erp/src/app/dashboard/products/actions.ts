@@ -117,6 +117,32 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
                 orderBy,
                 take,
                 skip,
+                select: {
+                    id: true,
+                    skuCode: true,
+                    productName: true,
+                    wineType: true,
+                    format: true,
+                    packagingType: true,
+                    unitsPerCase: true,
+                    abvPercent: true,
+                    producerName: true,
+                    producerCountry: true,
+                    appellationName: true,
+                    country: true,
+                    barcodeEan: true,
+                    classification: true,
+                    status: true,
+                    mediaCount: true,
+                    primaryImageUrl: true,
+                    totalStock: true,
+                    createdAt: true,
+                    volumeMl: true,
+                    hsCode: true,
+                    isAllocationEligible: true,
+                    retailPrice: true,
+                    wholesalePrice: true,
+                }
             }),
             prisma.productRowView.count({
                 where,
@@ -124,7 +150,6 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
         ])
 
         const rows: ProductRow[] = rowsRes.map((r) => {
-            const hasProfile = r.grapes || r.servingTemp || r.originDetail || r.certification || r.color || r.style || r.aromas || r.palate || r.foodPairings || r.bestSuitedFor
             return {
                 id: r.id,
                 skuCode: r.skuCode,
@@ -150,18 +175,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
                 isAllocationEligible: r.isAllocationEligible ?? null,
                 retailPrice: r.retailPrice ?? null,
                 wholesalePrice: r.wholesalePrice ?? null,
-                profile: hasProfile ? {
-                    originDetail: r.originDetail ?? null,
-                    certification: r.certification ?? null,
-                    color: r.color ?? null,
-                    aromas: r.aromas ?? null,
-                    palate: r.palate ?? null,
-                    style: r.style ?? null,
-                    servingTemp: r.servingTemp ?? null,
-                    foodPairings: r.foodPairings ?? null,
-                    bestSuitedFor: r.bestSuitedFor ?? null,
-                    grapes: r.grapes ?? null,
-                } : null,
+                profile: null, // Skip heavy profile columns for listing to reduce wire transfer payload size
             }
         })
 

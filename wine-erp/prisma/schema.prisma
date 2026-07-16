@@ -1224,6 +1224,7 @@ model StockLot {
   regulatedDocs  RegulatedDocument[]
 
   @@index([productId, status])
+  @@index([productId, qtyAvailable])
   @@map("stock_lots")
 }
 

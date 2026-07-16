@@ -11,6 +11,7 @@ import {
 } from './actions'
 import { formatVND } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
+import { useQuery } from '@tanstack/react-query'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
@@ -90,8 +91,30 @@ interface EditSODrawerProps {
 }
 
 export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODrawerProps) {
-    const [customers, setCustomers] = useState<Customer[]>([])
-    
+    // TanStack Query to fetch and cache reference data (shared cache with CreateSO)
+    const { data: refData } = useQuery({
+        queryKey: ['so_reference_data'],
+        queryFn: async () => {
+            const [c, p, e] = await Promise.all([
+                getCustomersForSO(),
+                getProductsWithStock(),
+                getLegalEntities(),
+            ])
+            return {
+                customers: (c as any) as Customer[],
+                products: p as ProductItem[],
+                entities: e as LegalEntityRow[]
+            }
+        },
+        enabled: open,
+        staleTime: 5 * 60_000,
+    })
+
+    const customers = refData?.customers ?? []
+    const products = refData?.products ?? []
+    const entities = refData?.entities ?? []
+    const loadingData = !refData && open
+
     const sortedCustomersForSelect = useMemo(() => {
         const parentsAndStandalone = customers.filter(c => !c.parentId)
         const result: typeof customers = []
@@ -119,8 +142,6 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         return result
     }, [customers])
 
-    const [products, setProducts] = useState<ProductItem[]>([])
-    const [loadingData, setLoadingData] = useState(false)
     const [loadingSO, setLoadingSO] = useState(true)
 
     const [customerId, setCustomerId] = useState('')
@@ -136,7 +157,6 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
     const [saving, setSaving] = useState(false)
     const [soNo, setSoNo] = useState('')
-    const [entities, setEntities] = useState<LegalEntityRow[]>([])
     const [legalEntityId, setLegalEntityId] = useState('')
 
     const activeProductIds = useMemo(() => new Set(lines.map(l => l.productId)), [lines])
@@ -153,16 +173,6 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
             p.skuCode.toLowerCase().includes(q)
         )
     }, [products, activeProductIds])
-
-    // Load reference data
-    const loadReferenceData = useCallback(async () => {
-        setLoadingData(true)
-        const [custs, prods, ents] = await Promise.all([getCustomersForSO(), getProductsWithStock(), getLegalEntities()])
-        setCustomers(custs as any)
-        setProducts(prods as any)
-        setEntities(ents)
-        setLoadingData(false)
-    }, [])
 
     // Load SO data
     const loadSOData = useCallback(async () => {
@@ -199,10 +209,9 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
     useEffect(() => {
         if (open) {
-            loadReferenceData()
             loadSOData()
         }
-    }, [open, loadReferenceData, loadSOData])
+    }, [open, loadSOData])
 
     // Set selected customer when data loaded
     useEffect(() => {

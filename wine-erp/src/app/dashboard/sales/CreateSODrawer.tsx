@@ -11,6 +11,7 @@ import {
 } from './actions'
 import { formatVND } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
+import { useQuery } from '@tanstack/react-query'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
@@ -85,9 +86,30 @@ const inputStyle = {
 const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Kế Toán', 'KE_TOAN']
 
 export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] }: { open: boolean; onClose: () => void; onSaved: () => void; userId: string; userRoles?: string[] }) {
-    const [customers, setCustomers] = useState<Customer[]>([])
-    const [products, setProducts] = useState<ProductItem[]>([])
-    const [loadingData, setLoadingData] = useState(false)
+    // TanStack Query to fetch and cache reference data for Sales Order Creation
+    const { data: refData } = useQuery({
+        queryKey: ['so_reference_data'],
+        queryFn: async () => {
+            const [c, p, e] = await Promise.all([
+                getCustomersForSO(),
+                getProductsWithStock(),
+                getLegalEntities(),
+            ])
+            return {
+                customers: (c as any) as Customer[],
+                products: p as ProductItem[],
+                entities: e as LegalEntityRow[]
+            }
+        },
+        enabled: open,
+        staleTime: 5 * 60_000, // Cache reference data for 5 minutes
+    })
+
+    const customers = refData?.customers ?? []
+    const products = refData?.products ?? []
+    const entities = refData?.entities ?? []
+    const loadingData = !refData && open
+
     const [overrideMode, setOverrideMode] = useState(false)
     const canOverride = OVERRIDE_ROLES.some(r => userRoles.includes(r))
 
@@ -134,7 +156,6 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     const [loadingPrices, setLoadingPrices] = useState(false)
 
     const [saving, setSaving] = useState(false)
-    const [entities, setEntities] = useState<LegalEntityRow[]>([])
     const [legalEntityId, setLegalEntityId] = useState('')
 
     const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
@@ -167,13 +188,6 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         setSearchQueries(queries)
     }, [lines.length]) // eslint-disable-line
 
-    useEffect(() => {
-        if (!open) return
-        setLoadingData(true)
-        Promise.all([getCustomersForSO(), getProductsWithStock(), getLegalEntities()])
-            .then(([c, p, e]) => { setCustomers(c as any); setProducts(p); setEntities(e) })
-            .finally(() => setLoadingData(false))
-    }, [open])
 
     // Load customer-resolved prices or fallback channel prices
     const loadPrices = useCallback(async (custId: string | null, ch: SalesChannel) => {
