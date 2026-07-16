@@ -23,6 +23,37 @@ const inputStyle: React.CSSProperties = {
     border: '1px solid #2A4355', background: '#142433', color: '#E8F1F2',
     fontSize: '14px', outline: 'none',
 }
+
+const MODULE_NAMES: Record<string, string> = {
+    DSH: 'Bảng điều khiển (Dashboard)',
+    MDM: 'Danh mục / Dữ liệu gốc (Master Data)',
+    SLS: 'Quản lý bán hàng (Sales)',
+    PRC: 'Quản lý mua hàng (Purchase)',
+    WMS: 'Quản lý kho hàng (Warehouse)',
+    FIN: 'Tài chính & Thanh toán (Finance)',
+    TAX: 'Hóa đơn & Thuế (Tax)',
+    CRM: 'Khách hàng & Liên hệ (CRM)',
+    CST: 'Chi phí & Giá thành (Cost)',
+    CNT: 'Hợp đồng (Contract)',
+    TRS: 'Vận chuyển & Giao nhận (Delivery)',
+    CSG: 'Hàng ký gửi (Consignment)',
+    AGN: 'Quản lý Đại lý (Agency)',
+    RPT: 'Báo cáo thống kê (Reports)',
+    KPI: 'Chỉ tiêu doanh số (KPI)',
+    STM: 'Điều chuyển kho (Stock Transfer)',
+    SYS: 'Quản trị hệ thống (System)',
+}
+
+const ACTION_LABELS: Record<string, string> = {
+    READ: 'Xem (Read)',
+    CREATE: 'Thêm mới (Create)',
+    UPDATE: 'Sửa (Update)',
+    DELETE: 'Xóa (Delete)',
+    APPROVE: 'Duyệt (Approve)',
+    EXPORT: 'Xuất Excel (Export)',
+    WRITE: 'Ghi / Giao hàng (Write)',
+    ADMIN: 'Toàn quyền (Admin)',
+}
 const focusHandler = {
     onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#87CBB9',
     onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#2A4355',
@@ -201,7 +232,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
                                         <button onClick={() => toggleModule(mod)}
                                             className="flex items-center justify-between w-full text-left">
                                             <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#E8F1F2' }}>
-                                                {mod}
+                                                {MODULE_NAMES[mod] ?? mod}
                                             </span>
                                             <span className="text-xs" style={{ color: '#4A6A7A' }}>
                                                 {count}/{modPerms.length}
@@ -219,7 +250,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
                                                         color: selectedPerms.includes(p.id) ? '#87CBB9' : '#4A6A7A',
                                                         border: selectedPerms.includes(p.id) ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
                                                     }}>
-                                                    {p.action}
+                                                    {ACTION_LABELS[p.action] ?? p.action}
                                                 </button>
                                             ))}
                                         </div>
@@ -329,7 +360,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                                             <button onClick={() => toggleModule(mod)}
                                                 className="flex items-center justify-between w-full text-left">
                                                 <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#E8F1F2' }}>
-                                                    {mod}
+                                                    {MODULE_NAMES[mod] ?? mod}
                                                 </span>
                                                 <span className="text-xs" style={{ color: '#4A6A7A' }}>
                                                     {count}/{modPerms.length}
@@ -347,7 +378,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                                                             color: selectedPerms.includes(p.id) ? '#87CBB9' : '#4A6A7A',
                                                             border: selectedPerms.includes(p.id) ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
                                                         }}>
-                                                        {p.action}
+                                                        {ACTION_LABELS[p.action] ?? p.action}
                                                     </button>
                                                 ))}
                                             </div>
