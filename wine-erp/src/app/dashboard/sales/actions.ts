@@ -384,6 +384,18 @@ export async function getCustomersForSO() {
                 paymentTerm: true,
                 channel: true,
                 parentId: true,
+                addresses: {
+                    select: {
+                        id: true,
+                        label: true,
+                        address: true,
+                        ward: true,
+                        district: true,
+                        city: true,
+                        isDefault: true,
+                        isBilling: true,
+                    }
+                },
                 parent: {
                     select: {
                         id: true,
@@ -711,6 +723,7 @@ export interface SOUpdateInput {
     orderDiscount?: number
     notes?: string
     legalEntityId: string
+    shippingAddressId?: string
     lines: SOLineCreate[]
 }
 
@@ -772,6 +785,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     orderDiscount: input.orderDiscount ?? 0,
                     totalAmount: finalAmount,
                     legalEntityId: input.legalEntityId,
+                    shippingAddressId: input.shippingAddressId ?? null,
                     notes: input.notes ?? null,
                 },
             }),

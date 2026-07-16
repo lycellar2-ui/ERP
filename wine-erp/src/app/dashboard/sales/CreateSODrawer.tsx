@@ -64,6 +64,16 @@ interface Customer {
     channel: string | null
     defaultLegalEntityId: string | null
     parentId: string | null
+    addresses?: {
+        id: string
+        label: string
+        address: string
+        ward?: string | null
+        district?: string | null
+        city?: string | null
+        isDefault: boolean
+        isBilling: boolean
+    }[]
     parent?: {
         id: string
         name: string
@@ -157,6 +167,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
     const [saving, setSaving] = useState(false)
     const [legalEntityId, setLegalEntityId] = useState('')
+    const [shippingAddressId, setShippingAddressId] = useState('')
+
+    const [customerSearchInput, setCustomerSearchInput] = useState('')
+    const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false)
 
     const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
     const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null)
@@ -175,6 +189,24 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         }
         return results
     }, [products])
+
+    // Autocomplete customer selection filter
+    const filteredCustomers = useMemo(() => {
+        const q = customerSearchInput.trim().toLowerCase()
+        if (!q || q.startsWith('[')) return sortedCustomersForSelect.slice(0, 10)
+        return sortedCustomersForSelect.filter(c => 
+            c.name.toLowerCase().includes(q) || 
+            c.code.toLowerCase().includes(q)
+        ).slice(0, 10)
+    }, [customerSearchInput, sortedCustomersForSelect])
+
+    useEffect(() => {
+        if (selectedCustomer) {
+            setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
+        } else {
+            setCustomerSearchInput('')
+        }
+    }, [selectedCustomer])
 
     useEffect(() => {
         const queries: Record<number, string> = {}
@@ -248,6 +280,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         const c = customers.find(c => c.id === id)
         setSelectedCustomer(c ?? null)
         if (c) {
+            const defaultAddress = c.addresses?.find(a => a.isDefault) || c.addresses?.[0]
+            setShippingAddressId(defaultAddress?.id ?? '')
             setPaymentTerm(c.paymentTerm)
             const nextChannel = (c.channel ?? 'HORECA') as SalesChannel
             setChannel(nextChannel)
@@ -345,6 +379,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 priceSource: l.priceSource || undefined,
             })),
             legalEntityId,
+            shippingAddressId: shippingAddressId || undefined,
         } as SOCreateInput).then(res => {
             if (!res.success) throw new Error(res.error ?? 'Có lỗi xảy ra')
             return res
@@ -366,6 +401,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
         setArBalance(0); setPriceMap({}); setLegalEntityId(''); setSearchQueries({})
         setNotes(''); setOverrideMode(false)
+        setShippingAddressId('')
+        setCustomerSearchInput('')
+        setCustomerDropdownOpen(false)
     }
 
     if (!open) return null
@@ -401,23 +439,103 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
                     {!loadingData && (
                         <>
-                            {/* Customer */}
+                            {/* Customer Autocomplete Search */}
                             <div>
                                 <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
                                     Khách Hàng *
                                 </label>
-                                <select
-                                    value={customerId}
-                                    onChange={e => handleCustomerChange(e.target.value)}
-                                    className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ ...inputStyle }}
-                                >
-                                    <option value="">-- Chọn khách hàng --</option>
-                                    {sortedCustomersForSelect.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Gõ mã hoặc tên khách hàng để tìm..."
+                                        value={customerSearchInput}
+                                        onFocus={() => setCustomerDropdownOpen(true)}
+                                        onBlur={() => {
+                                            setTimeout(() => {
+                                                setCustomerDropdownOpen(false)
+                                                if (selectedCustomer) {
+                                                    setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
+                                                } else {
+                                                    setCustomerSearchInput('')
+                                                }
+                                            }, 200)
+                                        }}
+                                        onChange={e => {
+                                            setCustomerSearchInput(e.target.value)
+                                            setCustomerDropdownOpen(true)
+                                        }}
+                                        className="w-full px-3 py-2.5 text-sm outline-none"
+                                        style={{ ...inputStyle }}
+                                    />
+                                    {customerDropdownOpen && (
+                                        <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-[#142433] border border-[#2A4355] w-full shadow-2xl">
+                                            {filteredCustomers.length === 0 ? (
+                                                <div className="px-3 py-2.5 text-xs text-gray-500">
+                                                    Không tìm thấy khách hàng
+                                                </div>
+                                            ) : (
+                                                filteredCustomers.map(c => (
+                                                    <div
+                                                        key={c.id}
+                                                        onMouseDown={() => {
+                                                            handleCustomerChange(c.id)
+                                                            setCustomerDropdownOpen(false)
+                                                        }}
+                                                        className="px-3 py-2.5 text-sm cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left text-white border-b border-[#2A4355]/30 last:border-b-0"
+                                                    >
+                                                        <span className="font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
+                                                        <span>{c.name}</span>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* Shipping Address Selection */}
+                            {selectedCustomer && (
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
+                                        Địa Chỉ Giao Hàng *
+                                    </label>
+                                    {(!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
+                                        <div className="p-3 rounded-md text-xs bg-red-950/20 border border-red-500/20 text-red-400">
+                                            ⚠️ Khách hàng chưa cấu hình địa chỉ giao hàng. Hãy cấu hình ở mục Khách hàng.
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <select
+                                                value={shippingAddressId}
+                                                onChange={e => setShippingAddressId(e.target.value)}
+                                                className="w-full px-3 py-2.5 text-sm outline-none"
+                                                style={{ ...inputStyle }}
+                                            >
+                                                <option value="">-- Chọn địa chỉ giao hàng --</option>
+                                                {selectedCustomer.addresses.map(addr => (
+                                                    <option key={addr.id} value={addr.id}>
+                                                        {addr.label} ({addr.address})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {shippingAddressId && (() => {
+                                                const selectedAddr = selectedCustomer.addresses.find(a => a.id === shippingAddressId)
+                                                if (!selectedAddr) return null
+                                                return (
+                                                    <div className="p-3 rounded bg-[#142433] border border-[#2A4355]/40 text-xs text-gray-300 leading-relaxed">
+                                                        <span className="font-bold text-[#87CBB9]">{selectedAddr.label}: </span>
+                                                        {selectedAddr.address}
+                                                        {selectedAddr.ward && `, ${selectedAddr.ward}`}
+                                                        {selectedAddr.district && `, ${selectedAddr.district}`}
+                                                        {selectedAddr.city && `, ${selectedAddr.city}`}
+                                                        {selectedAddr.isDefault && <span className="ml-2 inline-block px-1.5 py-0.5 text-[9px] bg-[#5BA88A]/20 text-[#5BA88A] rounded border border-[#5BA88A]/30">Mặc định</span>}
+                                                    </div>
+                                                )
+                                            })()}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Credit status */}
                             {selectedCustomer && (
@@ -645,6 +763,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                             </div>
                                                                         )}
                                                                     </div>
+                                                                    {line.productId && (
+                                                                        <div className="mt-1 text-[10px] text-gray-300 bg-[#0A1926] p-1.5 rounded border border-[#2A4355]/40 whitespace-normal leading-relaxed">
+                                                                            {line.productName}
+                                                                        </div>
+                                                                    )}
                                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                                         {alloc && (
                                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
@@ -777,6 +900,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                 <Trash2 size={14} />
                                                             </button>
                                                         </div>
+                                                        {line.productId && (
+                                                            <div className="text-[10px] text-gray-300 bg-[#0A1926] p-1.5 rounded border border-[#2A4355]/40 whitespace-normal leading-relaxed">
+                                                                {line.productName}
+                                                            </div>
+                                                        )}
                                                         {/* Allocation & Price badges */}
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {alloc && (
