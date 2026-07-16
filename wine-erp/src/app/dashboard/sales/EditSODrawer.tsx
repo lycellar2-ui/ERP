@@ -420,7 +420,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     return (
         <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(10,25,38,0.8)' }}>
             <div className="hidden md:block md:flex-1" onClick={onClose} />
-            <div className="w-full md:max-w-2xl h-full overflow-y-auto" style={{ background: '#0F2133', borderLeft: '1px solid #2A4355' }}>
+            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full overflow-y-auto" style={{ background: '#0F2133', borderLeft: '1px solid #2A4355' }}>
                 <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid #2A4355' }}>
                     <div>
                         <h2 className="text-lg font-bold" style={{ color: '#D4A853' }}>Sửa Đơn Hàng</h2>
@@ -626,7 +626,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 ) : (
                                     <>
                                         {/* Desktop Table View */}
-                                        <div className="hidden md:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
+                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
@@ -695,7 +695,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         </div>
 
                                         {/* Mobile Card View */}
-                                        <div className="block md:hidden space-y-2">
+                                        <div className="block sm:hidden space-y-2">
                                             {lines.map((l, idx) => {
                                                 const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
                                                 const lowStock = l.stock < l.qtyOrdered

@@ -414,7 +414,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
             <div className="hidden md:block md:flex-1" onClick={onClose} />
 
             {/* Drawer */}
-            <div className="w-full md:max-w-2xl h-full flex flex-col overflow-hidden"
+            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden"
                 style={{ background: '#1B2E3D', borderLeft: '1px solid #2A4355' }}>
 
                 {/* Header */}
@@ -687,7 +687,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 ) : (
                                     <>
                                         {/* Desktop Table View */}
-                                        <div className="hidden md:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
+                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
@@ -827,7 +827,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                         </div>
 
                                         {/* Mobile Card View */}
-                                        <div className="block md:hidden space-y-2">
+                                        <div className="block sm:hidden space-y-2">
                                             {lines.map((line, i) => {
                                                 const lineTotal = line.qtyOrdered * line.unitPrice * (1 - line.lineDiscountPct / 100)
                                                 const lowStock = line.productId ? line.qtyOrdered > line.stock : false
