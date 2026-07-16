@@ -21,8 +21,8 @@ type CacheEntry<T> = {
 const cache = new Map<string, CacheEntry<unknown>>()
 const pendingRefreshes = new Set<string>() // Dedup SWR background refreshes
 
-const DEFAULT_TTL_MS = 30_000 // 30 seconds
-const STALE_MULTIPLIER = 3    // stale data lives 3x TTL before eviction
+const DEFAULT_TTL_MS = 60_000 // 60 seconds — safe for ≤10 users, mutations call revalidateCache()
+const STALE_MULTIPLIER = 5    // stale data lives 5x TTL before eviction (SWR refreshes in background)
 
 /**
  * Cache a server-side function result with SWR pattern.

@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 import { serialize } from '@/lib/serialize'
 import { logAudit } from '@/lib/audit'
-import { getCurrentUser, requireAuth, requirePermission } from '@/lib/session'
+import { getCurrentUser, requireAuth, requirePermission, invalidateUserSession } from '@/lib/session'
 import crypto from 'crypto'
 
 // ═══════════════════════════════════════════════════
@@ -137,6 +137,9 @@ export async function updateUserRoles(
         const newRoles = await prisma.userRole.findMany({ where: { userId }, include: { role: { select: { name: true } } } })
         const currentUser = await getCurrentUser().catch(() => null)
         logAudit({ userId: currentUser?.id, userName: currentUser?.name, action: 'UPDATE', entityType: 'UserRole', entityId: userId, oldValue: { roles: oldRoles.map(r => r.role.name) }, newValue: { roles: newRoles.map(r => r.role.name) } })
+        // Invalidate user session cache so updated roles take effect immediately
+        const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+        if (targetUser?.email) invalidateUserSession(targetUser.email)
         revalidateCache('settings')
         revalidatePath('/dashboard/settings')
         return { success: true }

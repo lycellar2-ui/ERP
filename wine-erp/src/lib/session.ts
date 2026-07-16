@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { prisma } from '@/lib/db'
+import { cached, revalidateCache } from '@/lib/cache'
 
 export type SessionUser = {
     id: string
@@ -11,18 +12,13 @@ export type SessionUser = {
     permissions: string[]
 }
 
-// Get current authenticated user with roles & permissions
-// Wrapped with React cache() for per-request deduplication — avoids duplicate
-// Supabase + Prisma calls when multiple server functions need the user in one render.
-export const getCurrentUser = cache(async function getCurrentUser(): Promise<SessionUser | null> {
-    try {
-        const supabase = await createServerSupabaseClient()
-        const { data: { user: authUser } } = await supabase.auth.getUser()
-
-        if (!authUser?.email) return null
-
+// ── Cached Prisma user lookup (shared across all requests for 5 min) ─────
+// Supabase auth (JWT validation) still runs every request,
+// but the heavy Prisma join for roles/permissions is cached in-memory.
+async function fetchUserByEmail(email: string): Promise<SessionUser | null> {
+    return cached(`user:session:${email}`, async () => {
         const user = await prisma.user.findUnique({
-            where: { email: authUser.email },
+            where: { email },
             include: {
                 roles: {
                     include: {
@@ -61,10 +57,35 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Ses
             roles,
             permissions,
         }
+    }, 300_000) // 5 minutes — roles/permissions rarely change
+}
+
+// Get current authenticated user with roles & permissions
+// Wrapped with React cache() for per-request deduplication — avoids duplicate
+// Supabase + Prisma calls when multiple server functions need the user in one render.
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<SessionUser | null> {
+    try {
+        const supabase = await createServerSupabaseClient()
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+
+        if (!authUser?.email) return null
+
+        return await fetchUserByEmail(authUser.email)
     } catch {
         return null
     }
 })
+
+/**
+ * Force-refresh user session cache (call after role/permission changes)
+ */
+export function invalidateUserSession(email?: string) {
+    if (email) {
+        revalidateCache(`user:session:${email}`)
+    } else {
+        revalidateCache('user:session')
+    }
+}
 
 export const ROLE_NAME_MAP: Record<string, string> = {
     'Kế Toán': 'KE_TOAN',

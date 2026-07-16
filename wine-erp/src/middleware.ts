@@ -90,7 +90,7 @@ export async function middleware(request: NextRequest) {
                 // Set a strict timeout to prevent 504 Gateway Timeout if Supabase is cold-starting
                 const authPromise = supabase.auth.getUser()
                 const timeoutPromise = new Promise<{ data: { user: null } }>((_, reject) =>
-                    setTimeout(() => reject(new Error('Auth check timeout')), 1200)
+                    setTimeout(() => reject(new Error('Auth check timeout')), 800)
                 )
 
                 const { data: { user: authUser } } = await Promise.race([authPromise, timeoutPromise])

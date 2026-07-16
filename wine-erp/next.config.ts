@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '15mb',
     },
     staleTimes: {
-      dynamic: 120,   // Pages visited within 2min → instant from browser cache
-      static: 600,    // Static pages cached 10min
+      dynamic: 300,   // Pages visited within 5min → instant from Router Cache
+      static: 1800,   // Static pages cached 30min
     },
   },
   async headers() {
