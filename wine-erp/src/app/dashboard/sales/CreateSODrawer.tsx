@@ -439,230 +439,206 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
                     {!loadingData && (
                         <>
-                            {/* Customer Autocomplete Search */}
-                            <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
-                                    Khách Hàng *
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Gõ mã hoặc tên khách hàng để tìm..."
-                                        value={customerSearchInput}
-                                        onFocus={() => setCustomerDropdownOpen(true)}
-                                        onBlur={() => {
-                                            setTimeout(() => {
-                                                setCustomerDropdownOpen(false)
-                                                if (selectedCustomer) {
-                                                    setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
-                                                } else {
-                                                    setCustomerSearchInput('')
-                                                }
-                                            }, 200)
-                                        }}
-                                        onChange={e => {
-                                            setCustomerSearchInput(e.target.value)
-                                            setCustomerDropdownOpen(true)
-                                        }}
-                                        className="w-full px-3 py-2.5 text-sm outline-none"
-                                        style={{ ...inputStyle }}
-                                    />
-                                    {customerDropdownOpen && (
-                                        <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-[#142433] border border-[#2A4355] w-full shadow-2xl">
-                                            {filteredCustomers.length === 0 ? (
-                                                <div className="px-3 py-2.5 text-xs text-gray-500">
-                                                    Không tìm thấy khách hàng
-                                                </div>
-                                            ) : (
-                                                filteredCustomers.map(c => (
-                                                    <div
-                                                        key={c.id}
-                                                        onMouseDown={() => {
-                                                            handleCustomerChange(c.id)
-                                                            setCustomerDropdownOpen(false)
-                                                        }}
-                                                        className="px-3 py-2.5 text-sm cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left text-white border-b border-[#2A4355]/30 last:border-b-0"
-                                                    >
-                                                        <span className="font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
-                                                        <span>{c.name}</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Shipping Address Selection */}
-                            {selectedCustomer && (
+                            {/* Row 1: Customer & Address */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Customer Autocomplete Search */}
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#4A6A7A' }}>
+                                        Khách Hàng *
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Gõ mã hoặc tên khách hàng để tìm..."
+                                            value={customerSearchInput}
+                                            onFocus={() => setCustomerDropdownOpen(true)}
+                                            onBlur={() => {
+                                                setTimeout(() => {
+                                                    setCustomerDropdownOpen(false)
+                                                    if (selectedCustomer) {
+                                                        setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
+                                                    } else {
+                                                        setCustomerSearchInput('')
+                                                    }
+                                                }, 200)
+                                            }}
+                                            onChange={e => {
+                                                setCustomerSearchInput(e.target.value)
+                                                setCustomerDropdownOpen(true)
+                                            }}
+                                            className="w-full px-3 py-1.5 text-xs outline-none rounded"
+                                            style={{ ...inputStyle }}
+                                        />
+                                        {customerDropdownOpen && (
+                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-[#142433] border border-[#2A4355] w-full shadow-2xl">
+                                                {filteredCustomers.length === 0 ? (
+                                                    <div className="px-3 py-2.5 text-xs text-gray-500">
+                                                        Không tìm thấy khách hàng
+                                                    </div>
+                                                ) : (
+                                                    filteredCustomers.map(c => (
+                                                        <div
+                                                            key={c.id}
+                                                            onMouseDown={() => {
+                                                                handleCustomerChange(c.id)
+                                                                setCustomerDropdownOpen(false)
+                                                            }}
+                                                            className="px-3 py-2.5 text-xs cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left text-white border-b border-[#2A4355]/30 last:border-b-0"
+                                                        >
+                                                            <span className="font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
+                                                            <span>{c.name}</span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Shipping Address Selection */}
+                                <div>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#4A6A7A' }}>
                                         Địa Chỉ Giao Hàng *
                                     </label>
-                                    {(!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
-                                        <div className="p-3 rounded-md text-xs bg-red-950/20 border border-red-500/20 text-red-400">
-                                            ⚠️ Khách hàng chưa cấu hình địa chỉ giao hàng. Hãy cấu hình ở mục Khách hàng.
+                                    {!selectedCustomer ? (
+                                        <div className="w-full px-3 py-1.5 text-xs rounded border border-[#2A4355] text-gray-500 bg-[#0A1926]/40">
+                                            Chưa chọn khách hàng
+                                        </div>
+                                    ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
+                                        <div className="px-3 py-1 text-xs bg-red-950/20 border border-red-500/20 text-red-400 rounded">
+                                            ⚠️ Chưa có địa chỉ giao hàng
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
+                                        <div className="space-y-1">
                                             <select
                                                 value={shippingAddressId}
                                                 onChange={e => setShippingAddressId(e.target.value)}
-                                                className="w-full px-3 py-2.5 text-sm outline-none"
+                                                className="w-full px-3 py-1.5 text-xs outline-none rounded"
                                                 style={{ ...inputStyle }}
                                             >
-                                                <option value="">-- Chọn địa chỉ giao hàng --</option>
+                                                <option value="">-- Chọn địa chỉ --</option>
                                                 {selectedCustomer.addresses.map(addr => (
                                                     <option key={addr.id} value={addr.id}>
                                                         {addr.label} ({addr.address})
                                                     </option>
                                                 ))}
                                             </select>
-                                            {shippingAddressId && (() => {
-                                                const selectedAddr = selectedCustomer.addresses.find(a => a.id === shippingAddressId)
-                                                if (!selectedAddr) return null
-                                                return (
-                                                    <div className="p-3 rounded bg-[#142433] border border-[#2A4355]/40 text-xs text-gray-300 leading-relaxed">
-                                                        <span className="font-bold text-[#87CBB9]">{selectedAddr.label}: </span>
-                                                        {selectedAddr.address}
-                                                        {selectedAddr.ward && `, ${selectedAddr.ward}`}
-                                                        {selectedAddr.district && `, ${selectedAddr.district}`}
-                                                        {selectedAddr.city && `, ${selectedAddr.city}`}
-                                                        {selectedAddr.isDefault && <span className="ml-2 inline-block px-1.5 py-0.5 text-[9px] bg-[#5BA88A]/20 text-[#5BA88A] rounded border border-[#5BA88A]/30">Mặc định</span>}
-                                                    </div>
-                                                )
-                                            })()}
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            </div>
 
-                            {/* Credit status */}
+                            {selectedCustomer && shippingAddressId && (() => {
+                                const selectedAddr = selectedCustomer.addresses?.find(a => a.id === shippingAddressId)
+                                if (!selectedAddr) return null
+                                return (
+                                    <div className="p-2 rounded bg-[#142433]/60 border border-[#2A4355]/40 text-[11px] text-gray-300 leading-normal">
+                                        <span className="font-bold text-[#87CBB9]">{selectedAddr.label}: </span>
+                                        {selectedAddr.address}{selectedAddr.ward && `, ${selectedAddr.ward}`}{selectedAddr.district && `, ${selectedAddr.district}`}{selectedAddr.city && `, ${selectedAddr.city}`}
+                                    </div>
+                                )
+                            })()}
+
+                            {/* Row 2: Credit Status & Order general details */}
                             {selectedCustomer && (
-                                <div className="p-3 rounded-md" style={{ background: creditWarning ? 'rgba(139,26,46,0.1)' : 'rgba(91,168,138,0.08)', border: `1px solid ${creditWarning ? 'rgba(139,26,46,0.3)' : 'rgba(91,168,138,0.2)'}` }}>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        {creditWarning && <AlertCircle size={14} style={{ color: '#8B1A2E' }} />}
-                                        <p className="text-xs font-semibold" style={{ color: creditWarning ? '#8B1A2E' : '#5BA88A' }}>
-                                            {isCreditHold 
-                                                ? '⚠️ Khách hàng đang bị GIỮ TÍN DỤNG (Credit Hold)' 
-                                                : creditWarning 
-                                                    ? '⚠️ Vượt Credit Limit' 
-                                                    : '✅ Credit OK'}
-                                        </p>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-3 text-xs">
-                                        <div>
-                                            <p style={{ color: '#4A6A7A' }}>
-                                                Credit Limit {selectedCustomer.parentId && Number(selectedCustomer.creditLimit) === 0 && ' (Cha)'}
-                                            </p>
-                                            <p className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
-                                                {formatVND(effectiveCreditLimit)}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Credit Status Card */}
+                                    <div className="p-2.5 rounded-lg flex flex-col justify-between"
+                                        style={{ background: creditWarning ? 'rgba(139,26,46,0.06)' : 'rgba(91,168,138,0.04)', border: `1px solid ${creditWarning ? 'rgba(139,26,46,0.25)' : 'rgba(91,168,138,0.15)'}` }}>
+                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
+                                                {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
                                             </p>
                                         </div>
-                                        <div>
-                                            <p style={{ color: '#4A6A7A' }}>Dư Nợ Hiện Tại</p>
-                                            <p className="font-bold" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>
-                                                {loadingAR ? '...' : formatVND(arBalance)}
-                                            </p>
+                                        <div className="grid grid-cols-3 gap-2 text-[11px]">
+                                            <div>
+                                                <p style={{ color: '#4A6A7A' }} className="text-[10px]">Hạn mức</p>
+                                                <p className="font-semibold font-mono" style={{ color: '#E8F1F2' }}>{formatVND(effectiveCreditLimit)}</p>
+                                            </div>
+                                            <div>
+                                                <p style={{ color: '#4A6A7A' }} className="text-[10px]">Dư nợ</p>
+                                                <p className="font-semibold font-mono" style={{ color: '#D4A853' }}>{loadingAR ? '...' : formatVND(arBalance)}</p>
+                                            </div>
+                                            <div>
+                                                <p style={{ color: '#4A6A7A' }} className="text-[10px]">Khả dụng</p>
+                                                <p className="font-semibold font-mono" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>{formatVND(Math.max(0, creditAvailable))}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p style={{ color: '#4A6A7A' }}>Khả Dụng</p>
-                                            <p className="font-bold" style={{ color: creditWarning ? '#8B1A2E' : '#5BA88A', fontFamily: '"DM Mono"' }}>
-                                                {formatVND(Math.max(0, creditAvailable))}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Channel + Payment Term + Legal Entity — read-only with override */}
-                            {selectedCustomer && (
-                                <div className="p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông Tin Đơn Hàng</p>
-                                        {canOverride && !overrideMode && (
-                                            <button
-                                                onClick={() => setOverrideMode(true)}
-                                                className="text-[10px] px-2 py-0.5 rounded transition-all"
-                                                style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}
-                                            >
-                                                Thay đổi
-                                            </button>
-                                        )}
-                                        {overrideMode && (
-                                            <button
-                                                onClick={() => setOverrideMode(false)}
-                                                className="text-[10px] px-2 py-0.5 rounded transition-all"
-                                                style={{ color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', background: 'rgba(91,168,138,0.08)' }}
-                                            >
-                                                Xong
-                                            </button>
-                                        )}
                                     </div>
 
-                                    {!overrideMode ? (
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div>
-                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Kênh Bán</p>
-                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
-                                                    {CHANNELS.find(c => c.value === channel)?.label ?? channel}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Thanh Toán</p>
-                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{paymentTerm}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Pháp Nhân</p>
-                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
-                                                    {entities.find(e => e.id === legalEntityId)?.name ?? '— Chưa chọn —'}
-                                                </p>
-                                            </div>
+                                    {/* General Order Info */}
+                                    <div className="p-2.5 rounded-lg flex flex-col justify-between" style={{ background: '#142433/60', border: '1px solid #2A4355' }}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông tin đơn hàng</p>
+                                            {canOverride && (
+                                                <button
+                                                    onClick={() => setOverrideMode(!overrideMode)}
+                                                    className="text-[9px] px-1.5 py-0.5 rounded transition-all"
+                                                    style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}
+                                                >
+                                                    {overrideMode ? 'Xong' : 'Thay đổi'}
+                                                </button>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] mb-1" style={{ color: '#4A6A7A' }}>Kênh Bán</label>
-                                                <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
-                                                    className="w-full px-2 py-1.5 text-xs outline-none" style={{ ...inputStyle }}>
-                                                    {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                                </select>
+
+                                        {!overrideMode ? (
+                                            <div className="grid grid-cols-3 gap-2 text-[11px]">
+                                                <div>
+                                                    <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Kênh Bán</p>
+                                                    <p className="font-semibold" style={{ color: '#E8F1F2' }}>
+                                                        {CHANNELS.find(c => c.value === channel)?.label ?? channel}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Thanh Toán</p>
+                                                    <p className="font-semibold" style={{ color: '#E8F1F2' }}>{paymentTerm}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Pháp Nhân</p>
+                                                    <p className="font-semibold truncate" style={{ color: '#E8F1F2' }} title={entities.find(e => e.id === legalEntityId)?.name}>
+                                                        {entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-[10px] mb-1" style={{ color: '#4A6A7A' }}>Thanh Toán</label>
-                                                <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
-                                                    className="w-full px-2 py-1.5 text-xs outline-none" style={{ ...inputStyle }}>
-                                                    {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
-                                                        <option key={t} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
+                                        ) : (
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
+                                                        className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                        {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
+                                                        className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                        {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
+                                                            <option key={t} value={t}>{t}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
+                                                        className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                        <option value="">— Pháp Nhân —</option>
+                                                        {entities.map(e => (
+                                                            <option key={e.id} value={e.id}>{e.code}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-[10px] mb-1" style={{ color: '#4A6A7A' }}>Pháp Nhân</label>
-                                                <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
-                                                    className="w-full px-2 py-1.5 text-xs outline-none" style={{ ...inputStyle }}>
-                                                    <option value="">— Mặc định —</option>
-                                                    {entities.map(e => (
-                                                        <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
                             {/* Diễn giải đơn hàng */}
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
-                                    Diễn Giải Đơn Hàng
-                                </label>
                                 <textarea
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
                                     placeholder="Nhập diễn giải/ghi chú đơn hàng..."
-                                    rows={2}
-                                    className="w-full px-3 py-2.5 text-sm outline-none"
+                                    rows={1}
+                                    className="w-full px-3 py-1.5 text-xs outline-none rounded"
                                     style={{ ...inputStyle }}
                                 />
                             </div>
@@ -687,7 +663,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 ) : (
                                     <>
                                         {/* Desktop Table View */}
-                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
+                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full" style={{ minHeight: '280px' }}>
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">

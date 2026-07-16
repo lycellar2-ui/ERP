@@ -626,7 +626,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 ) : (
                                     <>
                                         {/* Desktop Table View */}
-                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full">
+                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full" style={{ minHeight: '280px' }}>
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
