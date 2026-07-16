@@ -147,7 +147,7 @@ function SortHeader({ label, field, current, dir, onSort }: { label: string; fie
     const isActive = current === field
     return (
         <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
-            style={{ color: isActive ? '#87CBB9' : '#4A6A7A' }}
+            style={{ color: isActive ? '#87CBB9' : '#8AAEBB' }}
             onClick={() => onSort(field)}>
             <span className="inline-flex items-center gap-1">
                 {label}
@@ -270,94 +270,116 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                             </div>
                         )}
 
-                        <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Tiến Trình Đơn Hàng</p>
+                        {/* Tiến Trình Đơn Hàng */}
+                        <div className="py-2.5">
+                            <div className="flex items-center justify-between text-xs mb-3">
+                                <span className="font-bold uppercase tracking-wider text-[10px]" style={{ color: '#4A6A7A' }}>Tiến Trình Đơn Hàng</span>
+                                <span className="font-semibold text-xs px-2 py-0.5 rounded-full"
+                                    style={{ background: STATUS_CFG[detail.status as SOStatus]?.bg, color: STATUS_CFG[detail.status as SOStatus]?.color }}>
+                                    {STATUS_CFG[detail.status as SOStatus]?.label}
+                                </span>
+                            </div>
                             <div className="flex items-center gap-1">
                                 {(['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] as SOStatus[]).map((s, i) => {
                                     const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
                                     const currentIdx = steps.indexOf(detail.status as SOStatus)
-                                    const stepIdx = i
-                                    const isDone = stepIdx <= currentIdx
+                                    const isDone = i <= currentIdx
                                     const isCurrent = s === detail.status
                                     return (
                                         <div key={s} className="flex items-center gap-1 flex-1">
                                             <div className="flex flex-col items-center flex-1">
-                                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                                                <div className="w-5.5 h-5.5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all"
                                                     style={{
-                                                        background: isDone ? 'rgba(91,168,138,0.25)' : 'rgba(42,67,85,0.5)',
-                                                        color: isDone ? '#5BA88A' : '#4A6A7A',
+                                                        background: isDone ? 'rgba(135,203,185,0.2)' : 'rgba(42,67,85,0.3)',
+                                                        color: isDone ? '#87CBB9' : '#4A6A7A',
                                                         border: isCurrent ? '2px solid #87CBB9' : '1px solid transparent',
+                                                        width: '22px', height: '22px'
                                                     }}>
-                                                    {isDone ? '✓' : stepIdx + 1}
+                                                    {isDone ? '✓' : i + 1}
                                                 </div>
-                                                <p className="text-[9px] mt-1 text-center hidden sm:block" style={{ color: isDone ? '#87CBB9' : '#4A6A7A' }}>
-                                                    {STATUS_CFG[s]?.label}
-                                                </p>
                                             </div>
-                                            {i < 5 && <div className="h-[2px] flex-1 rounded mb-0 sm:mb-4" style={{ background: isDone && stepIdx < currentIdx ? '#5BA88A' : '#2A4355' }} />}
+                                            {i < 5 && <div className="h-[2px] flex-1 rounded" style={{ background: isDone && i < currentIdx ? '#87CBB9' : '#2A4355' }} />}
                                         </div>
                                     )
                                 })}
                             </div>
                         </div>
 
-                        {/* 2. GENERAL INFO & FINANCES MARGIN */}
-                        <div className="space-y-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông Tin Tổng Quan</p>
-                            
-                            {canSeeMargin && !marginData && (
-                                <div className="p-3 rounded-md flex items-center justify-center gap-2" style={{ background: '#142433', border: '1px dashed #2A4355' }}>
-                                    <Loader2 size={12} className="animate-spin text-[#D4A853]" />
-                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>Đang tính toán giá vốn & margin trong nền...</span>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {[
-                                    { label: 'Tổng Giá Trị Đơn', value: formatVND(Number(detail.totalAmount)), color: '#87CBB9' },
-                                    { label: 'Nhân Viên Kinh Doanh', value: detail.salesRep.name, color: '#8AAEBB' },
-                                    { label: 'Kênh Bán Hàng', value: CHANNEL_LABEL[detail.channel] ?? detail.channel, color: '#8AAEBB' },
-                                ].map(kpi => (
-                                    <div key={kpi.label} className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{kpi.label}</p>
-                                        <p className="text-sm font-bold mt-1" style={{ color: kpi.color, fontFamily: '"DM Mono"' }}>{kpi.value}</p>
+                        {/* General Info & Financials (Two-Column Grid) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#2A4355]/40">
+                            {/* Column 1: Customer details */}
+                            <div className="space-y-3">
+                                <h4 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thông tin chung</h4>
+                                <div className="space-y-2 text-xs">
+                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }}>Khách hàng:</span>
+                                        <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.name}</span>
                                     </div>
-                                ))}
+                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }}>Mã KH / Kênh:</span>
+                                        <span className="font-semibold" style={{ color: '#8AAEBB' }}>{detail.customer.code} ({CHANNEL_LABEL[detail.channel] ?? detail.channel})</span>
+                                    </div>
+                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }}>Sales Rep:</span>
+                                        <span className="font-semibold" style={{ color: '#E8F1F2' }}>{detail.salesRep.name}</span>
+                                    </div>
+                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }}>Kỳ hạn thanh toán:</span>
+                                        <span className="font-semibold" style={{ color: '#D4A853' }}>{detail.paymentTerm}</span>
+                                    </div>
+                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }}>Ngày tạo đơn:</span>
+                                        <span className="font-semibold" style={{ color: '#8AAEBB' }}>{formatDate(detail.createdAt)}</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            {marginData && canSeeMargin && (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Doanh Thu Net</p>
-                                        <p className="text-xs font-bold mt-1" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalRevenue)}</p>
+                            {/* Column 2: Financial summary */}
+                            <div className="space-y-3">
+                                <h4 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Chỉ số tài chính</h4>
+                                {canSeeMargin && !marginData ? (
+                                    <div className="py-6 rounded-lg flex flex-col items-center justify-center gap-2 border border-[#2A4355]/30 bg-[#142433]/40">
+                                        <Loader2 size={16} className="animate-spin text-[#87CBB9]" />
+                                        <span className="text-[11px]" style={{ color: '#4A6A7A' }}>Đang tính toán tỷ suất lợi nhuận...</span>
                                     </div>
-                                    <div className="p-2.5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Tổng Giá Vốn</p>
-                                        <p className="text-xs font-bold mt-1" style={{ color: '#D4A853', fontFamily: '"DM Mono"' }}>{formatVND(marginData.totalCOGS)}</p>
-                                    </div>
-                                    <div className="p-2.5 rounded-md" style={{ background: marginData.totalMargin >= 0 ? 'rgba(91,168,138,0.08)' : 'rgba(220,38,38,0.08)', border: `1px solid ${marginData.totalMargin >= 0 ? 'rgba(91,168,138,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
-                                        <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Lợi Nhuận Gộp</p>
-                                        <p className="text-xs font-bold mt-1" style={{ color: marginData.totalMargin >= 0 ? '#5BA88A' : '#EF4444', fontFamily: '"DM Mono"' }}>
-                                            {marginData.totalMargin >= 0 ? '' : '-'}{formatVND(Math.abs(marginData.totalMargin))}
-                                        </p>
-                                    </div>
-                                    <div className="p-2.5 rounded-md flex items-center justify-between gap-1" style={{ background: marginData.totalMarginPct >= 0 ? 'rgba(91,168,138,0.08)' : 'rgba(220,38,38,0.08)', border: `1px solid ${marginData.totalMarginPct >= 0 ? 'rgba(91,168,138,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
-                                        <div>
-                                            <p className="text-[10px] uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Biên Lợi Nhuận</p>
-                                            <p className="text-xs font-bold mt-1" style={{ color: marginData.totalMarginPct >= 0 ? '#5BA88A' : '#EF4444', fontFamily: '"DM Mono"' }}>
-                                                {marginData.totalMarginPct.toFixed(1)}%
-                                            </p>
+                                ) : (
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                            <span style={{ color: '#4A6A7A' }}>Tổng giá trị (Gross):</span>
+                                            <span className="font-bold font-mono text-sm" style={{ color: '#E8F1F2' }}>{formatVND(Number(detail.totalAmount))}</span>
                                         </div>
-                                        {marginData.totalMarginPct >= 0 ? <TrendingUp size={14} style={{ color: '#5BA88A' }} /> : <TrendingDown size={14} style={{ color: '#EF4444' }} />}
+                                        {marginData && canSeeMargin ? (
+                                            <>
+                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                                    <span style={{ color: '#4A6A7A' }}>Doanh thu Net (trước VAT):</span>
+                                                    <span className="font-bold font-mono" style={{ color: '#87CBB9' }}>{formatVND(marginData.totalRevenue)}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                                    <span style={{ color: '#4A6A7A' }}>Tổng giá vốn (COGS):</span>
+                                                    <span className="font-bold font-mono" style={{ color: '#D4A853' }}>{formatVND(marginData.totalCOGS)}</span>
+                                                </div>
+                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                                    <span style={{ color: '#4A6A7A' }}>Lợi nhuận gộp:</span>
+                                                    <span className={`font-bold font-mono ${marginData.totalMargin >= 0 ? 'text-[#5BA88A]' : 'text-[#EF4444]'}`}>
+                                                        {marginData.totalMargin >= 0 ? '' : '-'}{formatVND(Math.abs(marginData.totalMargin))}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                                    <span style={{ color: '#4A6A7A' }}>Biên lợi nhuận gộp:</span>
+                                                    <span className="font-semibold flex items-center gap-1" style={{ color: marginData.totalMarginPct >= 20 ? '#5BA88A' : marginData.totalMarginPct >= 0 ? '#D4A853' : '#EF4444' }}>
+                                                        {marginData.totalMarginPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                                                        {marginData.totalMarginPct.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            </>
+                                        ) : !canSeeMargin ? (
+                                            <div className="py-3 px-3 rounded text-[11px] leading-relaxed bg-[#142433]/40 border border-[#2A4355]/30" style={{ color: '#4A6A7A' }}>
+                                                🔒 Chi tiết biên lợi nhuận bị ẩn đối với tài khoản Sales Rep/Sales Admin.
+                                            </div>
+                                        ) : null}
                                     </div>
-                                </div>
-                            )}
-
-                            {marginData && !canSeeMargin && (
-                                <div className="p-3 rounded-md flex items-center justify-center gap-2" style={{ background: 'rgba(74,106,122,0.08)', border: '1px dashed #2A4355' }}>
-                                    <span className="text-xs text-center" style={{ color: '#4A6A7A' }}>🔒 Chi tiết giá vốn và biên lợi nhuận được ẩn đối với tài khoản phân quyền Sales Rep/Sales Admin.</span>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
 
                         {/* 3. PRODUCTS LIST */}
@@ -794,6 +816,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     const [createOpen, setCreateOpen] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
+    const [showStats, setShowStats] = useState(false)
     const [editId, setEditId] = useState<string | null>(null)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
@@ -1040,14 +1063,38 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                <SOStatCard label="Doanh Thu Tháng" value={`₫${(stats.monthRevenue / 1e9).toFixed(1)}T`} accent="#87CBB9" />
-                <SOStatCard label="Đơn Tháng Này" value={stats.monthOrders} accent="#5BA88A" />
-                <SOStatCard label="Chờ Duyệt" value={stats.pendingApproval} accent="#D4A853" />
-                <SOStatCard label="Đã Xác Nhận" value={stats.confirmed} accent="#4A8FAB" />
-                <SOStatCard label="Bản Nháp" value={stats.draft} accent="#8AAEBB" />
-            </div>
+            {/* Collapsible Stats Section */}
+            {!showStats ? (
+                <div className="flex flex-wrap items-center justify-between px-4 py-2.5 rounded-lg text-xs"
+                    style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+                        <span style={{ color: '#4A6A7A' }} className="font-semibold uppercase tracking-wider text-[10px]">Chỉ số nhanh:</span>
+                        <span style={{ color: '#8AAEBB' }}>Doanh Thu: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.monthRevenue / 1e9).toFixed(1)}T</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Đơn hàng: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Xác nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.confirmed}</strong></span>
+                    </div>
+                    <button onClick={() => setShowStats(true)} className="text-xs font-semibold hover:underline flex items-center gap-1 transition-all" style={{ color: '#87CBB9' }}>
+                        Xem chi tiết chỉ số ➔
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết</span>
+                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
+                            Thu gọn chỉ số ✕
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                        <SOStatCard label="Doanh Thu Tháng" value={`₫${(stats.monthRevenue / 1e9).toFixed(1)}T`} accent="#87CBB9" />
+                        <SOStatCard label="Đơn Tháng Này" value={stats.monthOrders} accent="#5BA88A" />
+                        <SOStatCard label="Chờ Duyệt" value={stats.pendingApproval} accent="#D4A853" />
+                        <SOStatCard label="Đã Xác Nhận" value={stats.confirmed} accent="#4A8FAB" />
+                        <SOStatCard label="Bản Nháp" value={stats.draft} accent="#8AAEBB" />
+                    </div>
+                </div>
+            )}
 
             {/* Quick Filter Tabs */}
             <FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />
@@ -1094,14 +1141,14 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                         <thead>
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
                                 <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} />
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Khách Hàng</th>
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Kênh</th>
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Pháp Nhân</th>
+                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Khách Hàng</th>
+                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Kênh</th>
+                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Pháp Nhân</th>
                                 <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} />
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Sales Rep</th>
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Trạng Thái</th>
+                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Sales Rep</th>
+                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Trạng Thái</th>
                                 <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} />
-                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>Hành Động</th>
+                                <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB' }}>Hành Động</th>
                             </tr>
                         </thead>
                         <tbody>

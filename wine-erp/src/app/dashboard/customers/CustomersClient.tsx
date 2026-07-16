@@ -614,6 +614,7 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
     const [importOpen, setImportOpen] = useState(false)
+    const [showStats, setShowStats] = useState(false)
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
@@ -753,13 +754,37 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard label="Tổng KH" value={stats.total} icon={Users} accent="#87CBB9" />
-                <StatCard label="Hoạt động" value={stats.active} icon={Building2} accent="#5BA88A" />
-                <StatCard label="Có hạn mức" value={stats.withCredit} icon={ShoppingBag} accent="#4A8FAB" />
-                <StatCard label="Tổng hạn mức" value={formatVND(stats.totalCreditLimit)} icon={CreditCard} accent="#87CBB9" />
-            </div>
+            {/* Collapsible Stats Section */}
+            {!showStats ? (
+                <div className="flex flex-wrap items-center justify-between px-4 py-2.5 rounded-lg text-xs"
+                    style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+                        <span style={{ color: '#4A6A7A' }} className="font-semibold uppercase tracking-wider text-[10px]">Chỉ số nhanh:</span>
+                        <span style={{ color: '#8AAEBB' }}>Tổng KH: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{stats.total}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Hoạt động: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.active}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Có hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.withCredit}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Tổng hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{formatVND(stats.totalCreditLimit)}</strong></span>
+                    </div>
+                    <button onClick={() => setShowStats(true)} className="text-xs font-semibold hover:underline flex items-center gap-1 transition-all" style={{ color: '#87CBB9' }}>
+                        Xem chi tiết chỉ số ➔
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết</span>
+                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
+                            Thu gọn chỉ số ✕
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <StatCard label="Tổng KH" value={stats.total} icon={Users} accent="#87CBB9" />
+                        <StatCard label="Hoạt động" value={stats.active} icon={Building2} accent="#5BA88A" />
+                        <StatCard label="Có hạn mức" value={stats.withCredit} icon={ShoppingBag} accent="#4A8FAB" />
+                        <StatCard label="Tổng hạn mức" value={formatVND(stats.totalCreditLimit)} icon={CreditCard} accent="#87CBB9" />
+                    </div>
+                </div>
+            )}
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-3">
@@ -824,7 +849,7 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
                                 {sortableHeaders.map((h, i) => (
                                     <th key={i} className={`${h.cls} text-xs uppercase tracking-wider font-semibold ${h.sortable ? 'cursor-pointer select-none' : ''}`}
-                                        style={{ color: h.sortable && filters.sortBy === h.key ? '#87CBB9' : '#4A6A7A' }}
+                                        style={{ color: h.sortable && filters.sortBy === h.key ? '#87CBB9' : '#8AAEBB' }}
                                         onClick={() => h.sortable && h.key && handleSort(h.key)}>
                                         <span className="inline-flex items-center gap-1.5">
                                             {h.label}
