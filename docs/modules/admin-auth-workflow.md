@@ -38,3 +38,19 @@ Sẽ cần thiết kế engine trung tâm (State Machine) thay vì dùng code `i
 ## 3. Hoạt động trên Executive Dashboard
 Trên màn hình của CEO và các Trưởng phòng sẽ xuất hiện một Khu Vực Đặc Biệt:
 - **"Pending My Approvals / Cần Tôi Duyệt":** Hiển thị danh sách dạng Kanban/Table các chứng từ đang chờ, CEO bấm vào có thể xem tổng quát số liệu tài chính của chứng từ trước khi ký điện tử (Click nút `Approve` hoặc `Reject` với lý do đính kèm).
+
+---
+
+## 4. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 16/07/2026 — **Hoàn thiện 100%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Danh sách Vai trò & Quyền** | `SettingsClient.tsx` + `actions.ts:getRoles` | Hiển thị các vai trò, số lượng quyền, số lượng người dùng và thanh tiến độ phần trăm |
+| **Phân quyền Vai trò (CRUD RBAC)** | `SettingsClient.tsx` + `actions.ts:getRolePermissions` | Hỗ trợ click vào vai trò để mở Drawer phân quyền, tích hợp check/uncheck quyền nhóm theo Module và cập nhật trực tiếp xuống DB qua `updateRolePermissions` |
+| **Audit Logs cho Phân quyền** | `actions.ts` | Ghi nhận nhật ký hệ thống chi tiết khi cập nhật quyền của vai trò |
+
+*Last updated: 2026-07-16 22:53 | Wine ERP v7.6*

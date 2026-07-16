@@ -9,7 +9,7 @@ import {
 import { toast } from 'sonner'
 import {
     UserRow, RoleRow, createUser, updateUser, updateUserRoles,
-    createRole, updateRolePermissions, getUsers, getRoles,
+    createRole, updateRolePermissions, getRolePermissions, getUsers, getRoles,
     getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate,
     getLegalEntitiesList, updateLegalEntity, getSystemWarehouses, updateWarehouseLegalEntity
 } from './actions'
@@ -241,6 +241,135 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     )
 }
 
+// ── Edit Role Permissions Drawer ──────────────────
+function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions }: {
+    open: boolean
+    onClose: () => void
+    onUpdated: () => void
+    role: RoleRow | null
+    permissions: PermissionRow[]
+}) {
+    const [saving, setSaving] = useState(false)
+    const [selectedPerms, setSelectedPerms] = useState<string[]>([])
+    const [loading, setLoading] = useState(false)
+
+    // Load permissions for selected role
+    React.useEffect(() => {
+        if (open && role) {
+            setLoading(true)
+            getRolePermissions(role.id)
+                .then(permIds => {
+                    setSelectedPerms(permIds)
+                    setLoading(false)
+                })
+                .catch(err => {
+                    toast.error('Lỗi khi tải danh sách quyền: ' + err.message)
+                    setLoading(false)
+                })
+        }
+    }, [open, role])
+
+    const modules = Array.from(new Set(permissions.map(p => p.module))).sort()
+
+    const toggleModule = (mod: string) => {
+        const modPerms = permissions.filter(p => p.module === mod).map(p => p.id)
+        const allSelected = modPerms.every(id => selectedPerms.includes(id))
+        if (allSelected) {
+            setSelectedPerms(s => s.filter(id => !modPerms.includes(id)))
+        } else {
+            setSelectedPerms(s => [...new Set([...s, ...modPerms])])
+        }
+    }
+
+    async function handleSave() {
+        if (!role) return
+        setSaving(true)
+        const res = await updateRolePermissions(role.id, selectedPerms)
+        if (res.success) {
+            toast.success('Cập nhật quyền thành công!')
+            onUpdated()
+            onClose()
+        } else {
+            toast.error(res.error || 'Lỗi cập nhật quyền')
+        }
+        setSaving(false)
+    }
+
+    if (!open || !role) return null
+
+    return (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6" style={{ background: '#0D1B25' }}>
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                            Phân Quyền Vai Trò
+                        </h3>
+                        <p className="text-xs" style={{ color: '#4A6A7A' }}>
+                            Cấu hình quyền hạn cho: <strong style={{ color: '#87CBB9' }}>{role.name}</strong>
+                        </p>
+                    </div>
+                    <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                </div>
+
+                {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#8AAEBB' }}>Quyền Hạn Hệ Thống</label>
+                            <div className="space-y-2">
+                                {modules.map(mod => {
+                                    const modPerms = permissions.filter(p => p.module === mod)
+                                    const count = modPerms.filter(p => selectedPerms.includes(p.id)).length
+                                    return (
+                                        <div key={mod} className="rounded-md p-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                            <button onClick={() => toggleModule(mod)}
+                                                className="flex items-center justify-between w-full text-left">
+                                                <span className="text-xs font-bold" style={{ color: count === modPerms.length ? '#87CBB9' : '#E8F1F2' }}>
+                                                    {mod}
+                                                </span>
+                                                <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                    {count}/{modPerms.length}
+                                                </span>
+                                            </button>
+                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                {modPerms.map(p => (
+                                                    <button key={p.id}
+                                                        onClick={() => setSelectedPerms(s =>
+                                                            s.includes(p.id) ? s.filter(x => x !== p.id) : [...s, p.id]
+                                                        )}
+                                                        className="text-xs px-2 py-0.5 rounded transition-all"
+                                                        style={{
+                                                            background: selectedPerms.includes(p.id) ? 'rgba(135,203,185,0.2)' : 'rgba(42,67,85,0.5)',
+                                                            color: selectedPerms.includes(p.id) ? '#87CBB9' : '#4A6A7A',
+                                                            border: selectedPerms.includes(p.id) ? '1px solid rgba(135,203,185,0.4)' : '1px solid transparent',
+                                                        }}>
+                                                        {p.action}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        <button onClick={handleSave} disabled={saving}
+                            className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
+                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                            {saving ? 'Đang lưu...' : `Lưu Quyền Hạn (${selectedPerms.length} quyền)`}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
 // ── User Detail / Edit Drawer ─────────────────────
 interface UserDetailDrawerProps {
     open: boolean
@@ -436,6 +565,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
     const [fieldChanges, setFieldChanges] = useState<any[]>([])
     const [loadingChanges, setLoadingChanges] = useState(false)
     const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
+    const [selectedRole, setSelectedRole] = useState<RoleRow | null>(null)
+    const [showEditRole, setShowEditRole] = useState(false)
 
     // Legal Entities Tab States
     const [entities, setEntities] = useState<any[]>([])
@@ -696,7 +827,12 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                         {roles.map(r => (
-                            <div key={r.id} className="p-5 rounded-md" style={card}>
+                            <div key={r.id} className="p-5 rounded-md cursor-pointer border border-transparent hover:border-[#87CBB9]/45 hover:bg-[#1C3245] transition-all" 
+                                style={card}
+                                onClick={() => {
+                                    setSelectedRole(r)
+                                    setShowEditRole(true)
+                                }}>
                                 <div className="flex items-center justify-between mb-3">
                                     <h4 className="font-bold" style={{ color: '#E8F1F2' }}>{r.name}</h4>
                                     <div className="flex items-center gap-2">
@@ -999,6 +1135,16 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             />
             <CreateUserDrawer open={showCreateUser} onClose={() => setShowCreateUser(false)} onCreated={reload} roles={roles} />
             <CreateRoleDrawer open={showCreateRole} onClose={() => setShowCreateRole(false)} onCreated={reload} permissions={permissions} />
+            <EditRolePermissionsDrawer
+                open={showEditRole}
+                onClose={() => {
+                    setShowEditRole(false)
+                    setSelectedRole(null)
+                }}
+                onUpdated={reload}
+                role={selectedRole}
+                permissions={permissions}
+            />
             <UserDetailDrawer
                 open={!!selectedUser}
                 onClose={() => setSelectedUser(null)}

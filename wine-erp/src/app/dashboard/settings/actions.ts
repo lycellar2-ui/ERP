@@ -212,6 +212,15 @@ export async function getPermissions() {
     return serialize(raw)
 }
 
+export async function getRolePermissions(roleId: string): Promise<string[]> {
+    await requirePermission('SYS', 'ADMIN')
+    const rp = await prisma.rolePermission.findMany({
+        where: { roleId },
+        select: { permissionId: true },
+    })
+    return rp.map(item => item.permissionId)
+}
+
 // ─── Update Role Permissions ──────────────────────
 export async function updateRolePermissions(
     roleId: string,
