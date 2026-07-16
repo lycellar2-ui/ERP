@@ -157,8 +157,8 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
     if (collapsed) {
         return (
             <div
-                className="flex items-center justify-center py-4 w-full"
-                style={{ borderBottom: '1px solid #2A4355', minHeight: '64px' }}
+                className="flex items-center justify-center w-full"
+                style={{ borderBottom: '1px solid #2A4355', height: '64px' }}
             >
                 <Image
                     src="/logo/Ly's Cellars - Logo_icon blue green.png"
@@ -174,8 +174,8 @@ function LysLogo({ collapsed }: { collapsed: boolean }) {
 
     return (
         <div
-            className="flex items-center px-6 py-4 w-full"
-            style={{ borderBottom: '1px solid #2A4355', minHeight: '64px' }}
+            className="flex items-center px-6 w-full"
+            style={{ borderBottom: '1px solid #2A4355', height: '64px' }}
         >
             <Image
                 src="/logo/Ly's Cellars - Logo_tagline blue green.png"
