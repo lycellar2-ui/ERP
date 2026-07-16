@@ -2,6 +2,9 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import ExcelJS from 'exceljs'
+import path from 'path'
+import fs from 'fs'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 import { requireAuth, getCurrentUser, requirePermission, hasRole } from '@/lib/session'
@@ -762,6 +765,73 @@ export async function deleteCustomerAddress(id: string): Promise<{ success: bool
         revalidatePath('/dashboard/customers')
         return { success: true }
     } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function exportCustomerOnboardingForm(customerId: string): Promise<{ success: boolean; data?: string; filename?: string; error?: string }> {
+    try {
+        await requirePermission('MDM', 'READ')
+        const c = await prisma.customer.findUnique({
+            where: { id: customerId },
+            include: {
+                salesRep: { select: { name: true } },
+                contacts: { where: { isPrimary: true }, take: 1 },
+                addresses: { where: { isDefault: true }, take: 1 },
+            }
+        })
+        if (!c) throw new Error('Không tìm thấy khách hàng')
+
+        const contact = c.contacts[0]
+        const addr = c.addresses[0]
+
+        // Load the template
+        const templatePath = path.join(process.cwd(), 'public', 'templates', 'Form_8.8-A_Yeu_cau_Tao_ma_KH.xlsx')
+        if (!fs.existsSync(templatePath)) {
+            throw new Error(`Không tìm thấy file mẫu tại ${templatePath}`)
+        }
+
+        const workbook = new ExcelJS.Workbook()
+        await workbook.xlsx.readFile(templatePath)
+        const worksheet = workbook.getWorksheet(1)
+        if (!worksheet) throw new Error('Không tìm thấy sheet trong file mẫu')
+
+        // Fill cells
+        worksheet.getCell('L2').value = c.salesRep?.name || ''
+        worksheet.getCell('L4').value = new Date().toLocaleDateString('vi-VN')
+        
+        // Section I
+        worksheet.getCell('A13').value = c.name
+        worksheet.getCell('B13').value = addr
+            ? `${addr.address}${addr.ward ? ', ' + addr.ward : ''}${addr.district ? ', ' + addr.district : ''}${addr.city ? ', ' + addr.city : ''}`
+            : ''
+        worksheet.getCell('E13').value = contact?.name || ''
+        worksheet.getCell('F13').value = contact?.phone || ''
+        worksheet.getCell('H13').value = contact?.name || ''
+        worksheet.getCell('I13').value = contact?.phone || ''
+        worksheet.getCell('K13').value = contact?.email || ''
+
+        // Section B
+        worksheet.getCell('B16').value = addr?.city === 'Hồ Chí Minh' || addr?.city === 'Hà Nội' ? 'Việt Nam' : ''
+        worksheet.getCell('B18').value = addr?.city || ''
+        worksheet.getCell('B19').value = addr?.ward || ''
+        worksheet.getCell('H16').value = c.channel || ''
+        
+        // Section II
+        worksheet.getCell('E25').value = c.paymentTerm || 'NET30'
+        worksheet.getCell('N26').value = c.taxId || ''
+
+        // Save workbook to buffer and return as base64 string
+        const buffer = await workbook.xlsx.writeBuffer()
+        const base64 = Buffer.from(buffer as ArrayBuffer).toString('base64')
+
+        return {
+            success: true,
+            data: base64,
+            filename: `Form_8.8-A_Yeu_cau_Tao_ma_KH_${c.code || 'KH'}.xlsx`
+        }
+    } catch (err: any) {
+        console.error("Lỗi xuất Excel form:", err)
         return { success: false, error: err.message }
     }
 }

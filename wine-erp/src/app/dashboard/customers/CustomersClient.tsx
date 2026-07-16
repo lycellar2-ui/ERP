@@ -10,7 +10,7 @@ import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
     createCustomer, updateCustomer, getCustomers, getCustomerById,
     deleteCustomer, exportCustomersData, bulkImportCustomers, getParentCandidates,
-    getCustomerStats, getCustomerChannels, getSalesRepList,
+    getCustomerStats, getCustomerChannels, getSalesRepList, exportCustomerOnboardingForm,
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
@@ -94,6 +94,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [exportingExcel, setExportingExcel] = useState(false)
 
     const [parentCandidates, setParentCandidates] = useState<{ id: string; name: string; code: string }[]>([])
 
@@ -285,6 +286,36 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         `
         printWindow.document.write(htmlContent)
         printWindow.document.close()
+    }
+
+    const handleExportExcelForm = async () => {
+        if (!editingId) return
+        setExportingExcel(true)
+        try {
+            const res = await exportCustomerOnboardingForm(editingId)
+            if (res.success && res.data && res.filename) {
+                const byteCharacters = atob(res.data)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = res.filename
+                a.click()
+                window.URL.revokeObjectURL(url)
+                toast.success('Đã tải xuống biểu mẫu Excel thành công')
+            } else {
+                toast.error(res.error ?? 'Lỗi xuất biểu mẫu Excel')
+            }
+        } catch (err: any) {
+            toast.error(err.message ?? 'Đã xảy ra lỗi')
+        } finally {
+            setExportingExcel(false)
+        }
     }
 
     const handleSave = async () => {
@@ -537,10 +568,17 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                 <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #2A4355' }}>
                     {isEdit && (
-                        <button onClick={handlePrintCustomer} type="button"
-                            className="mr-auto flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all border border-[#2A4355] text-[#D4A853] hover:bg-[#D4A853]/10">
-                            <Printer size={14} /> In Hồ Sơ
-                        </button>
+                        <div className="mr-auto flex gap-2">
+                            <button onClick={handlePrintCustomer} type="button"
+                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-[#2A4355] text-[#D4A853] hover:bg-[#D4A853]/10">
+                                <Printer size={14} /> In Hồ Sơ
+                            </button>
+                            <button onClick={handleExportExcelForm} disabled={exportingExcel} type="button"
+                                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-sm font-semibold transition-all border border-[#2A4355] text-[#5BA88A] hover:bg-[#5BA88A]/10 disabled:opacity-50">
+                                {exportingExcel ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                                Xuất Excel
+                            </button>
+                        </div>
                     )}
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
                         style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}
