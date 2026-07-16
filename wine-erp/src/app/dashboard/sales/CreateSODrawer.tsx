@@ -82,10 +82,14 @@ const inputStyle = {
     outline: 'none',
 }
 
-export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boolean; onClose: () => void; onSaved: () => void; userId: string }) {
+const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Kế Toán', 'KE_TOAN']
+
+export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] }: { open: boolean; onClose: () => void; onSaved: () => void; userId: string; userRoles?: string[] }) {
     const [customers, setCustomers] = useState<Customer[]>([])
     const [products, setProducts] = useState<ProductItem[]>([])
     const [loadingData, setLoadingData] = useState(false)
+    const [overrideMode, setOverrideMode] = useState(false)
+    const canOverride = OVERRIDE_ROLES.some(r => userRoles.includes(r))
 
     const sortedCustomersForSelect = useMemo(() => {
         const parentsAndStandalone = customers.filter(c => !c.parentId)
@@ -347,7 +351,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
         setArBalance(0); setPriceMap({}); setLegalEntityId(''); setSearchQueries({})
-        setNotes('')
+        setNotes(''); setOverrideMode(false)
     }
 
     if (!open) return null
@@ -439,41 +443,82 @@ export function CreateSODrawer({ open, onClose, onSaved, userId }: { open: boole
                                 </div>
                             )}
 
-                            {/* Channel + Payment Term + Legal Entity */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
-                                        Kênh Bán
-                                    </label>
-                                    <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
-                                        className="w-full px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }}>
-                                        {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                    </select>
+                            {/* Channel + Payment Term + Legal Entity — read-only with override */}
+                            {selectedCustomer && (
+                                <div className="p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông Tin Đơn Hàng</p>
+                                        {canOverride && !overrideMode && (
+                                            <button
+                                                onClick={() => setOverrideMode(true)}
+                                                className="text-[10px] px-2 py-0.5 rounded transition-all"
+                                                style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}
+                                            >
+                                                Thay đổi
+                                            </button>
+                                        )}
+                                        {overrideMode && (
+                                            <button
+                                                onClick={() => setOverrideMode(false)}
+                                                className="text-[10px] px-2 py-0.5 rounded transition-all"
+                                                style={{ color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)', background: 'rgba(91,168,138,0.08)' }}
+                                            >
+                                                Xong
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {!overrideMode ? (
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Kênh Bán</p>
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                                    {CHANNELS.find(c => c.value === channel)?.label ?? channel}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Thanh Toán</p>
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{paymentTerm}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Pháp Nhân</p>
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                                    {entities.find(e => e.id === legalEntityId)?.name ?? '— Chưa chọn —'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-[10px] mb-1" style={{ color: '#4A6A7A' }}>Kênh Bán</label>
+                                                <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
+                                                    className="w-full px-2 py-1.5 text-xs outline-none" style={{ ...inputStyle }}>
+                                                    {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] mb-1" style={{ color: '#4A6A7A' }}>Thanh Toán</label>
+                                                <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
+                                                    className="w-full px-2 py-1.5 text-xs outline-none" style={{ ...inputStyle }}>
+                                                    {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
+                                                        <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] mb-1" style={{ color: '#4A6A7A' }}>Pháp Nhân</label>
+                                                <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
+                                                    className="w-full px-2 py-1.5 text-xs outline-none" style={{ ...inputStyle }}>
+                                                    <option value="">— Mặc định —</option>
+                                                    {entities.map(e => (
+                                                        <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
-                                        Thanh Toán
-                                    </label>
-                                    <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
-                                        className="w-full px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }}>
-                                        {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
-                                            <option key={t} value={t}>{t}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
-                                        Pháp Nhân
-                                    </label>
-                                    <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
-                                        className="w-full px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }}>
-                                        <option value="">— Mặc định —</option>
-                                        {entities.map(e => (
-                                            <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
+                            )}
 
                             {/* Diễn giải đơn hàng */}
                             <div>
