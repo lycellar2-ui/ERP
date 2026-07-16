@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock } from './actions'
@@ -751,25 +752,24 @@ function SalesOrderMobileCard({
         </div>
     )
 }
-
 // ── Main Component ───────────────────────────────
 // Roles allowed to see cost/margin data
 const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager']
 
+type SalesPageResult = { rows: SalesOrderRow[]; total: number; stats: { monthRevenue: number; monthOrders: number; pendingApproval: number; draft: number; confirmed: number }; statusCounts: Record<string, number> }
+
 type Props = {
+    initialData?: SalesPageResult
     userId: string
     userRoles: string[]
 }
 
-export function SalesClient({ userId, userRoles }: Props) {
+export function SalesClient({ initialData, userId, userRoles }: Props) {
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const isCEO = userRoles.includes('CEO')
     const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
     const canAcctApprove = userRoles.includes('Kế Toán') || userRoles.includes('KE_TOAN')
 
-    const [rows, setRows] = useState<SalesOrderRow[]>([])
-    const [total, setTotal] = useState(0)
-    const [loading, setLoading] = useState(true)
     const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<SOStatus | ''>('')
@@ -790,52 +790,61 @@ export function SalesClient({ userId, userRoles }: Props) {
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
     const [editId, setEditId] = useState<string | null>(null)
-    const [stats, setStats] = useState({ monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 })
-    const [counts, setCounts] = useState<Record<string, number>>({})
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
     const [acctEntityId, setAcctEntityId] = useState('')
     const [approvalModalId, setApprovalModalId] = useState<string | null>(null)
 
-    // Prefetch data used by CreateSODrawer on mount — warms server cache
-    // so clicking "Tạo Đơn" is instant even on cold start
+    // TanStack Query — cache sales data, survive tab switches
+    const queryKey = ['sales', { search: search || undefined, status: statusFilter || undefined, page, sortBy, sortDir, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }]
+    const { data: queryData, isLoading: loading, refetch } = useQuery({
+        queryKey,
+        queryFn: () => getSalesPageData({
+            search: search || undefined,
+            status: statusFilter as SOStatus || undefined,
+            page,
+            pageSize: 20,
+            sortBy: sortBy as any,
+            sortDir: sortDir as any,
+            dateFrom: dateFrom || undefined,
+            dateTo: dateTo || undefined,
+        }),
+        initialData: !search && !statusFilter && page === 1 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo
+            ? initialData
+            : undefined,
+        staleTime: 30_000,
+    })
+
+    const rows = queryData?.rows ?? []
+    const total = queryData?.total ?? 0
+    const stats = queryData?.stats ?? { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 }
+    const counts = queryData?.statusCounts ?? {}
+
+    // Prefetch data used by CreateSODrawer on mount
     useEffect(() => {
         getLegalEntities().then(setLegalEntities).catch(() => { })
-        // Fire-and-forget: warm cache for customers + products
         getCustomersForSO().catch(() => { })
         getProductsWithStock().catch(() => { })
     }, [])
 
+    // Legacy reload — now triggers query refetch
     const reload = useCallback(async (
         overrides?: Partial<{ search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string }>,
-        onlyRows = false
+        _onlyRows = false
     ) => {
-        setLoading(true)
-        try {
-            const result = await getSalesPageData({
-                search: (overrides?.search ?? search) || undefined,
-                status: (overrides?.status ?? statusFilter) as SOStatus || undefined,
-                page: overrides?.page ?? page,
-                pageSize: 20,
-                sortBy: (overrides?.sortBy ?? sortBy) as any,
-                sortDir: (overrides?.sortDir ?? sortDir) as any,
-                dateFrom: (overrides?.dateFrom ?? dateFrom) || undefined,
-                dateTo: (overrides?.dateTo ?? dateTo) || undefined,
-            }, onlyRows)
-            setRows(result.rows)
-            setTotal(result.total)
-            if (!onlyRows) {
-                setStats(result.stats)
-                setCounts(result.statusCounts)
-            }
-        } finally {
-            setLoading(false)
+        // Update filter state → queryKey changes → auto refetch
+        if (overrides?.search !== undefined) setSearch(overrides.search)
+        if (overrides?.status !== undefined) setStatusFilter(overrides.status as SOStatus | '')
+        if (overrides?.page !== undefined) setPage(overrides.page)
+        if (overrides?.sortBy !== undefined) setSortBy(overrides.sortBy as any)
+        if (overrides?.sortDir !== undefined) setSortDir(overrides.sortDir as any)
+        if (overrides?.dateFrom !== undefined) setDateFrom(overrides.dateFrom)
+        if (overrides?.dateTo !== undefined) setDateTo(overrides.dateTo)
+        // If no overrides, just refetch current query
+        if (!overrides || Object.keys(overrides).length === 0) {
+            refetch()
         }
-    }, [search, statusFilter, page, sortBy, sortDir, dateFrom, dateTo])
-    // Client-side data fetching on mount — skeleton shows instantly
-    useEffect(() => {
-        reload()
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [refetch])
 
     const handleSort = (field: string) => {
         const newDir = sortBy === field && sortDir === 'desc' ? 'asc' : 'desc'

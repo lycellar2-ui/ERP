@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getRegions, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
@@ -69,19 +70,18 @@ function StatCard({ label, value, icon: Icon, accent }: {
     )
 }
 
+type ProductsPageResult = { rows: ProductRow[]; total: number; stats: ProductStats; countries: { code: string; count: number }[]; producers: { id: string; name: string }[]; canEdit: boolean }
+
 interface ProductsClientProps {
     canEdit?: boolean
+    initialData?: ProductsPageResult
 }
 
 export function ProductsClient({ 
-    canEdit = false 
+    canEdit = false,
+    initialData,
 }: ProductsClientProps) {
-    const [rows, setRows] = useState<ProductRow[]>([])
-    const [total, setTotal] = useState(0)
-    const [stats, setStats] = useState<ProductStats>({ total: 0, active: 0, outOfStock: 0, topTypes: [] })
-    const [countries, setCountries] = useState<{ code: string; count: number }[]>([])
-    const [producers, setProducers] = useState<{ id: string; name: string }[]>([])
-    const [loading, setLoading] = useState(true)
+    const qc = useQueryClient()
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -96,24 +96,27 @@ export function ProductsClient({
     const [exporting, setExporting] = useState(false)
     const [showMobileFilters, setShowMobileFilters] = useState(false)
 
-    // Client-side data fetching on mount — page renders instantly as skeleton
+    // TanStack Query — cache products page data, survive tab switches
+    const { data: queryData, isLoading: loading } = useQuery({
+        queryKey: ['products', filters],
+        queryFn: () => getProductsPageData(filters),
+        initialData: filters.page === 1 && !filters.search && !filters.wineType && !filters.status && !filters.country && !filters.producerId
+            ? initialData
+            : undefined,
+        staleTime: 30_000,
+    })
+
+    const rows = queryData?.rows ?? []
+    const total = queryData?.total ?? 0
+    const stats = queryData?.stats ?? { total: 0, active: 0, outOfStock: 0, topTypes: [] }
+    const countries = queryData?.countries ?? []
+    const producers = queryData?.producers ?? []
+
+    // Warm reference data cache for drawers
     useEffect(() => {
-        // Warm reference data cache
         getRegions().catch(() => [])
         getSuppliers().catch(() => [])
-
-        // Fetch page data + metadata
-        Promise.all([
-            getProductsPageData({ page: 1, pageSize: 20 }).catch(() => ({ rows: [] as ProductRow[], total: 0, stats: { total: 0, active: 0, outOfStock: 0, topTypes: [] }, countries: [], producers: [], canEdit: false })),
-        ]).then(([data]) => {
-            setRows(data.rows)
-            setTotal(data.total)
-            if (data.stats) setStats(data.stats)
-            if (data.countries) setCountries(data.countries)
-            if (data.producers) setProducers(data.producers)
-            setLoading(false)
-        })
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [])
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
     const detailCache = useRef<Record<string, any>>({})
@@ -181,37 +184,14 @@ export function ProductsClient({
     // Use server-aggregated stats (counts all products, not just current page)
     const topTypeLabel = stats.topTypes.map(t => `${t.count} ${t.label}`).join(' / ') || 'N/A'
 
-    const applyFilter = useCallback(async (newFilters: Partial<ProductFilters>) => {
-        const merged = { ...filters, ...newFilters, page: newFilters.page ?? 1 }
-        setFilters(merged)
-        setLoading(true)
-        try {
-            const result = await getProducts(merged)
-            setRows(result.rows)
-            setTotal(result.total)
-        } finally {
-            setLoading(false)
-        }
-    }, [filters])
+    const applyFilter = useCallback((newFilters: Partial<ProductFilters>) => {
+        // Update filters → queryKey changes → TanStack auto refetch
+        setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page ?? 1 }))
+    }, [])
 
-    const reloadPageData = useCallback(async () => {
-        setLoading(true)
-        try {
-            const [pageData, s, c, p] = await Promise.all([
-                getProductsPageData(filters).catch(() => ({ rows: [] as ProductRow[], total: 0 })),
-                getProductStats().catch(() => ({ total: 0, active: 0, outOfStock: 0, topTypes: [] as any[] })),
-                getProductCountries().catch(() => []),
-                getProducers().catch(() => []),
-            ])
-            setRows(pageData.rows)
-            setTotal(pageData.total)
-            setStats(s)
-            setCountries(c)
-            setProducers(p)
-        } finally {
-            setLoading(false)
-        }
-    }, [filters])
+    const reloadPageData = useCallback(() => {
+        qc.invalidateQueries({ queryKey: ['products'] })
+    }, [qc])
 
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Xóa sản phẩm "${name}"?\n\nSản phẩm sẽ bị ẩn khỏi danh sách (soft delete).`)) return

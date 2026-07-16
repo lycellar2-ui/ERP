@@ -1,5 +1,6 @@
 import { ProductsClient } from './ProductsClient'
 import { getCurrentUser } from '@/lib/session'
+import { getProductsPageData } from './actions'
 
 export const metadata = { title: 'Danh Mục Sản Phẩm | Wine ERP' }
 
@@ -9,5 +10,7 @@ export default async function ProductsPage() {
         ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN'].includes(r)
     ) ?? false
 
-    return <ProductsClient canEdit={canEdit} />
+    const data = await getProductsPageData({ page: 1, pageSize: 20 })
+
+    return <ProductsClient canEdit={canEdit} initialData={data} />
 }

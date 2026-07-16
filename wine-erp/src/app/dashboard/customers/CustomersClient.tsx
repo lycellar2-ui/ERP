@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
     Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
@@ -412,15 +413,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 // MAIN CLIENT COMPONENT
 // ════════════════════════════════════════════════════════
 
-interface CustomersClientProps {}
+type CustomersPageResult = { rows: CustomerRow[]; total: number; stats: CustomerStats; channels: { channel: string; count: number }[]; salesReps: { id: string; name: string }[] }
 
-export function CustomersClient({}: CustomersClientProps) {
-    const [rows, setRows] = useState<CustomerRow[]>([])
-    const [total, setTotal] = useState(0)
-    const [loading, setLoading] = useState(true)
-    const [stats, setStats] = useState<CustomerStats>({ total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, topTypes: [] })
-    const [channels, setChannels] = useState<{ channel: string; count: number }[]>([])
-    const [salesReps, setSalesReps] = useState<{ id: string; name: string }[]>([])
+interface CustomersClientProps {
+    initialData?: CustomersPageResult
+}
+
+export function CustomersClient({ initialData }: CustomersClientProps) {
+    const qc = useQueryClient()
     const [filters, setFilters] = useState<CustomerFilters>({ page: 1, pageSize: 25 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -432,37 +432,37 @@ export function CustomersClient({}: CustomersClientProps) {
     const [exporting, setExporting] = useState(false)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
 
-    // Client-side data fetching on mount
+    // TanStack Query — cache customers page data
+    const { data: queryData, isLoading: loading } = useQuery({
+        queryKey: ['customers', filters],
+        queryFn: async () => {
+            const [data, stats, channels, salesReps] = await Promise.all([
+                getCustomers(filters),
+                getCustomerStats(),
+                getCustomerChannels(),
+                getSalesRepList(),
+            ])
+            return { rows: data.rows, total: data.total, stats, channels, salesReps }
+        },
+        initialData: filters.page === 1 && !filters.search && !filters.type && !filters.status && !filters.channel
+            ? initialData
+            : undefined,
+        staleTime: 30_000,
+    })
+
+    const rows = queryData?.rows ?? []
+    const total = queryData?.total ?? 0
+    const stats = queryData?.stats ?? { total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, topTypes: [] }
+    const channels = queryData?.channels ?? []
+    const salesReps = queryData?.salesReps ?? []
+
     useEffect(() => {
-        Promise.all([
-            getCustomers({ pageSize: 25 }).catch(() => ({ rows: [] as CustomerRow[], total: 0 })),
-            getCustomerStats().catch(() => ({ total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, topTypes: [] as any[] })),
-            getCustomerChannels().catch(() => []),
-            getSalesRepList().catch(() => []),
-            getLegalEntities().catch(() => []),
-        ]).then(([data, s, ch, reps, entities]) => {
-            setRows(data.rows)
-            setTotal(data.total)
-            setStats(s)
-            setChannels(ch)
-            setSalesReps(reps)
-            setLegalEntities(entities)
-            setLoading(false)
-        })
+        getLegalEntities().then(setLegalEntities).catch(() => { })
     }, [])
 
-    const applyFilter = useCallback(async (newFilters: Partial<CustomerFilters>) => {
-        const merged = { ...filters, ...newFilters, page: newFilters.page ?? 1 }
-        setFilters(merged)
-        setLoading(true)
-        try {
-            const result = await getCustomers(merged)
-            setRows(result.rows)
-            setTotal(result.total)
-        } finally {
-            setLoading(false)
-        }
-    }, [filters])
+    const applyFilter = useCallback((newFilters: Partial<CustomerFilters>) => {
+        setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page ?? 1 }))
+    }, [])
 
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Xóa khách hàng "${name}"?\n\nKH sẽ bị đánh dấu Tạm dừng (soft delete). Nếu KH đang có đơn hàng chưa hoàn tất sẽ không xóa được.`)) return
