@@ -7,7 +7,10 @@ import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
-import { CreateSODrawer } from './CreateSODrawer'
+const CreateSODrawer = dynamic(() => import('./CreateSODrawer').then(m => m.CreateSODrawer), {
+    loading: () => null,
+    ssr: false,
+})
 const EditSODrawer = dynamic(() => import('./EditSODrawer').then(m => m.EditSODrawer), {
     loading: () => null,
     ssr: false

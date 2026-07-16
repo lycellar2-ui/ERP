@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { signOut } from '@/app/login/actions'
 import { type SessionUser } from '@/lib/session'
 import {
@@ -102,6 +103,46 @@ const NAV_GROUPS: NavGroup[] = [
     }
 ]
 
+// Data prefetch map: when hovering a sidebar link, prefetch page data into TanStack Query cache
+// Uses dynamic import to avoid bundling all actions into sidebar chunk
+const DATA_PREFETCH_MAP: Record<string, (qc: any) => void> = {
+    '/dashboard/sales': (qc) => {
+        import('@/app/dashboard/sales/actions').then(({ getSalesPageData }) => {
+            qc.prefetchQuery({
+                queryKey: ['sales', { page: 1, sortBy: 'createdAt', sortDir: 'desc' }],
+                queryFn: () => getSalesPageData({ page: 1, pageSize: 20 }),
+                staleTime: 30_000,
+            })
+        })
+    },
+    '/dashboard/products': (qc) => {
+        import('@/app/dashboard/products/actions').then(({ getProductsPageData }) => {
+            qc.prefetchQuery({
+                queryKey: ['products', { page: 1, pageSize: 20 }],
+                queryFn: () => getProductsPageData({ page: 1, pageSize: 20 }),
+                staleTime: 30_000,
+            })
+        })
+    },
+    '/dashboard/customers': (qc) => {
+        import('@/app/dashboard/customers/actions').then(({ getCustomers, getCustomerStats, getCustomerChannels, getSalesRepList }) => {
+            qc.prefetchQuery({
+                queryKey: ['customers', { page: 1, pageSize: 25 }],
+                queryFn: async () => {
+                    const [data, stats, channels, salesReps] = await Promise.all([
+                        getCustomers({ pageSize: 25 }),
+                        getCustomerStats(),
+                        getCustomerChannels(),
+                        getSalesRepList(),
+                    ])
+                    return { rows: data.rows, total: data.total, stats, channels, salesReps }
+                },
+                staleTime: 30_000,
+            })
+        })
+    },
+}
+
 // LY's Cellars — Wine glass PNG logo
 function LysLogo({ collapsed }: { collapsed: boolean }) {
     if (collapsed) {
@@ -149,7 +190,9 @@ interface SidebarProps {
 export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
+    const queryClient = useQueryClient()
     const prefetchedRef = useRef(new Set<string>())
+    const dataPrefetchedRef = useRef(new Set<string>())
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     const filteredGroups = useMemo(() => {
@@ -177,12 +220,19 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
         window.location.href = '/login'
     }, [])
 
-    // Smart prefetch: prefetch on hover (with debounce to avoid spam)
+    // Smart prefetch: prefetch route + data on hover
     const handlePrefetch = useCallback((href: string) => {
-        if (prefetchedRef.current.has(href)) return
-        prefetchedRef.current.add(href)
-        router.prefetch(href)
-    }, [router])
+        if (!prefetchedRef.current.has(href)) {
+            prefetchedRef.current.add(href)
+            router.prefetch(href)
+        }
+        // Prefetch TanStack Query data (only once per session)
+        if (!dataPrefetchedRef.current.has(href)) {
+            dataPrefetchedRef.current.add(href)
+            const prefetcher = DATA_PREFETCH_MAP[href]
+            if (prefetcher) prefetcher(queryClient)
+        }
+    }, [router, queryClient])
 
     // Auto-prefetch ALL sidebar links after current page loads
     // This ensures every link click is instant from Router Cache

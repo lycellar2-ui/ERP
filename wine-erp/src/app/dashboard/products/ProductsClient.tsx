@@ -5,8 +5,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getRegions, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
-import { ProductDrawer } from './ProductDrawer'
-import { ProductDetailDrawer } from './ProductDetailDrawer'
+import dynamic from 'next/dynamic'
+const ProductDrawer = dynamic(() => import('./ProductDrawer').then(m => m.ProductDrawer), { loading: () => null, ssr: false })
+const ProductDetailDrawer = dynamic(() => import('./ProductDetailDrawer').then(m => m.ProductDetailDrawer), { loading: () => null, ssr: false })
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
 
