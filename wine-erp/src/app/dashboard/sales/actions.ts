@@ -235,7 +235,7 @@ export async function getSalesOrderDetail(id: string) {
         include: {
             legalEntity: true,
             warehouse: true,
-            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
+            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, parent: { select: { id: true, name: true } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {
@@ -287,7 +287,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
         include: {
             legalEntity: true,
             warehouse: true,
-            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true } },
+            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, parent: { select: { id: true, name: true } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {

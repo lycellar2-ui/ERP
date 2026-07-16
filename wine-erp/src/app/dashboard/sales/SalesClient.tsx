@@ -433,9 +433,9 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                     {/* Vòng tròn trạng thái */}
                                                     <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all"
                                                         style={{
-                                                            background: isDone ? '#5BA88A' : '#142433',
-                                                            color: isDone ? '#0D1E2B' : '#4A6A7A',
-                                                            border: isCurrent ? '2px solid #87CBB9' : isDone ? 'none' : '2px solid #2A4355',
+                                                            backgroundColor: isDone ? '#5ba889' : 'transparent',
+                                                            color: isDone ? '#0d1e2c' : '#4a6a79',
+                                                            border: isCurrent ? '2px solid #87cbb8' : isDone ? 'none' : '2px solid #2a4354',
                                                             boxShadow: isCurrent ? '0 0 8px rgba(135,203,185,0.4)' : 'none',
                                                         }}>
                                                         {isDone ? '✓' : i + 1}
@@ -470,6 +470,18 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                         <span style={{ color: '#4A6A7A' }}>Khách hàng:</span>
                                         <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.name}</span>
                                     </div>
+                                    {detail.customer.parent && (
+                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                            <span style={{ color: '#4A6A7A' }}>Khách hàng cha:</span>
+                                            <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.parent.name}</span>
+                                        </div>
+                                    )}
+                                    {detail.customer.taxId && (
+                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                            <span style={{ color: '#4A6A7A' }}>MST:</span>
+                                            <span className="font-semibold font-mono" style={{ color: '#8AAEBB' }}>{detail.customer.taxId}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
                                         <span style={{ color: '#4A6A7A' }}>Mã KH / Kênh:</span>
                                         <span className="font-semibold" style={{ color: '#8AAEBB' }}>{detail.customer.code} ({CHANNEL_LABEL[detail.channel] ?? detail.channel})</span>
