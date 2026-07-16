@@ -3,14 +3,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import dynamic from 'next/dynamic'
-
-const CreateSODrawer = dynamic(() => import('./CreateSODrawer').then(m => m.CreateSODrawer), {
-    loading: () => null,
-    ssr: false
-})
+import { CreateSODrawer } from './CreateSODrawer'
 const EditSODrawer = dynamic(() => import('./EditSODrawer').then(m => m.EditSODrawer), {
     loading: () => null,
     ssr: false
@@ -805,9 +801,13 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
     const [acctEntityId, setAcctEntityId] = useState('')
     const [approvalModalId, setApprovalModalId] = useState<string | null>(null)
 
-    // Load legal entities on mount
+    // Prefetch data used by CreateSODrawer on mount — warms server cache
+    // so clicking "Tạo Đơn" is instant even on cold start
     useEffect(() => {
         getLegalEntities().then(setLegalEntities).catch(() => { })
+        // Fire-and-forget: warm cache for customers + products
+        getCustomersForSO().catch(() => { })
+        getProductsWithStock().catch(() => { })
     }, [])
 
     const reload = useCallback(async (
