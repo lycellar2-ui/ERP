@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
-    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
+    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer,
 } from 'lucide-react'
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
@@ -141,6 +141,151 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const set = (k: keyof CustomerInput, v: any) => setForm(f => ({ ...f, [k]: v }))
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
     const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+
+    const handlePrintCustomer = () => {
+        if (!form) return
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
+
+        const customerTypeLabels: Record<string, string> = {
+            HORECA: '🏨 HORECA (Nhà hàng / Khách sạn)',
+            WHOLESALE_DISTRIBUTOR: '🏭 Phân Phối Sỉ / Đại lý',
+            VIP_RETAIL: '👑 VIP Retail',
+            INDIVIDUAL: '👤 Cá Nhân'
+        }
+
+        const statusLabels: Record<string, string> = {
+            ACTIVE: 'Hoạt động',
+            INACTIVE: 'Tạm dừng',
+            CREDIT_HOLD: 'Giữ tín dụng'
+        }
+
+        const mainAddress = form.address
+            ? `${form.address}${form.ward ? ', Phường/Xã ' + form.ward : ''}${form.district ? ', Quận/Huyện ' + form.district : ''}${form.city ? ', Tỉnh/TP ' + form.city : ''}`
+            : 'Chưa cấu hình địa chỉ chính'
+
+        const htmlContent = `
+            <html>
+            <head>
+                <title>Ho_so_khach_hang_${form.code || 'Moi'}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; color: #333; margin: 40px; font-size: 13px; line-height: 1.6; }
+                    .header { width: 100%; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
+                    .title { font-size: 20px; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 5px; }
+                    .subtitle { text-align: center; font-size: 11px; color: #666; margin-bottom: 30px; font-style: italic; }
+                    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                    .info-table td { padding: 8px 12px; border: 1px solid #ddd; vertical-align: top; }
+                    .info-label { font-weight: bold; width: 30%; background: #f9f9f9; }
+                    .info-value { width: 70%; }
+                    .signatures { width: 100%; margin-top: 60px; border-collapse: collapse; page-break-inside: avoid; }
+                    .signatures td { text-align: center; width: 33%; vertical-align: top; border: none; padding: 10px; }
+                    .sign-title { font-weight: bold; margin-bottom: 80px; text-transform: uppercase; }
+                    @media print {
+                        body { margin: 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <table style="width:100%; margin-bottom: 10px;">
+                    <tr>
+                        <td>
+                            <strong style="font-size: 15px; text-transform: uppercase;">Ly's Cellar Wine Imports</strong><br/>
+                            <span style="font-size: 11px; color: #555;">Hệ thống ERP Phân phối Rượu Vang</span>
+                        </td>
+                        <td style="text-align: right; font-size: 11px; color: #555;">
+                            Mã số: BM-MDM-01-KH<br/>
+                            Ngày in: ${new Date().toLocaleDateString('vi-VN')}
+                        </td>
+                    </tr>
+                </table>
+                <div class="header"></div>
+
+                <div class="title">Phiếu Thông Tin Khách Hàng</div>
+                <div class="subtitle">(Hồ sơ lưu trữ phê duyệt tạo mới & hạn mức tín dụng)</div>
+
+                <table class="info-table">
+                    <tr>
+                        <td class="info-label">Mã Khách Hàng (Code):</td>
+                        <td class="info-value"><strong>${form.code || ''}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Tên Khách Hàng:</td>
+                        <td class="info-value"><strong>${form.name || ''}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Tên Viết Tắt:</td>
+                        <td class="info-value">${form.shortName || '—'}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Mã Số Thuế:</td>
+                        <td class="info-value">${form.taxId || '—'}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Phân Loại:</td>
+                        <td class="info-value">${customerTypeLabels[form.customerType || ''] || form.customerType || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Kênh Bán Hàng (Channel):</td>
+                        <td class="info-value">${form.channel || 'HORECA'}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Kỳ Hạn Thanh Toán:</td>
+                        <td class="info-value"><strong>${form.paymentTerm || 'NET30'}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Hạn Mức Nợ (Credit Limit):</td>
+                        <td class="info-value"><strong>${(form.creditLimit || 0).toLocaleString('vi-VN')} ₫</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Người Liên Hệ Chính:</td>
+                        <td class="info-value">${form.contactName || '—'}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Số Điện Thoại:</td>
+                        <td class="info-value">${form.phone || '—'}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Email:</td>
+                        <td class="info-value">${form.email || '—'}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Địa Chỉ Giao Hàng:</td>
+                        <td class="info-value">${mainAddress}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Trạng Thái Tài Khoản:</td>
+                        <td class="info-value"><strong>${statusLabels[form.status || ''] || form.status || ''}</strong></td>
+                    </tr>
+                </table>
+
+                <table class="signatures">
+                    <tr>
+                        <td>
+                            <div class="sign-title">Nhân Viên Kinh Doanh</div>
+                            <div style="font-size: 11px; color: #777;">(Ký & ghi rõ họ tên)</div>
+                        </td>
+                        <td>
+                            <div class="sign-title">Kế Toán Trưởng</div>
+                            <div style="font-size: 11px; color: #777;">(Ký & ghi rõ họ tên)</div>
+                        </td>
+                        <td>
+                            <div class="sign-title">Giám Đốc Phê Duyệt</div>
+                            <div style="font-size: 11px; color: #777;">(Ký & ghi rõ họ tên)</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </body>
+            </html>
+        `
+        printWindow.document.write(htmlContent)
+        printWindow.document.close()
+    }
 
     const handleSave = async () => {
         const e: Record<string, string> = {}
@@ -391,6 +536,12 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 </div>
 
                 <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #2A4355' }}>
+                    {isEdit && (
+                        <button onClick={handlePrintCustomer} type="button"
+                            className="mr-auto flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all border border-[#2A4355] text-[#D4A853] hover:bg-[#D4A853]/10">
+                            <Printer size={14} /> In Hồ Sơ
+                        </button>
+                    )}
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
                         style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
