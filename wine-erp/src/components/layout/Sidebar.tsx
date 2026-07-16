@@ -141,6 +141,15 @@ const DATA_PREFETCH_MAP: Record<string, (qc: any) => void> = {
             })
         })
     },
+    '/dashboard/quotations': (qc) => {
+        import('@/app/dashboard/quotations/actions').then(({ getQuotations }) => {
+            qc.prefetchQuery({
+                queryKey: ['quotations', {}],
+                queryFn: () => getQuotations(),
+                staleTime: 30_000,
+            })
+        })
+    },
 }
 
 // LY's Cellars — Wine glass PNG logo

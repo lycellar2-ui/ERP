@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw, Download, Link2, Copy, ExternalLink, Printer, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation, sendQuotation, duplicateQuotation, exportQuotationExcel } from './actions'
@@ -17,15 +18,16 @@ const STATUS_CFG: Record<QuotationStatus, { label: string; color: string; bg: st
 }
 
 interface Props {
-    initialRows: QuotationRow[]
-    stats: { total: number; draft: number; sent: number; accepted: number; converted: number; totalValue: number }
+    initialData?: {
+        rows: QuotationRow[]
+        stats: { total: number; draft: number; sent: number; accepted: number; converted: number; totalValue: number }
+    }
 }
 
-export function QuotationClient({ initialRows, stats }: Props) {
-    const [rows, setRows] = useState(initialRows)
+export function QuotationClient({ initialData }: Props) {
+    const queryClient = useQueryClient()
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
-    const [loading, setLoading] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
     const [detail, setDetail] = useState<any>(null)
@@ -33,9 +35,6 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const [createOpen, setCreateOpen] = useState(false)
 
     // Create form state
-    const [customers, setCustomers] = useState<any[]>([])
-    const [reps, setReps] = useState<any[]>([])
-    const [products, setProducts] = useState<any[]>([])
     const [formData, setFormData] = useState({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '', showQuantity: false })
     const [formLines, setFormLines] = useState<{ productId: string; qty: number; price: number; discount: number }[]>([])
     const [saving, setSaving] = useState(false)
@@ -49,27 +48,35 @@ export function QuotationClient({ initialRows, stats }: Props) {
     const [pickerWineType, setPickerWineType] = useState('')
     const [pickerSelected, setPickerSelected] = useState<Record<string, { qty: number; checked: boolean }>>({})
 
-    useEffect(() => {
-        // Prefetch customer, sales rep, and product data in the background on mount
-        const prefetch = async () => {
-            try {
-                const [c, r, p] = await Promise.all([getCustomersForSO(), getSalesReps(), getProductsWithStock()])
-                setCustomers(c)
-                setReps(r)
-                setProducts(p)
-            } catch (err) {
-                console.error("Failed to prefetch quotation form metadata:", err)
-            }
-        }
-        prefetch()
-    }, [])
+    // TanStack Query — cache quotations list
+    const { data: rows = [], isLoading: loading, refetch } = useQuery({
+        queryKey: ['quotations', { search: search || undefined, status: statusFilter || undefined }],
+        queryFn: () => getQuotations({ search: search || undefined, status: statusFilter || undefined }),
+        initialData: !search && !statusFilter ? initialData?.rows : undefined,
+        staleTime: 30_000,
+    })
+
+    // TanStack Query — cache reference data for form
+    const { data: refData } = useQuery({
+        queryKey: ['quotation_reference_data'],
+        queryFn: async () => {
+            const [c, r, p] = await Promise.all([getCustomersForSO(), getSalesReps(), getProductsWithStock()])
+            return { customers: c, reps: r, products: p }
+        },
+        enabled: createOpen,
+        staleTime: 5 * 60_000,
+    })
+
+    const customers = refData?.customers ?? []
+    const reps = refData?.reps ?? []
+    const products = refData?.products ?? []
+
+    // Cache stats (uses initial stats hydration or simple local state if not fetched)
+    const [stats, setStats] = useState(initialData?.stats ?? { total: 0, draft: 0, sent: 0, accepted: 0, converted: 0, totalValue: 0 })
 
     const reload = useCallback(async () => {
-        setLoading(true)
-        const data = await getQuotations({ search: search || undefined, status: statusFilter || undefined })
-        setRows(data)
-        setLoading(false)
-    }, [search, statusFilter])
+        refetch()
+    }, [refetch])
 
     const openDetail = async (id: string) => {
         setDetailId(id)
@@ -127,15 +134,6 @@ export function QuotationClient({ initialRows, stats }: Props) {
 
     const openCreate = () => {
         setCreateOpen(true)
-        if (customers.length === 0) {
-            Promise.all([getCustomersForSO(), getSalesReps(), getProductsWithStock()]).then(([c, r, p]) => {
-                setCustomers(c)
-                setReps(r)
-                setProducts(p)
-            }).catch(err => {
-                console.error("Failed to load quotation form metadata:", err)
-            })
-        }
     }
 
     const handleCreate = async () => {
