@@ -1910,20 +1910,45 @@ export async function getSOTimeline(soId: string): Promise<SOTimelineEvent[]> {
     const so = await prisma.salesOrder.findUnique({ where: { id: soId }, select: { soNo: true } })
     if (!so) return []
 
+    const deliveryOrders = await prisma.deliveryOrder.findMany({
+        where: { soId },
+        select: { id: true, doNo: true }
+    })
+    const arInvoices = await prisma.aRInvoice.findMany({
+        where: { soId },
+        select: { id: true, invoiceNo: true }
+    })
+
+    const doIds = deliveryOrders.map(d => d.id)
+    const invIds = arInvoices.map(i => i.id)
+
     const logs = await prisma.auditLog.findMany({
         where: {
             OR: [
                 { entityType: 'SalesOrder', entityId: soId },
+                { entityType: 'DeliveryOrder', entityId: { in: doIds } },
+                { entityType: 'ARInvoice', entityId: { in: invIds } },
             ],
         },
         orderBy: { createdAt: 'desc' },
-        take: 30,
-        select: { id: true, action: true, userName: true, createdAt: true, newValue: true },
+        take: 40,
+        select: { id: true, action: true, userName: true, createdAt: true, newValue: true, entityType: true, entityId: true },
     })
 
     return logs.map(l => {
         const nv = l.newValue as Record<string, any> | null
-        const desc = nv?.description ?? nv?.trigger ?? `${l.action} ${so.soNo}`
+        let desc = nv?.description ?? nv?.trigger
+        if (!desc) {
+            if (l.entityType === 'DeliveryOrder') {
+                const doNo = deliveryOrders.find(d => d.id === l.entityId)?.doNo ?? ''
+                desc = `Phiếu xuất ${doNo}: ${l.action}`
+            } else if (l.entityType === 'ARInvoice') {
+                const invNo = arInvoices.find(i => i.id === l.entityId)?.invoiceNo ?? ''
+                desc = `Hóa đơn ${invNo}: ${l.action}`
+            } else {
+                desc = `Đơn hàng ${so.soNo}: ${l.action}`
+            }
+        }
         return {
             id: l.id,
             action: l.action,

@@ -289,5 +289,11 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Shipment → PO status hook (IN_TRANSIT) | 🟡 P2 |
 | RBAC middleware cho server actions | 🟡 P2 |
 
-*Last updated: 2026-07-16 15:00 | Wine ERP v7.5*
+#### 🆕 Session 12 — Enhanced Progress Stepper & Timeline (16/07/2026)
 
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Stepper Nhãn Bước & Thời gian** | `SalesClient.tsx` | Thiết kế lại thanh tiến trình gồm 6 bước rõ ràng kèm nhãn mô tả: Tạo đơn, Duyệt đơn, Xác nhận, Giao hàng, Xuất HĐ, Thu tiền |
+| **Ghi nhận Mốc thời gian** | `SalesClient.tsx` + `actions.ts:getSOTimeline` | Tự động phân tích mốc thời gian hoàn thành từng bước từ nhật ký hoạt động gộp (SO, DO, Invoice) |
+
+*Last updated: 2026-07-16 22:38 | Wine ERP v7.6*

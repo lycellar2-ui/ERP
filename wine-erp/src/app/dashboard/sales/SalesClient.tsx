@@ -33,6 +33,26 @@ const CHANNEL_LABEL: Record<string, string> = {
     HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Đại Lý', VIP_RETAIL: 'VIP', DIRECT_INDIVIDUAL: 'Trực Tiếp',
 }
 
+const stepLabelMap: Record<string, string> = {
+    DRAFT: 'Tạo đơn',
+    PENDING_ACCOUNTING: 'Duyệt đơn',
+    CONFIRMED: 'Xác nhận',
+    DELIVERED: 'Giao hàng',
+    INVOICED: 'Xuất HĐ',
+    PAID: 'Thu tiền'
+}
+
+const formatStepTime = (d: Date | string | number) => {
+    const dateObj = new Date(d)
+    if (isNaN(dateObj.getTime())) return ''
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const day = pad(dateObj.getDate())
+    const month = pad(dateObj.getMonth() + 1)
+    const hours = pad(dateObj.getHours())
+    const minutes = pad(dateObj.getMinutes())
+    return `${day}/${month} ${hours}:${minutes}`
+}
+
 const getPriceBadgeStyle = (source: string | null) => {
     switch (source) {
         case 'SPECIAL_PRICE':
@@ -206,6 +226,45 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
         return () => { cancelled = true }
     }, [soId, canSeeMargin])
 
+    const getStepTimestamp = (step: SOStatus, orderCreatedAt: Date | string, orderUpdatedAt: Date | string, orderStatus: string): Date | null => {
+        if (step === 'DRAFT') return new Date(orderCreatedAt)
+        
+        if (step === 'PENDING_ACCOUNTING') {
+            const ev = timeline.find(e => e.action === 'APPROVE')
+            return ev ? new Date(ev.createdAt) : null
+        }
+        if (step === 'CONFIRMED') {
+            const ev = timeline.find(e => e.action === 'CONFIRM')
+            return ev ? new Date(ev.createdAt) : null
+        }
+        if (step === 'DELIVERED') {
+            const steps = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
+            const currentIdx = steps.indexOf(orderStatus as SOStatus)
+            if (currentIdx >= 3) {
+                const ev = timeline.find(e => e.action === 'CONFIRM' && e.description?.includes('Phiếu xuất'))
+                return ev ? new Date(ev.createdAt) : new Date(orderUpdatedAt)
+            }
+            return null
+        }
+        if (step === 'INVOICED') {
+            const steps = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
+            const currentIdx = steps.indexOf(orderStatus as SOStatus)
+            if (currentIdx >= 4) {
+                const ev = timeline.find(e => e.description?.includes('Hóa đơn'))
+                return ev ? new Date(ev.createdAt) : new Date(orderUpdatedAt)
+            }
+            return null
+        }
+        if (step === 'PAID') {
+            if (orderStatus === 'PAID') {
+                const ev = timeline.find(e => e.action === 'PAYMENT' || e.action === 'COLLECT_COD' || e.description?.includes('PAID'))
+                return ev ? new Date(ev.createdAt) : new Date(orderUpdatedAt)
+            }
+            return null
+        }
+        return null
+    }
+
     const ACTION_ICON: Record<string, string> = {
         CREATE: '📝', UPDATE: '✏️', CONFIRM: '✅', APPROVE: '👍', REJECT: '❌',
         STATUS_CHANGE: '🔄', DELETE: '🗑️', EXPORT: '📤', SIGN: '🖊️',
@@ -271,37 +330,72 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                         )}
 
                         {/* Tiến Trình Đơn Hàng */}
-                        <div className="py-2.5">
-                            <div className="flex items-center justify-between text-xs mb-3">
+                        <div className="py-3 px-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            <div className="flex items-center justify-between text-xs mb-4">
                                 <span className="font-bold uppercase tracking-wider text-[10px]" style={{ color: '#4A6A7A' }}>Tiến Trình Đơn Hàng</span>
                                 <span className="font-semibold text-xs px-2 py-0.5 rounded-full"
                                     style={{ background: STATUS_CFG[detail.status as SOStatus]?.bg, color: STATUS_CFG[detail.status as SOStatus]?.color }}>
                                     {STATUS_CFG[detail.status as SOStatus]?.label}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-1">
-                                {(['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID'] as SOStatus[]).map((s, i) => {
-                                    const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
-                                    const currentIdx = steps.indexOf(detail.status as SOStatus)
-                                    const isDone = i <= currentIdx
-                                    const isCurrent = s === detail.status
-                                    return (
-                                        <div key={s} className="flex items-center gap-1 flex-1">
-                                            <div className="flex flex-col items-center flex-1">
-                                                <div className="w-5.5 h-5.5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all"
-                                                    style={{
-                                                        background: isDone ? 'rgba(135,203,185,0.2)' : 'rgba(42,67,85,0.3)',
-                                                        color: isDone ? '#87CBB9' : '#4A6A7A',
-                                                        border: isCurrent ? '2px solid #87CBB9' : '1px solid transparent',
-                                                        width: '22px', height: '22px'
-                                                    }}>
-                                                    {isDone ? '✓' : i + 1}
+                            
+                            <div className="relative pt-2 pb-1">
+                                {/* Đường nối liền đằng sau */}
+                                <div className="absolute left-[8%] right-[8%] top-[12px] h-[2px] z-0" style={{ background: '#2A4355' }}>
+                                    {(() => {
+                                        const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
+                                        let currentIdx = steps.indexOf(detail.status as SOStatus)
+                                        if (detail.status === 'PENDING_APPROVAL') currentIdx = 0
+                                        return (
+                                            <div className="h-full transition-all duration-300" 
+                                                style={{ 
+                                                    width: `${currentIdx >= 0 ? (currentIdx / 5) * 100 : 0}%`, 
+                                                    background: '#5BA88A' 
+                                                }} 
+                                            />
+                                        )
+                                    })()}
+                                </div>
+                                
+                                <div className="flex justify-between items-start relative z-10">
+                                    {(() => {
+                                        const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
+                                        let currentIdx = steps.indexOf(detail.status as SOStatus)
+                                        if (detail.status === 'PENDING_APPROVAL') currentIdx = 0
+                                        return steps.map((s, i) => {
+                                            const isDone = i <= currentIdx
+                                            const isCurrent = s === detail.status || (s === 'PENDING_ACCOUNTING' && detail.status === 'PENDING_APPROVAL')
+                                            const ts = getStepTimestamp(s, detail.createdAt, detail.updatedAt, detail.status)
+                                            
+                                            return (
+                                                <div key={s} className="flex flex-col items-center flex-1 text-center">
+                                                    {/* Vòng tròn trạng thái */}
+                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all"
+                                                        style={{
+                                                            background: isDone ? '#5BA88A' : '#142433',
+                                                            color: isDone ? '#0D1E2B' : '#4A6A7A',
+                                                            border: isCurrent ? '2px solid #87CBB9' : isDone ? 'none' : '2px solid #2A4355',
+                                                            boxShadow: isCurrent ? '0 0 8px rgba(135,203,185,0.4)' : 'none',
+                                                        }}>
+                                                        {isDone ? '✓' : i + 1}
+                                                    </div>
+                                                    
+                                                    {/* Nhãn bước */}
+                                                    <span className="text-[10px] font-bold mt-2 whitespace-nowrap block" 
+                                                        style={{ color: isCurrent ? '#87CBB9' : isDone ? '#E8F1F2' : '#4A6A7A' }}>
+                                                        {stepLabelMap[s]}
+                                                    </span>
+                                                    
+                                                    {/* Mốc thời gian */}
+                                                    <span className="text-[8px] font-mono mt-0.5 block leading-none" 
+                                                        style={{ color: isDone ? '#8AAEBB' : '#2A4355' }}>
+                                                        {ts ? formatStepTime(ts) : '—'}
+                                                    </span>
                                                 </div>
-                                            </div>
-                                            {i < 5 && <div className="h-[2px] flex-1 rounded" style={{ background: isDone && i < currentIdx ? '#87CBB9' : '#2A4355' }} />}
-                                        </div>
-                                    )
-                                })}
+                                            )
+                                        })
+                                    })()}
+                                </div>
                             </div>
                         </div>
 
