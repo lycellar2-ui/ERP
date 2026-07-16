@@ -46,5 +46,6 @@ Kỷ nguyên ERP không còn dùng giấy tờ thủ công quá nhiều.
 | **Redelivery** | `scheduleRedelivery` | Lên lịch giao lại → route mới |
 | **Shipper Manifest** | `getShipperManifest` | Bảng lộ trình ngày + stops + COD + POD status |
 | Delivery Stats | `getDeliveryStats` | KPI: total routes, delivered, in-progress, failed |
+| **Timemark Camera Watermark** | `ShipperView.tsx` | Đóng dấu ngày giờ + tọa độ GPS + tên khách hàng lên ảnh bằng chứng giao nhận (POD) bằng Canvas và tự động lưu về thư viện ảnh của Shipper |
 
-*Last updated: 2026-03-07 | Wine ERP v5.0*
+*Last updated: 2026-07-16 22:50 | Wine ERP v7.6*

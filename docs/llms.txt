@@ -1,5 +1,5 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-07-16 22:38
+> Last updated: 2026-07-16 22:50
 > Status: Production — 26 modules, 114 DB models, 33 dashboard routes, TanStack Query Cache Persistence in localStorage (24h), Optimistic UI updates, and Supabase Realtime auto-invalidation
 
 ## Core Files (MUST READ IN ORDER)

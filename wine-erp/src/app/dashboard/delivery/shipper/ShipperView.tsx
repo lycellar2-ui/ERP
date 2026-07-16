@@ -310,6 +310,92 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
 
     const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '10px' }
 
+    const watermarkImage = (file: File, customerName: string): Promise<{ file: File; dataUrl: string }> => {
+        return new Promise((resolve) => {
+            const img = new Image()
+            img.onload = () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const { latitude, longitude } = position.coords
+                            applyWatermark(img, file.name, customerName, latitude, longitude, resolve)
+                        },
+                        () => {
+                            applyWatermark(img, file.name, customerName, null, null, resolve)
+                        },
+                        { enableHighAccuracy: true, timeout: 5000 }
+                    )
+                } else {
+                    applyWatermark(img, file.name, customerName, null, null, resolve)
+                }
+            }
+            img.onerror = () => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                    resolve({ file, dataUrl: reader.result as string })
+                }
+                reader.readAsDataURL(file)
+            }
+            img.src = URL.createObjectURL(file)
+        })
+    }
+
+    const applyWatermark = (
+        img: HTMLImageElement,
+        originalName: string,
+        customerName: string,
+        lat: number | null,
+        lon: number | null,
+        resolve: (res: { file: File; dataUrl: string }) => void
+    ) => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+            resolve({ file: img as any, dataUrl: img.src })
+            return
+        }
+
+        canvas.width = img.naturalWidth || img.width
+        canvas.height = img.naturalHeight || img.height
+
+        ctx.drawImage(img, 0, 0)
+
+        const bannerHeight = Math.max(50, Math.round(canvas.height * 0.09))
+        const fontSize = Math.max(13, Math.round(bannerHeight * 0.24))
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'
+        ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight)
+
+        const now = new Date()
+        const pad = (n: number) => String(n).padStart(2, '0')
+        const timeStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`
+        
+        ctx.fillStyle = '#FFFFFF'
+        ctx.font = `bold ${fontSize}px sans-serif`
+        
+        const rowHeight = fontSize * 1.5
+        let textY = canvas.height - bannerHeight + (bannerHeight - rowHeight * (lat ? 2 : 1)) / 2 + fontSize
+        
+        const row1 = `⏰ ${timeStr} | 👤 KH: ${customerName}`
+        ctx.fillText(row1, 20, textY)
+
+        if (lat !== null && lon !== null) {
+            ctx.font = `${fontSize * 0.85}px monospace`
+            const row2 = `📍 Định vị: ${lat.toFixed(5)}, ${lon.toFixed(5)}`
+            ctx.fillText(row2, 20, textY + rowHeight)
+        }
+
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const newFile = new File([blob], originalName, { type: 'image/jpeg' })
+                const dataUrl = canvas.toDataURL('image/jpeg')
+                resolve({ file: newFile, dataUrl })
+            } else {
+                resolve({ file: img as any, dataUrl: img.src })
+            }
+        }, 'image/jpeg', 0.85)
+    }
+
     const handleSave = async () => {
         if (!name.trim() || !signatureUrl) return
         setSaving(true)
@@ -405,13 +491,24 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                         Ảnh Bằng Chứng
                     </label>
                     <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden"
-                        onChange={e => {
+                        onChange={async e => {
                             const file = e.target.files?.[0]
                             if (file) {
-                                setPhotoFile(file)
-                                const reader = new FileReader()
-                                reader.onload = () => setPhotoPreview(reader.result as string)
-                                reader.readAsDataURL(file)
+                                const watermarked = await watermarkImage(file, stop.customerName)
+                                setPhotoFile(watermarked.file)
+                                setPhotoPreview(watermarked.dataUrl)
+
+                                // Auto-download to shipper phone library
+                                try {
+                                    const link = document.createElement('a')
+                                    link.download = `POD-${stop.customerName.replace(/[^a-zA-Z0-9]/g, '_')}-${Date.now()}.jpg`
+                                    link.href = watermarked.dataUrl
+                                    document.body.appendChild(link)
+                                    link.click()
+                                    document.body.removeChild(link)
+                                } catch (err) {
+                                    console.error('Không thể tự động tải ảnh về máy:', err)
+                                }
                             }
                         }} />
                     {photoPreview ? (
