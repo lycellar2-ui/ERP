@@ -441,7 +441,7 @@ export async function generatePOSVATInvoice(input: {
         const so = await prisma.salesOrder.findFirst({
             where: { soNo: validated.soNo },
             include: {
-                customer: { select: { id: true, name: true } },
+                customer: { select: { id: true, name: true, parentId: true } },
                 lines: {
                     include: { product: { select: { skuCode: true, productName: true } } },
                 },
@@ -470,7 +470,7 @@ export async function generatePOSVATInvoice(input: {
         await prisma.aRInvoice.create({
             data: {
                 invoiceNo,
-                customerId: so.customerId,
+                customerId: so.customer.parentId ?? so.customerId,
                 soId: so.id,
                 amount: baseAmount,
                 vatAmount,

@@ -11,6 +11,7 @@ import {
     createCustomer, updateCustomer, getCustomers, getCustomerById,
     deleteCustomer, exportCustomersData, bulkImportCustomers, getParentCandidates,
     getCustomerStats, getCustomerChannels, getSalesRepList, exportCustomerOnboardingForm,
+    approveCustomer, rejectCustomer,
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
@@ -47,8 +48,20 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 function StatusDot({ status }: { status: string }) {
-    const color = { ACTIVE: '#5BA88A', INACTIVE: '#4A6A7A', CREDIT_HOLD: '#D4963A' }[status] ?? '#4A6A7A'
-    const label = { ACTIVE: 'Hoạt động', INACTIVE: 'Tạm dừng', CREDIT_HOLD: 'Giữ tín dụng' }[status] ?? status
+    const color = { 
+        ACTIVE: '#5BA88A', 
+        INACTIVE: '#4A6A7A', 
+        CREDIT_HOLD: '#D4963A',
+        PENDING_APPROVAL: '#E0A96D',
+        REJECTED: '#E05252',
+    }[status] ?? '#4A6A7A'
+    const label = { 
+        ACTIVE: 'Hoạt động', 
+        INACTIVE: 'Tạm dừng', 
+        CREDIT_HOLD: 'Giữ tín dụng',
+        PENDING_APPROVAL: 'Chờ duyệt',
+        REJECTED: 'Bị từ chối',
+    }[status] ?? status
     return (
         <span className="flex items-center gap-1.5 text-xs" style={{ color }}>
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
@@ -82,15 +95,23 @@ function StatCard({ label, value, icon: Icon, accent }: { label: string; value: 
 // CUSTOMER DRAWER (Create + Edit)
 // ════════════════════════════════════════════════════════
 
-function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, onSaved }: {
+function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, onSaved, currentUser }: {
     open: boolean; editingId: string | null
     salesReps: { id: string; name: string }[]
     legalEntities: LegalEntityRow[]
     onClose: () => void; onSaved: () => void
+    currentUser?: any
 }) {
+    const isSalesAdmin = currentUser?.roles?.includes('Sales Admin') || currentUser?.roles?.includes('SALES_ADMIN') || currentUser?.roles?.includes('ADMIN') || currentUser?.roles?.includes('CEO') || currentUser?.roles?.includes('Sales Manager') || currentUser?.roles?.includes('SALES_MGR') || currentUser?.roles?.includes('Kế Toán') || currentUser?.roles?.includes('KE_TOAN')
+    const isSalesRep = currentUser?.roles?.includes('Sales Rep') || currentUser?.roles?.includes('SALES_REP')
+
     const [form, setForm] = useState<Partial<CustomerInput>>({
-        paymentTerm: 'NET30', creditLimit: 0, status: 'ACTIVE', customerType: 'HORECA',
+        paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', customerType: 'HORECA',
+        entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null
     })
+    const [officialCodeInput, setOfficialCodeInput] = useState('')
+    const [approving, setApproving] = useState(false)
+    const [approvalError, setApprovalError] = useState('')
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
@@ -130,14 +151,21 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         ward: data.ward,
                         district: data.district,
                         city: data.city,
+                        entityType: data.entityType as any,
+                        allowDirectSO: data.allowDirectSO,
+                        brandGroup: data.brandGroup,
                     })
+                    setOfficialCodeInput('')
+                    setApprovalError('')
                 }
             }).finally(() => setLoading(false))
         } else {
-            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: 'ACTIVE', customerType: 'HORECA', parentId: null })
+            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', customerType: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null })
+            setOfficialCodeInput('')
+            setApprovalError('')
         }
         setErrors({})
-    }, [open, editingId])
+    }, [open, editingId, isSalesRep])
 
     const set = (k: keyof CustomerInput, v: any) => setForm(f => ({ ...f, [k]: v }))
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
@@ -158,7 +186,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         const statusLabels: Record<string, string> = {
             ACTIVE: 'Hoạt động',
             INACTIVE: 'Tạm dừng',
-            CREDIT_HOLD: 'Giữ tín dụng'
+            CREDIT_HOLD: 'Giữ tín dụng',
+            PENDING_APPROVAL: 'Chờ duyệt',
+            REJECTED: 'Bị từ chối'
         }
 
         const mainAddress = form.address
@@ -318,9 +348,52 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         }
     }
 
+    const handleApprove = async () => {
+        if (!editingId) return
+        setApprovalError('')
+        setApproving(true)
+        try {
+            const res = await approveCustomer(editingId, officialCodeInput)
+            if (res.success) {
+                toast.success('Đã phê duyệt khách hàng thành công!')
+                onSaved()
+            } else {
+                setApprovalError(res.error ?? 'Lỗi phê duyệt')
+                toast.error(res.error ?? 'Lỗi phê duyệt')
+            }
+        } catch (err: any) {
+            setApprovalError(err.message)
+            toast.error(err.message)
+        } finally {
+            setApproving(false)
+        }
+    }
+
+    const handleReject = async () => {
+        if (!editingId) return
+        setApprovalError('')
+        setApproving(true)
+        try {
+            const res = await rejectCustomer(editingId)
+            if (res.success) {
+                toast.success('Đã từ chối yêu cầu duyệt khách hàng.')
+                onSaved()
+            } else {
+                setApprovalError(res.error ?? 'Lỗi từ chối duyệt')
+                toast.error(res.error ?? 'Lỗi từ chối duyệt')
+            }
+        } catch (err: any) {
+            setApprovalError(err.message)
+            toast.error(err.message)
+        } finally {
+            setApproving(false)
+        }
+    }
+
     const handleSave = async () => {
         const e: Record<string, string> = {}
-        if (!form.code) e.code = 'Bắt buộc'
+        if (!isEdit && !isSalesRep && !form.code) e.code = 'Bắt buộc'
+        if (isEdit && !form.code) e.code = 'Bắt buộc'
         if (!form.name) e.name = 'Bắt buộc'
         setErrors(e)
         if (Object.keys(e).length) return
@@ -391,12 +464,49 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             )}
 
+                            {isEdit && (form.status === 'PENDING_APPROVAL' || form.status === 'REJECTED') && isSalesAdmin && (
+                                <div className="p-4 rounded-xl space-y-3" style={{ background: 'rgba(212,150,58,0.08)', border: '1px solid rgba(212,150,58,0.3)' }}>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg">⚖️</span>
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A]">Yêu cầu tạo Khách Hàng</p>
+                                            <p className="text-[11px]" style={{ color: '#8AAEBB' }}>Khách hàng này do Sale tạo với mã tạm thời là <strong className="font-mono">{form.code}</strong>. Vui lòng ấn định mã chính thức để duyệt.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                                        <div className="flex-1">
+                                            <input type="text" placeholder="Mã KH chính thức (Ví dụ: KH-00123)"
+                                                value={officialCodeInput}
+                                                onChange={e => setOfficialCodeInput(e.target.value.toUpperCase())}
+                                                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                                                style={{ background: '#0D1E2B', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={handleReject} disabled={approving} type="button"
+                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all text-[#E05252] border border-[#E05252]/30 hover:bg-[#E05252]/10 disabled:opacity-50">
+                                                Từ chối
+                                            </button>
+                                            <button onClick={handleApprove} disabled={approving} type="button"
+                                                className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all bg-[#5BA88A] hover:bg-[#72BF9E] text-[#0D1E2B] disabled:opacity-60">
+                                                {approving ? <Loader2 size={14} className="animate-spin" /> : null}
+                                                Duyệt
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {approvalError && <p className="text-xs font-semibold text-[#E05252] mt-1">{approvalError}</p>}
+                                </div>
+                            )}
+
                             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Thông Tin Cơ Bản</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã KH <span style={{ color: '#8B1A2E' }}>*</span></label>
-                                    <input className={inputCls} style={inputStyle} value={form.code ?? ''} placeholder="CUS-PARKHYATT"
-                                        onChange={e => set('code', e.target.value.toUpperCase())} disabled={isEdit}
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#8B1A2E' }}>*</span>}</label>
+                                    <input className={inputCls} style={inputStyle} 
+                                        value={isEdit ? (form.code ?? '') : (isSalesRep ? 'MÃ TỰ SINH' : (form.code ?? ''))} 
+                                        placeholder={isSalesRep ? 'Sẽ được sinh tự động' : 'CUS-PARKHYATT'}
+                                        onChange={e => set('code', e.target.value.toUpperCase())} 
+                                        disabled={isEdit || isSalesRep}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                                     {errors.code && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.code}</p>}
                                 </div>
@@ -421,16 +531,54 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             </div>
 
                             {(form.customerType === 'HORECA' || form.customerType === 'WHOLESALE_DISTRIBUTOR') && (
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Khách hàng cha (Chuỗi / Hệ thống)</label>
-                                    <select className={inputCls} style={inputStyle} value={form.parentId ?? ''}
-                                        onChange={e => set('parentId', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                        <option value="">— Chọn Khách Hàng Cha (Nếu có) —</option>
-                                        {parentCandidates.map(c => (
-                                            <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
-                                        ))}
-                                    </select>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Công ty mẹ (Gánh nợ)</label>
+                                        <select className={inputCls} style={inputStyle} value={form.parentId ?? ''}
+                                            onChange={e => set('parentId', e.target.value || null)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                            <option value="">— Chọn Công ty mẹ (Nếu có) —</option>
+                                            {parentCandidates.map(c => (
+                                                <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Loại thực thể</label>
+                                            <select className={inputCls} style={inputStyle} value={form.entityType ?? 'RESTAURANT'}
+                                                onChange={e => {
+                                                    const val = e.target.value as 'COMPANY' | 'RESTAURANT'
+                                                    setForm(f => ({
+                                                        ...f,
+                                                        entityType: val,
+                                                        ...(val === 'COMPANY' ? { parentId: null } : { allowDirectSO: false })
+                                                    }))
+                                                }}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                                <option value="RESTAURANT">🍽️ Nhà hàng / Chi nhánh con</option>
+                                                <option value="COMPANY">🏢 Công ty mẹ chịu nợ</option>
+                                            </select>
+                                        </div>
+                                        {form.entityType === 'COMPANY' ? (
+                                            <div className="flex items-center pt-6">
+                                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase tracking-wide" style={{ color: '#E8F1F2' }}>
+                                                    <input type="checkbox" checked={form.allowDirectSO ?? false}
+                                                        onChange={e => set('allowDirectSO', e.target.checked)}
+                                                        className="rounded bg-[#1B2E3D] border-[#2A4355] text-[#87CBB9] focus:ring-0" />
+                                                    Cho phép đặt SO trực tiếp
+                                                </label>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên Brand</label>
+                                                <input className={inputCls} style={inputStyle} value={form.brandGroup ?? ''} placeholder="Ví dụ: Manwah, Gogi"
+                                                    onChange={e => set('brandGroup', e.target.value || null)}
+                                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -553,13 +701,20 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Trạng thái</label>
-                                    <select className={inputCls} style={inputStyle} value={form.status ?? 'ACTIVE'}
-                                        onChange={e => set('status', e.target.value as any)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                        <option value="ACTIVE">Hoạt động</option>
-                                        <option value="CREDIT_HOLD">Giữ tín dụng</option>
-                                        <option value="INACTIVE">Tạm dừng</option>
-                                    </select>
+                                    {isSalesRep || form.status === 'PENDING_APPROVAL' || form.status === 'REJECTED' ? (
+                                        <div className="py-2.5 px-3 rounded-lg text-sm font-semibold text-[#E8F1F2] border border-[#2A4355] bg-[#142433] flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: { PENDING_APPROVAL: '#E0A96D', REJECTED: '#E05252', ACTIVE: '#5BA88A', INACTIVE: '#4A6A7A', CREDIT_HOLD: '#D4963A' }[form.status ?? 'ACTIVE'] }} />
+                                            {{ PENDING_APPROVAL: 'Chờ duyệt', REJECTED: 'Bị từ chối', ACTIVE: 'Hoạt động', INACTIVE: 'Tạm dừng', CREDIT_HOLD: 'Giữ tín dụng' }[form.status ?? 'ACTIVE']}
+                                        </div>
+                                    ) : (
+                                        <select className={inputCls} style={inputStyle} value={form.status ?? 'ACTIVE'}
+                                            onChange={e => set('status', e.target.value as any)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                            <option value="ACTIVE">Hoạt động</option>
+                                            <option value="CREDIT_HOLD">Giữ tín dụng</option>
+                                            <option value="INACTIVE">Tạm dừng</option>
+                                        </select>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -606,10 +761,14 @@ type CustomersPageResult = { rows: CustomerRow[]; total: number; stats: Customer
 
 interface CustomersClientProps {
     initialData?: CustomersPageResult
+    currentUser?: any
 }
 
-export function CustomersClient({ initialData }: CustomersClientProps) {
+export function CustomersClient({ initialData, currentUser }: CustomersClientProps) {
     const qc = useQueryClient()
+    const isSalesAdmin = currentUser?.roles?.includes('Sales Admin') || currentUser?.roles?.includes('SALES_ADMIN') || currentUser?.roles?.includes('ADMIN') || currentUser?.roles?.includes('CEO') || currentUser?.roles?.includes('Sales Manager') || currentUser?.roles?.includes('SALES_MGR')
+    const isSalesRep = currentUser?.roles?.includes('Sales Rep') || currentUser?.roles?.includes('SALES_REP')
+
     const [filters, setFilters] = useState<CustomerFilters>({ page: 1, pageSize: 25 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -705,12 +864,14 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
     }
 
     const sortableHeaders: { key: CustomerFilters['sortBy'] | undefined; label: string; cls: string; sortable: boolean }[] = [
-        { key: 'name', label: 'Khách Hàng', cls: 'px-4 py-1.5 w-[280px]', sortable: true },
-        { key: undefined, label: 'Loại', cls: 'px-3 py-1.5 w-[120px]', sortable: false },
+        { key: undefined, label: 'Loại', cls: 'px-3 py-1.5 w-[100px]', sortable: false },
+        { key: undefined, label: 'Mã KH', cls: 'px-3 py-1.5 w-[130px]', sortable: false },
+        { key: 'name', label: 'Khách Hàng', cls: 'px-4 py-1.5 w-[240px]', sortable: true },
+        { key: undefined, label: 'Công ty mẹ / Cha', cls: 'px-3 py-1.5 w-[180px]', sortable: false },
         { key: undefined, label: 'MST', cls: 'px-3 py-1.5 w-[110px]', sortable: false },
-        { key: undefined, label: 'Sales Rep', cls: 'px-3 py-1.5 w-[130px]', sortable: false },
+        { key: undefined, label: 'Sales Rep', cls: 'px-3 py-1.5 w-[120px]', sortable: false },
         { key: undefined, label: 'Thanh Toán', cls: 'px-3 py-1.5 w-[90px]', sortable: false },
-        { key: 'creditLimit', label: 'Hạn Mức', cls: 'px-3 py-1.5 w-[140px]', sortable: true },
+        { key: 'creditLimit', label: 'Hạn Mức', cls: 'px-3 py-1.5 w-[120px]', sortable: true },
         { key: 'orderCount', label: 'Đơn Hàng', cls: 'px-3 py-1.5 w-[80px] text-center', sortable: true },
         { key: undefined, label: 'Trạng Thái', cls: 'px-3 py-1.5 w-[100px]', sortable: false },
         { key: undefined, label: '', cls: 'px-3 py-1.5 w-[70px]', sortable: false },
@@ -762,8 +923,12 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                         <span style={{ color: '#4A6A7A' }} className="font-semibold uppercase tracking-wider text-[10px]">Chỉ số nhanh:</span>
                         <span style={{ color: '#8AAEBB' }}>Tổng KH: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{stats.total}</strong></span>
                         <span style={{ color: '#8AAEBB' }}>Hoạt động: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.active}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Có hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.withCredit}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Tổng hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{formatVND(stats.totalCreditLimit)}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E0A96D' }}>{stats.pendingApproval ?? 0}</strong></span>
+                        {isSalesRep ? (
+                            <span style={{ color: '#8AAEBB' }}>Từ chối: <strong className="font-mono text-sm ml-1" style={{ color: '#E05252' }}>{stats.rejected ?? 0}</strong></span>
+                        ) : (
+                            <span style={{ color: '#8AAEBB' }}>Tổng hạn mức: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{formatVND(stats.totalCreditLimit)}</strong></span>
+                        )}
                     </div>
                     <button onClick={() => setShowStats(true)} className="text-xs font-semibold hover:underline flex items-center gap-1 transition-all" style={{ color: '#87CBB9' }}>
                         Xem chi tiết chỉ số ➔
@@ -780,8 +945,12 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <StatCard label="Tổng KH" value={stats.total} icon={Users} accent="#87CBB9" />
                         <StatCard label="Hoạt động" value={stats.active} icon={Building2} accent="#5BA88A" />
-                        <StatCard label="Có hạn mức" value={stats.withCredit} icon={ShoppingBag} accent="#4A8FAB" />
-                        <StatCard label="Tổng hạn mức" value={formatVND(stats.totalCreditLimit)} icon={CreditCard} accent="#87CBB9" />
+                        <StatCard label="Chờ duyệt" value={stats.pendingApproval ?? 0} icon={ShoppingBag} accent="#E0A96D" />
+                        {isSalesRep ? (
+                            <StatCard label="Bị từ chối" value={stats.rejected ?? 0} icon={X} accent="#E05252" />
+                        ) : (
+                            <StatCard label="Tổng hạn mức" value={formatVND(stats.totalCreditLimit)} icon={CreditCard} accent="#87CBB9" />
+                        )}
                     </div>
                 </div>
             )}
@@ -815,6 +984,8 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
                         <option value="">Trạng thái</option>
                         <option value="ACTIVE">Hoạt động</option>
+                        <option value="PENDING_APPROVAL">Chờ duyệt</option>
+                        <option value="REJECTED">Bị từ chối</option>
                         <option value="CREDIT_HOLD">Giữ tín dụng</option>
                         <option value="INACTIVE">Tạm dừng</option>
                     </select>
@@ -871,7 +1042,7 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                                     </tr>
                                 ))
                             ) : rows.length === 0 ? (
-                                <tr><td colSpan={9}>
+                                <tr><td colSpan={11}>
                                     <div className="flex flex-col items-center py-16 gap-3">
                                         <span className="text-3xl">👥</span>
                                         <p style={{ color: '#4A6A7A' }} className="text-sm">Chưa có khách hàng nào</p>
@@ -882,34 +1053,40 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                                     style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                    <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.customerType} /></td>
+                                    <td className="px-3 py-1.5 whitespace-nowrap font-mono text-xs text-[#E8F1F2] font-semibold">{row.code}</td>
                                     <td className="px-4 py-1.5">
-                                        {row.parentId ? (
-                                            <>
-                                                <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
-                                                <div className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color: '#4A6A7A' }}>
-                                                    <span className="whitespace-nowrap font-mono">{row.code}</span>
-                                                    <span>·</span>
-                                                    <span style={{ color: '#8AAEBB' }} className="whitespace-nowrap">↳ Chi nhánh của {row.parentCode}</span>
-                                                </div>
-                                            </>
-                                        ) : row.childrenCount > 0 ? (
-                                            <>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
-                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold whitespace-nowrap" style={{ color: '#0A1926', background: '#D4A853' }}>
-                                                        Cha ({row.childrenCount} nhánh)
-                                                    </span>
-                                                </div>
-                                                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
-                                            </>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
+                                            {row.entityType === 'COMPANY' ? (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0D1E2B', background: '#8AAEBB' }}>
+                                                    🏢 Công ty {row.allowDirectSO && '(Bán trực tiếp)'}
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0D1E2B', background: '#5BA88A' }}>
+                                                    🍽️ Nhà hàng
+                                                </span>
+                                            )}
+                                            {row.brandGroup && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap" style={{ color: '#E8F1F2', background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                    ✨ {row.brandGroup}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-1.5 text-xs">
+                                        {row.entityType === 'RESTAURANT' && row.parentId ? (
+                                            <span style={{ color: '#8AAEBB' }} className="font-mono text-[11px] whitespace-nowrap">
+                                                {row.parentName} ({row.parentCode})
+                                            </span>
+                                        ) : row.entityType === 'COMPANY' && row.childrenCount > 0 ? (
+                                            <span style={{ color: '#D4A853' }} className="text-[11px] whitespace-nowrap">
+                                                ({row.childrenCount} nhà hàng)
+                                            </span>
                                         ) : (
-                                            <>
-                                                <p className="text-[13px] font-semibold truncate max-w-[260px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
-                                                <p className="text-[10px] mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{row.code}</p>
-                                            </>
+                                            <span style={{ color: '#4A6A7A' }} className="text-xs">—</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.customerType} /></td>
                                     <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#4A6A7A' }}>{row.taxId ?? '—'}</td>
                                     <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
                                         {row.salesRepName ?? '—'}
@@ -968,6 +1145,7 @@ export function CustomersClient({ initialData }: CustomersClientProps) {
                 legalEntities={legalEntities}
                 onClose={() => setDrawerOpen(false)}
                 onSaved={() => { setDrawerOpen(false); applyFilter({}) }}
+                currentUser={currentUser}
             />
 
             <ExcelImportDialog

@@ -128,7 +128,8 @@ describe('POS-02: lookupByBarcode', () => {
 describe('POS-03: generatePOSVATInvoice', () => {
     it('should generate VAT invoice for paid POS SO', async () => {
         mockPrisma.salesOrder.findFirst.mockResolvedValue({
-            id: 'so-1', totalAmount: 1100000, status: 'PAID', vatInvoices: []
+            id: 'so-1', totalAmount: 1100000, status: 'PAID', vatInvoices: [], customerId: 'cust-1',
+            customer: { id: 'cust-1', name: 'Khach le', parentId: null }
         })
         mockPrisma.aRInvoice.findFirst.mockResolvedValue(null)
         mockPrisma.aRInvoice.count.mockResolvedValue(0)

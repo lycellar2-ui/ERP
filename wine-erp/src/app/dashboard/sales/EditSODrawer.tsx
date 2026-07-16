@@ -63,6 +63,9 @@ interface Customer {
     paymentTerm: string
     channel: string | null
     parentId: string | null
+    entityType: string
+    allowDirectSO: boolean
+    brandGroup: string | null
     addresses?: {
         id: string
         label: string
@@ -467,19 +470,36 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     Không tìm thấy khách hàng
                                                 </div>
                                             ) : (
-                                                filteredCustomers.map(c => (
-                                                    <div
-                                                        key={c.id}
-                                                        onMouseDown={() => {
-                                                            handleCustomerChange(c.id)
-                                                            setCustomerDropdownOpen(false)
-                                                        }}
-                                                        className="px-3 py-2.5 text-sm cursor-pointer hover:bg-[#1B2E3D] transition-colors text-left text-white border-b border-[#2A4355]/30 last:border-b-0"
-                                                    >
-                                                        <span className="font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
-                                                        <span>{c.name}</span>
-                                                    </div>
-                                                ))
+                                                filteredCustomers.map(c => {
+                                                    const isCompany = c.entityType === 'COMPANY'
+                                                    const isDisabled = isCompany && !c.allowDirectSO
+                                                    return (
+                                                        <div
+                                                            key={c.id}
+                                                            onMouseDown={() => {
+                                                                if (isDisabled) return
+                                                                handleCustomerChange(c.id)
+                                                                setCustomerDropdownOpen(false)
+                                                            }}
+                                                            className={`px-3 py-2.5 text-xs text-left border-b border-[#2A4355]/30 last:border-b-0 transition-colors ${
+                                                                isDisabled ? 'opacity-50 cursor-not-allowed bg-[#0F1C28]/80 text-gray-500' : 'cursor-pointer hover:bg-[#1B2E3D] text-white'
+                                                            }`}
+                                                        >
+                                                            <span className="font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
+                                                            <span>{c.name}</span>
+                                                            {isCompany && (
+                                                                <span className="ml-2 text-[10px] uppercase font-semibold text-[#8AAEBB]" style={{ color: '#8AAEBB' }}>
+                                                                    {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty (Mẹ - Chỉ gánh nợ)'}
+                                                                </span>
+                                                            )}
+                                                            {c.brandGroup && (
+                                                                <span className="ml-2 text-[10px] px-1 bg-[#2A4355]/50 border border-[#2A4355] text-gray-300 rounded">
+                                                                    ✨ {c.brandGroup}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })
                                             )}
                                         </div>
                                     )}

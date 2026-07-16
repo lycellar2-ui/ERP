@@ -234,6 +234,28 @@ export async function executeReport(templateId: string): Promise<{
                 }))
                 break
             }
+            case 'brand': {
+                const orders = await prisma.salesOrder.findMany({
+                    where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
+                    include: { customer: { select: { brandGroup: true } } },
+                })
+                const brandMap: Record<string, { brand: string; revenue: number; orderCount: number }> = {}
+                orders.forEach(o => {
+                    const brand = o.customer.brandGroup ?? 'Không có Brand'
+                    if (!brandMap[brand]) {
+                        brandMap[brand] = { brand, revenue: 0, orderCount: 0 }
+                    }
+                    brandMap[brand].revenue += Number(o.totalAmount)
+                    brandMap[brand].orderCount += 1
+                })
+                data = Object.values(brandMap).map(b => ({
+                    brand: b.brand,
+                    revenue: b.revenue,
+                    orderCount: b.orderCount,
+                    avgOrderValue: Math.round(b.revenue / b.orderCount),
+                })).sort((a, b) => b.revenue - a.revenue)
+                break
+            }
             case 'procurement': {
                 const pos = await prisma.purchaseOrder.findMany({
                     include: {
@@ -607,6 +629,12 @@ const REPORT_COLUMNS: Record<ReportKey, ExcelColumn[]> = {
         { header: 'Nợ', key: 'debit', width: 15, numFmt: '#,##0' }, { header: 'Có', key: 'credit', width: 15, numFmt: '#,##0' },
         { header: 'Loại', key: 'sourceType', width: 12 }, { header: 'Mã CT', key: 'sourceId', width: 15 },
     ],
+    brand_performance: [
+        { header: 'Brand', key: 'brand', width: 25 },
+        { header: 'Doanh thu', key: 'revenue', width: 18, numFmt: '#,##0' },
+        { header: 'Số đơn hàng', key: 'orderCount', width: 12, numFmt: '#,##0' },
+        { header: 'Đơn giá TB', key: 'avgOrderValue', width: 18, numFmt: '#,##0' },
+    ],
 }
 
 const REPORT_TITLES: Record<ReportKey, string> = {
@@ -625,6 +653,7 @@ const REPORT_TITLES: Record<ReportKey, string> = {
     tax_summary: 'BẢNG TỔNG HỢP THUẾ NK / TTĐB / VAT',
     expense_summary: 'BÁO CÁO TỔNG HỢP CHI PHÍ',
     journal_ledger: 'SỔ NHẬT KÝ KẾ TOÁN TỔNG HỢP',
+    brand_performance: 'BÁO CÁO DOANH THU THEO BRAND',
 }
 
 export async function exportReportExcel(key: ReportKey): Promise<{ success: boolean; buffer?: string; fileName?: string; error?: string }> {
@@ -720,6 +749,28 @@ export async function exportReportExcel(key: ReportKey): Promise<{ success: bool
             case 'tax_summary': rows = await getTaxSummary(); break
             case 'expense_summary': rows = await getExpenseSummary(); break
             case 'journal_ledger': rows = await getJournalLedger(); break
+            case 'brand_performance': {
+                const orders = await prisma.salesOrder.findMany({
+                    where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
+                    include: { customer: { select: { brandGroup: true } } },
+                })
+                const brandMap: Record<string, { brand: string; revenue: number; orderCount: number }> = {}
+                orders.forEach(o => {
+                    const brand = o.customer.brandGroup ?? 'Không có Brand'
+                    if (!brandMap[brand]) {
+                        brandMap[brand] = { brand, revenue: 0, orderCount: 0 }
+                    }
+                    brandMap[brand].revenue += Number(o.totalAmount)
+                    brandMap[brand].orderCount += 1
+                })
+                rows = Object.values(brandMap).map(b => ({
+                    brand: b.brand,
+                    revenue: b.revenue,
+                    orderCount: b.orderCount,
+                    avgOrderValue: b.revenue / b.orderCount,
+                })).sort((a, b) => b.revenue - a.revenue)
+                break
+            }
         }
 
         const catalog = REPORT_CATALOG.find(r => r.key === key)!
@@ -894,6 +945,28 @@ export async function getReportSchedules(): Promise<ScheduleRow[]> {
         nextRunAt: s.nextRunAt,
         createdAt: s.createdAt,
     }))
+}
+
+export async function getRevenueByBrand(): Promise<{ brand: string; revenue: number; orderCount: number; avgOrderValue: number }[]> {
+    const orders = await prisma.salesOrder.findMany({
+        where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
+        include: { customer: { select: { brandGroup: true } } },
+    })
+    const brandMap: Record<string, { brand: string; revenue: number; orderCount: number }> = {}
+    orders.forEach(o => {
+        const brand = o.customer.brandGroup ?? 'Không có Brand'
+        if (!brandMap[brand]) {
+            brandMap[brand] = { brand, revenue: 0, orderCount: 0 }
+        }
+        brandMap[brand].revenue += Number(o.totalAmount)
+        brandMap[brand].orderCount += 1
+    })
+    return Object.values(brandMap).map(b => ({
+        brand: b.brand,
+        revenue: b.revenue,
+        orderCount: b.orderCount,
+        avgOrderValue: b.revenue / b.orderCount,
+    })).sort((a, b) => b.revenue - a.revenue)
 }
 
 export async function createReportSchedule(input: {

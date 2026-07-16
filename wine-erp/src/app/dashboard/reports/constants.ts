@@ -2,7 +2,7 @@ export type ReportKey =
     | 'stock_inventory' | 'sales_revenue' | 'ar_aging' | 'costing' | 'ap_outstanding'
     | 'po_status' | 'monthly_pnl' | 'margin_per_sku' | 'channel_performance'
     | 'customer_ranking' | 'slow_moving' | 'stamp_usage' | 'tax_summary'
-    | 'expense_summary' | 'journal_ledger'
+    | 'expense_summary' | 'journal_ledger' | 'brand_performance'
 
 export const REPORT_CATALOG: { key: ReportKey; code: string; name: string; module: string }[] = [
     { key: 'stock_inventory', code: 'R01', name: 'Tồn Kho Chi Tiết', module: 'WMS' },
@@ -20,4 +20,5 @@ export const REPORT_CATALOG: { key: ReportKey; code: string; name: string; modul
     { key: 'tax_summary', code: 'R13', name: 'Tổng Hợp Thuế NK/TTĐB/VAT', module: 'TAX' },
     { key: 'expense_summary', code: 'R14', name: 'Tổng Hợp Chi Phí', module: 'FIN' },
     { key: 'journal_ledger', code: 'R15', name: 'Sổ Nhật Ký Kế Toán', module: 'FIN' },
+    { key: 'brand_performance', code: 'R16', name: 'Doanh Thu Theo Brand', module: 'SLS' },
 ]

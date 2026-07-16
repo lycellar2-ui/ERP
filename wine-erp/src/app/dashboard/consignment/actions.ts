@@ -216,7 +216,7 @@ export async function confirmConsignmentReport(
             include: {
                 agreement: {
                     include: {
-                        customer: { select: { id: true, name: true } },
+                        customer: { select: { id: true, name: true, parentId: true } },
                         stocks: {
                             include: { product: { select: { id: true, productName: true } } },
                         },
@@ -264,7 +264,7 @@ export async function confirmConsignmentReport(
                     data: {
                         invoiceNo,
                         soId,
-                        customerId: report.agreement.customerId,
+                        customerId: report.agreement.customer.parentId ?? report.agreement.customerId,
                         amount: totalSales,
                         vatAmount,
                         totalAmount,

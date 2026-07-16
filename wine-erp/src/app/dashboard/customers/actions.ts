@@ -33,6 +33,9 @@ export type CustomerRow = {
     parentCode: string | null
     parentName: string | null
     childrenCount: number
+    entityType: 'COMPANY' | 'RESTAURANT'
+    allowDirectSO: boolean
+    brandGroup: string | null
 }
 
 export type CustomerFilters = {
@@ -128,6 +131,9 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
             parentCode: c.parent?.code ?? null,
             parentName: c.parent?.name ?? null,
             childrenCount: c.children.length,
+            entityType: c.entityType as 'COMPANY' | 'RESTAURANT',
+            allowDirectSO: c.allowDirectSO,
+            brandGroup: c.brandGroup,
         }))
 
         // Client-side sort for computed field
@@ -184,6 +190,9 @@ export async function getCustomerById(id: string) {
         ward: addr?.ward ?? null,
         district: addr?.district ?? null,
         city: addr?.city ?? null,
+        entityType: c.entityType,
+        allowDirectSO: c.allowDirectSO,
+        brandGroup: c.brandGroup,
     }
 }
 
@@ -197,24 +206,36 @@ export type CustomerStats = {
     withCredit: number
     totalCreditLimit: number
     topTypes: { type: string; label: string; count: number }[]
+    pendingApproval?: number
+    rejected?: number
 }
 
 export async function getCustomerStats(): Promise<CustomerStats> {
     await requirePermission('MDM', 'READ')
-    return cached('customers:stats', async () => {
+    const user = await getCurrentUser()
+    const userId = user?.id ?? 'guest'
+
+    return cached(`customers:stats:${userId}`, async () => {
         const typeLabels: Record<string, string> = {
             HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Phân Phối',
             VIP_RETAIL: 'VIP Retail', INDIVIDUAL: 'Cá Nhân',
         }
 
-        const [total, active, withCredit, creditSum, typeCounts] = await Promise.all([
-            prisma.customer.count({ where: { deletedAt: null } }),
-            prisma.customer.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
-            prisma.customer.count({ where: { deletedAt: null, creditLimit: { gt: 0 } } }),
-            prisma.customer.aggregate({ where: { deletedAt: null }, _sum: { creditLimit: true } }),
+        const where: any = { deletedAt: null }
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            where.salesRepId = user.id
+        }
+
+        const [total, active, pendingApproval, rejected, withCredit, creditSum, typeCounts] = await Promise.all([
+            prisma.customer.count({ where }),
+            prisma.customer.count({ where: { ...where, status: 'ACTIVE' } }),
+            prisma.customer.count({ where: { ...where, status: 'PENDING_APPROVAL' } }),
+            prisma.customer.count({ where: { ...where, status: 'REJECTED' } }),
+            prisma.customer.count({ where: { ...where, creditLimit: { gt: 0 } } }),
+            prisma.customer.aggregate({ where, _sum: { creditLimit: true } }),
             prisma.customer.groupBy({
                 by: ['customerType'],
-                where: { deletedAt: null },
+                where,
                 _count: { id: true },
                 orderBy: { _count: { id: 'desc' } },
             }),
@@ -230,6 +251,8 @@ export async function getCustomerStats(): Promise<CustomerStats> {
                 label: typeLabels[t.customerType] ?? t.customerType,
                 count: t._count.id,
             })),
+            pendingApproval,
+            rejected,
         }
     }, 30_000)
 }
@@ -331,7 +354,7 @@ export async function exportCustomersData() {
 // ═══════════════════════════════════════════════════
 
 const customerSchema = z.object({
-    code: z.string().min(3, 'Mã KH bắt buộc'),
+    code: z.string().min(3, 'Mã KH bắt buộc').optional(),
     name: z.string().min(2, 'Tên KH bắt buộc'),
     shortName: z.string().nullable().optional(),
     taxId: z.string().nullable().optional(),
@@ -340,7 +363,7 @@ const customerSchema = z.object({
     paymentTerm: z.string().default('NET30'),
     creditLimit: z.number().default(0),
     salesRepId: z.string().nullable().optional(),
-    status: z.enum(['ACTIVE', 'CREDIT_HOLD', 'INACTIVE']).default('ACTIVE'),
+    status: z.enum(['ACTIVE', 'CREDIT_HOLD', 'INACTIVE', 'PENDING_APPROVAL', 'REJECTED']).default('ACTIVE'),
     parentId: z.string().nullable().optional(),
     contactName: z.string().nullable().optional(),
     email: z.string().email('Email không hợp lệ').nullable().optional(),
@@ -349,6 +372,9 @@ const customerSchema = z.object({
     ward: z.string().nullable().optional(),
     district: z.string().nullable().optional(),
     city: z.string().nullable().optional(),
+    entityType: z.enum(['COMPANY', 'RESTAURANT']).default('RESTAURANT'),
+    allowDirectSO: z.boolean().default(false),
+    brandGroup: z.string().nullable().optional(),
 })
 
 export type CustomerInput = z.infer<typeof customerSchema>
@@ -356,27 +382,84 @@ export type CustomerInput = z.infer<typeof customerSchema>
 export async function createCustomer(input: CustomerInput) {
     try {
         const user = await requirePermission('MDM', 'WRITE')
-        const data = customerSchema.parse(input)
+        
+        const isSalesRepUser = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
 
+        let inputData = { ...input }
+
+        if (isSalesRepUser) {
+            inputData.status = 'PENDING_APPROVAL'
+            const rand = Math.random().toString(36).substring(2, 8).toUpperCase()
+            inputData.code = `TEMP-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${rand}`
+            inputData.salesRepId = user.id
+        } else {
+            if (!inputData.code) {
+                return { success: false, error: 'Mã KH bắt buộc' }
+            }
+            if (inputData.code.startsWith('TEMP-')) {
+                return { success: false, error: 'Mã KH chính thức không được bắt đầu bằng TEMP-' }
+            }
+        }
+
+        const data = customerSchema.parse(inputData)
         let salesRepId = data.salesRepId
-        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        if (isSalesRepUser) {
             salesRepId = user.id
         }
 
         const customer = await prisma.$transaction(async (tx) => {
+            let finalParentId = data.parentId !== undefined ? data.parentId : null
+            let finalCreditLimit = data.creditLimit
+
+            // Business Rule: If Restaurant and no parent is specified, auto-generate a parent Company!
+            if (data.entityType === 'RESTAURANT' && !finalParentId) {
+                const parentCode = `${data.code}-M`
+                let parentCompany = await tx.customer.findUnique({
+                    where: { code: parentCode }
+                })
+
+                if (!parentCompany) {
+                    parentCompany = await tx.customer.create({
+                        data: {
+                            code: parentCode,
+                            name: `${data.name} (Mẹ)`,
+                            shortName: data.shortName ? `${data.shortName} (Mẹ)` : null,
+                            taxId: data.taxId !== undefined ? data.taxId : null,
+                            customerType: data.customerType,
+                            channel: data.channel !== undefined ? data.channel : null,
+                            paymentTerm: data.paymentTerm,
+                            creditLimit: data.creditLimit,
+                            salesRep: salesRepId ? { connect: { id: salesRepId } } : undefined,
+                            status: data.status,
+                            entityType: 'COMPANY',
+                            allowDirectSO: false,
+                        }
+                    })
+                }
+                finalParentId = parentCompany.id
+                finalCreditLimit = 0 // Inherited from parent
+            }
+
+            if (data.entityType === 'COMPANY') {
+                finalParentId = null
+            }
+
             const cust = await tx.customer.create({
                 data: {
-                    code: data.code,
+                    code: data.code!,
                     name: data.name,
                     shortName: data.shortName !== undefined ? data.shortName : null,
                     taxId: data.taxId !== undefined ? data.taxId : null,
                     customerType: data.customerType,
                     channel: data.channel !== undefined ? data.channel : null,
                     paymentTerm: data.paymentTerm,
-                    creditLimit: data.creditLimit,
-                    salesRepId: salesRepId !== undefined ? salesRepId : null,
+                    creditLimit: finalCreditLimit,
+                    salesRep: salesRepId ? { connect: { id: salesRepId } } : undefined,
                     status: data.status,
-                    parentId: data.parentId !== undefined ? data.parentId : null,
+                    parent: finalParentId ? { connect: { id: finalParentId } } : undefined,
+                    entityType: data.entityType,
+                    allowDirectSO: data.entityType === 'COMPANY' ? data.allowDirectSO : false,
+                    brandGroup: data.brandGroup !== undefined ? data.brandGroup : null,
                 },
             })
 
@@ -428,7 +511,24 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         const user = await requirePermission('MDM', 'WRITE')
         const data = customerSchema.partial().parse(input)
         const { contactName, email, phone, address, ward, district, city, ...customerData } = data
-        const oldCustomer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true, paymentTerm: true, channel: true, salesRepId: true, status: true, shortName: true } })
+        const oldCustomer = await prisma.customer.findUnique({
+            where: { id },
+            select: {
+                code: true,
+                name: true,
+                customerType: true,
+                creditLimit: true,
+                paymentTerm: true,
+                channel: true,
+                salesRepId: true,
+                status: true,
+                shortName: true,
+                entityType: true,
+                allowDirectSO: true,
+                parentId: true,
+                taxId: true,
+            }
+        })
         if (!oldCustomer) return { success: false, error: 'Khách hàng không tồn tại' }
 
         if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
@@ -438,6 +538,16 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
             if (customerData.salesRepId && customerData.salesRepId !== user.id) {
                 return { success: false, error: 'Bạn không thể đổi Sales phụ trách của khách hàng này.' }
             }
+
+            // Apply Sales Rep restrictions on status and code
+            if (oldCustomer.status === 'REJECTED') {
+                customerData.status = 'PENDING_APPROVAL'
+            } else if (oldCustomer.status === 'PENDING_APPROVAL') {
+                customerData.status = 'PENDING_APPROVAL'
+            } else {
+                delete customerData.status
+            }
+            delete customerData.code
         }
 
         const updateData: any = {}
@@ -451,15 +561,60 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.creditLimit !== undefined) updateData.creditLimit = customerData.creditLimit
         if (customerData.salesRepId !== undefined) updateData.salesRepId = customerData.salesRepId
         if (customerData.status !== undefined) updateData.status = customerData.status
-        if (customerData.parentId !== undefined) updateData.parentId = customerData.parentId
+        if (customerData.brandGroup !== undefined) updateData.brandGroup = customerData.brandGroup
+        if (customerData.entityType !== undefined) updateData.entityType = customerData.entityType
 
-        if (customerData.parentId) {
-            if (customerData.parentId === id) {
+        const currentEntityType = customerData.entityType ?? oldCustomer.entityType
+        let finalParentId = customerData.parentId !== undefined ? customerData.parentId : oldCustomer.parentId
+
+        if (currentEntityType === 'COMPANY') {
+            updateData.parentId = null
+            updateData.allowDirectSO = customerData.allowDirectSO !== undefined ? customerData.allowDirectSO : oldCustomer.allowDirectSO
+        } else {
+            updateData.allowDirectSO = false
+            if (!finalParentId) {
+                const codeForParent = customerData.code ?? oldCustomer.code
+                const nameForParent = customerData.name ?? oldCustomer.name
+                const parentCode = `${codeForParent}-M`
+                
+                await prisma.$transaction(async (tx) => {
+                    let parentCompany = await tx.customer.findUnique({
+                        where: { code: parentCode }
+                    })
+
+                    if (!parentCompany) {
+                        const repId = customerData.salesRepId ?? oldCustomer.salesRepId
+                        parentCompany = await tx.customer.create({
+                            data: {
+                                code: parentCode,
+                                name: `${nameForParent} (Mẹ)`,
+                                shortName: (customerData.shortName ?? oldCustomer.shortName) ? `${customerData.shortName ?? oldCustomer.shortName} (Mẹ)` : null,
+                                taxId: customerData.taxId !== undefined ? customerData.taxId : oldCustomer.taxId,
+                                customerType: customerData.customerType ?? oldCustomer.customerType,
+                                channel: customerData.channel !== undefined ? customerData.channel : oldCustomer.channel,
+                                paymentTerm: customerData.paymentTerm ?? oldCustomer.paymentTerm,
+                                creditLimit: customerData.creditLimit ?? Number(oldCustomer.creditLimit),
+                                salesRep: repId ? { connect: { id: repId } } : undefined,
+                                status: customerData.status ?? oldCustomer.status,
+                                entityType: 'COMPANY',
+                                allowDirectSO: false,
+                            }
+                        })
+                    }
+                    updateData.parentId = parentCompany.id
+                    updateData.creditLimit = 0 // Inherit
+                })
+            } else {
+                updateData.parentId = finalParentId
+            }
+        }
+
+        if (updateData.parentId) {
+            if (updateData.parentId === id) {
                 return { success: false, error: 'Không thể chọn chính mình làm cha' }
             }
-            // Prevent circular dependency: check if the chosen parent is a child of this customer
             const isChild = await prisma.customer.findFirst({
-                where: { id: customerData.parentId, parentId: id, deletedAt: null }
+                where: { id: updateData.parentId, parentId: id, deletedAt: null }
             })
             if (isChild) {
                 return { success: false, error: 'Khách hàng được chọn làm cha đang là con của khách hàng này' }
@@ -467,9 +622,28 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         }
 
         await prisma.$transaction(async (tx) => {
+            const dataToUpdate: any = { ...updateData }
+            
+            // Connect relation
+            if (dataToUpdate.parentId) {
+                const pid = dataToUpdate.parentId
+                delete dataToUpdate.parentId
+                dataToUpdate.parent = { connect: { id: pid } }
+            } else if (dataToUpdate.parentId === null) {
+                dataToUpdate.parent = { disconnect: true }
+            }
+
+            if (dataToUpdate.salesRepId) {
+                const srid = dataToUpdate.salesRepId
+                delete dataToUpdate.salesRepId
+                dataToUpdate.salesRep = { connect: { id: srid } }
+            } else if (dataToUpdate.salesRepId === null) {
+                dataToUpdate.salesRep = { disconnect: true }
+            }
+
             await tx.customer.update({
                 where: { id },
-                data: updateData,
+                data: dataToUpdate,
             })
 
             // Update primary contact if provided
@@ -837,5 +1011,127 @@ export async function exportCustomerOnboardingForm(customerId: string): Promise<
     } catch (err: any) {
         console.error("Lỗi xuất Excel form:", err)
         return { success: false, error: err.message }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// APPROVAL WORKFLOW ACTIONS
+// ═══════════════════════════════════════════════════
+
+export async function approveCustomer(id: string, officialCode: string) {
+    try {
+        const user = await requireAuth()
+        const isSalesAdmin = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'ADMIN', 'CEO', 'Sales Manager', 'SALES_MGR', 'Kế Toán', 'KE_TOAN')
+        if (!isSalesAdmin) {
+            return { success: false, error: 'Bạn không có quyền phê duyệt khách hàng.' }
+        }
+
+        const trimmedCode = (officialCode || '').trim().toUpperCase()
+        if (!trimmedCode || trimmedCode.length < 3) {
+            return { success: false, error: 'Mã KH chính thức phải từ 3 ký tự trở lên' }
+        }
+        if (trimmedCode.startsWith('TEMP-') || trimmedCode.startsWith('DRAFT-')) {
+            return { success: false, error: 'Mã KH chính thức không được bắt đầu bằng TEMP- hoặc DRAFT-' }
+        }
+
+        const oldCustomer = await prisma.customer.findUnique({
+            where: { id },
+            select: { code: true, name: true, status: true, parentId: true }
+        })
+        if (!oldCustomer) return { success: false, error: 'Khách hàng không tồn tại' }
+
+        if (oldCustomer.status !== 'PENDING_APPROVAL' && oldCustomer.status !== 'REJECTED') {
+            return { success: false, error: 'Khách hàng này đã được xử lý hoặc đang hoạt động.' }
+        }
+
+        // Check if code already exists
+        const codeExists = await prisma.customer.findFirst({
+            where: { code: trimmedCode, id: { not: id }, deletedAt: null }
+        })
+        if (codeExists) {
+            return { success: false, error: `Mã KH '${trimmedCode}' đã tồn tại hệ thống. Vui lòng chọn mã khác.` }
+        }
+
+        const customer = await prisma.$transaction(async (tx) => {
+            const updated = await tx.customer.update({
+                where: { id },
+                data: {
+                    code: trimmedCode,
+                    status: 'ACTIVE',
+                }
+            })
+
+            // If it's a Restaurant and parent was auto-created with a temporary code, we also need to approve the parent!
+            if (updated.parentId) {
+                const parent = await tx.customer.findUnique({ where: { id: updated.parentId } })
+                if (parent && parent.code.startsWith('TEMP-') && (parent.status === 'PENDING_APPROVAL' || parent.status === 'REJECTED')) {
+                    const parentOfficialCode = `${trimmedCode}-M`
+                    await tx.customer.update({
+                        where: { id: parent.id },
+                        data: {
+                            code: parentOfficialCode,
+                            status: 'ACTIVE'
+                        }
+                    })
+                }
+            }
+
+            return updated
+        })
+
+        revalidateCache('customers')
+        revalidatePath('/dashboard/customers')
+        logAudit({
+            userId: user?.id,
+            userName: user?.name,
+            action: 'UPDATE',
+            entityType: 'Customer',
+            entityId: id,
+            newValue: { code: trimmedCode, status: 'ACTIVE' }
+        })
+
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi phê duyệt khách hàng' }
+    }
+}
+
+export async function rejectCustomer(id: string) {
+    try {
+        const user = await requireAuth()
+        const isSalesAdmin = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'ADMIN', 'CEO', 'Sales Manager', 'SALES_MGR')
+        if (!isSalesAdmin) {
+            return { success: false, error: 'Bạn không có quyền từ chối phê duyệt khách hàng.' }
+        }
+
+        const oldCustomer = await prisma.customer.findUnique({
+            where: { id },
+            select: { status: true }
+        })
+        if (!oldCustomer) return { success: false, error: 'Khách hàng không tồn tại' }
+
+        if (oldCustomer.status !== 'PENDING_APPROVAL') {
+            return { success: false, error: 'Chỉ có thể từ chối khách hàng đang chờ duyệt.' }
+        }
+
+        await prisma.customer.update({
+            where: { id },
+            data: { status: 'REJECTED' }
+        })
+
+        revalidateCache('customers')
+        revalidatePath('/dashboard/customers')
+        logAudit({
+            userId: user?.id,
+            userName: user?.name,
+            action: 'UPDATE',
+            entityType: 'Customer',
+            entityId: id,
+            newValue: { status: 'REJECTED' }
+        })
+
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi từ chối khách hàng' }
     }
 }

@@ -384,6 +384,9 @@ export async function getCustomersForSO() {
                 paymentTerm: true,
                 channel: true,
                 parentId: true,
+                entityType: true,
+                allowDirectSO: true,
+                brandGroup: true,
                 addresses: {
                     select: {
                         id: true,
@@ -403,6 +406,9 @@ export async function getCustomersForSO() {
                         code: true,
                         creditLimit: true,
                         creditHold: true,
+                        entityType: true,
+                        allowDirectSO: true,
+                        brandGroup: true,
                     }
                 }
             },
@@ -549,11 +555,25 @@ export async function getCustomerARBalance(customerId: string): Promise<number> 
         }
     }
 
-    const result = await prisma.aRInvoice.aggregate({
+    const invoices = await prisma.aRInvoice.findMany({
         where: { customerId: { in: targetCustomerIds }, status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
-        _sum: { amount: true },
+        select: { amount: true, paidAmount: true }
     })
-    return Number(result._sum?.amount ?? 0)
+    const arOutstanding = invoices.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+
+    const uninvoicedSO = await prisma.salesOrder.findMany({
+        where: {
+            customerId: { in: targetCustomerIds },
+            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED'] },
+            arInvoices: { none: {} }
+        },
+        select: {
+            totalAmount: true
+        }
+    })
+    const uninvoicedSOAmount = uninvoicedSO.reduce((sum, so) => sum + Number(so.totalAmount), 0)
+
+    return arOutstanding + uninvoicedSOAmount
 }
 
 // ── Users (sales reps) ───────────────────────────
@@ -610,8 +630,23 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
         // --- 2. Credit Hold Check ---
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
-            select: { creditLimit: true, name: true, parentId: true, parent: { select: { id: true, creditLimit: true, name: true } } },
+            select: { 
+                creditLimit: true, 
+                name: true, 
+                parentId: true, 
+                entityType: true,
+                allowDirectSO: true,
+                parent: { select: { id: true, creditLimit: true, name: true } } 
+            },
         })
+
+        if (!customer) {
+            return { success: false, error: 'Khách hàng không tồn tại' }
+        }
+
+        if (customer.entityType === 'COMPANY' && !customer.allowDirectSO) {
+            return { success: false, error: 'Không thể tạo đơn hàng trực tiếp cho công ty chịu nợ. Vui lòng chọn một nhà hàng con.' }
+        }
 
         // Auto credit limit enforcement
         if (customer) {
@@ -755,8 +790,19 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
         // Credit check
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
-            select: { creditLimit: true, parentId: true, parent: { select: { id: true, creditLimit: true } } },
+            select: { 
+                creditLimit: true, 
+                parentId: true, 
+                entityType: true,
+                allowDirectSO: true,
+                parent: { select: { id: true, creditLimit: true } } 
+            },
         })
+        if (!customer) return { success: false, error: 'Khách hàng không tồn tại' }
+        if (customer.entityType === 'COMPANY' && !customer.allowDirectSO) {
+            return { success: false, error: 'Không thể tạo đơn hàng trực tiếp cho công ty chịu nợ. Vui lòng chọn một nhà hàng con.' }
+        }
+
         if (customer) {
             let checkCustomerId = input.customerId
             let creditLimit = Number(customer.creditLimit)

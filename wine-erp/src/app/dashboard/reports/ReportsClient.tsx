@@ -44,9 +44,10 @@ interface Props {
     monthlyRevenue: { month: string; label: string; revenue: number }[]
     channelBreakdown: { channel: string; revenue: number; orders: number }[]
     stockValuation: { totalQty: number; totalValue: number; productCount: number }
+    brandBreakdown: { brand: string; revenue: number; orderCount: number; avgOrderValue: number }[]
 }
 
-export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stockValuation }: Props) {
+export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stockValuation, brandBreakdown }: Props) {
     const [tab, setTab] = useState<TabKey>('overview')
     const [downloading, setDownloading] = useState<string | null>(null)
     const [lastDownloaded, setLastDownloaded] = useState<string | null>(null)
@@ -218,50 +219,88 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                         </div>
                     </div>
 
-                    {/* Top SKUs */}
-                    <div className="p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <div className="flex items-center gap-2 mb-5">
-                            <Wine size={18} style={{ color: '#87CBB9' }} />
-                            <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Top 10 SKU Bán Chạy Nhất</h3>
-                        </div>
-                        {topSKUs.length === 0 ? (
-                            <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu bán hàng</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {topSKUs.map((sku, i) => {
-                                    const pct = (sku.qtyOrdered / maxQty) * 100
-                                    const typeColor = WINE_TYPE_COLOR[sku.wineType] ?? '#8AAEBB'
-                                    return (
-                                        <div key={sku.productId} className="flex items-center gap-4">
-                                            <span className="text-xs font-bold w-5 text-right" style={{ color: '#4A6A7A' }}>
-                                                {i + 1}
-                                            </span>
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs px-1.5 py-0.5 rounded font-semibold"
-                                                            style={{ background: `${typeColor}20`, color: typeColor }}>
-                                                            {sku.wineType}
-                                                        </span>
-                                                        <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{sku.skuCode}</span>
-                                                        <span className="text-xs hidden md:block truncate max-w-[200px]" style={{ color: '#4A6A7A' }}>
-                                                            {sku.productName}
+                    {/* Top SKUs & Brand Breakdown Grid */}
+                    <div className="grid grid-cols-12 gap-5">
+                        {/* Top SKUs */}
+                        <div className="col-span-12 lg:col-span-7 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <div className="flex items-center gap-2 mb-5">
+                                <Wine size={18} style={{ color: '#87CBB9' }} />
+                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Top 10 SKU Bán Chạy Nhất</h3>
+                            </div>
+                            {topSKUs.length === 0 ? (
+                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu bán hàng</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {topSKUs.map((sku, i) => {
+                                        const pct = (sku.qtyOrdered / maxQty) * 100
+                                        const typeColor = WINE_TYPE_COLOR[sku.wineType] ?? '#8AAEBB'
+                                        return (
+                                            <div key={sku.productId} className="flex items-center gap-4">
+                                                <span className="text-xs font-bold w-5 text-right" style={{ color: '#4A6A7A' }}>
+                                                    {i + 1}
+                                                </span>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs px-1.5 py-0.5 rounded font-semibold"
+                                                                style={{ background: `${typeColor}20`, color: typeColor }}>
+                                                                {sku.wineType}
+                                                            </span>
+                                                            <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{sku.skuCode}</span>
+                                                            <span className="text-xs hidden md:block truncate max-w-[200px]" style={{ color: '#4A6A7A' }}>
+                                                                {sku.productName}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-xs font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>
+                                                            {sku.qtyOrdered.toLocaleString()} chai
                                                         </span>
                                                     </div>
-                                                    <span className="text-xs font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>
-                                                        {sku.qtyOrdered.toLocaleString()} chai
-                                                    </span>
-                                                </div>
-                                                <div className="h-1 rounded-full overflow-hidden" style={{ background: '#142433' }}>
-                                                    <div className="h-full rounded-full transition-all duration-500"
-                                                        style={{ width: `${pct}%`, background: typeColor }} />
+                                                    <div className="h-1 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                        <div className="h-full rounded-full transition-all duration-500"
+                                                            style={{ width: `${pct}%`, background: typeColor }} />
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Brand Breakdown */}
+                        <div className="col-span-12 lg:col-span-5 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <div className="flex items-center gap-2 mb-5">
+                                <TrendingUp size={18} style={{ color: '#87CBB9' }} />
+                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Doanh Thu Theo Brand</h3>
                             </div>
-                        )}
+                            {brandBreakdown.length === 0 ? (
+                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
+                            ) : (
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                    {brandBreakdown.map(b => {
+                                        const totalBrandRevenue = brandBreakdown.reduce((sum, x) => sum + x.revenue, 0)
+                                        const pct = totalBrandRevenue > 0 ? (b.revenue / totalBrandRevenue) * 100 : 0
+                                        return (
+                                            <div key={b.brand}>
+                                                <div className="flex justify-between mb-1">
+                                                    <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{b.brand}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-[#87CBB9]">
+                                                            {formatVND(b.revenue)}
+                                                        </span>
+                                                        <span className="text-xs" style={{ color: '#4A6A7A' }}>{pct.toFixed(0)}%</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                    <div className="h-full rounded-full transition-all duration-500 bg-[#87CBB9]"
+                                                        style={{ width: `${pct}%` }} />
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </>
             )}
@@ -271,7 +310,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                     <div className="p-4 rounded-md" style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(135,203,185,0.15)' }}>
                         <p className="text-xs" style={{ color: '#87CBB9' }}>
                             <FileSpreadsheet size={14} className="inline mr-1.5" />
-                            15 báo cáo chuẩn — Xuất file Excel (.xlsx) với header công ty, format VND, auto-filter. Nhấn vào nút Xuất để tải.
+                            16 báo cáo chuẩn — Xuất file Excel (.xlsx) với header công ty, format VND, auto-filter. Nhấn vào nút Xuất để tải.
                         </p>
                     </div>
 

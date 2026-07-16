@@ -496,6 +496,8 @@ model Customer {
   parentId      String?
   parent        Customer?              @relation("CustomerHierarchy", fields: [parentId], references: [id])
   children      Customer[]             @relation("CustomerHierarchy")
+  entityType    CustomerEntityType     @default(RESTAURANT)
+  allowDirectSO Boolean                @default(false)
   brandGroup    String?
   addresses     CustomerAddress[]
   contacts      CustomerContact[]
@@ -2022,6 +2024,11 @@ enum SupplierStatus {
   BLACKLISTED
 }
 
+enum CustomerEntityType {
+  COMPANY
+  RESTAURANT
+}
+
 enum CustomerType {
   HORECA
   WHOLESALE_DISTRIBUTOR
@@ -2035,6 +2042,8 @@ enum CustomerStatus {
   ACTIVE
   CREDIT_HOLD
   INACTIVE
+  PENDING_APPROVAL
+  REJECTED
 }
 
 enum ActivityType {

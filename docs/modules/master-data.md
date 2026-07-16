@@ -170,9 +170,12 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
 | `channel` | Kênh phân phối (HORECA / WHOLESALE / VIP_RETAIL / DIRECT_INDIVIDUAL) | ✅ Dropdown + Filter |
 | `tax_id` | MST để xuất hóa đơn VAT | ✅ Tìm kiếm được |
 | `payment_term` | Công nợ bao nhiêu ngày (COD / NET15 / NET30 / NET45 / NET60) | ✅ Dropdown |
-| `credit_limit` | Hạn mức công nợ tối đa được phép (VND) | ✅ Sortable |
+| `credit_limit` | Hạn mức công nợ tối đa được phép (VND) — Đặt ở thực thể cha COMPANY | ✅ Sortable |
 | `sales_rep_id` | Nhân viên Sales phụ trách (chọn từ danh sách Users) | ✅ Dropdown + Cột bảng |
-| `status` | ACTIVE / CREDIT_HOLD / INACTIVE | ✅ Filter |
+| `entityType` | Loại thực thể (`COMPANY` — Công ty mẹ chịu nợ / `RESTAURANT` — Nhà hàng con) | ✅ Badge hiển thị |
+| `allowDirectSO` | Cho phép đặt SO trực tiếp cho công ty mẹ (chỉ có ý nghĩa khi `entityType === 'COMPANY'`) | ✅ Checkbox |
+| `brandGroup` | Tên Brand của nhà hàng (chỉ có ý nghĩa khi `entityType === 'RESTAURANT'`) | ✅ Nhập văn bản |
+| `status` | ACTIVE / PENDING_APPROVAL / REJECTED / CREDIT_HOLD / INACTIVE | ✅ Filter |
 
 **Địa chỉ (CustomerAddress):**
 
@@ -198,12 +201,21 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
 
 **Tính năng UI đã triển khai (07/03/2026):**
 - ✅ **CRUD đầy đủ**: Thêm mới + Chỉnh sửa (drawer load data by ID) + Xóa (soft-delete có kiểm tra SO active)
+- ✅ **Quy trình Phê Duyệt Khách Hàng (Customer Approval Workflow)**:
+  * **Sales tạo khách hàng**: Tự động gán trạng thái `PENDING_APPROVAL` và sinh Mã KH tạm thời dạng `TEMP-YYMMDD-XXXX`.
+  * **Sales Admin duyệt**: Xem danh sách chờ duyệt, ấn định Mã KH chính thức (độc nhất, không chứa `TEMP-`) và Duyệt chuyển sang `ACTIVE` (hoặc Từ chối chuyển sang `REJECTED`).
+  * **Tự động duyệt công ty mẹ**: Nếu Nhà hàng được duyệt có Công ty mẹ tự sinh (đuôi `-M`) đang ở dạng chờ duyệt, Công ty mẹ cũng sẽ tự động được duyệt và đổi mã tương ứng.
+  * **Thống kê & Bộ lọc cho Sale**: Thẻ hiển thị số lượng khách hàng chờ duyệt và bị từ chối trực quan ngay trên đầu trang.
 - ✅ **Tìm kiếm mở rộng**: Tên, mã, MST, email, SĐT, tên viết tắt
 - ✅ **3 filter**: Loại KH + Trạng thái + Kênh bán hàng (dynamic từ DB)
 - ✅ **Sort**: Theo Tên, Hạn Mức, Đơn Hàng (asc/desc)
 - ✅ **Export CSV**: Xuất toàn bộ danh sách KH ra CSV (UTF-8 BOM)
 - ✅ **Import Excel**: Upload Excel hàng loạt, validate per row
 - ✅ **Gán Sales Rep**: Dropdown chọn từ danh sách Users có quyền Sales
+
+### E. Quy trình Phê duyệt & Vai trò RBAC Chi tiết
+* **Sales Rep**: Tạo mới (mã tạm thời, trạng thái chờ duyệt). Sửa được thông tin nháp/bị từ chối của mình (khi sửa nháp bị từ chối sẽ tự động chuyển về trạng thái chờ duyệt). Chỉ xem được chỉ số thống kê & danh sách khách hàng do mình phụ trách.
+* **Sales Admin / Admin / CEO / Sales Manager**: Có quyền phê duyệt hoặc từ chối duyệt, xem toàn bộ chỉ số hệ thống, ấn định mã khách hàng chính thức.
 
 ---
 

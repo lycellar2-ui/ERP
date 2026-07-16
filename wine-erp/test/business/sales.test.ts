@@ -15,12 +15,12 @@ vi.mock('@/lib/session', () => ({
 }))
 
 const mockPrisma = {
-    salesOrder: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    salesOrder: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     salesOrderLine: { findMany: vi.fn() },
     allocationCampaign: { findMany: vi.fn() },
     allocationQuota: { update: vi.fn(), create: vi.fn() },
     allocationLog: { create: vi.fn() },
-    aRInvoice: { aggregate: vi.fn() },
+    aRInvoice: { aggregate: vi.fn(), findMany: vi.fn() },
     stockLot: { findMany: vi.fn() },
     customer: { findUnique: vi.fn(), findMany: vi.fn() },
     user: { findMany: vi.fn() },
@@ -289,14 +289,21 @@ describe('SLS-02: getSOMarginData', () => {
 // ═══════════════════════════════════════════════════
 
 describe('SLS-03: getCustomerARBalance', () => {
+    beforeEach(() => {
+        mockPrisma.customer.findUnique.mockResolvedValue({ parentId: null })
+        mockPrisma.customer.findMany.mockResolvedValue([])
+        mockPrisma.aRInvoice.findMany.mockResolvedValue([])
+        mockPrisma.salesOrder.findMany.mockResolvedValue([])
+    })
+
     it('should return total AR outstanding', async () => {
-        mockPrisma.aRInvoice.aggregate.mockResolvedValue({ _sum: { amount: 150_000_000 } })
+        mockPrisma.aRInvoice.findMany.mockResolvedValue([{ amount: 150_000_000, paidAmount: 0 }])
         const balance = await getCustomerARBalance('cust-1')
         expect(balance).toBe(150_000_000)
     })
 
     it('should return 0 when no outstanding', async () => {
-        mockPrisma.aRInvoice.aggregate.mockResolvedValue({ _sum: { amount: null } })
+        mockPrisma.aRInvoice.findMany.mockResolvedValue([])
         const balance = await getCustomerARBalance('cust-clean')
         expect(balance).toBe(0)
     })

@@ -28,6 +28,8 @@
 19. [BUG-019: Trang Danh Mục Sản Phẩm Tải Chậm Trên Điện Thoại (8s) — Invalidation Cache Sai & Responsive DOM Overhead](#bug-019-trang-danh-mục-sản-phẩm-tải-chậm-trên-điện-thoại-8s--invalidation-cache-sai--responsive-dom-overhead)
 20. [BUG-020: 504 MIDDLEWARE_INVOCATION_TIMEOUT Trên Điện Thoại / Khách Hàng Truy Cập Lần Đầu](#bug-020-504-middleware_invocation_timeout-trên-điện-thoại--khách-hàng-truy-cập-lần-đầu)
 21. [BUG-021: 504 MIDDLEWARE_INVOCATION_TIMEOUT Khi Đã Có Cookie và DB Đang Ngủ (Cold Start) — Promise.race Timeout](#bug-021-504-middleware_invocation_timeout-khi-đã-có-cookie-và-db-đang-ngủ-cold-start--promiserace-timeout)
+22. [BUG-022: Trễ tải dữ liệu khi mở Drawer Chỉnh sửa Sản phẩm](#bug-022-trễ-tải-dữ-liệu-khi-mở-drawer-chỉnh-sửa-sản-phẩm)
+23. [BUG-023: Build Fail — TypeScript Type Mismatch on Nested Prisma Connect](#bug-023-build-fail--typescript-type-mismatch-on-nested-prisma-connect)
 
 ---
 
@@ -1131,4 +1133,30 @@ useEffect(() => {
 
 > ⚠️ **RULE 44: Luôn kết hợp lưu cache server-side và tải trước (prefetch) trên giao diện đối với các thao tác Drawer/Modal.**
 > Caching giúp giảm thiểu truy vấn trùng lặp tới DB, còn prefetch khi hover giúp triệt tiêu hoàn toàn thời gian trễ mạng trước khi người dùng thực hiện thao tác click.
+
+---
+
+## BUG-023: Build Fail - TypeScript Type Mismatch on Nested Prisma Connect
+
+**Ngày:** 2026-07-16
+**Severity:** 🔴 Critical — Gây lỗi biên dịch TypeScript khi chạy production build (`next build`)
+
+### Triệu chứng
+- Khi chạy build sản phẩm, trình biên dịch báo lỗi:
+  `Type '{ connect: { id: string | null; }; } | undefined' is not assignable to type 'UserCreateNestedOneWithoutCustomersInput | undefined'.`
+  `Type 'null' is not assignable to type 'string | undefined'.`
+
+### Nguyên nhân gốc rễ
+- Trong hàm `updateCustomer` Server Action, khi tự động tạo Company mẹ gánh nợ, trường `salesRep` được định nghĩa bằng toán tử ternary kiểm tra sự tồn tại của `customerData.salesRepId ?? oldCustomer.salesRepId` và sau đó truyền trực tiếp biểu thức đó vào `{ connect: { id: customerData.salesRepId ?? oldCustomer.salesRepId } }`.
+- Mặc dù đã kiểm tra tính truthy ở đầu biểu thức ternary, TypeScript không thể thu hẹp kiểu (narrow type) cho biểu thức giống hệt bên trong do nó được tính toán lại độc lập, dẫn đến TypeScript vẫn xem giá trị đó có thể là `string | null`, không tương thích với kiểu `string | undefined` của Prisma input.
+
+### Cách fix
+- Gán kết quả của biểu thức `customerData.salesRepId ?? oldCustomer.salesRepId` vào một biến cục bộ riêng (ví dụ: `const repId`), sau đó kiểm tra và truyền biến đó vào `connect`:
+  `salesRep: repId ? { connect: { id: repId } } : undefined`
+  TypeScript sẽ tự động thu hẹp kiểu của `repId` bên trong block thành một kiểu `string` không nullable.
+
+### Bài học
+
+> ⚠️ **RULE 45: Luôn gán các biểu thức kiểm tra có khả năng chứa null hoặc undefined vào biến cục bộ trước khi truyền vào Prisma nested relations.**
+> Việc gán biến cục bộ giúp trình biên dịch TypeScript thực hiện thu hẹp kiểu dữ liệu chính xác, tránh các lỗi biên dịch kiểu tĩnh không tương thích.
 
