@@ -17,8 +17,11 @@ interface Props {
 }
 
 export function ApprovalMatrixClient({ initialData }: Props) {
-    const [routes, setRoutes] = useState<ProposalRouteConfig[]>(initialData.proposalRoutes)
-    const [thresholds, setThresholds] = useState<ThresholdConfig[]>(initialData.thresholds)
+    const safeProposalRoutes = initialData?.proposalRoutes ?? []
+    const safeThresholds = initialData?.thresholds ?? []
+
+    const [routes, setRoutes] = useState<ProposalRouteConfig[]>(safeProposalRoutes)
+    const [thresholds, setThresholds] = useState<ThresholdConfig[]>(safeThresholds)
     const [savingRoutes, setSavingRoutes] = useState(false)
     const [savingThresholds, setSavingThresholds] = useState(false)
     const [dirty, setDirty] = useState({ routes: false, thresholds: false })
@@ -180,9 +183,10 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             </tr>
                         </thead>
                         <tbody>
-                            {routes.map((route, idx) => {
+                            {(routes ?? []).map((route, idx) => {
                                 const catLabel = CATEGORY_LABELS[route.category] ?? route.category
-                                const isDirectCEO = route.levels.length === 1 && route.levels[0] === 3
+                                const routeLevels = route.levels ?? []
+                                const isDirectCEO = routeLevels.length === 1 && routeLevels[0] === 3
                                 return (
                                     <tr key={route.category}
                                         style={{
@@ -198,8 +202,8 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                             </span>
                                         </td>
                                         {[1, 2, 3].map(lv => {
-                                            const active = route.levels.includes(lv)
-                                            const cfg = LEVEL_LABELS[lv]
+                                            const active = routeLevels.includes(lv)
+                                            const cfg = LEVEL_LABELS[lv] ?? { label: `Cấp ${lv}`, role: `Cấp ${lv}`, color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' }
                                             const isCEO = lv === 3
                                             return (
                                                 <td key={lv} className="px-4 py-3 text-center">
@@ -230,15 +234,15 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                                         CEO TRỰC TIẾP
                                                     </span>
                                                 )}
-                                                {route.levels.map((lv, i) => {
-                                                    const cfg = LEVEL_LABELS[lv]
+                                                {routeLevels.map((lv, i) => {
+                                                    const cfg = LEVEL_LABELS[lv] ?? { label: `Cấp ${lv}`, role: `Cấp ${lv}`, color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' }
                                                     return (
                                                         <span key={lv} className="flex items-center gap-1">
                                                             <span className="text-xs font-bold px-1.5 py-0.5 rounded"
                                                                 style={{ background: cfg.bg, color: cfg.color }}>
                                                                 {cfg.role}
                                                             </span>
-                                                            {i < route.levels.length - 1 && (
+                                                            {i < routeLevels.length - 1 && (
                                                                 <ChevronRight size={12} style={{ color: '#4A6A7A' }} />
                                                             )}
                                                         </span>
@@ -372,19 +376,19 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                             <div className="flex justify-between">
                                 <span style={{ color: '#8AAEBB' }}>Số loại 3 cấp</span>
                                 <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
-                                    {routes.filter(r => r.levels.length === 3).length}
+                                    {(routes ?? []).filter(r => (r.levels ?? []).length === 3).length}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span style={{ color: '#8AAEBB' }}>Số loại 2 cấp</span>
                                 <span className="font-bold" style={{ color: '#E8F1F2', fontFamily: '"DM Mono"' }}>
-                                    {routes.filter(r => r.levels.length === 2).length}
+                                    {(routes ?? []).filter(r => (r.levels ?? []).length === 2).length}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span style={{ color: '#8AAEBB' }}>CEO trực tiếp</span>
                                 <span className="font-bold" style={{ color: '#E05252', fontFamily: '"DM Mono"' }}>
-                                    {routes.filter(r => r.levels.length === 1 && r.levels[0] === 3).length}
+                                    {(routes ?? []).filter(r => (r.levels ?? []).length === 1 && r.levels?.[0] === 3).length}
                                 </span>
                             </div>
                         </div>
