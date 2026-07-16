@@ -1,4 +1,4 @@
-﻿# Tech Stack & Infrastructure — Wine ERP
+# Tech Stack & Infrastructure — Wine ERP
 **Phiên bản:** 3.0 | **Cập nhật:** 2026-03-08
 
 ---
@@ -45,6 +45,8 @@
 | **Tanstack Table** | v8 | Bảng dữ liệu lớn (Inventory, Allocation Matrix) |
 | **ExcelJS** | latest | Parse & xuất Excel (import/export toàn hệ thống) |
 | **Prisma** | **7.4.2** | ORM — 113 models, 71 enums |
+| **TanStack Query** | **v5** | Client-side caching, server hydration, and hover prefetching |
+| **TanStack Persist Cache** | **v5** | localStorage cache persistence (24h) to bypass Vercel cold-starts |
 
 ### 🗄️ Database — Supabase PostgreSQL
 | Công nghệ | Ghi chú |
@@ -242,7 +244,7 @@ git init && git remote add origin [github-repo-url]
 - [x] Cài ImgBB API key vào Vercel + `.env.local`
 
 ---
-*Last updated: 2026-03-08 | Tech Stack v3.0 — Next.js 16.1.6 + Supabase + ImgBB + Vercel + GitHub*
+*Last updated: 2026-07-16 | Tech Stack v3.1 — Next.js 16.1.6 + Supabase + TanStack Query + Persist cache + ImgBB + Vercel + GitHub*
 
 ---
 

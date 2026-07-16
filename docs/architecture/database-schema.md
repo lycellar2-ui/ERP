@@ -745,6 +745,7 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 ```sql
 -- Tìm tồn kho theo SKU nhanh
 CREATE INDEX idx_stocklot_product ON stock_lot(product_id, status);
+CREATE INDEX idx_stocklot_prod_qty ON stock_lots(productId, qtyAvailable);
 
 -- Tra cứu thuế
 CREATE INDEX idx_taxrate_lookup ON tax_rate(hs_code, country_of_origin, effective_date);

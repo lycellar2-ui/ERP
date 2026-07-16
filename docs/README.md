@@ -140,12 +140,12 @@
 | **AI LLM** | Google Gemini 3.1 Pro — CEO Briefing, Pipeline Analysis, CRM Analysis, Catalog & Market Intelligence, Product Description, Admin Toggle & Reports |
 | **API Pattern** | Server Actions (KHÔNG dùng tRPC) |
 | **Connection Pool** | pgBouncer Transaction mode (port 6543), `max: 5` |
-| **Caching** | 5-layer: Router Cache (120s) + ISR + SWR + Server-side LRU (`cached()`) + Sidebar Prefetch |
+| **Caching** | 6-layer: Router Cache (120s) + ISR + SWR + Server-side LRU (`cached()`) + TanStack Client-side Caching + LocalStorage Cache Persistence (24h) + Sidebar Hover Prefetch |
 | **Validation** | Zod 23+ schemas cho 7+ modules |
 | **Auth Guards** | `requireAuth()` + `requirePermission()` cho mọi mutation |
 | **Serialization** | `serialize()` utility cho Prisma Decimal/BigInt |
 | **Mobile** | PWA + Responsive sidebar, Camera scanner for WMS |
-| **Realtime** | Supabase Realtime — role-based channels |
+| **Realtime** | Supabase Realtime — role-based channels & client-side cache auto-invalidation |
 | **Kiến trúc** | Modular-first: Mỗi module độc lập |
 
 ---
@@ -229,4 +229,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-07-14 22:30 | Wine ERP v7.4 — 26 modules, 114 models, 42 action files, Product Detail View Drawer, and Product page UI simplified + optimized*
+*Last updated: 2026-07-16 15:00 | Wine ERP v7.5 — 26 modules, 114 models, 42 action files, TanStack Cache Persistence in localStorage (24h), Optimistic UI updates, and Supabase Realtime auto-invalidation*
