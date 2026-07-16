@@ -2,6 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
+import { persistQueryClient } from '@tanstack/react-query-persist-client'
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 
 function makeQueryClient() {
     return new QueryClient({
@@ -9,8 +11,8 @@ function makeQueryClient() {
             queries: {
                 // Data is "fresh" for 30s — no refetch within this window
                 staleTime: 30_000,
-                // Cache kept for 10 minutes after last subscriber unmounts
-                gcTime: 10 * 60_000,
+                // Cache kept in memory for 24h to support persister
+                gcTime: 24 * 60 * 60 * 1000,
                 // Don't refetch everything when user alt-tabs back
                 refetchOnWindowFocus: false,
                 // Only 1 retry on failure
@@ -33,6 +35,20 @@ function getQueryClient() {
     // Browser: reuse the same client across navigations
     if (!browserQueryClient) {
         browserQueryClient = makeQueryClient()
+        try {
+            const persister = createSyncStoragePersister({
+                storage: window.localStorage,
+                key: 'WINE_ERP_QUERY_CACHE',
+            })
+            persistQueryClient({
+                queryClient: browserQueryClient,
+                persister,
+                maxAge: 24 * 60 * 60 * 1000, // Keep cache for 24 hours
+                buster: 'v2', // Increment to invalidate previous cache versions
+            })
+        } catch (err) {
+            console.error('[Query Persistence] Failed to initialize:', err)
+        }
     }
     return browserQueryClient
 }
