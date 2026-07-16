@@ -756,24 +756,20 @@ function SalesOrderMobileCard({
 // Roles allowed to see cost/margin data
 const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager']
 
-interface Props {
-    initialRows: SalesOrderRow[]
-    initialTotal: number
-    stats: { monthRevenue: number; monthOrders: number; pendingApproval: number; draft: number; confirmed: number }
+type Props = {
     userId: string
     userRoles: string[]
-    statusCounts: Record<string, number>
 }
 
-export function SalesClient({ initialRows, initialTotal, stats: initialStats, userId, userRoles, statusCounts: initialStatusCounts }: Props) {
+export function SalesClient({ userId, userRoles }: Props) {
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const isCEO = userRoles.includes('CEO')
     const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
     const canAcctApprove = userRoles.includes('Kế Toán') || userRoles.includes('KE_TOAN')
 
-    const [rows, setRows] = useState(initialRows)
-    const [total, setTotal] = useState(initialTotal)
-    const [loading, setLoading] = useState(initialRows.length === 0)
+    const [rows, setRows] = useState<SalesOrderRow[]>([])
+    const [total, setTotal] = useState(0)
+    const [loading, setLoading] = useState(true)
     const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<SOStatus | ''>('')
@@ -794,8 +790,8 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
     const [editId, setEditId] = useState<string | null>(null)
-    const [stats, setStats] = useState(initialStats)
-    const [counts, setCounts] = useState(initialStatusCounts)
+    const [stats, setStats] = useState({ monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 })
+    const [counts, setCounts] = useState<Record<string, number>>({})
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
     const [acctEntityId, setAcctEntityId] = useState('')
@@ -836,13 +832,10 @@ export function SalesClient({ initialRows, initialTotal, stats: initialStats, us
             setLoading(false)
         }
     }, [search, statusFilter, page, sortBy, sortDir, dateFrom, dateTo])
-
-    // Load initial sales data on mount
+    // Client-side data fetching on mount — skeleton shows instantly
     useEffect(() => {
-        if (initialRows.length === 0) {
-            reload()
-        }
-    }, [initialRows.length, reload])
+        reload()
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSort = (field: string) => {
         const newDir = sortBy === field && sortDir === 'desc' ? 'asc' : 'desc'

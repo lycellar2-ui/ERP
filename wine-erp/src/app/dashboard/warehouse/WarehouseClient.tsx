@@ -1,6 +1,6 @@
-﻿'use client'
+'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
     Warehouse, Package, BarChart3, Plus, Search, MapPin,
     Thermometer, Box, X, Save, Loader2, AlertCircle, CheckCircle2,
@@ -10,7 +10,8 @@ import {
 import {
     WarehouseRow, StockLotRow, LocationRow,
     createWarehouse, createLocation, getStockInventory, getLocations,
-    getQuarantinedLots, moveToQuarantine, releaseFromQuarantine, writeOffStock
+    getQuarantinedLots, moveToQuarantine, releaseFromQuarantine, writeOffStock,
+    getWarehouses, getWMSStats
 } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { GoodsReceiptTab } from './GoodsReceiptTab'
@@ -389,18 +390,17 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
 type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map'
 
 interface Props {
-    initialWarehouses: WarehouseRow[]
-    stats: {
-        warehouses: number; totalLots: number
-        availableBottles: number; reservedBottles: number
-        inventoryValue: number; quarantinedCount: number
-        lowStockCount: number; slowMovingCount: number
-    }
     isAdmin: boolean
 }
 
-export function WarehouseClient({ initialWarehouses, stats, isAdmin }: Props) {
-    const [warehouses, setWarehouses] = useState(initialWarehouses)
+export function WarehouseClient({ isAdmin }: Props) {
+    const [warehouses, setWarehouses] = useState<WarehouseRow[]>([])
+    const [wmsStats, setWmsStats] = useState({
+        warehouses: 0, totalLots: 0,
+        availableBottles: 0, reservedBottles: 0,
+        inventoryValue: 0, quarantinedCount: 0,
+        lowStockCount: 0, slowMovingCount: 0,
+    })
     const [selectedWH, setSelectedWH] = useState<string | null>(null)
     const [lots, setLots] = useState<StockLotRow[]>([])
     const [lotsLoading, setLotsLoading] = useState(false)
@@ -414,6 +414,21 @@ export function WarehouseClient({ initialWarehouses, stats, isAdmin }: Props) {
     const [createWHOpen, setCreateWHOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<WMSTab>('inventory')
     const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'receivedDate', dir: 'desc' })
+    const [pageLoading, setPageLoading] = useState(true)
+
+    // Client-side data fetching on mount
+    useEffect(() => {
+        Promise.all([
+            getWarehouses().catch(() => [] as WarehouseRow[]),
+            getWMSStats().catch(() => ({ warehouses: 0, totalLots: 0, availableBottles: 0, reservedBottles: 0, inventoryValue: 0, quarantinedCount: 0, lowStockCount: 0, slowMovingCount: 0 })),
+        ]).then(([w, s]) => {
+            setWarehouses(w)
+            setWmsStats(s)
+            setPageLoading(false)
+        })
+    }, [])
+
+    const stats = wmsStats
 
     const warehouseList = warehouses.map(w => ({ id: w.id, code: w.code, name: w.name }))
 

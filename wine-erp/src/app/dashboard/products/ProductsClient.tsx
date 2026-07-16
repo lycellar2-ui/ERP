@@ -70,28 +70,18 @@ function StatCard({ label, value, icon: Icon, accent }: {
 }
 
 interface ProductsClientProps {
-    initialRows: ProductRow[]
-    initialTotal: number
-    initialStats?: ProductStats
-    initialCountries?: { code: string; count: number }[]
-    initialProducers?: { id: string; name: string }[]
     canEdit?: boolean
 }
 
 export function ProductsClient({ 
-    initialRows, 
-    initialTotal, 
-    initialStats, 
-    initialCountries, 
-    initialProducers, 
     canEdit = false 
 }: ProductsClientProps) {
-    const [rows, setRows] = useState<ProductRow[]>(initialRows)
-    const [total, setTotal] = useState(initialTotal)
-    const [stats, setStats] = useState<ProductStats>(initialStats || { total: initialTotal, active: initialTotal, outOfStock: 0, topTypes: [] })
-    const [countries, setCountries] = useState<{ code: string; count: number }[]>(initialCountries || [])
-    const [producers, setProducers] = useState<{ id: string; name: string }[]>(initialProducers || [])
-    const [loading, setLoading] = useState(false)
+    const [rows, setRows] = useState<ProductRow[]>([])
+    const [total, setTotal] = useState(0)
+    const [stats, setStats] = useState<ProductStats>({ total: 0, active: 0, outOfStock: 0, topTypes: [] })
+    const [countries, setCountries] = useState<{ code: string; count: number }[]>([])
+    const [producers, setProducers] = useState<{ id: string; name: string }[]>([])
+    const [loading, setLoading] = useState(true)
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -106,26 +96,24 @@ export function ProductsClient({
     const [exporting, setExporting] = useState(false)
     const [showMobileFilters, setShowMobileFilters] = useState(false)
 
+    // Client-side data fetching on mount — page renders instantly as skeleton
     useEffect(() => {
-        // Warm reference data cache for drawer on client load
+        // Warm reference data cache
         getRegions().catch(() => [])
         getSuppliers().catch(() => [])
 
-        // If metadata is already provided by server, skip mount fetch
-        if (initialStats || initialCountries || initialProducers) {
-            return
-        }
-        // Fetch reference metadata and stats dynamically in the background on mount if not provided
+        // Fetch page data + metadata
         Promise.all([
-            getProductStats().catch(() => ({ total: initialTotal, active: initialTotal, outOfStock: 0, topTypes: [] })),
-            getProductCountries().catch(() => []),
-            getProducers().catch(() => []),
-        ]).then(([s, c, p]) => {
-            setStats(s)
-            setCountries(c)
-            setProducers(p)
+            getProductsPageData({ page: 1, pageSize: 20 }).catch(() => ({ rows: [] as ProductRow[], total: 0, stats: { total: 0, active: 0, outOfStock: 0, topTypes: [] }, countries: [], producers: [], canEdit: false })),
+        ]).then(([data]) => {
+            setRows(data.rows)
+            setTotal(data.total)
+            if (data.stats) setStats(data.stats)
+            if (data.countries) setCountries(data.countries)
+            if (data.producers) setProducers(data.producers)
+            setLoading(false)
         })
-    }, [initialTotal, initialStats, initialCountries, initialProducers])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
     const detailCache = useRef<Record<string, any>>({})

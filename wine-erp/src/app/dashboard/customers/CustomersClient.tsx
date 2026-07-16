@@ -9,6 +9,7 @@ import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
     createCustomer, updateCustomer, getCustomers, getCustomerById,
     deleteCustomer, exportCustomersData, bulkImportCustomers, getParentCandidates,
+    getCustomerStats, getCustomerChannels, getSalesRepList,
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
@@ -411,18 +412,15 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 // MAIN CLIENT COMPONENT
 // ════════════════════════════════════════════════════════
 
-interface CustomersClientProps {
-    initialRows: CustomerRow[]
-    initialTotal: number
-    stats: CustomerStats
-    channels: { channel: string; count: number }[]
-    salesReps: { id: string; name: string }[]
-}
+interface CustomersClientProps {}
 
-export function CustomersClient({ initialRows, initialTotal, stats, channels, salesReps }: CustomersClientProps) {
-    const [rows, setRows] = useState(initialRows)
-    const [total, setTotal] = useState(initialTotal)
-    const [loading, setLoading] = useState(false)
+export function CustomersClient({}: CustomersClientProps) {
+    const [rows, setRows] = useState<CustomerRow[]>([])
+    const [total, setTotal] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const [stats, setStats] = useState<CustomerStats>({ total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, topTypes: [] })
+    const [channels, setChannels] = useState<{ channel: string; count: number }[]>([])
+    const [salesReps, setSalesReps] = useState<{ id: string; name: string }[]>([])
     const [filters, setFilters] = useState<CustomerFilters>({ page: 1, pageSize: 25 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -434,8 +432,23 @@ export function CustomersClient({ initialRows, initialTotal, stats, channels, sa
     const [exporting, setExporting] = useState(false)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
 
+    // Client-side data fetching on mount
     useEffect(() => {
-        getLegalEntities().then(setLegalEntities).catch(() => { })
+        Promise.all([
+            getCustomers({ pageSize: 25 }).catch(() => ({ rows: [] as CustomerRow[], total: 0 })),
+            getCustomerStats().catch(() => ({ total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, topTypes: [] as any[] })),
+            getCustomerChannels().catch(() => []),
+            getSalesRepList().catch(() => []),
+            getLegalEntities().catch(() => []),
+        ]).then(([data, s, ch, reps, entities]) => {
+            setRows(data.rows)
+            setTotal(data.total)
+            setStats(s)
+            setChannels(ch)
+            setSalesReps(reps)
+            setLegalEntities(entities)
+            setLoading(false)
+        })
     }, [])
 
     const applyFilter = useCallback(async (newFilters: Partial<CustomerFilters>) => {
