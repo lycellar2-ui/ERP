@@ -10,6 +10,7 @@ import { notifySOApprovalRequired, notifySOCreated, notifySOPendingAdmin, notify
 import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
 import { serialize } from '@/lib/serialize'
 import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
+import * as XLSX from 'xlsx'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
@@ -63,12 +64,21 @@ export async function getSalesOrders(filters: {
     sortDir?: 'asc' | 'desc'
     dateFrom?: string
     dateTo?: string
+    salesRepId?: string
+    channel?: SalesChannel
+    legalEntityId?: string
+    warehouseId?: string
+    paymentTerm?: string
+    pendingAction?: boolean
 } = {}): Promise<{ rows: SalesOrderRow[]; total: number }> {
-    const { status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', dateFrom, dateTo } = filters
+    const { 
+        status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', 
+        dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction 
+    } = filters
 
     const user = await getCurrentUser()
     const userId = user?.id ?? 'anonymous'
-    const cacheKey = `sales:orders:list:${userId}:${status || 'all'}:${search || 'none'}:${page}:${pageSize}:${sortBy}:${sortDir}:${dateFrom || 'none'}:${dateTo || 'none'}`
+    const cacheKey = `sales:orders:list:${userId}:${status || 'all'}:${search || 'none'}:${page}:${pageSize}:${sortBy}:${sortDir}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}`
 
     const fetchData = async () => {
         const skip = (page - 1) * pageSize
@@ -80,11 +90,38 @@ export async function getSalesOrders(filters: {
         if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
             conditions.push(`so."salesRepId" = $${paramIndex++}`)
             params.push(user.id)
+        } else if (salesRepId) {
+            conditions.push(`so."salesRepId" = $${paramIndex++}`)
+            params.push(salesRepId)
         }
 
         if (status) {
             conditions.push(`so.status = $${paramIndex++}`)
             params.push(status)
+        }
+
+        if (channel) {
+            conditions.push(`so.channel = $${paramIndex++}`)
+            params.push(channel)
+        }
+
+        if (legalEntityId) {
+            conditions.push(`so."legalEntityId" = $${paramIndex++}`)
+            params.push(legalEntityId)
+        }
+
+        if (warehouseId) {
+            conditions.push(`so."warehouseId" = $${paramIndex++}`)
+            params.push(warehouseId)
+        }
+
+        if (paymentTerm) {
+            conditions.push(`so."paymentTerm" = $${paramIndex++}`)
+            params.push(paymentTerm)
+        }
+
+        if (pendingAction) {
+            conditions.push(`so.status IN ('PENDING_APPROVAL', 'PENDING_ACCOUNTING')`)
         }
 
         if (search) {
@@ -2027,19 +2064,37 @@ export async function cloneSalesOrder(sourceId: string): Promise<{ success: bool
 }
 
 // ── Export SO list (CSV data) ─────────────────────
-export async function exportSalesOrdersCSV(filters: {
+export async function exportSalesOrdersExcel(filters: {
     status?: SOStatus
     dateFrom?: string
     dateTo?: string
-} = {}): Promise<{ csv: string }> {
+    salesRepId?: string
+    channel?: SalesChannel
+    legalEntityId?: string
+    warehouseId?: string
+    paymentTerm?: string
+    pendingAction?: boolean
+} = {}): Promise<{ base64: string }> {
     const user = await requireAuth()
-    const { status, dateFrom, dateTo } = filters
+    const { status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction } = filters
     const where: any = {}
 
     if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
         where.salesRepId = user.id
+    } else if (salesRepId) {
+        where.salesRepId = salesRepId
     }
+
     if (status) where.status = status
+    if (channel) where.channel = channel
+    if (legalEntityId) where.legalEntityId = legalEntityId
+    if (warehouseId) where.warehouseId = warehouseId
+    if (paymentTerm) where.paymentTerm = paymentTerm
+    
+    if (pendingAction) {
+        where.status = { in: ['PENDING_APPROVAL', 'PENDING_ACCOUNTING'] }
+    }
+
     if (dateFrom || dateTo) {
         where.createdAt = {}
         if (dateFrom) where.createdAt.gte = new Date(dateFrom)
@@ -2053,29 +2108,33 @@ export async function exportSalesOrdersCSV(filters: {
         include: {
             customer: { select: { name: true, code: true } },
             salesRep: { select: { name: true } },
+            legalEntity: { select: { name: true } },
+            warehouse: { select: { name: true } },
             _count: { select: { lines: true } },
         },
     })
 
-    const header = 'Số SO,Khách Hàng,Mã KH,Kênh,Doanh Số,CK %,Thanh Toán,Sales Rep,Trạng Thái,Sp,Ngày Tạo'
-    const rows = orders.map(o => {
-        const cols = [
-            o.soNo,
-            `"${o.customer.name}"`,
-            o.customer.code,
-            o.channel,
-            Number(o.totalAmount),
-            Number(o.orderDiscount),
-            o.paymentTerm,
-            `"${o.salesRep.name}"`,
-            o.status,
-            o._count.lines,
-            o.createdAt.toISOString().split('T')[0],
-        ]
-        return cols.join(',')
-    })
+    const excelData = orders.map(o => ({
+        'Số Đơn Hàng (SO)': o.soNo,
+        'Khách Hàng': o.customer.name,
+        'Mã Khách Hàng': o.customer.code,
+        'Kênh Bán Hàng': o.channel,
+        'Doanh Số (VND)': Number(o.totalAmount),
+        'Chiết Khấu (%)': Number(o.orderDiscount),
+        'Điều Khoản Thanh Toán': o.paymentTerm,
+        'Nhân Viên Sales': o.salesRep.name,
+        'Pháp Nhân': o.legalEntity?.name ?? '',
+        'Kho Xuất': o.warehouse?.name ?? '',
+        'Trạng Thái': o.status,
+        'Số Dòng Hàng': o._count.lines,
+        'Ngày Tạo': o.createdAt.toISOString().split('T')[0],
+    }))
 
-    return { csv: [header, ...rows].join('\n') }
+    const worksheet = XLSX.utils.json_to_sheet(excelData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Đơn Bán Hàng")
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+    return { base64: buffer.toString('base64') }
 }
 
 // ── Status counts for quick filter tabs ───────────
@@ -2112,6 +2171,12 @@ export async function getSalesPageData(filters: {
     sortDir?: 'asc' | 'desc'
     dateFrom?: string
     dateTo?: string
+    salesRepId?: string
+    channel?: SalesChannel
+    legalEntityId?: string
+    warehouseId?: string
+    paymentTerm?: string
+    pendingAction?: boolean
 } = {}, onlyRows = false) {
     if (onlyRows) {
         const ordersResult = await getSalesOrders(filters)
@@ -2122,16 +2187,25 @@ export async function getSalesPageData(filters: {
             statusCounts: {} as Record<string, number>,
         })
     }
-    const [ordersResult, stats, statusCounts] = await Promise.all([
+    const [ordersResult, stats, statusCounts, salesReps, legalEntities, warehouses, paymentTermsRaw] = await Promise.all([
         getSalesOrders(filters),
         getSalesStats(),
         getSOStatusCounts(),
+        prisma.user.findMany({ where: { status: 'ACTIVE' }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+        prisma.legalEntity.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: 'asc' } }),
+        prisma.warehouse.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: 'asc' } }),
+        prisma.salesOrder.groupBy({ by: ['paymentTerm'] })
     ])
+    const paymentTerms = paymentTermsRaw.map(pt => pt.paymentTerm).filter(Boolean) as string[]
     return serialize({
         rows: ordersResult.rows,
         total: ordersResult.total,
         stats,
         statusCounts,
+        salesReps,
+        legalEntities,
+        warehouses,
+        paymentTerms
     })
 }
 

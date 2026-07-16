@@ -9,9 +9,30 @@
  *   return serialize(prismaResult)
  */
 export function serialize<T>(data: T): T {
-    return JSON.parse(JSON.stringify(data, (_key, value) => {
-        // Convert BigInt to number (safe for our use case — no values > Number.MAX_SAFE_INTEGER)
-        if (typeof value === 'bigint') return Number(value)
-        return value
-    }))
+    const process = (val: any): any => {
+        if (val === null || val === undefined) return val
+        if (typeof val === 'object') {
+            if (val.constructor && (val.constructor.name === 'Decimal' || val.constructor.name === 'd' || typeof val.toNumber === 'function')) {
+                return Number(val.toString())
+            }
+            if (val instanceof Date) {
+                return val.toISOString()
+            }
+            if (Array.isArray(val)) {
+                return val.map(process)
+            }
+            const res: any = {}
+            for (const key in val) {
+                if (Object.prototype.hasOwnProperty.call(val, key)) {
+                    res[key] = process(val[key])
+                }
+            }
+            return res
+        }
+        if (typeof val === 'bigint') {
+            return Number(val)
+        }
+        return val
+    }
+    return process(data)
 }

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersCSV, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
@@ -52,6 +52,69 @@ const formatStepTime = (d: Date | string | number) => {
     const minutes = pad(dateObj.getMinutes())
     return `${day}/${month} ${hours}:${minutes}`
 }
+
+const INVOICE_STATUS_LABELS: Record<string, string> = {
+    UNPAID: 'Chưa thanh toán',
+    PARTIALLY_PAID: 'Thanh toán 1 phần',
+    PAID: 'Đã thanh toán',
+    OVERDUE: 'Quá hạn',
+}
+
+const getInvoiceStatusStyle = (status: string) => {
+    switch (status) {
+        case 'PAID':
+            return { background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }
+        case 'PARTIALLY_PAID':
+            return { background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }
+        case 'OVERDUE':
+            return { background: 'rgba(224,82,82,0.15)', color: '#E05252' }
+        default:
+            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853' }
+    }
+}
+
+const SODetailSkeleton = () => (
+    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 animate-pulse">
+        {/* Progress bar skeleton */}
+        <div className="py-3 px-4 rounded-lg space-y-3 animate-pulse" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="flex justify-between">
+                <div className="h-3 w-24 bg-[#2A4355] rounded animate-pulse" />
+                <div className="h-4 w-16 bg-[#2A4355] rounded-full animate-pulse" />
+            </div>
+            <div className="h-6 bg-[#2A4355] rounded w-full animate-pulse" />
+        </div>
+
+        {/* Two column layout skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#2A4355]/40 animate-pulse">
+            <div className="space-y-4 animate-pulse">
+                <div className="h-4 bg-[#2A4355] rounded w-1/3 font-bold animate-pulse" />
+                <div className="space-y-2 animate-pulse">
+                    <div className="h-3 bg-[#2A4355] rounded w-3/4 animate-pulse" />
+                    <div className="h-3 bg-[#2A4355] rounded w-1/2 animate-pulse" />
+                    <div className="h-3 bg-[#2A4355] rounded w-2/3 animate-pulse" />
+                </div>
+            </div>
+            <div className="space-y-4 animate-pulse">
+                <div className="h-4 bg-[#2A4355] rounded w-1/3 font-bold animate-pulse" />
+                <div className="space-y-2 animate-pulse">
+                    <div className="h-3 bg-[#2A4355] rounded w-3/4 animate-pulse" />
+                    <div className="h-3 bg-[#2A4355] rounded w-1/2 animate-pulse" />
+                    <div className="h-3 bg-[#2A4355] rounded w-2/3 animate-pulse" />
+                </div>
+            </div>
+        </div>
+
+        {/* Lines/Items list table skeleton */}
+        <div className="space-y-3 animate-pulse">
+            <div className="h-4 bg-[#2A4355] rounded w-1/4 animate-pulse" />
+            <div className="space-y-2 animate-pulse">
+                <div className="h-10 bg-[#2A4355] rounded w-full animate-pulse" />
+                <div className="h-10 bg-[#2A4355] rounded w-full animate-pulse" />
+                <div className="h-10 bg-[#2A4355] rounded w-full animate-pulse" />
+            </div>
+        </div>
+    </div>
+)
 
 const getPriceBadgeStyle = (source: string | null) => {
     switch (source) {
@@ -309,9 +372,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center flex-1">
-                        <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
-                    </div>
+                    <SODetailSkeleton />
                 ) : !detail ? (
                     <p className="text-center py-8" style={{ color: '#4A6A7A' }}>Không tìm thấy đơn</p>
                 ) : (
@@ -414,7 +475,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                         <span className="font-semibold" style={{ color: '#8AAEBB' }}>{detail.customer.code} ({CHANNEL_LABEL[detail.channel] ?? detail.channel})</span>
                                     </div>
                                     <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                        <span style={{ color: '#4A6A7A' }}>Sales Rep:</span>
+                                        <span style={{ color: '#4A6A7A' }}>Nhân viên Sales:</span>
                                         <span className="font-semibold" style={{ color: '#E8F1F2' }}>{detail.salesRep.name}</span>
                                     </div>
                                     <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
@@ -439,7 +500,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                 ) : (
                                     <div className="space-y-2 text-xs">
                                         <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>Tổng giá trị (Gross):</span>
+                                            <span style={{ color: '#4A6A7A' }}>Tổng giá trị (Trước CK):</span>
                                             <span className="font-bold font-mono text-sm" style={{ color: '#E8F1F2' }}>{formatVND(Number(detail.totalAmount))}</span>
                                         </div>
                                         {marginData && canSeeMargin ? (
@@ -468,7 +529,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                             </>
                                         ) : !canSeeMargin ? (
                                             <div className="py-3 px-3 rounded text-[11px] leading-relaxed bg-[#142433]/40 border border-[#2A4355]/30" style={{ color: '#4A6A7A' }}>
-                                                🔒 Chi tiết biên lợi nhuận bị ẩn đối với tài khoản Sales Rep/Sales Admin.
+                                                🔒 Chi tiết biên lợi nhuận bị ẩn đối với tài khoản Nhân viên Sales / Trợ lý Sales.
                                             </div>
                                         ) : null}
                                     </div>
@@ -641,7 +702,9 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="text-xs font-bold font-mono block" style={{ color: '#E8F1F2' }}>{formatVND(Number(inv.amount))}</span>
-                                                    <span className="text-xs px-1.5 py-0.5 rounded-full font-bold inline-block mt-0.5" style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>{inv.status}</span>
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mt-0.5" style={getInvoiceStatusStyle(inv.status)}>
+                                                        {INVOICE_STATUS_LABELS[inv.status] ?? inv.status}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}
@@ -652,7 +715,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
 
                         {/* 5. HISTORY & AUDIT LOGS */}
                         <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Nhật Ký Đơn Hàng (Timeline)</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#4A6A7A' }}>Nhật Ký Hoạt Động</p>
                             {timelineLoading ? (
                                 <div className="flex items-center justify-center py-6 gap-2 text-xs" style={{ color: '#4A6A7A' }}>
                                     <Loader2 size={14} className="animate-spin text-[#87CBB9]" />
@@ -917,8 +980,33 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     const [acctEntityId, setAcctEntityId] = useState('')
     const [approvalModalId, setApprovalModalId] = useState<string | null>(null)
 
+    // Advanced filters
+    const [salesRepFilter, setSalesRepFilter] = useState<string>('')
+    const [channelFilter, setChannelFilter] = useState<string>('')
+    const [legalEntityFilter, setLegalEntityFilter] = useState<string>('')
+    const [warehouseFilter, setWarehouseFilter] = useState<string>('')
+    const [paymentTermFilter, setPaymentTermFilter] = useState<string>('')
+    const [pendingActionFilter, setPendingActionFilter] = useState<boolean>(false)
+
     // TanStack Query — cache sales data, survive tab switches
-    const queryKey = ['sales', { search: search || undefined, status: statusFilter || undefined, page, sortBy, sortDir, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }]
+    const queryKey = [
+        'sales', 
+        { 
+            search: search || undefined, 
+            status: statusFilter || undefined, 
+            page, 
+            sortBy, 
+            sortDir, 
+            dateFrom: dateFrom || undefined, 
+            dateTo: dateTo || undefined,
+            salesRepId: salesRepFilter || undefined,
+            channel: channelFilter || undefined,
+            legalEntityId: legalEntityFilter || undefined,
+            warehouseId: warehouseFilter || undefined,
+            paymentTerm: paymentTermFilter || undefined,
+            pendingAction: pendingActionFilter || undefined
+        }
+    ]
     const { data: queryData, isLoading: loading, refetch } = useQuery({
         queryKey,
         queryFn: () => getSalesPageData({
@@ -930,8 +1018,14 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
             sortDir: sortDir as any,
             dateFrom: dateFrom || undefined,
             dateTo: dateTo || undefined,
+            salesRepId: salesRepFilter || undefined,
+            channel: channelFilter as any || undefined,
+            legalEntityId: legalEntityFilter || undefined,
+            warehouseId: warehouseFilter || undefined,
+            paymentTerm: paymentTermFilter || undefined,
+            pendingAction: pendingActionFilter || undefined
         }),
-        initialData: !search && !statusFilter && page === 1 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo
+        initialData: !search && !statusFilter && page === 1 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter
             ? initialData
             : undefined,
         staleTime: 30_000,
@@ -941,6 +1035,32 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     const total = queryData?.total ?? 0
     const stats = queryData?.stats ?? { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 }
     const counts = queryData?.statusCounts ?? {}
+
+    const salesReps = (queryData as any)?.salesReps ?? (initialData as any)?.salesReps ?? []
+    const pageLegalEntities = (queryData as any)?.legalEntities ?? (initialData as any)?.legalEntities ?? []
+    const pageWarehouses = (queryData as any)?.warehouses ?? (initialData as any)?.warehouses ?? []
+    const paymentTerms = (queryData as any)?.paymentTerms ?? (initialData as any)?.paymentTerms ?? []
+
+    const hasActiveFilters = !!(search || statusFilter || dateFrom || dateTo || salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter)
+
+    const handleClearFilters = () => {
+        setSearchInput('')
+        setSearch('')
+        setStatusFilter('')
+        setDateFrom('')
+        setDateTo('')
+        setSalesRepFilter('')
+        setChannelFilter('')
+        setLegalEntityFilter('')
+        setWarehouseFilter('')
+        setPaymentTermFilter('')
+        setPendingActionFilter(false)
+        setPage(1)
+        reload({
+            search: '', status: '', page: 1, dateFrom: '', dateTo: '',
+            salesRepId: '', channel: '', legalEntityId: '', warehouseId: '', paymentTerm: '', pendingAction: false
+        }, true)
+    }
 
     // Realtime Supabase Database Listener + Drawer data prefetching
     useEffect(() => {
@@ -973,7 +1093,10 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
 
     // Legacy reload — now triggers query refetch
     const reload = useCallback(async (
-        overrides?: Partial<{ search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string }>,
+        overrides?: Partial<{ 
+            search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string;
+            salesRepId: string; channel: string; legalEntityId: string; warehouseId: string; paymentTerm: string; pendingAction: boolean
+        }>,
         _onlyRows = false
     ) => {
         // Update filter state → queryKey changes → auto refetch
@@ -984,6 +1107,12 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
         if (overrides?.sortDir !== undefined) setSortDir(overrides.sortDir as any)
         if (overrides?.dateFrom !== undefined) setDateFrom(overrides.dateFrom)
         if (overrides?.dateTo !== undefined) setDateTo(overrides.dateTo)
+        if (overrides?.salesRepId !== undefined) setSalesRepFilter(overrides.salesRepId)
+        if (overrides?.channel !== undefined) setChannelFilter(overrides.channel)
+        if (overrides?.legalEntityId !== undefined) setLegalEntityFilter(overrides.legalEntityId)
+        if (overrides?.warehouseId !== undefined) setWarehouseFilter(overrides.warehouseId)
+        if (overrides?.paymentTerm !== undefined) setPaymentTermFilter(overrides.paymentTerm)
+        if (overrides?.pendingAction !== undefined) setPendingActionFilter(overrides.pendingAction)
         // If no overrides, just refetch current query
         if (!overrides || Object.keys(overrides).length === 0) {
             refetch()
@@ -1119,14 +1248,32 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
 
     const handleExport = async () => {
         toast.promise(
-            exportSalesOrdersCSV({ status: statusFilter || undefined, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }).then(({ csv }) => {
-                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+            exportSalesOrdersExcel({
+                status: statusFilter || undefined,
+                dateFrom: dateFrom || undefined,
+                dateTo: dateTo || undefined,
+                salesRepId: salesRepFilter || undefined,
+                channel: channelFilter as any || undefined,
+                legalEntityId: legalEntityFilter || undefined,
+                warehouseId: warehouseFilter || undefined,
+                paymentTerm: paymentTermFilter || undefined,
+                pendingAction: pendingActionFilter || undefined,
+            }).then(({ base64 }) => {
+                const byteCharacters = atob(base64)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement('a')
-                a.href = url; a.download = `sales-orders-${new Date().toISOString().split('T')[0]}.csv`
-                a.click(); URL.revokeObjectURL(url)
+                a.href = url
+                a.download = `sales-orders-${new Date().toISOString().split('T')[0]}.xlsx`
+                a.click()
+                URL.revokeObjectURL(url)
             }),
-            { loading: 'Đang xuất...', success: 'Đã tải xuống!', error: 'Lỗi xuất file' }
+            { loading: 'Đang xuất file Excel...', success: 'Đã tải xuống file Excel!', error: 'Lỗi xuất file Excel' }
         )
     }
 
@@ -1228,21 +1375,101 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                 </div>
             </div>
 
+            {/* Advanced Filters */}
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div>
+                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Nhân viên Sales</label>
+                    <select value={salesRepFilter} 
+                        onChange={e => { setSalesRepFilter(e.target.value); setPage(1); reload({ salesRepId: e.target.value, page: 1 }, true) }}
+                        className="w-full px-2 py-1.5 text-xs outline-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                        <option value="">Tất cả Sales</option>
+                        {salesReps.map((u: any) => (
+                            <option key={u.id} value={u.id}>{u.name}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div>
+                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kênh</label>
+                    <select value={channelFilter} 
+                        onChange={e => { setChannelFilter(e.target.value); setPage(1); reload({ channel: e.target.value, page: 1 }, true) }}
+                        className="w-full px-2 py-1.5 text-xs outline-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                        <option value="">Tất cả kênh</option>
+                        <option value="HORECA">HORECA</option>
+                        <option value="WHOLESALE_DISTRIBUTOR">Đại Lý</option>
+                        <option value="VIP_RETAIL">VIP</option>
+                        <option value="DIRECT_INDIVIDUAL">Trực Tiếp</option>
+                        <option value="CORPORATE">Doanh Nghiệp</option>
+                        <option value="RETAIL">Bán Lẻ</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Pháp nhân</label>
+                    <select value={legalEntityFilter} 
+                        onChange={e => { setLegalEntityFilter(e.target.value); setPage(1); reload({ legalEntityId: e.target.value, page: 1 }, true) }}
+                        className="w-full px-2 py-1.5 text-xs outline-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                        <option value="">Tất cả pháp nhân</option>
+                        {pageLegalEntities.map((le: any) => (
+                            <option key={le.id} value={le.id}>{le.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kho xuất</label>
+                    <select value={warehouseFilter} 
+                        onChange={e => { setWarehouseFilter(e.target.value); setPage(1); reload({ warehouseId: e.target.value, page: 1 }, true) }}
+                        className="w-full px-2 py-1.5 text-xs outline-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                        <option value="">Tất cả kho</option>
+                        {pageWarehouses.map((wh: any) => (
+                            <option key={wh.id} value={wh.id}>{wh.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Điều khoản</label>
+                    <select value={paymentTermFilter} 
+                        onChange={e => { setPaymentTermFilter(e.target.value); setPage(1); reload({ paymentTerm: e.target.value, page: 1 }, true) }}
+                        className="w-full px-2 py-1.5 text-xs outline-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                        <option value="">Tất cả</option>
+                        {paymentTerms.map((pt: string) => (
+                            <option key={pt} value={pt}>{pt}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex flex-col justify-end">
+                    <label className="flex items-center gap-1.5 cursor-pointer py-1.5 text-xs font-semibold" style={{ color: '#8AAEBB' }}>
+                        <input type="checkbox" checked={pendingActionFilter} 
+                            onChange={e => { setPendingActionFilter(e.target.checked); setPage(1); reload({ pendingAction: e.target.checked, page: 1 }, true) }}
+                            className="rounded border-[#2A4355] text-[#87CBB9] focus:ring-0 focus:ring-offset-0 bg-[#1B2E3D] w-4 h-4" />
+                        <span>⚠️ Cần xử lý</span>
+                    </label>
+                </div>
+            </div>
+
             {/* Table (Desktop View) */}
             <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 900 }}>
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 950 }}>
                         <thead>
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '25%' }}>Khách Hàng</th>
+                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '10%' }} />
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '22%' }}>Khách Hàng</th>
                                 <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '8%' }}>Kênh</th>
                                 <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '8%' }}>Pháp Nhân</th>
-                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '13%' }} />
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '12%' }}>Sales Rep</th>
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Trạng Thái</th>
-                                <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '9%' }} />
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '4%' }}>Hành Động</th>
+                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '12%' }} />
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '12%' }}>Nhân viên Sales</th>
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '12%' }}>Trạng Thái</th>
+                                <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#8AAEBB', width: '18%' }}>Hành Động</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1253,7 +1480,12 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                             ) : rows.length === 0 ? (
                                 <tr><td colSpan={9} className="text-center py-16" style={{ color: '#4A6A7A' }}>
                                     <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
-                                    <p className="text-sm">Chưa có đơn hàng nào</p>
+                                    <p className="text-sm font-semibold">{hasActiveFilters ? 'Không tìm thấy đơn hàng phù hợp với bộ lọc' : 'Hệ thống chưa có đơn hàng nào'}</p>
+                                    {hasActiveFilters && (
+                                         <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#87CBB9', color: '#0A1926' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                             Xóa Bộ Lọc
+                                         </button>
+                                    )}
                                 </td></tr>
                             ) : rows.map(row => (
                                 <tr key={row.id}
@@ -1291,32 +1523,36 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                                     <td className="px-4 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
                                     <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>{formatDate(row.createdAt)}</td>
                                     <td className="px-4 py-1.5">
-                                        <div className="flex items-center gap-1 whitespace-nowrap">
-                                            <button onClick={() => setDetailId(row.id)} className="p-1 rounded" title="Chi tiết"
-                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.2)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.1)')}>
-                                                <Eye size={12} />
+                                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                                            <button onClick={() => setDetailId(row.id)} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
+                                                style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.25)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.15)')}>
+                                                <Eye size={11} /> Xem
                                             </button>
-                                            <button onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')} className="p-1 rounded" title="In đơn hàng"
-                                                style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.2)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.1)')}>
-                                                <Printer size={12} />
+                                            <button onClick={() => window.open(`/dashboard/sales/print?id=${row.id}`, '_blank')} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
+                                                style={{ background: 'rgba(138,174,187,0.15)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.3)' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.25)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.15)')}>
+                                                <Printer size={11} /> In
                                             </button>
                                             {row.status === 'PENDING_APPROVAL' && (
                                                 ((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))
                                             ) && (
                                                 <>
                                                     <button onClick={() => handleApprove(row.id)} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
-                                                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.4)', borderRadius: '4px' }}>
-                                                        {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> Duyệt</>}
+                                                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
+                                                        style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.45)' }}
+                                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.3)')}
+                                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(91,168,138,0.2)')}>
+                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><CheckCircle2 size={11} /> Duyệt</>}
                                                     </button>
                                                     <button onClick={() => handleReject(row.id)} disabled={actionLoading === row.id}
-                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
-                                                        style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.35)', borderRadius: '4px' }}>
-                                                        {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : <><XCircle size={10} /> Từ Chối</>}
+                                                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
+                                                        style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', border: '1px solid rgba(139,26,46,0.4)' }}
+                                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.25)')}
+                                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(139,26,46,0.15)')}>
+                                                        {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><XCircle size={11} /> Từ Chối</>}
                                                     </button>
                                                 </>
                                             )}
@@ -1401,7 +1637,12 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                 ) : rows.length === 0 ? (
                     <div className="text-center py-16 rounded-md border border-[#2A4355] bg-[#0D1E2B]" style={{ color: '#4A6A7A' }}>
                         <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
-                        <p className="text-sm">Chưa có đơn hàng nào</p>
+                        <p className="text-sm font-semibold">{hasActiveFilters ? 'Không tìm thấy đơn hàng phù hợp với bộ lọc' : 'Hệ thống chưa có đơn hàng nào'}</p>
+                        {hasActiveFilters && (
+                             <button onClick={handleClearFilters} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded transition-all" style={{ background: '#87CBB9', color: '#0A1926' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                 Xóa Bộ Lọc
+                             </button>
+                        )}
                     </div>
                 ) : (
                     rows.map(row => (
