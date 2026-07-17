@@ -464,45 +464,49 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         style={inputStyle}
                                     />
                                     {customerDropdownOpen && (
-                                        <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-[#142433] border border-[#2A4355] w-full shadow-2xl">
+                                        <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] w-full shadow-2xl">
                                             {filteredCustomers.length === 0 ? (
-                                                <div className="px-3 py-2.5 text-xs text-gray-500">
+                                                <div className="px-3 py-3 text-xs text-slate-400 dark:text-gray-500">
                                                     Không tìm thấy khách hàng
                                                 </div>
                                             ) : (
                                                 filteredCustomers.map(c => {
                                                     const isCompany = c.entityType === 'COMPANY'
-                                                    const isDisabled = isCompany && !c.allowDirectSO
-                                                    return (
-                                                        <div
-                                                            key={c.id}
-                                                            onMouseDown={() => {
-                                                                if (isDisabled) return
-                                                                handleCustomerChange(c.id)
-                                                                setCustomerDropdownOpen(false)
-                                                            }}
-                                                            className={`px-3 py-2.5 text-xs text-left border-b border-[#2A4355]/30 last:border-b-0 transition-colors ${
-                                                                isDisabled ? 'opacity-50 cursor-not-allowed bg-[#0F1C28]/80 text-gray-500' : 'cursor-pointer hover:bg-[#1B2E3D] text-white'
-                                                            }`}
-                                                        >
-                                                            <span className="font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
-                                                            <span>{c.name}</span>
-                                                            {isCompany && (
-                                                                <span className="ml-2 text-[10px] uppercase font-semibold text-[#8AAEBB]" style={{ color: '#8AAEBB' }}>
-                                                                    {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty (Mẹ - Chỉ gánh nợ)'}
-                                                                </span>
-                                                            )}
-                                                            {c.brandGroup && (
-                                                                <span className="ml-2 text-[10px] px-1 bg-[#2A4355]/50 border border-[#2A4355] text-gray-300 rounded">
-                                                                    ✨ {c.brandGroup}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )
-                                                })
-                                            )}
-                                        </div>
-                                    )}
+                                                     const isDisabled = isCompany && !c.allowDirectSO
+                                                     return (
+                                                         <div
+                                                             key={c.id}
+                                                             onMouseDown={() => {
+                                                                 if (isDisabled) return
+                                                                 handleCustomerChange(c.id)
+                                                                 setCustomerDropdownOpen(false)
+                                                             }}
+                                                             className={`px-3 py-2.5 text-xs text-left border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0 transition-colors ${
+                                                                 isDisabled 
+                                                                     ? 'bg-slate-50 dark:bg-[#0F1C28]/80 text-slate-400 dark:text-gray-500 opacity-60 cursor-not-allowed' 
+                                                                     : 'cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] text-slate-700 dark:text-white'
+                                                             }`}
+                                                         >
+                                                             <span className={`font-bold mr-2 ${isDisabled ? 'text-slate-400 dark:text-[#87CBB9]/60' : 'text-teal-600 dark:text-[#87CBB9]'}`}>
+                                                                 [{c.code}]
+                                                             </span>
+                                                             <span className="font-medium">{c.name}</span>
+                                                             {isCompany && (
+                                                                 <span className={`ml-2 text-[10px] uppercase font-semibold ${isDisabled ? 'text-slate-400 dark:text-[#8AAEBB]/60' : 'text-slate-500 dark:text-[#8AAEBB]'}`}>
+                                                                     {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty (Mẹ - Chỉ gánh nợ)'}
+                                                                 </span>
+                                                             )}
+                                                             {c.brandGroup && (
+                                                                 <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-[#2A4355]/50 border border-slate-200 dark:border-[#2A4355] text-slate-600 dark:text-gray-300 rounded font-semibold">
+                                                                     ✨ {c.brandGroup}
+                                                                 </span>
+                                                             )}
+                                                         </div>
+                                                     )
+                                                 })
+                                             )}
+                                         </div>
+                                     )}
                                 </div>
                             </div>
 
