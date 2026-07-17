@@ -409,7 +409,8 @@ export async function getSalesOrderDetailWithMarginAndTimeline(id: string): Prom
 
 // ── Customers for dropdown ───────────────────────
 export async function getCustomersForSO() {
-    return cached('sales:customers', async () => {
+    const user = await requireAuth()
+    const allCustomers = await cached('sales:customers', async () => {
         return prisma.customer.findMany({
             where: { status: 'ACTIVE', deletedAt: null },
             select: {
@@ -424,6 +425,7 @@ export async function getCustomersForSO() {
                 entityType: true,
                 allowDirectSO: true,
                 brandGroup: true,
+                salesRepId: true,
                 addresses: {
                     select: {
                         id: true,
@@ -452,6 +454,15 @@ export async function getCustomersForSO() {
             orderBy: { name: 'asc' },
         })
     }, 60_000)
+
+    const isSalesRepOnly = hasRole(user, 'Sales Rep', 'SALES_REP') && 
+        !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
+
+    if (isSalesRepOnly) {
+        return allCustomers.filter(c => c.salesRepId === user.id)
+    }
+
+    return allCustomers
 }
 
 // ── Products with stock for SO lines ─────────────

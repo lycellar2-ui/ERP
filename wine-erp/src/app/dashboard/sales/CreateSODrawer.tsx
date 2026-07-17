@@ -196,11 +196,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     // Autocomplete customer selection filter
     const filteredCustomers = useMemo(() => {
         const q = customerSearchInput.trim().toLowerCase()
-        if (!q || q.startsWith('[')) return sortedCustomersForSelect.slice(0, 50)
+        if (!q || q.startsWith('[')) return sortedCustomersForSelect.slice(0, 500)
         return sortedCustomersForSelect.filter(c => 
             c.name.toLowerCase().includes(q) || 
             c.code.toLowerCase().includes(q)
-        ).slice(0, 50)
+        ).slice(0, 500)
     }, [customerSearchInput, sortedCustomersForSelect])
 
     useEffect(() => {
