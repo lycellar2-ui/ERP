@@ -877,14 +877,16 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     }
 
     const sortableHeaders: { key: CustomerFilters['sortBy'] | undefined; label: string; cls: string; sortable: boolean }[] = [
-        { key: undefined, label: 'Loại', cls: 'px-3 py-1.5 w-[80px]', sortable: false },
-        { key: 'name', label: 'Khách Hàng', cls: 'px-4 py-1.5 w-[320px]', sortable: true },
-        { key: undefined, label: 'Công ty mẹ / Cha', cls: 'px-3 py-1.5 w-[160px]', sortable: false },
-        { key: undefined, label: 'Sales Rep', cls: 'px-3 py-1.5 w-[120px]', sortable: false },
+        { key: undefined, label: 'Loại', cls: 'px-3 py-1.5 w-[70px]', sortable: false },
+        { key: undefined, label: 'Mã KH', cls: 'px-3 py-1.5 w-[90px]', sortable: false },
+        { key: 'name', label: 'Khách Hàng', cls: 'px-4 py-1.5 w-[220px]', sortable: true },
+        { key: undefined, label: 'Mã cha', cls: 'px-3 py-1.5 w-[80px]', sortable: false },
+        { key: undefined, label: 'MST', cls: 'px-3 py-1.5 w-[100px]', sortable: false },
+        { key: undefined, label: 'Sales Rep', cls: 'px-3 py-1.5 w-[110px]', sortable: false },
         { key: undefined, label: 'Thanh Toán', cls: 'px-3 py-1.5 w-[80px]', sortable: false },
-        { key: 'creditLimit', label: 'Hạn Mức', cls: 'px-3 py-1.5 w-[120px]', sortable: true },
-        { key: 'orderCount', label: 'Đơn Hàng', cls: 'px-3 py-1.5 w-[80px] text-center', sortable: true },
-        { key: undefined, label: 'Trạng Thái', cls: 'px-3 py-1.5 w-[100px]', sortable: false },
+        { key: 'creditLimit', label: 'Hạn Mức', cls: 'px-3 py-1.5 w-[100px]', sortable: true },
+        { key: 'orderCount', label: 'Đơn Hàng', cls: 'px-3 py-1.5 w-[70px] text-center', sortable: true },
+        { key: undefined, label: 'Trạng Thái', cls: 'px-3 py-1.5 w-[90px]', sortable: false },
         { key: undefined, label: '', cls: 'px-3 py-1.5 w-[60px]', sortable: false },
     ]
 
@@ -1066,6 +1068,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                     <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.customerType} /></td>
+                                    <td className="px-3 py-1.5 whitespace-nowrap font-mono text-xs text-[#E8F1F2] font-semibold">{row.code}</td>
                                     <td className="px-4 py-1.5">
                                         <div className="flex items-center gap-2">
                                             <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
@@ -1084,28 +1087,22 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-2 text-[10px] mt-0.5" style={{ color: '#8AAEBB' }}>
-                                            <span>Mã: <strong style={{ color: '#E8F1F2' }} className="font-mono">{row.code}</strong></span>
-                                            {row.taxId && (
-                                                <>
-                                                    <span style={{ color: '#2A4355' }}>|</span>
-                                                    <span>MST: <strong style={{ color: '#8AAEBB' }} className="font-mono">{row.taxId}</strong></span>
-                                                </>
-                                            )}
-                                        </div>
                                     </td>
                                     <td className="px-3 py-1.5 text-xs">
                                         {row.entityType === 'RESTAURANT' && row.parentId ? (
                                             <span style={{ color: '#8AAEBB' }} className="font-mono text-[11px] whitespace-nowrap">
-                                                {row.parentName} ({row.parentCode})
+                                                {row.parentCode}
                                             </span>
                                         ) : row.entityType === 'COMPANY' && row.childrenCount > 0 ? (
                                             <span style={{ color: '#D4A853' }} className="text-[11px] whitespace-nowrap">
-                                                ({row.childrenCount} nhà hàng)
+                                                ({row.childrenCount})
                                             </span>
                                         ) : (
                                             <span style={{ color: '#4A6A7A' }} className="text-xs">—</span>
                                         )}
+                                    </td>
+                                    <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#4A6A7A' }}>
+                                        {row.taxId ?? '—'}
                                     </td>
                                     <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
                                         {row.salesRepName ?? '—'}
