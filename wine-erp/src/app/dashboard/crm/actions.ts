@@ -832,14 +832,23 @@ export async function getComplaintSeverityLevels() {
 // WEEKLY VISIT PLANNER ACTIONS
 // ═══════════════════════════════════════════════════
 
-export async function getWeeklyPlan(year: number, weekNumber: number) {
+export async function getWeeklyPlan(year: number, weekNumber: number, targetSalesRepId?: string) {
     try {
         const user = await getCurrentUser()
         if (!user) return { success: false, error: 'Chưa đăng nhập' }
 
+        let querySalesRepId = user.id
+        if (targetSalesRepId && targetSalesRepId !== user.id) {
+            const isManager = user.roles.some(roleName => ['CEO', 'SALES_MGR', 'SALES_ADMIN'].includes(roleName))
+            if (!isManager) {
+                return { success: false, error: 'Không có quyền truy cập kế hoạch của nhân viên khác' }
+            }
+            querySalesRepId = targetSalesRepId
+        }
+
         const plan = await prisma.weeklyVisitPlan.findFirst({
             where: {
-                salesRepId: user.id,
+                salesRepId: querySalesRepId,
                 year,
                 weekNumber,
             },
@@ -1026,5 +1035,49 @@ export async function getSalesRepCustomers() {
     } catch (err) {
         console.error('Lỗi getSalesRepCustomers:', err)
         return []
+    }
+}
+
+export async function getSalesRepsList() {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return []
+
+        const isManager = user.roles.some(roleName => ['CEO', 'SALES_MGR', 'SALES_ADMIN'].includes(roleName))
+        if (!isManager) return []
+
+        const users = await prisma.user.findMany({
+            where: {
+                status: 'ACTIVE',
+                roles: {
+                    some: {
+                        role: {
+                            name: {
+                                in: ['Sales Rep', 'Sales Manager', 'SALES_REP', 'SALES_MGR']
+                            }
+                        }
+                    }
+                }
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+            },
+            orderBy: { name: 'asc' }
+        })
+
+        return users
+    } catch (err) {
+        console.error('Lỗi getSalesRepsList:', err)
+        return []
+    }
+}
+
+export async function getCurrentUserProfile() {
+    try {
+        return await getCurrentUser()
+    } catch {
+        return null
     }
 }
