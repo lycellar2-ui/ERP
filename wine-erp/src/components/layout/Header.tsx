@@ -169,7 +169,6 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/quotations', title: 'Báo Giá' },
             { path: '/dashboard/price-list', title: 'Bảng Giá' },
             { path: '/dashboard/crm', title: 'CRM — Khách Hàng' },
-            { path: '/dashboard/pipeline', title: 'Sales Pipeline' },
             { path: '/dashboard/consignment', title: 'Ký Gửi (CSG)' },
             { path: '/dashboard/allocation', title: 'Allocation Engine' },
             { path: '/dashboard/delivery', title: 'Vận Chuyển' },

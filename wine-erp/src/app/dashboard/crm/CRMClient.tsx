@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
     Users, Search, Phone, Mail, Handshake, Wine,
     Package, AlertCircle, TrendingUp, ChevronRight, MessageSquarePlus,
     ShoppingCart, Clock, CheckCircle2, Loader2, Crown, Calendar, AlertTriangle,
-    ArrowUpDown, ArrowDown, ArrowUp, Gem
+    ArrowUpDown, ArrowDown, ArrowUp, Gem, Target
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions, recalcAllCustomerTiers } from './actions'
@@ -14,6 +15,7 @@ import { TastingEventsPanel } from './TastingEventsPanel'
 import { ComplaintTicketsPanel } from './ComplaintTicketsPanel'
 import { WinePreferencePanel } from './WinePreferencePanel'
 import { WeeklyVisitPlannerPanel } from './WeeklyVisitPlannerPanel'
+import { PipelinePanel } from './PipelinePanel'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -196,7 +198,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     const [txHistory, setTxHistory] = useState<Awaited<ReturnType<typeof getCustomerTransactions>> | null>(null)
     const [txOpen, setTxOpen] = useState(false)
     const [tierRecalcing, setTierRecalcing] = useState(false)
-    const [crmTab, setCrmTab] = useState<'customers' | 'events' | 'complaints' | 'visits'>('customers')
+    const searchParams = useSearchParams()
+    const initialTab = (searchParams.get('tab') as any) || 'customers'
+    const [crmTab, setCrmTab] = useState<'customers' | 'events' | 'complaints' | 'visits' | 'pipeline'>(initialTab)
     const [sortBy, setSortBy] = useState<'revenue' | 'orders' | 'name'>('revenue')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
@@ -311,6 +315,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433' }}>
                 {([
                     { key: 'customers' as const, label: 'Khách Hàng', icon: Users },
+                    { key: 'pipeline' as const, label: 'Cơ hội bán hàng (Pipeline)', icon: Target },
                     { key: 'visits' as const, label: 'Kế hoạch tuần', icon: Calendar },
                     { key: 'events' as const, label: 'Sự Kiện Thử Rượu', icon: Wine },
                     { key: 'complaints' as const, label: 'Phiếu Khiếu Nại', icon: AlertTriangle },
@@ -329,6 +334,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
             {/* Tab: Weekly Visit Planner */}
             {crmTab === 'visits' && <WeeklyVisitPlannerPanel />}
+
+            {/* Tab: Sales Pipeline */}
+            {crmTab === 'pipeline' && <PipelinePanel />}
 
             {/* Tab: Tasting Events */}
             {crmTab === 'events' && <TastingEventsPanel />}

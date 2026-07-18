@@ -66,7 +66,6 @@ const NAV_GROUPS: NavGroup[] = [
             { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá', permission: 'SLS:READ' },
             { href: '/dashboard/margin', icon: Calculator, label: 'Check Margin', permission: 'SLS:READ' },
             { href: '/dashboard/crm', icon: Users, label: 'CRM — Khách Hàng', permission: 'CRM:READ' },
-            { href: '/dashboard/pipeline', icon: Target, label: 'Sales Pipeline', permission: 'SLS:READ' },
             { href: '/dashboard/consignment', icon: Handshake, label: 'Ký Gửi (CSG)', permission: 'CSG:READ' },
             // { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine', permission: 'SLS:READ' },
             // { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển', permission: 'SLS:READ' },
