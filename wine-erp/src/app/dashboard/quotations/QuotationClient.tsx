@@ -55,6 +55,58 @@ export function QuotationClient({ initialData }: Props) {
     const [sendDrawerOpen, setSendDrawerOpen] = useState<string | null>(null)
     const [sendLoading, setSendLoading] = useState(false)
 
+    const handleCloseCreateDrawer = () => {
+        const hasContent = isNewCustomer 
+            ? !!(formData.companyName || formData.contactPerson || formData.customerEmail || formData.customerPhone || formLines.length > 0)
+            : !!(formData.customerId || formData.validUntil || formData.notes || formData.terms || formLines.length > 0);
+
+        if (hasContent) {
+            if (window.confirm('Bạn có chắc chắn muốn đóng? Mọi thông tin báo giá đang nhập sẽ bị mất.')) {
+                setCreateOpen(false)
+            }
+        } else {
+            setCreateOpen(false)
+        }
+    }
+
+    const handlePreview = () => {
+        const previewData = {
+            customerId: formData.customerId,
+            salesRepId: formData.salesRepId,
+            channel: formData.channel,
+            paymentTerm: formData.paymentTerm,
+            validUntil: formData.validUntil,
+            notes: formData.notes,
+            terms: formData.terms,
+            showQuantity: formData.showQuantity,
+            companyName: formData.companyName,
+            contactPerson: formData.contactPerson,
+            customerEmail: formData.customerEmail,
+            customerPhone: formData.customerPhone,
+            lines: formLines.map(line => ({
+                productId: line.productId,
+                qtyOrdered: line.qty,
+                unitPrice: line.price,
+                lineDiscountPct: line.discount
+            }))
+        }
+
+        const form = document.createElement('form')
+        form.method = 'POST'
+        form.action = '/api/export/quotation-pdf'
+        form.target = '_blank'
+
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = 'data'
+        input.value = JSON.stringify(previewData)
+        form.appendChild(input)
+
+        document.body.appendChild(form)
+        form.submit()
+        document.body.removeChild(form)
+    }
+
     // Quick Product Picker states
     const [pickerOpen, setPickerOpen] = useState(false)
     const [pickerSearch, setPickerSearch] = useState('')
@@ -625,11 +677,11 @@ export function QuotationClient({ initialData }: Props) {
             {/* Create Drawer */}
             {createOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setCreateOpen(false)} />
+                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={handleCloseCreateDrawer} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(520px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#E8F1F2' }}>Tạo Báo Giá Mới</h3>
-                            <button onClick={() => setCreateOpen(false)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                            <button onClick={handleCloseCreateDrawer} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                             {/* Customer */}
@@ -865,11 +917,28 @@ export function QuotationClient({ initialData }: Props) {
                                 </div>
                             </div>
 
-                            <button onClick={handleCreate} disabled={saving || !formData.customerId || formLines.length === 0}
-                                className="w-full py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
-                                style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
-                                {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Tạo Báo Giá'}
-                            </button>
+                            <div className="flex gap-3">
+                                <button onClick={handlePreview} disabled={!formData.customerId || formLines.length === 0}
+                                    type="button"
+                                    className="flex-1 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 border"
+                                    style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB', borderColor: 'rgba(138,174,187,0.25)', borderRadius: '6px' }}
+                                    onMouseEnter={e => {
+                                        if (formData.customerId && formLines.length > 0) {
+                                            e.currentTarget.style.background = 'rgba(138,174,187,0.2)';
+                                        }
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.background = 'rgba(138,174,187,0.1)';
+                                    }}
+                                >
+                                    👁️ Xem Trước
+                                </button>
+                                <button onClick={handleCreate} disabled={saving || !formData.customerId || formLines.length === 0}
+                                    className="w-[60%] py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
+                                    style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
+                                    {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Tạo Báo Giá'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </>

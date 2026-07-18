@@ -33,10 +33,119 @@ export async function GET(req: NextRequest) {
 
     if (!qt) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+    const html = renderHtml(qt, style)
+    return new NextResponse(html, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    })
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        let data: any
+        const contentType = req.headers.get('content-type') || ''
+        if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+            const formData = await req.formData()
+            const dataStr = formData.get('data') as string
+            data = JSON.parse(dataStr)
+        } else {
+            data = await req.json()
+        }
+
+        const style = data.pdfStyle || 'professional'
+
+        // Fetch customer and salesRep and products
+        let customer: any = null
+        if (data.customerId && data.customerId !== 'TEMP_CUSTOMER') {
+            customer = await prisma.customer.findUnique({
+                where: { id: data.customerId },
+                select: { name: true, code: true, channel: true }
+            })
+        }
+        if (!customer) {
+            customer = {
+                name: data.companyName || data.contactPerson || 'Khách Hàng Mới',
+                code: 'TEMP',
+                channel: data.channel || 'HORECA'
+            }
+        }
+
+        let salesRep: any = null
+        if (data.salesRepId) {
+            salesRep = await prisma.user.findUnique({
+                where: { id: data.salesRepId },
+                select: { name: true, email: true }
+            })
+        }
+        if (!salesRep) {
+            salesRep = { name: 'Chưa chỉ định', email: '' }
+        }
+
+        const productIds = data.lines?.map((l: any) => l.productId).filter(Boolean) || []
+        const dbProducts = await prisma.product.findMany({
+            where: { id: { in: productIds } },
+            select: {
+                id: true,
+                skuCode: true, productName: true, wineType: true, volumeMl: true,
+                country: true, abvPercent: true, profile: true,
+                classification: true,
+                producer: { select: { name: true } },
+                supplier: { select: { name: true } },
+                appellation: { select: { name: true, region: { select: { name: true } } } },
+                media: { where: { isPrimary: true }, select: { url: true }, take: 1 },
+                awards: { select: { source: true, score: true, medal: true }, take: 2 },
+            }
+        })
+
+        // Build qt object resembling SalesQuotation structure
+        const qt = {
+            quotationNo: 'QT-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-PREVIEW',
+            createdAt: new Date(),
+            validUntil: data.validUntil ? new Date(data.validUntil) : new Date(Date.now() + 30 * 86400000),
+            orderDiscount: Number(data.orderDiscount) || 0,
+            vatIncluded: data.vatIncluded || false,
+            showQuantity: data.showQuantity || false,
+            paymentTerm: data.paymentTerm || 'NET30',
+            notes: data.notes || '',
+            terms: data.terms || '',
+            deliveryTerms: data.deliveryTerms || '',
+            companyName: data.companyName || '',
+            contactPerson: data.contactPerson || '',
+            customer,
+            salesRep,
+            channel: data.channel || 'HORECA',
+            lines: (data.lines || []).map((l: any) => {
+                const product = dbProducts.find(p => p.id === l.productId)
+                return {
+                    qtyOrdered: Number(l.qtyOrdered || l.qty || 1),
+                    unitPrice: Number(l.unitPrice || l.price || 0),
+                    lineDiscountPct: Number(l.lineDiscountPct || l.discount || 0),
+                    product: product || {
+                        productName: 'Sản phẩm chưa chọn',
+                        skuCode: '—',
+                        wineType: 'OTHER',
+                        volumeMl: 750,
+                        country: '—',
+                        abvPercent: 0,
+                        media: []
+                    }
+                }
+            })
+        }
+
+        const html = renderHtml(qt, style)
+        return new NextResponse(html, {
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        })
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 })
+    }
+}
+
+function renderHtml(qt: any, style: string): string {
     const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 0 })
     const fmtDate = (d: Date) => d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-    const subtotal = qt.lines.reduce((s, l) => {
+    const subtotal = qt.lines.reduce((s: number, l: any) => {
         const qty = Number(l.qtyOrdered)
         const price = Number(l.unitPrice)
         const disc = Number(l.lineDiscountPct)
@@ -81,9 +190,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Group lines by Supplier and Country
-    const groups: Record<string, { supplierName: string; country: string; lines: typeof qt.lines }> = {}
+    const groups: Record<string, { supplierName: string; country: string; lines: any[] }> = {}
     for (const l of qt.lines) {
-        const supplierName = (l.product as any).supplier?.name || "Ly's Cellars"
+        const supplierName = l.product.supplier?.name || "Ly's Cellars"
         const country = l.product.country || "Other"
         const key = `${supplierName} - ${country}`
         if (!groups[key]) {
@@ -108,7 +217,7 @@ export async function GET(req: NextRequest) {
             const disc = Number(l.lineDiscountPct)
             const lineTotal = qty * price * (1 - disc / 100)
             const imgUrl = l.product.media?.[0]?.url
-            const awards = l.product.awards?.map(a =>
+            const awards = l.product.awards?.map((a: any) =>
                 `${a.source} ${a.score ? Number(a.score) : (a.medal?.replace('_', ' ') || '')}`
             ).join(' · ')
 
@@ -158,6 +267,8 @@ export async function GET(req: NextRequest) {
 
         return groupHeaderRow + lineRows
     }).join('')
+
+    const isPreview = qt.quotationNo.endsWith('-PREVIEW')
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -629,9 +740,11 @@ export async function GET(req: NextRequest) {
 
     <!-- PRINT BUTTONS -->
     <div class="no-print">
-        <button class="btn-print btn-print-secondary" onclick="location.href=location.href.replace('style=${style}','style=${style === 'elegant' ? 'professional' : 'elegant'}')">
-            ${style === 'elegant' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+        ${!isPreview ? `
+        <button class="btn-print btn-print-secondary" onclick="location.href=location.href.replace('style=\${style}','style=\${style === \\'elegant\\' ? \\'professional\\' : \\'elegant\\'}')">
+            \${style === 'elegant' ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
+        ` : ''}
         <button class="btn-print btn-print-primary" onclick="window.print()">
             🖨️ Print / Save PDF
         </button>
@@ -639,7 +752,5 @@ export async function GET(req: NextRequest) {
 </body>
 </html>`
 
-    return new NextResponse(html, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    })
+    return html
 }
