@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next()
     }
 
-    const publicPaths = ['/login', '/forgot-password', '/reset-password']
+    const publicPaths = ['/login', '/forgot-password', '/reset-password', '/verify']
     const isPublic = publicPaths.some(p => request.nextUrl.pathname.startsWith(p))
     const isAgencyPath = request.nextUrl.pathname.startsWith('/portal')
     const isApiPath = request.nextUrl.pathname.startsWith('/api')
