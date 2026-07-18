@@ -108,17 +108,25 @@ html {
   background-color: var(--color-lys-card) !important;
 }
 
-/* 4. Midnight ocean secondary backgrounds (#0D1E2B) -> var(--color-lys-surface) */
+/* 4. Midnight ocean secondary backgrounds (#0D1E2B / #0F1D2B / #0D1B25) -> var(--color-lys-surface) */
 [style*="#0D1E2B"],
 [style*="#0d1e2b"],
+[style*="#0F1D2B"],
+[style*="#0f1d2b"],
+[style*="#0D1B25"],
+[style*="#0d1b25"],
 [style*="rgb(13, 30, 43)"],
-[style*="rgba(13,30,43"],
-[style*="rgba(13, 30, 43"] {
+[style*="rgba(13,30,43)"],
+[style*="rgba(13, 30, 43)"] {
   background: var(--color-lys-surface) !important;
   background-color: var(--color-lys-surface) !important;
 }
 [class*="bg-[#0D1E2B]"],
-[class*="bg-[#0d1e2b]"] {
+[class*="bg-[#0d1e2b]"],
+[class*="bg-[#0F1D2B]"],
+[class*="bg-[#0f1d2b]"],
+[class*="bg-[#0D1B25]"],
+[class*="bg-[#0d1b25]"] {
   background-color: var(--color-lys-surface) !important;
 }
 
