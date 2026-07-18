@@ -1,12 +1,13 @@
 'use client'
 
 import { Bell, LogOut, User, Key, X, Save, Loader2, AlertCircle } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { type SessionUser } from '@/lib/session'
 import { signOut } from '@/app/login/actions'
 import { updatePersonalProfile } from '@/app/dashboard/settings/actions'
 import { toast } from 'sonner'
+import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/lib/notifications'
 
 interface HeaderProps {
     title?: string
@@ -18,25 +19,118 @@ interface HeaderProps {
 interface NotificationItem {
     id: string
     title: string
-    time: string
-    type: 'info' | 'warning' | 'success'
-    read: boolean
+    content?: string | null
+    type: string
+    link?: string | null
+    isRead: boolean
+    createdAt: string
+}
+
+function formatNotiTime(dateString: string): string {
+    try {
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffMs = now.getTime() - date.getTime()
+        const diffMins = Math.floor(diffMs / 60000)
+        const diffHours = Math.floor(diffMins / 60)
+        const diffDays = Math.floor(diffHours / 24)
+
+        if (diffMins < 1) return 'Vừa xong'
+        if (diffMins < 60) return `${diffMins} phút trước`
+        if (diffHours < 24) return `${diffHours} giờ trước`
+        if (diffDays === 1) return 'Hôm qua'
+        if (diffDays < 7) return `${diffDays} ngày trước`
+        
+        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    } catch {
+        return 'Vừa xong'
+    }
 }
 
 export function Header({ title: customTitle, subtitle, mobileMenuButton, currentUser }: HeaderProps) {
     const pathname = usePathname()
-    const [notifications, setNotifications] = useState<NotificationItem[]>([
-        { id: '1', title: 'Tờ trình PO-2026-004 đang chờ CEO phê duyệt', time: '2 giờ trước', type: 'info', read: false },
-        { id: '2', title: 'Lô hàng GR-2026-102 (Bordeaux) đã nhập kho thành công', time: '5 giờ trước', type: 'success', read: false },
-        { id: '3', title: 'Mức margin của sản phẩm Chateau Margaux dưới 15%', time: 'Hôm qua', type: 'warning', read: false },
-        { id: '4', title: 'Cảnh báo tồn kho: Chateau Lafite còn dưới mức an toàn', time: '2 ngày trước', type: 'warning', read: true },
-    ])
+    const router = useRouter()
+    const [notifications, setNotifications] = useState<NotificationItem[]>([])
+    const [unreadCount, setUnreadCount] = useState(0)
+    const [hasMore, setHasMore] = useState(false)
+    const [loadingNoti, setLoadingNoti] = useState(false)
     const [showNoti, setShowNoti] = useState(false)
     const notiRef = useRef<HTMLDivElement>(null)
     const [showProfile, setShowProfile] = useState(false)
     const [showMyAccount, setShowMyAccount] = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+    const fetchNotifications = useCallback(async (isLoadMore = false) => {
+        if (loadingNoti) return
+        setLoadingNoti(true)
+        try {
+            const offset = isLoadMore ? notifications.length : 0
+            const res = await getNotifications(10, offset)
+            if (res.success && res.notifications) {
+                const newNotis = res.notifications as unknown as NotificationItem[]
+                if (isLoadMore) {
+                    setNotifications(prev => [...prev, ...newNotis])
+                } else {
+                    setNotifications(newNotis)
+                }
+                setHasMore(newNotis.length === 10)
+            }
+            
+            const countRes = await getUnreadCount()
+            if (countRes.success) {
+                setUnreadCount(countRes.count)
+            }
+        } catch (err) {
+            console.error('Error fetching notifications:', err)
+        } finally {
+            setLoadingNoti(false)
+        }
+    }, [notifications.length, loadingNoti])
+
+    useEffect(() => {
+        if (currentUser) {
+            fetchNotifications()
+            const timer = setInterval(() => {
+                fetchNotifications()
+            }, 45000)
+            return () => clearInterval(timer)
+        }
+    }, [currentUser])
+
+    const handleToggleNoti = () => {
+        if (!showNoti) {
+            fetchNotifications()
+        }
+        setShowNoti(!showNoti)
+    }
+
+    const handleMarkAllAsRead = async () => {
+        try {
+            await markAllAsRead()
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+            setUnreadCount(0)
+            toast.success('Đã đánh dấu đọc tất cả thông báo')
+        } catch (err) {
+            console.error('Error marking all as read:', err)
+        }
+    }
+
+    const handleNotificationClick = async (n: NotificationItem) => {
+        setShowNoti(false)
+        if (!n.isRead) {
+            try {
+                await markAsRead(n.id)
+                setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, isRead: true } : item))
+                setUnreadCount(prev => Math.max(0, prev - 1))
+            } catch (err) {
+                console.error('Error marking as read:', err)
+            }
+        }
+        if (n.link) {
+            router.push(n.link)
+        }
+    }
 
     const handleLogout = useCallback(async () => {
         setIsLoggingOut(true)
@@ -116,8 +210,6 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const hasUnread = notifications.some(n => !n.read)
-
     return (
         <header
             className="sticky top-0 z-10 flex items-center justify-between px-6"
@@ -143,7 +235,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 {/* Notifications */}
                 <div className="relative" ref={notiRef}>
                     <button
-                        onClick={() => setShowNoti(!showNoti)}
+                        onClick={handleToggleNoti}
                         className="relative flex items-center justify-center w-9 h-9 transition-all duration-150"
                         style={{
                             background: '#1B2E3D',
@@ -155,12 +247,14 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}
                     >
                         <Bell size={16} />
-                        {/* Notification dot — Burgundy */}
-                        {hasUnread && (
+                        {/* Notification badge */}
+                        {unreadCount > 0 && (
                             <span
-                                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-                                style={{ background: '#8B1A2E' }}
-                            />
+                                className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-extrabold flex items-center justify-center text-slate-100"
+                                style={{ background: '#E05252' }}
+                            >
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
                         )}
                     </button>
 
@@ -176,13 +270,10 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         >
                             <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#2A4355' }}>
                                 <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Thông Báo</span>
-                                {hasUnread && (
+                                {unreadCount > 0 && (
                                     <button
-                                        onClick={() => {
-                                            setNotifications(notifications.map(n => ({ ...n, read: true })))
-                                        }}
-                                        className="text-[10px] font-semibold hover:underline"
-                                        style={{ color: '#87CBB9' }}
+                                        onClick={handleMarkAllAsRead}
+                                        className="text-[10px] font-semibold hover:underline text-[#87CBB9]"
                                     >
                                         Đọc tất cả
                                     </button>
@@ -194,35 +285,54 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                         Không có thông báo mới
                                     </div>
                                 ) : (
-                                    notifications.map(n => (
-                                        <div
-                                            key={n.id}
-                                            onClick={() => {
-                                                setNotifications(notifications.map(item => item.id === n.id ? { ...item, read: true } : item))
-                                            }}
-                                            className="px-4 py-3 transition-colors duration-150 cursor-pointer border-b last:border-b-0"
-                                            style={{
-                                                borderColor: '#2A4355',
-                                                background: n.read ? 'transparent' : 'rgba(135,203,185,0.04)',
-                                            }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.08)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(135,203,185,0.04)')}
-                                        >
-                                            <div className="flex gap-2.5 items-start">
-                                                <span className="mt-0.5 flex-shrink-0 text-xs">
-                                                    {n.type === 'success' ? '🟢' : n.type === 'warning' ? '🟡' : '🔵'}
-                                                </span>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-medium leading-normal" style={{ color: n.read ? '#8AAEBB' : '#E8F1F2' }}>
-                                                        {n.title}
-                                                    </p>
-                                                    <span className="text-[10px] block mt-1" style={{ color: '#4A6A7A' }}>
-                                                        {n.time}
+                                    <>
+                                        {notifications.map(n => (
+                                            <div
+                                                key={n.id}
+                                                onClick={() => handleNotificationClick(n)}
+                                                className="px-4 py-3 transition-colors duration-150 cursor-pointer border-b last:border-b-0"
+                                                style={{
+                                                    borderColor: '#2A4355',
+                                                    background: n.isRead ? 'transparent' : 'rgba(135,203,185,0.04)',
+                                                }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.08)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = n.isRead ? 'transparent' : 'rgba(135,203,185,0.04)')}
+                                            >
+                                                <div className="flex gap-2.5 items-start">
+                                                    <span className="mt-0.5 flex-shrink-0 text-xs">
+                                                        {n.type === 'success' ? '🟢' : n.type === 'warning' ? '🟡' : n.type === 'error' ? '🔴' : '🔵'}
                                                     </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-xs font-semibold leading-normal" style={{ color: n.isRead ? '#8AAEBB' : '#E8F1F2' }}>
+                                                            {n.title}
+                                                        </p>
+                                                        {n.content && (
+                                                            <p className="text-[10px] mt-0.5 text-slate-400 line-clamp-2">
+                                                                {n.content}
+                                                            </p>
+                                                        )}
+                                                        <span className="text-[10px] block mt-1" style={{ color: '#4A6A7A' }}>
+                                                            {formatNotiTime(n.createdAt)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        ))}
+                                        {hasMore && (
+                                            <button
+                                                onClick={() => fetchNotifications(true)}
+                                                disabled={loadingNoti}
+                                                className="w-full py-2 text-center text-[10px] font-bold border-t hover:underline transition-all"
+                                                style={{ 
+                                                    borderColor: '#2A4355', 
+                                                    color: '#87CBB9', 
+                                                    background: 'rgba(135,203,185,0.02)' 
+                                                }}
+                                            >
+                                                {loadingNoti ? 'Đang tải...' : 'Xem thêm thông báo'}
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>

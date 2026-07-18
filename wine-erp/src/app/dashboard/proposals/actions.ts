@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
+import { createNotification, triggerNotificationForRole } from '@/lib/notifications'
 
 // ═══════════════════════════════════════════════════
 // PRO — TỜ TRÌNH (Proposals / Submissions)
@@ -286,6 +287,14 @@ export async function submitProposal(id: string, userId: string): Promise<{ succ
             newValue: { status: 'SUBMITTED', level: firstLevel },
         })
 
+        const targetRole = firstLevel === 1 ? 'SALES_MGR' : firstLevel === 2 ? 'KE_TOAN' : 'CEO'
+        await triggerNotificationForRole(targetRole, {
+            title: `Tờ trình ${proposal.proposalNo} đang chờ phê duyệt`,
+            content: `Tờ trình "${proposal.title}" đang chờ bạn phê duyệt ở mức ${firstLevel}.`,
+            type: 'info',
+            link: `/dashboard/proposals?id=${proposal.id}`
+        })
+
         revalidatePath('/dashboard/proposals')
         revalidatePath('/dashboard')
         return { success: true }
@@ -367,6 +376,44 @@ export async function processProposalApproval(input: {
             }
         }
 
+        if (input.action === 'REJECT') {
+            await createNotification({
+                userId: proposal.createdBy,
+                title: `Tờ trình ${proposal.proposalNo} đã bị từ chối`,
+                content: `Tờ trình "${proposal.title}" của bạn đã bị từ chối phê duyệt.`,
+                type: 'error',
+                link: `/dashboard/proposals?id=${proposal.id}`
+            })
+        } else if (input.action === 'RETURN') {
+            await createNotification({
+                userId: proposal.createdBy,
+                title: `Tờ trình ${proposal.proposalNo} bị trả lại`,
+                content: `Tờ trình "${proposal.title}" của bạn bị trả lại để điều chỉnh thêm. Lý do: ${input.comment || 'Không có lý do chi tiết.'}`,
+                type: 'warning',
+                link: `/dashboard/proposals?id=${proposal.id}`
+            })
+        } else {
+            const currentIdx = levels.indexOf(currentLevel)
+            const nextLevel = currentIdx < levels.length - 1 ? levels[currentIdx + 1] : null
+            if (nextLevel === null) {
+                await createNotification({
+                    userId: proposal.createdBy,
+                    title: `Tờ trình ${proposal.proposalNo} đã được duyệt hoàn toàn`,
+                    content: `Tờ trình "${proposal.title}" của bạn đã được phê duyệt thành công bởi CEO.`,
+                    type: 'success',
+                    link: `/dashboard/proposals?id=${proposal.id}`
+                })
+            } else {
+                const targetRole = nextLevel === 1 ? 'SALES_MGR' : nextLevel === 2 ? 'KE_TOAN' : 'CEO'
+                await triggerNotificationForRole(targetRole, {
+                    title: `Tờ trình ${proposal.proposalNo} chờ phê duyệt`,
+                    content: `Tờ trình "${proposal.title}" đã được duyệt ở mức ${currentLevel} và đang chờ bạn phê duyệt ở mức ${nextLevel}.`,
+                    type: 'info',
+                    link: `/dashboard/proposals?id=${proposal.id}`
+                })
+            }
+        }
+
         await logAudit({
             userId: input.approverId,
             action: input.action,
@@ -400,6 +447,18 @@ export async function addProposalComment(input: {
                 isInternal: input.isInternal ?? false,
             },
         })
+
+        const proposal = await prisma.proposal.findUnique({ where: { id: input.proposalId }, select: { createdBy: true, proposalNo: true } })
+        if (proposal && input.authorId !== proposal.createdBy) {
+            await createNotification({
+                userId: proposal.createdBy,
+                title: `Có bình luận mới trên Tờ trình ${proposal.proposalNo}`,
+                content: `Bình luận mới: "${input.content.substring(0, 50)}${input.content.length > 50 ? '...' : ''}"`,
+                type: 'info',
+                link: `/dashboard/proposals?id=${input.proposalId}`
+            })
+        }
+
         revalidatePath('/dashboard/proposals')
         return { success: true }
     } catch (err: any) {

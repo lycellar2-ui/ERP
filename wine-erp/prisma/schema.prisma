@@ -100,6 +100,7 @@ model User {
   priceRulesRequested    CustomerPriceRule[] @relation("PriceRuleRequester")
   priceRulesApproved     CustomerPriceRule[] @relation("PriceRuleApprover")
   posShifts              POSShift[]
+  notifications          Notification[]     @relation("UserNotifications")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -2952,4 +2953,23 @@ model ProposalPriceItem {
   proposedPrice Decimal  @db.Decimal(18, 2)
 
   @@map("proposal_price_items")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  type      String   @default("info") // info, warning, success, error
+  link      String?  // URL redirection link
+  isRead    Boolean  @default(false)
+  
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notifications")
+  @@index([userId, isRead])
+  @@index([userId, createdAt(sort: Desc)])
 }

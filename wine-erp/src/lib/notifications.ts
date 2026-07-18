@@ -2,6 +2,8 @@
 
 import { Resend } from 'resend'
 import { notifyTelegram, formatVND } from '@/lib/telegram'
+import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session'
 
 let _resend: Resend | null = null
 function getResend() {
@@ -572,5 +574,165 @@ export async function notifySOConfirmed(input: {
         },
         telegramMsg,
     )
+}
+
+// ═══════════════════════════════════════════════════
+// DATABASE IN-APP NOTIFICATIONS
+// ═══════════════════════════════════════════════════
+
+export async function createNotification(input: {
+    userId: string
+    title: string
+    content?: string
+    type?: string
+    link?: string
+}) {
+    try {
+        const noti = await prisma.notification.create({
+            data: {
+                userId: input.userId,
+                title: input.title,
+                content: input.content || null,
+                type: input.type || 'info',
+                link: input.link || null,
+                isRead: false,
+            },
+        })
+        return { success: true, notification: { ...noti, createdAt: noti.createdAt.toISOString(), updatedAt: noti.updatedAt.toISOString() } }
+    } catch (err: any) {
+        console.error('Lỗi createNotification:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function triggerNotificationForRole(
+    roleName: string,
+    input: {
+        title: string
+        content?: string
+        type?: string
+        link?: string
+    }
+) {
+    try {
+        const users = await prisma.user.findMany({
+            where: {
+                roles: {
+                    some: {
+                        role: {
+                            name: roleName,
+                        },
+                    },
+                },
+            },
+            select: { id: true },
+        })
+
+        if (users.length === 0) return { success: true, count: 0 }
+
+        await prisma.notification.createMany({
+            data: users.map(u => ({
+                userId: u.id,
+                title: input.title,
+                content: input.content || null,
+                type: input.type || 'info',
+                link: input.link || null,
+                isRead: false,
+            })),
+        })
+
+        return { success: true, count: users.length }
+    } catch (err: any) {
+        console.error('Lỗi triggerNotificationForRole:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getNotifications(limit = 10, offset = 0) {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập' }
+
+        const items = await prisma.notification.findMany({
+            where: { userId: user.id },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            skip: offset,
+        })
+
+        const serialized = items.map((item: any) => ({
+            ...item,
+            createdAt: item.createdAt.toISOString(),
+            updatedAt: item.updatedAt.toISOString(),
+        }))
+
+        return { success: true, notifications: serialized }
+    } catch (err: any) {
+        console.error('Lỗi getNotifications:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getUnreadCount() {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập', count: 0 }
+
+        const count = await prisma.notification.count({
+            where: {
+                userId: user.id,
+                isRead: false,
+            },
+        })
+
+        return { success: true, count }
+    } catch (err: any) {
+        console.error('Lỗi getUnreadCount:', err)
+        return { success: false, error: err.message, count: 0 }
+    }
+}
+
+export async function markAsRead(notificationId: string) {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập' }
+
+        await prisma.notification.updateMany({
+            where: {
+                id: notificationId,
+                userId: user.id,
+            },
+            data: {
+                isRead: true,
+            },
+        })
+
+        return { success: true }
+    } catch (err: any) {
+        console.error('Lỗi markAsRead:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function markAllAsRead() {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập' }
+
+        await prisma.notification.updateMany({
+            where: {
+                userId: user.id,
+                isRead: false,
+            },
+            data: {
+                isRead: true,
+            },
+        })
+
+        return { success: true }
+    } catch (err: any) {
+        console.error('Lỗi markAllAsRead:', err)
+        return { success: false, error: err.message }
+    }
 }
 
