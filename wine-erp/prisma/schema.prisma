@@ -101,6 +101,7 @@ model User {
   priceRulesApproved     CustomerPriceRule[] @relation("PriceRuleApprover")
   posShifts              POSShift[]
   notifications          Notification[]     @relation("UserNotifications")
+  visitPlans             WeeklyVisitPlan[]  @relation("SalesRepVisitPlans")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -520,6 +521,7 @@ model Customer {
   tastingGuests  TastingEventGuest[]   @relation("TastingGuests")
   loyaltyTransactions LoyaltyTransaction[]
   priceRules    CustomerPriceRule[]
+  visitSchedules SalesVisitSchedule[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   deletedAt     DateTime?
@@ -621,6 +623,45 @@ model TastingEvent {
   createdAt   DateTime               @default(now())
 
   @@map("tasting_events")
+}
+
+model WeeklyVisitPlan {
+  id          String               @id @default(cuid())
+  salesRepId  String
+  salesRep    User                 @relation("SalesRepVisitPlans", fields: [salesRepId], references: [id], onDelete: Cascade)
+  
+  weekNumber  Int                  // Week number (1 - 53)
+  year        Int                  // Year
+  status      String               @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED
+  note        String?              // Week's main focus/notes
+  
+  visits      SalesVisitSchedule[]
+  
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@unique([salesRepId, weekNumber, year])
+  @@map("weekly_visit_plans")
+}
+
+model SalesVisitSchedule {
+  id          String             @id @default(cuid())
+  planId      String
+  plan        WeeklyVisitPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  
+  customerId  String
+  customer    Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  visitDate   DateTime           // Scheduled visit date
+  purpose     String             // purpose description
+  status      String             @default("PLANNED") // PLANNED, COMPLETED, CANCELLED
+  
+  resultNotes String?            // Visit outcome details
+  
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@map("sales_visit_schedules")
 }
 
 model TastingEventAttendee {

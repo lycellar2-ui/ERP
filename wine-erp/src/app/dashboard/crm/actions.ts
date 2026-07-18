@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, CRMActivitySchema, CRMContactSchema, CRMComplaintSchema, CRMTastingEventSchema } from '@/lib/validations'
+import { getCurrentUser } from '@/lib/session'
 
 export type ActivityType = 'CALL' | 'EMAIL' | 'MEETING' | 'TASTING' | 'DELIVERY' | 'COMPLAINT' | 'OTHER'
 export type OpportunityStage = 'LEAD' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST'
@@ -825,4 +826,205 @@ export async function getComplaintTypes() {
 
 export async function getComplaintSeverityLevels() {
     return ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+}
+
+// ═══════════════════════════════════════════════════
+// WEEKLY VISIT PLANNER ACTIONS
+// ═══════════════════════════════════════════════════
+
+export async function getWeeklyPlan(year: number, weekNumber: number) {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập' }
+
+        const plan = await prisma.weeklyVisitPlan.findFirst({
+            where: {
+                salesRepId: user.id,
+                year,
+                weekNumber,
+            },
+            include: {
+                visits: {
+                    include: {
+                        customer: {
+                            select: { id: true, name: true, code: true }
+                        }
+                    },
+                    orderBy: { visitDate: 'asc' }
+                }
+            }
+        })
+
+        if (!plan) return { success: true, plan: null }
+
+        const serializedVisits = plan.visits.map(v => ({
+            ...v,
+            visitDate: v.visitDate.toISOString(),
+            createdAt: v.createdAt.toISOString(),
+            updatedAt: v.updatedAt.toISOString(),
+        }))
+
+        return {
+            success: true,
+            plan: {
+                ...plan,
+                createdAt: plan.createdAt.toISOString(),
+                updatedAt: plan.updatedAt.toISOString(),
+                visits: serializedVisits
+            }
+        }
+    } catch (err: any) {
+        console.error('Lỗi getWeeklyPlan:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function createOrUpdateWeeklyPlan(input: {
+    weekNumber: number
+    year: number
+    note?: string
+    visits: Array<{
+        customerId: string
+        visitDate: string
+        purpose: string
+    }>
+}) {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập' }
+
+        const result = await prisma.$transaction(async (tx) => {
+            let plan = await tx.weeklyVisitPlan.findFirst({
+                where: {
+                    salesRepId: user.id,
+                    year: input.year,
+                    weekNumber: input.weekNumber,
+                }
+            })
+
+            if (!plan) {
+                plan = await tx.weeklyVisitPlan.create({
+                    data: {
+                        salesRepId: user.id,
+                        year: input.year,
+                        weekNumber: input.weekNumber,
+                        note: input.note || null,
+                        status: 'DRAFT',
+                    }
+                })
+            } else {
+                plan = await tx.weeklyVisitPlan.update({
+                    where: { id: plan.id },
+                    data: {
+                        note: input.note || null,
+                        status: 'DRAFT',
+                    }
+                })
+            }
+
+            await tx.salesVisitSchedule.deleteMany({
+                where: { planId: plan.id }
+            })
+
+            if (input.visits.length > 0) {
+                await tx.salesVisitSchedule.createMany({
+                    data: input.visits.map(v => ({
+                        planId: plan!.id,
+                        customerId: v.customerId,
+                        visitDate: new Date(v.visitDate),
+                        purpose: v.purpose,
+                        status: 'PLANNED',
+                    }))
+                })
+            }
+
+            return plan
+        })
+
+        revalidateCache('crm')
+        revalidatePath('/dashboard/crm')
+        return { success: true, planId: result.id }
+    } catch (err: any) {
+        console.error('Lỗi createOrUpdateWeeklyPlan:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function updateVisitStatus(input: {
+    visitId: string
+    status: 'COMPLETED' | 'CANCELLED'
+    resultNotes?: string
+}) {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return { success: false, error: 'Chưa đăng nhập' }
+
+        const result = await prisma.$transaction(async (tx) => {
+            const visit = await tx.salesVisitSchedule.findUnique({
+                where: { id: input.visitId },
+                include: { plan: true }
+            })
+
+            if (!visit) throw new Error('Không tìm thấy lịch đi thăm')
+            if (visit.plan.salesRepId !== user.id) throw new Error('Không có quyền thay đổi lịch này')
+
+            const updated = await tx.salesVisitSchedule.update({
+                where: { id: input.visitId },
+                data: {
+                    status: input.status,
+                    resultNotes: input.resultNotes || null,
+                }
+            })
+
+            if (input.status === 'COMPLETED') {
+                const activityType = updated.purpose.toLowerCase().includes('thử') || updated.purpose.toLowerCase().includes('tasting')
+                    ? 'TASTING'
+                    : 'MEETING'
+
+                await tx.customerActivity.create({
+                    data: {
+                        customerId: updated.customerId,
+                        type: activityType,
+                        description: `[Đi thăm] Kết quả: ${input.resultNotes || 'Đã gặp khách hàng.'} (Mục đích: ${updated.purpose})`,
+                        performedBy: user.id,
+                        occurredAt: new Date(),
+                    }
+                })
+            }
+
+            return updated
+        })
+
+        revalidateCache('crm')
+        revalidatePath('/dashboard/crm')
+        return { success: true }
+    } catch (err: any) {
+        console.error('Lỗi updateVisitStatus:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+export async function getSalesRepCustomers() {
+    try {
+        const user = await getCurrentUser()
+        if (!user) return []
+
+        const customers = await prisma.customer.findMany({
+            where: {
+                salesRepId: user.id,
+                status: 'ACTIVE',
+            },
+            select: {
+                id: true,
+                code: true,
+                name: true,
+            },
+            orderBy: { name: 'asc' }
+        })
+
+        return customers
+    } catch (err) {
+        console.error('Lỗi getSalesRepCustomers:', err)
+        return []
+    }
 }

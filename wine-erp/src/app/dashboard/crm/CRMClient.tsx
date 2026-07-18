@@ -13,6 +13,7 @@ import { ContactsPanel, TagsPanel } from './ContactsTagsPanel'
 import { TastingEventsPanel } from './TastingEventsPanel'
 import { ComplaintTicketsPanel } from './ComplaintTicketsPanel'
 import { WinePreferencePanel } from './WinePreferencePanel'
+import { WeeklyVisitPlannerPanel } from './WeeklyVisitPlannerPanel'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -195,7 +196,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     const [txHistory, setTxHistory] = useState<Awaited<ReturnType<typeof getCustomerTransactions>> | null>(null)
     const [txOpen, setTxOpen] = useState(false)
     const [tierRecalcing, setTierRecalcing] = useState(false)
-    const [crmTab, setCrmTab] = useState<'customers' | 'events' | 'complaints'>('customers')
+    const [crmTab, setCrmTab] = useState<'customers' | 'events' | 'complaints' | 'visits'>('customers')
     const [sortBy, setSortBy] = useState<'revenue' | 'orders' | 'name'>('revenue')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
@@ -310,7 +311,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433' }}>
                 {([
                     { key: 'customers' as const, label: 'Khách Hàng', icon: Users },
-                    { key: 'events' as const, label: 'Sự Kiện Thử Rượu', icon: Calendar },
+                    { key: 'visits' as const, label: 'Kế hoạch tuần', icon: Calendar },
+                    { key: 'events' as const, label: 'Sự Kiện Thử Rượu', icon: Wine },
                     { key: 'complaints' as const, label: 'Phiếu Khiếu Nại', icon: AlertTriangle },
                 ]).map(tab => (
                     <button key={tab.key} onClick={() => setCrmTab(tab.key)}
@@ -324,6 +326,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     </button>
                 ))}
             </div>
+
+            {/* Tab: Weekly Visit Planner */}
+            {crmTab === 'visits' && <WeeklyVisitPlannerPanel />}
 
             {/* Tab: Tasting Events */}
             {crmTab === 'events' && <TastingEventsPanel />}
