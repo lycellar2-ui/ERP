@@ -794,12 +794,12 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] w-[140px]">Mã SKU</th>
-                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A]">Tên sản phẩm</th>
-                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Giá Wholesale</th>
-                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[120px]">Special Price</th>
-                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[100px]">Margin</th>
-                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[140px]">Vs Wholesale</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] w-[140px]">Mã SKU</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#8AAEBB]">Tên sản phẩm</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-right w-[120px]">Giá Wholesale</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-right w-[120px]">Special Price</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-center w-[100px]">Margin</th>
+                                        <th className="px-3 py-2.5 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-center w-[140px]">Vs Wholesale</th>
                                         <th className="px-3 py-2.5 w-[50px]"></th>
                                     </tr>
                                 </thead>
@@ -920,10 +920,10 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         </th>
                                     </tr>
                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                        <th className="px-3 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] w-[280px] min-w-[280px]">Sản phẩm</th>
-                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px]">Cost</th>
-                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px]">Retail</th>
-                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[85px] border-r border-[#2A4355]/40">Wholesale</th>
+                                        <th className="px-3 py-2 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] w-[280px] min-w-[280px]">Sản phẩm</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-right w-[85px]">Cost</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-right w-[85px]">Retail</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-right w-[85px] border-r border-[#2A4355]/40">Wholesale</th>
                                         
                                         <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[100px]">Special Price</th>
                                         <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-emerald-400 bg-[#132A3E]/20 text-center w-[65px]">C.Khấu D (%)</th>
@@ -933,9 +933,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                         <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-sky-400 bg-[#132A3E]/20 text-right w-[80px] border-r border-[#2A4355]/40">Inc VNĐ</th>
                                         
                                         <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#87CBB9] text-right w-[95px]">Special Price</th>
-                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-right w-[95px]">Lãi gộp</th>
-                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[70px]">Margin</th>
-                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-[#4A6A7A] text-center w-[70px]">% Giảm vs Wholesale</th>
+                                        <th className="px-1.5 py-2 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-right w-[95px]">Lãi gộp</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-center w-[70px]">Margin</th>
+                                        <th className="px-1 py-2 text-xs uppercase font-bold tracking-wider text-[#8AAEBB] text-center w-[70px]">% Giảm vs Wholesale</th>
                                         <th className="px-2.5 py-2 text-center w-[40px]"></th>
                                     </tr>
                                 </thead>
