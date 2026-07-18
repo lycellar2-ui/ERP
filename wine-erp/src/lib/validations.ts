@@ -23,6 +23,7 @@ export const SOLineCreateSchema = z.object({
     unitPrice: positiveNumber,
     lineDiscountPct: percentSchema.optional(),
     priceSource: z.string().optional(),
+    vatRate: percentSchema.optional().default(10),
 })
 
 export const SOCreateSchema = z.object({

@@ -51,7 +51,7 @@ export function QuotationClient({ initialData }: Props) {
         customerPhone: ''
     })
     const [isNewCustomer, setIsNewCustomer] = useState(false)
-    const [formLines, setFormLines] = useState<{ productId: string; qty: number; price: number; discount: number }[]>([])
+    const [formLines, setFormLines] = useState<{ productId: string; qty: number; price: number; discount: number; vatRate?: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [sendDrawerOpen, setSendDrawerOpen] = useState<string | null>(null)
     const [sendLoading, setSendLoading] = useState(false)
@@ -88,7 +88,8 @@ export function QuotationClient({ initialData }: Props) {
                 productId: line.productId,
                 qtyOrdered: line.qty,
                 unitPrice: line.price,
-                lineDiscountPct: line.discount
+                lineDiscountPct: line.discount,
+                vatRate: line.vatRate ?? 10
             }))
         }
 
@@ -216,7 +217,7 @@ export function QuotationClient({ initialData }: Props) {
         toast.promise(
             createQuotation({
                 ...formData,
-                lines: formLines.map(l => ({ productId: l.productId, qtyOrdered: l.qty, unitPrice: l.price, lineDiscountPct: l.discount })),
+                lines: formLines.map(l => ({ productId: l.productId, qtyOrdered: l.qty, unitPrice: l.price, lineDiscountPct: l.discount, vatRate: l.vatRate ?? 10 })),
             }).then((res: any) => {
                 if (!res.success) throw new Error(res.error || 'Lỗi tạo báo giá')
                 setCreateOpen(false)
@@ -248,7 +249,7 @@ export function QuotationClient({ initialData }: Props) {
         )
     }
 
-    const addLine = () => setFormLines([...formLines, { productId: '', qty: 1, price: 0, discount: 0 }])
+    const addLine = () => setFormLines([...formLines, { productId: '', qty: 1, price: 0, discount: 0, vatRate: 10 }])
     const removeLine = (i: number) => setFormLines(formLines.filter((_, idx) => idx !== i))
     const updateLine = (i: number, field: string, val: any) => {
         const copy = [...formLines]
@@ -261,6 +262,7 @@ export function QuotationClient({ initialData }: Props) {
         const copy = [...formLines]
         copy[i].productId = productId
         copy[i].price = prod ? prod.wholesalePrice : 0
+        copy[i].vatRate = prod ? (prod as any).vatRate ?? 10 : 10
         setFormLines(copy)
     }
 
@@ -285,7 +287,8 @@ export function QuotationClient({ initialData }: Props) {
                     productId: prodId,
                     qty: data.qty,
                     price: existing?.price || (prod ? prod.wholesalePrice : 0),
-                    discount: existing?.discount || 0
+                    discount: existing?.discount || 0,
+                    vatRate: existing?.vatRate || (prod ? (prod as any).vatRate ?? 10 : 10)
                 })
             }
         }
@@ -632,7 +635,7 @@ export function QuotationClient({ initialData }: Props) {
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ background: '#142433' }}>
-                                                    {['SKU', 'Sản Phẩm', 'SL', 'Giá', 'CK%', 'Thành Tiền'].map(h => (
+                                                    {['SKU', 'Sản Phẩm', 'SL', 'Giá', 'CK%', 'VAT%', 'Thành Tiền'].map(h => (
                                                         <th key={h} className="px-3 py-2 text-left font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
                                                     ))}
                                                 </tr>
@@ -647,6 +650,7 @@ export function QuotationClient({ initialData }: Props) {
                                                             <td className="px-3 py-2 text-right" style={{ color: '#8AAEBB' }}>{Number(l.qtyOrdered)}</td>
                                                             <td className="px-3 py-2 text-right" style={{ color: '#8AAEBB' }}>{formatVND(Number(l.unitPrice))}</td>
                                                             <td className="px-3 py-2 text-center" style={{ color: '#D4A853' }}>{Number(l.lineDiscountPct) > 0 ? `${Number(l.lineDiscountPct)}%` : '—'}</td>
+                                                            <td className="px-3 py-2 text-center" style={{ color: '#E8F1F2' }}>{l.vatRate ? `${l.vatRate}%` : '10%'}</td>
                                                             <td className="px-3 py-2 text-right font-bold" style={{ color: '#87CBB9' }}>{formatVND(total)}</td>
                                                         </tr>
                                                     )
@@ -919,7 +923,7 @@ export function QuotationClient({ initialData }: Props) {
                                                 {/* Numeric controls and indicators if product is selected */}
                                                 {line.productId && prod && (
                                                     <div className="space-y-2">
-                                                        <div className="grid grid-cols-3 gap-2">
+                                                        <div className="grid grid-cols-4 gap-2">
                                                             <div>
                                                                 <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>SL</label>
                                                                 <input type="number" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} placeholder="SL"
@@ -928,12 +932,20 @@ export function QuotationClient({ initialData }: Props) {
                                                             <div>
                                                                 <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>Giá báo khách</label>
                                                                 <input type="number" value={line.price} onChange={e => updateLine(i, 'price', Number(e.target.value))} placeholder="Giá"
-                                                                    className="w-full px-2 py-1 text-xs outline-none text-right" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853', fontFamily: '"DM Mono"', borderRadius: '4px' }} />
+                                                                    className="w-full px-2 py-1 text-xs outline-none text-right font-mono" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853', borderRadius: '4px' }} />
                                                             </div>
                                                             <div>
                                                                 <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>CK%</label>
                                                                 <input type="number" value={line.discount} onChange={e => updateLine(i, 'discount', Number(e.target.value))} placeholder="CK%"
                                                                     className="w-full px-2 py-1 text-xs outline-none text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#4A6A7A' }}>VAT%</label>
+                                                                <select value={line.vatRate ?? 10} onChange={e => updateLine(i, 'vatRate', Number(e.target.value))}
+                                                                    className="w-full px-1 py-1 text-xs outline-none text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
+                                                                    <option value={10}>10%</option>
+                                                                    <option value={8}>8%</option>
+                                                                </select>
                                                             </div>
                                                         </div>
                                                         

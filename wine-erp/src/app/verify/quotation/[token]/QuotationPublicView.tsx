@@ -10,7 +10,7 @@ type LineData = {
     tastingNotes: string | null; classification: string | null; producerName: string | undefined
     appellationName: string | undefined; regionName: string | undefined
     imageUrl: string | null; awards: { source: string; score: number | null; medal: string | null }[]
-    qty: number; unitPrice: number; discountPct: number; lineTotal: number
+    qty: number; unitPrice: number; discountPct: number; vatRate: number; lineTotal: number
 }
 
 type QuotationData = {
@@ -197,7 +197,12 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
     const subtotal = data.lines.reduce((s, l) => s + l.lineTotal, 0)
     const discountAmount = subtotal * (data.orderDiscount / 100)
     const afterDiscount = subtotal - discountAmount
-    const vatAmount = data.vatIncluded ? 0 : afterDiscount * 0.1
+    const vatAmount = data.vatIncluded
+        ? 0
+        : data.lines.reduce((sum, l) => {
+            const lineAmountAfterOrderDiscount = l.lineTotal * (1 - data.orderDiscount / 100)
+            return sum + (lineAmountAfterOrderDiscount * ((l.vatRate ?? 10) / 100))
+          }, 0)
     const grandTotal = afterDiscount + vatAmount
     const statusInfo = STATUS_MAP[data.status] || STATUS_MAP.DRAFT
 
@@ -634,7 +639,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
 
                             {!data.vatIncluded && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#8AAEBB', fontSize: 14 }}>Value Added Tax (VAT 10%)</span>
+                                    <span style={{ color: '#8AAEBB', fontSize: 14 }}>Value Added Tax (VAT)</span>
                                     <span className="font-mono" style={{ color: '#E8F1F2', fontWeight: 500, fontSize: 14 }}>{fmt(vatAmount)} ₫</span>
                                 </div>
                             )}

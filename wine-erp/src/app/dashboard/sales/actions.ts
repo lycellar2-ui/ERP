@@ -40,6 +40,7 @@ export interface SOLineCreate {
     unitPrice: number
     lineDiscountPct?: number
     priceSource?: string
+    vatRate?: number
 }
 
 export interface SOCreateInput {
@@ -471,7 +472,7 @@ export async function getProductsWithStock() {
         const products = await prisma.product.findMany({
             where: { status: 'ACTIVE', deletedAt: null },
             select: {
-                id: true, skuCode: true, productName: true, wineType: true, country: true,
+                id: true, skuCode: true, productName: true, wineType: true, country: true, vatRate: true,
                 media: {
                     select: { url: true, isPrimary: true }
                 },
@@ -488,6 +489,7 @@ export async function getProductsWithStock() {
                 productName: p.productName,
                 wineType: p.wineType,
                 country: p.country,
+                vatRate: p.vatRate ? Number(p.vatRate) : 10,
                 listPrice: 0,
                 totalStock: p.stockLots.reduce((sum: number, l: any) => sum + Number(l.qtyAvailable), 0),
                 costPrice: p.marginPrice ? Number(p.marginPrice.costPrice) : 0,
@@ -749,6 +751,16 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
 
         const finalAmount = totalAmount * (1 - (input.orderDiscount ?? 0) / 100)
 
+        // Calculate dynamic VAT amount
+        let vatAmount = 0
+        const orderDiscountMultiplier = 1 - (input.orderDiscount ?? 0) / 100
+        for (const l of input.lines) {
+            const lineAmount = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
+            const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
+            const rate = l.vatRate ?? 10
+            vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
+        }
+
         const so = await prisma.salesOrder.create({
             data: {
                 soNo,
@@ -759,6 +771,8 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 shippingAddressId: input.shippingAddressId ?? null,
                 orderDiscount: input.orderDiscount ?? 0,
                 totalAmount: finalAmount,
+                vatRate: 10,
+                vatAmount: Math.round(vatAmount),
                 status: 'DRAFT',
                 legalEntityId: input.legalEntityId,
                 notes: input.notes ?? null,
@@ -771,6 +785,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                             unitPrice: l.unitPrice,
                             lineDiscountPct: l.lineDiscountPct ?? 0,
                             priceSource: l.priceSource ?? null,
+                            vatRate: l.vatRate ?? 10,
                             ...(qc ? { allocationCampaignId: qc.campaignId } : {}),
                         }
                     }),
@@ -870,6 +885,16 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             }
         }
 
+        // Calculate dynamic VAT amount
+        let vatAmount = 0
+        const orderDiscountMultiplier = 1 - (input.orderDiscount ?? 0) / 100
+        for (const l of input.lines) {
+            const lineAmount = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
+            const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
+            const rate = l.vatRate ?? 10
+            vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
+        }
+
         await prisma.$transaction([
             // Delete old lines
             prisma.salesOrderLine.deleteMany({ where: { soId: input.soId } }),
@@ -882,6 +907,8 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     paymentTerm: input.paymentTerm,
                     orderDiscount: input.orderDiscount ?? 0,
                     totalAmount: finalAmount,
+                    vatRate: 10,
+                    vatAmount: Math.round(vatAmount),
                     legalEntityId: input.legalEntityId,
                     shippingAddressId: input.shippingAddressId ?? null,
                     notes: input.notes ?? null,
@@ -896,6 +923,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     unitPrice: l.unitPrice,
                     lineDiscountPct: l.lineDiscountPct ?? 0,
                     priceSource: l.priceSource ?? null,
+                    vatRate: l.vatRate ?? 10,
                 },
             })),
         ])

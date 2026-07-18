@@ -84,8 +84,8 @@ interface Customer {
         creditHold: boolean
     } | null
 }
-interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
-interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null }
+interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number }
+interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number }
 
 const inputStyle = {
     background: '#142433',
@@ -238,6 +238,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
             lineDiscountPct: Number(l.lineDiscountPct ?? 0),
             stock: 0, // will be populated from products list
             priceSource: l.priceSource ?? null,
+            vatRate: l.vatRate ? Number(l.vatRate) : 10,
         })))
 
         setLoadingSO(false)
@@ -347,7 +348,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         setLines(prev => [...prev, {
             productId: p.id, productName: p.productName, skuCode: p.skuCode,
             qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: p.totalStock,
-            priceSource: source,
+            priceSource: source, vatRate: p.vatRate ? Number(p.vatRate) : 10,
         }])
     }
 
@@ -358,7 +359,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                 const p = products.find(p => p.id === value)!
                 const price = priceMap[value]?.price ?? 0
                 const source = priceMap[value]?.source ?? null
-                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, priceSource: source }
+                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, priceSource: source, vatRate: p.vatRate ? Number(p.vatRate) : 10 }
             }
             return { ...l, [field]: value }
         }))
@@ -370,7 +371,12 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         const line = l.qtyOrdered * l.unitPrice
         return sum + line - line * (l.lineDiscountPct / 100)
     }, 0)
-    const finalTotal = subtotal * (1 - orderDiscount / 100)
+    const vatAmount = lines.reduce((sum, l) => {
+        const line = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
+        const lineAfterOrderDiscount = line * (1 - orderDiscount / 100)
+        return sum + lineAfterOrderDiscount * ((l.vatRate ?? 10) / 100)
+    }, 0)
+    const finalTotal = subtotal * (1 - orderDiscount / 100) + vatAmount
 
     const effectiveCreditLimit = selectedCustomer
         ? (selectedCustomer.parentId && Number(selectedCustomer.creditLimit) === 0 && selectedCustomer.parent)
@@ -400,6 +406,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                 qtyOrdered: l.qtyOrdered,
                 unitPrice: l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
+                vatRate: l.vatRate ?? 10,
                 priceSource: l.priceSource || undefined,
             })),
         } as SOUpdateInput).then(res => {
@@ -745,7 +752,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 </span>
                                                             </div>
                                                         )}
-                                                        <div className="grid grid-cols-3 gap-2">
+                                                        <div className="grid grid-cols-4 gap-2">
                                                             <div>
                                                                 <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>SL (Tồn: {l.stock})</p>
                                                                 <input type="number" min={1} value={l.qtyOrdered}
@@ -771,6 +778,16 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                     style={inputStyle}
                                                                 />
                                                             </div>
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>VAT (%)</p>
+                                                                <select value={l.vatRate ?? 10}
+                                                                    onChange={e => updateLine(idx, 'vatRate', Number(e.target.value))}
+                                                                    className="w-full px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                    style={inputStyle}>
+                                                                    <option value={10}>10%</option>
+                                                                    <option value={8}>8%</option>
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                         <div className="flex justify-end pt-1">
                                                             <p className="text-xs font-bold text-[#87CBB9]">
@@ -794,11 +811,17 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                     className="w-16 px-2 py-1 text-xs text-center" style={inputStyle} />
                                 <span className="text-xs" style={{ color: '#4A6A7A' }}>%</span>
                                 <div className="flex-1" />
-                                <div className="text-right">
-                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng cộng</p>
-                                    <p className="text-lg font-bold" style={{ color: '#D4A853' }}>
-                                        {formatVND(finalTotal)}
-                                    </p>
+                                <div className="text-right space-y-1">
+                                    <div className="flex justify-end gap-4 text-xs text-[#4A6A7A]">
+                                        <span>Trước thuế: {formatVND(subtotal * (1 - orderDiscount / 100))}</span>
+                                        <span>VAT: {formatVND(vatAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-end items-center gap-2">
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng thanh toán (Gồm VAT)</p>
+                                        <p className="text-lg font-bold" style={{ color: '#D4A853' }}>
+                                            {formatVND(finalTotal)}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 

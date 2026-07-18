@@ -260,6 +260,7 @@ model Product {
   isAllocationEligible Boolean                @default(false)
   classification       String?
   status               ProductStatus          @default(ACTIVE)
+  vatRate              Decimal                @default(10)
   media                ProductMedia[]
   awards               ProductAward[]
   priceLines           PriceListLine[]
@@ -1441,6 +1442,7 @@ model SalesQuotationLine {
   qtyOrdered      Decimal
   unitPrice       Decimal
   lineDiscountPct Decimal         @default(0)
+  vatRate         Decimal         @default(10)
 
   @@map("sales_quotation_lines")
 }
@@ -1464,6 +1466,8 @@ model SalesOrder {
   paymentTerm       String
   totalAmount       Decimal             @default(0)
   orderDiscount     Decimal             @default(0)
+  vatRate           Decimal?            @default(10)
+  vatAmount         Decimal?            @default(0)
   status            SOStatus            @default(DRAFT)
   notes             String?
   lines             SalesOrderLine[]
@@ -1496,6 +1500,7 @@ model SalesOrderLine {
   unitPrice            Decimal
   priceSource          String?
   lineDiscountPct      Decimal             @default(0)
+  vatRate              Decimal             @default(10)
   vintage              Int?                // Selected vintage year for this order line
   allocationCampaignId String?
   allocationCampaign   AllocationCampaign? @relation(fields: [allocationCampaignId], references: [id])

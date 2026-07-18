@@ -96,6 +96,7 @@ export async function getQuotationDetail(id: string): Promise<{ success: true; d
                             select: {
                                 skuCode: true, productName: true, wineType: true, volumeMl: true,
                                 country: true, abvPercent: true, profile: true, classification: true,
+                                vatRate: true,
                                 producer: { select: { name: true } },
                                 supplier: { select: { name: true } },
                                 appellation: { select: { name: true, region: { select: { name: true } } } },
@@ -118,6 +119,7 @@ export async function getQuotationDetail(id: string): Promise<{ success: true; d
             qtyOrdered: Number(raw.lines[i].qtyOrdered),
             unitPrice: Number(raw.lines[i].unitPrice),
             lineDiscountPct: Number(raw.lines[i].lineDiscountPct),
+            vatRate: Number(raw.lines[i].vatRate),
         }))
         return { success: true, data: plain }
     } catch (err: any) {
@@ -164,7 +166,7 @@ export async function createQuotation(input: {
     customerEmail?: string
     customerPhone?: string
     pdfStyle?: string
-    lines: { productId: string; qtyOrdered: number; unitPrice: number; lineDiscountPct?: number }[]
+    lines: { productId: string; qtyOrdered: number; unitPrice: number; lineDiscountPct?: number; vatRate?: number }[]
 }): Promise<{ success: boolean; id?: string; quotationNo?: string; error?: string }> {
     try {
         const count = await prisma.salesQuotation.count()
@@ -211,6 +213,7 @@ export async function createQuotation(input: {
                         qtyOrdered: l.qtyOrdered,
                         unitPrice: l.unitPrice,
                         lineDiscountPct: l.lineDiscountPct ?? 0,
+                        vatRate: l.vatRate ?? 10,
                     })),
                 },
             },
@@ -242,7 +245,7 @@ export async function updateQuotation(id: string, input: {
     customerEmail?: string
     customerPhone?: string
     pdfStyle?: string
-    lines?: { productId: string; qtyOrdered: number; unitPrice: number; lineDiscountPct?: number }[]
+    lines?: { productId: string; qtyOrdered: number; unitPrice: number; lineDiscountPct?: number; vatRate?: number }[]
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const qt = await prisma.salesQuotation.findUnique({ where: { id } })
@@ -288,6 +291,7 @@ export async function updateQuotation(id: string, input: {
                     qtyOrdered: l.qtyOrdered,
                     unitPrice: l.unitPrice,
                     lineDiscountPct: l.lineDiscountPct ?? 0,
+                    vatRate: l.vatRate ?? 10,
                 })),
             })
         }
@@ -402,6 +406,23 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
         const soCount = await prisma.salesOrder.count()
         const soNo = `SO-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(soCount + 1).padStart(3, '0')}`
 
+        // Calculate dynamic VAT amount
+        let vatAmount = 0
+        const isVatIncluded = qt.vatIncluded ?? false
+        const orderDiscountMultiplier = 1 - Number(qt.orderDiscount) / 100
+
+        for (const l of qt.lines) {
+            const lineAmount = Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100)
+            const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
+            const rate = Number(l.vatRate)
+
+            if (isVatIncluded) {
+                vatAmount += lineAmountAfterOrderDiscount - (lineAmountAfterOrderDiscount / (1 + rate / 100))
+            } else {
+                vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
+            }
+        }
+
         const so = await prisma.salesOrder.create({
             data: {
                 soNo,
@@ -411,6 +432,8 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
                 paymentTerm: qt.paymentTerm,
                 orderDiscount: qt.orderDiscount,
                 totalAmount: qt.totalAmount,
+                vatRate: 10, // Default/average rate
+                vatAmount: Math.round(vatAmount),
                 status: 'DRAFT',
                 legalEntityId,
                 lines: {
@@ -419,6 +442,7 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
                         qtyOrdered: l.qtyOrdered,
                         unitPrice: l.unitPrice,
                         lineDiscountPct: l.lineDiscountPct,
+                        vatRate: l.vatRate,
                     })),
                 },
             },
@@ -520,6 +544,7 @@ export async function duplicateQuotation(quotationId: string): Promise<{ success
                         qtyOrdered: l.qtyOrdered,
                         unitPrice: l.unitPrice,
                         lineDiscountPct: l.lineDiscountPct,
+                        vatRate: l.vatRate,
                     })),
                 },
             },

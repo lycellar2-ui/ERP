@@ -87,6 +87,7 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
                 qty,
                 unitPrice,
                 discountPct: disc,
+                vatRate: Number(l.vatRate),
                 lineTotal,
             }
         }),

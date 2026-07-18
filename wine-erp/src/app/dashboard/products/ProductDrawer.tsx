@@ -101,6 +101,7 @@ interface ProductFormState {
     hsCode?: string
     isAllocationEligible?: boolean
     status?: string
+    vatRate?: number
 }
 
 function formToInput(f: ProductFormState): ProductInput {
@@ -122,6 +123,7 @@ function formToInput(f: ProductFormState): ProductInput {
         classification: f.classification ?? null,
         isAllocationEligible: f.isAllocationEligible ?? false,
         status: (f.status ?? 'ACTIVE') as any,
+        vatRate: f.vatRate ?? 10,
         profile: {
             originDetail: f.originDetail ?? null,
             certification: f.certification ?? null,
@@ -203,6 +205,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 regionId: null,
                 classification: null,
                 status: initialData.status,
+                vatRate: (initialData as any).vatRate ?? 10,
             })
         } else if (!editingId) {
             // New product mode
@@ -212,6 +215,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 packagingType: 'CARTON',
                 bottlesPerCase: 12,
                 volumeMl: 750,
+                vatRate: 10,
             })
         }
     }, [open, editingId, initialData])
@@ -274,6 +278,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 bestSuitedFor: data.profile?.bestSuitedFor ?? null,
                 grapes: data.profile?.grapes ?? null,
                 status: data.status,
+                vatRate: data.vatRate ? Number(data.vatRate) : 10,
             }))
             setLoading(false)
         }).catch(() => {
@@ -447,6 +452,12 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     <option value={6}>6</option>
                                     <option value={12}>12</option>
                                     <option value={24}>24</option>
+                                </Select>
+                            </Field>
+                            <Field label="Thuế suất VAT">
+                                <Select value={form.vatRate ?? 10} onChange={e => set('vatRate', Number(e.target.value))}>
+                                    <option value={10}>10% (Chuẩn)</option>
+                                    <option value={8}>8% (Ưu đãi)</option>
                                 </Select>
                             </Field>
                         </div>

@@ -512,8 +512,16 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                 ) : (
                                     <div className="space-y-2 text-xs">
                                         <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>Tổng giá trị (Trước CK):</span>
+                                            <span style={{ color: '#4A6A7A' }}>Tổng tiền trước thuế (Sau CK):</span>
                                             <span className="font-bold font-mono text-sm" style={{ color: '#E8F1F2' }}>{formatVND(Number(detail.totalAmount))}</span>
+                                        </div>
+                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                            <span style={{ color: '#4A6A7A' }}>Tiền thuế VAT:</span>
+                                            <span className="font-bold font-mono" style={{ color: '#8AAEBB' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
+                                        </div>
+                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                            <span style={{ color: '#4A6A7A' }}>Tổng thanh toán (Có VAT):</span>
+                                            <span className="font-bold font-mono text-sm text-[#87CBB9]">{formatVND(Number(detail.totalAmount) + Number(detail.vatAmount ?? 0))}</span>
                                         </div>
                                         {marginData && canSeeMargin ? (
                                             <>

@@ -267,6 +267,7 @@ export async function getProductById(id: string) {
         storageTempMax: p.storageTempMax ? Number(p.storageTempMax) : null,
         isAllocationEligible: p.isAllocationEligible,
         classification: p.classification,
+        vatRate: p.vatRate ? Number(p.vatRate) : 10,
         profile: p.profile ? {
             originDetail: p.profile.originDetail,
             certification: p.profile.certification,
@@ -362,6 +363,7 @@ const productSchema = z.object({
     classification: z.string().nullable().optional(),
     isAllocationEligible: z.boolean().optional().default(false),
     status: z.enum(['ACTIVE', 'DISCONTINUED', 'ALLOCATION_ONLY']).default('ACTIVE'),
+    vatRate: z.number().default(10),
     profile: z.object({
         originDetail: z.string().nullable().optional(),
         certification: z.string().nullable().optional(),
@@ -403,6 +405,7 @@ export async function createProduct(input: ProductInput) {
                 classification: data.classification ?? null,
                 isAllocationEligible: data.isAllocationEligible ?? false,
                 status: data.status,
+                vatRate: data.vatRate,
                 profile: data.profile ? {
                     create: {
                         originDetail: data.profile.originDetail ?? null,
@@ -454,6 +457,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 classification: true,
                 isAllocationEligible: true,
                 hsCode: true,
+                vatRate: true,
                 profile: { select: { id: true } }
             }
         })
@@ -477,6 +481,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 ...(data.isAllocationEligible !== undefined && { isAllocationEligible: data.isAllocationEligible }),
                 ...(data.hsCode && { hsCode: data.hsCode }),
                 ...(data.status && { status: data.status }),
+                ...(data.vatRate !== undefined && { vatRate: data.vatRate }),
                 ...(data.profile !== undefined && {
                     profile: data.profile ? {
                         upsert: {
@@ -1099,6 +1104,7 @@ export async function getProductEditDetails(id: string) {
                     grapes: p.profile.grapes,
                 } : null,
                 status: p.status,
+                vatRate: p.vatRate ? Number(p.vatRate) : 10,
             },
             media: media.map(m => ({
                 id: m.id,

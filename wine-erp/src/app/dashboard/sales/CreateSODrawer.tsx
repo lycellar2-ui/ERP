@@ -85,8 +85,8 @@ interface Customer {
         creditHold: boolean
     } | null
 }
-interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number }
-interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null }
+interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number }
+interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number }
 
 const inputStyle = {
     background: '#142433',
@@ -320,7 +320,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     }
 
     const addLine = () => {
-        setLines(prev => [...prev, { productId: '', productName: '', skuCode: '', qtyOrdered: 1, unitPrice: 0, lineDiscountPct: 0, stock: 0, priceSource: null }])
+        setLines(prev => [...prev, { productId: '', productName: '', skuCode: '', qtyOrdered: 1, unitPrice: 0, lineDiscountPct: 0, stock: 0, priceSource: null, vatRate: 10 }])
     }
 
     const updateLine = (i: number, field: keyof SOLine, value: any) => {
@@ -337,7 +337,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                     [i]: `[${p.skuCode}] ${p.productName}`
                 }))
 
-                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: autoPrice, priceSource: source }
+                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: autoPrice, priceSource: source, vatRate: p.vatRate ? Number(p.vatRate) : 10 }
             }
             return { ...l, [field]: value }
         }))
@@ -349,7 +349,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         const line = l.qtyOrdered * l.unitPrice
         return sum + line - line * (l.lineDiscountPct / 100)
     }, 0)
-    const finalTotal = subtotal * (1 - orderDiscount / 100)
+    const vatAmount = lines.reduce((sum, l) => {
+        const line = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
+        const lineAfterOrderDiscount = line * (1 - orderDiscount / 100)
+        return sum + lineAfterOrderDiscount * ((l.vatRate ?? 10) / 100)
+    }, 0)
+    const finalTotal = subtotal * (1 - orderDiscount / 100) + vatAmount
 
     const effectiveCreditLimit = selectedCustomer
         ? (selectedCustomer.parentId && Number(selectedCustomer.creditLimit) === 0 && selectedCustomer.parent)
@@ -379,7 +384,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 qtyOrdered: l.qtyOrdered,
                 unitPrice: l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
-                priceSource: l.priceSource || undefined,
+                vatRate: l.vatRate ?? 10,
+                priceSource: l.priceSource || undefined
             })),
             legalEntityId,
             shippingAddressId: shippingAddressId || undefined,
@@ -921,31 +927,41 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="grid grid-cols-3 gap-2">
+                                                        <div className="grid grid-cols-4 gap-2">
                                                             <div>
                                                                 <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Số Lượng</p>
                                                                 <input type="number" min="1" value={line.qtyOrdered}
                                                                     onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
-                                                                    className="w-full px-2.5 py-1.5 text-sm outline-none"
+                                                                    className="w-full px-2 py-1 text-xs outline-none"
                                                                     style={{ ...inputStyle, border: `1px solid ${lowStock ? 'rgba(139,26,46,0.5)' : '#2A4355'}` }}
                                                                 />
-                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ Vượt tồn kho ({line.stock})</p>}
+                                                                {lowStock && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>⚠️ Vượt tồn ({line.stock})</p>}
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá (VND){hasAutoPrice && <span style={{ color: '#5BA88A' }}> ✦</span>}</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
                                                                 <input type="number" min="0" value={line.unitPrice}
                                                                     readOnly
-                                                                    className="w-full px-2.5 py-1.5 text-sm outline-none opacity-70 cursor-not-allowed"
+                                                                    className="w-full px-2 py-1 text-xs outline-none opacity-70 cursor-not-allowed"
                                                                     style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }}
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>CK Dòng (%)</p>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>CK (%)</p>
                                                                 <input type="number" min="0" max="100" value={line.lineDiscountPct}
                                                                     onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
-                                                                    className="w-full px-2.5 py-1.5 text-sm outline-none"
+                                                                    className="w-full px-2 py-1 text-xs outline-none"
                                                                     style={{ ...inputStyle }}
                                                                 />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>VAT (%)</p>
+                                                                <select value={line.vatRate ?? 10}
+                                                                    onChange={e => updateLine(i, 'vatRate', Number(e.target.value))}
+                                                                    className="w-full px-2 py-1 text-xs outline-none"
+                                                                    style={{ ...inputStyle }}>
+                                                                    <option value={10}>10%</option>
+                                                                    <option value={8}>8%</option>
+                                                                </select>
                                                             </div>
                                                         </div>
                                                         <div className="flex justify-end">
@@ -972,8 +988,16 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             style={{ ...inputStyle }}
                                         />
                                     </div>
+                                    <div className="flex justify-between items-center text-xs text-[#8AAEBB] mb-1.5">
+                                        <p>Trước thuế (Sau CK)</p>
+                                        <p className="font-mono">{formatVND(subtotal * (1 - orderDiscount / 100))}</p>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-[#8AAEBB] mb-2.5">
+                                        <p>Thuế VAT</p>
+                                        <p className="font-mono">{formatVND(vatAmount)}</p>
+                                    </div>
                                     <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid #2A4355' }}>
-                                        <p className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>Tổng Cộng</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>Tổng Thanh Toán (Gồm VAT)</p>
                                         <p className="text-xl font-bold" style={{ color: '#87CBB9' }}>
                                             {formatVND(finalTotal)}
                                         </p>

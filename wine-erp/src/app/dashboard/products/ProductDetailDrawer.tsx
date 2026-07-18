@@ -254,6 +254,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 { label: 'Loại thùng đóng gói', value: activeProduct.packagingType === 'OWC' ? 'OWC (Thùng Gỗ)' : 'Carton' },
                                 { label: 'Số chai mỗi thùng', value: `${activeProduct.unitsPerCase} chai` },
                                 { label: 'Phân hạng rượu', value: activeProduct.classification ?? '—' },
+                                { label: 'Thuế suất VAT', value: `${(data as any)?.vatRate ?? (activeProduct as any).vatRate ?? 10}%` },
                             ].map((spec, i) => (
                                 <div key={i} className="flex justify-between py-1.5 border-b border-[#2A4355]/20 last:border-b-0">
                                     <span style={{ color: '#4A6A7A' }}>{spec.label}</span>

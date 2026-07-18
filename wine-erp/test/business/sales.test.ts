@@ -115,6 +115,34 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
             }),
         )
     })
+
+    it('should calculate dynamic line-level VAT correctly', async () => {
+        mockPrisma.allocationCampaign.findMany.mockResolvedValue([])
+        mockPrisma.salesOrder.count.mockResolvedValue(0)
+        mockPrisma.salesOrder.create.mockResolvedValue({ id: 'so-2', soNo: 'SO-02', lines: [] })
+
+        await createSalesOrder({
+            legalEntityId: 'le-1',
+            customerId: 'c-1', salesRepId: 'r-1', channel: 'HORECA',
+            paymentTerm: 'NET30',
+            orderDiscount: 10, // 10% overall discount
+            lines: [
+                { productId: 'p-1', qtyOrdered: 10, unitPrice: 1_000_000, lineDiscountPct: 10, vatRate: 8 }, // net: 9M * 0.9 = 8.1M @ 8% VAT = 648,000
+                { productId: 'p-2', qtyOrdered: 5, unitPrice: 2_000_000, lineDiscountPct: 0, vatRate: 10 }, // net: 10M * 0.9 = 9M @ 10% VAT = 900,000
+            ],
+        })
+
+        // Total pre-tax: 8.1M + 9M = 17.1M
+        // Total VAT: 648K + 900K = 1,548,000
+        expect(mockPrisma.salesOrder.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    totalAmount: 17_100_000,
+                    vatAmount: 1_548_000,
+                }),
+            }),
+        )
+    })
 })
 
 // ═══════════════════════════════════════════════════
