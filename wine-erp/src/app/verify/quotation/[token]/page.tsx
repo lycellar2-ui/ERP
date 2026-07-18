@@ -8,9 +8,10 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
     const { token } = await params
     const qt = await getQuotationByToken(token)
     if (!qt) return { title: 'Báo giá không tồn tại' }
+    const customName = qt.customer.code === 'KH-TEMP' ? (qt.companyName || qt.contactPerson || 'Khách Hàng Mới') : qt.customer.name
     return {
         title: `Báo Giá ${qt.quotationNo} — LY's Cellars`,
-        description: `Báo giá rượu vang cho ${qt.customer.name}`,
+        description: `Báo giá rượu vang cho ${customName}`,
     }
 }
 
@@ -40,7 +41,7 @@ export default async function QuotationPublicPage({ params }: { params: Promise<
         companyName: qt.companyName,
         contactPerson: qt.contactPerson,
         createdAt: qt.createdAt.toISOString(),
-        customerName: qt.customer.name,
+        customerName: qt.customer.code === 'KH-TEMP' ? (qt.companyName || qt.contactPerson || 'Khách Hàng Mới') : qt.customer.name,
         customerCode: qt.customer.code,
         salesRepName: qt.salesRep.name,
         salesRepEmail: qt.salesRep.email,

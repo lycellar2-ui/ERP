@@ -35,7 +35,21 @@ export function QuotationClient({ initialData }: Props) {
     const [createOpen, setCreateOpen] = useState(false)
 
     // Create form state
-    const [formData, setFormData] = useState({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '', showQuantity: false })
+    const [formData, setFormData] = useState({ 
+        customerId: '', 
+        salesRepId: '', 
+        channel: 'HORECA', 
+        paymentTerm: 'NET30', 
+        validUntil: '', 
+        notes: '', 
+        terms: '', 
+        showQuantity: false,
+        companyName: '',
+        contactPerson: '',
+        customerEmail: '',
+        customerPhone: ''
+    })
+    const [isNewCustomer, setIsNewCustomer] = useState(false)
     const [formLines, setFormLines] = useState<{ productId: string; qty: number; price: number; discount: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [sendDrawerOpen, setSendDrawerOpen] = useState<string | null>(null)
@@ -141,6 +155,10 @@ export function QuotationClient({ initialData }: Props) {
             toast.error('Vui lòng điền đầy đủ thông tin')
             return
         }
+        if (formData.customerId === 'TEMP_CUSTOMER' && !formData.companyName && !formData.contactPerson) {
+            toast.error('Vui lòng điền Tên doanh nghiệp hoặc Người liên hệ cho khách hàng mới')
+            return
+        }
         setSaving(true)
         toast.promise(
             createQuotation({
@@ -149,7 +167,21 @@ export function QuotationClient({ initialData }: Props) {
             }).then((res: any) => {
                 if (!res.success) throw new Error(res.error || 'Lỗi tạo báo giá')
                 setCreateOpen(false)
-                setFormData({ customerId: '', salesRepId: '', channel: 'HORECA', paymentTerm: 'NET30', validUntil: '', notes: '', terms: '', showQuantity: false })
+                setIsNewCustomer(false)
+                setFormData({ 
+                    customerId: '', 
+                    salesRepId: '', 
+                    channel: 'HORECA', 
+                    paymentTerm: 'NET30', 
+                    validUntil: '', 
+                    notes: '', 
+                    terms: '', 
+                    showQuantity: false,
+                    companyName: '',
+                    contactPerson: '',
+                    customerEmail: '',
+                    customerPhone: ''
+                })
                 setFormLines([])
                 reload()
                 return res
@@ -451,7 +483,11 @@ export function QuotationClient({ initialData }: Props) {
                                 <div className="grid grid-cols-3 gap-3">
                                     {[
                                         { label: 'Tổng Tiền', value: formatVND(Number(detail.totalAmount)), color: '#87CBB9' },
-                                        { label: 'Khách Hàng', value: detail.customer.name, color: '#E8F1F2' },
+                                        { 
+                                            label: 'Khách Hàng', 
+                                            value: detail.customer.code === 'KH-TEMP' ? (detail.companyName || detail.contactPerson || 'Khách Hàng Mới') : detail.customer.name, 
+                                            color: '#E8F1F2' 
+                                        },
                                         { label: 'Sales Rep', value: detail.salesRep.name, color: '#8AAEBB' },
                                     ].map(k => (
                                         <div key={k.label} className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
@@ -475,6 +511,17 @@ export function QuotationClient({ initialData }: Props) {
                                         </span>
                                     </div>
                                 </div>
+                                {detail.customer.code === 'KH-TEMP' && (
+                                    <div className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                        <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#87CBB9' }}>Thông Tin Khách Hàng Ngoài Hệ Thống</p>
+                                        <div className="space-y-1.5 text-xs text-slate-300">
+                                            {detail.companyName && <p><strong>Doanh nghiệp:</strong> {detail.companyName}</p>}
+                                            {detail.contactPerson && <p><strong>Người liên hệ:</strong> {detail.contactPerson}</p>}
+                                            {detail.customerEmail && <p><strong>Email:</strong> {detail.customerEmail}</p>}
+                                            {detail.customerPhone && <p><strong>Số điện thoại:</strong> {detail.customerPhone}</p>}
+                                        </div>
+                                    </div>
+                                )}
                                 {detail.notes && (
                                     <div className="p-3 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                         <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Ghi Chú</p>
@@ -587,17 +634,90 @@ export function QuotationClient({ initialData }: Props) {
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                             {/* Customer */}
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Khách Hàng</label>
-                                <select value={formData.customerId} onChange={e => setFormData({ ...formData, customerId: e.target.value })}
-                                    className="w-full mt-1 px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}>
-                                    <option value="">Chọn khách hàng...</option>
-                                    {customers.length === 0 ? (
-                                        <option disabled>⏳ Đang tải danh sách khách hàng...</option>
-                                    ) : (
-                                        customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)
-                                    )}
-                                </select>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Khách Hàng</label>
+                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: '#87CBB9' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isNewCustomer} 
+                                            onChange={e => {
+                                                const checked = e.target.checked
+                                                setIsNewCustomer(checked)
+                                                setFormData(f => ({
+                                                    ...f,
+                                                    customerId: checked ? 'TEMP_CUSTOMER' : '',
+                                                    companyName: '',
+                                                    contactPerson: '',
+                                                    customerEmail: '',
+                                                    customerPhone: ''
+                                                }))
+                                            }}
+                                            className="rounded border-[#2A4355] bg-[#142433] text-[#87CBB9] focus:ring-0 focus:ring-offset-0"
+                                        />
+                                        Khách hàng mới
+                                    </label>
+                                </div>
+                                {!isNewCustomer ? (
+                                    <select value={formData.customerId} onChange={e => setFormData({ ...formData, customerId: e.target.value })}
+                                        className="w-full mt-1.5 px-3 py-2.5 text-sm outline-none"
+                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}>
+                                        <option value="">Chọn khách hàng...</option>
+                                        {customers.length === 0 ? (
+                                            <option disabled>⏳ Đang tải danh sách khách hàng...</option>
+                                        ) : (
+                                            customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)
+                                        )}
+                                    </select>
+                                ) : (
+                                    <div className="mt-2.5 p-3 rounded-md space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <div>
+                                            <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Tên Doanh Nghiệp / Đơn Vị</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="VD: Nhà hàng Vườn Bia Hà Nội"
+                                                value={formData.companyName} 
+                                                onChange={e => setFormData({ ...formData, companyName: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs outline-none rounded-md"
+                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Người Đại Diện / Liên Hệ</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="VD: Anh Huy"
+                                                value={formData.contactPerson} 
+                                                onChange={e => setFormData({ ...formData, contactPerson: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs outline-none rounded-md"
+                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Email</label>
+                                                <input 
+                                                    type="email" 
+                                                    placeholder="VD: huy@example.com"
+                                                    value={formData.customerEmail} 
+                                                    onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
+                                                    className="w-full px-3 py-2 text-xs outline-none rounded-md"
+                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Số điện thoại</label>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="VD: 0912345678"
+                                                    value={formData.customerPhone} 
+                                                    onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
+                                                    className="w-full px-3 py-2 text-xs outline-none rounded-md"
+                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>

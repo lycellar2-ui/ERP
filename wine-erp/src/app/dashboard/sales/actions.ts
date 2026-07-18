@@ -459,7 +459,7 @@ export async function getCustomersForSO() {
         !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
 
     if (isSalesRepOnly) {
-        return allCustomers.filter(c => c.salesRepId === user.id)
+        return allCustomers.filter(c => c.salesRepId === user.id || c.salesRepId === null)
     }
 
     return allCustomers

@@ -41,6 +41,8 @@ export async function getQuotations(filters: { search?: string; status?: string 
             where.OR = [
                 { quotationNo: { contains: filters.search, mode: 'insensitive' } },
                 { customer: { name: { contains: filters.search, mode: 'insensitive' } } },
+                { companyName: { contains: filters.search, mode: 'insensitive' } },
+                { contactPerson: { contains: filters.search, mode: 'insensitive' } },
             ]
         }
 
@@ -57,7 +59,7 @@ export async function getQuotations(filters: { search?: string; status?: string 
         return rows.map(r => ({
             id: r.id,
             quotationNo: r.quotationNo,
-            customerName: r.customer.name,
+            customerName: r.customer.code === 'KH-TEMP' ? (r.companyName || r.contactPerson || 'Khách Hàng Mới') : r.customer.name,
             customerCode: r.customer.code,
             channel: r.channel,
             salesRepName: r.salesRep.name,
@@ -125,6 +127,26 @@ export async function getQuotationDetail(id: string): Promise<{ success: true; d
 }
 
 // ── Create quotation ────────────────────────────
+// ─── Helper to resolve placeholder customer ───────
+async function getOrCreateTempCustomer() {
+    let temp = await prisma.customer.findUnique({
+        where: { code: 'KH-TEMP' }
+    })
+    if (!temp) {
+        temp = await prisma.customer.create({
+            data: {
+                id: 'temp-customer-id',
+                code: 'KH-TEMP',
+                name: 'Khách Hàng Mới (Chưa lưu hệ thống)',
+                customerType: 'INDIVIDUAL',
+                status: 'ACTIVE',
+                entityType: 'RESTAURANT'
+            }
+        })
+    }
+    return temp
+}
+
 export async function createQuotation(input: {
     customerId: string
     salesRepId: string
@@ -155,10 +177,16 @@ export async function createQuotation(input: {
 
         const finalAmount = totalAmount * (1 - (input.orderDiscount ?? 0) / 100)
 
+        let finalCustomerId = input.customerId
+        if (input.customerId === 'TEMP_CUSTOMER') {
+            const tempCust = await getOrCreateTempCustomer()
+            finalCustomerId = tempCust.id
+        }
+
         const qt = await prisma.salesQuotation.create({
             data: {
                 quotationNo,
-                customerId: input.customerId,
+                customerId: finalCustomerId,
                 salesRepId: input.salesRepId,
                 channel: input.channel as any,
                 paymentTerm: input.paymentTerm,
@@ -222,7 +250,14 @@ export async function updateQuotation(id: string, input: {
         if (qt.status !== 'DRAFT') return { success: false, error: 'Chỉ có thể sửa báo giá ở trạng thái Nháp' }
 
         const updateData: any = {}
-        if (input.customerId) updateData.customerId = input.customerId
+        if (input.customerId) {
+            let finalCustomerId = input.customerId
+            if (input.customerId === 'TEMP_CUSTOMER') {
+                const tempCust = await getOrCreateTempCustomer()
+                finalCustomerId = tempCust.id
+            }
+            updateData.customerId = finalCustomerId
+        }
         if (input.channel) updateData.channel = input.channel
         if (input.paymentTerm) updateData.paymentTerm = input.paymentTerm
         if (input.validUntil) updateData.validUntil = new Date(input.validUntil)
