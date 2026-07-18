@@ -509,7 +509,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
             <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
-                style={{ background: '#0D1B25', borderLeft: '1px solid #2A4355' }}>
+                style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                 <div>
                     <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #142433' }}>
                         <div className="flex items-center gap-2">

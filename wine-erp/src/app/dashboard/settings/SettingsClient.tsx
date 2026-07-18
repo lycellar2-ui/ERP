@@ -115,7 +115,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
-            <div className="w-full max-w-md h-full overflow-y-auto p-6" style={{ background: '#0D1B25' }}>
+            <div className="w-full max-w-md h-full overflow-y-auto p-6" style={{ background: '#0D1E2B' }}>
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Người Dùng</h3>
                     <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
@@ -209,7 +209,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6" style={{ background: '#0D1B25' }}>
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6" style={{ background: '#0D1E2B' }}>
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Vai Trò</h3>
                     <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
@@ -331,7 +331,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6" style={{ background: '#0D1B25' }}>
+            <div className="w-full max-w-lg h-full overflow-y-auto p-6" style={{ background: '#0D1E2B' }}>
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
@@ -486,7 +486,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl transition-all duration-300" style={{ background: '#0D1B25', borderLeft: '1px solid #2A4355' }}>
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl transition-all duration-300" style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                 <div>
                     <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #142433' }}>
                         <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
@@ -1237,7 +1237,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
     if (!open || !entity) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between" style={{ background: '#0D1B25', borderLeft: '1px solid #2A4355' }}>
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between" style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                 <div>
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Cấu Hình Pháp Nhân</h3>
