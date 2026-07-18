@@ -1183,4 +1183,28 @@ useEffect(() => {
 > ⚠️ **RULE 46: Tránh sử dụng `@media print` ẩn các thẻ layout gốc (như `main`, `body`, hoặc các block bọc ngoài) để hiển thị phần tử in con.**
 > Việc này dễ gây ra lỗi ẩn toàn bộ cây DOM con. Thay vào đó, hãy sử dụng giải pháp mở Popup in (`window.open`) hoặc một route chuyên dụng để đảm bảo bản in độc lập hoàn toàn khỏi CSS layout gốc và hiển thị chính xác.
 
+---
+
+## BUG-025: Không Hiển Thị Hình Ảnh Sản Phẩm Trong Popup Chọn Nhanh Của Báo Giá & Đơn Hàng
+
+**Ngày:** 2026-07-18
+**Severity:** 🟡 Medium — Ảnh sản phẩm hiển thị icon rượu vang placeholder thay vì ảnh thật trong popup chọn nhanh
+
+### Triệu chứng
+- Khi mở popup "Chọn sản phẩm nhanh" trong tab Tạo báo giá mới (`QuotationClient.tsx`), tất cả sản phẩm đều chỉ hiển thị icon ly rượu vang `🍷` trên nền tối thay vì hiển thị hình ảnh thực tế của chai rượu, mặc dù trong master data sản phẩm đã được cấu hình ảnh đầy đủ.
+
+### Nguyên nhân gốc rễ
+- Hàm Server Action `getProductsWithStock()` trong [actions.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/sales/actions.ts) được dùng chung để tải danh mục sản phẩm cho cả Đơn bán hàng và Báo giá.
+- Trong hàm này, câu truy vấn Prisma `prisma.product.findMany` không thực hiện chọn (select) trường `primaryImageUrl` từ database. Đồng thời, trong kết quả map trả về client, giá trị trường `primaryImageUrl` bị gán cứng thành `null`: `primaryImageUrl: null`.
+
+### Cách fix
+- Cập nhật hàm `getProductsWithStock()` để thêm `primaryImageUrl: true` vào khối lệnh `select` của Prisma.
+- Trong hàm map kết quả, thay thế giá trị gán cứng `primaryImageUrl: null` bằng `primaryImageUrl: p.primaryImageUrl`.
+
+### Bài học
+
+> ⚠️ **RULE 47: Luôn kiểm tra các hàm chia sẻ dữ liệu chung (shared data actions) khi tích hợp UI để đảm bảo không bị thiếu thuộc tính dữ liệu cần thiết.**
+> Hạn chế việc gán cứng giá trị `null` hoặc `N/A` cho các trường dữ liệu quan trọng như URL hình ảnh, ID định danh nếu database đã lưu trữ sẵn các thông tin này.
+
+
 
