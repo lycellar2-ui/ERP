@@ -3,7 +3,7 @@
 export const CATEGORY_LABELS: Record<string, string> = {
     BUDGET_REQUEST: 'Xin Ngân Sách',
     CAPITAL_EXPENDITURE: 'Mua Sắm TSCĐ',
-    PRICE_ADJUSTMENT: 'Điều Chỉnh Giá',
+    PRICE_ADJUSTMENT: 'Tờ trình cơ chế giá',
     NEW_SUPPLIER: 'NCC Mới',
     NEW_PRODUCT: 'Sản Phẩm Mới',
     POLICY_CHANGE: 'Thay Đổi Quy Trình',

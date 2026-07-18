@@ -362,7 +362,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
                     {/* Title */}
                     <div className="text-center mb-8">
-                        <h2 className="text-lg font-bold uppercase tracking-wide">TỜ TRÌNH PHÊ DUYỆT GIÁ ĐẶC BIỆT</h2>
+                        <h2 className="text-lg font-bold uppercase tracking-wide">TỜ TRÌNH CƠ CHẾ GIÁ</h2>
                         <p className="text-sm italic mt-1">(V/v: {detail.title})</p>
                     </div>
 
@@ -945,7 +945,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
                         {/* Special pricing details */}
                         {detail.category === 'PRICE_ADJUSTMENT' && (
                             <div className="p-4 rounded-md space-y-3" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-semibold uppercase" style={{ color: '#87CBB9' }}>Thông Tin Áp Dụng Giá Đặc Biệt</p>
+                                <p className="text-xs font-semibold uppercase" style={{ color: '#87CBB9' }}>Thông Tin Áp Dụng Cơ Chế Giá</p>
                                 <div className="grid grid-cols-2 gap-3 text-xs">
                                     <div className="p-2.5 rounded" style={{ background: '#142433' }}>
                                         <p style={{ color: '#4A6A7A' }}>Khách hàng áp dụng</p>
