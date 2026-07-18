@@ -215,6 +215,25 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
         }).filter(group => group.items.length > 0)
     }, [currentUser])
 
+    const bestMatchHref = useMemo(() => {
+        let best = ''
+        let maxLen = 0
+        for (const group of filteredGroups) {
+            for (const item of group.items) {
+                if (pathname === item.href) {
+                    return item.href
+                }
+                if (item.href !== '/dashboard' && pathname.startsWith(item.href + '/')) {
+                    if (item.href.length > maxLen) {
+                        best = item.href
+                        maxLen = item.href.length
+                    }
+                }
+            }
+        }
+        return best
+    }, [pathname, filteredGroups])
+
     const handleLogout = useCallback(async () => {
         setIsLoggingOut(true)
         try {
@@ -286,8 +305,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                             </p>
                         )}
                         {group.items.map((item) => {
-                            const isActive = pathname === item.href ||
-                                (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                            const isActive = item.href === bestMatchHref
                             const Icon = item.icon
 
                             return (
