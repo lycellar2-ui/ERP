@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react'
 import {
     FileText, Plus, X, Search, Send, CheckCircle2, XCircle, RotateCcw,
     Clock, AlertCircle, Loader2, MessageSquare, Paperclip, ChevronDown,
-    Filter, Eye, ArrowRight, ClipboardCheck,
+    Filter, Eye, ArrowRight, ClipboardCheck, Printer,
 } from 'lucide-react'
 import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
@@ -12,6 +12,8 @@ import {
 } from './actions'
 import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS } from './constants'
 import { formatVND } from '@/lib/utils'
+import { useQuery } from '@tanstack/react-query'
+import { getCustomersForSO, getProductsWithStock } from '../sales/actions'
 
 function formatCompactVND(amount: number): string {
     if (amount >= 1_000_000_000) {
@@ -337,6 +339,183 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     onRefresh={async () => { await refreshList(); await openDetail(detailId) }}
                 />
             )}
+
+            {/* Hidden Print Area */}
+            {detail && (
+                <div id="proposal-print-area" className="hidden print:block p-8 bg-white text-black font-sans leading-relaxed" style={{ color: '#000', backgroundColor: '#fff' }}>
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="text-center font-bold">
+                            <p className="text-sm uppercase tracking-wide">LY'S CELLARS</p>
+                            <p className="text-xs font-mono mt-1">Số: {detail.proposalNo}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-bold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                            <p className="text-xs font-semibold mt-1">Độc lập - Tự do - Hạnh phúc</p>
+                            <div className="w-32 h-[1px] bg-black mx-auto mt-1" />
+                        </div>
+                    </div>
+
+                    <div className="text-right text-xs italic mb-6">
+                        Hà Nội, ngày {new Date(detail.createdAt).getDate()} tháng {new Date(detail.createdAt).getMonth() + 1} năm {new Date(detail.createdAt).getFullYear()}
+                    </div>
+
+                    {/* Title */}
+                    <div className="text-center mb-8">
+                        <h2 className="text-lg font-bold uppercase tracking-wide">TỜ TRÌNH PHÊ DUYỆT GIÁ ĐẶC BIỆT</h2>
+                        <p className="text-sm italic mt-1">(V/v: {detail.title})</p>
+                    </div>
+
+                    {/* Recipient */}
+                    <div className="mb-6 space-y-1">
+                        <p className="font-bold">Kính gửi:</p>
+                        <p className="pl-6">- Trưởng bộ phận Bán hàng</p>
+                        <p className="pl-6">- Kế toán trưởng</p>
+                        <p className="pl-6">- Tổng Giám đốc (CEO)</p>
+                    </div>
+
+                    {/* Submitter */}
+                    <div className="mb-6 space-y-2 text-sm">
+                        <p><strong>Người trình:</strong> {detail.creator?.name} ({detail.creator?.email})</p>
+                        <p><strong>Bộ phận:</strong> {detail.department?.name || 'Kinh doanh'}</p>
+                    </div>
+
+                    {/* Proposal Body */}
+                    <div className="space-y-4 text-sm mb-8">
+                        <div>
+                            <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">I. CHI TIẾT ĐỀ XUẤT GIÁ</h3>
+                            <div className="pl-4 space-y-2">
+                                <p><strong>Khách hàng áp dụng:</strong> {detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
+                                <p><strong>Phạm vi áp dụng:</strong> {
+                                    detail.scope === 'ENTIRE_PORTFOLIO' ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
+                                    detail.scope === 'SPECIFIC_PRODUCTS' ? 'Áp dụng cho một số sản phẩm cụ thể' :
+                                    detail.scope === 'MIXED' ? 'Kết hợp chiết khấu danh mục và giá riêng cho một số sản phẩm' : 'N/A'
+                                }</p>
+                                
+                                {detail.discountPct !== null && detail.discountPct !== undefined && (
+                                    <p><strong>Mức chiết khấu toàn danh mục:</strong> <span className="font-bold text-lg">{detail.discountPct}%</span></p>
+                                )}
+                            </div>
+                        </div>
+
+                        {detail.priceItems && detail.priceItems.length > 0 && (
+                            <div>
+                                <h4 className="font-bold mb-2">Danh sách sản phẩm áp dụng giá riêng:</h4>
+                                <table className="w-full border-collapse border border-black text-xs text-left">
+                                    <thead>
+                                        <tr className="bg-gray-100">
+                                            <th className="border border-black p-2 text-center w-10">STT</th>
+                                            <th className="border border-black p-2">Mã sản phẩm</th>
+                                            <th className="border border-black p-2">Tên sản phẩm</th>
+                                            <th className="border border-black p-2 text-right">Giá gốc (Wholesale)</th>
+                                            <th className="border border-black p-2 text-right">Giá đề xuất đặc biệt</th>
+                                            <th className="border border-black p-2 text-center font-bold">Chênh lệch (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {detail.priceItems.map((item: any, i: number) => {
+                                            const originalPrice = item.product?.wholesalePrice || 0
+                                            const diff = originalPrice > 0 
+                                                ? ((item.proposedPrice - originalPrice) / originalPrice) * 100 
+                                                : 0
+                                            return (
+                                                <tr key={item.id}>
+                                                    <td className="border border-black p-2 text-center">{i + 1}</td>
+                                                    <td className="border border-black p-2 font-mono">{item.product?.skuCode}</td>
+                                                    <td className="border border-black p-2">{item.product?.productName}</td>
+                                                    <td className="border border-black p-2 text-right">{formatVND(originalPrice)}</td>
+                                                    <td className="border border-black p-2 text-right font-bold">{formatVND(item.proposedPrice)}</td>
+                                                    <td className="border border-black p-2 text-center font-bold">
+                                                        {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        <div>
+                            <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">II. NỘI DUNG TỜ TRÌNH</h3>
+                            <p className="whitespace-pre-wrap pl-4 leading-relaxed">{detail.content}</p>
+                        </div>
+
+                        {detail.justification && (
+                            <div>
+                                <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">III. LÝ DO & CĂN CỨ ĐỀ XUẤT</h3>
+                                <p className="whitespace-pre-wrap pl-4 leading-relaxed">{detail.justification}</p>
+                            </div>
+                        )}
+
+                        {detail.expectedOutcome && (
+                            <div>
+                                <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">IV. KẾT QUẢ KỲ VỌNG</h3>
+                                <p className="whitespace-pre-wrap pl-4 leading-relaxed">{detail.expectedOutcome}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Signature Blocks */}
+                    <div className="mt-16 grid grid-cols-4 gap-4 text-center text-xs">
+                        <div>
+                            <p className="font-bold uppercase">NGƯỜI TRÌNH DUYỆT</p>
+                            <p className="italic text-gray-500 mt-0.5">(Ký, ghi rõ họ tên)</p>
+                            <div className="h-20" />
+                            <p className="font-bold">{detail.creator?.name}</p>
+                        </div>
+                        <div>
+                            <p className="font-bold uppercase">TRƯỞNG BỘ PHẬN</p>
+                            <p className="italic text-gray-500 mt-0.5">(Ý kiến & Ký tên)</p>
+                            <div className="h-20" />
+                            <p className="font-bold text-gray-300">...........................</p>
+                        </div>
+                        <div>
+                            <p className="font-bold uppercase">KẾ TOÁN TRƯỞNG</p>
+                            <p className="italic text-gray-500 mt-0.5">(Ý kiến & Ký tên)</p>
+                            <div className="h-20" />
+                            <p className="font-bold text-gray-300">...........................</p>
+                        </div>
+                        <div>
+                            <p className="font-bold uppercase">TỔNG GIÁM ĐỐC</p>
+                            <p className="italic text-gray-500 mt-0.5">(Phê duyệt & Ký tên)</p>
+                            <div className="h-20" />
+                            <p className="font-bold text-gray-300">...........................</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                    body {
+                        background-color: #ffffff !important;
+                        color: #000000 !important;
+                    }
+                    div[role="dialog"],
+                    .fixed,
+                    header,
+                    aside,
+                    main,
+                    nav,
+                    button,
+                    #proposal-print-area ~ * {
+                        display: none !important;
+                    }
+                    #proposal-print-area {
+                        display: block !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        width: 100% !important;
+                        z-index: 9999999 !important;
+                        color: #000000 !important;
+                        background: #ffffff !important;
+                    }
+                }
+            `}} />
         </div>
     )
 }
@@ -347,6 +526,18 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     userId: string
     onCreated: () => void
 }) {
+    const { data: refData } = useQuery({
+        queryKey: ['proposal_reference_data'],
+        queryFn: async () => {
+            const [c, p] = await Promise.all([getCustomersForSO(), getProductsWithStock()])
+            return { customers: c, products: p }
+        },
+        staleTime: 5 * 60_000,
+    })
+
+    const customers = refData?.customers ?? []
+    const products = refData?.products ?? []
+
     const [form, setForm] = useState({
         category: 'BUDGET_REQUEST',
         priority: 'NORMAL',
@@ -356,15 +547,36 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         expectedOutcome: '',
         estimatedAmount: '',
         deadline: '',
+        customerId: '',
+        scope: 'ENTIRE_PORTFOLIO',
+        discountPct: '',
     })
+    const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number }[]>([])
     const [saving, setSaving] = useState(false)
 
     const handleSave = async () => {
         if (!form.title || !form.content) return alert('Vui lòng nhập tiêu đề và nội dung')
+        if (form.category === 'PRICE_ADJUSTMENT') {
+            if (!form.customerId) return alert('Vui lòng chọn khách hàng áp dụng')
+            if ((form.scope === 'ENTIRE_PORTFOLIO' || form.scope === 'MIXED') && !form.discountPct) {
+                return alert('Vui lòng nhập % chiết khấu toàn danh mục')
+            }
+            if ((form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && priceLines.length === 0) {
+                return alert('Vui lòng thêm sản phẩm đề xuất giá')
+            }
+            if (priceLines.some(line => !line.productId)) {
+                return alert('Vui lòng chọn đầy đủ sản phẩm cho các dòng đề xuất')
+            }
+        }
+
         setSaving(true)
         const result = await createProposal({
             ...form,
             estimatedAmount: form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined,
+            discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
+            priceItems: form.category === 'PRICE_ADJUSTMENT' && (form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') 
+                ? priceLines 
+                : undefined,
             createdBy: userId,
         })
         if (result.success) onCreated()
@@ -394,6 +606,127 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             ))}
                         </select>
                     </div>
+
+                    {/* Price adjustment custom fields */}
+                    {form.category === 'PRICE_ADJUSTMENT' && (
+                        <div className="space-y-4 p-4 rounded-md border border-[#2A4355] bg-[#1B2E3D]">
+                            <div>
+                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Khách hàng áp dụng *</label>
+                                <select 
+                                    value={form.customerId} 
+                                    onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))} 
+                                    style={{ ...inputStyle, background: '#142433' }}
+                                >
+                                    <option value="">Chọn khách hàng...</option>
+                                    {customers.map((c: any) => (
+                                        <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Phạm vi áp dụng *</label>
+                                <select 
+                                    value={form.scope} 
+                                    onChange={e => setForm(f => ({ ...f, scope: e.target.value }))} 
+                                    style={{ ...inputStyle, background: '#142433' }}
+                                >
+                                    <option value="ENTIRE_PORTFOLIO">Toàn bộ danh mục (% chiết khấu)</option>
+                                    <option value="SPECIFIC_PRODUCTS">Một số sản phẩm cụ thể (gõ giá riêng)</option>
+                                    <option value="MIXED">Kết hợp cả hai (chiết khấu danh mục + giá riêng một số chai)</option>
+                                </select>
+                            </div>
+
+                            {(form.scope === 'ENTIRE_PORTFOLIO' || form.scope === 'MIXED') && (
+                                <div>
+                                    <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>% Chiết khấu toàn danh mục *</label>
+                                    <input 
+                                        type="number" 
+                                        placeholder="VD: 15" 
+                                        value={form.discountPct} 
+                                        onChange={e => setForm(f => ({ ...f, discountPct: e.target.value }))} 
+                                        style={{ ...inputStyle, background: '#142433' }} 
+                                    />
+                                </div>
+                            )}
+
+                            {(form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold uppercase block" style={{ color: '#8AAEBB' }}>Đề xuất giá theo chai *</label>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0 }])}
+                                            className="text-xs flex items-center gap-1 text-[#87CBB9] hover:underline"
+                                        >
+                                            <Plus size={12} /> Thêm dòng
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                                        {priceLines.map((line, idx) => {
+                                            const selectedProd = products.find(p => p.id === line.productId)
+                                            const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
+                                            
+                                            return (
+                                                <div key={idx} className="flex gap-2 items-end p-2 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                    <div className="flex-1 min-w-0">
+                                                        <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Sản phẩm</label>
+                                                        <select 
+                                                            value={line.productId} 
+                                                            onChange={e => {
+                                                                const copy = [...priceLines]
+                                                                copy[idx].productId = e.target.value
+                                                                const found = products.find(p => p.id === e.target.value)
+                                                                copy[idx].proposedPrice = found ? found.wholesalePrice : 0
+                                                                setPriceLines(copy)
+                                                            }}
+                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D' }}
+                                                        >
+                                                            <option value="">Chọn sản phẩm...</option>
+                                                            {products.map(p => (
+                                                                <option key={p.id} value={p.id}>{p.productName} ({p.skuCode})</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div className="w-24">
+                                                        <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Giá đề xuất</label>
+                                                        <input 
+                                                            type="number"
+                                                            value={line.proposedPrice || ''}
+                                                            onChange={e => {
+                                                                const copy = [...priceLines]
+                                                                copy[idx].proposedPrice = parseFloat(e.target.value) || 0
+                                                                setPriceLines(copy)
+                                                            }}
+                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D' }}
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[70px]">
+                                                        <span className="text-[9px] block text-gray-500">Gốc</span>
+                                                        <span className="text-[11px] block font-mono font-semibold" style={{ color: '#E8F1F2' }}>{formatVND(wholesale)}</span>
+                                                    </div>
+
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
+                                                        className="p-1 rounded text-red-400 hover:bg-red-500/10 mb-0.5"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            )
+                                        })}
+                                        {priceLines.length === 0 && (
+                                            <p className="text-center text-xs py-3 text-gray-500">Bấm nút "Thêm dòng" để chọn chai đề xuất.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Priority */}
                     <div>
@@ -528,7 +861,18 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
                         <ClipboardCheck size={18} className="inline mr-2" style={{ color: '#87CBB9' }} />
                         Chi Tiết Tờ Trình
                     </h3>
-                    <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    <div className="flex items-center gap-3">
+                        {detail && detail.category === 'PRICE_ADJUSTMENT' && (
+                            <button 
+                                onClick={() => window.print()}
+                                className="px-2.5 py-1.5 text-xs font-semibold rounded flex items-center gap-1 transition-all"
+                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                            >
+                                <Printer size={13} /> In Tờ Trình
+                            </button>
+                        )}
+                        <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    </div>
                 </div>
 
                 {loading || !detail ? (
@@ -597,6 +941,65 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
                                 })}
                             </div>
                         </div>
+
+                        {/* Special pricing details */}
+                        {detail.category === 'PRICE_ADJUSTMENT' && (
+                            <div className="p-4 rounded-md space-y-3" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <p className="text-xs font-semibold uppercase" style={{ color: '#87CBB9' }}>Thông Tin Áp Dụng Giá Đặc Biệt</p>
+                                <div className="grid grid-cols-2 gap-3 text-xs">
+                                    <div className="p-2.5 rounded" style={{ background: '#142433' }}>
+                                        <p style={{ color: '#4A6A7A' }}>Khách hàng áp dụng</p>
+                                        <p className="font-bold mt-0.5" style={{ color: '#E8F1F2' }}>{detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
+                                    </div>
+                                    <div className="p-2.5 rounded" style={{ background: '#142433' }}>
+                                        <p style={{ color: '#4A6A7A' }}>Phạm vi áp dụng</p>
+                                        <p className="font-bold mt-0.5" style={{ color: '#E8F1F2' }}>
+                                            {detail.scope === 'ENTIRE_PORTFOLIO' ? 'Toàn danh mục' : 
+                                             detail.scope === 'SPECIFIC_PRODUCTS' ? 'Một số sản phẩm' : 
+                                             detail.scope === 'MIXED' ? 'Kết hợp' : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                {detail.discountPct !== null && detail.discountPct !== undefined && (
+                                    <div className="p-2.5 rounded" style={{ background: '#142433' }}>
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Chiết khấu toàn danh mục</p>
+                                        <p className="text-lg font-bold" style={{ color: '#D4A853' }}>{detail.discountPct}%</p>
+                                    </div>
+                                )}
+
+                                {detail.priceItems && detail.priceItems.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Danh sách sản phẩm đề xuất giá:</p>
+                                        <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                                            {detail.priceItems.map((item: any) => {
+                                                const originalPrice = item.product?.wholesalePrice || 0
+                                                const diff = originalPrice > 0 
+                                                    ? ((item.proposedPrice - originalPrice) / originalPrice) * 100 
+                                                    : 0
+                                                return (
+                                                    <div key={item.id} className="flex justify-between items-center p-2 rounded text-xs" style={{ background: '#142433' }}>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="font-medium truncate" style={{ color: '#E8F1F2' }}>{item.product?.productName}</p>
+                                                            <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{item.product?.skuCode}</p>
+                                                        </div>
+                                                        <div className="text-right pl-3 flex items-center gap-2">
+                                                            <div>
+                                                                <p className="font-bold" style={{ color: '#87CBB9' }}>{formatVND(item.proposedPrice)}</p>
+                                                                <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>Gốc: {formatVND(originalPrice)}</p>
+                                                            </div>
+                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diff < 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                                                                {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Content sections */}
                         <div className="space-y-3">

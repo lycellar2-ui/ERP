@@ -58,6 +58,7 @@ export async function getProposals(filters?: {
             include: {
                 creator: { select: { name: true, email: true } },
                 department: { select: { name: true } },
+                customer: { select: { name: true } },
                 _count: { select: { attachments: true, comments: true } },
             },
             orderBy: [
@@ -79,6 +80,9 @@ export async function getProposals(filters?: {
             currentLevel: p.currentLevel,
             creatorName: p.creator.name ?? p.creator.email,
             departmentName: p.department?.name ?? null,
+            customerName: p.customer?.name ?? null,
+            scope: p.scope,
+            discountPct: p.discountPct ? Number(p.discountPct) : null,
             attachmentCount: p._count.attachments,
             commentCount: p._count.comments,
             submittedAt: p.submittedAt,
@@ -95,6 +99,12 @@ export async function getProposalDetail(id: string) {
         include: {
             creator: { select: { id: true, name: true, email: true } },
             department: { select: { name: true } },
+            customer: { select: { id: true, name: true, code: true } },
+            priceItems: {
+                include: {
+                    product: { select: { id: true, skuCode: true, productName: true, country: true, marginPrice: { select: { wholesalePrice: true } } } }
+                }
+            },
             attachments: { orderBy: { uploadedAt: 'desc' } },
             comments: {
                 orderBy: { createdAt: 'asc' },
@@ -111,6 +121,15 @@ export async function getProposalDetail(id: string) {
     return {
         ...p,
         estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+        discountPct: p.discountPct ? Number(p.discountPct) : null,
+        priceItems: p.priceItems?.map((item: any) => ({
+            ...item,
+            proposedPrice: Number(item.proposedPrice),
+            product: {
+                ...item.product,
+                wholesalePrice: item.product.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0
+            }
+        })) || [],
         requiredLevels: CATEGORY_ROUTING[p.category] ?? [1, 3],
     }
 }
@@ -128,6 +147,10 @@ export async function createProposal(input: {
     deadline?: string
     createdBy: string
     departmentId?: string
+    customerId?: string
+    scope?: string
+    discountPct?: number
+    priceItems?: { productId: string; proposedPrice: number }[]
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
         const proposalNo = await generateProposalNo()
@@ -147,6 +170,17 @@ export async function createProposal(input: {
                 departmentId: input.departmentId ?? null,
                 status: 'DRAFT',
                 currentLevel: 0,
+                customerId: input.customerId ?? null,
+                scope: input.scope ?? null,
+                discountPct: input.discountPct ?? null,
+                priceItems: input.priceItems && input.priceItems.length > 0 ? {
+                    createMany: {
+                        data: input.priceItems.map(item => ({
+                            productId: item.productId,
+                            proposedPrice: item.proposedPrice
+                        }))
+                    }
+                } : undefined
             },
         })
 
@@ -168,6 +202,10 @@ export async function updateProposal(id: string, input: {
     category?: string
     priority?: string
     deadline?: string
+    customerId?: string
+    scope?: string
+    discountPct?: number
+    priceItems?: { productId: string; proposedPrice: number }[]
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const existing = await prisma.proposal.findUnique({ where: { id }, select: { status: true } })
@@ -176,18 +214,40 @@ export async function updateProposal(id: string, input: {
             return { success: false, error: 'Chỉ có thể sửa tờ trình ở trạng thái Nháp hoặc Trả lại' }
         }
 
-        await prisma.proposal.update({
-            where: { id },
-            data: {
-                ...(input.title && { title: input.title }),
-                ...(input.content && { content: input.content }),
-                ...(input.justification !== undefined && { justification: input.justification }),
-                ...(input.expectedOutcome !== undefined && { expectedOutcome: input.expectedOutcome }),
-                ...(input.estimatedAmount !== undefined && { estimatedAmount: input.estimatedAmount }),
-                ...(input.category && { category: input.category as any }),
-                ...(input.priority && { priority: input.priority as any }),
-                ...(input.deadline && { deadline: new Date(input.deadline) }),
-            },
+        await prisma.$transaction(async (tx) => {
+            await tx.proposal.update({
+                where: { id },
+                data: {
+                    ...(input.title && { title: input.title }),
+                    ...(input.content && { content: input.content }),
+                    ...(input.justification !== undefined && { justification: input.justification }),
+                    ...(input.expectedOutcome !== undefined && { expectedOutcome: input.expectedOutcome }),
+                    ...(input.estimatedAmount !== undefined && { estimatedAmount: input.estimatedAmount }),
+                    ...(input.category && { category: input.category as any }),
+                    ...(input.priority && { priority: input.priority as any }),
+                    ...(input.deadline && { deadline: new Date(input.deadline) }),
+                    ...(input.customerId !== undefined && { customerId: input.customerId }),
+                    ...(input.scope !== undefined && { scope: input.scope }),
+                    ...(input.discountPct !== undefined && { discountPct: input.discountPct }),
+                },
+            })
+
+            if (input.priceItems !== undefined) {
+                // Delete existing ones
+                await tx.proposalPriceItem.deleteMany({
+                    where: { proposalId: id }
+                })
+                // Insert new ones if any
+                if (input.priceItems.length > 0) {
+                    await tx.proposalPriceItem.createMany({
+                        data: input.priceItems.map(item => ({
+                            proposalId: id,
+                            productId: item.productId,
+                            proposedPrice: item.proposedPrice
+                        }))
+                    })
+                }
+            }
         })
 
         revalidatePath('/dashboard/proposals')

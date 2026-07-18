@@ -473,6 +473,7 @@ export async function getProductsWithStock() {
             select: {
                 id: true, skuCode: true, productName: true, wineType: true, country: true,
                 stockLots: { where: { status: 'AVAILABLE' }, select: { qtyAvailable: true } },
+                marginPrice: { select: { costPrice: true, retailPrice: true, wholesalePrice: true } },
             },
             orderBy: { productName: 'asc' },
         })
@@ -486,9 +487,9 @@ export async function getProductsWithStock() {
                 country: p.country,
                 listPrice: 0,
                 totalStock: p.stockLots.reduce((sum: number, l: any) => sum + Number(l.qtyAvailable), 0),
-                costPrice: 0,
-                retailPrice: 0,
-                wholesalePrice: 0,
+                costPrice: p.marginPrice ? Number(p.marginPrice.costPrice) : 0,
+                retailPrice: p.marginPrice ? Number(p.marginPrice.retailPrice) : 0,
+                wholesalePrice: p.marginPrice ? Number(p.marginPrice.wholesalePrice) : 0,
                 primaryImageUrl: null,
                 supplierName: "Ly's Cellars",
             }

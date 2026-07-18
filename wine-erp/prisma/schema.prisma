@@ -273,6 +273,7 @@ model Product {
   marketPrices         MarketPrice[]
   returnOrderLines     ReturnOrderLine[]
   transferOrderLines   TransferOrderLine[]
+  proposalPriceItems   ProposalPriceItem[]
   qrCodes              QRCode[]
   regulatedDocs        RegulatedDocument[]
   priceRules           CustomerPriceRule[]
@@ -510,6 +511,7 @@ model Customer {
   consignments  ConsignmentAgreement[]
   arInvoices    ARInvoice[]
   contracts     Contract[]
+  proposals     Proposal[]
   regulatedDocs RegulatedDocument[] @relation("CustomerRegDocs")
   returnOrders  ReturnOrder[]
   creditNotes   CreditNote[]
@@ -2723,6 +2725,12 @@ model Proposal {
   linkedDocType   String?                            // "PurchaseOrder", "Expense"...
   linkedDocId     String?
 
+  customerId      String?
+  customer        Customer?             @relation(fields: [customerId], references: [id])
+  scope           String?               // "ENTIRE_PORTFOLIO" | "SPECIFIC_PRODUCTS" | "MIXED"
+  discountPct     Decimal?              @db.Decimal(5, 2)
+  priceItems      ProposalPriceItem[]
+
   // ── Sub-models ──
   attachments     ProposalAttachment[]
   comments        ProposalComment[]
@@ -2933,4 +2941,15 @@ model POSShift {
 enum ShiftStatus {
   OPEN
   CLOSED
+}
+
+model ProposalPriceItem {
+  id            String   @id @default(cuid())
+  proposalId    String
+  proposal      Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  proposedPrice Decimal  @db.Decimal(18, 2)
+
+  @@map("proposal_price_items")
 }
