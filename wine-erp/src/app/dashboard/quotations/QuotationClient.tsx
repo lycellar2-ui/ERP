@@ -33,6 +33,7 @@ export function QuotationClient({ initialData }: Props) {
     const [detail, setDetail] = useState<any>(null)
     const [detailLoading, setDetailLoading] = useState(false)
     const [createOpen, setCreateOpen] = useState(false)
+    const [showStats, setShowStats] = useState(false)
 
     // Create form state
     const [formData, setFormData] = useState({ 
@@ -296,57 +297,102 @@ export function QuotationClient({ initialData }: Props) {
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold font-brand" style={{ color: '#E8F1F2' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-xl md:text-2xl font-bold font-brand" style={{ color: '#E8F1F2' }}>
                         Báo Giá (QTN)
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Tạo báo giá → Gửi khách → Chấp nhận → Chuyển thành Đơn Hàng
-                    </p>
-                </div>
-                <button onClick={openCreate}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all"
-                    style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                    <Plus size={16} /> Tạo Báo Giá
-                </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                {[
-                    { label: 'Tổng Giá Trị', value: `₫${(stats.totalValue / 1e6).toFixed(0)}M`, accent: '#87CBB9' },
-                    { label: 'Tổng BG', value: stats.total, accent: '#8AAEBB' },
-                    { label: 'Đã Gửi', value: stats.sent, accent: '#D4A853' },
-                    { label: 'Chấp Nhận', value: stats.accepted, accent: '#5BA88A' },
-                    { label: 'Đã → SO', value: stats.converted, accent: '#87CBB9' },
-                ].map(s => (
-                    <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                    
+                    {/* Inline Quick Stats */}
+                    <div className="hidden lg:flex items-center gap-x-4 pl-4 border-l border-[#2A4355] text-xs">
+                        <span style={{ color: '#8AAEBB' }}>Giá trị: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.totalValue / 1e6).toFixed(0)}M</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>BG: <strong className="font-mono text-sm ml-1" style={{ color: '#8AAEBB' }}>{stats.total}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Đã gửi: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.sent}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Chấp nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.accepted}</strong></span>
                     </div>
-                ))}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setShowStats(!showStats)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all rounded-md"
+                        style={{ 
+                            background: showStats ? 'rgba(135,203,185,0.15)' : 'rgba(138,174,187,0.1)', 
+                            color: showStats ? '#87CBB9' : '#8AAEBB', 
+                            border: `1px solid ${showStats ? 'rgba(135,203,185,0.3)' : 'rgba(138,174,187,0.25)'}` 
+                        }}
+                        onMouseEnter={e => {
+                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)'
+                        }}
+                        onMouseLeave={e => {
+                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.1)'
+                        }}
+                    >
+                        📊 Thống Kê
+                    </button>
+                    <button onClick={openCreate}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-150"
+                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        <Plus size={16} /> Tạo Báo Giá
+                    </button>
+                </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+            {/* Collapsible Stats Section */}
+            {showStats && (
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 animate-in slide-in-from-top-2 duration-150">
+                    {[
+                        { label: 'Tổng Giá Trị', value: `₫${(stats.totalValue / 1e6).toFixed(0)}M`, accent: '#87CBB9' },
+                        { label: 'Tổng BG', value: stats.total, accent: '#8AAEBB' },
+                        { label: 'Đã Gửi', value: stats.sent, accent: '#D4A853' },
+                        { label: 'Chấp Nhận', value: stats.accepted, accent: '#5BA88A' },
+                        { label: 'Đã → SO', value: stats.converted, accent: '#87CBB9' },
+                    ].map(s => (
+                        <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{s.label}</p>
+                            <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Toolbar: Status Tabs + Search */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-[#2A4355]/30">
+                {/* Status Tabs */}
+                <div className="flex flex-wrap gap-1 bg-[#142433] p-1 rounded border border-[#2A4355]/60">
+                    <button onClick={() => { setStatusFilter(''); setTimeout(reload, 50) }}
+                        className="px-2.5 py-1 text-xs font-semibold rounded transition-all"
+                        style={{
+                            background: statusFilter === '' ? '#1B2E3D' : 'transparent',
+                            color: statusFilter === '' ? '#87CBB9' : '#8AAEBB',
+                        }}
+                    >
+                        Tất cả
+                    </button>
+                    {Object.entries(STATUS_CFG).map(([k, v]) => (
+                        <button key={k} onClick={() => { setStatusFilter(k); setTimeout(reload, 50) }}
+                            className="px-2.5 py-1 text-xs font-semibold rounded transition-all"
+                            style={{
+                                background: statusFilter === k ? 'rgba(135,203,185,0.1)' : 'transparent',
+                                color: statusFilter === k ? v.color : '#8AAEBB',
+                            }}
+                        >
+                            {v.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Search box */}
+                <div className="relative w-full sm:w-64">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input value={search} onChange={e => { setSearch(e.target.value); setTimeout(reload, 300) }}
                         placeholder="Tìm số QT, khách hàng..."
-                        className="w-full pl-9 pr-4 py-2.5 text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }} />
+                        className="w-full pl-9 pr-3 py-1.5 text-xs outline-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }} />
                 </div>
-                <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setTimeout(reload, 100) }}
-                    className="px-3 py-2.5 text-sm outline-none cursor-pointer"
-                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A', borderRadius: '6px' }}>
-                    <option value="">Tất cả</option>
-                    {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                </select>
             </div>
 
             {/* Table (Desktop View) */}
