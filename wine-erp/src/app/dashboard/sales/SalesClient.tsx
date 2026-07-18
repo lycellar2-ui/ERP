@@ -986,6 +986,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
     const [showStats, setShowStats] = useState(false)
+    const [showFilters, setShowFilters] = useState(false)
     const [editId, setEditId] = useState<string | null>(null)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
@@ -1290,15 +1291,40 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     }
 
     return (
-        <div className="space-y-5 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#E8F1F2' }}>
                         Đơn Bán Hàng (SLS)
                     </h2>
+                    
+                    {/* Inline Quick Stats */}
+                    <div className="hidden lg:flex items-center gap-x-4 pl-4 border-l border-[#2A4355] text-xs">
+                        <span style={{ color: '#8AAEBB' }}>Doanh Thu: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.monthRevenue / 1e9).toFixed(1)}T</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Đơn: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong></span>
+                        <span style={{ color: '#8AAEBB' }}>Xác nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.confirmed}</strong></span>
+                    </div>
                 </div>
+                
                 <div className="flex items-center gap-2">
+                    <button onClick={() => setShowStats(!showStats)}
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
+                        style={{ 
+                            background: showStats ? 'rgba(135,203,185,0.15)' : 'rgba(138,174,187,0.1)', 
+                            color: showStats ? '#87CBB9' : '#8AAEBB', 
+                            border: `1px solid ${showStats ? 'rgba(135,203,185,0.3)' : 'rgba(138,174,187,0.25)'}` 
+                        }}
+                        onMouseEnter={e => {
+                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)'
+                        }}
+                        onMouseLeave={e => {
+                            if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.1)'
+                        }}
+                    >
+                        📊 Thống Kê
+                    </button>
                     <button onClick={handleExport}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
                         style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)' }}
@@ -1317,22 +1343,8 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
             </div>
 
             {/* Collapsible Stats Section */}
-            {!showStats ? (
-                <div className="flex flex-wrap items-center justify-between px-4 py-2.5 rounded-lg text-xs"
-                    style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
-                        <span style={{ color: '#4A6A7A' }} className="font-semibold uppercase tracking-wider text-[10px]">Chỉ số nhanh:</span>
-                        <span style={{ color: '#8AAEBB' }}>Doanh Thu: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.monthRevenue / 1e9).toFixed(1)}T</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Đơn hàng: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong></span>
-                        <span style={{ color: '#8AAEBB' }}>Xác nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.confirmed}</strong></span>
-                    </div>
-                    <button onClick={() => setShowStats(true)} className="text-xs font-semibold hover:underline flex items-center gap-1 transition-all" style={{ color: '#87CBB9' }}>
-                        Xem chi tiết chỉ số ➔
-                    </button>
-                </div>
-            ) : (
-                <div className="space-y-2">
+            {showStats && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết</span>
                         <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
@@ -1349,123 +1361,152 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                 </div>
             )}
 
-            {/* Quick Filter Tabs */}
-            <FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />
-
-            {/* Search + Date Range */}
-            <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
-                    <input type="text" placeholder="Tìm số SO, khách hàng..."
-                        value={searchInput}
-                        onChange={e => {
-                            const val = e.target.value
-                            setSearchInput(val)
-                            if (debounceRef.current) clearTimeout(debounceRef.current)
-                            debounceRef.current = setTimeout(() => {
-                                setSearch(val)
-                                setPage(1)
-                                reload({ search: val, page: 1 }, true)
-                            }, 300)
-                        }}
-                        className="w-full pl-9 pr-4 py-2.5 text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
-                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+            {/* Toolbar: Tabs & Main Filters */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-[#2A4355]/30">
+                {/* Left side: Quick Filter Tabs */}
+                <div className="flex-1 min-w-0">
+                    <FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />
                 </div>
-                <div className="flex items-center gap-2">
-                    <Calendar size={14} style={{ color: '#4A6A7A' }} />
-                    <input type="date" value={dateFrom}
-                        onChange={e => { setDateFrom(e.target.value); setPage(1); reload({ dateFrom: e.target.value, page: 1 }, true) }}
-                        className="px-2.5 py-2 text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }} />
-                    <span className="text-xs" style={{ color: '#4A6A7A' }}>→</span>
-                    <input type="date" value={dateTo}
-                        onChange={e => { setDateTo(e.target.value); setPage(1); reload({ dateTo: e.target.value, page: 1 }, true) }}
-                        className="px-2.5 py-2 text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }} />
+
+                {/* Right side: Search + Date inputs + Filter button */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Search input */}
+                    <div className="relative w-full sm:w-48 xl:w-64">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <input type="text" placeholder="Tìm số SO, khách hàng..."
+                            value={searchInput}
+                            onChange={e => {
+                                const val = e.target.value
+                                setSearchInput(val)
+                                if (debounceRef.current) clearTimeout(debounceRef.current)
+                                debounceRef.current = setTimeout(() => {
+                                    setSearch(val)
+                                    setPage(1)
+                                    reload({ search: val, page: 1 }, true)
+                                }, 300)
+                            }}
+                            className="w-full pl-9 pr-3 py-1.5 text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                    </div>
+
+                    {/* Compact Date inputs */}
+                    <div className="flex items-center gap-1 bg-[#1B2E3D] px-2 py-1 border border-[#2A4355] rounded-[4px]">
+                        <Calendar size={12} style={{ color: '#4A6A7A' }} />
+                        <input type="date" value={dateFrom}
+                            onChange={e => { setDateFrom(e.target.value); setPage(1); reload({ dateFrom: e.target.value, page: 1 }, true) }}
+                            className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                        <span className="text-[10px]" style={{ color: '#4A6A7A' }}>→</span>
+                        <input type="date" value={dateTo}
+                            onChange={e => { setDateTo(e.target.value); setPage(1); reload({ dateTo: e.target.value, page: 1 }, true) }}
+                            className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                    </div>
+
+                    {/* Filter Toggle Button */}
+                    {(() => {
+                        const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter);
+                        return (
+                            <button onClick={() => setShowFilters(!showFilters)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
+                                style={{
+                                    background: (showFilters || hasAdvancedFilters) ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
+                                    color: (showFilters || hasAdvancedFilters) ? '#87CBB9' : '#8AAEBB',
+                                    border: `1px solid ${(showFilters || hasAdvancedFilters) ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
+                                }}
+                            >
+                                <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
+                                Bộ lọc
+                                {hasAdvancedFilters && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#87CBB9]" />
+                                )}
+                            </button>
+                        );
+                    })()}
                 </div>
             </div>
 
-            {/* Advanced Filters */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <div>
-                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Nhân viên Sales</label>
-                    <select value={salesRepFilter} 
-                        onChange={e => { setSalesRepFilter(e.target.value); setPage(1); reload({ salesRepId: e.target.value, page: 1 }, true) }}
-                        className="w-full px-2 py-1.5 text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
-                        <option value="">Tất cả Sales</option>
-                        {salesReps.map((u: any) => (
-                            <option key={u.id} value={u.id}>{u.name}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div>
-                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kênh</label>
-                    <select value={channelFilter} 
-                        onChange={e => { setChannelFilter(e.target.value); setPage(1); reload({ channel: e.target.value, page: 1 }, true) }}
-                        className="w-full px-2 py-1.5 text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
-                        <option value="">Tất cả kênh</option>
-                        <option value="HORECA">HORECA</option>
-                        <option value="WHOLESALE_DISTRIBUTOR">Đại Lý</option>
-                        <option value="VIP_RETAIL">VIP</option>
-                        <option value="DIRECT_INDIVIDUAL">Trực Tiếp</option>
-                        <option value="CORPORATE">Doanh Nghiệp</option>
-                        <option value="RETAIL">Bán Lẻ</option>
-                    </select>
-                </div>
+            {/* Collapsible Advanced Filters */}
+            {showFilters && (
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Nhân viên Sales</label>
+                        <select value={salesRepFilter} 
+                            onChange={e => { setSalesRepFilter(e.target.value); setPage(1); reload({ salesRepId: e.target.value, page: 1 }, true) }}
+                            className="w-full px-2 py-1.5 text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            <option value="">Tất cả Sales</option>
+                            {salesReps.map((u: any) => (
+                                <option key={u.id} value={u.id}>{u.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kênh</label>
+                        <select value={channelFilter} 
+                            onChange={e => { setChannelFilter(e.target.value); setPage(1); reload({ channel: e.target.value, page: 1 }, true) }}
+                            className="w-full px-2 py-1.5 text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            <option value="">Tất cả kênh</option>
+                            <option value="HORECA">HORECA</option>
+                            <option value="WHOLESALE_DISTRIBUTOR">Đại Lý</option>
+                            <option value="VIP_RETAIL">VIP</option>
+                            <option value="DIRECT_INDIVIDUAL">Trực Tiếp</option>
+                            <option value="CORPORATE">Doanh Nghiệp</option>
+                            <option value="RETAIL">Bán Lẻ</option>
+                        </select>
+                    </div>
 
-                <div>
-                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Pháp nhân</label>
-                    <select value={legalEntityFilter} 
-                        onChange={e => { setLegalEntityFilter(e.target.value); setPage(1); reload({ legalEntityId: e.target.value, page: 1 }, true) }}
-                        className="w-full px-2 py-1.5 text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
-                        <option value="">Tất cả pháp nhân</option>
-                        {pageLegalEntities.map((le: any) => (
-                            <option key={le.id} value={le.id}>{le.name}</option>
-                        ))}
-                    </select>
-                </div>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Pháp nhân</label>
+                        <select value={legalEntityFilter} 
+                            onChange={e => { setLegalEntityFilter(e.target.value); setPage(1); reload({ legalEntityId: e.target.value, page: 1 }, true) }}
+                            className="w-full px-2 py-1.5 text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            <option value="">Tất cả pháp nhân</option>
+                            {pageLegalEntities.map((le: any) => (
+                                <option key={le.id} value={le.id}>{le.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div>
-                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kho xuất</label>
-                    <select value={warehouseFilter} 
-                        onChange={e => { setWarehouseFilter(e.target.value); setPage(1); reload({ warehouseId: e.target.value, page: 1 }, true) }}
-                        className="w-full px-2 py-1.5 text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
-                        <option value="">Tất cả kho</option>
-                        {pageWarehouses.map((wh: any) => (
-                            <option key={wh.id} value={wh.id}>{wh.name}</option>
-                        ))}
-                    </select>
-                </div>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kho xuất</label>
+                        <select value={warehouseFilter} 
+                            onChange={e => { setWarehouseFilter(e.target.value); setPage(1); reload({ warehouseId: e.target.value, page: 1 }, true) }}
+                            className="w-full px-2 py-1.5 text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            <option value="">Tất cả kho</option>
+                            {pageWarehouses.map((wh: any) => (
+                                <option key={wh.id} value={wh.id}>{wh.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div>
-                    <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Điều khoản</label>
-                    <select value={paymentTermFilter} 
-                        onChange={e => { setPaymentTermFilter(e.target.value); setPage(1); reload({ paymentTerm: e.target.value, page: 1 }, true) }}
-                        className="w-full px-2 py-1.5 text-xs outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
-                        <option value="">Tất cả</option>
-                        {paymentTerms.map((pt: string) => (
-                            <option key={pt} value={pt}>{pt}</option>
-                        ))}
-                    </select>
-                </div>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Điều khoản</label>
+                        <select value={paymentTermFilter} 
+                            onChange={e => { setPaymentTermFilter(e.target.value); setPage(1); reload({ paymentTerm: e.target.value, page: 1 }, true) }}
+                            className="w-full px-2 py-1.5 text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            <option value="">Tất cả</option>
+                            {paymentTerms.map((pt: string) => (
+                                <option key={pt} value={pt}>{pt}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div className="flex flex-col justify-end">
-                    <label className="flex items-center gap-1.5 cursor-pointer py-1.5 text-xs font-semibold" style={{ color: '#8AAEBB' }}>
-                        <input type="checkbox" checked={pendingActionFilter} 
-                            onChange={e => { setPendingActionFilter(e.target.checked); setPage(1); reload({ pendingAction: e.target.checked, page: 1 }, true) }}
-                            className="rounded border-[#2A4355] text-[#87CBB9] focus:ring-0 focus:ring-offset-0 bg-[#1B2E3D] w-4 h-4" />
-                        <span>⚠️ Cần xử lý</span>
-                    </label>
+                    <div className="flex flex-col justify-end">
+                        <label className="flex items-center gap-1.5 cursor-pointer py-1.5 text-xs font-semibold" style={{ color: '#8AAEBB' }}>
+                            <input type="checkbox" checked={pendingActionFilter} 
+                                onChange={e => { setPendingActionFilter(e.target.checked); setPage(1); reload({ pendingAction: e.target.checked, page: 1 }, true) }}
+                                className="rounded border-[#2A4355] text-[#87CBB9] focus:ring-0 focus:ring-offset-0 bg-[#1B2E3D] w-4 h-4" />
+                            <span>⚠️ Cần xử lý</span>
+                        </label>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Table (Desktop View) */}
             <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>

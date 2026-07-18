@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getRegions, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
@@ -97,14 +97,16 @@ export function ProductsClient({
     const [showMobileFilters, setShowMobileFilters] = useState(false)
 
     // TanStack Query — cache products page data, survive tab switches
-    const { data: queryData, isLoading: loading } = useQuery({
+    const { data: queryData, isLoading, isFetching } = useQuery({
         queryKey: ['products', filters],
         queryFn: () => getProductsPageData(filters),
         initialData: filters.page === 1 && !filters.search && !filters.wineType && !filters.status && !filters.country && !filters.producerId
             ? initialData
             : undefined,
         staleTime: 30_000,
+        placeholderData: keepPreviousData,
     })
+    const loading = isLoading || isFetching
 
     const rows = queryData?.rows ?? []
     const total = queryData?.total ?? 0
@@ -170,9 +172,13 @@ export function ProductsClient({
     const handleSearchChange = (value: string) => {
         setSearch(value)
         if (debounceRef.current) clearTimeout(debounceRef.current)
-        debounceRef.current = setTimeout(() => {
-            applyFilter({ search: value || undefined })
-        }, 300)
+        if (!value) {
+            applyFilter({ search: undefined })
+        } else {
+            debounceRef.current = setTimeout(() => {
+                applyFilter({ search: value || undefined })
+            }, 300)
+        }
     }
 
     useEffect(() => {

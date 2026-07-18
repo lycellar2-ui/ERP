@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
     Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer,
@@ -782,7 +782,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
 
     // TanStack Query — cache customers page data
-    const { data: queryData, isLoading: loading } = useQuery({
+    const { data: queryData, isLoading, isFetching } = useQuery({
         queryKey: ['customers', filters],
         queryFn: async () => {
             const [data, stats, channels, salesReps] = await Promise.all([
@@ -797,7 +797,9 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             ? initialData
             : undefined,
         staleTime: 30_000,
+        placeholderData: keepPreviousData,
     })
+    const loading = isLoading || isFetching
 
     const rows = queryData?.rows ?? []
     const total = queryData?.total ?? 0
@@ -821,9 +823,13 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const handleSearchChange = (value: string) => {
         setSearch(value)
         if (debounceRef.current) clearTimeout(debounceRef.current)
-        debounceRef.current = setTimeout(() => {
-            applyFilter({ search: value || undefined })
-        }, 300)
+        if (!value) {
+            applyFilter({ search: undefined })
+        } else {
+            debounceRef.current = setTimeout(() => {
+                applyFilter({ search: value || undefined })
+            }, 300)
+        }
     }
 
     const handleDelete = async (id: string, name: string) => {
@@ -1044,8 +1050,8 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
-                            {loading ? (
+                        <tbody className={`transition-opacity duration-200 ${loading && rows.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
+                            {loading && rows.length === 0 ? (
                                 Array.from({ length: 6 }).map((_, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}>
                                         {sortableHeaders.map((_, j) => (

@@ -95,6 +95,184 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         setActionLoading(null)
     }, [userId, refreshList, detailId, openDetail])
 
+    const handlePrint = useCallback(() => {
+        if (!detail) return
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
+
+        const scopeText = 
+            detail.scope === 'ENTIRE_PORTFOLIO' ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
+            detail.scope === 'SPECIFIC_PRODUCTS' ? 'Áp dụng cho một số sản phẩm cụ thể' :
+            detail.scope === 'MIXED' ? 'Kết hợp chiết khấu danh mục và giá riêng cho một số sản phẩm' : 'N/A'
+
+        const dateStr = `Hà Nội, ngày ${new Date(detail.createdAt).getDate()} tháng ${new Date(detail.createdAt).getMonth() + 1} năm ${new Date(detail.createdAt).getFullYear()}`
+
+        let tableRows = ''
+        if (detail.priceItems && detail.priceItems.length > 0) {
+            tableRows = detail.priceItems.map((item: any, i: number) => {
+                const originalPrice = item.product?.wholesalePrice || 0
+                const diff = originalPrice > 0 
+                    ? ((item.proposedPrice - originalPrice) / originalPrice) * 100 
+                    : 0
+                return `
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: center;">${i + 1}</td>
+                        <td style="border: 1px solid #000; padding: 8px; font-family: monospace;">${item.product?.skuCode || ''}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${item.product?.productName || ''}</td>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: right;">${formatVND(originalPrice)}</td>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">${formatVND(item.proposedPrice)}</td>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">
+                            ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%
+                        </td>
+                    </tr>
+                `
+            }).join('')
+        }
+
+        const htmlContent = `
+            <html>
+            <head>
+                <title>To_trinh_${detail.proposalNo || 'Co_che_gia'}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; color: #000; margin: 40px; font-size: 14px; line-height: 1.6; }
+                    .header-table { width: 100%; border: none; margin-bottom: 20px; }
+                    .header-table td { border: none; padding: 0; vertical-align: top; }
+                    .title { font-size: 18px; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 20px; margin-bottom: 5px; }
+                    .subtitle { text-align: center; font-size: 14px; margin-bottom: 30px; font-style: italic; }
+                    .info-section { margin-bottom: 20px; }
+                    .info-section p { margin: 4px 0; }
+                    .content-section { margin-top: 25px; margin-bottom: 25px; }
+                    .content-title { font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 10px; }
+                    .content-body { padding-left: 15px; white-space: pre-wrap; word-break: break-word; }
+                    .price-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-size: 13px; }
+                    .signatures-table { width: 100%; margin-top: 50px; border-collapse: collapse; page-break-inside: avoid; }
+                    .signatures-table td { text-align: center; width: 25%; vertical-align: top; border: none; padding: 5px; }
+                    .sign-title { font-weight: bold; text-transform: uppercase; margin-bottom: 70px; font-size: 12px; }
+                    @media print {
+                        body { margin: 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <table class="header-table">
+                    <tr>
+                        <td style="text-align: center; font-weight: bold; width: 35%;">
+                            <p style="margin: 0; font-size: 13px; text-transform: uppercase; tracking-wide;">LY'S CELLARS</p>
+                            <p style="margin: 5px 0 0 0; font-size: 11px; font-family: monospace; font-weight: normal;">Số: ${detail.proposalNo}</p>
+                        </td>
+                        <td style="text-align: center; width: 65%;">
+                            <p style="margin: 0; font-weight: bold; font-size: 13px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                            <p style="margin: 5px 0 0 0; font-weight: bold; font-size: 11px;">Độc lập - Tự do - Hạnh phúc</p>
+                            <div style="width: 120px; height: 1px; background: #000; margin: 5px auto 0 auto;"></div>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="text-align: right; font-size: 12px; font-style: italic; margin-bottom: 20px;">
+                    ${dateStr}
+                </div>
+
+                <div class="title">TỜ TRÌNH CƠ CHẾ GIÁ</div>
+                <div class="subtitle">(V/v: ${detail.title})</div>
+
+                <div class="info-section">
+                    <p><strong>Kính gửi:</strong></p>
+                    <p style="padding-left: 20px;">- Trưởng bộ phận Bán hàng</p>
+                    <p style="padding-left: 20px;">- Kế toán trưởng</p>
+                    <p style="padding-left: 20px;">- Tổng Giám đốc (CEO)</p>
+                </div>
+
+                <div class="info-section" style="margin-top: 15px;">
+                    <p><strong>Người trình:</strong> ${detail.creator?.name || ''} (${detail.creator?.email || ''})</p>
+                    <p><strong>Bộ phận:</strong> ${detail.department?.name || 'Kinh doanh'}</p>
+                </div>
+
+                <div class="content-section">
+                    <div class="content-title">I. Chi tiết đề xuất giá</div>
+                    <div style="padding-left: 15px;">
+                        <p style="margin: 4px 0;"><strong>Khách hàng áp dụng:</strong> ${detail.customer?.name || ''} (${detail.customer?.code || 'N/A'})</p>
+                        <p style="margin: 4px 0;"><strong>Phạm vi áp dụng:</strong> ${scopeText}</p>
+                        ${detail.discountPct !== null && detail.discountPct !== undefined ? `<p style="margin: 4px 0;"><strong>Mức chiết khấu toàn danh mục:</strong> <span style="font-weight: bold; font-size: 16px;">${detail.discountPct}%</span></p>` : ''}
+                    </div>
+
+                    ${tableRows ? `
+                        <div style="margin-top: 15px; padding-left: 15px;">
+                            <p style="font-weight: bold; margin-bottom: 10px;">Danh sách sản phẩm áp dụng giá riêng:</p>
+                            <table class="price-table">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 40px;">STT</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: left;">Mã sản phẩm</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: left;">Tên sản phẩm</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">Giá gốc (Wholesale)</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">Giá đề xuất đặc biệt</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Chênh lệch (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="content-section">
+                    <div class="content-title">II. Nội dung tờ trình</div>
+                    <div class="content-body">${detail.content}</div>
+                </div>
+
+                ${detail.justification ? `
+                    <div class="content-section">
+                        <div class="content-title">III. Lý do & căn cứ đề xuất</div>
+                        <div class="content-body">${detail.justification}</div>
+                    </div>
+                ` : ''}
+
+                ${detail.expectedOutcome ? `
+                    <div class="content-section">
+                        <div class="content-title">IV. Kết quả kỳ vọng</div>
+                        <div class="content-body">${detail.expectedOutcome}</div>
+                    </div>
+                ` : ''}
+
+                <table class="signatures-table">
+                    <tr>
+                        <td>
+                            <div class="sign-title">Người trình duyệt</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Ký, ghi rõ họ tên)</div>
+                            <div style="font-weight: bold; margin-top: 10px;">${detail.creator?.name || ''}</div>
+                        </td>
+                        <td>
+                            <div class="sign-title">Trưởng bộ phận</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Ý kiến & Ký tên)</div>
+                            <div style="color: #777; margin-top: 10px;">...........................</div>
+                        </td>
+                        <td>
+                            <div class="sign-title">Kế toán trưởng</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Ý kiến & Ký tên)</div>
+                            <div style="color: #777; margin-top: 10px;">...........................</div>
+                        </td>
+                        <td>
+                            <div class="sign-title">Tổng giám đốc</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Phê duyệt & Ký tên)</div>
+                            <div style="color: #777; margin-top: 10px;">...........................</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+        printWindow.document.write(htmlContent)
+        printWindow.document.close()
+    }, [detail])
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             {/* Header */}
@@ -337,185 +515,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     isCEO={isCEO}
                     onApproval={async (action, comment) => { await handleApproval(detailId, action, comment); }}
                     onRefresh={async () => { await refreshList(); await openDetail(detailId) }}
+                    onPrint={handlePrint}
                 />
             )}
-
-            {/* Hidden Print Area */}
-            {detail && (
-                <div id="proposal-print-area" className="hidden print:block p-8 bg-white text-black font-sans leading-relaxed" style={{ color: '#000', backgroundColor: '#fff' }}>
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="text-center font-bold">
-                            <p className="text-sm uppercase tracking-wide">LY'S CELLARS</p>
-                            <p className="text-xs font-mono mt-1">Số: {detail.proposalNo}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm font-bold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                            <p className="text-xs font-semibold mt-1">Độc lập - Tự do - Hạnh phúc</p>
-                            <div className="w-32 h-[1px] bg-black mx-auto mt-1" />
-                        </div>
-                    </div>
-
-                    <div className="text-right text-xs italic mb-6">
-                        Hà Nội, ngày {new Date(detail.createdAt).getDate()} tháng {new Date(detail.createdAt).getMonth() + 1} năm {new Date(detail.createdAt).getFullYear()}
-                    </div>
-
-                    {/* Title */}
-                    <div className="text-center mb-8">
-                        <h2 className="text-lg font-bold uppercase tracking-wide">TỜ TRÌNH CƠ CHẾ GIÁ</h2>
-                        <p className="text-sm italic mt-1">(V/v: {detail.title})</p>
-                    </div>
-
-                    {/* Recipient */}
-                    <div className="mb-6 space-y-1">
-                        <p className="font-bold">Kính gửi:</p>
-                        <p className="pl-6">- Trưởng bộ phận Bán hàng</p>
-                        <p className="pl-6">- Kế toán trưởng</p>
-                        <p className="pl-6">- Tổng Giám đốc (CEO)</p>
-                    </div>
-
-                    {/* Submitter */}
-                    <div className="mb-6 space-y-2 text-sm">
-                        <p><strong>Người trình:</strong> {detail.creator?.name} ({detail.creator?.email})</p>
-                        <p><strong>Bộ phận:</strong> {detail.department?.name || 'Kinh doanh'}</p>
-                    </div>
-
-                    {/* Proposal Body */}
-                    <div className="space-y-4 text-sm mb-8">
-                        <div>
-                            <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">I. CHI TIẾT ĐỀ XUẤT GIÁ</h3>
-                            <div className="pl-4 space-y-2">
-                                <p><strong>Khách hàng áp dụng:</strong> {detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
-                                <p><strong>Phạm vi áp dụng:</strong> {
-                                    detail.scope === 'ENTIRE_PORTFOLIO' ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
-                                    detail.scope === 'SPECIFIC_PRODUCTS' ? 'Áp dụng cho một số sản phẩm cụ thể' :
-                                    detail.scope === 'MIXED' ? 'Kết hợp chiết khấu danh mục và giá riêng cho một số sản phẩm' : 'N/A'
-                                }</p>
-                                
-                                {detail.discountPct !== null && detail.discountPct !== undefined && (
-                                    <p><strong>Mức chiết khấu toàn danh mục:</strong> <span className="font-bold text-lg">{detail.discountPct}%</span></p>
-                                )}
-                            </div>
-                        </div>
-
-                        {detail.priceItems && detail.priceItems.length > 0 && (
-                            <div>
-                                <h4 className="font-bold mb-2">Danh sách sản phẩm áp dụng giá riêng:</h4>
-                                <table className="w-full border-collapse border border-black text-xs text-left">
-                                    <thead>
-                                        <tr className="bg-gray-100">
-                                            <th className="border border-black p-2 text-center w-10">STT</th>
-                                            <th className="border border-black p-2">Mã sản phẩm</th>
-                                            <th className="border border-black p-2">Tên sản phẩm</th>
-                                            <th className="border border-black p-2 text-right">Giá gốc (Wholesale)</th>
-                                            <th className="border border-black p-2 text-right">Giá đề xuất đặc biệt</th>
-                                            <th className="border border-black p-2 text-center font-bold">Chênh lệch (%)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {detail.priceItems.map((item: any, i: number) => {
-                                            const originalPrice = item.product?.wholesalePrice || 0
-                                            const diff = originalPrice > 0 
-                                                ? ((item.proposedPrice - originalPrice) / originalPrice) * 100 
-                                                : 0
-                                            return (
-                                                <tr key={item.id}>
-                                                    <td className="border border-black p-2 text-center">{i + 1}</td>
-                                                    <td className="border border-black p-2 font-mono">{item.product?.skuCode}</td>
-                                                    <td className="border border-black p-2">{item.product?.productName}</td>
-                                                    <td className="border border-black p-2 text-right">{formatVND(originalPrice)}</td>
-                                                    <td className="border border-black p-2 text-right font-bold">{formatVND(item.proposedPrice)}</td>
-                                                    <td className="border border-black p-2 text-center font-bold">
-                                                        {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        <div>
-                            <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">II. NỘI DUNG TỜ TRÌNH</h3>
-                            <p className="whitespace-pre-wrap pl-4 leading-relaxed">{detail.content}</p>
-                        </div>
-
-                        {detail.justification && (
-                            <div>
-                                <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">III. LÝ DO & CĂN CỨ ĐỀ XUẤT</h3>
-                                <p className="whitespace-pre-wrap pl-4 leading-relaxed">{detail.justification}</p>
-                            </div>
-                        )}
-
-                        {detail.expectedOutcome && (
-                            <div>
-                                <h3 className="font-bold uppercase border-b border-black pb-1 mb-2">IV. KẾT QUẢ KỲ VỌNG</h3>
-                                <p className="whitespace-pre-wrap pl-4 leading-relaxed">{detail.expectedOutcome}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Signature Blocks */}
-                    <div className="mt-16 grid grid-cols-4 gap-4 text-center text-xs">
-                        <div>
-                            <p className="font-bold uppercase">NGƯỜI TRÌNH DUYỆT</p>
-                            <p className="italic text-gray-500 mt-0.5">(Ký, ghi rõ họ tên)</p>
-                            <div className="h-20" />
-                            <p className="font-bold">{detail.creator?.name}</p>
-                        </div>
-                        <div>
-                            <p className="font-bold uppercase">TRƯỞNG BỘ PHẬN</p>
-                            <p className="italic text-gray-500 mt-0.5">(Ý kiến & Ký tên)</p>
-                            <div className="h-20" />
-                            <p className="font-bold text-gray-300">...........................</p>
-                        </div>
-                        <div>
-                            <p className="font-bold uppercase">KẾ TOÁN TRƯỞNG</p>
-                            <p className="italic text-gray-500 mt-0.5">(Ý kiến & Ký tên)</p>
-                            <div className="h-20" />
-                            <p className="font-bold text-gray-300">...........................</p>
-                        </div>
-                        <div>
-                            <p className="font-bold uppercase">TỔNG GIÁM ĐỐC</p>
-                            <p className="italic text-gray-500 mt-0.5">(Phê duyệt & Ký tên)</p>
-                            <div className="h-20" />
-                            <p className="font-bold text-gray-300">...........................</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <style dangerouslySetInnerHTML={{ __html: `
-                @media print {
-                    body {
-                        background-color: #ffffff !important;
-                        color: #000000 !important;
-                    }
-                    div[role="dialog"],
-                    .fixed,
-                    header,
-                    aside,
-                    main,
-                    nav,
-                    button,
-                    #proposal-print-area ~ * {
-                        display: none !important;
-                    }
-                    #proposal-print-area {
-                        display: block !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        position: absolute !important;
-                        left: 0 !important;
-                        top: 0 !important;
-                        width: 100% !important;
-                        z-index: 9999999 !important;
-                        color: #000000 !important;
-                        background: #ffffff !important;
-                    }
-                }
-            `}} />
         </div>
     )
 }
@@ -824,7 +826,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 }
 
 // ─── Detail Drawer ───────────────────────────────
-function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onRefresh }: {
+function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onRefresh, onPrint }: {
     detail: ProposalDetail | null
     loading: boolean
     onClose: () => void
@@ -832,6 +834,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
     isCEO: boolean
     onApproval: (action: 'APPROVE' | 'REJECT' | 'RETURN', comment?: string) => void
     onRefresh: () => void
+    onPrint: () => void
 }) {
     const [comment, setComment] = useState('')
     const [sendingComment, setSendingComment] = useState(false)
@@ -864,7 +867,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
                     <div className="flex items-center gap-3">
                         {detail && detail.category === 'PRICE_ADJUSTMENT' && (
                             <button 
-                                onClick={() => window.print()}
+                                onClick={onPrint}
                                 className="px-2.5 py-1.5 text-xs font-semibold rounded flex items-center gap-1 transition-all"
                                 style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
                             >

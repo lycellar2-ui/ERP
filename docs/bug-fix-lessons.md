@@ -1160,3 +1160,27 @@ useEffect(() => {
 > ⚠️ **RULE 45: Luôn gán các biểu thức kiểm tra có khả năng chứa null hoặc undefined vào biến cục bộ trước khi truyền vào Prisma nested relations.**
 > Việc gán biến cục bộ giúp trình biên dịch TypeScript thực hiện thu hẹp kiểu dữ liệu chính xác, tránh các lỗi biên dịch kiểu tĩnh không tương thích.
 
+---
+
+## BUG-024: Bản in Tờ Trình Cơ Chế Giá Bị Trắng / Không Hiển Thị Do CSS @media print
+
+**Ngày:** 2026-07-18
+**Severity:** 🟠 Medium — Không xem được bản in hoặc in ra trang trắng đối với tờ trình cơ chế giá
+
+### Triệu chứng
+- Khi nhấn nút "In Tờ Trình" trong chi tiết tờ trình cơ chế giá (`PRICE_ADJUSTMENT`), giao diện in của trình duyệt hiện ra trống trơn (trang trắng), không thể xem hay in được nội dung.
+
+### Nguyên nhân gốc rễ
+1. Để ẩn giao diện hệ thống ERP (sidebar, header, dashboard wrappers...) khi in, mã CSS trong `@media print` sử dụng thuộc tính `display: none !important` trên các tag bao ngoài như `main`, `.fixed`, `header`, `aside`.
+2. Do component `ProposalsClient` và phần tử chứa dữ liệu in `#proposal-print-area` được đặt lồng bên trong thẻ `<main>` của Layout Next.js, thuộc tính `display: none` của thẻ `<main>` đã ẩn toàn bộ các phần tử con bên dưới nó, bao gồm cả nội dung tờ trình cần in.
+
+### Cách fix
+- Loại bỏ phần HTML in ẩn `#proposal-print-area` và các thuộc tính `@media print` rắc rối trong [ProposalsClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/proposals/ProposalsClient.tsx).
+- Thay thế bằng giải pháp mở cửa sổ phụ (popup window) độc lập bằng `window.open` tương tự module Hồ Sơ Khách Hàng. Giải pháp này xuất ra một trang HTML độc lập chứa riêng nội dung tờ trình, tự động kích hoạt `window.print()` và đóng cửa sổ sau khi in xong.
+
+### Bài học
+
+> ⚠️ **RULE 46: Tránh sử dụng `@media print` ẩn các thẻ layout gốc (như `main`, `body`, hoặc các block bọc ngoài) để hiển thị phần tử in con.**
+> Việc này dễ gây ra lỗi ẩn toàn bộ cây DOM con. Thay vào đó, hãy sử dụng giải pháp mở Popup in (`window.open`) hoặc một route chuyên dụng để đảm bảo bản in độc lập hoàn toàn khỏi CSS layout gốc và hiển thị chính xác.
+
+

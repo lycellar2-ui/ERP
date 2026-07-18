@@ -424,4 +424,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-07-16 22:55 | Wine ERP v7.6 — 26 modules, 114 models, 72 enums, 42 action files, TanStack Cache Persistence in localStorage (24h), Optimistic UI updates, and Supabase Realtime auto-invalidation*
+*Last updated: 2026-07-18 20:00 | Wine ERP v7.6 — 26 modules, 114 models, 72 enums, 42 action files, TanStack Cache Persistence in localStorage (24h), Optimistic UI updates, and Supabase Realtime auto-invalidation*
+
