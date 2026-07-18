@@ -1,10 +1,12 @@
 'use client'
 
-import { Bell, LogOut } from 'lucide-react'
+import { Bell, LogOut, User, Key, X, Save, Loader2, AlertCircle } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { type SessionUser } from '@/lib/session'
 import { signOut } from '@/app/login/actions'
+import { updatePersonalProfile } from '@/app/dashboard/settings/actions'
+import { toast } from 'sonner'
 
 interface HeaderProps {
     title?: string
@@ -32,6 +34,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
     const [showNoti, setShowNoti] = useState(false)
     const notiRef = useRef<HTMLDivElement>(null)
     const [showProfile, setShowProfile] = useState(false)
+    const [showMyAccount, setShowMyAccount] = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -283,6 +286,18 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                     ))}
                                 </div>
                             </div>
+                            <div className="p-2 border-b" style={{ borderColor: '#2A4355' }}>
+                                <button
+                                    onClick={() => {
+                                        setShowProfile(false)
+                                        setShowMyAccount(true)
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-300 hover:bg-[#1B2E3D]"
+                                >
+                                    <User size={14} style={{ color: '#87CBB9' }} />
+                                    Tài khoản của tôi
+                                </button>
+                            </div>
                             <div className="p-2">
                                 <button
                                     onClick={handleLogout}
@@ -300,6 +315,182 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                     )}
                 </div>
             </div>
+            
+            <MyAccountDrawer
+                open={showMyAccount}
+                onClose={() => setShowMyAccount(false)}
+                currentUser={currentUser ?? null}
+            />
         </header>
+    )
+}
+
+// ── My Account Drawer ─────────────────────────────
+interface MyAccountDrawerProps {
+    open: boolean
+    onClose: () => void
+    currentUser: SessionUser | null
+}
+
+function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
+    const [saving, setSaving] = useState(false)
+    const [error, setError] = useState('')
+    const [name, setName] = useState('')
+    const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+
+    useEffect(() => {
+        if (currentUser) {
+            setName(currentUser.name || '')
+            setPassword('')
+            setConfirmPassword('')
+            setError('')
+        }
+    }, [currentUser, open])
+
+    if (!open || !currentUser) return null
+
+    const inputStyle: React.CSSProperties = {
+        width: '100%',
+        padding: '10px 12px',
+        borderRadius: '6px',
+        border: '1px solid #2A4355',
+        background: '#142433',
+        color: '#E8F1F2',
+        fontSize: '14px',
+        outline: 'none',
+        transition: 'border-color 0.15s ease-in-out',
+    }
+
+    async function handleSave() {
+        setError('')
+        if (name.trim().length < 2) {
+            setError('Họ tên tối thiểu 2 ký tự')
+            return
+        }
+
+        if (password.length > 0) {
+            if (password.length < 6) {
+                setError('Mật khẩu mới tối thiểu 6 ký tự')
+                return
+            }
+            if (password !== confirmPassword) {
+                setError('Mật khẩu xác nhận không trùng khớp')
+                return
+            }
+        }
+
+        setSaving(true)
+        try {
+            const res = await updatePersonalProfile(name, password || undefined)
+            if (res.success) {
+                toast.success('Cập nhật tài khoản thành công!')
+                onClose()
+                window.location.reload()
+            } else {
+                setError(res.error || 'Lỗi cập nhật tài khoản')
+            }
+        } catch (err: any) {
+            setError(err.message || 'Lỗi kết nối hệ thống')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
+            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
+                style={{ background: '#0D1B25', borderLeft: '1px solid #2A4355' }}>
+                <div>
+                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #142433' }}>
+                        <div className="flex items-center gap-2">
+                            <User size={18} style={{ color: '#87CBB9' }} />
+                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tài Khoản Của Tôi</h3>
+                        </div>
+                        <button onClick={onClose} className="hover:opacity-80 transition-opacity">
+                            <X size={18} style={{ color: '#4A6A7A' }} />
+                        </button>
+                    </div>
+
+                    {error && (
+                        <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
+                            style={{ background: 'rgba(139,26,46,0.15)', border: '1px solid rgba(139,26,46,0.3)', color: '#f87171' }}>
+                            <AlertCircle size={14} /> {error}
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
+                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB' }}>
+                                {currentUser.email}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Vai Trò</label>
+                            <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                {currentUser.roles.map(r => (
+                                    <span key={r} className="text-xs px-2 py-0.5 rounded font-bold"
+                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
+                                        {r}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Họ Tên *</label>
+                            <input 
+                                style={inputStyle} 
+                                placeholder="Họ và tên của bạn"
+                                value={name} 
+                                onChange={e => setName(e.target.value)} 
+                            />
+                        </div>
+
+                        <div className="pt-4 border-t" style={{ borderColor: '#142433' }}>
+                            <div className="flex items-center gap-1.5 mb-3">
+                                <Key size={14} style={{ color: '#87CBB9' }} />
+                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Đổi Mật Khẩu</span>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Mật Khẩu Mới</label>
+                                    <input 
+                                        style={inputStyle} 
+                                        type="password" 
+                                        placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                                        value={password} 
+                                        onChange={e => setPassword(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Xác Nhận Mật Khẩu Mới</label>
+                                    <input 
+                                        style={inputStyle} 
+                                        type="password" 
+                                        placeholder="Xác nhận mật khẩu mới"
+                                        value={confirmPassword} 
+                                        onChange={e => setConfirmPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button 
+                    onClick={handleSave} 
+                    disabled={saving}
+                    className="w-full mt-8 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50"
+                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                >
+                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {saving ? 'Đang lưu thay đổi...' : 'Lưu Thay Đổi'}
+                </button>
+            </div>
+        </div>
     )
 }

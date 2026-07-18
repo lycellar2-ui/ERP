@@ -11,7 +11,8 @@ import {
     UserRow, RoleRow, createUser, updateUser, updateUserRoles,
     createRole, updateRolePermissions, getRolePermissions, getUsers, getRoles,
     getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate,
-    getLegalEntitiesList, updateLegalEntity, getSystemWarehouses, updateWarehouseLegalEntity
+    getLegalEntitiesList, updateLegalEntity, getSystemWarehouses, updateWarehouseLegalEntity,
+    adminResetPassword
 } from './actions'
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 import { type SessionUser } from '@/lib/session'
@@ -415,6 +416,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [form, setForm] = useState({ name: '', status: 'ACTIVE', roleIds: [] as string[] })
+    const [resetPassword, setResetPassword] = useState('')
 
     React.useEffect(() => {
         if (user) {
@@ -426,6 +428,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                 status: user.status,
                 roleIds: userRoleIds
             })
+            setResetPassword('')
             setError('')
         }
     }, [user, roles])
@@ -448,10 +451,24 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
         setSaving(true)
         setError('')
         try {
+            if (resetPassword.trim().length > 0 && resetPassword.trim().length < 6) {
+                setError('Mật khẩu mới phải tối thiểu 6 ký tự')
+                setSaving(false)
+                return
+            }
+
             const resUser = await updateUser(user.id, { name: form.name, status: form.status as any })
             if (resUser.success) {
                 const resRoles = await updateUserRoles(user.id, form.roleIds)
                 if (resRoles.success) {
+                    if (resetPassword.trim().length >= 6) {
+                        const resPass = await adminResetPassword(user.id, resetPassword.trim())
+                        if (!resPass.success) {
+                            setError(resPass.error || 'Lỗi đặt lại mật khẩu')
+                            setSaving(false)
+                            return
+                        }
+                    }
                     onUpdated()
                     onClose()
                 } else {
@@ -555,6 +572,14 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                                 </div>
                             )}
                         </div>
+
+                        {isAdmin && (
+                            <div>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Đặt Lại Mật Khẩu</label>
+                                <input style={inputStyle} {...focusHandler} type="password" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                                    value={resetPassword} onChange={e => setResetPassword(e.target.value)} />
+                            </div>
+                        )}
 
                         <div>
                             <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Ngày Tạo</label>

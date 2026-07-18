@@ -8,6 +8,7 @@ import { serialize } from '@/lib/serialize'
 import { logAudit } from '@/lib/audit'
 import { getCurrentUser, requireAuth, requirePermission, invalidateUserSession } from '@/lib/session'
 import crypto from 'crypto'
+import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase'
 
 // ═══════════════════════════════════════════════════
 // SETTINGS — RBAC, Users, System Config
@@ -74,6 +75,9 @@ export async function createUser(input: UserInput): Promise<{ success: boolean; 
         const existing = await prisma.user.findUnique({ where: { email: data.email } })
         if (existing) return { success: false, error: 'Email đã tồn tại' }
 
+        const userId = crypto.randomUUID()
+        await syncUserToAuth(userId, data.email, data.passwordHash)
+
         // Securely hash the password using Node.js native scrypt (OWASP recommended)
         const salt = crypto.randomBytes(16).toString('hex')
         const hash = crypto.scryptSync(data.passwordHash, salt, 64).toString('hex')
@@ -81,6 +85,7 @@ export async function createUser(input: UserInput): Promise<{ success: boolean; 
 
         const user = await prisma.user.create({
             data: {
+                id: userId,
                 email: data.email,
                 name: data.name,
                 passwordHash: securePasswordHash,
@@ -616,6 +621,173 @@ export async function updateWarehouseLegalEntity(warehouseId: string, legalEntit
         revalidateCache('wms:warehouses')
         revalidatePath('/dashboard/settings')
         return { success: true, warehouse: serialize(updated) }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── Sync user to Supabase Auth ───────────────────
+async function syncUserToAuth(userId: string, email: string, passwordPlain: string) {
+    try {
+        const supabaseAdmin = createAdminClient()
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            id: userId,
+            email: email,
+            password: passwordPlain,
+            email_confirm: true
+        })
+        if (!authError && authData?.user) {
+            console.log('✓ Created auth user via Supabase admin client.')
+            return authData.user.id
+        }
+        console.log('Supabase admin client error, falling back to direct SQL:', authError?.message)
+    } catch (err: any) {
+        console.log('Supabase admin client failed to init/run, falling back to direct SQL:', err.message)
+    }
+
+    try {
+        await prisma.$executeRawUnsafe(`DELETE FROM auth.identities WHERE email = $1`, email)
+        await prisma.$executeRawUnsafe(`DELETE FROM auth.users WHERE email = $1`, email)
+        await prisma.$executeRawUnsafe(`DELETE FROM auth.identities WHERE user_id = $1::uuid`, userId)
+        await prisma.$executeRawUnsafe(`DELETE FROM auth.users WHERE id = $1::uuid`, userId)
+
+        await prisma.$executeRawUnsafe(`
+            INSERT INTO auth.users (
+                id, instance_id, aud, role, email, encrypted_password,
+                email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+                is_anonymous, created_at, updated_at
+            ) VALUES (
+                $1::uuid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', $2,
+                crypt($3, gen_salt('bf')),
+                NOW(), '{"provider": "email", "providers": ["email"]}'::jsonb, '{"email_verified": true}'::jsonb,
+                false, NOW(), NOW()
+            )
+        `, userId, email, passwordPlain)
+
+        const identityId = crypto.randomUUID()
+        const identityData = {
+            sub: userId,
+            email: email,
+            email_verified: true,
+            phone_verified: false
+        }
+        await prisma.$executeRawUnsafe(`
+            INSERT INTO auth.identities (
+                id, user_id, provider_id, provider, identity_data,
+                last_sign_in_at, created_at, updated_at
+            ) VALUES (
+                $1, $2::uuid, $3::text, 'email', $4::jsonb,
+                NOW(), NOW(), NOW()
+            )
+        `, identityId, userId, userId, JSON.stringify(identityData))
+
+        console.log('✓ Synced auth user via direct SQL.')
+        return userId
+    } catch (sqlErr: any) {
+        console.error('❌ Direct SQL sync failed:', sqlErr.message)
+        throw sqlErr
+    }
+}
+
+// ─── Admin reset user password ───────────────────
+export async function adminResetPassword(userId: string, passwordPlain: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requirePermission('SYS', 'ADMIN')
+        if (passwordPlain.length < 6) {
+            return { success: false, error: 'Mật khẩu tối thiểu 6 ký tự' }
+        }
+
+        let updatedInAuth = false
+        try {
+            const supabaseAdmin = createAdminClient()
+            const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+                password: passwordPlain
+            })
+            if (!authError) {
+                console.log('✓ Reset password via Supabase admin client.')
+                updatedInAuth = true
+            } else {
+                console.log('Supabase admin client reset failed, falling back to SQL:', authError.message)
+            }
+        } catch (err: any) {
+            console.log('Supabase admin client failed to init/run, falling back to SQL:', err.message)
+        }
+
+        if (!updatedInAuth) {
+            await prisma.$executeRawUnsafe(`
+                UPDATE auth.users 
+                SET encrypted_password = crypt($1, gen_salt('bf')), updated_at = NOW()
+                WHERE id = $2::uuid
+            `, passwordPlain, userId)
+            console.log('✓ Reset password via direct SQL.')
+        }
+
+        const salt = crypto.randomBytes(16).toString('hex')
+        const hash = crypto.scryptSync(passwordPlain, salt, 64).toString('hex')
+        const securePasswordHash = `${salt}:${hash}`
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { passwordHash: securePasswordHash }
+        })
+
+        const currentUser = await getCurrentUser().catch(() => null)
+        logAudit({
+            userId: currentUser?.id,
+            userName: currentUser?.name,
+            action: 'UPDATE',
+            entityType: 'User',
+            entityId: userId,
+            newValue: { passwordReset: true }
+        })
+
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── Update personal profile and password ────────
+export async function updatePersonalProfile(name: string, passwordPlain?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await getCurrentUser()
+        if (!user) {
+            return { success: false, error: 'Chưa đăng nhập' }
+        }
+
+        if (name.trim().length < 2) {
+            return { success: false, error: 'Tên bắt buộc và tối thiểu 2 ký tự' }
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { name: name.trim() }
+        })
+
+        if (passwordPlain && passwordPlain.length > 0) {
+            if (passwordPlain.length < 6) {
+                return { success: false, error: 'Mật khẩu tối thiểu 6 ký tự' }
+            }
+
+            const supabase = await createServerSupabaseClient()
+            const { error: authError } = await supabase.auth.updateUser({
+                password: passwordPlain
+            })
+            if (authError) {
+                throw new Error(`Supabase Auth error: ${authError.message}`)
+            }
+
+            const salt = crypto.randomBytes(16).toString('hex')
+            const hash = crypto.scryptSync(passwordPlain, salt, 64).toString('hex')
+            const securePasswordHash = `${salt}:${hash}`
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { passwordHash: securePasswordHash }
+            })
+        }
+
+        invalidateUserSession(user.email)
+        return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
