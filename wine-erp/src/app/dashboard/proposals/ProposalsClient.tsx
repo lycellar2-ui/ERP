@@ -311,13 +311,13 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             </div>
 
             {/* Filter + Search Bar */}
-            <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            <div className="flex items-center gap-3 flex-wrap w-full">
+                <div className="max-w-full overflow-x-auto scrollbar-none flex rounded-md flex-shrink-0" style={{ border: '1px solid #2A4355' }}>
                     {(['ALL', 'PENDING', 'DRAFT', 'APPROVED', 'REJECTED'] as const).map(f => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className="px-4 py-2 text-xs font-semibold transition-all"
+                            className="px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap"
                             style={{
                                 background: filter === f ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
                                 color: filter === f ? '#87CBB9' : '#4A6A7A',
@@ -328,7 +328,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         </button>
                     ))}
                 </div>
-                <div className="flex-1 relative">
+                <div className="flex-1 relative min-w-[280px]">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input
                         type="text"
@@ -341,10 +341,131 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 </div>
             </div>
 
-            {/* Proposals Table */}
-            <div className="rounded-md overflow-hidden" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            {/* Mobile View - Cards for small screens */}
+            <div className="block md:hidden space-y-3">
+                {filtered.length === 0 ? (
+                    <div className="flex flex-col items-center py-12 gap-2" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderRadius: '6px' }}>
+                        <FileText size={32} style={{ color: '#2A4355' }} />
+                        <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tờ trình nào</p>
+                    </div>
+                ) : (
+                    filtered.map(p => {
+                        const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
+                        const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                        const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
+                        const isCEOLevel = p.currentLevel === 3
+
+                        return (
+                            <div
+                                key={p.id}
+                                className="p-4 rounded-lg space-y-3 transition-all cursor-pointer"
+                                style={{
+                                    background: '#1B2E3D',
+                                    border: isPending && isCEOLevel && isCEO ? '1px solid #D4A853' : '1px solid #2A4355',
+                                }}
+                                onClick={() => openDetail(p.id)}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
+                                        {p.proposalNo}
+                                    </span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                                        style={{ background: statusCfg.bg, color: statusCfg.color }}>
+                                        {statusCfg.label}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                        {p.title}
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                                        style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
+                                        {CATEGORY_LABELS[p.category] ?? p.category}
+                                    </span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                                        style={{ background: prioCfg.bg, color: prioCfg.color }}>
+                                        {prioCfg.label}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-xs pt-2" style={{ borderTop: '1px solid rgba(42,67,85,0.2)', color: '#8AAEBB' }}>
+                                    <div>
+                                        <p style={{ color: '#4A6A7A' }} className="text-[10px] uppercase font-semibold">Người trình</p>
+                                        <p className="font-medium mt-0.5">{p.creatorName}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ color: '#4A6A7A' }} className="text-[10px] uppercase font-semibold">Ngày trình</p>
+                                        <p className="font-medium mt-0.5">
+                                            {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString('vi-VN') : '—'}
+                                        </p>
+                                    </div>
+                                    {p.estimatedAmount !== null && (
+                                        <div className="col-span-2">
+                                            <p style={{ color: '#4A6A7A' }} className="text-[10px] uppercase font-semibold">Giá trị dự kiến</p>
+                                            <p className="font-bold text-sm mt-0.5" style={{ color: '#E8F1F2' }}>
+                                                {formatCompactVND(p.estimatedAmount)}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-2" onClick={e => e.stopPropagation()}>
+                                    <button onClick={() => openDetail(p.id)}
+                                        className="px-3 py-1.5 text-xs font-medium rounded transition-all"
+                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                        <Eye size={12} className="inline mr-1" />Chi tiết
+                                    </button>
+                                    {isPending && isCEOLevel && isCEO && (
+                                        <>
+                                            <button
+                                                onClick={() => handleApproval(p.id, 'APPROVE')}
+                                                disabled={actionLoading === p.id}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
+                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
+                                                Duyệt
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const reason = prompt('Lý do từ chối:')
+                                                    if (reason) handleApproval(p.id, 'REJECT', reason)
+                                                }}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
+                                                style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
+                                                <XCircle size={12} className="inline mr-1" />Từ chối
+                                            </button>
+                                        </>
+                                    )}
+                                    {p.status === 'DRAFT' && p.creatorName && (
+                                        <button
+                                            onClick={async () => {
+                                                setActionLoading(p.id)
+                                                await submitProposal(p.id, userId)
+                                                await refreshList()
+                                                setActionLoading(null)
+                                            }}
+                                            disabled={actionLoading === p.id}
+                                            className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
+                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                                            {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
+                                            Trình
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block rounded-md overflow-hidden" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                 <div className="overflow-x-auto">
-                    <table style={{ width: '100%', minWidth: '1440px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                    <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                         <colgroup>
                             <col style={{ width: '115px' }} />
                             <col />

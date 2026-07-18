@@ -465,7 +465,7 @@ export async function finalizeLandedCostCampaign(
                     const newUnitCost = Number(alloc.unitLandedCost)
                     const qtySold = Number(lot.qtyReceived) - Number(lot.qtyAvailable)
 
-                    if (qtySold > 0 && newUnitCost > oldUnitCost) {
+                    if (qtySold > 0 && newUnitCost !== oldUnitCost) {
                         const diff = newUnitCost - oldUnitCost
                         totalCOGSAdjustment += diff * qtySold
                     }
@@ -480,12 +480,17 @@ export async function finalizeLandedCostCampaign(
                 })
             }
 
-            // If there's a positive adjustment amount, create the COGS adjustment journal entry
-            if (totalCOGSAdjustment > 0) {
+            // Create the COGS adjustment journal entry if there is any difference
+            if (Math.abs(totalCOGSAdjustment) > 0) {
                 const now = new Date()
                 const { getOrCreatePeriod, nextEntryNo } = await import('../finance/actions')
                 const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1, tx)
                 const entryNo = await nextEntryNo('JE-ADJ', tx)
+
+                const debit632 = totalCOGSAdjustment > 0 ? Math.round(totalCOGSAdjustment) : 0
+                const credit632 = totalCOGSAdjustment < 0 ? Math.round(Math.abs(totalCOGSAdjustment)) : 0
+                const debit156 = totalCOGSAdjustment < 0 ? Math.round(Math.abs(totalCOGSAdjustment)) : 0
+                const credit156 = totalCOGSAdjustment > 0 ? Math.round(totalCOGSAdjustment) : 0
 
                 await tx.journalEntry.create({
                     data: {
@@ -497,8 +502,8 @@ export async function finalizeLandedCostCampaign(
                         createdBy: 'system',
                         lines: {
                             create: [
-                                { account: '632 - Giá vốn hàng bán', debit: Math.round(totalCOGSAdjustment), credit: 0 },
-                                { account: '156 - Hàng tồn kho', debit: 0, credit: Math.round(totalCOGSAdjustment) },
+                                { account: '632 - Giá vốn hàng bán', debit: debit632, credit: credit632 },
+                                { account: '156 - Hàng tồn kho', debit: debit156, credit: credit156 },
                             ],
                         },
                     },

@@ -28,7 +28,7 @@ const mockPrisma = {
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
-vi.mock('@/lib/approval', () => ({ submitForApproval: vi.fn().mockResolvedValue({ success: true }) }))
+vi.mock('@/lib/approval', () => ({ submitForApproval: vi.fn().mockResolvedValue({ success: true, requestId: 'req-123' }) }))
 
 const {
     createSalesOrder,

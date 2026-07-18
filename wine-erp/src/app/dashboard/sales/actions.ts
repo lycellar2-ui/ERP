@@ -968,16 +968,19 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
 
         const amount = Number(so.totalAmount)
 
-        // ALL orders confirmed by Sales go to PENDING_APPROVAL for Sale Admin/Manager approval
-        await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_APPROVAL' } })
-
-        // Submit to Approval Engine (starts at step 1: Sales Admin/Manager)
-        await submitForApproval({
+        // Submit to Approval Engine
+        const approvalRes = await submitForApproval({
             docType: 'SALES_ORDER',
             docId: id,
             docValue: amount,
             requestedBy: so.salesRepId,
         })
+
+        const targetStatus = (approvalRes.success && !approvalRes.requestId) 
+            ? 'PENDING_ACCOUNTING' 
+            : 'PENDING_APPROVAL'
+
+        await prisma.salesOrder.update({ where: { id }, data: { status: targetStatus } })
 
         // Log audit
         await logAudit({
@@ -985,7 +988,7 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
             action: 'CONFIRM',
             entityType: 'SalesOrder',
             entityId: id,
-            newValue: { status: 'PENDING_APPROVAL' }
+            newValue: { status: targetStatus }
         }).catch(() => { })
 
         // Trigger notifications asynchronously to Sales Admin and Manager (Chờ duyệt cấp 1)
@@ -1086,60 +1089,129 @@ export async function approveSalesOrder(
                 step: approvalReq.currentStep,
                 action: 'APPROVE',
                 approvedBy: user.id,
-                comment: 'Sale Admin phê duyệt'
+                comment: isCEO ? 'CEO phê duyệt' : 'Sale Admin phê duyệt'
             }
         })
 
-        // Mark approval request as APPROVED completely
-        await prisma.approvalRequest.update({
-            where: { id: approvalReq.id },
-            data: { status: 'APPROVED' }
-        })
+        const docValue = Number(so.totalAmount)
+        const applicableSteps = approvalReq.template.steps.filter(s =>
+            !s.threshold || (docValue >= Number(s.threshold))
+        )
+        const currentIdx = applicableSteps.findIndex(s => s.stepOrder === approvalReq.currentStep)
 
-        // Transition SO directly to PENDING_ACCOUNTING
-        const updateData: any = { status: 'PENDING_ACCOUNTING' }
-        if (warehouseId) {
-            updateData.warehouseId = warehouseId
+        if (currentIdx === -1) {
+            return { success: false, error: 'Bước phê duyệt hiện tại không nằm trong danh sách bước áp dụng' }
         }
-        await prisma.salesOrder.update({
-            where: { id },
-            data: updateData
-        })
+
+        const nextIdx = currentIdx + 1
+        const hasNextStep = nextIdx < applicableSteps.length
+        let targetStatus = 'PENDING_APPROVAL'
+
+        if (hasNextStep) {
+            const nextStepDef = applicableSteps[nextIdx]
+            // Move to next step
+            await prisma.approvalRequest.update({
+                where: { id: approvalReq.id },
+                data: { currentStep: nextStepDef.stepOrder },
+            })
+
+            // Notify next step approver(s)
+            ;(async () => {
+                try {
+                    const approvers = await prisma.user.findMany({
+                        where: {
+                            roles: {
+                                some: { role: { name: nextStepDef.approverRole } }
+                            },
+                            status: 'ACTIVE'
+                        },
+                        select: { email: true }
+                    })
+                    const emails = approvers.map(u => u.email)
+                    if (emails.length > 0) {
+                        if (nextStepDef.approverRole === 'CEO') {
+                            for (const email of emails) {
+                                await notifySOPendingCEO({
+                                    soNo: so.soNo,
+                                    customerName: so.customer.name,
+                                    totalAmount: amount,
+                                    salesRepName: so.salesRep.name,
+                                    approverEmail: email
+                                })
+                            }
+                        } else {
+                            for (const email of emails) {
+                                await notifySOApprovalRequired({
+                                    soNo: so.soNo,
+                                    customerName: so.customer.name,
+                                    totalAmount: amount,
+                                    salesRepName: so.salesRep.name,
+                                    approverEmail: email
+                                })
+                            }
+                        }
+                    }
+                } catch (notifyErr) {
+                    console.error('[Notification Error]', notifyErr)
+                }
+            })()
+        } else {
+            // Final approval — mark request as APPROVED completely
+            await prisma.approvalRequest.update({
+                where: { id: approvalReq.id },
+                data: { status: 'APPROVED' },
+            })
+
+            // Transition SO directly to PENDING_ACCOUNTING
+            const updateData: any = { status: 'PENDING_ACCOUNTING' }
+            if (warehouseId) {
+                updateData.warehouseId = warehouseId
+            }
+            await prisma.salesOrder.update({
+                where: { id },
+                data: updateData
+            })
+            targetStatus = 'PENDING_ACCOUNTING'
+
+            // Notify Accountant
+            ;(async () => {
+                try {
+                    const accountants = await prisma.user.findMany({
+                        where: {
+                            roles: {
+                                some: { role: { name: { in: ['Kế Toán', 'KE_TOAN'] } } }
+                            },
+                            status: 'ACTIVE'
+                        },
+                        select: { email: true }
+                    })
+                    const acctEmails = accountants.map(u => u.email)
+                    if (acctEmails.length > 0) {
+                        await notifySOPendingAccounting({
+                            soNo: so.soNo,
+                            customerName: so.customer.name,
+                            totalAmount: amount,
+                            salesRepName: so.salesRep.name,
+                            recipientEmails: acctEmails
+                        })
+                    }
+                } catch (notifyErr) {
+                    console.error('[Notification Error]', notifyErr)
+                }
+            })()
+        }
 
         await logAudit({
             userId: user.id,
             action: 'APPROVE',
             entityType: 'SalesOrder',
             entityId: id,
-            newValue: { step: approvalReq.currentStep, status: 'PENDING_ACCOUNTING' }
-        }).catch(() => { })
-
-        // Notify Accountant
-        ;(async () => {
-            try {
-                const accountants = await prisma.user.findMany({
-                    where: {
-                        roles: {
-                            some: { role: { name: { in: ['Kế Toán', 'KE_TOAN'] } } }
-                        },
-                        status: 'ACTIVE'
-                    },
-                    select: { email: true }
-                })
-                const acctEmails = accountants.map(u => u.email)
-                if (acctEmails.length > 0) {
-                    await notifySOPendingAccounting({
-                        soNo: so.soNo,
-                        customerName: so.customer.name,
-                        totalAmount: amount,
-                        salesRepName: so.salesRep.name,
-                        recipientEmails: acctEmails
-                    })
-                }
-            } catch (notifyErr) {
-                console.error('[Notification Error]', notifyErr)
+            newValue: { 
+                step: approvalReq.currentStep, 
+                nextStep: hasNextStep ? applicableSteps[nextIdx].stepOrder : null,
+                status: targetStatus 
             }
-        })()
+        }).catch(() => { })
 
         revalidatePath('/dashboard/sales')
         revalidateCache('sales')

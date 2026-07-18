@@ -55,25 +55,21 @@ export async function recordStampUsage(data: {
     reportedBy: string
     notes?: string
 }) {
-    // CONSTRAINT: Không được dán lố tem
-    const purchase = await prisma.wineStampPurchase.findUnique({
-        where: { id: data.purchaseId },
-    })
-
-    if (!purchase) {
-        return { success: false, error: 'Không tìm thấy lô tem.' }
-    }
-
-    const totalAfter = purchase.usedQty + data.qtyUsed + data.qtyDamaged
-    if (totalAfter > purchase.totalQty) {
-        return {
-            success: false,
-            error: `Vượt quá số lượng tem khả dụng! Tồn kho tem: ${purchase.totalQty - purchase.usedQty}, yêu cầu: ${data.qtyUsed + data.qtyDamaged}`,
-        }
-    }
-
-    // Transaction: tạo usage + cập nhật usedQty
+    // Transaction: tạo usage + cập nhật usedQty (atomic - tránh race condition)
     return prisma.$transaction(async (tx) => {
+        const purchase = await tx.wineStampPurchase.findUnique({
+            where: { id: data.purchaseId },
+        })
+
+        if (!purchase) {
+            throw new Error('Không tìm thấy lô tem.')
+        }
+
+        const totalAfter = Number(purchase.usedQty) + data.qtyUsed + data.qtyDamaged
+        if (totalAfter > Number(purchase.totalQty)) {
+            throw new Error(`Vượt quá số lượng tem khả dụng! Tồn kho tem: ${Number(purchase.totalQty) - Number(purchase.usedQty)}, yêu cầu: ${data.qtyUsed + data.qtyDamaged}`)
+        }
+
         const usage = await tx.wineStampUsage.create({
             data: {
                 purchaseId: data.purchaseId,
@@ -86,12 +82,11 @@ export async function recordStampUsage(data: {
             },
         })
 
-        const newUsedQty = purchase.usedQty + data.qtyUsed + data.qtyDamaged
         await tx.wineStampPurchase.update({
             where: { id: data.purchaseId },
             data: {
-                usedQty: newUsedQty,
-                status: newUsedQty >= purchase.totalQty ? 'EXHAUSTED' : 'ACTIVE',
+                usedQty: totalAfter,
+                status: totalAfter >= Number(purchase.totalQty) ? 'EXHAUSTED' : 'ACTIVE',
             },
         })
 
@@ -156,10 +151,7 @@ export async function safeRecordStampUsage(data: {
     notes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        const res = await recordStampUsage(data)
-        if (res && typeof res === 'object' && 'success' in res && res.success === false) {
-            return res as { success: false; error: string }
-        }
+        await recordStampUsage(data)
         revalidateCache('stamps')
         revalidatePath('/dashboard/stamps')
         return { success: true }

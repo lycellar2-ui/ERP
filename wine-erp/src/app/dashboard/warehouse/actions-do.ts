@@ -121,6 +121,29 @@ export async function createDeliveryOrder(input: {
             })
 
             for (const line of lines) {
+                // Fetch lot and product info to enforce constraints
+                const lot = await tx.stockLot.findUnique({
+                    where: { id: line.lotId },
+                    include: {
+                        product: { select: { abvPercent: true, productName: true } }
+                    }
+                })
+
+                if (!lot) {
+                    throw new Error(`Lô hàng không tồn tại (lotId: ${line.lotId})`)
+                }
+
+                // 1. Check legal entity ownership
+                if (lot.ownerEntityId !== so.legalEntityId) {
+                    throw new Error(
+                        `Không được xuất lô hàng thuộc sở hữu của pháp nhân khác! ` +
+                        `Lô hàng ${lot.lotNo} thuộc sở hữu của pháp nhân (ID: ${lot.ownerEntityId}), ` +
+                        `trong khi đơn hàng SO thuộc pháp nhân (ID: ${so.legalEntityId}).`
+                    )
+                }
+
+
+
                 await tx.deliveryOrderLine.create({
                     data: {
                         doId: deliveryOrder.id,

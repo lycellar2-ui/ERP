@@ -8,7 +8,10 @@ const mockPrisma = {
     $transaction: vi.fn(async (cb: any) => {
         const tx = {
             wineStampUsage: { create: vi.fn() },
-            wineStampPurchase: { update: vi.fn() },
+            wineStampPurchase: { 
+                findUnique: mockPrisma.wineStampPurchase.findUnique,
+                update: vi.fn() 
+            },
         }
         return cb(tx)
     })
