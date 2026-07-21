@@ -7,7 +7,7 @@ import { hasPermission, hasRole, canAccessReport, getAccessibleReports, type Ses
 const ceoUser: SessionUser = {
     id: 'user-ceo-001',
     email: 'ceo@lyscellars.com',
-    name: 'CEO Ly',
+    name: 'CEO',
     status: 'ACTIVE',
     roles: ['CEO'],
     permissions: [

@@ -276,7 +276,7 @@ describe('rejectRequest', () => {
         await rejectRequest({
             requestId: 'req-002',
             rejectedBy: 'user-ceo',
-            rejectorName: 'CEO Ly',
+            rejectorName: 'CEO',
             reason: 'Chưa đủ thông tin',
         })
 

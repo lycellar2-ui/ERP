@@ -149,11 +149,11 @@ async function main() {
     console.log('  → Creating admin user...')
     const adminUser = await prisma.user.upsert({
         where: { email: 'admin@lyscellars.com' },
-        update: { name: 'Ly (CEO)' },
+        update: { name: 'CEO' },
         create: {
             id: 'user-admin',
             email: 'admin@lyscellars.com',
-            name: 'Ly (CEO)',
+            name: 'CEO',
             passwordHash: 'supabase-managed', // Auth qua Supabase, không dùng trường này
             status: 'ACTIVE',
         },
@@ -169,11 +169,11 @@ async function main() {
 
     const adminUser2 = await prisma.user.upsert({
         where: { email: 'admin2@lyscellars.com' },
-        update: { name: 'Ly (CEO Secondary)' },
+        update: { name: 'CEO Secondary' },
         create: {
             id: 'user-admin2',
             email: 'admin2@lyscellars.com',
-            name: 'Ly (CEO Secondary)',
+            name: 'CEO Secondary',
             passwordHash: 'supabase-managed',
             status: 'ACTIVE',
         },
