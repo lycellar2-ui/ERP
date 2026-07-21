@@ -622,10 +622,9 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         />
                                         
                                         {isAddDropdownOpen && (
-                                            <div className="absolute right-0 left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded shadow-lg border text-left"
-                                                 style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                            <div className="absolute right-0 left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded shadow-xl border text-left bg-white dark:bg-[#142433] border-slate-200 dark:border-[#2A4355]">
                                                 {getFilteredAddProducts(addProductSearchQuery).length === 0 ? (
-                                                    <div className="px-2 py-1.5 text-[10px] text-gray-500">
+                                                    <div className="px-2.5 py-2 text-xs text-slate-500 dark:text-gray-500">
                                                         Không tìm thấy hoặc đã thêm
                                                     </div>
                                                 ) : (
@@ -637,10 +636,10 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 setAddProductSearchQuery('')
                                                                 setIsAddDropdownOpen(false)
                                                             }}
-                                                            className="px-2 py-1.5 text-[10px] cursor-pointer hover:bg-[#1B2E3D]"
-                                                            style={{ color: '#E8F1F2' }}
+                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] transition-colors flex items-center gap-1.5 border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0"
                                                         >
-                                                            <span className="font-bold text-[#87CBB9]">[{p.skuCode}]</span> {p.productName}
+                                                            <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
+                                                            <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
                                                         </div>
                                                     ))
                                                 )}
