@@ -37,12 +37,12 @@ async function main() {
         await client.query('DELETE FROM allocation_logs CASCADE').catch(() => {})
         await client.query('DELETE FROM allocation_quotas CASCADE').catch(() => {})
         const allocCamp = await client.query('DELETE FROM allocation_campaigns CASCADE').catch(() => {})
-        console.log(`  ✓ Deleted allocation campaigns/quotas/logs: ${allocCamp.rowCount}`)
+        console.log(`  ✓ Deleted allocation campaigns/quotas/logs: ${allocCamp?.rowCount ?? 0}`)
 
         // 3. Clear Delivery Orders
         const doLines = await client.query('DELETE FROM delivery_order_lines CASCADE').catch(() => {})
         const doOrders = await client.query('DELETE FROM delivery_orders CASCADE').catch(() => {})
-        console.log(`  ✓ Deleted delivery_orders: ${doOrders.rowCount}`)
+        console.log(`  ✓ Deleted delivery_orders: ${doOrders?.rowCount ?? 0}`)
 
         // 4. Clear Return Orders & Credit Notes & AR Payments & AR Invoices
         await client.query('DELETE FROM return_order_lines CASCADE').catch(() => {})
@@ -51,7 +51,7 @@ async function main() {
         console.log(`  ✓ Deleted ar_payments: ${arPay.rowCount}`)
 
         const cn = await client.query('DELETE FROM credit_notes CASCADE').catch(() => {})
-        console.log(`  ✓ Deleted credit_notes: ${cn.rowCount}`)
+        console.log(`  ✓ Deleted credit_notes: ${cn?.rowCount ?? 0}`)
 
         const arInv = await client.query('DELETE FROM ar_invoices CASCADE')
         console.log(`  ✓ Deleted ar_invoices: ${arInv.rowCount}`)
@@ -67,11 +67,11 @@ async function main() {
         await client.query('DELETE FROM consignment_reports CASCADE').catch(() => {})
         await client.query('DELETE FROM consignment_stocks CASCADE').catch(() => {})
         const csg = await client.query('DELETE FROM consignment_agreements CASCADE').catch(() => {})
-        console.log(`  ✓ Deleted consignment agreements/stocks: ${csg.rowCount}`)
+        console.log(`  ✓ Deleted consignment agreements/stocks: ${csg?.rowCount ?? 0}`)
 
         // 7. Clear Loyalty transactions (if any)
         const loyalty = await client.query('DELETE FROM loyalty_transactions CASCADE').catch(() => {})
-        console.log(`  ✓ Deleted loyalty_transactions: ${loyalty.rowCount || 0}`)
+        console.log(`  ✓ Deleted loyalty_transactions: ${loyalty?.rowCount ?? 0}`)
 
         await client.query('COMMIT')
         console.log('\n🎉 SUCCESS: All sales, quotation, delivery, and AR invoice transactions have been safely reset!')
