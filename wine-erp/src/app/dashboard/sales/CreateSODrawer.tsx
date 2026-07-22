@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -487,11 +487,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                         Khách Hàng *
                                     </label>
                                     <div className="relative">
-                                        <div className={`relative flex items-center w-full rounded border-2 transition-all ${customerDropdownOpen ? 'border-[#87CBB9] ring-2 ring-[#87CBB9]/20' : 'border-[#2A4355]'} bg-[#142433]`}>
-                                            <span className="pl-3 text-slate-400 text-sm">🔍</span>
+                                        <div className={`relative flex items-center w-full rounded-md border-2 transition-all ${customerDropdownOpen ? 'border-[#87CBB9] ring-4 ring-[#87CBB9]/10' : 'border-[#2A4355] hover:border-[#3B5466]'} bg-[#142433]`}>
+                                            <div className="pl-3 text-slate-400">
+                                                <Search size={16} />
+                                            </div>
                                             <input
                                                 type="text"
-                                                placeholder="Bấm vào đây hoặc gõ mã, tên khách hàng..."
+                                                placeholder="Tìm kiếm theo mã, tên khách hàng..."
                                                 value={customerSearchInput}
                                                 onFocus={e => {
                                                     setCustomerDropdownOpen(true)
@@ -511,7 +513,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                     setCustomerSearchInput(e.target.value)
                                                     setCustomerDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-2 pr-8 py-2 text-sm font-semibold text-white bg-transparent outline-none placeholder:text-[#6A8A9A]"
+                                                className="w-full pl-3 pr-10 py-2.5 text-sm font-semibold text-white bg-transparent outline-none placeholder:text-[#6A8A9A]"
                                             />
                                             {selectedCustomer ? (
                                                 <button
@@ -522,20 +524,23 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                         setCustomerSearchInput('')
                                                         setCustomerDropdownOpen(true)
                                                     }}
-                                                    className="absolute right-2 px-1.5 py-0.5 text-xs text-slate-400 hover:text-white bg-[#1F3547] hover:bg-red-500/80 rounded transition-colors"
+                                                    className="absolute right-2 p-1.5 text-slate-400 hover:text-white bg-[#1F3547] hover:bg-rose-500 rounded-md transition-colors"
                                                     title="Bỏ chọn khách hàng"
                                                 >
-                                                    ✕
+                                                    <X size={14} />
                                                 </button>
                                             ) : (
-                                                <span className="absolute right-2.5 text-slate-400 pointer-events-none text-xs">▼</span>
+                                                <div className="absolute right-3 text-slate-400 pointer-events-none">
+                                                    <ChevronDown size={16} />
+                                                </div>
                                             )}
                                         </div>
                                         {customerDropdownOpen && (
-                                            <div className="absolute left-0 mt-1 max-h-72 overflow-y-auto z-[100] rounded-lg bg-[#0F1C28] border-2 border-[#2A4355] w-full shadow-2xl divide-y divide-[#1F3547]">
+                                            <div className="absolute left-0 mt-2 max-h-80 overflow-y-auto z-[100] rounded-md bg-[#0F1C28] border border-[#2A4355] w-full shadow-2xl divide-y divide-[#1F3547]">
                                                 {filteredCustomers.length === 0 ? (
-                                                    <div className="px-4 py-4 text-xs font-medium text-amber-400/90 text-center bg-[#142433]">
-                                                        🔍 Không tìm thấy khách hàng khớp với từ khóa "{customerSearchInput}"
+                                                    <div className="px-4 py-8 flex flex-col items-center justify-center text-slate-400 gap-2 bg-[#142433]">
+                                                        <Search size={24} className="text-slate-500" />
+                                                        <span className="text-sm font-medium">Không tìm thấy khách hàng khớp với từ khóa</span>
                                                     </div>
                                                 ) : (
                                                     filteredCustomers.map(c => {
@@ -550,40 +555,48 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                     handleCustomerChange(c.id)
                                                                     setCustomerDropdownOpen(false)
                                                                 }}
-                                                                className={`px-3.5 py-3 text-xs text-left transition-all ${
+                                                                className={`px-4 py-3.5 text-left transition-all border-l-4 ${
                                                                     isDisabled 
-                                                                        ? 'bg-[#0A141E] text-slate-500 opacity-60 cursor-not-allowed' 
+                                                                        ? 'bg-[#0A141E] text-slate-500 opacity-60 cursor-not-allowed border-l-transparent' 
                                                                         : isSelected
-                                                                        ? 'bg-[#1F3E4D] text-white border-l-4 border-l-[#87CBB9]'
-                                                                        : 'cursor-pointer hover:bg-[#1B2E3D] hover:border-l-4 hover:border-l-[#87CBB9] text-white'
+                                                                        ? 'bg-[#182C3D] border-l-[#87CBB9]'
+                                                                        : 'bg-[#0F1C28] cursor-pointer hover:bg-[#1B2E3D] border-l-transparent hover:border-l-[#87CBB9]/50'
                                                                 }`}
                                                             >
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                                        <span className={`font-bold text-sm ${isDisabled ? 'text-slate-500' : 'text-[#87CBB9]'}`}>
-                                                                            [{c.code}]
-                                                                        </span>
-                                                                        <span className="font-semibold text-sm text-white">{c.name}</span>
+                                                                <div className="flex items-start justify-between gap-2">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-800 text-slate-500' : 'bg-[#1C3344] text-[#87CBB9]'}`}>
+                                                                                {c.code}
+                                                                            </span>
+                                                                            <span className={`font-semibold text-sm ${isDisabled ? 'text-slate-400' : isSelected ? 'text-white' : 'text-slate-200'}`}>
+                                                                                {c.name}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
+                                                                            {isCompany && (
+                                                                                <span className={`flex items-center gap-1 font-medium ${isDisabled ? 'text-slate-500' : 'text-sky-400'}`}>
+                                                                                    <Building2 size={12} />
+                                                                                    {c.allowDirectSO ? 'Công ty' : 'Công ty Mẹ (Chỉ gánh nợ)'}
+                                                                                </span>
+                                                                            )}
+                                                                            {c.brandGroup && (
+                                                                                <span className="flex items-center gap-1 text-amber-200/90 font-medium">
+                                                                                    <Star size={12} className="fill-amber-400/50" />
+                                                                                    {c.brandGroup}
+                                                                                </span>
+                                                                            )}
+                                                                            {c.channel && (
+                                                                                <span className="text-[#8AAEBB] font-medium border-l border-[#2A4355] pl-2 ml-1">
+                                                                                    {c.channel}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                     {isSelected && (
-                                                                        <span className="text-[11px] px-2 py-0.5 rounded bg-[#87CBB9]/20 text-[#87CBB9] font-bold">✓ Đã chọn</span>
-                                                                    )}
-                                                                </div>
-                                                                <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px]">
-                                                                    {isCompany && (
-                                                                        <span className={`font-semibold ${isDisabled ? 'text-slate-500' : 'text-sky-400'}`}>
-                                                                            {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty Mẹ (Chỉ gánh nợ)'}
-                                                                        </span>
-                                                                    )}
-                                                                    {c.brandGroup && (
-                                                                        <span className="px-2 py-0.5 bg-[#2A4355] text-slate-200 rounded font-semibold">
-                                                                            ✨ {c.brandGroup}
-                                                                        </span>
-                                                                    )}
-                                                                    {c.channel && (
-                                                                        <span className="px-2 py-0.5 bg-[#1C3344] text-[#8AAEBB] rounded">
-                                                                            Kênh: {c.channel}
-                                                                        </span>
+                                                                        <div className="shrink-0 text-[#87CBB9] mt-1">
+                                                                            <CheckCircle2 size={18} />
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             </div>
