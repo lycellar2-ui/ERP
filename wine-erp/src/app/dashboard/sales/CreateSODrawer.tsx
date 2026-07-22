@@ -225,6 +225,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     }, [selectedCustomer])
 
     useEffect(() => {
+        if (entities.length > 0 && !legalEntityId) {
+            const defaultEntity = entities.find(e => e.code === 'TA') || entities[0]
+            if (defaultEntity) {
+                setLegalEntityId(defaultEntity.id)
+            }
+        }
+    }, [entities, legalEntityId])
+
+    useEffect(() => {
         const queries: Record<number, string> = {}
         lines.forEach((l, idx) => {
             if (l.productId) {
@@ -301,7 +310,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
             setPaymentTerm(c.paymentTerm)
             const nextChannel = (c.channel ?? 'HORECA') as SalesChannel
             setChannel(nextChannel)
-            setLegalEntityId(c.defaultLegalEntityId ?? '')
+            const fallbackLE = entities.find(e => e.code === 'TA')?.id || entities[0]?.id || ''
+            setLegalEntityId(c.defaultLegalEntityId || fallbackLE)
             setLoadingAR(true)
             
             // Parallelize balance and customer prices fetch to eliminate waterfalls
@@ -476,41 +486,61 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                         Khách Hàng *
                                     </label>
                                     <div className="relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Gõ mã hoặc tên khách hàng để tìm..."
-                                            value={customerSearchInput}
-                                            onFocus={e => {
-                                                setCustomerDropdownOpen(true)
-                                                e.target.select()
-                                            }}
-                                            onBlur={() => {
-                                                setTimeout(() => {
-                                                    setCustomerDropdownOpen(false)
-                                                    if (selectedCustomer) {
-                                                        setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
-                                                    } else {
+                                        <div className={`relative flex items-center w-full rounded border-2 transition-all ${customerDropdownOpen ? 'border-[#87CBB9] ring-2 ring-[#87CBB9]/20' : 'border-[#2A4355]'} bg-[#142433]`}>
+                                            <span className="pl-3 text-slate-400 text-sm">🔍</span>
+                                            <input
+                                                type="text"
+                                                placeholder="Bấm vào đây hoặc gõ mã, tên khách hàng..."
+                                                value={customerSearchInput}
+                                                onFocus={e => {
+                                                    setCustomerDropdownOpen(true)
+                                                    e.target.select()
+                                                }}
+                                                onBlur={() => {
+                                                    setTimeout(() => {
+                                                        setCustomerDropdownOpen(false)
+                                                        if (selectedCustomer) {
+                                                            setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
+                                                        } else {
+                                                            setCustomerSearchInput('')
+                                                        }
+                                                    }, 200)
+                                                }}
+                                                onChange={e => {
+                                                    setCustomerSearchInput(e.target.value)
+                                                    setCustomerDropdownOpen(true)
+                                                }}
+                                                className="w-full pl-2 pr-8 py-2 text-sm font-semibold text-white bg-transparent outline-none placeholder:text-[#6A8A9A]"
+                                            />
+                                            {selectedCustomer ? (
+                                                <button
+                                                    type="button"
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault()
+                                                        handleCustomerChange('')
                                                         setCustomerSearchInput('')
-                                                    }
-                                                }, 200)
-                                            }}
-                                            onChange={e => {
-                                                setCustomerSearchInput(e.target.value)
-                                                setCustomerDropdownOpen(true)
-                                            }}
-                                            className="w-full px-3 py-1.5 text-xs outline-none rounded"
-                                            style={{ ...inputStyle }}
-                                        />
+                                                        setCustomerDropdownOpen(true)
+                                                    }}
+                                                    className="absolute right-2 px-1.5 py-0.5 text-xs text-slate-400 hover:text-white bg-[#1F3547] hover:bg-red-500/80 rounded transition-colors"
+                                                    title="Bỏ chọn khách hàng"
+                                                >
+                                                    ✕
+                                                </button>
+                                            ) : (
+                                                <span className="absolute right-2.5 text-slate-400 pointer-events-none text-xs">▼</span>
+                                            )}
+                                        </div>
                                         {customerDropdownOpen && (
-                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] w-full shadow-2xl">
+                                            <div className="absolute left-0 mt-1 max-h-72 overflow-y-auto z-[100] rounded-lg bg-[#0F1C28] border-2 border-[#2A4355] w-full shadow-2xl divide-y divide-[#1F3547]">
                                                 {filteredCustomers.length === 0 ? (
-                                                    <div className="px-3 py-3 text-xs text-slate-400 dark:text-gray-500">
-                                                        Không tìm thấy khách hàng
+                                                    <div className="px-4 py-4 text-xs font-medium text-amber-400/90 text-center bg-[#142433]">
+                                                        🔍 Không tìm thấy khách hàng khớp với từ khóa "{customerSearchInput}"
                                                     </div>
                                                 ) : (
                                                     filteredCustomers.map(c => {
                                                         const isCompany = c.entityType === 'COMPANY'
                                                         const isDisabled = isCompany && !c.allowDirectSO
+                                                        const isSelected = selectedCustomer?.id === c.id
                                                         return (
                                                             <div
                                                                 key={c.id}
@@ -519,26 +549,42 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                     handleCustomerChange(c.id)
                                                                     setCustomerDropdownOpen(false)
                                                                 }}
-                                                                className={`px-3 py-2.5 text-xs text-left border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0 transition-colors ${
+                                                                className={`px-3.5 py-3 text-xs text-left transition-all ${
                                                                     isDisabled 
-                                                                        ? 'bg-slate-50 dark:bg-[#0F1C28]/80 text-slate-400 dark:text-gray-500 opacity-60 cursor-not-allowed' 
-                                                                        : 'cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] text-slate-700 dark:text-white'
+                                                                        ? 'bg-[#0A141E] text-slate-500 opacity-60 cursor-not-allowed' 
+                                                                        : isSelected
+                                                                        ? 'bg-[#1F3E4D] text-white border-l-4 border-l-[#87CBB9]'
+                                                                        : 'cursor-pointer hover:bg-[#1B2E3D] hover:border-l-4 hover:border-l-[#87CBB9] text-white'
                                                                 }`}
                                                             >
-                                                                <span className={`font-bold mr-2 ${isDisabled ? 'text-slate-400 dark:text-[#87CBB9]/60' : 'text-teal-600 dark:text-[#87CBB9]'}`}>
-                                                                    [{c.code}]
-                                                                </span>
-                                                                <span className="font-medium">{c.name}</span>
-                                                                {isCompany && (
-                                                                    <span className={`ml-2 text-[10px] uppercase font-semibold ${isDisabled ? 'text-slate-400 dark:text-[#8AAEBB]/60' : 'text-slate-500 dark:text-[#8AAEBB]'}`}>
-                                                                        {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty (Mẹ - Chỉ gánh nợ)'}
-                                                                    </span>
-                                                                )}
-                                                                {c.brandGroup && (
-                                                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-[#2A4355]/50 border border-slate-200 dark:border-[#2A4355] text-slate-600 dark:text-gray-300 rounded font-semibold">
-                                                                        ✨ {c.brandGroup}
-                                                                    </span>
-                                                                )}
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className={`font-bold text-sm ${isDisabled ? 'text-slate-500' : 'text-[#87CBB9]'}`}>
+                                                                            [{c.code}]
+                                                                        </span>
+                                                                        <span className="font-semibold text-sm text-white">{c.name}</span>
+                                                                    </div>
+                                                                    {isSelected && (
+                                                                        <span className="text-[11px] px-2 py-0.5 rounded bg-[#87CBB9]/20 text-[#87CBB9] font-bold">✓ Đã chọn</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px]">
+                                                                    {isCompany && (
+                                                                        <span className={`font-semibold ${isDisabled ? 'text-slate-500' : 'text-sky-400'}`}>
+                                                                            {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty Mẹ (Chỉ gánh nợ)'}
+                                                                        </span>
+                                                                    )}
+                                                                    {c.brandGroup && (
+                                                                        <span className="px-2 py-0.5 bg-[#2A4355] text-slate-200 rounded font-semibold">
+                                                                            ✨ {c.brandGroup}
+                                                                        </span>
+                                                                    )}
+                                                                    {c.channel && (
+                                                                        <span className="px-2 py-0.5 bg-[#1C3344] text-[#8AAEBB] rounded">
+                                                                            Kênh: {c.channel}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         )
                                                     })

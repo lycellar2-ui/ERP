@@ -434,13 +434,13 @@ export function WeeklyVisitPlannerPanel() {
                                         <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#4A6A7A' }}>Khách Hàng</label>
                                         <select
                                             className={inputCls}
-                                            style={inputStyle}
+                                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px', padding: '6px 8px', width: '100%', fontSize: '12px' }}
                                             value={newVisit.customerId}
                                             onChange={e => setNewVisit(prev => ({ ...prev, customerId: e.target.value }))}
                                         >
-                                            <option value="">-- Chọn khách hàng --</option>
+                                            <option value="" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>-- Chọn khách hàng --</option>
                                             {customers.map(c => (
-                                                <option key={c.id} value={c.id}>
+                                                <option key={c.id} value={c.id} style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>
                                                     {c.name} ({c.code})
                                                 </option>
                                             ))}
@@ -451,7 +451,7 @@ export function WeeklyVisitPlannerPanel() {
                                         <input
                                             type="datetime-local"
                                             className={inputCls}
-                                            style={inputStyle}
+                                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px', padding: '6px 8px', width: '100%', fontSize: '12px' }}
                                             value={newVisit.visitDate}
                                             onChange={e => setNewVisit(prev => ({ ...prev, visitDate: e.target.value }))}
                                         />
@@ -460,12 +460,12 @@ export function WeeklyVisitPlannerPanel() {
                                         <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#4A6A7A' }}>Mục Đích</label>
                                         <select
                                             className={inputCls}
-                                            style={inputStyle}
+                                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px', padding: '6px 8px', width: '100%', fontSize: '12px' }}
                                             value={newVisit.purpose}
                                             onChange={e => setNewVisit(prev => ({ ...prev, purpose: e.target.value }))}
                                         >
                                             {PURPOSE_PRESETS.map(p => (
-                                                <option key={p} value={p}>{p}</option>
+                                                <option key={p} value={p} style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>{p}</option>
                                             ))}
                                         </select>
                                     </div>

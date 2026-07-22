@@ -34,30 +34,38 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
         stopActiveStream()
 
         try {
-            const constraints: MediaStreamConstraints = {
-                video: {
-                    facingMode: { ideal: mode },
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                },
-                audio: false
+            let newStream: MediaStream | null = null
+            try {
+                // Primary: Try HD camera with specified facing mode
+                const constraints: MediaStreamConstraints = {
+                    video: {
+                        facingMode: { ideal: mode },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                    },
+                    audio: false
+                }
+                newStream = await navigator.mediaDevices.getUserMedia(constraints)
+            } catch (err1) {
+                console.warn('HD Camera constraint failed, trying basic video:', err1)
+                // Fallback: Try basic video constraint (works on all devices/browsers)
+                newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             }
 
-            const newStream = await navigator.mediaDevices.getUserMedia(constraints)
             streamRef.current = newStream
 
-            if (videoRef.current) {
+            if (videoRef.current && newStream) {
                 videoRef.current.srcObject = newStream
                 await videoRef.current.play().catch(() => {})
             }
         } catch (e: any) {
             console.warn('Camera access warning:', e)
             if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                setCameraError('Trình duyệt chưa được cấp quyền mở Camera. Bạn có thể nhấn nút bên dưới để mở Camera hệ thống!')
+                setCameraError('Trình duyệt chưa được cấp quyền mở Camera. Bạn hãy bấm nút bên dưới để mở ứng dụng Camera máy chụp ảnh!')
             } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-                setCameraError('Không tìm thấy luồng Camera trực tiếp. Vui lòng bấm nút mở Camera hệ thống!')
+                setCameraError('Không tìm thấy luồng Camera trực tiếp. Bạn hãy bấm nút bên dưới để mở ứng dụng Camera máy!')
             } else {
-                setCameraError('Không thể tự động mở Camera live: ' + (e.message || 'Lỗi thiết bị'))
+                setCameraError('Chưa thể mở Camera trực tiếp. Bấm nút bên dưới để dùng ứng dụng Camera máy chụp!')
             }
         }
         setStarting(false)
