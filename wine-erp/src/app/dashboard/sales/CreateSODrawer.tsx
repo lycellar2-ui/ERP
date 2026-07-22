@@ -343,11 +343,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 const p = products.find(p => p.id === value)!
                 const mapEntry = priceMap[value]
                 const resolvedPrice = (mapEntry && mapEntry.price > 0) ? mapEntry.price : 0
-                const fallbackPrice = p ? (p.wholesalePrice > 0 ? p.wholesalePrice : (p.retailPrice > 0 ? p.retailPrice : 0)) : 0
-                const autoPrice = resolvedPrice > 0 ? resolvedPrice : fallbackPrice
+                const wp = p?.wholesalePrice ?? 0
+                const rp = p?.retailPrice ?? 0
+                const fallbackPrice = wp > 0 ? wp : (rp > 0 ? rp : 0)
+                const autoPrice: number = resolvedPrice > 0 ? resolvedPrice : fallbackPrice
                 const source = (mapEntry && mapEntry.price > 0)
                     ? mapEntry.source
-                    : (p?.wholesalePrice ? 'WHOLESALE_FALLBACK' : (p?.retailPrice ? 'RETAIL_FALLBACK' : null))
+                    : (wp > 0 ? 'RETAIL_FALLBACK' : (rp > 0 ? 'RETAIL_FALLBACK' : null))
                 
                 // Update search query display
                 setSearchQueries(prevQueries => ({
