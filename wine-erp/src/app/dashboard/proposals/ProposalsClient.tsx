@@ -679,7 +679,7 @@ function SearchableProductCombobox({
 
     return (
         <div className="relative flex-1 min-w-0">
-            <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: '#8AAEBB' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
             <div className="relative">
                 <input
                     type="text"
@@ -687,15 +687,15 @@ function SearchableProductCombobox({
                     onFocus={() => { setOpen(true); setQuery(''); }}
                     onChange={e => setQuery(e.target.value)}
                     placeholder="Gõ mã SKU hoặc tên sản phẩm..."
-                    style={{ ...inputStyle, padding: '5px 28px 5px 8px', fontSize: '12px', background: '#1B2E3D' }}
+                    style={{ ...inputStyle, padding: '7px 32px 7px 10px', fontSize: '13px', background: '#1B2E3D' }}
                 />
-                <Search size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
 
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-md shadow-lg"
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl min-w-[380px]"
                         style={{ background: '#142433', border: '1px solid #2A4355' }}>
                         {filtered.length === 0 ? (
                             <div className="p-3 text-xs text-center text-gray-500">Không tìm thấy sản phẩm khớp "{query}"</div>
@@ -708,13 +708,13 @@ function SearchableProductCombobox({
                                         onSelect(p)
                                         setOpen(false)
                                     }}
-                                    className="w-full text-left p-2 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs"
+                                    className="w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs"
                                 >
-                                    <div className="min-w-0 flex-1 pr-2">
-                                        <span className="font-mono font-bold text-[#87CBB9] mr-2">{p.skuCode}</span>
-                                        <span className="text-[#E8F1F2] truncate">{p.productName}</span>
+                                    <div className="min-w-0 flex-1 pr-3">
+                                        <span className="font-mono font-bold text-[#87CBB9] mr-2 text-xs">{p.skuCode}</span>
+                                        <span className="text-[#E8F1F2] font-medium">{p.productName}</span>
                                     </div>
-                                    <span className="font-mono text-[10px] text-gray-400 whitespace-nowrap">
+                                    <span className="font-mono text-xs text-gray-400 font-medium whitespace-nowrap bg-[#1B2E3D] px-2 py-1 rounded">
                                         {formatVND(p.wholesalePrice)}
                                     </span>
                                 </button>
@@ -784,11 +784,11 @@ function BatchProductPickerModal({
     const selectedCount = Object.keys(selected).length
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-            <div className="w-full max-w-2xl max-h-[85vh] rounded-lg flex flex-col" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between p-4 border-b border-[#2A4355]">
-                    <h4 className="text-sm font-bold text-[#E8F1F2]">Chọn Nhanh Sản Phẩm Đề Xuất Giá</h4>
-                    <button onClick={onClose}><X size={16} className="text-gray-400" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+            <div className="w-full max-w-4xl max-h-[90vh] rounded-xl flex flex-col shadow-2xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between p-5 border-b border-[#2A4355]">
+                    <h4 className="text-base font-bold text-[#E8F1F2]">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Product Picker)</h4>
+                    <button onClick={onClose} className="p-1 rounded hover:bg-[#1B2E3D]"><X size={20} className="text-gray-400" /></button>
                 </div>
 
                 <div className="p-4 space-y-3 flex-1 overflow-hidden flex flex-col">
@@ -954,15 +954,15 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="w-full max-w-xl h-full overflow-y-auto" style={{ background: '#142433', borderLeft: '1px solid #2A4355' }}>
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.6)' }}>
+            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl" style={{ background: '#142433', borderLeft: '1px solid #2A4355' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
-                        <FileText size={18} className="inline mr-2" style={{ color: '#87CBB9' }} />
-                        Tạo Tờ Trình Mới
+                <div className="flex items-center justify-between p-6" style={{ borderBottom: '1px solid #2A4355' }}>
+                    <h3 className="text-xl font-bold" style={{ color: '#E8F1F2' }}>
+                        <FileText size={22} className="inline mr-2 text-[#87CBB9]" />
+                        Tạo Tờ Trình Đề Xuất Mới
                     </h3>
-                    <button onClick={onClose}><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded hover:bg-[#1B2E3D]"><X size={20} style={{ color: '#4A6A7A' }} /></button>
                 </div>
 
                 <div className="p-5 space-y-4">
