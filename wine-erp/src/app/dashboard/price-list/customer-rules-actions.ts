@@ -545,7 +545,7 @@ export async function getCustomerResolvedPrices(
         if (retailPrices[pId] !== undefined && retailPrices[pId] > 0) {
             results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
         } else if (marginMap[pId] !== undefined && marginMap[pId] > 0) {
-            results[pId] = { price: marginMap[pId], source: 'WHOLESALE_FALLBACK' }
+            results[pId] = { price: marginMap[pId], source: 'RETAIL_FALLBACK' }
         }
     }
 

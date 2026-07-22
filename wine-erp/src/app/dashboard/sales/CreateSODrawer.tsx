@@ -85,7 +85,7 @@ interface Customer {
         creditHold: boolean
     } | null
 }
-interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number }
+interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number; wholesalePrice?: number; retailPrice?: number }
 interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number }
 
 const inputStyle = {
