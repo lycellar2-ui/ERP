@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
     MapPin, Camera, Clock, CheckCircle2, AlertCircle, Search, Filter,
-    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation, ExternalLink, Calendar, Plus, X
+    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation, ExternalLink, Calendar, Plus, X, Download
 } from 'lucide-react'
 import { checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit } from './actions'
 import { LiveCameraModal } from './LiveCameraModal'
@@ -616,15 +616,52 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                 />
             )}
 
-            {/* Photo Zoom Modal */}
+            {/* Photo Zoom & Download Modal */}
             {viewPhoto && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur" onClick={() => setViewPhoto(null)}>
-                    <div className="max-w-2xl max-h-[90vh] bg-[#142433] p-4 rounded-2xl border border-[#2A4355] space-y-3" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-white">{viewPhoto.title}</h4>
-                            <button onClick={() => setViewPhoto(null)}><X size={18} className="text-gray-400" /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur" onClick={() => setViewPhoto(null)}>
+                    <div className="w-full max-w-3xl max-h-[92vh] bg-[#142433] p-5 rounded-2xl border border-[#2A4355] space-y-4 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-[#2A4355] pb-3">
+                            <div>
+                                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                                    <Camera size={18} className="text-[#87CBB9]" />
+                                    {viewPhoto.title}
+                                </h4>
+                                <p className="text-[11px] text-[#4A6A7A] mt-0.5">Ảnh chụp camera thực tế tại điểm bán</p>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={viewPhoto.url}
+                                    download={`Checkin_Photo_${Date.now()}.jpg`}
+                                    className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-[#87CBB9] text-[#0A1926] hover:bg-[#A5DED0] flex items-center gap-1.5 transition shadow"
+                                    title="Tải ảnh gốc về máy"
+                                >
+                                    <Download size={14} /> Tải Ảnh Về Máy
+                                </a>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const win = window.open('')
+                                        if (win) {
+                                            win.document.write(`<title>${viewPhoto.title}</title><img src="${viewPhoto.url}" style="max-width:100%;height:auto;"/>`)
+                                        }
+                                    }}
+                                    className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-[#1B2E3D] text-[#8AAEBB] hover:bg-[#2A4355] border border-[#2A4355] flex items-center gap-1.5 transition"
+                                    title="Mở ảnh trong cửa sổ trình duyệt mới"
+                                >
+                                    <ExternalLink size={14} /> Mở Thẻ Mới
+                                </button>
+
+                                <button onClick={() => setViewPhoto(null)} className="p-1.5 rounded-lg text-gray-400 hover:bg-[#1B2E3D] hover:text-white transition">
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
-                        <img src={viewPhoto.url} alt="Enlarged" className="w-full max-h-[75vh] object-contain rounded-xl" />
+
+                        <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/60 rounded-xl p-2 border border-[#2A4355]">
+                            <img src={viewPhoto.url} alt="Enlarged" className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+                        </div>
                     </div>
                 </div>
             )}
