@@ -324,15 +324,15 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                 <div className="flex items-center gap-2 bg-[#142433] p-1 rounded-xl border border-[#2A4355]">
                     <button
                         onClick={() => setActiveTab('CHECKIN')}
-                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'CHECKIN' ? 'bg-[#87CBB9] text-[#0A1926]' : 'text-[#8AAEBB] hover:text-white'}`}
+                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all active:scale-[0.98] ${activeTab === 'CHECKIN' ? 'bg-[#87CBB9] text-[#0A1926] shadow-sm' : 'text-[#8AAEBB] hover:text-white'}`}
                     >
-                        📸 Thực Hiện Check-in
+                        📸 Check-in Điểm Bán
                     </button>
                     <button
                         onClick={() => setActiveTab('HISTORY')}
-                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'HISTORY' ? 'bg-[#87CBB9] text-[#0A1926]' : 'text-[#8AAEBB] hover:text-white'}`}
+                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all active:scale-[0.98] ${activeTab === 'HISTORY' ? 'bg-[#87CBB9] text-[#0A1926] shadow-sm' : 'text-[#8AAEBB] hover:text-white'}`}
                     >
-                        📋 Nhật Ký Viếng Thăm ({visits.length})
+                        📋 Lịch Sử Viếng Thăm ({visits.length})
                     </button>
                 </div>
             </div>
@@ -409,7 +409,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                         onChange={e => setCheckoutNotes(e.target.value)}
                                         rows={3}
                                         placeholder="Nhập ghi chú kết quả (VD: Khách lấy 2 thùng Amarone, đề xuất giảm 5%, hẹn quay lại vào tuần sau...)"
-                                        className="w-full p-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white focus:border-[#87CBB9]"
+                                        className="w-full p-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white focus:border-[#87CBB9] transition"
                                     />
                                 </div>
 
@@ -417,9 +417,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 <button
                                     onClick={() => setCameraMode('CHECKOUT')}
                                     disabled={submitting}
-                                    className="w-full py-4 rounded-xl text-sm font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] transition-all flex items-center justify-center gap-2 shadow-lg"
+                                    className="w-full py-3.5 rounded-xl text-xs font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg"
                                 >
-                                    <Camera size={18} /> 📸 BẬT CAMERA CHỤP ÁNH & CHECK-OUT KẾT THÚC
+                                    <Camera size={16} /> 📸 Bật Camera Chụp Ảnh & Check-out Kết Thúc
                                 </button>
                             </div>
                         ) : (
@@ -434,12 +434,12 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 {users && users.length > 0 && (
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                            Nhân Viên Kinh Doanh Thực Hiện *
+                                            1. Nhân Viên Kinh Doanh Thực Hiện *
                                         </label>
                                         <select
                                             value={selectedSalespersonId}
                                             onChange={e => setSelectedSalespersonId(e.target.value)}
-                                            className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-[#87CBB9] font-bold"
+                                            className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-[#87CBB9] font-bold hover:border-[#87CBB9] transition"
                                         >
                                             {users.map(u => (
                                                 <option key={u.id} value={u.id}>
@@ -451,9 +451,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 )}
 
                                 {/* Customer Combobox Picker */}
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                        Chọn Khách Hàng Viếng Thăm *
+                                        2. Chọn Khách Hàng Viếng Thăm *
                                     </label>
 
                                     <SearchableCustomerCombobox
@@ -466,12 +466,12 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 {/* Purpose Selection */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                        2. Mục Đích Viếng Thăm
+                                        3. Mục Đích Viếng Thăm
                                     </label>
                                     <select
                                         value={purpose}
                                         onChange={e => setPurpose(e.target.value)}
-                                        className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white font-medium"
+                                        className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white font-medium hover:border-[#87CBB9] transition"
                                     >
                                         <option value="Viếng thăm & Chăm sóc định kỳ">Viếng thăm & Chăm sóc định kỳ</option>
                                         <option value="Thử mẫu rượu (Wine Tasting)">Thử mẫu rượu (Wine Tasting)</option>
@@ -541,9 +541,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                         setCameraMode('CHECKIN')
                                     }}
                                     disabled={submitting || !selectedCustomerId}
-                                    className="w-full py-4 rounded-xl text-sm font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-40"
+                                    className="w-full py-3.5 rounded-xl text-xs font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-40"
                                 >
-                                    <Camera size={18} /> 📸 BẬT CAMERA CHỤP ÁNH & CHECK-IN ĐIỂM BÁN
+                                    <Camera size={16} /> 📸 Bật Camera Chụp Ảnh & Check-in Viếng Thăm
                                 </button>
                             </div>
                         )}
@@ -619,13 +619,13 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                             <table className="w-full text-xs text-left">
                                 <thead>
                                     <tr className="bg-[#142433] text-[#4A6A7A]">
-                                        <th className="p-3.5 font-semibold">Mã Lượt</th>
-                                        <th className="p-3.5 font-semibold">Khách Hàng</th>
+                                        <th className="p-3.5 font-semibold">Mã Viếng Thăm</th>
+                                        <th className="p-3.5 font-semibold">Khách Hàng & Kênh</th>
                                         <th className="p-3.5 font-semibold">Salesman</th>
                                         <th className="p-3.5 font-semibold">Ảnh Check-in</th>
                                         <th className="p-3.5 font-semibold">Ảnh Check-out</th>
-                                        <th className="p-3.5 font-semibold">Thời Gian</th>
-                                        <th className="p-3.5 font-semibold">Tọa Độ GPS</th>
+                                        <th className="p-3.5 font-semibold">Thời Gian Lưu Lại</th>
+                                        <th className="p-3.5 font-semibold">Định Vị GPS & Địa Chỉ</th>
                                         <th className="p-3.5 font-semibold">Ghi Chú Kết Quả</th>
                                     </tr>
                                 </thead>
