@@ -11,14 +11,93 @@ import { LiveCameraModal } from './LiveCameraModal'
 interface Props {
     initialVisits: any[]
     customers: { id: string; code: string; name: string; channel: string | null }[]
+    users?: { id: string; name: string; email: string }[]
     currentUserId: string
     currentUserName: string
     isManager: boolean
 }
 
-export function SalesVisitsClient({ initialVisits, customers, currentUserId, currentUserName, isManager }: Props) {
+// ─── Searchable Customer Combobox ───────────────────────────
+function SearchableCustomerCombobox({
+    customers,
+    selectedCustomerId,
+    onSelect,
+}: {
+    customers: { id: string; code: string; name: string; channel: string | null }[]
+    selectedCustomerId: string
+    onSelect: (customer: any) => void
+}) {
+    const [open, setOpen] = useState(false)
+    const [query, setQuery] = useState('')
+
+    const selectedCust = customers.find(c => c.id === selectedCustomerId)
+
+    const filtered = React.useMemo(() => {
+        const q = query.trim().toLowerCase()
+        if (!q) return customers.slice(0, 40)
+        return customers.filter(c =>
+            c.name.toLowerCase().includes(q) ||
+            c.code.toLowerCase().includes(q)
+        ).slice(0, 40)
+    }, [customers, query])
+
+    const displayValue = selectedCust ? `[${selectedCust.code}] ${selectedCust.name}` : query
+
+    return (
+        <div className="relative">
+            <div className="relative">
+                <input
+                    type="text"
+                    value={open ? query : displayValue}
+                    onFocus={() => { setOpen(true); setQuery(''); }}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder="Gõ mã hoặc tên nhà hàng / khách hàng để chọn..."
+                    className="w-full pl-9 pr-3 py-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white focus:border-[#87CBB9] font-medium"
+                />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {open && (
+                <>
+                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-xl shadow-2xl"
+                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        {filtered.length === 0 ? (
+                            <div className="p-3 text-xs text-center text-gray-500">Không tìm thấy khách hàng khớp "{query}"</div>
+                        ) : (
+                            filtered.map(c => (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onSelect(c)
+                                        setOpen(false)
+                                    }}
+                                    className="w-full text-left p-3 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs"
+                                >
+                                    <div className="min-w-0 flex-1 pr-2">
+                                        <span className="font-mono font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
+                                        <span className="text-[#E8F1F2] font-semibold">{c.name}</span>
+                                    </div>
+                                    {c.channel && (
+                                        <span className="text-[10px] text-[#4A6A7A] uppercase bg-[#1B2E3D] px-2 py-0.5 rounded font-mono">
+                                            {c.channel}
+                                        </span>
+                                    )}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}
+
+export function SalesVisitsClient({ initialVisits, customers, users, currentUserId, currentUserName, isManager }: Props) {
     const [activeTab, setActiveTab] = useState<'CHECKIN' | 'HISTORY'>('CHECKIN')
     const [visits, setVisits] = useState(initialVisits)
+    const [selectedSalespersonId, setSelectedSalespersonId] = useState(currentUserId)
     const [activeVisit, setActiveVisit] = useState<any | null>(null)
     const [loadingActive, setLoadingActive] = useState(true)
 
@@ -48,10 +127,10 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
     const fetchActive = useCallback(async () => {
         setLoadingActive(true)
-        const active = await getActiveVisit(currentUserId)
+        const active = await getActiveVisit(selectedSalespersonId)
         setActiveVisit(active)
         setLoadingActive(false)
-    }, [currentUserId])
+    }, [selectedSalespersonId])
 
     const fetchVisitsList = useCallback(async () => {
         const data = await getSalesVisits({ date: filterDate, status: filterStatus })
@@ -106,7 +185,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
         const res = await checkInSalesVisit({
             customerId: selectedCustomerId,
-            salespersonId: currentUserId,
+            salespersonId: selectedSalespersonId,
             purpose,
             lat: gps.lat || coords.lat,
             lng: gps.lng || coords.lng,
@@ -133,7 +212,7 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
 
         const res = await checkOutSalesVisit({
             visitId: activeVisit.id,
-            salespersonId: currentUserId,
+            salespersonId: selectedSalespersonId,
             notes: checkoutNotes,
             lat: gps.lat || coords.lat,
             lng: gps.lng || coords.lng,
@@ -299,33 +378,37 @@ export function SalesVisitsClient({ initialVisits, customers, currentUserId, cur
                                     <h3 className="text-base font-bold text-white">Tạo Lượt Check-in Viếng Thăm Mới</h3>
                                 </div>
 
-                                {/* Customer Picker */}
+                                {/* Salesperson Picker (For Admin / Manager) */}
+                                {users && users.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
+                                            Nhân Viên Kinh Doanh Thực Hiện *
+                                        </label>
+                                        <select
+                                            value={selectedSalespersonId}
+                                            onChange={e => setSelectedSalespersonId(e.target.value)}
+                                            className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-[#87CBB9] font-bold"
+                                        >
+                                            {users.map(u => (
+                                                <option key={u.id} value={u.id}>
+                                                    👤 {u.name} ({u.email}) {u.id === currentUserId ? ' - (Tài khoản hiện tại)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Customer Combobox Picker */}
                                 <div className="space-y-2">
                                     <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
-                                        1. Chọn Khách Hàng Viếng Thăm *
+                                        Chọn Khách Hàng Viếng Thăm *
                                     </label>
 
-                                    <div className="relative">
-                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            value={customerSearch}
-                                            onChange={e => setCustomerSearch(e.target.value)}
-                                            placeholder="Gõ tên nhà hàng hoặc mã KH để tìm..."
-                                            className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white"
-                                        />
-                                    </div>
-
-                                    <select
-                                        value={selectedCustomerId}
-                                        onChange={e => setSelectedCustomerId(e.target.value)}
-                                        className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white font-medium"
-                                    >
-                                        <option value="">-- Bấm để chọn Khách Hàng --</option>
-                                        {filteredCustomers.map(c => (
-                                            <option key={c.id} value={c.id}>[{c.code}] {c.name} {c.channel ? `(${c.channel})` : ''}</option>
-                                        ))}
-                                    </select>
+                                    <SearchableCustomerCombobox
+                                        customers={customers}
+                                        selectedCustomerId={selectedCustomerId}
+                                        onSelect={c => setSelectedCustomerId(c.id)}
+                                    />
                                 </div>
 
                                 {/* Purpose Selection */}

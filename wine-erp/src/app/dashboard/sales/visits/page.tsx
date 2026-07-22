@@ -21,13 +21,18 @@ export default async function SalesVisitsPage() {
 
     const todayStr = new Date().toISOString().slice(0, 10)
 
-    const [visits, customers] = await Promise.all([
+    const [visits, customers, users] = await Promise.all([
         getSalesVisits({ date: todayStr }),
         prisma.customer.findMany({
             where: { deletedAt: null },
             select: { id: true, code: true, name: true, channel: true },
             orderBy: { name: 'asc' },
-            take: 200,
+            take: 500,
+        }),
+        prisma.user.findMany({
+            where: { status: 'ACTIVE' },
+            select: { id: true, name: true, email: true },
+            orderBy: { name: 'asc' },
         })
     ])
 
@@ -36,6 +41,7 @@ export default async function SalesVisitsPage() {
             <SalesVisitsClient
                 initialVisits={visits}
                 customers={customers}
+                users={users}
                 currentUserId={currentUser?.id || 'sys-user'}
                 currentUserName={currentUser?.name || 'Sales Rep'}
                 isManager={isManager}
