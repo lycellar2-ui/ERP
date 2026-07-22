@@ -254,6 +254,22 @@ button[style*="#1b2e3d"]:hover {
   background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
+/* 13. Map Tailwind utility text colors on overridden backgrounds (Fixes white-on-white text) */
+:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]) :is(.text-white, .text-gray-50, .text-gray-100, .text-gray-200, .text-slate-50, .text-slate-100, .text-slate-200),
+:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]):is(.text-white, .text-gray-50, .text-gray-100, .text-gray-200, .text-slate-50, .text-slate-100, .text-slate-200) {
+  color: var(--color-lys-ivory) !important;
+}
+
+:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]) :is(.text-gray-300, .text-slate-300, .text-gray-400, .text-slate-400),
+:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]):is(.text-gray-300, .text-slate-300, .text-gray-400, .text-slate-400) {
+  color: var(--color-lys-muted) !important;
+}
+
+:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]) :is(.text-gray-500, .text-slate-500),
+:is([class*="bg-[#0A1926]" i], [class*="bg-[#142433]" i], [class*="bg-[#1B2E3D]" i], [class*="bg-[#0D1E2B]" i], [class*="bg-[#0F1D2B]" i], [class*="bg-[#0D1B25]" i], [style*="#0A1926" i], [style*="#142433" i], [style*="#1B2E3D" i], [style*="#0D1E2B" i], [style*="#0F1D2B" i], [style*="#0D1B25" i]):is(.text-gray-500, .text-slate-500) {
+  color: var(--color-lys-dim) !important;
+}
+
 
 :root {
   --font-ui: var(--font-sans);

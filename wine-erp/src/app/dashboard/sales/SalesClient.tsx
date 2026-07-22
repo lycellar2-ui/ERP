@@ -35,8 +35,8 @@ const CHANNEL_LABEL: Record<string, string> = {
 
 const stepLabelMap: Record<string, string> = {
     DRAFT: 'Tạo đơn',
-    PENDING_ACCOUNTING: 'Duyệt đơn',
-    CONFIRMED: 'Xác nhận',
+    PENDING_ACCOUNTING: 'QL Duyệt',
+    CONFIRMED: 'KT Duyệt',
     DELIVERED: 'Giao hàng',
     INVOICED: 'Xuất HĐ',
     PAID: 'Thu tiền'
@@ -294,10 +294,14 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
         
         if (step === 'PENDING_ACCOUNTING') {
             const ev = timeline.find(e => e.action === 'APPROVE')
-            return ev ? new Date(ev.createdAt) : null
+            if (ev) return new Date(ev.createdAt)
+            
+            // Fallback for auto-approved orders that bypass manager approval
+            const confirmEv = timeline.find(e => e.action === 'CONFIRM' && e.entityType === 'SalesOrder')
+            return confirmEv ? new Date(confirmEv.createdAt) : null
         }
         if (step === 'CONFIRMED') {
-            const ev = timeline.find(e => e.action === 'CONFIRM')
+            const ev = timeline.find(e => e.action === 'ACCOUNTING_APPROVE')
             return ev ? new Date(ev.createdAt) : null
         }
         if (step === 'DELIVERED') {
@@ -401,16 +405,24 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                             </div>
                             
                             <div className="relative pt-2 pb-1">
-                                {/* Đường nối liền đằng sau */}
-                                <div className="absolute left-[8%] right-[8%] top-[12px] h-[2px] z-0" style={{ background: '#2A4355' }}>
+                                <div className="absolute top-[12px] h-[2px] z-0" style={{ background: '#2A4355', left: '8.33%', right: '8.33%' }}>
                                     {(() => {
-                                        const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
-                                        let currentIdx = steps.indexOf(detail.status as SOStatus)
-                                        if (detail.status === 'PENDING_APPROVAL') currentIdx = 0
+                                        let activeIdx = 0
+                                        switch (detail.status) {
+                                            case 'DRAFT': activeIdx = 0; break;
+                                            case 'PENDING_APPROVAL': activeIdx = 1; break;
+                                            case 'PENDING_ACCOUNTING': activeIdx = 2; break;
+                                            case 'CONFIRMED': activeIdx = 3; break;
+                                            case 'PARTIALLY_DELIVERED': activeIdx = 3; break;
+                                            case 'DELIVERED': activeIdx = 4; break;
+                                            case 'INVOICED': activeIdx = 5; break;
+                                            case 'PAID': activeIdx = 6; break;
+                                            case 'CANCELLED': activeIdx = -1; break;
+                                        }
                                         return (
                                             <div className="h-full transition-all duration-300" 
                                                 style={{ 
-                                                    width: `${currentIdx >= 0 ? (currentIdx / 5) * 100 : 0}%`, 
+                                                    width: `${activeIdx >= 0 ? (Math.min(activeIdx, 5) / 5) * 100 : 0}%`, 
                                                     background: '#5BA88A' 
                                                 }} 
                                             />
@@ -418,25 +430,46 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                     })()}
                                 </div>
                                 
-                                <div className="flex justify-between items-start relative z-10">
+                                <div className="flex justify-between items-start relative z-10 w-full">
                                     {(() => {
-                                        const steps: SOStatus[] = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
-                                        let currentIdx = steps.indexOf(detail.status as SOStatus)
-                                        if (detail.status === 'PENDING_APPROVAL') currentIdx = 0
-                                        return steps.map((s, i) => {
-                                            const isDone = i <= currentIdx
-                                            const isCurrent = s === detail.status || (s === 'PENDING_ACCOUNTING' && detail.status === 'PENDING_APPROVAL')
-                                            const ts = getStepTimestamp(s, detail.createdAt, detail.updatedAt, detail.status)
+                                        const steps = [
+                                            { s: 'DRAFT', label: 'Tạo đơn' },
+                                            { s: 'PENDING_ACCOUNTING', label: 'QL Duyệt' },
+                                            { s: 'CONFIRMED', label: 'KT Duyệt' },
+                                            { s: 'DELIVERED', label: 'Giao hàng' },
+                                            { s: 'INVOICED', label: 'Xuất HĐ' },
+                                            { s: 'PAID', label: 'Thu tiền' }
+                                        ]
+                                        
+                                        let activeIdx = 0
+                                        switch (detail.status) {
+                                            case 'DRAFT': activeIdx = 0; break;
+                                            case 'PENDING_APPROVAL': activeIdx = 1; break;
+                                            case 'PENDING_ACCOUNTING': activeIdx = 2; break;
+                                            case 'CONFIRMED': activeIdx = 3; break;
+                                            case 'PARTIALLY_DELIVERED': activeIdx = 3; break;
+                                            case 'DELIVERED': activeIdx = 4; break;
+                                            case 'INVOICED': activeIdx = 5; break;
+                                            case 'PAID': activeIdx = 6; break;
+                                            case 'CANCELLED': activeIdx = -1; break;
+                                        }
+
+                                        return steps.map((stepInfo, i) => {
+                                            const { s, label } = stepInfo
+                                            const isDone = activeIdx > i
+                                            const isCurrent = activeIdx === i
+                                            const ts = getStepTimestamp(s as SOStatus, detail.createdAt, detail.updatedAt, detail.status)
                                             
                                             return (
-                                                <div key={s} className="flex flex-col items-center flex-1 text-center">
+                                                <div key={s} className="flex flex-col items-center flex-1 text-center relative">
                                                     {/* Vòng tròn trạng thái */}
-                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all"
+                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all relative z-10"
                                                         style={{
-                                                            backgroundColor: isDone ? '#5ba889' : 'transparent',
+                                                            backgroundColor: isDone ? '#5ba889' : '#1B2E3D',
                                                             color: isDone ? '#0d1e2c' : '#4a6a79',
                                                             border: isCurrent ? '2px solid #87cbb8' : isDone ? 'none' : '2px solid #2a4354',
                                                             boxShadow: isCurrent ? '0 0 8px rgba(135,203,185,0.4)' : 'none',
+                                                            boxSizing: 'border-box'
                                                         }}>
                                                         {isDone ? '✓' : i + 1}
                                                     </div>
@@ -444,11 +477,11 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                                                     {/* Nhãn bước */}
                                                     <span className="text-[10px] font-bold mt-2 whitespace-nowrap block" 
                                                         style={{ color: isCurrent ? '#87CBB9' : isDone ? '#E8F1F2' : '#4A6A7A' }}>
-                                                        {stepLabelMap[s]}
+                                                        {label}
                                                     </span>
                                                     
                                                     {/* Mốc thời gian */}
-                                                    <span className="text-[8px] font-mono mt-0.5 block leading-none" 
+                                                    <span className="text-[8px] font-mono mt-0.5 block leading-none h-2" 
                                                         style={{ color: isDone ? '#8AAEBB' : '#2A4355' }}>
                                                         {ts ? formatStepTime(ts) : '—'}
                                                     </span>
