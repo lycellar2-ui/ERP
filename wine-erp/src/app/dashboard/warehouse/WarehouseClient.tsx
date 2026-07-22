@@ -728,7 +728,6 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             </div>
                         )}
                     </div>
-                </div>
             )}
 
             <CreateWarehouseModal
