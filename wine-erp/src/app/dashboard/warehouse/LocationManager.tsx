@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2, MapPin, Thermometer, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { type LocationRow, getLocations, createLocation, deleteLocation, getLocationHeatmap } from './actions'
@@ -17,6 +17,14 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
     const [showCreate, setShowCreate] = useState(false)
     const [loading, setLoading] = useState(false)
     const [form, setForm] = useState({ zone: '', rack: '', bin: '', type: 'STORAGE', capacityCases: '', tempControlled: false })
+
+    useEffect(() => {
+        setLocations(initialLocations)
+    }, [initialLocations])
+
+    useEffect(() => {
+        refresh()
+    }, [warehouseId])
 
     const refresh = async () => {
         const [locs, hm] = await Promise.all([
