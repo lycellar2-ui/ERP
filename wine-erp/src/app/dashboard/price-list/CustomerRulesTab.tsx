@@ -21,7 +21,7 @@ import { formatVND } from '@/lib/utils'
 const RULE_TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
     FIXED_DISCOUNT: { label: 'Chiết Khấu Cố Định %', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     FIXED_PRICE: { label: 'Giá Cố Định', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)' },
-    SPECIAL_PRICE: { label: 'Giá Đặc Biệt (Có Hạn)', color: '#A78BFA', bg: 'rgba(167,139,250,0.15)' },
+    SPECIAL_PRICE: { label: 'Giá Đặc Biệt', color: '#A78BFA', bg: 'rgba(167,139,250,0.15)' },
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -264,7 +264,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             <option value="ALL">Tất cả Loại Giá</option>
                             <option value="FIXED_DISCOUNT">Chiết Khấu %</option>
                             <option value="FIXED_PRICE">Giá Cố Định</option>
-                            <option value="SPECIAL_PRICE">Giá Đặc Biệt (Có Hạn)</option>
+                            <option value="SPECIAL_PRICE">Giá Đặc Biệt</option>
                         </select>
                     </div>
 
@@ -285,11 +285,14 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         <table className="w-full text-xs text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#142433' }}>
-                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Khách Hàng</th>
-                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Sản Phẩm</th>
+                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Mã Khách Hàng</th>
+                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Tên Khách Hàng</th>
+                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Mã Sản Phẩm</th>
+                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Tên Sản Phẩm</th>
                                     <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Loại Áp Dụng</th>
                                     <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Giá Trị</th>
-                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Hiệu Lực</th>
+                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Ngày Bắt Đầu</th>
+                                    <th className="p-3 text-left font-semibold" style={{ color: '#4A6A7A' }}>Ngày Kết Thúc</th>
                                     <th className="p-3 text-center font-semibold" style={{ color: '#4A6A7A' }}>Trạng Thái</th>
                                     <th className="p-3 text-right font-semibold" style={{ color: '#4A6A7A' }}>Hành Động</th>
                                 </tr>
@@ -297,14 +300,14 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             <tbody>
                                 {loading && rules.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="text-center py-12">
+                                        <td colSpan={10} className="text-center py-12">
                                             <Loader2 className="animate-spin mx-auto" size={24} style={{ color: '#87CBB9' }} />
                                             <p className="mt-2" style={{ color: '#4A6A7A' }}>Đang tải dữ liệu...</p>
                                         </td>
                                     </tr>
                                 ) : filteredRules.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="text-center py-12" style={{ color: '#4A6A7A' }}>
+                                        <td colSpan={10} className="text-center py-12" style={{ color: '#4A6A7A' }}>
                                             Không tìm thấy chính sách giá nào khớp bộ lọc.
                                         </td>
                                     </tr>
@@ -313,15 +316,22 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#E8F1F2', bg: 'rgba(255,255,255,0.1)' }
                                     return (
                                         <tr key={rule.id} style={{ borderTop: '1px solid #2A4355', background: '#1B2E3D' }} className="hover:bg-[#1f3445] transition">
+                                            <td className="p-3 font-mono font-semibold text-xs" style={{ color: '#8AAEBB' }}>
+                                                {rule.customerCode}
+                                            </td>
                                             <td className="p-3 font-semibold" style={{ color: '#E8F1F2' }}>
                                                 {rule.customerName}
-                                                <div className="text-[10px] font-normal" style={{ color: '#4A6A7A' }}>
-                                                    {rule.customerCode} • Kênh: {rule.customerChannel ?? 'N/A'}
-                                                </div>
+                                                {rule.customerChannel && (
+                                                    <span className="ml-2 text-[10px] font-normal px-1.5 py-0.5 rounded" style={{ background: '#142433', color: '#4A6A7A' }}>
+                                                        {rule.customerChannel}
+                                                    </span>
+                                                )}
                                             </td>
-                                            <td className="p-3" style={{ color: '#E8F1F2' }}>
-                                                <span className="font-semibold text-[#87CBB9]">{rule.skuCode}</span>
-                                                <div className="truncate max-w-[150px] text-[10px] font-normal" style={{ color: '#4A6A7A' }}>{rule.productName}</div>
+                                            <td className="p-3 font-mono font-semibold" style={{ color: '#87CBB9' }}>
+                                                {rule.skuCode}
+                                            </td>
+                                            <td className="p-3 font-medium text-xs max-w-[220px] truncate" style={{ color: '#E8F1F2' }} title={rule.productName}>
+                                                {rule.productName}
                                             </td>
                                             <td className="p-3">
                                                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded" style={{ color: typeCfg.color, background: typeCfg.bg }}>
@@ -335,11 +345,11 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                     <span className="text-[#87CBB9]">{formatVND(rule.value)}</span>
                                                 )}
                                             </td>
-                                            <td className="p-3 text-[10px] whitespace-nowrap" style={{ color: '#8AAEBB' }}>
-                                                <div>{new Date(rule.startDate).toLocaleDateString('vi-VN')}</div>
-                                                <div style={{ color: '#4A6A7A' }}>
-                                                    {rule.endDate ? `đến ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : 'Vô thời hạn'}
-                                                </div>
+                                            <td className="p-3 text-xs whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                                {new Date(rule.startDate).toLocaleDateString('vi-VN')}
+                                            </td>
+                                            <td className="p-3 text-xs whitespace-nowrap" style={{ color: rule.endDate ? '#8AAEBB' : '#4A6A7A' }}>
+                                                {rule.endDate ? new Date(rule.endDate).toLocaleDateString('vi-VN') : 'Vô thời hạn'}
                                             </td>
                                             <td className="p-3 text-center">
                                                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: statusCfg.color, background: statusCfg.bg }}>
