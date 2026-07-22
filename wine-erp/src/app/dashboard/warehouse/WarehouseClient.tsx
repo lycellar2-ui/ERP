@@ -495,7 +495,31 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
     return (
         <div className="space-y-3 max-w-screen-2xl">
-            {/* Header + Compact Stats Row */}
+            {/* 1. TOPMOST: WMS Navigation Tabs */}
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                {wmsTabs.map(t => {
+                    const Icon = t.icon
+                    const active = activeTab === t.key
+                    return (
+                        <button key={t.key} onClick={() => handleTabChange(t.key)}
+                            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all"
+                            style={{
+                                background: active ? '#87CBB9' : 'transparent',
+                                color: active ? '#0A1926' : '#8AAEBB',
+                            }}>
+                            <Icon size={14} /> {t.label}
+                            {t.badge !== undefined && t.badge > 0 && (
+                                <span className="text-[10px] min-w-[16px] text-center px-1.5 py-0.5 rounded-full font-bold"
+                                    style={{ background: active ? '#0A1926' : 'rgba(212,168,83,0.2)', color: active ? '#87CBB9' : '#D4A853' }}>
+                                    {t.badge}
+                                </span>
+                            )}
+                        </button>
+                    )
+                })}
+            </div>
+
+            {/* 2. Header + Compact Inline Stats Row */}
             <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl"
                 style={{ background: '#142433', border: '1px solid #2A4355' }}>
                 <div>
@@ -527,29 +551,49 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             </div>
 
-            {/* WMS Tabs with badges */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                {wmsTabs.map(t => {
-                    const Icon = t.icon
-                    const active = activeTab === t.key
-                    return (
-                        <button key={t.key} onClick={() => handleTabChange(t.key)}
-                            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all"
-                            style={{
-                                background: active ? '#87CBB9' : 'transparent',
-                                color: active ? '#0A1926' : '#8AAEBB',
-                            }}>
-                            <Icon size={14} /> {t.label}
-                            {t.badge !== undefined && t.badge > 0 && (
-                                <span className="text-[10px] min-w-[16px] text-center px-1.5 py-0.5 rounded-full font-bold"
-                                    style={{ background: active ? '#0A1926' : 'rgba(212,168,83,0.2)', color: active ? '#87CBB9' : '#D4A853' }}>
-                                    {t.badge}
+            {/* 3. Compact Horizontal Warehouse Selector Chips */}
+            {(activeTab === 'inventory' || activeTab === 'locations') && (
+                <div className="flex items-center gap-2 p-2 rounded-xl overflow-x-auto"
+                    style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <span className="text-xs uppercase tracking-wider font-bold flex-shrink-0 px-2" style={{ color: '#4A6A7A' }}>
+                        Chọn Kho:
+                    </span>
+                    <button
+                        onClick={() => { setSelectedWH(null); setLots([]); setSelectedLocations([]) }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0 transition-all"
+                        style={{
+                            background: selectedWH === null ? '#87CBB9' : '#1B2E3D',
+                            color: selectedWH === null ? '#0A1926' : '#8AAEBB',
+                            border: `1px solid ${selectedWH === null ? '#87CBB9' : '#2A4355'}`,
+                        }}>
+                        <Warehouse size={13} /> tất cả kho ({stats.warehouses})
+                    </button>
+                    {warehouses.map(w => {
+                        const isSel = selectedWH === w.id
+                        return (
+                            <button
+                                key={w.id}
+                                onClick={() => selectWarehouse(w.id)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0 transition-all"
+                                style={{
+                                    background: isSel ? '#87CBB9' : '#1B2E3D',
+                                    color: isSel ? '#0A1926' : '#E8F1F2',
+                                    border: `1px solid ${isSel ? '#87CBB9' : '#2A4355'}`,
+                                }}>
+                                <MapPin size={12} style={{ color: isSel ? '#0A1926' : '#4A6A7A' }} />
+                                <span>{w.name}</span>
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold"
+                                    style={{
+                                        background: isSel ? '#0A1926' : '#142433',
+                                        color: isSel ? '#87CBB9' : '#8AAEBB'
+                                    }}>
+                                    {w.totalStock.toLocaleString()} chai
                                 </span>
-                            )}
-                        </button>
-                    )
-                })}
-            </div>
+                            </button>
+                        )
+                    })}
+                </div>
+            )}
 
             {/* NXT — Stock Movement Report Tab */}
             {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} />}
@@ -572,69 +616,37 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 }} />
             )}
 
-            {/* Locations Tab */}
+            {/* Locations Tab — Full Width */}
             {activeTab === 'locations' && (
-                <div className="grid grid-cols-12 gap-5">
-                    {/* Left: warehouse list */}
-                    <div className="col-span-12 lg:col-span-4 space-y-3">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>Chọn Kho</p>
-                        {warehouses.map(w => (
-                            <WarehouseCard key={w.id} warehouse={w} isSelected={selectedWH === w.id}
-                                onClick={() => selectWarehouse(w.id)} />
-                        ))}
-                    </div>
-                    {/* Right: location manager */}
-                    <div className="col-span-12 lg:col-span-8">
-                        {selectedWH ? (
-                            <LocationManager
-                                key={selectedWH}
-                                warehouseId={selectedWH}
-                                warehouseName={warehouses.find(w => w.id === selectedWH)?.name ?? ''}
-                                initialLocations={selectedLocations}
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center py-20 gap-3 rounded-xl"
-                                style={{ border: '1px dashed #2A4355' }}>
-                                <MapPin size={36} style={{ color: '#2A4355' }} />
-                                <p className="text-sm" style={{ color: '#4A6A7A' }}>
-                                    Chọn một kho bên trái để thiết lập Zone / Rack / Bin Location
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                <div className="w-full">
+                    {selectedWH ? (
+                        <LocationManager
+                            key={selectedWH}
+                            warehouseId={selectedWH}
+                            warehouseName={warehouses.find(w => w.id === selectedWH)?.name ?? ''}
+                            initialLocations={selectedLocations}
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center py-20 gap-3 rounded-xl"
+                            style={{ border: '1px dashed #2A4355', background: '#142433' }}>
+                            <MapPin size={36} style={{ color: '#4A6A7A' }} />
+                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                Chọn một kho từ thanh kho ở trên để quản lý vị trí
+                            </p>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Inventory Tab — Warehouse grid + Stock view */}
+            {/* Inventory Tab — Full Width */}
             {activeTab === 'inventory' && (
-                <div className="grid grid-cols-12 gap-5">
-                    {/* Left: warehouse list */}
-                    <div className="col-span-12 lg:col-span-4 space-y-3">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>Danh Sách Kho</p>
-                        {warehouses.length === 0 ? (
-                            <div className="flex flex-col items-center py-12 gap-3 rounded-xl"
-                                style={{ border: '1px dashed #2A4355', background: '#142433' }}>
-                                <Warehouse size={28} style={{ color: '#2A4355' }} />
-                                <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có kho nào</p>
-                                <button onClick={() => setCreateWHOpen(true)} className="text-xs px-3 py-1.5 rounded-lg"
-                                    style={{ color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
-                                    + Thêm kho đầu tiên
-                                </button>
-                            </div>
-                        ) : warehouses.map(w => (
-                            <WarehouseCard key={w.id} warehouse={w} isSelected={selectedWH === w.id}
-                                onClick={() => selectWarehouse(w.id)} />
-                        ))}
-                    </div>
-
-                    {/* Right: stock inventory */}
-                    <div className="col-span-12 lg:col-span-8 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
-                                {selectedWH
-                                    ? `Tồn Kho — ${warehouses.find(w => w.id === selectedWH)?.name ?? ''}`
-                                    : 'Tồn Kho — Chọn kho từ danh sách bên trái'}
-                            </p>
+                <div className="w-full space-y-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
+                            {selectedWH
+                                ? `Tồn Kho — ${warehouses.find(w => w.id === selectedWH)?.name ?? ''}`
+                                : 'Tồn Kho — Tất cả kho'}
+                        </p>
                             {selectedWH && (
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs px-2 py-1 rounded-lg font-mono" style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
