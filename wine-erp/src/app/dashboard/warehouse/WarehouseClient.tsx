@@ -494,60 +494,55 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     ]
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4">
+        <div className="space-y-3 max-w-screen-2xl">
+            {/* Header + Compact Stats Row */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl"
+                style={{ background: '#142433', border: '1px solid #2A4355' }}>
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
-                        Kho Hàng (WMS)
+                    <h2 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                        <Warehouse size={18} style={{ color: '#87CBB9' }} /> Kho Hàng (WMS)
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Warehouse Management — Quản lý tồn kho theo kho, vị trí, lô hàng
+                    <p className="text-[11px]" style={{ color: '#4A6A7A' }}>
+                        Quản lý tồn kho theo kho, vị trí, lô hàng
                     </p>
                 </div>
-                <button onClick={() => setCreateWHOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                    <Plus size={16} /> Tạo Kho Mới
-                </button>
-            </div>
 
-            {/* Stats — 6 cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                {statCards.map(s => (
-                    <div key={s.label} className="flex items-center gap-3 p-3.5 rounded-xl"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: `${s.accent}20` }}>
-                            <s.icon size={18} style={{ color: s.accent }} />
+                {/* Ultra-compact inline stat badges */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    {statCards.map(s => (
+                        <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <s.icon size={13} style={{ color: s.accent }} />
+                            <span className="text-[10px] uppercase font-semibold" style={{ color: '#4A6A7A' }}>{s.label}:</span>
+                            <span className="text-xs font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
                         </div>
-                        <div className="min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide font-semibold truncate" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-lg font-bold leading-tight truncate font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                    <button onClick={() => setCreateWHOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ml-1 transition-colors"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        <Plus size={14} /> Tạo Kho Mới
+                    </button>
+                </div>
             </div>
 
             {/* WMS Tabs with badges */}
-            <div className="flex gap-1 p-1 rounded-md" style={{ background: '#142433' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                 {wmsTabs.map(t => {
                     const Icon = t.icon
                     const active = activeTab === t.key
                     return (
                         <button key={t.key} onClick={() => handleTabChange(t.key)}
-                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded transition-all"
+                            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all"
                             style={{
-                                background: active ? '#1B2E3D' : 'transparent',
-                                color: active ? '#87CBB9' : '#4A6A7A',
-                                border: active ? '1px solid #2A4355' : '1px solid transparent',
+                                background: active ? '#87CBB9' : 'transparent',
+                                color: active ? '#0A1926' : '#8AAEBB',
                             }}>
                             <Icon size={14} /> {t.label}
                             {t.badge !== undefined && t.badge > 0 && (
-                                <span className="text-[10px] min-w-[18px] text-center px-1 py-0.5 rounded-full font-bold"
-                                    style={{ background: 'rgba(212,168,83,0.2)', color: '#D4A853' }}>
+                                <span className="text-[10px] min-w-[16px] text-center px-1.5 py-0.5 rounded-full font-bold"
+                                    style={{ background: active ? '#0A1926' : 'rgba(212,168,83,0.2)', color: active ? '#87CBB9' : '#D4A853' }}>
                                     {t.badge}
                                 </span>
                             )}

@@ -298,7 +298,7 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
     // RENDER
     // ═══════════════════════════════════════════════════
     return (
-        <div className="flex flex-col gap-0" style={{ height: 'calc(100vh - 280px)', minHeight: 500 }}>
+        <div className="flex flex-col gap-0" style={{ height: 'calc(100vh - 170px)', minHeight: 620 }}>
             {/* ── Top bar ─────────────────────────────── */}
             <div className="flex items-center gap-3 p-3 rounded-t-xl" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 {/* Warehouse selector */}
