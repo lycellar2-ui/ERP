@@ -651,6 +651,233 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     )
 }
 
+// ─── Searchable Product Combobox ───────────────────────────
+function SearchableProductCombobox({
+    products,
+    selectedProductId,
+    onSelect,
+}: {
+    products: any[]
+    selectedProductId: string
+    onSelect: (product: any) => void
+}) {
+    const [open, setOpen] = useState(false)
+    const [query, setQuery] = useState('')
+
+    const selectedProd = products.find(p => p.id === selectedProductId)
+
+    const filtered = React.useMemo(() => {
+        const q = query.trim().toLowerCase()
+        if (!q) return products.slice(0, 30)
+        return products.filter(p => 
+            p.productName.toLowerCase().includes(q) || 
+            p.skuCode.toLowerCase().includes(q)
+        ).slice(0, 30)
+    }, [products, query])
+
+    const displayValue = selectedProd ? `[${selectedProd.skuCode}] ${selectedProd.productName}` : query
+
+    return (
+        <div className="relative flex-1 min-w-0">
+            <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
+            <div className="relative">
+                <input
+                    type="text"
+                    value={open ? query : displayValue}
+                    onFocus={() => { setOpen(true); setQuery(''); }}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder="Gõ mã SKU hoặc tên sản phẩm..."
+                    style={{ ...inputStyle, padding: '5px 28px 5px 8px', fontSize: '12px', background: '#1B2E3D' }}
+                />
+                <Search size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {open && (
+                <>
+                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-md shadow-lg"
+                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        {filtered.length === 0 ? (
+                            <div className="p-3 text-xs text-center text-gray-500">Không tìm thấy sản phẩm khớp "{query}"</div>
+                        ) : (
+                            filtered.map(p => (
+                                <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onSelect(p)
+                                        setOpen(false)
+                                    }}
+                                    className="w-full text-left p-2 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs"
+                                >
+                                    <div className="min-w-0 flex-1 pr-2">
+                                        <span className="font-mono font-bold text-[#87CBB9] mr-2">{p.skuCode}</span>
+                                        <span className="text-[#E8F1F2] truncate">{p.productName}</span>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-gray-400 whitespace-nowrap">
+                                        {formatVND(p.wholesalePrice)}
+                                    </span>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}
+
+// ─── Batch Product Picker Modal ───────────────────────────
+function BatchProductPickerModal({
+    products,
+    onAddItems,
+    onClose,
+}: {
+    products: any[]
+    onAddItems: (items: { productId: string; proposedPrice: number }[]) => void
+    onClose: () => void
+}) {
+    const [search, setSearch] = useState('')
+    const [selected, setSelected] = useState<Record<string, { proposedPrice: number }>>({})
+
+    const filtered = React.useMemo(() => {
+        const q = search.trim().toLowerCase()
+        if (!q) return products.slice(0, 50)
+        return products.filter(p => 
+            p.productName.toLowerCase().includes(q) || 
+            p.skuCode.toLowerCase().includes(q)
+        ).slice(0, 50)
+    }, [products, search])
+
+    const handleApplyDiscountAll = (pct: number) => {
+        const next: Record<string, { proposedPrice: number }> = { ...selected }
+        filtered.forEach(p => {
+            if (next[p.id]) {
+                const discounted = p.wholesalePrice * (1 - pct / 100)
+                next[p.id].proposedPrice = Math.round(discounted / 1000) * 1000
+            }
+        })
+        setSelected(next)
+    }
+
+    const toggleSelect = (p: any) => {
+        const next = { ...selected }
+        if (next[p.id]) {
+            delete next[p.id]
+        } else {
+            next[p.id] = { proposedPrice: p.wholesalePrice }
+        }
+        setSelected(next)
+    }
+
+    const handleConfirm = () => {
+        const items = Object.entries(selected).map(([productId, val]) => ({
+            productId,
+            proposedPrice: val.proposedPrice
+        }))
+        if (items.length > 0) {
+            onAddItems(items)
+        }
+        onClose()
+    }
+
+    const selectedCount = Object.keys(selected).length
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
+            <div className="w-full max-w-2xl max-h-[85vh] rounded-lg flex flex-col" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between p-4 border-b border-[#2A4355]">
+                    <h4 className="text-sm font-bold text-[#E8F1F2]">Chọn Nhanh Sản Phẩm Đề Xuất Giá</h4>
+                    <button onClick={onClose}><X size={16} className="text-gray-400" /></button>
+                </div>
+
+                <div className="p-4 space-y-3 flex-1 overflow-hidden flex flex-col">
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Tìm SKU hoặc tên sản phẩm..."
+                            className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-md"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                        <span>Đã chọn: <strong className="text-[#87CBB9]">{selectedCount}</strong> chai</span>
+                        <div className="flex items-center gap-2">
+                            <span>Áp dụng giảm nhanh:</span>
+                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="px-2 py-0.5 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-[10px] text-[#D4A853]">-5%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="px-2 py-0.5 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-[10px] text-[#D4A853]">-10%</button>
+                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="px-2 py-0.5 rounded bg-[#1B2E3D] hover:bg-[#2A4355] text-[10px] text-[#D4A853]">-15%</button>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 border border-[#2A4355]/40 rounded p-2">
+                        {filtered.map(p => {
+                            const isChecked = !!selected[p.id]
+                            const currentPrice = selected[p.id]?.proposedPrice ?? p.wholesalePrice
+                            const diffPct = p.wholesalePrice > 0 ? ((currentPrice - p.wholesalePrice) / p.wholesalePrice) * 100 : 0
+
+                            return (
+                                <div key={p.id} className="flex items-center justify-between p-2 rounded hover:bg-[#1B2E3D] transition border-b border-[#2A4355]/30 text-xs">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={() => toggleSelect(p)}
+                                            className="w-4 h-4 accent-[#87CBB9] cursor-pointer"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <span className="font-mono font-bold text-[#87CBB9] mr-2">{p.skuCode}</span>
+                                            <span className="text-[#E8F1F2] font-medium">{p.productName}</span>
+                                            <span className="text-[10px] text-gray-500 block">Giá niêm yết: {formatVND(p.wholesalePrice)}</span>
+                                        </div>
+                                    </div>
+
+                                    {isChecked && (
+                                        <div className="flex items-center gap-2 pl-3">
+                                            <div className="text-right">
+                                                <label className="text-[9px] block text-gray-400">Giá đề xuất</label>
+                                                <input
+                                                    type="number"
+                                                    value={currentPrice}
+                                                    onChange={e => {
+                                                        const val = parseFloat(e.target.value) || 0
+                                                        setSelected(prev => ({ ...prev, [p.id]: { proposedPrice: val } }))
+                                                    }}
+                                                    className="w-24 px-2 py-1 text-xs font-bold font-mono outline-none rounded"
+                                                    style={{ background: '#142433', border: '1px solid #87CBB9', color: '#87CBB9' }}
+                                                />
+                                            </div>
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diffPct < 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                                                {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                <div className="p-4 border-t border-[#2A4355] flex justify-end gap-3">
+                    <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-medium rounded text-gray-400 hover:bg-[#1B2E3D]">Huỷ</button>
+                    <button
+                        type="button"
+                        onClick={handleConfirm}
+                        disabled={selectedCount === 0}
+                        className="px-5 py-2 text-xs font-semibold rounded disabled:opacity-40"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                    >
+                        Thêm {selectedCount} Sản Phẩm Vào Tờ Trình
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 // ─── Create Drawer ───────────────────────────────
 function CreateDrawer({ onClose, userId, onCreated }: {
     onClose: () => void
@@ -684,6 +911,17 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     })
     const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number }[]>([])
     const [saving, setSaving] = useState(false)
+    const [customerSearch, setCustomerSearch] = useState('')
+    const [batchPickerOpen, setBatchPickerOpen] = useState(false)
+
+    const filteredCustomersForSelect = React.useMemo(() => {
+        const q = customerSearch.trim().toLowerCase()
+        if (!q) return customers.slice(0, 100)
+        return customers.filter((c: any) => 
+            c.name.toLowerCase().includes(q) || 
+            c.code.toLowerCase().includes(q)
+        ).slice(0, 100)
+    }, [customers, customerSearch])
 
     const handleSave = async () => {
         if (!form.title || !form.content) return alert('Vui lòng nhập tiêu đề và nội dung')
@@ -743,16 +981,29 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         <div className="space-y-4 p-4 rounded-md border border-[#2A4355] bg-[#1B2E3D]">
                             <div>
                                 <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Khách hàng áp dụng *</label>
-                                <select 
-                                    value={form.customerId} 
-                                    onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))} 
-                                    style={{ ...inputStyle, background: '#142433' }}
-                                >
-                                    <option value="">Chọn khách hàng...</option>
-                                    {customers.map((c: any) => (
-                                        <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
-                                    ))}
-                                </select>
+                                <div className="space-y-1">
+                                    <div className="relative mb-1">
+                                        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={customerSearch}
+                                            onChange={e => setCustomerSearch(e.target.value)}
+                                            placeholder="Gõ mã hoặc tên khách hàng để tìm nhanh..."
+                                            className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded"
+                                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                        />
+                                    </div>
+                                    <select 
+                                        value={form.customerId} 
+                                        onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))} 
+                                        style={{ ...inputStyle, background: '#142433' }}
+                                    >
+                                        <option value="">-- Chọn khách hàng --</option>
+                                        {filteredCustomersForSelect.map((c: any) => (
+                                            <option key={c.id} value={c.id}>[{c.code}] {c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
@@ -785,44 +1036,52 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <label className="text-xs font-semibold uppercase block" style={{ color: '#8AAEBB' }}>Đề xuất giá theo chai *</label>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0 }])}
-                                            className="text-xs flex items-center gap-1 text-[#87CBB9] hover:underline"
-                                        >
-                                            <Plus size={12} /> Thêm dòng
-                                        </button>
+                                        <div className="flex items-center gap-3">
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setBatchPickerOpen(true)}
+                                                className="text-xs flex items-center gap-1 text-[#D4A853] font-semibold hover:underline"
+                                            >
+                                                <Search size={12} /> Chọn nhanh hàng loạt
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0 }])}
+                                                className="text-xs flex items-center gap-1 text-[#87CBB9] font-semibold hover:underline"
+                                            >
+                                                <Plus size={12} /> Thêm dòng
+                                            </button>
+                                        </div>
                                     </div>
                                     
-                                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                                         {priceLines.map((line, idx) => {
                                             const selectedProd = products.find(p => p.id === line.productId)
                                             const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
+                                            const diffPct = wholesale > 0 && line.proposedPrice > 0 ? ((line.proposedPrice - wholesale) / wholesale) * 100 : 0
                                             
                                             return (
-                                                <div key={idx} className="flex gap-2 items-end p-2 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                                    <div className="flex-1 min-w-0">
-                                                        <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Sản phẩm</label>
-                                                        <select 
-                                                            value={line.productId} 
-                                                            onChange={e => {
-                                                                const copy = [...priceLines]
-                                                                copy[idx].productId = e.target.value
-                                                                const found = products.find(p => p.id === e.target.value)
-                                                                copy[idx].proposedPrice = found ? found.wholesalePrice : 0
-                                                                setPriceLines(copy)
-                                                            }}
-                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D' }}
-                                                        >
-                                                            <option value="">Chọn sản phẩm...</option>
-                                                            {products.map(p => (
-                                                                <option key={p.id} value={p.id}>{p.productName} ({p.skuCode})</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
+                                                <div key={idx} className="flex gap-2 items-end p-2.5 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                    <SearchableProductCombobox
+                                                        products={products}
+                                                        selectedProductId={line.productId}
+                                                        onSelect={p => {
+                                                            const copy = [...priceLines]
+                                                            copy[idx].productId = p.id
+                                                            copy[idx].proposedPrice = p.wholesalePrice
+                                                            setPriceLines(copy)
+                                                        }}
+                                                    />
                                                     
-                                                    <div className="w-24">
-                                                        <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Giá đề xuất</label>
+                                                    <div className="w-28">
+                                                        <div className="flex items-center justify-between mb-0.5">
+                                                            <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Giá đề xuất</label>
+                                                            {line.proposedPrice > 0 && wholesale > 0 && (
+                                                                <span className={`text-[9px] font-bold ${diffPct < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                                    {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <input 
                                                             type="number"
                                                             value={line.proposedPrice || ''}
@@ -831,12 +1090,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                 copy[idx].proposedPrice = parseFloat(e.target.value) || 0
                                                                 setPriceLines(copy)
                                                             }}
-                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D' }}
+                                                            placeholder="0"
+                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D', fontWeight: 'bold', color: '#87CBB9' }}
                                                         />
                                                     </div>
                                                     
-                                                    <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[70px]">
-                                                        <span className="text-[9px] block text-gray-500">Gốc</span>
+                                                    <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[75px]">
+                                                        <span className="text-[9px] block text-gray-500">Gốc (WS)</span>
                                                         <span className="text-[11px] block font-mono font-semibold" style={{ color: '#E8F1F2' }}>{formatVND(wholesale)}</span>
                                                     </div>
 
@@ -844,6 +1104,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                         type="button" 
                                                         onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
                                                         className="p-1 rounded text-red-400 hover:bg-red-500/10 mb-0.5"
+                                                        title="Xóa dòng"
                                                     >
                                                         <X size={14} />
                                                     </button>
@@ -851,10 +1112,26 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             )
                                         })}
                                         {priceLines.length === 0 && (
-                                            <p className="text-center text-xs py-3 text-gray-500">Bấm nút "Thêm dòng" để chọn chai đề xuất.</p>
+                                            <p className="text-center text-xs py-4 text-gray-400 border border-dashed border-[#2A4355] rounded-md">
+                                                Bấm nút <strong className="text-[#87CBB9]">"Thêm dòng"</strong> hoặc <strong className="text-[#D4A853]">"Chọn nhanh hàng loạt"</strong> để chọn sản phẩm đề xuất.
+                                            </p>
                                         )}
                                     </div>
                                 </div>
+                            )}
+
+                            {batchPickerOpen && (
+                                <BatchProductPickerModal
+                                    products={products}
+                                    onClose={() => setBatchPickerOpen(false)}
+                                    onAddItems={newItems => {
+                                        // Merge new items avoiding duplicates
+                                        const existingIds = new Set(priceLines.filter(l => l.productId).map(l => l.productId))
+                                        const filteredNew = newItems.filter(item => !existingIds.has(item.productId))
+                                        const validLines = priceLines.filter(l => l.productId)
+                                        setPriceLines([...validLines, ...filteredNew])
+                                    }}
+                                />
                             )}
                         </div>
                     )}
