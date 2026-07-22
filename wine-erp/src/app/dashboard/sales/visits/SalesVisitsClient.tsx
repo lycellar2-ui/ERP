@@ -139,8 +139,26 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
     const [gpsError, setGpsError] = useState<string | null>(null)
 
+    // Reverse Geocoding (Convert lat/lng -> Street address)
+    const fetchAddressFromCoords = async (lat: number, lng: number): Promise<string | undefined> => {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=vi`, {
+                headers: { 'User-Agent': 'WineERP/1.0' }
+            })
+            if (res.ok) {
+                const data = await res.json()
+                if (data && data.display_name) {
+                    return data.display_name
+                }
+            }
+        } catch (e) {
+            console.warn('Reverse geocode error:', e)
+        }
+        return undefined
+    }
+
     // Robust multi-tier GPS capture
-    const captureGPSLocation = useCallback((): Promise<{ lat?: number; lng?: number }> => {
+    const captureGPSLocation = useCallback((): Promise<{ lat?: number; lng?: number; address?: string }> => {
         return new Promise((resolve) => {
             if (!navigator.geolocation) {
                 setGpsError('Trình duyệt không hỗ trợ định vị GPS')
@@ -151,26 +169,26 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             setGettingLocation(true)
             setGpsError(null)
 
+            const handleSuccess = async (pos: GeolocationPosition) => {
+                const lat = pos.coords.latitude
+                const lng = pos.coords.longitude
+                setCoords({ lat, lng })
+                const address = await fetchAddressFromCoords(lat, lng)
+                const res = { lat, lng, address }
+                setCoords(res)
+                setGettingLocation(false)
+                setGpsError(null)
+                resolve(res)
+            }
+
             // Strategy 1: High Accuracy with 6s timeout
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    setGettingLocation(false)
-                    const res = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-                    setCoords(res)
-                    setGpsError(null)
-                    resolve(res)
-                },
+                handleSuccess,
                 (err1) => {
                     console.warn('GPS High Accuracy failed, falling back to standard:', err1)
                     // Strategy 2: Low Accuracy fallback with 10s timeout
                     navigator.geolocation.getCurrentPosition(
-                        (pos2) => {
-                            setGettingLocation(false)
-                            const res2 = { lat: pos2.coords.latitude, lng: pos2.coords.longitude }
-                            setCoords(res2)
-                            setGpsError(null)
-                            resolve(res2)
-                        },
+                        handleSuccess,
                         (err2) => {
                             console.warn('GPS Low Accuracy failed:', err2)
                             setGettingLocation(false)
@@ -221,6 +239,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             purpose,
             lat: gps.lat || coords.lat,
             lng: gps.lng || coords.lng,
+            address: gps.address || coords.address,
             photoBase64,
         })
 
@@ -248,6 +267,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             notes: checkoutNotes,
             lat: gps.lat || coords.lat,
             lng: gps.lng || coords.lng,
+            address: gps.address || coords.address,
             photoBase64,
         })
 
@@ -463,18 +483,25 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
                                 {/* GPS Location Status Card */}
                                 <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] flex items-center justify-between gap-3 text-xs">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <MapPin size={18} className={coords.lat && coords.lng ? 'text-[#87CBB9]' : 'text-[#D4A853]'} />
-                                        <div className="min-w-0">
-                                            <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Trạng Thái Định Vị GPS Check-in</span>
+                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                        <MapPin size={18} className={coords.lat && coords.lng ? 'text-[#87CBB9] shrink-0' : 'text-[#D4A853] shrink-0'} />
+                                        <div className="min-w-0 flex-1">
+                                            <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Trạng Thái Định Vị & Địa Chỉ GPS</span>
                                             {gettingLocation ? (
                                                 <span className="text-[#87CBB9] animate-pulse flex items-center gap-1 text-xs">
-                                                    <RefreshCw size={12} className="animate-spin inline" /> Đang quét vệ tinh GPS...
+                                                    <RefreshCw size={12} className="animate-spin inline" /> Đang quét tọa độ & tra địa chỉ...
                                                 </span>
                                             ) : coords.lat && coords.lng ? (
-                                                <span className="font-mono font-bold text-[#87CBB9] text-xs">
-                                                    {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} ✅ (Đã lấy vị trí)
-                                                </span>
+                                                <div>
+                                                    <span className="font-mono font-bold text-[#87CBB9] text-xs block">
+                                                        {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} ✅
+                                                    </span>
+                                                    {coords.address && (
+                                                        <span className="text-[11px] text-[#E8F1F2] block font-medium mt-0.5 truncate max-w-sm" title={coords.address}>
+                                                            🏠 {coords.address}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             ) : (
                                                 <span className="text-red-400 text-[11px] block font-medium">
                                                     {gpsError || 'Chưa định vị được GPS. Hãy bấm nút thử lại!'}
@@ -487,7 +514,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                         type="button"
                                         onClick={() => captureGPSLocation()}
                                         disabled={gettingLocation}
-                                        className="px-2.5 py-1.5 rounded-lg bg-[#1B2E3D] hover:bg-[#2A4355] text-xs font-semibold text-[#87CBB9] border border-[#2A4355] whitespace-nowrap flex items-center gap-1"
+                                        className="px-2.5 py-1.5 rounded-lg bg-[#1B2E3D] hover:bg-[#2A4355] text-xs font-semibold text-[#87CBB9] border border-[#2A4355] whitespace-nowrap flex items-center gap-1 shrink-0"
                                     >
                                         <RefreshCw size={12} className={gettingLocation ? 'animate-spin' : ''} /> {coords.lat ? 'Cập Nhật GPS' : '📍 Lấy GPS'}
                                     </button>
@@ -643,16 +670,23 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                     {v.status === 'COMPLETED' ? `Ở lại ${v.durationMinutes} phút` : 'Đang ở tại chỗ'}
                                                 </div>
                                             </td>
-                                            <td className="p-3.5">
+                                            <td className="p-3.5 max-w-xs">
                                                 {v.checkInLat && v.checkInLng ? (
-                                                    <a
-                                                        href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="inline-flex items-center gap-1 text-[#87CBB9] hover:underline font-mono text-[11px]"
-                                                    >
-                                                        <Navigation size={12} /> Google Maps
-                                                    </a>
+                                                    <div className="space-y-1">
+                                                        <a
+                                                            href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-1 text-[#87CBB9] hover:underline font-mono text-[11px]"
+                                                        >
+                                                            <Navigation size={12} /> Google Maps ({v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)})
+                                                        </a>
+                                                        {v.checkInAddress && (
+                                                            <p className="text-[10px] text-gray-300 truncate" title={v.checkInAddress}>
+                                                                🏠 {v.checkInAddress}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 ) : <span className="text-gray-500">Không có GPS</span>}
                                             </td>
                                             <td className="p-3.5 max-w-xs truncate text-gray-300 text-xs" title={v.notes}>
