@@ -760,7 +760,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                                 setSearchQueries(prev => ({ ...prev, [i]: val }))
                                                                                 setActiveDropdownIndex(i)
                                                                             }}
-                                                                            className="w-full px-2.5 py-1.5 text-xs outline-none bg-[#0D1E2B] border border-[#2A4355] text-white rounded"
+                                                                            className="w-full px-2.5 py-1.5 text-xs outline-none rounded"
+                                                                            style={{ ...inputStyle }}
                                                                         />
                                                                         
                                                                         {activeDropdownIndex === i && (
@@ -821,7 +822,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                         min="1"
                                                                         value={line.qtyOrdered}
                                                                         onChange={e => updateLine(i, 'qtyOrdered', Number(e.target.value))}
-                                                                        className="w-14 px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                        className="w-14 px-2 py-1 text-xs text-center rounded outline-none"
+                                                                        style={{ ...inputStyle }}
                                                                     />
                                                                     {lowStock && <p className="text-[10px] text-red-500 mt-0.5">Vượt tồn!</p>}
                                                                 </td>
@@ -835,7 +837,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                         max="100"
                                                                         value={line.lineDiscountPct}
                                                                         onChange={e => updateLine(i, 'lineDiscountPct', Number(e.target.value))}
-                                                                        className="w-12 px-1 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
+                                                                        className="w-12 px-1 py-1 text-xs text-center rounded outline-none"
+                                                                        style={{ ...inputStyle }}
                                                                     />
                                                                 </td>
                                                                 <td className="px-3 py-2 text-right font-mono font-bold text-[#87CBB9]">
