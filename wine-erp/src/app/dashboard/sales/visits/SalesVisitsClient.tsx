@@ -137,6 +137,58 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         setVisits(data)
     }, [filterDate, filterStatus])
 
+    const [gpsError, setGpsError] = useState<string | null>(null)
+
+    // Robust multi-tier GPS capture
+    const captureGPSLocation = useCallback((): Promise<{ lat?: number; lng?: number }> => {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                setGpsError('Trình duyệt không hỗ trợ định vị GPS')
+                resolve({})
+                return
+            }
+
+            setGettingLocation(true)
+            setGpsError(null)
+
+            // Strategy 1: High Accuracy with 6s timeout
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setGettingLocation(false)
+                    const res = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+                    setCoords(res)
+                    setGpsError(null)
+                    resolve(res)
+                },
+                (err1) => {
+                    console.warn('GPS High Accuracy failed, falling back to standard:', err1)
+                    // Strategy 2: Low Accuracy fallback with 10s timeout
+                    navigator.geolocation.getCurrentPosition(
+                        (pos2) => {
+                            setGettingLocation(false)
+                            const res2 = { lat: pos2.coords.latitude, lng: pos2.coords.longitude }
+                            setCoords(res2)
+                            setGpsError(null)
+                            resolve(res2)
+                        },
+                        (err2) => {
+                            console.warn('GPS Low Accuracy failed:', err2)
+                            setGettingLocation(false)
+                            let msg = 'Chưa thể lấy vị trí GPS. Vui lòng kiểm tra quyền Vị Trí (Location) trên trình duyệt!'
+                            if (err2.code === 1) msg = 'Bạn đã từ chối quyền GPS. Vui lòng bấm "Cho phép vị trí" trên thanh địa chỉ!'
+                            else if (err2.code === 2) msg = 'Không thể xác định vị trí thiết bị. Vui lòng bật GPS trên điện thoại!'
+                            else if (err2.code === 3) msg = 'Hết thời gian chờ phản hồi GPS. Vui lòng bấm "Lấy Tọa Độ GPS"!'
+                            setGpsError(msg)
+                            resolve({})
+                        },
+                        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+                    )
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+            )
+        })
+    }, [])
+
     useEffect(() => {
         fetchActive()
     }, [fetchActive])
@@ -145,30 +197,10 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         fetchVisitsList()
     }, [fetchVisitsList])
 
-    // Fetch GPS Location
-    const captureGPSLocation = (): Promise<{ lat?: number; lng?: number }> => {
-        return new Promise((resolve) => {
-            if (!navigator.geolocation) {
-                resolve({})
-                return
-            }
-            setGettingLocation(true)
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    setGettingLocation(false)
-                    const res = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-                    setCoords(res)
-                    resolve(res)
-                },
-                (err) => {
-                    console.warn('GPS location error:', err)
-                    setGettingLocation(false)
-                    resolve({})
-                },
-                { enableHighAccuracy: true, timeout: 8000 }
-            )
-        })
-    }
+    // Auto-request GPS location on page mount
+    useEffect(() => {
+        captureGPSLocation()
+    }, [captureGPSLocation])
 
     // Filtered customers for select
     const filteredCustomers = React.useMemo(() => {
@@ -427,6 +459,38 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                         <option value="Thu hồi công nợ / Hóa đơn">Thu hồi công nợ / Hóa đơn</option>
                                         <option value="Giao hợp đồng & Hồ sơ TCB">Giao hợp đồng & Hồ sơ TCB</option>
                                     </select>
+                                </div>
+
+                                {/* GPS Location Status Card */}
+                                <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] flex items-center justify-between gap-3 text-xs">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <MapPin size={18} className={coords.lat && coords.lng ? 'text-[#87CBB9]' : 'text-[#D4A853]'} />
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Trạng Thái Định Vị GPS Check-in</span>
+                                            {gettingLocation ? (
+                                                <span className="text-[#87CBB9] animate-pulse flex items-center gap-1 text-xs">
+                                                    <RefreshCw size={12} className="animate-spin inline" /> Đang quét vệ tinh GPS...
+                                                </span>
+                                            ) : coords.lat && coords.lng ? (
+                                                <span className="font-mono font-bold text-[#87CBB9] text-xs">
+                                                    {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} ✅ (Đã lấy vị trí)
+                                                </span>
+                                            ) : (
+                                                <span className="text-red-400 text-[11px] block font-medium">
+                                                    {gpsError || 'Chưa định vị được GPS. Hãy bấm nút thử lại!'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => captureGPSLocation()}
+                                        disabled={gettingLocation}
+                                        className="px-2.5 py-1.5 rounded-lg bg-[#1B2E3D] hover:bg-[#2A4355] text-xs font-semibold text-[#87CBB9] border border-[#2A4355] whitespace-nowrap flex items-center gap-1"
+                                    >
+                                        <RefreshCw size={12} className={gettingLocation ? 'animate-spin' : ''} /> {coords.lat ? 'Cập Nhật GPS' : '📍 Lấy GPS'}
+                                    </button>
                                 </div>
 
                                 {/* Rules Notice */}
