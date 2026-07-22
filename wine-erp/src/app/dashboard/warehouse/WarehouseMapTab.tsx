@@ -82,6 +82,7 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
     const [searchTerm, setSearchTerm] = useState('')
     const [highlightLocs, setHighlightLocs] = useState<string[]>([])
     const [searchResults, setSearchResults] = useState<{ skuCode: string; productName: string; totalQty: number; locationIds: string[] }[]>([])
+    const [showLocModal, setShowLocModal] = useState(false)
 
     // Toast
     const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
@@ -789,16 +790,48 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                                         </div>
                                     </div>
                                 )}
-                                {selectedLoc.products.length > 0 && (
-                                    <div className="pt-2 border-t space-y-1" style={{ borderColor: '#f1f5f9' }}>
-                                        <p className="text-[10px] font-semibold uppercase" style={{ color: '#94a3b8' }}>Sản phẩm trong kệ</p>
-                                        {selectedLoc.products.slice(0, 5).map((p, i) => (
-                                            <div key={i} className="flex items-center gap-1.5">
-                                                <Package size={10} style={{ color: '#94a3b8' }} />
-                                                <span className="text-[10px] truncate flex-1" style={{ color: '#475569' }}>{p.skuCode}</span>
-                                                <span className="text-[10px] font-bold" style={{ color: '#1e293b' }}>{formatNumber(p.qtyAvailable)}</span>
-                                            </div>
-                                        ))}
+                                {selectedLoc.products.length > 0 ? (
+                                    <div className="pt-3 border-t space-y-2" style={{ borderColor: '#e2e8f0' }}>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#1e293b' }}>
+                                                📦 Hàng trong ô ({selectedLoc.products.length})
+                                            </p>
+                                            <button
+                                                onClick={() => setShowLocModal(true)}
+                                                className="text-[10px] font-semibold px-2 py-0.5 rounded transition-colors"
+                                                style={{ background: '#3b82f6', color: '#fff' }}
+                                            >
+                                                Xem bảng 🔍
+                                            </button>
+                                        </div>
+
+                                        <div className="border rounded-lg overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+                                            <table className="w-full text-left text-[11px] border-collapse">
+                                                <thead>
+                                                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                                        <th className="p-1.5 font-bold" style={{ color: '#64748b' }}>Mã SKU / Tên Rượu</th>
+                                                        <th className="p-1.5 font-bold text-right" style={{ color: '#64748b' }}>SL (Chai)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y" style={{ borderColor: '#f1f5f9' }}>
+                                                    {selectedLoc.products.map((p, i) => (
+                                                        <tr key={i} className="hover:bg-blue-50/50 transition-colors">
+                                                            <td className="p-1.5 min-w-0">
+                                                                <p className="font-bold truncate text-[11px]" style={{ color: '#1e293b' }}>{p.skuCode}</p>
+                                                                <p className="truncate text-[10px]" style={{ color: '#64748b' }}>{p.productName}</p>
+                                                            </td>
+                                                            <td className="p-1.5 text-right font-mono font-bold align-top text-xs" style={{ color: '#059669' }}>
+                                                                {formatNumber(p.qtyAvailable)}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="pt-3 border-t text-center" style={{ borderColor: '#e2e8f0' }}>
+                                        <p className="text-[11px] italic" style={{ color: '#94a3b8' }}>Kệ hiện đang trống</p>
                                     </div>
                                 )}
                             </div>
@@ -807,7 +840,85 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                 </div>
             </div>
 
-            {/* Keyboard shortcuts are now handled via global useEffect */}
+            {/* Modal: Full Location Product Table */}
+            {showLocModal && selectedLoc && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 bg-slate-900 text-white">
+                            <div>
+                                <h3 className="text-base font-bold flex items-center gap-2">
+                                    📍 Vị Trí: {selectedLoc.locationCode}
+                                </h3>
+                                <p className="text-xs text-slate-400">
+                                    Zone: {selectedLoc.zone} • Rack: {selectedLoc.rack ?? '—'} • Bin: {selectedLoc.bin ?? '—'}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowLocModal(false)}
+                                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Summary badges */}
+                        <div className="flex items-center gap-3 p-3 bg-slate-50 border-b border-slate-200 text-xs">
+                            <span className="font-semibold text-slate-700">
+                                Tổng sản phẩm: <strong className="text-blue-600 font-mono">{selectedLoc.products.length} mã</strong>
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span className="font-semibold text-slate-700">
+                                Tổng tồn kho: <strong className="text-emerald-600 font-mono">{formatNumber(selectedLoc.totalQty)} chai</strong>
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span className="font-semibold text-slate-700">
+                                Tỷ lệ lấp đầy: <strong className="text-amber-600 font-mono">{selectedLoc.occupancyPct}%</strong>
+                            </span>
+                        </div>
+
+                        {/* Product Table */}
+                        <div className="p-4 max-h-[60vh] overflow-y-auto">
+                            <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 uppercase text-[10px] tracking-wider">
+                                        <th className="p-2.5 font-bold">Mã SKU</th>
+                                        <th className="p-2.5 font-bold">Tên Rượu / Sản Phẩm</th>
+                                        <th className="p-2.5 font-bold text-center">Trạng Thái</th>
+                                        <th className="p-2.5 font-bold text-right">Tồn Kho (Chai)</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {selectedLoc.products.map((p, i) => (
+                                        <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                            <td className="p-2.5 font-mono font-bold text-slate-800">{p.skuCode}</td>
+                                            <td className="p-2.5 font-medium text-slate-700">{p.productName}</td>
+                                            <td className="p-2.5 text-center">
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                                    {p.status === 'AVAILABLE' ? '✅ Sẵn sàng' : p.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-2.5 text-right font-mono font-bold text-emerald-600 text-sm">
+                                                {formatNumber(p.qtyAvailable)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                            <button
+                                onClick={() => setShowLocModal(false)}
+                                className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-700"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Toast */}
             {toast && (
