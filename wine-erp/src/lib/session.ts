@@ -89,6 +89,7 @@ export function invalidateUserSession(email?: string) {
 
 export const ROLE_NAME_MAP: Record<string, string> = {
     'Kế Toán': 'KE_TOAN',
+    'CBO': 'CBO',
     'Sales Manager': 'SALES_MGR',
     'Sales Rep': 'SALES_REP',
     'Thủ Kho': 'THU_KHO',
@@ -109,15 +110,15 @@ export function hasRole(user: SessionUser, ...roleNames: string[]): boolean {
 // ── Report Permission Mapping ─────────────────────
 const REPORT_ROLE_MAP: Record<string, string[]> = {
     'R01_STOCK_DETAIL': ['CEO', 'THU_KHO', 'KE_TOAN'],
-    'R02_REVENUE': ['CEO', 'SALES_MGR', 'KE_TOAN', 'SALES_ADMIN'],
+    'R02_REVENUE': ['CEO', 'CBO', 'SALES_MGR', 'KE_TOAN', 'SALES_ADMIN'],
     'R03_AR_AGING': ['CEO', 'KE_TOAN'],
     'R04_COST_MARGIN': ['CEO', 'KE_TOAN', 'SALES_ADMIN'],
     'R05_AP_OUTSTANDING': ['CEO', 'KE_TOAN', 'THU_MUA'],
     'R06_PO_STATUS': ['CEO', 'THU_MUA', 'KE_TOAN'],
     'R07_MONTHLY_PL': ['CEO', 'KE_TOAN'],
-    'R08_SKU_MARGIN': ['CEO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN'],
-    'R09_CHANNEL_PERF': ['CEO', 'SALES_MGR', 'SALES_REP', 'SALES_ADMIN'],
-    'R10_CUSTOMER_RANK': ['CEO', 'SALES_MGR', 'KE_TOAN', 'SALES_ADMIN'],
+    'R08_SKU_MARGIN': ['CEO', 'CBO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN'],
+    'R09_CHANNEL_PERF': ['CEO', 'CBO', 'SALES_MGR', 'SALES_REP', 'SALES_ADMIN'],
+    'R10_CUSTOMER_RANK': ['CEO', 'CBO', 'SALES_MGR', 'KE_TOAN', 'SALES_ADMIN'],
     'R11_SLOW_STOCK': ['CEO', 'THU_KHO'],
     'R12_STAMP_USAGE': ['CEO', 'KE_TOAN', 'THU_KHO'],
     'R13_TAX_SUMMARY': ['CEO', 'KE_TOAN'],

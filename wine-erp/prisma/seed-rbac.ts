@@ -56,6 +56,15 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
         'STM:READ', 'STM:CREATE', 'STM:UPDATE',
         'CST:READ', 'CST:CREATE', 'CST:UPDATE',
     ],
+    'CBO': [
+        'DSH:READ',
+        'SLS:READ', 'SLS:CREATE', 'SLS:UPDATE', 'SLS:APPROVE', 'SLS:WRITE',
+        'CRM:READ', 'CRM:CREATE', 'CRM:UPDATE',
+        'RPT:READ', 'RPT:EXPORT',
+        'MDM:READ', 'MDM:WRITE',
+        'KPI:READ', 'KPI:CREATE', 'KPI:UPDATE',
+        'CSG:READ', 'CSG:CREATE', 'CSG:UPDATE',
+    ],
     'Sales Manager': [
         'DSH:READ',
         'SLS:READ', 'SLS:CREATE', 'SLS:UPDATE', 'SLS:APPROVE', 'SLS:WRITE',
@@ -189,8 +198,8 @@ async function main() {
     // ─── 4. Create sample users ────────────────────
     console.log('  → Creating sample users...')
     const sampleUsers = [
-        { id: 'user-ketoan', email: 'ketoan@lyscellars.com', name: 'Trà (Kế toán)', roleId: 'role-kế-toán' },
-        { id: 'user-sales-mgr', email: 'sales.mgr@lyscellars.com', name: 'Jeremy (Sale Manager)', roleId: 'role-sales-manager' },
+        { id: 'user-ketoan', email: 'accounting@lyscellars.com', name: 'Trà (Kế toán)', roleId: 'role-kế-toán' },
+        { id: 'user-sales-mgr', email: 'jeremie.courivault@lyscellars.com', name: 'Jeremy (CBO)', roleId: 'role-cbo' },
         { id: 'user-sales-01', email: 'sales01@lyscellars.com', name: 'Khánh (Sale rep)', roleId: 'role-sales-rep' },
         { id: 'user-thukho', email: 'thukho@lyscellars.com', name: 'Phạm Quốc Hùng (Thủ Kho)', roleId: 'role-thủ-kho' },
         { id: 'user-thumua', email: 'thumua@lyscellars.com', name: 'Nga (Mua Hàng)', roleId: 'role-thu-mua' },
