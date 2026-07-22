@@ -297,7 +297,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
             if (ev) return new Date(ev.createdAt)
             
             // Fallback for auto-approved orders that bypass manager approval
-            const confirmEv = timeline.find(e => e.action === 'CONFIRM' && e.entityType === 'SalesOrder')
+            const confirmEv = timeline.find(e => e.action === 'CONFIRM')
             return confirmEv ? new Date(confirmEv.createdAt) : null
         }
         if (step === 'CONFIRMED') {
