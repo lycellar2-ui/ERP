@@ -72,8 +72,9 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [spaceHeld, setSpaceHeld] = useState(false)
 
-    // Drag location
+    // Drag & Resize location
     const [dragLoc, setDragLoc] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null)
+    const [resizeLoc, setResizeLoc] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origX: number; origY: number } | null>(null)
     const [locations, setLocations] = useState<MapLocation[]>([])
     const [hasChanges, setHasChanges] = useState(false)
 
@@ -236,11 +237,48 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
             ))
             setHasChanges(true)
         }
+
+        // Resize location
+        if (resizeLoc && editMode) {
+            const dx = (e.clientX - resizeLoc.startX) / zoom
+            const dy = (e.clientY - resizeLoc.startY) / zoom
+            setLocations(prev => prev.map(l => {
+                if (l.id !== resizeLoc.id) return l
+                let newW = l.width
+                let newH = l.height
+                let newX = l.posX
+                let newY = l.posY
+
+                if (resizeLoc.handle.includes('r')) {
+                    newW = Math.max(40, snap(resizeLoc.origW + dx))
+                }
+                if (resizeLoc.handle.includes('b')) {
+                    newH = Math.max(30, snap(resizeLoc.origH + dy))
+                }
+                if (resizeLoc.handle.includes('l')) {
+                    const potentialW = snap(resizeLoc.origW - dx)
+                    if (potentialW >= 40) {
+                        newW = potentialW
+                        newX = snap(resizeLoc.origX + dx)
+                    }
+                }
+                if (resizeLoc.handle.includes('t')) {
+                    const potentialH = snap(resizeLoc.origH - dy)
+                    if (potentialH >= 30) {
+                        newH = potentialH
+                        newY = snap(resizeLoc.origY + dy)
+                    }
+                }
+                return { ...l, width: newW, height: newH, posX: newX, posY: newY }
+            }))
+            setHasChanges(true)
+        }
     }
 
     const onCanvasMouseUp = () => {
         setIsPanning(false)
         setDragLoc(null)
+        setResizeLoc(null)
     }
 
     const onWheel = (e: React.WheelEvent) => {
@@ -336,8 +374,8 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                     <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-gray-100"><Maximize2 size={14} style={{ color: '#64748b' }} /></button>
                 </div>
 
-                {/* Edit controls (Admin) */}
-                {isAdmin && mapData && (
+                {/* Edit controls */}
+                {mapData && (
                     <div className="flex items-center gap-1.5 ml-auto">
                         {!editMode ? (
                             <button onClick={() => setEditMode(true)}
@@ -692,6 +730,65 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
                                     <span style={{ color: '#94a3b8' }}>Chiếm:</span>
                                     <span className="font-semibold" style={{ color: occColor(selectedLoc.occupancyPct).text }}>{selectedLoc.occupancyPct}%</span>
                                 </div>
+
+                                {/* Direct Dimension Editor (Width x Height) */}
+                                {editMode && (
+                                    <div className="pt-2 border-t space-y-2" style={{ borderColor: '#e2e8f0' }}>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#3b82f6' }}>📐 Đổi kích thước ô (px)</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#64748b' }}>Rộng (W)</label>
+                                                <input
+                                                    type="number"
+                                                    value={selectedLoc.width}
+                                                    onChange={e => {
+                                                        const val = Math.max(40, parseInt(e.target.value) || 40)
+                                                        setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: val } : l))
+                                                        setHasChanges(true)
+                                                    }}
+                                                    className="w-full px-2 py-1 text-xs rounded border outline-none font-mono"
+                                                    style={{ background: '#f8fafc', borderColor: '#cbd5e1', color: '#1e293b' }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#64748b' }}>Cao (H)</label>
+                                                <input
+                                                    type="number"
+                                                    value={selectedLoc.height}
+                                                    onChange={e => {
+                                                        const val = Math.max(30, parseInt(e.target.value) || 30)
+                                                        setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, height: val } : l))
+                                                        setHasChanges(true)
+                                                    }}
+                                                    className="w-full px-2 py-1 text-xs rounded border outline-none font-mono"
+                                                    style={{ background: '#f8fafc', borderColor: '#cbd5e1', color: '#1e293b' }}
+                                                />
+                                            </div>
+                                        </div>
+                                        {/* Presets */}
+                                        <p className="text-[10px] font-semibold" style={{ color: '#64748b' }}>Kích thước chuẩn:</p>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            {[
+                                                { label: '80x60 (Chuẩn)', w: 80, h: 60 },
+                                                { label: '120x80 (Vừa)', w: 120, h: 80 },
+                                                { label: '160x100 (Rộng)', w: 160, h: 100 },
+                                                { label: '240x80 (Kệ dài)', w: 240, h: 80 },
+                                            ].map(p => (
+                                                <button
+                                                    key={p.label}
+                                                    onClick={() => {
+                                                        setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: p.w, height: p.h } : l))
+                                                        setHasChanges(true)
+                                                    }}
+                                                    className="text-[10px] py-1 px-1.5 rounded border bg-white hover:bg-blue-50 hover:border-blue-300 font-mono text-center"
+                                                    style={{ borderColor: '#cbd5e1', color: '#334155' }}
+                                                >
+                                                    {p.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 {selectedLoc.products.length > 0 && (
                                     <div className="pt-2 border-t space-y-1" style={{ borderColor: '#f1f5f9' }}>
                                         <p className="text-[10px] font-semibold uppercase" style={{ color: '#94a3b8' }}>Sản phẩm trong kệ</p>
