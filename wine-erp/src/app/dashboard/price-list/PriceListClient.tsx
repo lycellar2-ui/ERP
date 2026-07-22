@@ -18,6 +18,7 @@ function ChannelBadge({ channel }: { channel: string }) {
 }
 
 import { CustomerRulesTab } from './CustomerRulesTab'
+import { ChannelMappingTab } from './ChannelMappingTab'
 
 interface Props {
     initialLists: PriceListRow[]
@@ -31,7 +32,7 @@ interface Props {
 }
 
 export function PriceListClient({ initialLists, currentUser }: Props) {
-    const [activeTab, setActiveTab] = useState<'general' | 'customer'>('general')
+    const [activeTab, setActiveTab] = useState<'general' | 'customer' | 'mapping'>('general')
     const [lists, setLists] = useState(initialLists)
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [detail, setDetail] = useState<Awaited<ReturnType<typeof getPriceListDetail>>>(null)
@@ -131,12 +132,14 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
-                        {activeTab === 'general' ? 'Bảng Giá (PRC)' : 'Chính Sách Giá Khách Hàng (Customer Pricing)'}
+                        {activeTab === 'general' ? 'Bảng Giá Niêm Yết (PRC)' : activeTab === 'customer' ? 'Chính Sách Giá Khách Hàng (Customer Pricing)' : 'Cấu Hình Ánh Xạ Kênh Giá Mặc Định'}
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
                         {activeTab === 'general' 
                             ? 'Quản lý bảng giá theo kênh bán hàng — HORECA, Đại Lý, VIP, Trực Tiếp' 
-                            : 'Đề xuất, phê duyệt và quản lý giá cố định hoặc giá đặc biệt cho từng khách hàng cụ thể'}
+                            : activeTab === 'customer'
+                            ? 'Bảng giá đặc biệt và chiết khấu phân bổ cho từng khách hàng cụ thể'
+                            : 'Phân bổ bảng giá niêm yết mặc định cho từng nhóm đối tượng khách hàng khi không có giá đặc biệt'}
                     </p>
                 </div>
                 {activeTab === 'general' && (
@@ -172,12 +175,24 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                         borderColor: activeTab === 'customer' ? '#87CBB9' : 'transparent',
                     }}
                 >
-                    Giá Khách Hàng & Cấu Hình
+                    Giá Khách Hàng
+                </button>
+                <button
+                    onClick={() => setActiveTab('mapping')}
+                    className="px-4 py-2.5 text-sm font-semibold transition-all border-b-2"
+                    style={{
+                        color: activeTab === 'mapping' ? '#87CBB9' : '#8AAEBB',
+                        borderColor: activeTab === 'mapping' ? '#87CBB9' : 'transparent',
+                    }}
+                >
+                    Cấu Hình Ánh Xạ Kênh
                 </button>
             </div>
 
             {activeTab === 'customer' ? (
                 <CustomerRulesTab currentUser={currentUser} />
+            ) : activeTab === 'mapping' ? (
+                <ChannelMappingTab currentUser={currentUser} />
             ) : (
                 <>
                     {/* Summary cards */}
