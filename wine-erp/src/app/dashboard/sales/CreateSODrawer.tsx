@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -58,6 +58,7 @@ interface Customer {
     id: string
     name: string
     code: string
+    taxId?: string | null
     creditLimit: number
     creditHold: boolean
     paymentTerm: string
@@ -169,6 +170,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     const [loadingPrices, setLoadingPrices] = useState(false)
 
     const [saving, setSaving] = useState(false)
+    const [previewOpen, setPreviewOpen] = useState(false)
     const [legalEntityId, setLegalEntityId] = useState('')
     const [shippingAddressId, setShippingAddressId] = useState('')
 
@@ -1081,19 +1083,198 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid #2A4355' }}>
-                    <button onClick={onClose} className="px-4 py-2 text-sm"
-                        style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}>
-                        Huỷ
+                <div className="flex justify-between items-center px-6 py-4" style={{ borderTop: '1px solid #2A4355' }}>
+                    <button
+                        onClick={() => {
+                            if (!selectedCustomer) {
+                                toast.error('Vui lòng chọn khách hàng để xem file in')
+                                return
+                            }
+                            if (lines.length === 0 || lines.every(l => !l.productId)) {
+                                toast.error('Vui lòng chọn ít nhất 1 sản phẩm để xem file in')
+                                return
+                            }
+                            setPreviewOpen(true)
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded transition-colors bg-[#1F3547] hover:bg-[#2A4355] text-amber-300 border border-amber-500/30 shadow"
+                        title="Xem trước phiếu đơn hàng trước khi tạo đơn"
+                    >
+                        <Printer size={15} /> 🖨️ Xem File In
                     </button>
-                    <button onClick={handleSave} disabled={saving}
-                        className="flex items-center gap-2 px-5 py-2 text-sm font-semibold transition-all"
-                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {saving ? 'Đang lưu...' : 'Tạo Đơn'}
-                    </button>
+
+                    <div className="flex items-center gap-3">
+                        <button onClick={onClose} className="px-4 py-2 text-sm"
+                            style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}>
+                            Huỷ
+                        </button>
+                        <button onClick={handleSave} disabled={saving}
+                            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold transition-all"
+                            style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            {saving ? 'Đang lưu...' : 'Tạo Đơn'}
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* PRINT PREVIEW MODAL */}
+            {previewOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-[#0D1821] border border-[#2A4355] rounded-xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+                        {/* Header bar */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F3547] bg-[#142433]">
+                            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                                <Printer size={18} />
+                                <span>XEM TRƯỚC PHIẾU ĐƠN BÁN HÀNG (PRINT PREVIEW)</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded transition-colors shadow"
+                                >
+                                    <Printer size={14} /> In / Xuất PDF
+                                </button>
+                                <button
+                                    onClick={() => setPreviewOpen(false)}
+                                    className="p-1 text-slate-400 hover:text-white rounded bg-[#1F3547]"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Invoice Content Area */}
+                        <div className="p-8 overflow-y-auto bg-white text-slate-900 text-xs font-sans space-y-6">
+                            {/* Company & Order Header */}
+                            <div className="flex justify-between items-start border-b border-slate-300 pb-4">
+                                <div>
+                                    <h1 className="text-xl font-bold text-slate-900 tracking-wide uppercase">LY'S CELLAR — WINE & SPIRITS</h1>
+                                    <p className="text-slate-600 font-medium mt-0.5">Pháp nhân xuất bán: <strong className="text-slate-900">{entities.find(e => e.id === legalEntityId)?.name || 'CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN'}</strong></p>
+                                    <p className="text-slate-500">Mã số thuế: {entities.find(e => e.id === legalEntityId)?.taxId || '0100112162'}</p>
+                                    <p className="text-slate-500">Kênh bán: <span className="font-semibold text-slate-800">{channel}</span></p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="inline-block px-3 py-1 bg-amber-100 border border-amber-300 rounded text-amber-900 font-bold text-xs uppercase">
+                                        Đơn Bán Hàng Dự Thảo
+                                    </div>
+                                    <p className="text-slate-500 mt-2">Ngày lập: {new Date().toLocaleDateString('vi-VN')}</p>
+                                    <p className="text-slate-500">Hạn thanh toán: <strong className="text-slate-800">{paymentTerm}</strong></p>
+                                </div>
+                            </div>
+
+                            {/* Customer Info Box */}
+                            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-slate-400 uppercase font-bold text-[10px]">THÔNG TIN KHÁCH HÀNG</p>
+                                    <p className="text-sm font-bold text-slate-900 mt-0.5">
+                                        [{selectedCustomer?.code}] {selectedCustomer?.name}
+                                    </p>
+                                    <p className="text-slate-600 mt-1">Mã số thuế: {selectedCustomer?.taxId || '—'}</p>
+                                    <p className="text-slate-600">Phân loại: {selectedCustomer?.entityType || 'Khách hàng HORECA'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 uppercase font-bold text-[10px]">ĐỊA CHỈ GIAO HÀNG</p>
+                                    <p className="text-slate-800 font-medium mt-0.5">
+                                        {selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address ||
+                                         selectedCustomer?.addresses?.[0]?.address ||
+                                         'Giao theo địa chỉ mặc định trên hợp đồng'}
+                                    </p>
+                                    <p className="text-slate-500 mt-1">Ghi chú đơn: {notes || 'Không có ghi chú thêm'}</p>
+                                </div>
+                            </div>
+
+                            {/* Line Items Table */}
+                            <table className="w-full border-collapse border border-slate-300 text-xs">
+                                <thead>
+                                    <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300">
+                                        <th className="p-2 border border-slate-300 text-center w-10">STT</th>
+                                        <th className="p-2 border border-slate-300 text-left">Mã SP (SKU)</th>
+                                        <th className="p-2 border border-slate-300 text-left">Tên Rượu / Sản Phẩm</th>
+                                        <th className="p-2 border border-slate-300 text-center w-16">SL</th>
+                                        <th className="p-2 border border-slate-300 text-right w-24">Đơn Giá</th>
+                                        <th className="p-2 border border-slate-300 text-center w-16">CK (%)</th>
+                                        <th className="p-2 border border-slate-300 text-center w-16">VAT (%)</th>
+                                        <th className="p-2 border border-slate-300 text-right w-28">Thành Tiền (VNĐ)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {lines.filter(l => l.productId).map((l, idx) => {
+                                        const p = products.find(prod => prod.id === l.productId)
+                                        const lineVal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
+                                        return (
+                                            <tr key={idx} className="border-b border-slate-200">
+                                                <td className="p-2 border border-slate-200 text-center font-mono">{idx + 1}</td>
+                                                <td className="p-2 border border-slate-200 font-mono font-semibold text-slate-700">{p?.skuCode}</td>
+                                                <td className="p-2 border border-slate-200 font-medium text-slate-900">
+                                                    {p?.productName}
+                                                    {l.priceSource === 'SPECIAL_PRICE' && (
+                                                        <span className="ml-2 text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
+                                                            ★ Giá Đặc Biệt
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="p-2 border border-slate-200 text-center font-bold">{l.qtyOrdered}</td>
+                                                <td className="p-2 border border-slate-200 text-right font-mono">{formatVND(l.unitPrice)}</td>
+                                                <td className="p-2 border border-slate-200 text-center font-mono">{l.lineDiscountPct ? `${l.lineDiscountPct}%` : '—'}</td>
+                                                <td className="p-2 border border-slate-200 text-center font-mono">{l.vatRate ?? 10}%</td>
+                                                <td className="p-2 border border-slate-200 text-right font-mono font-bold text-slate-900">
+                                                    {formatVND(lineVal)}
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+
+                            {/* Financial Totals */}
+                            <div className="flex justify-end pt-2">
+                                <div className="w-80 space-y-2 text-xs">
+                                    <div className="flex justify-between text-slate-600">
+                                        <span>Cộng tiền hàng (trước thuế):</span>
+                                        <span className="font-mono font-semibold">{formatVND(subtotal)}</span>
+                                    </div>
+                                    {orderDiscount > 0 && (
+                                        <div className="flex justify-between text-amber-700 font-medium">
+                                            <span>Chiết khấu tổng đơn ({orderDiscount}%):</span>
+                                            <span className="font-mono">-{formatVND(subtotal * (orderDiscount / 100))}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between text-slate-600">
+                                        <span>Tiền thuế VAT:</span>
+                                        <span className="font-mono font-semibold">{formatVND(vatAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm font-bold text-slate-900 border-t border-slate-400 pt-2">
+                                        <span>TỔNG THÀNH TIỀN:</span>
+                                        <span className="font-mono text-emerald-700 text-base">{formatVND(finalTotal)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Signature Footer */}
+                            <div className="grid grid-cols-3 gap-4 text-center pt-8 text-slate-700 border-t border-slate-200 mt-8">
+                                <div>
+                                    <p className="font-bold uppercase text-[11px]">Người Lập Đơn</p>
+                                    <p className="text-[10px] text-slate-500">(Ký & ghi rõ họ tên)</p>
+                                    <div className="h-16"></div>
+                                    <p className="font-semibold text-slate-900">Nhân viên Sales</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold uppercase text-[11px]">Đại Diện Khách Hàng</p>
+                                    <p className="text-[10px] text-slate-500">(Xác nhận đơn hàng)</p>
+                                    <div className="h-16"></div>
+                                    <p className="font-semibold text-slate-900">{selectedCustomer?.name}</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold uppercase text-[11px]">Kế Toán / Duyệt Đơn</p>
+                                    <p className="text-[10px] text-slate-500">(Ký & duyệt xuất hàng)</p>
+                                    <div className="h-16"></div>
+                                    <p className="font-semibold text-slate-900">Ban Lãnh Đạo ERP</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
