@@ -465,7 +465,6 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                         <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
                             Tạo Đơn Bán Hàng
                         </h3>
-                        <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Sales Order — SLS</p>
                     </div>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={20} /></button>
                 </div>

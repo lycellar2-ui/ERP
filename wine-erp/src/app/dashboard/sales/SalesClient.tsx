@@ -1336,12 +1336,8 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#E8F1F2' }}>
-                        Đơn Bán Hàng (SLS)
-                    </h2>
-                    
                     {/* Inline Quick Stats */}
-                    <div className="hidden lg:flex items-center gap-x-4 pl-4 border-l border-[#2A4355] text-xs">
+                    <div className="hidden lg:flex items-center gap-x-4 text-xs">
                         <span style={{ color: '#8AAEBB' }}>Doanh Thu: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>₫{(stats.monthRevenue / 1e9).toFixed(1)}T</strong></span>
                         <span style={{ color: '#8AAEBB' }}>Đơn: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.monthOrders}</strong></span>
                         <span style={{ color: '#8AAEBB' }}>Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.pendingApproval}</strong></span>
