@@ -51,6 +51,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
     const [createOpen, setCreateOpen] = useState(false)
     
     // Filters
+    const [filterCustomer, setFilterCustomer] = useState('ALL')
     const [filterStatus, setFilterStatus] = useState('ALL')
     const [filterType, setFilterType] = useState('ALL')
     const [searchQuery, setSearchQuery] = useState('')
@@ -198,12 +199,13 @@ export function CustomerRulesTab({ currentUser }: Props) {
     const filteredRules = rules.filter(r => {
         const matchesStatus = filterStatus === 'ALL' || r.status === filterStatus
         const matchesType = filterType === 'ALL' || r.ruleType === filterType
+        const matchesCustomer = filterCustomer === 'ALL' || r.customerId === filterCustomer
         const matchesSearch = !searchQuery || 
             r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             r.customerCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
             r.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             r.skuCode.toLowerCase().includes(searchQuery.toLowerCase())
-        return matchesStatus && matchesType && matchesSearch
+        return matchesStatus && matchesType && matchesCustomer && matchesSearch
     })
 
     // Filtered products/customers for create modal
@@ -231,6 +233,17 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
                             />
                         </div>
+                        <select
+                            value={filterCustomer}
+                            onChange={e => setFilterCustomer(e.target.value)}
+                            className="px-3 py-2 text-xs outline-none cursor-pointer max-w-[180px] truncate"
+                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
+                        >
+                            <option value="ALL">Tất cả Khách Hàng ({customers.length})</option>
+                            {customers.map(c => (
+                                <option key={c.id} value={c.id}>[{c.code}] {c.name}</option>
+                            ))}
+                        </select>
                         <select
                             value={filterStatus}
                             onChange={e => setFilterStatus(e.target.value)}
