@@ -1216,6 +1216,9 @@ export type LegalEntityRow = {
     name: string
     taxId: string | null
     address: string | null
+    bankAccountName: string | null
+    bankAccountNumber: string | null
+    bankName: string | null
 }
 
 export async function getLegalEntities(): Promise<LegalEntityRow[]> {
@@ -1229,6 +1232,9 @@ export async function getLegalEntities(): Promise<LegalEntityRow[]> {
             name: e.name,
             taxId: e.taxId,
             address: e.address,
+            bankAccountName: e.bankAccountName,
+            bankAccountNumber: e.bankAccountNumber,
+            bankName: e.bankName,
         }))
     }, 120_000)
 }
