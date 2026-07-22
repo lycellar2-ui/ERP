@@ -211,10 +211,10 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
     return (
         <header
-            className="sticky top-0 z-10 flex items-center justify-between px-6"
+            className="sticky top-0 z-10 flex items-center justify-between px-4"
             style={{
-                height: '64px',
-                background: 'rgba(20,36,51,0.92)',
+                height: '42px',
+                background: 'rgba(20,36,51,0.95)',
                 backdropFilter: 'blur(12px)',
                 borderBottom: '1px solid #2A4355',
             }}
@@ -223,29 +223,29 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             <div className="flex items-center">
                 {mobileMenuButton}
                 <div>
-                    <h1 className="font-semibold text-lg leading-tight" style={{ color: '#E8F1F2' }}>
+                    <h1 className="font-bold text-sm leading-none tracking-wide" style={{ color: '#E8F1F2' }}>
                         {title}
                     </h1>
                 </div>
             </div>
 
             {/* Right side */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
                 {/* Notifications */}
                 <div className="relative" ref={notiRef}>
                     <button
                         onClick={handleToggleNoti}
-                        className="relative flex items-center justify-center w-9 h-9 transition-all duration-150"
+                        className="relative flex items-center justify-center w-7 h-7 transition-all duration-150"
                         style={{
                             background: '#1B2E3D',
                             border: '1px solid #2A4355',
                             color: '#8AAEBB',
-                            borderRadius: '6px',
+                            borderRadius: '5px',
                         }}
                         onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                         onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}
                     >
-                        <Bell size={16} />
+                        <Bell size={14} />
                         {/* Notification badge */}
                         {unreadCount > 0 && (
                             <span
@@ -342,18 +342,18 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 <div className="relative" ref={profileRef}>
                     <button
                         onClick={() => setShowProfile(!showProfile)}
-                        className="flex items-center gap-2 pl-1 pr-3 py-1 transition-all duration-150"
+                        className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 transition-all duration-150"
                         style={{
                             background: '#1B2E3D',
                             border: '1px solid #2A4355',
-                            borderRadius: '6px',
+                            borderRadius: '5px',
                         }}
                         onMouseEnter={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                         onMouseLeave={e => (e.currentTarget.style.borderColor = '#2A4355')}
                     >
                         {/* Avatar circle — Teal */}
                         <div
-                            className="w-7 h-7 flex items-center justify-center text-xs font-bold"
+                            className="w-6 h-6 flex items-center justify-center text-[11px] font-bold"
                             style={{
                                 background: 'rgba(135,203,185,0.2)',
                                 color: '#87CBB9',
@@ -363,7 +363,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         >
                             {(currentUser?.name?.[0] || 'A').toUpperCase()}
                         </div>
-                        <span className="text-sm hidden sm:inline" style={{ color: '#8AAEBB' }}>
+                        <span className="text-xs font-semibold hidden sm:inline" style={{ color: '#8AAEBB' }}>
                             {currentUser?.name || 'Admin'}
                         </span>
                     </button>

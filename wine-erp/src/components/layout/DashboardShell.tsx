@@ -95,7 +95,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                     ) : undefined}
                 />
 
-                <main className="flex-1 overflow-y-auto p-4 md:p-6">
+                <main className="flex-1 overflow-y-auto p-3 md:p-4">
                     <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
                 </main>
             </div>
