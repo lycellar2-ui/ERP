@@ -613,18 +613,113 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                         </div>
                     </div>
 
-                    {/* Table */}
-                    <div className="rounded-2xl overflow-hidden border border-[#2A4355] bg-[#1B2E3D]">
+                    {/* Mobile View: Card List (sm:hidden) */}
+                    <div className="block md:hidden space-y-3">
+                        {filteredVisits.length === 0 ? (
+                            <div className="p-8 text-center text-xs text-gray-500 bg-[#1B2E3D] rounded-2xl border border-[#2A4355]">
+                                Chưa có lượt viếng thăm nào khớp bộ lọc.
+                            </div>
+                        ) : filteredVisits.map(v => (
+                            <div key={v.id} className="p-4 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] space-y-3 shadow-md">
+                                <div className="flex items-start justify-between gap-2 border-b border-[#2A4355] pb-2.5">
+                                    <div>
+                                        <span className="font-mono text-[11px] font-bold text-[#87CBB9] block">{v.visitNo}</span>
+                                        <h4 className="text-sm font-bold text-white mt-0.5">{v.customerName}</h4>
+                                        <p className="text-[10px] text-[#4A6A7A]">KH: {v.customerCode} • Sales: <strong className="text-gray-300">{v.salespersonName}</strong></p>
+                                    </div>
+                                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full whitespace-nowrap ${v.status === 'COMPLETED' ? 'bg-[#87CBB9]/20 text-[#87CBB9] border border-[#87CBB9]/40' : 'bg-[#D4A853]/20 text-[#D4A853] border border-[#D4A853]/40'}`}>
+                                        {v.status === 'COMPLETED' ? 'Hoàn Thành' : 'Đang Tại Chỗ'}
+                                    </span>
+                                </div>
+
+                                {/* 3 Time Badges */}
+                                <div className="grid grid-cols-3 gap-2 bg-[#142433] p-2.5 rounded-xl border border-[#2A4355] text-center">
+                                    <div>
+                                        <span className="text-[9px] text-[#4A6A7A] uppercase font-bold block">🟢 Giờ Đến</span>
+                                        <span className="text-xs font-bold text-[#87CBB9]">
+                                            {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] text-[#4A6A7A] uppercase font-bold block">🔴 Giờ Đi</span>
+                                        <span className="text-xs font-bold text-[#E8F1F2]">
+                                            {v.checkOutTime ? new Date(v.checkOutTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] text-[#4A6A7A] uppercase font-bold block">⏱️ Ở Lại</span>
+                                        <span className="text-xs font-bold text-[#D4A853]">
+                                            {v.status === 'COMPLETED' ? `${v.durationMinutes} phút` : 'Đang ở'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Photos */}
+                                <div className="flex items-center gap-3 bg-[#142433] p-2 rounded-xl border border-[#2A4355]">
+                                    <div className="flex-1 text-center">
+                                        <span className="text-[9px] text-[#4A6A7A] block mb-1">Ảnh Check-in</span>
+                                        {v.checkInPhoto ? (
+                                            <img
+                                                src={v.checkInPhoto}
+                                                alt="Checkin"
+                                                className="w-14 h-14 object-cover rounded-lg mx-auto border border-[#2A4355]"
+                                                onClick={() => setViewPhoto({ title: `Check-in: ${v.customerName}`, url: v.checkInPhoto })}
+                                            />
+                                        ) : <span className="text-gray-500 text-[10px]">Chưa chụp</span>}
+                                    </div>
+                                    <div className="w-[1px] h-10 bg-[#2A4355]" />
+                                    <div className="flex-1 text-center">
+                                        <span className="text-[9px] text-[#4A6A7A] block mb-1">Ảnh Check-out</span>
+                                        {v.checkOutPhoto ? (
+                                            <img
+                                                src={v.checkOutPhoto}
+                                                alt="Checkout"
+                                                className="w-14 h-14 object-cover rounded-lg mx-auto border border-[#2A4355]"
+                                                onClick={() => setViewPhoto({ title: `Check-out: ${v.customerName}`, url: v.checkOutPhoto })}
+                                            />
+                                        ) : <span className="text-gray-500 text-[10px]">Chưa Check-out</span>}
+                                    </div>
+                                </div>
+
+                                {/* Address & GPS */}
+                                {v.checkInLat && v.checkInLng && (
+                                    <div className="text-xs space-y-0.5 pt-1">
+                                        <a
+                                            href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 text-[#87CBB9] font-mono text-[11px] font-semibold"
+                                        >
+                                            <Navigation size={12} /> Google Maps ({v.checkInLat.toFixed(4)}, {v.checkInLng.toFixed(4)})
+                                        </a>
+                                        {v.checkInAddress && (
+                                            <p className="text-[10px] text-gray-300">🏠 {v.checkInAddress}</p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {v.notes && (
+                                    <p className="text-xs text-gray-300 bg-[#142433] p-2 rounded-lg border border-[#2A4355]/50">
+                                        💬 {v.notes}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop View: 9-Column Table (hidden md:block) */}
+                    <div className="hidden md:block rounded-2xl overflow-hidden border border-[#2A4355] bg-[#1B2E3D]">
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs text-left">
                                 <thead>
                                     <tr className="bg-[#142433] text-[#4A6A7A]">
                                         <th className="p-3.5 font-semibold">Mã Viếng Thăm</th>
-                                        <th className="p-3.5 font-semibold">Khách Hàng & Kênh</th>
-                                        <th className="p-3.5 font-semibold">Salesman</th>
-                                        <th className="p-3.5 font-semibold">Ảnh Check-in</th>
-                                        <th className="p-3.5 font-semibold">Ảnh Check-out</th>
-                                        <th className="p-3.5 font-semibold">Thời Gian Lưu Lại</th>
+                                        <th className="p-3.5 font-semibold">Khách Hàng & Salesman</th>
+                                        <th className="p-3.5 font-semibold text-center">Ảnh Check-in</th>
+                                        <th className="p-3.5 font-semibold text-center">Ảnh Check-out</th>
+                                        <th className="p-3.5 font-semibold text-center">🟢 Giờ Đến</th>
+                                        <th className="p-3.5 font-semibold text-center">🔴 Giờ Đi</th>
+                                        <th className="p-3.5 font-semibold text-center">⏱️ Tổng Thời Gian</th>
                                         <th className="p-3.5 font-semibold">Định Vị GPS & Địa Chỉ</th>
                                         <th className="p-3.5 font-semibold">Ghi Chú Kết Quả</th>
                                     </tr>
@@ -632,44 +727,55 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 <tbody>
                                     {filteredVisits.length === 0 ? (
                                         <tr>
-                                            <td colSpan={8} className="text-center py-12 text-gray-500">
+                                            <td colSpan={9} className="text-center py-12 text-gray-500">
                                                 Chưa có lượt viếng thăm nào khớp bộ lọc.
                                             </td>
                                         </tr>
                                     ) : filteredVisits.map(v => (
                                         <tr key={v.id} className="border-t border-[#2A4355] hover:bg-[#1f3445] transition">
                                             <td className="p-3.5 font-mono font-bold text-[#87CBB9]">{v.visitNo}</td>
-                                            <td className="p-3.5 font-semibold text-white">
-                                                {v.customerName}
-                                                <div className="text-[10px] text-[#4A6A7A] font-mono">{v.customerCode}</div>
-                                            </td>
-                                            <td className="p-3.5 text-gray-300">{v.salespersonName}</td>
                                             <td className="p-3.5">
+                                                <div className="font-semibold text-white">{v.customerName}</div>
+                                                <div className="text-[10px] text-[#4A6A7A] font-mono">KH: {v.customerCode} • Sales: {v.salespersonName}</div>
+                                            </td>
+                                            <td className="p-3.5 text-center">
                                                 {v.checkInPhoto ? (
                                                     <img
                                                         src={v.checkInPhoto}
                                                         alt="Checkin"
-                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer"
+                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer mx-auto"
                                                         onClick={() => setViewPhoto({ title: `Check-in: ${v.customerName}`, url: v.checkInPhoto })}
                                                     />
                                                 ) : <span className="text-gray-500">N/A</span>}
                                             </td>
-                                            <td className="p-3.5">
+                                            <td className="p-3.5 text-center">
                                                 {v.checkOutPhoto ? (
                                                     <img
                                                         src={v.checkOutPhoto}
                                                         alt="Checkout"
-                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer"
+                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer mx-auto"
                                                         onClick={() => setViewPhoto({ title: `Check-out: ${v.customerName}`, url: v.checkOutPhoto })}
                                                     />
                                                 ) : <span className="text-gray-500">—</span>}
                                             </td>
-                                            <td className="p-3.5 font-medium text-gray-300">
-                                                <div>Vào: {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
-                                                <div className="text-[10px] text-[#D4A853]">
-                                                    {v.status === 'COMPLETED' ? `Ở lại ${v.durationMinutes} phút` : 'Đang ở tại chỗ'}
-                                                </div>
+                                            
+                                            {/* 🟢 Giờ Đến */}
+                                            <td className="p-3.5 text-center font-bold text-[#87CBB9] whitespace-nowrap">
+                                                {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                             </td>
+
+                                            {/* 🔴 Giờ Đi */}
+                                            <td className="p-3.5 text-center font-bold text-[#E8F1F2] whitespace-nowrap">
+                                                {v.checkOutTime ? new Date(v.checkOutTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : <span className="text-gray-500">—</span>}
+                                            </td>
+
+                                            {/* ⏱️ Tổng Thời Gian */}
+                                            <td className="p-3.5 text-center whitespace-nowrap">
+                                                <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${v.status === 'COMPLETED' ? 'bg-[#D4A853]/20 text-[#D4A853]' : 'bg-[#87CBB9]/20 text-[#87CBB9]'}`}>
+                                                    {v.status === 'COMPLETED' ? `${v.durationMinutes} phút` : 'Đang ở tại chỗ'}
+                                                </span>
+                                            </td>
+
                                             <td className="p-3.5 max-w-xs">
                                                 {v.checkInLat && v.checkInLng ? (
                                                     <div className="space-y-1">
