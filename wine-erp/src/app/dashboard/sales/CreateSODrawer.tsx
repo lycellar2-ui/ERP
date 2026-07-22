@@ -629,106 +629,83 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 </div>
                             </div>
 
-                            {selectedCustomer && shippingAddressId && (() => {
-                                const selectedAddr = selectedCustomer.addresses?.find(a => a.id === shippingAddressId)
-                                if (!selectedAddr) return null
-                                return (
-                                    <div className="p-2 rounded bg-[#142433]/60 border border-[#2A4355]/40 text-[11px] text-gray-300 leading-normal">
-                                        <span className="font-bold text-[#87CBB9]">{selectedAddr.label}: </span>
-                                        {selectedAddr.address}{selectedAddr.ward && `, ${selectedAddr.ward}`}{selectedAddr.district && `, ${selectedAddr.district}`}{selectedAddr.city && `, ${selectedAddr.city}`}
-                                    </div>
-                                )
-                            })()}
-
-                            {/* Row 2: Credit Status & Order general details */}
+                            {/* Compact Credit Status Bar */}
                             {selectedCustomer && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Credit Status Card */}
-                                    <div className="p-2.5 rounded-lg flex flex-col justify-between"
-                                        style={{ background: creditWarning ? 'rgba(139,26,46,0.06)' : 'rgba(91,168,138,0.04)', border: `1px solid ${creditWarning ? 'rgba(139,26,46,0.25)' : 'rgba(91,168,138,0.15)'}` }}>
-                                        <div className="flex items-center gap-1.5 mb-1.5">
-                                            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
-                                                {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
-                                            </p>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2 text-[11px]">
-                                            <div>
-                                                <p style={{ color: '#4A6A7A' }} className="text-[10px]">Hạn mức</p>
-                                                <p className="font-semibold font-mono" style={{ color: '#E8F1F2' }}>{formatVND(effectiveCreditLimit)}</p>
-                                            </div>
-                                            <div>
-                                                <p style={{ color: '#4A6A7A' }} className="text-[10px]">Dư nợ</p>
-                                                <p className="font-semibold font-mono" style={{ color: '#D4A853' }}>{loadingAR ? '...' : formatVND(arBalance)}</p>
-                                            </div>
-                                            <div>
-                                                <p style={{ color: '#4A6A7A' }} className="text-[10px]">Khả dụng</p>
-                                                <p className="font-semibold font-mono" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>{formatVND(Math.max(0, creditAvailable))}</p>
-                                            </div>
-                                        </div>
+                                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-md text-[11px]"
+                                    style={{ background: creditWarning ? 'rgba(139,26,46,0.1)' : 'rgba(15,28,40,0.8)', border: `1px solid ${creditWarning ? 'rgba(139,26,46,0.3)' : '#2A4355'}` }}>
+                                    <span className="font-bold text-[11px]" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
+                                        {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
+                                    </span>
+                                    <div className="flex items-center gap-3 text-[11px]">
+                                        <span style={{ color: '#4A6A7A' }}>Hạn mức: <strong className="font-mono text-slate-200">{formatVND(effectiveCreditLimit)}</strong></span>
+                                        <span style={{ color: '#4A6A7A' }}>Dư nợ: <strong className="font-mono text-amber-300">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
+                                        <span style={{ color: '#4A6A7A' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#87CBB9' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
                                     </div>
+                                </div>
+                            )}
 
-                                    {/* General Order Info */}
-                                    <div className="p-2.5 rounded-lg flex flex-col justify-between" style={{ background: '#142433/60', border: '1px solid #2A4355' }}>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông tin đơn hàng</p>
-                                            {canOverride && (
-                                                <button
-                                                    onClick={() => setOverrideMode(!overrideMode)}
-                                                    className="text-xs px-1.5 py-0.5 rounded transition-all"
-                                                    style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}
-                                                >
-                                                    {overrideMode ? 'Xong' : 'Thay đổi'}
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {!overrideMode ? (
-                                            <div className="grid grid-cols-3 gap-2 text-[11px]">
-                                                <div>
-                                                    <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Kênh Bán</p>
-                                                    <p className="font-semibold" style={{ color: '#E8F1F2' }}>
-                                                        {CHANNELS.find(c => c.value === channel)?.label ?? channel}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Thanh Toán</p>
-                                                    <p className="font-semibold" style={{ color: '#E8F1F2' }}>{paymentTerm}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Pháp Nhân</p>
-                                                    <p className="font-semibold truncate" style={{ color: '#E8F1F2' }} title={entities.find(e => e.id === legalEntityId)?.name}>
-                                                        {entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div>
-                                                    <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
-                                                        className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                        {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
-                                                        className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                        {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
-                                                            <option key={t} value={t}>{t}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
-                                                        className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                        <option value="">— Pháp Nhân —</option>
-                                                        {entities.map(e => (
-                                                            <option key={e.id} value={e.id}>{e.code}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
+                            {/* General Order Info */}
+                            {selectedCustomer && (
+                                <div className="p-2.5 rounded-lg flex flex-col justify-between" style={{ background: '#142433/60', border: '1px solid #2A4355' }}>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông tin đơn hàng</p>
+                                        {canOverride && (
+                                            <button
+                                                onClick={() => setOverrideMode(!overrideMode)}
+                                                className="text-xs px-1.5 py-0.5 rounded transition-all"
+                                                style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}
+                                            >
+                                                {overrideMode ? 'Xong' : 'Thay đổi'}
+                                            </button>
                                         )}
                                     </div>
+
+                                    {!overrideMode ? (
+                                        <div className="grid grid-cols-3 gap-2 text-[11px]">
+                                            <div>
+                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Kênh Bán</p>
+                                                <p className="font-semibold" style={{ color: '#E8F1F2' }}>
+                                                    {CHANNELS.find(c => c.value === channel)?.label ?? channel}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Thanh Toán</p>
+                                                <p className="font-semibold" style={{ color: '#E8F1F2' }}>{paymentTerm}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Pháp Nhân</p>
+                                                <p className="font-semibold truncate" style={{ color: '#E8F1F2' }} title={entities.find(e => e.id === legalEntityId)?.name}>
+                                                    {entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
+                                                    className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                    {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
+                                                    className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                    {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
+                                                        <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
+                                                    className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                    <option value="">— Pháp Nhân —</option>
+                                                    {entities.map(e => (
+                                                        <option key={e.id} value={e.id}>{e.code}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
