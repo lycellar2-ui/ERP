@@ -530,10 +530,22 @@ export async function getCustomerResolvedPrices(
         }
     }
 
+    // Fetch ProductMarginPrice fallback for products without PriceList lines
+    const marginPrices = await prisma.productMarginPrice.findMany({
+        select: { productId: true, wholesalePrice: true, retailPrice: true }
+    })
+    const marginMap: Record<string, number> = {}
+    for (const m of marginPrices) {
+        const p = Number(m.wholesalePrice) > 0 ? Number(m.wholesalePrice) : Number(m.retailPrice)
+        if (p > 0) marginMap[m.productId] = p
+    }
+
     // Set initial fallback values
     for (const pId of Object.keys(results)) {
-        if (retailPrices[pId] !== undefined) {
+        if (retailPrices[pId] !== undefined && retailPrices[pId] > 0) {
             results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
+        } else if (marginMap[pId] !== undefined && marginMap[pId] > 0) {
+            results[pId] = { price: marginMap[pId], source: 'WHOLESALE_FALLBACK' }
         }
     }
 

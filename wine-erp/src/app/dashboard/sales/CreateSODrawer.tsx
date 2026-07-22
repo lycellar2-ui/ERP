@@ -341,8 +341,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
             if (idx !== i) return l
             if (field === 'productId') {
                 const p = products.find(p => p.id === value)!
-                const autoPrice = priceMap[value]?.price ?? 0
-                const source = priceMap[value]?.source ?? null
+                const mapEntry = priceMap[value]
+                const resolvedPrice = (mapEntry && mapEntry.price > 0) ? mapEntry.price : 0
+                const fallbackPrice = p ? (p.wholesalePrice > 0 ? p.wholesalePrice : (p.retailPrice > 0 ? p.retailPrice : 0)) : 0
+                const autoPrice = resolvedPrice > 0 ? resolvedPrice : fallbackPrice
+                const source = (mapEntry && mapEntry.price > 0)
+                    ? mapEntry.source
+                    : (p?.wholesalePrice ? 'WHOLESALE_FALLBACK' : (p?.retailPrice ? 'RETAIL_FALLBACK' : null))
                 
                 // Update search query display
                 setSearchQueries(prevQueries => ({
@@ -791,11 +796,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                             </div>
                                                                         )}
                                                                     </div>
-                                                                    {line.productId && (
-                                                                        <div className="mt-1 text-[10px] text-gray-300 bg-[#0A1926] p-1.5 rounded border border-[#2A4355]/40 whitespace-normal leading-relaxed">
-                                                                            {line.productName}
-                                                                        </div>
-                                                                    )}
+
                                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                                         {alloc && (
                                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
@@ -931,11 +932,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                 <Trash2 size={14} />
                                                             </button>
                                                         </div>
-                                                        {line.productId && (
-                                                            <div className="text-[10px] text-gray-300 bg-[#0A1926] p-1.5 rounded border border-[#2A4355]/40 whitespace-normal leading-relaxed">
-                                                                {line.productName}
-                                                            </div>
-                                                        )}
+
                                                         {/* Allocation & Price badges */}
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {alloc && (
