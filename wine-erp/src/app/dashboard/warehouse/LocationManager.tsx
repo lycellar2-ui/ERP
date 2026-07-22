@@ -22,10 +22,6 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
         setLocations(initialLocations)
     }, [initialLocations])
 
-    useEffect(() => {
-        refresh()
-    }, [warehouseId])
-
     const refresh = async () => {
         const [locs, hm] = await Promise.all([
             getLocations(warehouseId),
@@ -34,6 +30,10 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
         setLocations(locs)
         setHeatmap(hm as any)
     }
+
+    useEffect(() => {
+        refresh()
+    }, [warehouseId])
 
     const handleCreate = async () => {
         setLoading(true)
