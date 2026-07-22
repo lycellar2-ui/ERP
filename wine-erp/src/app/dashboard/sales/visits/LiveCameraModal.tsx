@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useRef, useState, useEffect, useCallback } from 'react'
-import { Camera, X, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck, VideoOff } from 'lucide-react'
+import { Camera, X, RefreshCw, CheckCircle2, ShieldCheck, VideoOff, Upload } from 'lucide-react'
 
 interface Props {
     title: string
@@ -13,21 +13,27 @@ interface Props {
 export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) {
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
+    const streamRef = useRef<MediaStream | null>(null)
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-    const [stream, setStream] = useState<MediaStream | null>(null)
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
     const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
     const [cameraError, setCameraError] = useState<string | null>(null)
     const [starting, setStarting] = useState(true)
 
+    const stopActiveStream = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
+        }
+    }
+
     const startCamera = useCallback(async (mode: 'environment' | 'user') => {
         setStarting(true)
         setCameraError(null)
-        try {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop())
-            }
+        stopActiveStream()
 
+        try {
             const constraints: MediaStreamConstraints = {
                 video: {
                     facingMode: { ideal: mode },
@@ -38,33 +44,31 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
             }
 
             const newStream = await navigator.mediaDevices.getUserMedia(constraints)
-            setStream(newStream)
+            streamRef.current = newStream
 
             if (videoRef.current) {
                 videoRef.current.srcObject = newStream
-                await videoRef.current.play()
+                await videoRef.current.play().catch(() => {})
             }
         } catch (e: any) {
-            console.error('Camera access error:', e)
+            console.warn('Camera access warning:', e)
             if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                setCameraError('Trình duyệt chưa được cấp quyền mở Camera. Vui lòng nhấn "Cho Phép" (Allow) quyền Camera trên thiết bị!')
+                setCameraError('Trình duyệt chưa được cấp quyền mở Camera. Bạn có thể nhấn nút bên dưới để mở Camera hệ thống!')
             } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-                setCameraError('Không tìm thấy thiết bị Camera khả dụng trên máy của bạn!')
+                setCameraError('Không tìm thấy luồng Camera trực tiếp. Vui lòng bấm nút mở Camera hệ thống!')
             } else {
-                setCameraError('Không thể mở luồng Camera: ' + (e.message || 'Lỗi thiết bị'))
+                setCameraError('Không thể tự động mở Camera live: ' + (e.message || 'Lỗi thiết bị'))
             }
         }
         setStarting(false)
-    }, [stream])
+    }, [])
 
     useEffect(() => {
         startCamera(facingMode)
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop())
-            }
+            stopActiveStream()
         }
-    }, [facingMode]) // eslint-disable-line
+    }, [facingMode, startCamera])
 
     const takeSnapshot = () => {
         if (!videoRef.current || !canvasRef.current) return
@@ -78,10 +82,9 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        // Draw image frame to canvas
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-        // Add Timestamp watermark to photo
+        // Add Watermark
         const nowStr = new Date().toLocaleString('vi-VN')
         ctx.font = 'bold 16px sans-serif'
         ctx.fillStyle = '#87CBB9'
@@ -91,13 +94,41 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
         setCapturedImage(dataUrl)
+        stopActiveStream()
+    }
+
+    // Native Camera File Input fallback (for iOS/Android native camera trigger)
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            const img = new Image()
+            img.onload = () => {
+                const canvas = canvasRef.current || document.createElement('canvas')
+                canvas.width = img.width || 800
+                canvas.height = img.height || 600
+                const ctx = canvas.getContext('2d')
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+                    const nowStr = new Date().toLocaleString('vi-VN')
+                    ctx.font = 'bold 16px sans-serif'
+                    ctx.fillStyle = '#87CBB9'
+                    ctx.shadowColor = 'black'
+                    ctx.shadowBlur = 4
+                    ctx.fillText(`LYS CELLARS ERP | Check-in Photo: ${nowStr}`, 16, canvas.height - 20)
+                    setCapturedImage(canvas.toDataURL('image/jpeg', 0.85))
+                }
+            }
+            img.src = event.target?.result as string
+        }
+        reader.readAsDataURL(file)
     }
 
     const handleConfirm = () => {
         if (!capturedImage) return
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop())
-        }
+        stopActiveStream()
         onCapture(capturedImage)
     }
 
@@ -125,7 +156,7 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
                             <p className="text-[11px] text-[#4A6A7A]">{subtitle || 'Bắt buộc chụp ảnh trực tiếp từ Camera'}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:bg-[#1B2E3D] hover:text-white transition">
+                    <button onClick={() => { stopActiveStream(); onClose(); }} className="p-1.5 rounded-lg text-gray-400 hover:bg-[#1B2E3D] hover:text-white transition">
                         <X size={18} />
                     </button>
                 </div>
@@ -133,7 +164,7 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
                 {/* Viewport Area */}
                 <div className="relative aspect-[4/3] bg-black flex items-center justify-center overflow-hidden">
                     {/* Live Stream Video */}
-                    {!capturedImage && (
+                    {!capturedImage && !cameraError && (
                         <>
                             <video
                                 ref={videoRef}
@@ -170,21 +201,31 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
                         />
                     )}
 
-                    {/* Error Banner */}
-                    {cameraError && (
+                    {/* Error / Native Camera Trigger Fallback */}
+                    {cameraError && !capturedImage && (
                         <div className="absolute inset-0 bg-[#0D1E2B] p-6 flex flex-col items-center justify-center text-center space-y-3 z-10">
-                            <VideoOff size={36} className="text-[#E11D48]" />
-                            <h4 className="text-sm font-bold text-white">Không Thể Bật Camera</h4>
+                            <VideoOff size={36} className="text-[#D4A853]" />
+                            <h4 className="text-sm font-bold text-white">Chụp Ảnh Qua Camera Thiết Bị</h4>
                             <p className="text-xs text-[#8AAEBB] max-w-xs">{cameraError}</p>
                             <button
                                 type="button"
-                                onClick={() => startCamera(facingMode)}
-                                className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#87CBB9] text-[#0A1926]"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="px-5 py-3 text-xs font-bold rounded-xl bg-[#87CBB9] text-[#0A1926] flex items-center gap-2 shadow-lg"
                             >
-                                Thử Lại Cấp Quyền Camera
+                                <Camera size={16} /> Bật App Camera Chụp Thực Tế
                             </button>
                         </div>
                     )}
+
+                    {/* Hidden Native File Input with capture="environment" for 100% OS Camera trigger */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleFileInputChange}
+                        className="hidden"
+                    />
 
                     <canvas ref={canvasRef} className="hidden" />
                 </div>
@@ -192,9 +233,9 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
                 {/* Live Watermark Notice */}
                 <div className="px-4 py-2 bg-[#142433] flex items-center justify-between text-[10px] text-[#8AAEBB] border-t border-[#2A4355]">
                     <span className="flex items-center gap-1">
-                        <ShieldCheck size={12} className="text-[#87CBB9]" /> Bắt buộc chụp thực tế (Anti-fraud)
+                        <ShieldCheck size={12} className="text-[#87CBB9]" /> Bắt buộc chụp thực tế tại điểm bán
                     </span>
-                    <span>Tự động chèn Thời Gian & Tọa Độ</span>
+                    <span>Tự động đóng dấu Thời gian</span>
                 </div>
 
                 {/* Footer Controls */}
@@ -203,20 +244,31 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
                         <>
                             <button
                                 type="button"
-                                onClick={onClose}
+                                onClick={() => { stopActiveStream(); onClose(); }}
                                 className="px-4 py-2.5 text-xs font-medium rounded-xl text-[#8AAEBB] hover:bg-[#1B2E3D]"
                             >
                                 Hủy
                             </button>
-                            <button
-                                type="button"
-                                onClick={takeSnapshot}
-                                disabled={starting || !!cameraError}
-                                className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-                                style={{ background: '#87CBB9', color: '#0A1926' }}
-                            >
-                                <Camera size={16} /> Chụp Ảnh Điểm Bán
-                            </button>
+                            
+                            {!cameraError ? (
+                                <button
+                                    type="button"
+                                    onClick={takeSnapshot}
+                                    disabled={starting}
+                                    className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                                    style={{ background: '#87CBB9', color: '#0A1926' }}
+                                >
+                                    <Camera size={16} /> Chụp Ảnh Điểm Bán
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#87CBB9] text-[#0A1926]"
+                                >
+                                    <Camera size={16} /> Mở Camera Chụp Ngay
+                                </button>
+                            )}
                         </>
                     ) : (
                         <>
