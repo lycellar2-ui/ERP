@@ -179,8 +179,21 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null)
 
     const getFilteredProducts = useCallback((query: string) => {
-        const q = query.trim().toLowerCase()
+        let q = query.trim().toLowerCase()
         if (!q) return products.slice(0, 15)
+        
+        // If q starts with [, strip the bracketed SKU prefix if present e.g. "[L10014] REGOLO..."
+        if (q.startsWith('[')) {
+            const closeIdx = q.indexOf(']')
+            if (closeIdx !== -1) {
+                const afterClose = q.substring(closeIdx + 1).trim()
+                if (afterClose) {
+                    q = afterClose
+                } else {
+                    return products.slice(0, 15)
+                }
+            }
+        }
         
         // High-performance filter with early exit to resolve typing lag
         const results = []
@@ -460,7 +473,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             type="text"
                                             placeholder="Gõ mã hoặc tên khách hàng để tìm..."
                                             value={customerSearchInput}
-                                            onFocus={() => setCustomerDropdownOpen(true)}
+                                            onFocus={e => {
+                                                setCustomerDropdownOpen(true)
+                                                e.target.select()
+                                            }}
                                             onBlur={() => {
                                                 setTimeout(() => {
                                                     setCustomerDropdownOpen(false)
@@ -722,7 +738,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                             type="text"
                                                                             placeholder="Gõ SKU hoặc tên sản phẩm..."
                                                                             value={searchQueries[i] ?? ''}
-                                                                            onFocus={() => setActiveDropdownIndex(i)}
+                                                                            onFocus={e => {
+                                                                                setActiveDropdownIndex(i)
+                                                                                e.target.select()
+                                                                            }}
                                                                             onBlur={() => {
                                                                                 setTimeout(() => {
                                                                                     setActiveDropdownIndex(null)
@@ -852,8 +871,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                     type="text"
                                                                     placeholder="Gõ mã SKU hoặc tên sản phẩm..."
                                                                     value={searchQueries[i] ?? ''}
-                                                                    onFocus={() => {
+                                                                    onFocus={e => {
                                                                         setActiveDropdownIndex(i)
+                                                                        e.target.select()
                                                                     }}
                                                                     onBlur={() => {
                                                                         setTimeout(() => {
