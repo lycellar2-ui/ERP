@@ -503,33 +503,61 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
     return (
         <div className="space-y-3 max-w-screen-2xl">
-            {/* 1. TOPMOST: WMS Navigation Tabs + Inline Warehouse Dropdown List */}
-            <div className="flex flex-wrap items-center justify-between gap-2 p-1 rounded-lg"
+            {/* 1. TOPMOST HEADER CONTAINER */}
+            <div className="flex flex-col gap-2 p-2.5 rounded-xl"
                 style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <div className="flex items-center gap-1 flex-wrap">
-                    {wmsTabs.map(t => {
-                        const Icon = t.icon
-                        const active = activeTab === t.key
-                        return (
-                            <button key={t.key} onClick={() => handleTabChange(t.key)}
-                                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all"
-                                style={{
-                                    background: active ? '#87CBB9' : 'transparent',
-                                    color: active ? '#0A1926' : '#8AAEBB',
-                                }}>
-                                <Icon size={14} /> {t.label}
-                                {t.badge !== undefined && t.badge > 0 && (
-                                    <span className="text-[10px] min-w-[16px] text-center px-1.5 py-0.5 rounded-full font-bold"
-                                        style={{ background: active ? '#0A1926' : 'rgba(212,168,83,0.2)', color: active ? '#87CBB9' : '#D4A853' }}>
-                                        {t.badge}
-                                    </span>
-                                )}
-                            </button>
-                        )
-                    })}
+                
+                {/* Top Row: Title + Stat Badges + Create WH Button */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2" style={{ borderColor: '#2A4355' }}>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <h2 className="text-sm font-bold flex items-center gap-1.5" style={{ color: '#E8F1F2' }}>
+                            <Warehouse size={16} style={{ color: '#87CBB9' }} /> Kho Hàng (WMS)
+                        </h2>
+                        {statCards.map(s => (
+                            <div key={s.label} className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px]"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <s.icon size={12} style={{ color: s.accent }} />
+                                <span className="uppercase font-medium" style={{ color: '#8AAEBB' }}>{s.label}:</span>
+                                <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <button onClick={() => setCreateWHOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ml-auto transition-colors"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        <Plus size={13} /> Tạo Kho Mới
+                    </button>
+                </div>
 
-                    {/* Warehouse Dropdown List right next to Cách Ly */}
-                    <div className="relative ml-2">
+                {/* Bottom Row: WMS Navigation Tabs + Inline Warehouse Selector */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                    <div className="flex items-center gap-1 flex-wrap">
+                        {wmsTabs.map(t => {
+                            const Icon = t.icon
+                            const active = activeTab === t.key
+                            return (
+                                <button key={t.key} onClick={() => handleTabChange(t.key)}
+                                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all"
+                                    style={{
+                                        background: active ? '#87CBB9' : 'transparent',
+                                        color: active ? '#0A1926' : '#8AAEBB',
+                                    }}>
+                                    <Icon size={14} /> {t.label}
+                                    {t.badge !== undefined && t.badge > 0 && (
+                                        <span className="text-[10px] min-w-[16px] text-center px-1.5 py-0.5 rounded-full font-bold"
+                                            style={{ background: active ? '#0A1926' : 'rgba(212,168,83,0.2)', color: active ? '#87CBB9' : '#D4A853' }}>
+                                            {t.badge}
+                                        </span>
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
+
+                    {/* Warehouse Dropdown List */}
+                    <div className="relative">
                         <select
                             value={selectedWH ?? ''}
                             onChange={e => {
@@ -561,38 +589,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             </div>
 
-            {/* 2. Header Title + Inline Stat Badges */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl"
-                style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <h2 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
-                    <Warehouse size={18} style={{ color: '#87CBB9' }} /> Kho Hàng (WMS)
-                </h2>
-
-                {/* Stat badges inline on header */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    {statCards.map(s => (
-                        <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                            <s.icon size={13} style={{ color: s.accent }} />
-                            <span className="text-[10px] uppercase font-semibold" style={{ color: '#4A6A7A' }}>{s.label}:</span>
-                            <span className="text-xs font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
-                        </div>
-                    ))}
-                    <button onClick={() => setCreateWHOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ml-1 transition-colors"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                        <Plus size={14} /> Tạo Kho Mới
-                    </button>
-                </div>
-            </div>
-
             {/* NXT — Stock Movement Report Tab */}
             {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} />}
 
             {/* 2D Warehouse Map Tab */}
-            {activeTab === 'map' && <WarehouseMapTab warehouses={warehouseList} isAdmin={isAdmin} />}
+            {activeTab === 'map' && <WarehouseMapTab warehouses={warehouseList} selectedWarehouseId={selectedWH} isAdmin={isAdmin} />}
 
             {/* GR Tab */}
             {activeTab === 'gr' && <GoodsReceiptTab warehouses={warehouseList} />}

@@ -47,12 +47,27 @@ function uid() { return `el-${Date.now()}-${_nextId++}` }
 // ═══════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════
-export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: WarehouseOption[]; isAdmin: boolean }) {
+export function WarehouseMapTab({
+    warehouses,
+    selectedWarehouseId,
+    isAdmin
+}: {
+    warehouses: WarehouseOption[];
+    selectedWarehouseId?: string | null;
+    isAdmin: boolean
+}) {
     // ── State ─────────────────────────────────────────
-    const [selectedWH, setSelectedWH] = useState('')
+    const [selectedWH, setSelectedWH] = useState(selectedWarehouseId || '')
     const [mapData, setMapData] = useState<MapWarehouse | null>(null)
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+
+    // Sync selectedWH when selectedWarehouseId changes
+    useEffect(() => {
+        if (selectedWarehouseId && selectedWarehouseId !== selectedWH) {
+            setSelectedWH(selectedWarehouseId)
+        }
+    }, [selectedWarehouseId])
 
     // Canvas
     const [zoom, setZoom] = useState(1)
@@ -340,19 +355,6 @@ export function WarehouseMapTab({ warehouses, isAdmin }: { warehouses: Warehouse
         <div className="flex flex-col gap-0" style={{ height: 'calc(100vh - 170px)', minHeight: 620 }}>
             {/* ── Top bar ─────────────────────────────── */}
             <div className="flex items-center gap-3 p-3 rounded-t-xl" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {/* Warehouse selector */}
-                <div className="relative">
-                    <select
-                        value={selectedWH}
-                        onChange={e => setSelectedWH(e.target.value)}
-                        className="appearance-none pl-3 pr-8 py-2 rounded-lg text-sm font-medium"
-                        style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#1e293b', minWidth: 220 }}
-                    >
-                        <option value="">Chọn kho...</option>
-                        {warehouses.map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#94a3b8' }} />
-                </div>
 
                 {/* Search */}
                 <div className="flex-1 relative max-w-sm">
