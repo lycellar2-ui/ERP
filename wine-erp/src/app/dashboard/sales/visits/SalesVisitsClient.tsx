@@ -17,11 +17,10 @@ interface Props {
     isManager: boolean
 }
 
-// ─── Searchable Customer Combobox ───────────────────────────
-function SearchableCustomerCombobox({
+// ─── Searchable Customer Combobox ───────�function SearchableCustomerCombobox({
     customers,
     selectedCustomerId,
-    onSelect,
+    onSelect
 }: {
     customers: { id: string; code: string; name: string; channel: string | null }[]
     selectedCustomerId: string
@@ -34,60 +33,94 @@ function SearchableCustomerCombobox({
 
     const filtered = React.useMemo(() => {
         const q = query.trim().toLowerCase()
-        if (!q) return customers.slice(0, 40)
+        if (!q) return customers.slice(0, 50)
         return customers.filter(c =>
             c.name.toLowerCase().includes(q) ||
             c.code.toLowerCase().includes(q)
-        ).slice(0, 40)
+        ).slice(0, 50)
     }, [customers, query])
-
-    const displayValue = selectedCust ? `[${selectedCust.code}] ${selectedCust.name}` : query
 
     return (
         <div className="relative">
-            <div className="relative">
-                <input
-                    type="text"
-                    value={open ? query : displayValue}
-                    onFocus={() => { setOpen(true); setQuery(''); }}
-                    onChange={e => setQuery(e.target.value)}
-                    placeholder="Gõ mã hoặc tên nhà hàng / khách hàng để chọn..."
-                    className="w-full pl-9 pr-3 py-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white focus:border-[#87CBB9] font-medium"
-                />
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            {/* Display Input Button Trigger */}
+            <div
+                onClick={() => setOpen(true)}
+                className="w-full p-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white hover:border-[#87CBB9] cursor-pointer flex items-center justify-between transition group"
+            >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Search size={14} className="text-[#87CBB9] shrink-0" />
+                    {selectedCust ? (
+                        <span className="font-semibold text-white truncate">
+                            <strong className="text-[#87CBB9] font-mono mr-1.5">[{selectedCust.code}]</strong>
+                            {selectedCust.name}
+                        </span>
+                    ) : (
+                        <span className="text-gray-400 font-medium truncate">Gõ mã hoặc tên nhà hàng / khách hàng để chọn...</span>
+                    )}
+                </div>
+                {selectedCust ? (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onSelect({ id: '' }); }}
+                        className="p-1 text-gray-400 hover:text-white"
+                    >
+                        <X size={14} />
+                    </button>
+                ) : (
+                    <ChevronRight size={14} className="text-gray-400 group-hover:text-white transition rotate-90 shrink-0" />
+                )}
             </div>
 
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-xl shadow-2xl"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                        {filtered.length === 0 ? (
-                            <div className="p-3 text-xs text-center text-gray-500">Không tìm thấy khách hàng khớp "{query}"</div>
-                        ) : (
-                            filtered.map(c => (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => {
-                                        onSelect(c)
-                                        setOpen(false)
-                                    }}
-                                    className="w-full text-left p-3 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs"
-                                >
-                                    <div className="min-w-0 flex-1 pr-2">
-                                        <span className="font-mono font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
-                                        <span className="text-[#E8F1F2] font-semibold">{c.name}</span>
-                                    </div>
-                                    {c.channel && (
-                                        <span className="text-[10px] text-[#4A6A7A] uppercase bg-[#1B2E3D] px-2 py-0.5 rounded font-mono">
-                                            {c.channel}
-                                        </span>
-                                    )}
-                                </button>
-                            ))
-                        )}
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl shadow-2xl p-2 space-y-2 border border-[#2A4355] bg-[#142433]">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                autoFocus
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
+                                placeholder="Gõ tên hoặc mã khách hàng..."
+                                className="w-full pl-8 pr-3 py-2 text-xs outline-none rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:border-[#87CBB9]"
+                            />
+                            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                        </div>
+
+                        <div className="max-h-60 overflow-y-auto space-y-1">
+                            {filtered.length === 0 ? (
+                                <div className="p-3 text-xs text-center text-gray-500">Không tìm thấy khách hàng khớp "{query}"</div>
+                            ) : (
+                                filtered.map(c => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => {
+                                            onSelect(c)
+                                            setOpen(false)
+                                            setQuery('')
+                                        }}
+                                        className={`w-full text-left p-2.5 rounded-lg transition flex items-center justify-between text-xs ${selectedCustomerId === c.id ? 'bg-[#87CBB9]/20 text-[#87CBB9] font-bold' : 'hover:bg-[#1B2E3D] text-gray-200'}`}
+                                    >
+                                        <div className="min-w-0 flex-1 pr-2">
+                                            <span className="font-mono font-bold text-[#87CBB9] mr-2">[{c.code}]</span>
+                                            <span className="font-semibold text-white">{c.name}</span>
+                                        </div>
+                                        {c.channel && (
+                                            <span className="text-[10px] text-[#4A6A7A] uppercase bg-[#1B2E3D] px-2 py-0.5 rounded font-mono">
+                                                {c.channel}
+                                            </span>
+                                        )}
+                                    </button>
+                                ))
+                            )}
+                        </div>
                     </div>
+                </>
+            )}
+        </div>
+    )
+}             </div>
                 </>
             )}
         </div>
