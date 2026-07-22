@@ -13,6 +13,7 @@ import {
 import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS } from './constants'
 import { formatVND } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'next/navigation'
 import { getCustomersForSO, getProductsWithStock } from '../sales/actions'
 
 function formatCompactVND(amount: number): string {
@@ -50,7 +51,14 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     const [loading, setLoading] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
 
+    const searchParams = useSearchParams()
     const isCEO = userRoles.includes('CEO')
+
+    React.useEffect(() => {
+        if (searchParams?.get('action') === 'create') {
+            setShowCreate(true)
+        }
+    }, [searchParams])
 
     const filtered = proposals.filter(p => {
         if (filter === 'PENDING' && !['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)) return false

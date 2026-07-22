@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, Trash2, Loader2, X, Check, Ban, Calendar, Settings, ShieldAlert, AlertCircle, HelpCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Search, Trash2, Loader2, X, Check, Ban, Calendar, Settings, ShieldAlert, AlertCircle, HelpCircle, FileText } from 'lucide-react'
 import {
     getCustomerPriceRules,
     createCustomerPriceRule,
@@ -270,13 +271,13 @@ export function CustomerRulesTab({ currentUser }: Props) {
                     </div>
 
                     {canCreate && (
-                        <button
-                            onClick={() => setCreateOpen(true)}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold transition-all"
+                        <Link
+                            href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold transition-all hover:opacity-90"
                             style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
                         >
-                            <Plus size={14} /> Đề Xuất Giá
-                        </button>
+                            <FileText size={14} /> + Đề Xuất Giá (Tờ Trình)
+                        </Link>
                     )}
                 </div>
 
