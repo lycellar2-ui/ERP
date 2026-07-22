@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
     MapPin, Camera, Clock, CheckCircle2, AlertCircle, Search, Filter,
-    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation, ExternalLink, Calendar, Plus
+    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation, ExternalLink, Calendar, Plus, X
 } from 'lucide-react'
 import { checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit } from './actions'
 import { LiveCameraModal } from './LiveCameraModal'

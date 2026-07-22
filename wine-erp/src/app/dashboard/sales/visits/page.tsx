@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/db'
 import { getSalesVisits } from './actions'
 import { SalesVisitsClient } from './SalesVisitsClient'
 
@@ -15,7 +15,7 @@ export default async function SalesVisitsPage() {
         include: { roles: { include: { role: true } } }
     })
 
-    const isManager = currentUser?.roles.some(r =>
+    const isManager = currentUser?.roles.some((r: any) =>
         ['Admin', 'Sales Manager', 'CEO', 'Manager'].includes(r.role.name)
     ) ?? true
 

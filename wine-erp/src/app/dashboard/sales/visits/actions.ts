@@ -1,6 +1,6 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export interface CheckInPayload {
@@ -155,7 +155,7 @@ export async function getSalesVisits(filters?: {
             take: 100,
         })
 
-        return visits.map(v => ({
+        return visits.map((v: any) => ({
             id: v.id,
             visitNo: v.visitNo,
             customerId: v.customerId,
