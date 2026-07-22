@@ -13,7 +13,7 @@ import {
     ChevronRight, Building2, FileSignature, Globe, Briefcase,
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
-    Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText
+    Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin
 } from 'lucide-react'
 
 interface NavItem {
@@ -61,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
             { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', permission: 'WMS:READ' },
             { href: '/dashboard/transfers', icon: ArrowRightLeft, label: 'Chuyển Kho', permission: 'TRS:READ' },
             { href: '/dashboard/stock-count', icon: ClipboardList, label: 'Kiểm Kê', permission: 'WMS:READ' },
+            { href: '/dashboard/sales/visits', icon: MapPin, label: 'Check-in Thị Trường', permission: 'SLS:READ' },
             { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng', permission: 'SLS:READ' },
             { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá', permission: 'SLS:READ' },
             { href: '/dashboard/price-list', icon: Tag, label: 'Bảng Giá', permission: 'SLS:READ' },

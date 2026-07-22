@@ -1,0 +1,550 @@
+'use client'
+
+import React, { useState, useEffect, useCallback } from 'react'
+import {
+    MapPin, Camera, Clock, CheckCircle2, AlertCircle, Search, Filter,
+    Building2, User, ChevronRight, Eye, RefreshCw, FileText, Navigation, ExternalLink, Calendar, Plus
+} from 'lucide-react'
+import { checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit } from './actions'
+import { LiveCameraModal } from './LiveCameraModal'
+
+interface Props {
+    initialVisits: any[]
+    customers: { id: string; code: string; name: string; channel: string | null }[]
+    currentUserId: string
+    currentUserName: string
+    isManager: boolean
+}
+
+export function SalesVisitsClient({ initialVisits, customers, currentUserId, currentUserName, isManager }: Props) {
+    const [activeTab, setActiveTab] = useState<'CHECKIN' | 'HISTORY'>('CHECKIN')
+    const [visits, setVisits] = useState(initialVisits)
+    const [activeVisit, setActiveVisit] = useState<any | null>(null)
+    const [loadingActive, setLoadingActive] = useState(true)
+
+    // Checkin Form
+    const [selectedCustomerId, setSelectedCustomerId] = useState('')
+    const [customerSearch, setCustomerSearch] = useState('')
+    const [purpose, setPurpose] = useState('Viếng thăm & Chăm sóc định kỳ')
+    const [submitting, setSubmitting] = useState(false)
+
+    // Checkout Form
+    const [checkoutNotes, setCheckoutNotes] = useState('')
+
+    // Camera Modal
+    const [cameraMode, setCameraMode] = useState<'CHECKIN' | 'CHECKOUT' | null>(null)
+
+    // Location State
+    const [coords, setCoords] = useState<{ lat?: number; lng?: number; address?: string }>({})
+    const [gettingLocation, setGettingLocation] = useState(false)
+
+    // Filters
+    const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 10))
+    const [filterStatus, setFilterStatus] = useState('ALL')
+    const [filterSearch, setFilterSearch] = useState('')
+
+    // Detail drawer photo modal
+    const [viewPhoto, setViewPhoto] = useState<{ title: string; url: string } | null>(null)
+
+    const fetchActive = useCallback(async () => {
+        setLoadingActive(true)
+        const active = await getActiveVisit(currentUserId)
+        setActiveVisit(active)
+        setLoadingActive(false)
+    }, [currentUserId])
+
+    const fetchVisitsList = useCallback(async () => {
+        const data = await getSalesVisits({ date: filterDate, status: filterStatus })
+        setVisits(data)
+    }, [filterDate, filterStatus])
+
+    useEffect(() => {
+        fetchActive()
+    }, [fetchActive])
+
+    useEffect(() => {
+        fetchVisitsList()
+    }, [fetchVisitsList])
+
+    // Fetch GPS Location
+    const captureGPSLocation = (): Promise<{ lat?: number; lng?: number }> => {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                resolve({})
+                return
+            }
+            setGettingLocation(true)
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setGettingLocation(false)
+                    const res = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+                    setCoords(res)
+                    resolve(res)
+                },
+                (err) => {
+                    console.warn('GPS location error:', err)
+                    setGettingLocation(false)
+                    resolve({})
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            )
+        })
+    }
+
+    // Filtered customers for select
+    const filteredCustomers = React.useMemo(() => {
+        const q = customerSearch.trim().toLowerCase()
+        if (!q) return customers.slice(0, 100)
+        return customers.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)).slice(0, 100)
+    }, [customers, customerSearch])
+
+    // Handle Check-in photo capture confirmation
+    const handleConfirmCheckInPhoto = async (photoBase64: string) => {
+        setCameraMode(null)
+        setSubmitting(true)
+        const gps = await captureGPSLocation()
+
+        const res = await checkInSalesVisit({
+            customerId: selectedCustomerId,
+            salespersonId: currentUserId,
+            purpose,
+            lat: gps.lat || coords.lat,
+            lng: gps.lng || coords.lng,
+            photoBase64,
+        })
+
+        if (res.success) {
+            setSelectedCustomerId('')
+            setCustomerSearch('')
+            await fetchActive()
+            await fetchVisitsList()
+        } else {
+            alert('Lỗi Check-in: ' + res.error)
+        }
+        setSubmitting(false)
+    }
+
+    // Handle Check-out photo capture confirmation
+    const handleConfirmCheckOutPhoto = async (photoBase64: string) => {
+        if (!activeVisit) return
+        setCameraMode(null)
+        setSubmitting(true)
+        const gps = await captureGPSLocation()
+
+        const res = await checkOutSalesVisit({
+            visitId: activeVisit.id,
+            salespersonId: currentUserId,
+            notes: checkoutNotes,
+            lat: gps.lat || coords.lat,
+            lng: gps.lng || coords.lng,
+            photoBase64,
+        })
+
+        if (res.success) {
+            setCheckoutNotes('')
+            await fetchActive()
+            await fetchVisitsList()
+        } else {
+            alert('Lỗi Check-out: ' + res.error)
+        }
+        setSubmitting(false)
+    }
+
+    // Live timer for active visit
+    const [elapsedMinutes, setElapsedMinutes] = useState(0)
+
+    useEffect(() => {
+        if (!activeVisit) return
+        const checkInDate = new Date(activeVisit.checkInTime).getTime()
+        const updateTimer = () => {
+            const now = new Date().getTime()
+            const diff = Math.max(1, Math.round((now - checkInDate) / (1000 * 60)))
+            setElapsedMinutes(diff)
+        }
+        updateTimer()
+        const interval = setInterval(updateTimer, 30_000)
+        return () => clearInterval(interval)
+    }, [activeVisit])
+
+    // Filtered visits list for history view
+    const filteredVisits = visits.filter(v => {
+        if (!filterSearch) return true
+        const q = filterSearch.toLowerCase()
+        return v.customerName.toLowerCase().includes(q) ||
+            v.customerCode.toLowerCase().includes(q) ||
+            v.salespersonName.toLowerCase().includes(q) ||
+            v.visitNo.toLowerCase().includes(q)
+    })
+
+    return (
+        <div className="space-y-6 max-w-screen-xl">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-[#E8F1F2] flex items-center gap-2">
+                        <MapPin className="text-[#87CBB9]" size={24} />
+                        Check-in Đi Thị Trường (Sales Visit)
+                    </h2>
+                    <p className="text-sm text-[#4A6A7A] mt-0.5">
+                        Ghi nhận thời gian viếng thăm, tọa độ GPS & ảnh chụp trực tiếp từ camera tại điểm bán
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-2 bg-[#142433] p-1 rounded-xl border border-[#2A4355]">
+                    <button
+                        onClick={() => setActiveTab('CHECKIN')}
+                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'CHECKIN' ? 'bg-[#87CBB9] text-[#0A1926]' : 'text-[#8AAEBB] hover:text-white'}`}
+                    >
+                        📸 Thực Hiện Check-in
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('HISTORY')}
+                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'HISTORY' ? 'bg-[#87CBB9] text-[#0A1926]' : 'text-[#8AAEBB] hover:text-white'}`}
+                    >
+                        📋 Nhật Ký Viếng Thăm ({visits.length})
+                    </button>
+                </div>
+            </div>
+
+            {/* TAB 1: CHECKIN / CHECKOUT FOR SALES */}
+            {activeTab === 'CHECKIN' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Active Status & Main Action Panel */}
+                    <div className="lg:col-span-7 space-y-6">
+                        {loadingActive ? (
+                            <div className="p-8 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] text-center text-xs text-[#4A6A7A]">
+                                <RefreshCw className="animate-spin mx-auto mb-2 text-[#87CBB9]" size={24} />
+                                Đang tải trạng thái viếng thăm...
+                            </div>
+                        ) : activeVisit ? (
+                            /* IN-PROGRESS ACTIVE VISIT CARD */
+                            <div className="p-6 rounded-2xl space-y-5 bg-[#1B2E3D] border-2 border-[#87CBB9] shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 bg-[#87CBB9] text-[#0A1926] px-4 py-1 text-[11px] font-bold rounded-bl-xl uppercase tracking-wider flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                                    Đang Ở Tại Điểm Bán
+                                </div>
+
+                                <div>
+                                    <span className="text-xs font-mono text-[#87CBB9] font-semibold">{activeVisit.visitNo}</span>
+                                    <h3 className="text-xl font-bold text-white mt-1">
+                                        {activeVisit.customer?.name}
+                                    </h3>
+                                    <p className="text-xs text-[#8AAEBB] font-mono mt-0.5">
+                                        Mã KH: {activeVisit.customer?.code} • Kênh: {activeVisit.customer?.channel || 'HORECA'}
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 bg-[#142433] p-4 rounded-xl border border-[#2A4355]">
+                                    <div>
+                                        <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Thời Gian Check-in</span>
+                                        <span className="text-sm font-bold text-[#E8F1F2]">
+                                            {new Date(activeVisit.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Thời Gian Lưu Lại</span>
+                                        <span className="text-sm font-bold text-[#D4A853] flex items-center gap-1">
+                                            <Clock size={14} /> {elapsedMinutes} Phút
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Checkin Photo Thumbnail */}
+                                {activeVisit.checkInPhoto && (
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] text-[#4A6A7A] uppercase font-semibold block">Ảnh Chụp Thực Tế Check-in</span>
+                                        <div className="flex items-center gap-3 bg-[#142433] p-2 rounded-xl border border-[#2A4355]">
+                                            <img
+                                                src={activeVisit.checkInPhoto}
+                                                alt="Checkin Photo"
+                                                className="w-16 h-16 object-cover rounded-lg border border-[#2A4355] cursor-pointer"
+                                                onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${activeVisit.customer?.name}`, url: activeVisit.checkInPhoto })}
+                                            />
+                                            <div className="text-xs text-[#8AAEBB]">
+                                                <p className="font-semibold text-white">Xác nhận camera thành công</p>
+                                                <p className="text-[10px] text-[#4A6A7A] mt-0.5">Bắt buộc chụp tại chỗ</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Notes Input */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
+                                        Ghi Chú Kết Quả Buổi Làm Việc *
+                                    </label>
+                                    <textarea
+                                        value={checkoutNotes}
+                                        onChange={e => setCheckoutNotes(e.target.value)}
+                                        rows={3}
+                                        placeholder="Nhập ghi chú kết quả (VD: Khách lấy 2 thùng Amarone, đề xuất giảm 5%, hẹn quay lại vào tuần sau...)"
+                                        className="w-full p-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white focus:border-[#87CBB9]"
+                                    />
+                                </div>
+
+                                {/* Checkout Button */}
+                                <button
+                                    onClick={() => setCameraMode('CHECKOUT')}
+                                    disabled={submitting}
+                                    className="w-full py-4 rounded-xl text-sm font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] transition-all flex items-center justify-center gap-2 shadow-lg"
+                                >
+                                    <Camera size={18} /> 📸 BẬT CAMERA CHỤP ÁNH & CHECK-OUT KẾT THÚC
+                                </button>
+                            </div>
+                        ) : (
+                            /* NEW CHECK-IN FORM */
+                            <div className="p-6 rounded-2xl space-y-5 bg-[#1B2E3D] border border-[#2A4355]">
+                                <div className="flex items-center gap-2 border-b border-[#2A4355] pb-3">
+                                    <Building2 className="text-[#87CBB9]" size={20} />
+                                    <h3 className="text-base font-bold text-white">Tạo Lượt Check-in Viếng Thăm Mới</h3>
+                                </div>
+
+                                {/* Customer Picker */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
+                                        1. Chọn Khách Hàng Viếng Thăm *
+                                    </label>
+
+                                    <div className="relative">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={customerSearch}
+                                            onChange={e => setCustomerSearch(e.target.value)}
+                                            placeholder="Gõ tên nhà hàng hoặc mã KH để tìm..."
+                                            className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white"
+                                        />
+                                    </div>
+
+                                    <select
+                                        value={selectedCustomerId}
+                                        onChange={e => setSelectedCustomerId(e.target.value)}
+                                        className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white font-medium"
+                                    >
+                                        <option value="">-- Bấm để chọn Khách Hàng --</option>
+                                        {filteredCustomers.map(c => (
+                                            <option key={c.id} value={c.id}>[{c.code}] {c.name} {c.channel ? `(${c.channel})` : ''}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Purpose Selection */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
+                                        2. Mục Đích Viếng Thăm
+                                    </label>
+                                    <select
+                                        value={purpose}
+                                        onChange={e => setPurpose(e.target.value)}
+                                        className="w-full p-3 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white font-medium"
+                                    >
+                                        <option value="Viếng thăm & Chăm sóc định kỳ">Viếng thăm & Chăm sóc định kỳ</option>
+                                        <option value="Thử mẫu rượu (Wine Tasting)">Thử mẫu rượu (Wine Tasting)</option>
+                                        <option value="Đề xuất cơ chế giá đặc biệt">Đề xuất cơ chế giá đặc biệt</option>
+                                        <option value="Thu hồi công nợ / Hóa đơn">Thu hồi công nợ / Hóa đơn</option>
+                                        <option value="Giao hợp đồng & Hồ sơ TCB">Giao hợp đồng & Hồ sơ TCB</option>
+                                    </select>
+                                </div>
+
+                                {/* Rules Notice */}
+                                <div className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] text-xs text-[#8AAEBB] space-y-1">
+                                    <p className="font-semibold text-[#87CBB9] flex items-center gap-1">
+                                        <AlertCircle size={14} /> Bắt buộc khi Check-in:
+                                    </p>
+                                    <ul className="list-disc pl-5 text-[11px] space-y-0.5 text-gray-300">
+                                        <li>Cấp quyền định vị GPS thời gian thực.</li>
+                                        <li>Bắt buộc bật ống kính Camera chụp ảnh thực tế điểm bán.</li>
+                                    </ul>
+                                </div>
+
+                                {/* Checkin Trigger Button */}
+                                <button
+                                    onClick={() => {
+                                        if (!selectedCustomerId) {
+                                            alert('Vui lòng chọn Khách Hàng viếng thăm trước khi Check-in!')
+                                            return
+                                        }
+                                        setCameraMode('CHECKIN')
+                                    }}
+                                    disabled={submitting || !selectedCustomerId}
+                                    className="w-full py-4 rounded-xl text-sm font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#A5DED0] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-40"
+                                >
+                                    <Camera size={18} /> 📸 BẬT CAMERA CHỤP ÁNH & CHECK-IN ĐIỂM BÁN
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Info & Quick History Column */}
+                    <div className="lg:col-span-5 space-y-4">
+                        <div className="p-5 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] space-y-3">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-[#87CBB9]">Quy Định Check-in Thị Trường</h4>
+                            <p className="text-xs text-[#8AAEBB] leading-relaxed">
+                                Hệ thống ERP bắt buộc chụp ảnh camera trực tiếp tại chỗ để bảo đảm tính chính xác của hoạt động thị trường.
+                            </p>
+                        </div>
+
+                        {/* Recent Visit Logs */}
+                        <div className="p-5 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] space-y-3">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Lượt Viếng Thăm Mới Nhất</h4>
+                            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                                {visits.slice(0, 5).map(v => (
+                                    <div key={v.id} className="p-3 rounded-xl bg-[#142433] border border-[#2A4355] space-y-1 text-xs">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-white">{v.customerName}</span>
+                                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${v.status === 'COMPLETED' ? 'bg-[#87CBB9]/20 text-[#87CBB9]' : 'bg-[#D4A853]/20 text-[#D4A853]'}`}>
+                                                {v.status === 'COMPLETED' ? `${v.durationMinutes} phút` : 'Đang ở tại chỗ'}
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-[#4A6A7A]">{v.salespersonName} • {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 2: VISIT HISTORY & AUDIT LOG FOR MANAGERS */}
+            {activeTab === 'HISTORY' && (
+                <div className="space-y-4">
+                    {/* Filters bar */}
+                    <div className="p-4 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                            <div className="relative flex-1 md:w-64">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={filterSearch}
+                                    onChange={e => setFilterSearch(e.target.value)}
+                                    placeholder="Tìm khách hàng hoặc Salesman..."
+                                    className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white"
+                                />
+                            </div>
+                            <input
+                                type="date"
+                                value={filterDate}
+                                onChange={e => setFilterDate(e.target.value)}
+                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white"
+                            />
+                            <select
+                                value={filterStatus}
+                                onChange={e => setFilterStatus(e.target.value)}
+                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white"
+                            >
+                                <option value="ALL">Tất cả Trạng Thái</option>
+                                <option value="IN_PROGRESS">Đang Viếng Thăm</option>
+                                <option value="COMPLETED">Đã Kết Thúc</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="rounded-2xl overflow-hidden border border-[#2A4355] bg-[#1B2E3D]">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs text-left">
+                                <thead>
+                                    <tr className="bg-[#142433] text-[#4A6A7A]">
+                                        <th className="p-3.5 font-semibold">Mã Lượt</th>
+                                        <th className="p-3.5 font-semibold">Khách Hàng</th>
+                                        <th className="p-3.5 font-semibold">Salesman</th>
+                                        <th className="p-3.5 font-semibold">Ảnh Check-in</th>
+                                        <th className="p-3.5 font-semibold">Ảnh Check-out</th>
+                                        <th className="p-3.5 font-semibold">Thời Gian</th>
+                                        <th className="p-3.5 font-semibold">Tọa Độ GPS</th>
+                                        <th className="p-3.5 font-semibold">Ghi Chú Kết Quả</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredVisits.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={8} className="text-center py-12 text-gray-500">
+                                                Chưa có lượt viếng thăm nào khớp bộ lọc.
+                                            </td>
+                                        </tr>
+                                    ) : filteredVisits.map(v => (
+                                        <tr key={v.id} className="border-t border-[#2A4355] hover:bg-[#1f3445] transition">
+                                            <td className="p-3.5 font-mono font-bold text-[#87CBB9]">{v.visitNo}</td>
+                                            <td className="p-3.5 font-semibold text-white">
+                                                {v.customerName}
+                                                <div className="text-[10px] text-[#4A6A7A] font-mono">{v.customerCode}</div>
+                                            </td>
+                                            <td className="p-3.5 text-gray-300">{v.salespersonName}</td>
+                                            <td className="p-3.5">
+                                                {v.checkInPhoto ? (
+                                                    <img
+                                                        src={v.checkInPhoto}
+                                                        alt="Checkin"
+                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer"
+                                                        onClick={() => setViewPhoto({ title: `Check-in: ${v.customerName}`, url: v.checkInPhoto })}
+                                                    />
+                                                ) : <span className="text-gray-500">N/A</span>}
+                                            </td>
+                                            <td className="p-3.5">
+                                                {v.checkOutPhoto ? (
+                                                    <img
+                                                        src={v.checkOutPhoto}
+                                                        alt="Checkout"
+                                                        className="w-12 h-12 object-cover rounded-lg border border-[#2A4355] cursor-pointer"
+                                                        onClick={() => setViewPhoto({ title: `Check-out: ${v.customerName}`, url: v.checkOutPhoto })}
+                                                    />
+                                                ) : <span className="text-gray-500">—</span>}
+                                            </td>
+                                            <td className="p-3.5 font-medium text-gray-300">
+                                                <div>Vào: {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
+                                                <div className="text-[10px] text-[#D4A853]">
+                                                    {v.status === 'COMPLETED' ? `Ở lại ${v.durationMinutes} phút` : 'Đang ở tại chỗ'}
+                                                </div>
+                                            </td>
+                                            <td className="p-3.5">
+                                                {v.checkInLat && v.checkInLng ? (
+                                                    <a
+                                                        href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-1 text-[#87CBB9] hover:underline font-mono text-[11px]"
+                                                    >
+                                                        <Navigation size={12} /> Google Maps
+                                                    </a>
+                                                ) : <span className="text-gray-500">Không có GPS</span>}
+                                            </td>
+                                            <td className="p-3.5 max-w-xs truncate text-gray-300 text-xs" title={v.notes}>
+                                                {v.notes || 'Chưa có ghi chú'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Live Camera Modal */}
+            {cameraMode && (
+                <LiveCameraModal
+                    title={cameraMode === 'CHECKIN' ? 'Check-in Viếng Thăm Điểm Bán' : 'Check-out Kết Thúc Viếng Thăm'}
+                    subtitle={cameraMode === 'CHECKIN' ? 'Chụp ảnh thực tế mặt tiền hoặc bảng hiệu nhà hàng' : 'Chụp ảnh thực tế xác nhận kết thúc công việc'}
+                    onCapture={photo => {
+                        if (cameraMode === 'CHECKIN') handleConfirmCheckInPhoto(photo)
+                        else handleConfirmCheckOutPhoto(photo)
+                    }}
+                    onClose={() => setCameraMode(null)}
+                />
+            )}
+
+            {/* Photo Zoom Modal */}
+            {viewPhoto && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur" onClick={() => setViewPhoto(null)}>
+                    <div className="max-w-2xl max-h-[90vh] bg-[#142433] p-4 rounded-2xl border border-[#2A4355] space-y-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold text-white">{viewPhoto.title}</h4>
+                            <button onClick={() => setViewPhoto(null)}><X size={18} className="text-gray-400" /></button>
+                        </div>
+                        <img src={viewPhoto.url} alt="Enlarged" className="w-full max-h-[75vh] object-contain rounded-xl" />
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

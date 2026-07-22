@@ -98,6 +98,7 @@ model User {
   proposalComments       ProposalComment[]  @relation("ProposalCommentAuthor")
   proposalApprovals      ProposalApprovalLog[] @relation("ProposalApprover")
   priceRulesRequested    CustomerPriceRule[] @relation("PriceRuleRequester")
+  salesVisits            SalesVisit[]       @relation("SalespersonVisits")
   priceRulesApproved     CustomerPriceRule[] @relation("PriceRuleApprover")
   posShifts              POSShift[]
   notifications          Notification[]     @relation("UserNotifications")
@@ -523,11 +524,56 @@ model Customer {
   loyaltyTransactions LoyaltyTransaction[]
   priceRules    CustomerPriceRule[]
   visitSchedules SalesVisitSchedule[]
+  salesVisits    SalesVisit[]           @relation("CustomerSalesVisits")
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   deletedAt     DateTime?
 
   @@map("customers")
+}
+
+enum VisitStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model SalesVisit {
+  id               String      @id @default(cuid())
+  visitNo          String      @unique
+  customerId       String
+  customer         Customer    @relation("CustomerSalesVisits", fields: [customerId], references: [id], onDelete: Cascade)
+  salespersonId    String
+  salesperson      User        @relation("SalespersonVisits", fields: [salespersonId], references: [id], onDelete: Cascade)
+  
+  status           VisitStatus @default(IN_PROGRESS)
+  purpose          String?
+  
+  // Check-in details
+  checkInTime      DateTime    @default(now())
+  checkInLat       Float?
+  checkInLng       Float?
+  checkInAddress   String?
+  checkInPhoto     String      @db.Text
+  
+  // Check-out details
+  checkOutTime     DateTime?
+  checkOutLat      Float?
+  checkOutLng      Float?
+  checkOutAddress  String?
+  checkOutPhoto    String?     @db.Text
+  durationMinutes  Int?
+  
+  notes            String?
+  salesOrderId     String?
+  
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([customerId])
+  @@index([salespersonId])
+  @@index([checkInTime])
+  @@map("sales_visits")
 }
 
 model CustomerAddress {
