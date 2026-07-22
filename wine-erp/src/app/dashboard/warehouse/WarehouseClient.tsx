@@ -417,6 +417,14 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     const [activeTab, setActiveTab] = useState<WMSTab>('inventory')
     const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'receivedDate', dir: 'desc' })
 
+    // Auto pre-select Kho Thắng Ân Giang Văn Minh (WH-TA-GVM) by default
+    useEffect(() => {
+        if (!selectedWH && warehouses.length > 0) {
+            const defaultWH = warehouses.find(w => w.code === 'WH-TA-GVM') || warehouses[0]
+            if (defaultWH) selectWarehouse(defaultWH.id)
+        }
+    }, [warehouses])
+
     const warehouseList = warehouses.map(w => ({ id: w.id, code: w.code, name: w.name }))
 
     const wmsTabs: { key: WMSTab; label: string; icon: any; badge?: number }[] = [
