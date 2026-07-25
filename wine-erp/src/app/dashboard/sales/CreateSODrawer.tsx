@@ -1088,7 +1088,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                         className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded transition-colors bg-[#1F3547] hover:bg-[#2A4355] text-amber-300 border border-amber-500/30 shadow"
                         title="Xem trước phiếu đơn hàng trước khi tạo đơn"
                     >
-                        <Printer size={15} /> 🖨️ Xem File In
+                        <Printer size={15} /> Xem File In
                     </button>
 
                     <div className="flex items-center gap-3">
@@ -1108,7 +1108,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
             {/* PRINT PREVIEW MODAL */}
             {previewOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print-only print:p-0">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
                     <div className="bg-[#0D1821] border border-[#2A4355] rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
                         {/* Header bar */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F3547] bg-[#142433] print:hidden">

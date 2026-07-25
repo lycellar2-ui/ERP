@@ -698,8 +698,8 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
 }
 
 export async function getDashboardConfig(roles: string[]): Promise<DashboardConfig> {
-    // Priority: CEO > KE_TOAN > SALES_MGR > THU_KHO > THU_MUA > SALES_REP
-    const priority = ['CEO', 'KE_TOAN', 'SALES_MGR', 'THU_KHO', 'THU_MUA', 'SALES_REP']
+    // Priority: CEO > KE_TOAN > SALES_MGR > SALES_ADMIN > THU_KHO > THU_MUA > SALES_REP
+    const priority = ['CEO', 'KE_TOAN', 'SALES_MGR', 'SALES_ADMIN', 'THU_KHO', 'THU_MUA', 'SALES_REP']
 
     for (const role of priority) {
         if (roles.includes(role)) {
