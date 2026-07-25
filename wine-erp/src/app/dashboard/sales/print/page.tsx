@@ -125,8 +125,6 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
         ? [order.shippingAddress.address, order.shippingAddress.ward, order.shippingAddress.district, order.shippingAddress.city].filter(Boolean).join(', ')
         : 'Nhận tại kho'
 
-    const isQuotation = ['DRAFT', 'PENDING_APPROVAL', 'PENDING_ACCOUNTING'].includes(order.status)
-
     return (
         <div className="min-h-screen bg-[#0A1926] text-slate-100 p-0 sm:p-6 print:bg-white print:text-black print:p-0">
             {/* Top Toolbar (Hidden on print) */}
@@ -168,9 +166,11 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                     </div>
                     <div className="text-right">
                         <h1 className="text-2xl font-bold uppercase tracking-wider mb-1">
-                            {isQuotation ? 'BÁO GIÁ' : 'ĐƠN BÁN HÀNG'}
+                            ĐƠN BÁN HÀNG
                         </h1>
-                        <p className="text-xs font-bold font-mono" style={{ color: '#124967' }}>{order.soNo}</p>
+                        <p className="text-xs font-bold font-mono" style={{ color: '#124967' }}>
+                            {['DRAFT', 'PENDING_APPROVAL'].includes(order.status) ? 'DỰ THẢO - ' : ''}{order.soNo}
+                        </p>
                         <p className="text-[10px] text-slate-500 mt-1">Ngày lập: {formatDateTime(order.createdAt)}</p>
                     </div>
                 </div>
@@ -348,17 +348,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                 </div>
 
                 {/* Dynamic Footer Block */}
-                {isQuotation ? (
-                    <div className="mt-8 pt-4 border-t border-dashed border-slate-300 text-[10px] text-slate-600 leading-relaxed space-y-1.5">
-                        <p className="font-bold text-slate-700 uppercase tracking-wide">Điều khoản báo giá / Quotation terms:</p>
-                        <ul className="list-disc pl-4 space-y-0.5">
-                            <li>Giá bán trên chưa bao gồm 10% VAT / Price listed above excludes 10% VAT.</li>
-                            <li>Báo giá này có giá trị hiệu lực trong vòng 01 tháng kể từ ngày lập / This quotation is valid for 01 month from the date of issue.</li>
-                            <li>Vui lòng liên hệ nhân viên phụ trách kinh doanh để nhận thông tin về tình trạng tồn kho hiện tại và chính sách ưu đãi bổ sung nếu có.</li>
-                        </ul>
-                    </div>
-                ) : (
-                    /* Signatures for confirmed Sales Orders */
+                {/* Signatures for Sales Orders */}
                     <div className="grid grid-cols-5 gap-1 text-center text-xs mt-10 pt-4 border-t border-dashed border-slate-300">
                         <div className="flex flex-col justify-between h-24">
                             <p className="font-bold text-slate-800 uppercase tracking-wide">Người lập đơn</p>
@@ -381,7 +371,6 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                             <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
                         </div>
                     </div>
-                )}
             </div>
         </div>
     )
