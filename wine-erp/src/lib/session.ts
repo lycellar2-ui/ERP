@@ -17,22 +17,32 @@ export type SessionUser = {
 // but the heavy Prisma join for roles/permissions is cached in-memory.
 async function fetchUserByEmail(email: string): Promise<SessionUser | null> {
     return cached(`user:session:${email}`, async () => {
-        const user = await prisma.user.findUnique({
-            where: { email },
-            include: {
-                roles: {
-                    include: {
-                        role: {
-                            include: {
-                                permissions: {
-                                    include: { permission: true },
-                                },
+        const userIncludeOptions = {
+            roles: {
+                include: {
+                    role: {
+                        include: {
+                            permissions: {
+                                include: { permission: true },
                             },
                         },
                     },
                 },
             },
+        }
+
+        let user = await prisma.user.findUnique({
+            where: { email },
+            include: userIncludeOptions,
         })
+
+        // Fallback to case-insensitive if exact match fails
+        if (!user) {
+            user = await prisma.user.findFirst({
+                where: { email: { equals: email, mode: 'insensitive' } },
+                include: userIncludeOptions,
+            })
+        }
 
         if (!user || user.status !== 'ACTIVE') return null
 
