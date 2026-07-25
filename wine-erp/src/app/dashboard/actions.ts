@@ -695,6 +695,18 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
             { label: 'Lô hàng', href: '/dashboard/procurement?tab=shipments', icon: 'Package' },
         ],
     },
+    SALES_ADMIN: {
+        greeting: 'Điều Hành Kinh Doanh (Sales Admin)',
+        sections: [
+            'kpi_cards', 'recent_orders', 'pending_approvals', 'revenue_chart',
+            'kpi_targets',
+        ],
+        quickLinks: [
+            { label: 'Đơn hàng', href: '/dashboard/sales', icon: 'Package' },
+            { label: 'Khách hàng', href: '/dashboard/crm', icon: 'Users' },
+            { label: 'Báo cáo', href: '/dashboard/reports', icon: 'BarChart3' },
+        ],
+    },
 }
 
 export async function getDashboardConfig(roles: string[]): Promise<DashboardConfig> {
