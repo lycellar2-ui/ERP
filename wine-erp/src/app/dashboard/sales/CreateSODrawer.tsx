@@ -487,7 +487,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                         Khách Hàng *
                                     </label>
                                     <div className="relative">
-                                        <div className={`relative flex items-center w-full rounded-md border-2 transition-all ${customerDropdownOpen ? 'border-[#87CBB9] ring-4 ring-[#87CBB9]/10' : 'border-[#2A4355] hover:border-[#3B5466]'} bg-[#142433]`}>
+                                        <div className={`relative flex items-center w-full rounded-md border-2 transition-all ${customerDropdownOpen ? 'border-teal-500 ring-4 ring-teal-500/10 dark:border-[#87CBB9] dark:ring-[#87CBB9]/10' : 'border-slate-200 hover:border-slate-300 dark:border-[#2A4355] dark:hover:border-[#3B5466]'} bg-white dark:bg-[#142433]`}>
                                             <div className="pl-3 text-slate-400">
                                                 <Search size={16} />
                                             </div>
@@ -513,7 +513,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                     setCustomerSearchInput(e.target.value)
                                                     setCustomerDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-3 pr-10 py-2.5 text-sm font-semibold text-white bg-transparent outline-none placeholder:text-[#6A8A9A]"
+                                                className="w-full pl-3 pr-10 py-2.5 text-sm font-semibold text-slate-900 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-[#6A8A9A]"
                                             />
                                             {selectedCustomer ? (
                                                 <button
@@ -524,7 +524,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                         setCustomerSearchInput('')
                                                         setCustomerDropdownOpen(true)
                                                     }}
-                                                    className="absolute right-2 p-1.5 text-slate-400 hover:text-white bg-[#1F3547] hover:bg-rose-500 rounded-md transition-colors"
+                                                    className="absolute right-2 p-1.5 text-slate-400 hover:text-white hover:bg-rose-500 dark:bg-[#1F3547] rounded-md transition-colors"
                                                     title="Bỏ chọn khách hàng"
                                                 >
                                                     <X size={14} />
@@ -536,10 +536,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             )}
                                         </div>
                                         {customerDropdownOpen && (
-                                            <div className="absolute left-0 mt-2 max-h-80 overflow-y-auto z-[100] rounded-md bg-[#0F1C28] border border-[#2A4355] w-full shadow-2xl divide-y divide-[#1F3547]">
+                                            <div className="absolute left-0 mt-2 max-h-80 overflow-y-auto z-[100] rounded-md bg-white dark:bg-[#0F1C28] border border-slate-200 dark:border-[#2A4355] w-full shadow-2xl divide-y divide-slate-100 dark:divide-[#1F3547]">
                                                 {filteredCustomers.length === 0 ? (
-                                                    <div className="px-4 py-8 flex flex-col items-center justify-center text-slate-400 gap-2 bg-[#142433]">
-                                                        <Search size={24} className="text-slate-500" />
+                                                    <div className="px-4 py-8 flex flex-col items-center justify-center text-slate-400 gap-2 bg-slate-50 dark:bg-[#142433]">
+                                                        <Search size={24} className="text-slate-400 dark:text-slate-500" />
                                                         <span className="text-sm font-medium">Không tìm thấy khách hàng khớp với từ khóa</span>
                                                     </div>
                                                 ) : (
@@ -557,44 +557,44 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                 }}
                                                                 className={`px-4 py-3.5 text-left transition-all border-l-4 ${
                                                                     isDisabled 
-                                                                        ? 'bg-[#0A141E] text-slate-500 opacity-60 cursor-not-allowed border-l-transparent' 
+                                                                        ? 'bg-slate-50 dark:bg-[#0A141E] text-slate-400 dark:text-slate-500 opacity-70 cursor-not-allowed border-l-transparent' 
                                                                         : isSelected
-                                                                        ? 'bg-[#182C3D] border-l-[#87CBB9]'
-                                                                        : 'bg-[#0F1C28] cursor-pointer hover:bg-[#1B2E3D] border-l-transparent hover:border-l-[#87CBB9]/50'
+                                                                        ? 'bg-teal-50 dark:bg-[#182C3D] border-l-teal-500 dark:border-l-[#87CBB9]'
+                                                                        : 'bg-white dark:bg-[#0F1C28] cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1B2E3D] border-l-transparent hover:border-l-teal-500/50 dark:hover:border-l-[#87CBB9]/50'
                                                                 }`}
                                                             >
                                                                 <div className="flex items-start justify-between gap-2">
                                                                     <div className="flex flex-col gap-1">
                                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-800 text-slate-500' : 'bg-[#1C3344] text-[#87CBB9]'}`}>
+                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-500' : 'bg-teal-100 text-teal-700 dark:bg-[#1C3344] dark:text-[#87CBB9]'}`}>
                                                                                 {c.code}
                                                                             </span>
-                                                                            <span className={`font-semibold text-sm ${isDisabled ? 'text-slate-400' : isSelected ? 'text-white' : 'text-slate-200'}`}>
+                                                                            <span className={`font-semibold text-sm ${isDisabled ? 'text-slate-400 dark:text-slate-500' : isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>
                                                                                 {c.name}
                                                                             </span>
                                                                         </div>
                                                                         <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
                                                                             {isCompany && (
-                                                                                <span className={`flex items-center gap-1 font-medium ${isDisabled ? 'text-slate-500' : 'text-sky-400'}`}>
+                                                                                <span className={`flex items-center gap-1 font-medium ${isDisabled ? 'text-slate-400 dark:text-slate-500' : 'text-sky-600 dark:text-sky-400'}`}>
                                                                                     <Building2 size={12} />
                                                                                     {c.allowDirectSO ? 'Công ty' : 'Công ty Mẹ (Chỉ gánh nợ)'}
                                                                                 </span>
                                                                             )}
                                                                             {c.brandGroup && (
-                                                                                <span className="flex items-center gap-1 text-amber-200/90 font-medium">
+                                                                                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-200/90 font-medium">
                                                                                     <Star size={12} className="fill-amber-400/50" />
                                                                                     {c.brandGroup}
                                                                                 </span>
                                                                             )}
                                                                             {c.channel && (
-                                                                                <span className="text-[#8AAEBB] font-medium border-l border-[#2A4355] pl-2 ml-1">
+                                                                                <span className="text-slate-500 dark:text-[#8AAEBB] font-medium border-l border-slate-200 dark:border-[#2A4355] pl-2 ml-1">
                                                                                     {c.channel}
                                                                                 </span>
                                                                             )}
                                                                         </div>
                                                                     </div>
                                                                     {isSelected && (
-                                                                        <div className="shrink-0 text-[#87CBB9] mt-1">
+                                                                        <div className="shrink-0 text-teal-500 dark:text-[#87CBB9] mt-1">
                                                                             <CheckCircle2 size={18} />
                                                                         </div>
                                                                     )}
