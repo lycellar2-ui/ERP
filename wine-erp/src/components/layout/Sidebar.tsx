@@ -71,7 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
             // { href: '/dashboard/allocation', icon: BarChart3, label: 'Allocation Engine', permission: 'SLS:READ' },
             // { href: '/dashboard/delivery', icon: Truck, label: 'Vận Chuyển', permission: 'SLS:READ' },
             { href: '/dashboard/returns', icon: ShoppingCart, label: 'Trả Hàng & CN', permission: 'SLS:READ' },
-            { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', permission: 'SLS:READ' },
+            { href: '/dashboard/pos', icon: Wine, label: 'POS Showroom', permission: 'POS:READ' },
             // { href: '/dashboard/qr-codes', icon: QrCode, label: 'QR Truy Xuất', permission: 'SLS:READ' },
         ]
     },

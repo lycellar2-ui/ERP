@@ -23,7 +23,7 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/ai': 'SYS:ADMIN',
     // Added for complete coverage
     '/dashboard/media': 'MDM:READ',
-    '/dashboard/pos': 'SLS:READ',
+    '/dashboard/pos': 'POS:READ',
     '/dashboard/pipeline': 'CRM:READ',
     '/dashboard/quotations': 'SLS:READ',
     '/dashboard/price-list': 'SLS:READ',
