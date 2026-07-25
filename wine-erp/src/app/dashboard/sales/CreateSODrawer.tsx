@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -483,9 +483,17 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Customer Autocomplete Search */}
                                 <div>
-                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#4A6A7A' }}>
-                                        Khách Hàng *
-                                    </label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-[11px] font-bold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
+                                            Khách Hàng *
+                                        </label>
+                                        {selectedCustomer && (
+                                            <a href="/dashboard/crm" target="_blank" className="text-[10px] text-teal-400 hover:text-teal-300 hover:underline flex items-center gap-1 transition-colors" title="Mở tab CRM để xem lịch sử mua hàng chi tiết">
+                                                <History size={10} />
+                                                Lịch sử mua hàng
+                                            </a>
+                                        )}
+                                    </div>
                                     <div className="relative">
                                         <div className={`relative flex items-center w-full rounded-md border-2 transition-all ${customerDropdownOpen ? 'border-teal-500 ring-4 ring-teal-500/10 dark:border-[#87CBB9] dark:ring-[#87CBB9]/10' : 'border-slate-200 hover:border-slate-300 dark:border-[#2A4355] dark:hover:border-[#3B5466]'} bg-white dark:bg-[#142433]`}>
                                             <div className="pl-3 text-slate-400">
@@ -641,81 +649,43 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 </div>
                             </div>
 
-                            {/* Compact Credit Status Bar */}
+                            {/* Compact Order Info & Credit Status */}
                             {selectedCustomer && (
-                                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-md text-[11px]"
-                                    style={{ background: creditWarning ? 'rgba(139,26,46,0.1)' : 'rgba(15,28,40,0.8)', border: `1px solid ${creditWarning ? 'rgba(139,26,46,0.3)' : '#2A4355'}` }}>
-                                    <span className="font-bold text-[11px]" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
-                                        {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
-                                    </span>
-                                    <div className="flex items-center gap-3 text-[11px]">
-                                        <span style={{ color: '#4A6A7A' }}>Hạn mức: <strong className="font-mono text-slate-200">{formatVND(effectiveCreditLimit)}</strong></span>
-                                        <span style={{ color: '#4A6A7A' }}>Dư nợ: <strong className="font-mono text-amber-300">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
-                                        <span style={{ color: '#4A6A7A' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#87CBB9' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* General Order Info */}
-                            {selectedCustomer && (
-                                <div className="p-2.5 rounded-lg flex flex-col justify-between" style={{ background: '#142433/60', border: '1px solid #2A4355' }}>
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Thông tin đơn hàng</p>
+                                <div className="flex flex-col gap-2 p-2 rounded-md" style={{ background: '#142433/60', border: '1px solid #2A4355' }}>
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-bold" style={{ color: creditWarning ? '#EF4444' : '#5BA88A' }}>
+                                                {isCreditHold ? '⚠️ Giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng OK'}
+                                            </span>
+                                            <span style={{ color: '#4A6A7A' }}>Hạn mức: <strong className="font-mono text-slate-200">{formatVND(effectiveCreditLimit)}</strong></span>
+                                            <span style={{ color: '#4A6A7A' }}>Dư nợ: <strong className="font-mono text-amber-300">{loadingAR ? '...' : formatVND(arBalance)}</strong></span>
+                                            <span style={{ color: '#4A6A7A' }}>Khả dụng: <strong className="font-mono" style={{ color: creditWarning ? '#EF4444' : '#87CBB9' }}>{formatVND(Math.max(0, creditAvailable))}</strong></span>
+                                        </div>
                                         {canOverride && (
-                                            <button
-                                                onClick={() => setOverrideMode(!overrideMode)}
-                                                className="text-xs px-1.5 py-0.5 rounded transition-all"
-                                                style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}
-                                            >
-                                                {overrideMode ? 'Xong' : 'Thay đổi'}
+                                            <button onClick={() => setOverrideMode(!overrideMode)} className="text-[10px] px-1.5 py-0.5 rounded transition-all" style={{ color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)', background: 'rgba(212,168,83,0.08)' }}>
+                                                {overrideMode ? 'Xong' : 'Sửa thông tin'}
                                             </button>
                                         )}
                                     </div>
-
+                                    <div className="h-px w-full bg-[#2A4355]/50" />
                                     {!overrideMode ? (
-                                        <div className="grid grid-cols-3 gap-2 text-[11px]">
-                                            <div>
-                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Kênh Bán</p>
-                                                <p className="font-semibold" style={{ color: '#E8F1F2' }}>
-                                                    {CHANNELS.find(c => c.value === channel)?.label ?? channel}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Thanh Toán</p>
-                                                <p className="font-semibold" style={{ color: '#E8F1F2' }}>{paymentTerm}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] mb-0.5" style={{ color: '#4A6A7A' }}>Pháp Nhân</p>
-                                                <p className="font-semibold truncate" style={{ color: '#E8F1F2' }} title={entities.find(e => e.id === legalEntityId)?.name}>
-                                                    {entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}
-                                                </p>
-                                            </div>
+                                        <div className="flex items-center gap-4 text-[11px]">
+                                            <span style={{ color: '#4A6A7A' }}>Kênh: <strong style={{ color: '#E8F1F2' }}>{CHANNELS.find(c => c.value === channel)?.label ?? channel}</strong></span>
+                                            <span style={{ color: '#4A6A7A' }}>Thanh toán: <strong style={{ color: '#E8F1F2' }}>{paymentTerm}</strong></span>
+                                            <span style={{ color: '#4A6A7A' }}>Pháp nhân: <strong style={{ color: '#E8F1F2' }} title={entities.find(e => e.id === legalEntityId)?.name}>{entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}</strong></span>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-3 gap-2">
-                                            <div>
-                                                <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
-                                                    className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                    {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
-                                                    className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                    {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => (
-                                                        <option key={t} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
-                                                    className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
-                                                    <option value="">— Pháp Nhân —</option>
-                                                    {entities.map(e => (
-                                                        <option key={e.id} value={e.id}>{e.code}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                            <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                            </select>
+                                            <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                {['COD', 'NET7', 'NET14', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                            <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)} className="w-full px-1.5 py-1 text-[11px] outline-none rounded" style={{ ...inputStyle }}>
+                                                <option value="">— Pháp Nhân —</option>
+                                                {entities.map(e => <option key={e.id} value={e.id}>{e.code}</option>)}
+                                            </select>
                                         </div>
                                     )}
                                 </div>
