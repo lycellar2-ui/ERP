@@ -40,7 +40,7 @@ const NAV_GROUPS: NavGroup[] = [
         label: 'Danh Mục',
         items: [
             { href: '/dashboard/products', icon: Package, label: 'Sản Phẩm', permission: 'MDM:READ' },
-            { href: '/dashboard/suppliers', icon: Building2, label: 'Nhà Cung Cấp', permission: 'MDM:READ' },
+            { href: '/dashboard/suppliers', icon: Building2, label: 'Nhà Cung Cấp', permission: 'PRC:READ' },
             { href: '/dashboard/customers', icon: Users, label: 'Khách Hàng', permission: 'MDM:READ' },
             { href: '/dashboard/contracts', icon: FileSignature, label: 'Hợp Đồng', permission: 'CNT:READ' },
         ]

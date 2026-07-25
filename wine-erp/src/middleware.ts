@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 // Module → required permission mapping for RBAC enforcement
 const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/products': 'MDM:READ',
-    '/dashboard/suppliers': 'MDM:READ',
+    '/dashboard/suppliers': 'PRC:READ',
     '/dashboard/customers': 'MDM:READ',
     '/dashboard/contracts': 'CNT:READ',
     '/dashboard/procurement': 'PRC:READ',
