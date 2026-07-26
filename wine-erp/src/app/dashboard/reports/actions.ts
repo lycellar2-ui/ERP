@@ -117,6 +117,132 @@ export async function getStockValuation() {
     }) // end cached
 }
 
+// ── Top Customers by Revenue ──────────────────────
+export async function getTopCustomers(limit = 5) {
+    return cached(`reports:top-customers:${limit}`, async () => {
+        const result = await prisma.salesOrder.groupBy({
+            by: ['customerId'],
+            _sum: { totalAmount: true },
+            _count: true,
+            orderBy: { _sum: { totalAmount: 'desc' } },
+            take: limit,
+            where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] } },
+        })
+
+        const customers = await prisma.customer.findMany({
+            where: { id: { in: result.map(r => r.customerId) } },
+            select: { id: true, name: true, code: true, type: true },
+        })
+
+        return result.map(r => {
+            const c = customers.find(c => c.id === r.customerId)
+            return {
+                customerId: r.customerId,
+                name: c?.name ?? 'Khách lẻ',
+                code: c?.code ?? '',
+                type: c?.type ?? 'DIRECT_INDIVIDUAL',
+                revenue: Number(r._sum.totalAmount ?? 0),
+                orders: r._count,
+            }
+        })
+    })
+}
+
+// ── Financial Summary (AR/AP) ───────────────────
+export async function getFinancialSummary() {
+    return cached('reports:financial-summary', async () => {
+        const [ar, ap] = await Promise.all([
+            prisma.aRInvoice.findMany({
+                where: { status: { in: ['DRAFT', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                select: { amount: true, paidAmount: true, status: true },
+            }),
+            prisma.aPInvoice.findMany({
+                where: { status: { in: ['DRAFT', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                select: { amount: true, paidAmount: true, status: true },
+            })
+        ])
+
+        const arUnpaid = ar.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+        const arOverdue = ar.filter(inv => inv.status === 'OVERDUE').reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+
+        const apUnpaid = ap.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+        const apOverdue = ap.filter(inv => inv.status === 'OVERDUE').reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+
+        return {
+            ar: { unpaid: arUnpaid, overdue: arOverdue },
+            ap: { unpaid: apUnpaid, overdue: apOverdue },
+        }
+    })
+}
+
+// ── Low Stock Alerts ────────────────────────────
+export async function getLowStockAlerts(limit = 5) {
+    return cached(`reports:low-stock:${limit}`, async () => {
+        const lots = await prisma.stockLot.findMany({
+            where: { status: 'AVAILABLE' },
+            select: { productId: true, qtyAvailable: true },
+        })
+
+        const stockMap: Record<string, number> = {}
+        lots.forEach(l => {
+            stockMap[l.productId] = (stockMap[l.productId] ?? 0) + Number(l.qtyAvailable)
+        })
+
+        const sortedIds = Object.keys(stockMap)
+            .filter(id => stockMap[id] > 0 && stockMap[id] <= 24) // Threshold for "Low" is <= 24 bottles
+            .sort((a, b) => stockMap[a] - stockMap[b])
+            .slice(0, limit)
+
+        const products = await prisma.product.findMany({
+            where: { id: { in: sortedIds } },
+            select: { id: true, skuCode: true, productName: true },
+        })
+
+        return sortedIds.map(id => {
+            const p = products.find(p => p.id === id)
+            return {
+                productId: id,
+                skuCode: p?.skuCode ?? 'Unknown',
+                productName: p?.productName ?? 'Unknown',
+                qtyAvailable: stockMap[id],
+            }
+        })
+    })
+}
+
+// ── Sales Rep Performance ───────────────────────
+export async function getSalesRepPerformance(limit = 5) {
+    return cached(`reports:sales-rep:${limit}`, async () => {
+        const result = await prisma.salesOrder.groupBy({
+            by: ['salesRepId'],
+            _sum: { totalAmount: true },
+            _count: true,
+            orderBy: { _sum: { totalAmount: 'desc' } },
+            take: limit,
+            where: {
+                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                salesRepId: { not: null },
+            },
+        })
+
+        const users = await prisma.user.findMany({
+            where: { id: { in: result.map(r => r.salesRepId!) } },
+            select: { id: true, name: true, email: true },
+        })
+
+        return result.map(r => {
+            const u = users.find(u => u.id === r.salesRepId)
+            return {
+                salesRepId: r.salesRepId!,
+                name: u?.name ?? 'Unknown',
+                email: u?.email ?? '',
+                revenue: Number(r._sum.totalAmount ?? 0),
+                orders: r._count,
+            }
+        })
+    })
+}
+
 // ═══════════════════════════════════════════════════
 // REPORT BUILDER — Template CRUD + dynamic execution
 // ═══════════════════════════════════════════════════

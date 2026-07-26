@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BarChart3, TrendingUp, Package, Wine, Download, Loader2, FileSpreadsheet, CheckCircle2, Clock, Calendar } from 'lucide-react'
+import { BarChart3, TrendingUp, Package, Wine, Download, Loader2, FileSpreadsheet, CheckCircle2, Clock, Calendar, Users, Wallet, AlertTriangle, Trophy } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatVND, formatDate } from '@/lib/utils'
 import { exportReportExcel, getReportSchedules, toggleScheduleStatus, type ScheduleRow } from './actions'
@@ -33,7 +33,7 @@ const MODULE_COLORS: Record<string, string> = {
 
 const TABS = [
     { key: 'overview', label: 'Tổng Quan', icon: BarChart3 },
-    { key: 'export', label: 'Xuất Excel (15 Báo Cáo)', icon: FileSpreadsheet },
+    { key: 'export', label: 'Xuất Excel (16 Báo Cáo)', icon: FileSpreadsheet },
     { key: 'schedule', label: 'Lịch Tự Động', icon: Calendar },
 ] as const
 
@@ -45,9 +45,13 @@ interface Props {
     channelBreakdown: { channel: string; revenue: number; orders: number }[]
     stockValuation: { totalQty: number; totalValue: number; productCount: number }
     brandBreakdown: { brand: string; revenue: number; orderCount: number; avgOrderValue: number }[]
+    topCustomers: { customerId: string; name: string; code: string; type: string; revenue: number; orders: number }[]
+    financialSummary: { ar: { unpaid: number; overdue: number }; ap: { unpaid: number; overdue: number } }
+    lowStockAlerts: { productId: string; skuCode: string; productName: string; qtyAvailable: number }[]
+    salesRepPerformance: { salesRepId: string; name: string; email: string; revenue: number; orders: number }[]
 }
 
-export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stockValuation, brandBreakdown }: Props) {
+export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stockValuation, brandBreakdown, topCustomers, financialSummary, lowStockAlerts, salesRepPerformance }: Props) {
     const [tab, setTab] = useState<TabKey>('overview')
     const [downloading, setDownloading] = useState<string | null>(null)
     const [lastDownloaded, setLastDownloaded] = useState<string | null>(null)
@@ -150,6 +154,42 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                             <p className="text-xl font-bold mt-1" style={{ color: '#4A8FAB' }}>
                                 {stockValuation.productCount}
                             </p>
+                        </div>
+                    </div>
+
+                    {/* Financial Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #5BA88A' }}>
+                            <div className="flex justify-between items-center mb-3">
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Công Nợ Khách Hàng (AR)</p>
+                                <Wallet size={16} style={{ color: '#5BA88A' }} />
+                            </div>
+                            <div className="flex items-center gap-8">
+                                <div>
+                                    <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tổng Chưa Thu</p>
+                                    <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>{formatVND(financialSummary.ar.unpaid)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[11px]" style={{ color: '#E05252' }}>Trong đó Quá Hạn</p>
+                                    <p className="text-lg font-bold" style={{ color: '#E05252' }}>{formatVND(financialSummary.ar.overdue)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: '3px solid #C45A2A' }}>
+                            <div className="flex justify-between items-center mb-3">
+                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Công Nợ Nhà Cung Cấp (AP)</p>
+                                <Wallet size={16} style={{ color: '#C45A2A' }} />
+                            </div>
+                            <div className="flex items-center gap-8">
+                                <div>
+                                    <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tổng Chưa Trả</p>
+                                    <p className="text-lg font-bold" style={{ color: '#E8F1F2' }}>{formatVND(financialSummary.ap.unpaid)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[11px]" style={{ color: '#E05252' }}>Trong đó Quá Hạn</p>
+                                    <p className="text-lg font-bold" style={{ color: '#E05252' }}>{formatVND(financialSummary.ap.overdue)}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -314,6 +354,89 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                     </div>
                                 )
                             })()}
+                        </div>
+                    </div>
+
+                    {/* Low Stock & Sales Rep & Top Customers */}
+                    <div className="grid grid-cols-12 gap-5">
+                        {/* Top Customers */}
+                        <div className="col-span-12 lg:col-span-5 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <div className="flex items-center gap-2 mb-5">
+                                <Users size={18} style={{ color: '#87CBB9' }} />
+                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Top 5 Khách Hàng (Theo Doanh Thu)</h3>
+                            </div>
+                            {topCustomers.length === 0 ? (
+                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {topCustomers.map(c => {
+                                        const maxRev = Math.max(...topCustomers.map(x => x.revenue))
+                                        const pct = maxRev > 0 ? (c.revenue / maxRev) * 100 : 0
+                                        return (
+                                            <div key={c.customerId}>
+                                                <div className="flex justify-between mb-1">
+                                                    <span className="text-xs font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }}>{c.name}</span>
+                                                    <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{formatVND(c.revenue)}</span>
+                                                </div>
+                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#142433' }}>
+                                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: '#87CBB9' }} />
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Sales Rep Performance */}
+                        <div className="col-span-12 lg:col-span-3 p-5 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <div className="flex items-center gap-2 mb-5">
+                                <Trophy size={18} style={{ color: '#D4A853' }} />
+                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Top Sale Rep</h3>
+                            </div>
+                            {salesRepPerformance.length === 0 ? (
+                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {salesRepPerformance.map((r, i) => (
+                                        <div key={r.salesRepId} className="flex items-center gap-3">
+                                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: i === 0 ? '#D4A853' : i === 1 ? '#8AAEBB' : i === 2 ? '#C45A2A' : '#142433', color: i < 3 ? '#142433' : '#4A6A7A' }}>
+                                                {i + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{r.name}</p>
+                                                <p className="text-[10px] truncate" style={{ color: '#4A6A7A' }}>{r.orders} đơn hàng</p>
+                                            </div>
+                                            <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>{(r.revenue / 1e6).toFixed(0)}M</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Low Stock Alerts */}
+                        <div className="col-span-12 lg:col-span-4 p-5 rounded-md" style={{ background: 'rgba(224, 82, 82, 0.05)', border: '1px solid rgba(224, 82, 82, 0.2)' }}>
+                            <div className="flex items-center gap-2 mb-5">
+                                <AlertTriangle size={18} style={{ color: '#E05252' }} />
+                                <h3 className="font-semibold" style={{ color: '#E8F1F2' }}>Cảnh Báo Tồn Kho Thấp</h3>
+                            </div>
+                            {lowStockAlerts.length === 0 ? (
+                                <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Không có sản phẩm nào sắp hết hàng</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {lowStockAlerts.map(l => (
+                                        <div key={l.productId} className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(224, 82, 82, 0.1)' }}>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{l.skuCode}</p>
+                                                <p className="text-[10px] truncate" style={{ color: '#4A6A7A' }}>{l.productName}</p>
+                                            </div>
+                                            <div className="text-right ml-3 flex-shrink-0">
+                                                <p className="text-xs font-bold" style={{ color: '#E05252' }}>{l.qtyAvailable} chai</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </>
