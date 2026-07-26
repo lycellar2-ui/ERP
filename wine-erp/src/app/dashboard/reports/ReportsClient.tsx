@@ -165,9 +165,13 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                 {monthlyRevenue.map((m) => {
                                     const pct = maxRevenue > 0 ? (m.revenue / maxRevenue) * 100 : 0
                                     return (
-                                        <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
-                                            <p className="text-xs font-bold text-right w-full" style={{ color: '#87CBB9' }}>
-                                                {m.revenue > 0 ? `${(m.revenue / 1e6).toFixed(0)}M` : '—'}
+                                        <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1 group relative">
+                                            {/* Tooltip on hover */}
+                                            <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#0A1926', color: '#87CBB9', border: '1px solid #2A4355', whiteSpace: 'nowrap' }}>
+                                                {formatVND(m.revenue)}
+                                            </div>
+                                            <p className="text-[10px] font-bold text-center w-full" style={{ color: '#87CBB9' }}>
+                                                {m.revenue > 0 ? `${(m.revenue / 1e6).toFixed(0)}M` : ''}
                                             </p>
                                             <div className="w-full rounded-t-md transition-all duration-500"
                                                 style={{
@@ -235,8 +239,12 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                         const pct = (sku.qtyOrdered / maxQty) * 100
                                         const typeColor = WINE_TYPE_COLOR[sku.wineType] ?? '#8AAEBB'
                                         return (
-                                            <div key={sku.productId} className="flex items-center gap-4">
-                                                <span className="text-xs font-bold w-5 text-right" style={{ color: '#4A6A7A' }}>
+                                            <div key={sku.productId} className="flex items-center gap-3 py-1 group relative">
+                                                {/* Tooltip */}
+                                                <div className="absolute right-0 bottom-full mb-1 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#0A1926', color: '#E8F1F2', border: '1px solid #2A4355', whiteSpace: 'nowrap' }}>
+                                                    {sku.productName}
+                                                </div>
+                                                <span className="text-[10px] font-bold w-4 text-center flex-shrink-0 rounded-full" style={{ color: i < 3 ? '#142433' : '#4A6A7A', background: i === 0 ? '#D4A853' : i === 1 ? '#8AAEBB' : i === 2 ? '#C45A2A' : 'transparent' }}>
                                                     {i + 1}
                                                 </span>
                                                 <div className="flex-1">
@@ -247,7 +255,7 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                                 {sku.wineType}
                                                             </span>
                                                             <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{sku.skuCode}</span>
-                                                            <span className="text-xs hidden md:block truncate max-w-[200px]" style={{ color: '#4A6A7A' }}>
+                                                            <span className="text-[11px] hidden md:block truncate max-w-[200px]" style={{ color: '#4A6A7A' }}>
                                                                 {sku.productName}
                                                             </span>
                                                         </div>
@@ -275,13 +283,18 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                             </div>
                             {brandBreakdown.length === 0 ? (
                                 <p className="text-xs text-center py-8" style={{ color: '#4A6A7A' }}>Chưa có dữ liệu</p>
-                            ) : (
-                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-                                    {brandBreakdown.map(b => {
-                                        const totalBrandRevenue = brandBreakdown.reduce((sum, x) => sum + x.revenue, 0)
-                                        const pct = totalBrandRevenue > 0 ? (b.revenue / totalBrandRevenue) * 100 : 0
-                                        return (
-                                            <div key={b.brand}>
+                            ) : (() => {
+                                const totalBrandRevenue = brandBreakdown.reduce((sum, x) => sum + x.revenue, 0)
+                                return (
+                                    <div className="space-y-4 max-h-80 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#2A4355 transparent' }}>
+                                        {brandBreakdown.map(b => {
+                                            const pct = totalBrandRevenue > 0 ? (b.revenue / totalBrandRevenue) * 100 : 0
+                                            return (
+                                                <div key={b.brand} className="group relative">
+                                                    {/* Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 px-2 py-1 rounded shadow-lg text-[10px] font-bold" style={{ background: '#0A1926', color: '#E8F1F2', border: '1px solid #2A4355', whiteSpace: 'nowrap' }}>
+                                                        {b.orderCount} đơn hàng • TB {formatVND(b.avgOrderValue)}/đơn
+                                                    </div>
                                                 <div className="flex justify-between mb-1">
                                                     <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>{b.brand}</span>
                                                     <div className="flex items-center gap-2">
@@ -297,9 +310,10 @@ export function ReportsClient({ topSKUs, monthlyRevenue, channelBreakdown, stock
                                                 </div>
                                             </div>
                                         )
-                                    })}
-                                </div>
-                            )}
+                                        })}
+                                    </div>
+                                )
+                            })()}
                         </div>
                     </div>
                 </>
