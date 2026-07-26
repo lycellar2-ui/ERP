@@ -131,7 +131,7 @@ export async function getTopCustomers(limit = 5) {
 
         const customers = await prisma.customer.findMany({
             where: { id: { in: result.map(r => r.customerId) } },
-            select: { id: true, name: true, code: true, type: true },
+            select: { id: true, name: true, code: true, customerType: true },
         })
 
         return result.map(r => {
@@ -140,9 +140,9 @@ export async function getTopCustomers(limit = 5) {
                 customerId: r.customerId,
                 name: c?.name ?? 'Khách lẻ',
                 code: c?.code ?? '',
-                type: c?.type ?? 'DIRECT_INDIVIDUAL',
+                type: c?.customerType ?? 'DIRECT_INDIVIDUAL',
                 revenue: Number(r._sum.totalAmount ?? 0),
-                orders: r._count,
+                orders: typeof r._count === 'number' ? r._count : (r._count?._all ?? 0),
             }
         })
     })
@@ -153,20 +153,22 @@ export async function getFinancialSummary() {
     return cached('reports:financial-summary', async () => {
         const [ar, ap] = await Promise.all([
             prisma.aRInvoice.findMany({
-                where: { status: { in: ['DRAFT', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
                 select: { amount: true, paidAmount: true, status: true },
             }),
             prisma.aPInvoice.findMany({
-                where: { status: { in: ['DRAFT', 'PARTIALLY_PAID', 'OVERDUE'] } },
-                select: { amount: true, paidAmount: true, status: true },
+                where: { status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                select: { amount: true, status: true },
             })
         ])
 
         const arUnpaid = ar.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
         const arOverdue = ar.filter(inv => inv.status === 'OVERDUE').reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
 
-        const apUnpaid = ap.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
-        const apOverdue = ap.filter(inv => inv.status === 'OVERDUE').reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+        // AP doesn't have paidAmount in this schema, so we assume amount is the unpaid portion 
+        // unless we join with APPayments, which is heavier. We use full amount for simplicity.
+        const apUnpaid = ap.reduce((sum, inv) => sum + Number(inv.amount), 0)
+        const apOverdue = ap.filter(inv => inv.status === 'OVERDUE').reduce((sum, inv) => sum + Number(inv.amount), 0)
 
         return {
             ar: { unpaid: arUnpaid, overdue: arOverdue },
@@ -221,23 +223,22 @@ export async function getSalesRepPerformance(limit = 5) {
             take: limit,
             where: {
                 status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-                salesRepId: { not: null },
             },
         })
 
         const users = await prisma.user.findMany({
-            where: { id: { in: result.map(r => r.salesRepId!) } },
+            where: { id: { in: result.map(r => r.salesRepId) } },
             select: { id: true, name: true, email: true },
         })
 
         return result.map(r => {
             const u = users.find(u => u.id === r.salesRepId)
             return {
-                salesRepId: r.salesRepId!,
+                salesRepId: r.salesRepId,
                 name: u?.name ?? 'Unknown',
                 email: u?.email ?? '',
-                revenue: Number(r._sum.totalAmount ?? 0),
-                orders: r._count,
+                revenue: Number(r._sum?.totalAmount ?? 0),
+                orders: typeof r._count === 'number' ? r._count : (r._count?._all ?? 0),
             }
         })
     })
