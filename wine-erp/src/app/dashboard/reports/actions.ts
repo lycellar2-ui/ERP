@@ -142,7 +142,7 @@ export async function getTopCustomers(limit = 5) {
                 code: c?.code ?? '',
                 type: c?.customerType ?? 'DIRECT_INDIVIDUAL',
                 revenue: Number(r._sum.totalAmount ?? 0),
-                orders: typeof r._count === 'number' ? r._count : (r._count?._all ?? 0),
+                orders: Number(r._count || 0),
             }
         })
     })
@@ -238,7 +238,7 @@ export async function getSalesRepPerformance(limit = 5) {
                 name: u?.name ?? 'Unknown',
                 email: u?.email ?? '',
                 revenue: Number(r._sum?.totalAmount ?? 0),
-                orders: typeof r._count === 'number' ? r._count : (r._count?._all ?? 0),
+                orders: Number(r._count || 0),
             }
         })
     })
