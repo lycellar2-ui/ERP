@@ -29,7 +29,7 @@ const FREQ_LABEL: Record<string, string> = {
 function CreateDrawer({ open, onClose, onCreated }: {
     open: boolean; onClose: () => void; onCreated: () => void
 }) {
-    const [customers, setCustomers] = useState<{ id: string; name: string; code: string; customerType: string }[]>([])
+    const [customers, setCustomers] = useState<{ id: string; name: string; code: string; customerType: string | null }[]>([])
     const [form, setForm] = useState<{ customerId: string; reportFrequency: 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'AS_NEEDED'; startDate: string; endDate: string }>({ customerId: '', reportFrequency: 'MONTHLY', startDate: '', endDate: '' })
     const [loading, setLoading] = useState(false)
 

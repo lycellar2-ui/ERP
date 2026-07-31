@@ -174,7 +174,7 @@ export async function POST() {
             return {
                 name: c.name,
                 code: c.code,
-                type: c.customerType,
+                type: c.channel ?? 'HORECA',
                 channel: c.channel,
                 tier,
                 tags: c.tags.map(t => t.tag),

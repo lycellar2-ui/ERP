@@ -217,8 +217,7 @@ export async function getCustomerStats(): Promise<CustomerStats> {
 
     return cached(`customers:stats:${userId}`, async () => {
         const typeLabels: Record<string, string> = {
-            HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Phân Phối',
-            VIP_RETAIL: 'VIP Retail', INDIVIDUAL: 'Cá Nhân',
+            HORECA: 'HORECA', CORPORATE: 'Corporate', RETAIL: 'Retail',
         }
 
         const where: any = { deletedAt: null }
@@ -234,7 +233,7 @@ export async function getCustomerStats(): Promise<CustomerStats> {
             prisma.customer.count({ where: { ...where, creditLimit: { gt: 0 } } }),
             prisma.customer.aggregate({ where, _sum: { creditLimit: true } }),
             prisma.customer.groupBy({
-                by: ['customerType'],
+                by: ['channel'],
                 where,
                 _count: { id: true },
                 orderBy: { _count: { id: 'desc' } },
@@ -247,8 +246,8 @@ export async function getCustomerStats(): Promise<CustomerStats> {
             withCredit,
             totalCreditLimit: Number(creditSum._sum.creditLimit ?? 0),
             topTypes: typeCounts.map(t => ({
-                type: t.customerType,
-                label: typeLabels[t.customerType] ?? t.customerType,
+                type: t.channel ?? 'N/A',
+                label: typeLabels[t.channel ?? ''] ?? t.channel ?? 'N/A',
                 count: t._count.id,
             })),
             pendingApproval,

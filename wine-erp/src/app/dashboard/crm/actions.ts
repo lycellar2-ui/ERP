@@ -13,7 +13,7 @@ export interface CustomerCRMRow {
     id: string
     code: string
     name: string
-    customerType: string
+    customerType: string | null
     channel: string | null
     paymentTerm: string
     creditLimit: number

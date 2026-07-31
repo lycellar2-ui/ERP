@@ -318,10 +318,6 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         <td class="info-value">${form.taxId || '—'}</td>
                     </tr>
                     <tr>
-                        <td class="info-label">Phân Loại:</td>
-                        <td class="info-value">${customerTypeLabels[form.customerType || ''] || form.customerType || ''}</td>
-                    </tr>
-                    <tr>
                         <td class="info-label">Kênh Bán Hàng (Channel):</td>
                         <td class="info-value">${form.channel || 'HORECA'}</td>
                     </tr>
@@ -709,7 +705,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                         setParentSearch(`${c.code} — ${c.name}`)
                                                                         setParentDropdownOpen(false)
                                                                         if (!isEdit && !isSalesRep) {
-                                                                            handleAutoGenerateCode(form.channel ?? undefined, form.customerType, c.id)
+                                                                            handleAutoGenerateCode(form.channel ?? undefined, c.id)
                                                                         }
                                                                     }}
                                                                 >
