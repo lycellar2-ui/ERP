@@ -169,13 +169,19 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         entityType: data.entityType as any,
                         allowDirectSO: data.allowDirectSO,
                         brandGroup: data.brandGroup,
+                        purchasingName: data.purchasingName,
+                        purchasingPhone: data.purchasingPhone,
+                        receiverName: data.receiverName,
+                        receiverPhone: data.receiverPhone,
+                        deliveryNotes: data.deliveryNotes,
+                        orderChannel: data.orderChannel as any,
                     })
                     setOfficialCodeInput('')
                     setApprovalError('')
                 }
             }).finally(() => setLoading(false))
         } else {
-            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null })
+            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO' })
             setOfficialCodeInput('')
             setApprovalError('')
             if (!isSalesRep) {
@@ -328,6 +334,22 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     <tr>
                         <td class="info-label">Hạn Mức Nợ (Credit Limit):</td>
                         <td class="info-value"><strong>${(form.creditLimit || 0).toLocaleString('vi-VN')} ₫</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Người Thu Mua (Purchasing):</td>
+                        <td class="info-value">${form.purchasingName || '—'} ${form.purchasingPhone ? `(${form.purchasingPhone})` : ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Người Nhận Hàng:</td>
+                        <td class="info-value">${form.receiverName || '—'} ${form.receiverPhone ? `(${form.receiverPhone})` : ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Kênh Nhận Order:</td>
+                        <td class="info-value">${form.orderChannel || 'ZALO'}</td>
+                    </tr>
+                    <tr>
+                        <td class="info-label">Lưu Ý Giao Hàng:</td>
+                        <td class="info-value">${form.deliveryNotes || '—'}</td>
                     </tr>
                     <tr>
                         <td class="info-label">Người Liên Hệ Chính:</td>
@@ -874,6 +896,57 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             </div>
 
+                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Thông Tin Thu Mua & Kênh Nhận Order</p>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Tên người thu mua</label>
+                                    <input className={inputCls} style={inputStyle} value={form.purchasingName ?? ''} placeholder="Ví dụ: Anh Nam Thu Mua"
+                                        onChange={e => set('purchasingName', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>SĐT thu mua</label>
+                                    <input className={inputCls} style={inputStyle} value={form.purchasingPhone ?? ''} placeholder="0912345678"
+                                        onChange={e => set('purchasingPhone', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Kênh nhận order</label>
+                                    <select className={inputCls} style={inputStyle} value={form.orderChannel ?? 'ZALO'}
+                                        onChange={e => set('orderChannel', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        <option value="ZALO">💬 Zalo</option>
+                                        <option value="EMAIL">📧 Email</option>
+                                        <option value="WHATSAPP">📱 WhatsApp</option>
+                                        <option value="PHONE">📞 Điện thoại</option>
+                                        <option value="DIRECT">🏢 Trực tiếp</option>
+                                        <option value="OTHER">❓ Khác</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Thông Tin Giao Hàng & Lưu Ý</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Người nhận hàng</label>
+                                    <input className={inputCls} style={inputStyle} value={form.receiverName ?? ''} placeholder="Ví dụ: Quản lý nhà hàng / Thủ kho"
+                                        onChange={e => set('receiverName', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>SĐT người nhận</label>
+                                    <input className={inputCls} style={inputStyle} value={form.receiverPhone ?? ''} placeholder="0987654321"
+                                        onChange={e => set('receiverPhone', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Lưu ý về giao hàng</label>
+                                <textarea className={`${inputCls} h-20 resize-none`} style={inputStyle} value={form.deliveryNotes ?? ''} placeholder="Ví dụ: Giao sau 14h, báo trước 30 phút, giao tầng hầm B2..."
+                                    onChange={e => set('deliveryNotes', e.target.value || null)}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            </div>
+
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Tín Dụng & Thanh Toán</p>
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
@@ -1270,7 +1343,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     style={{ borderBottom: '1px solid rgba(61,43,31,0.6)' }}
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,43,31,0.35)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.customerType} /></td>
+                                    <td className="px-3 py-1.5 whitespace-nowrap"><TypeBadge type={row.channel} /></td>
                                     <td className="px-3 py-1.5 whitespace-nowrap font-mono text-xs text-[#E8F1F2] font-semibold">{row.code}</td>
                                     <td className="px-4 py-1.5">
                                         <div className="flex items-center gap-2">

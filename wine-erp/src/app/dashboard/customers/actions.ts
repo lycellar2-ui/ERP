@@ -193,6 +193,12 @@ export async function getCustomerById(id: string) {
         entityType: c.entityType,
         allowDirectSO: c.allowDirectSO,
         brandGroup: c.brandGroup,
+        purchasingName: c.purchasingName,
+        purchasingPhone: c.purchasingPhone,
+        receiverName: c.receiverName,
+        receiverPhone: c.receiverPhone,
+        deliveryNotes: c.deliveryNotes,
+        orderChannel: c.orderChannel,
     }
 }
 
@@ -379,6 +385,12 @@ const customerSchema = z.object({
     entityType: z.enum(['COMPANY', 'RESTAURANT']).default('RESTAURANT'),
     allowDirectSO: z.boolean().default(false),
     brandGroup: z.string().nullable().optional(),
+    purchasingName: z.string().nullable().optional(),
+    purchasingPhone: z.string().nullable().optional(),
+    receiverName: z.string().nullable().optional(),
+    receiverPhone: z.string().nullable().optional(),
+    deliveryNotes: z.string().nullable().optional(),
+    orderChannel: z.enum(['ZALO', 'EMAIL', 'WHATSAPP', 'PHONE', 'DIRECT', 'OTHER']).nullable().optional(),
 })
 
 export type CustomerInput = z.infer<typeof customerSchema>
@@ -487,6 +499,12 @@ export async function createCustomer(input: CustomerInput) {
                     entityType: data.entityType,
                     allowDirectSO: data.entityType === 'COMPANY' ? data.allowDirectSO : false,
                     brandGroup: data.brandGroup !== undefined ? data.brandGroup : null,
+                    purchasingName: data.purchasingName !== undefined ? data.purchasingName : null,
+                    purchasingPhone: data.purchasingPhone !== undefined ? data.purchasingPhone : null,
+                    receiverName: data.receiverName !== undefined ? data.receiverName : null,
+                    receiverPhone: data.receiverPhone !== undefined ? data.receiverPhone : null,
+                    deliveryNotes: data.deliveryNotes !== undefined ? data.deliveryNotes : null,
+                    orderChannel: data.orderChannel !== undefined ? data.orderChannel : null,
                 },
             })
 
@@ -589,6 +607,12 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.status !== undefined) updateData.status = customerData.status
         if (customerData.brandGroup !== undefined) updateData.brandGroup = customerData.brandGroup
         if (customerData.entityType !== undefined) updateData.entityType = customerData.entityType
+        if (customerData.purchasingName !== undefined) updateData.purchasingName = customerData.purchasingName
+        if (customerData.purchasingPhone !== undefined) updateData.purchasingPhone = customerData.purchasingPhone
+        if (customerData.receiverName !== undefined) updateData.receiverName = customerData.receiverName
+        if (customerData.receiverPhone !== undefined) updateData.receiverPhone = customerData.receiverPhone
+        if (customerData.deliveryNotes !== undefined) updateData.deliveryNotes = customerData.deliveryNotes
+        if (customerData.orderChannel !== undefined) updateData.orderChannel = customerData.orderChannel
 
         const currentEntityType = customerData.entityType ?? oldCustomer.entityType
         let finalParentId = customerData.parentId !== undefined ? customerData.parentId : oldCustomer.parentId

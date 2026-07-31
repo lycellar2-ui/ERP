@@ -504,6 +504,12 @@ model Customer {
   entityType    CustomerEntityType     @default(RESTAURANT)
   allowDirectSO Boolean                @default(false)
   brandGroup    String?
+  purchasingName  String?
+  purchasingPhone String?
+  receiverName    String?
+  receiverPhone   String?
+  deliveryNotes   String?
+  orderChannel    OrderChannel?
   addresses     CustomerAddress[]
   contacts      CustomerContact[]
   tags          CustomerTag[]
@@ -2102,6 +2108,15 @@ enum SalesChannel {
   DIRECT_INDIVIDUAL
   CORPORATE
   RETAIL
+}
+
+enum OrderChannel {
+  ZALO
+  EMAIL
+  WHATSAPP
+  PHONE
+  DIRECT
+  OTHER
 }
 
 enum SupplierType {
