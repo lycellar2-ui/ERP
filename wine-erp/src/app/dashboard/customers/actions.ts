@@ -264,11 +264,11 @@ export async function getCustomerChannels(): Promise<{ channel: string; count: n
     return cached('customers:channels', async () => {
         const groups = await prisma.customer.groupBy({
             by: ['channel'],
-            where: { deletedAt: null, channel: { not: null } },
+            where: { deletedAt: null },
             _count: { id: true },
             orderBy: { _count: { id: 'desc' } },
         })
-        return groups.map(g => ({ channel: g.channel!, count: g._count.id }))
+        return groups.map(g => ({ channel: g.channel, count: g._count.id }))
     }, 60_000)
 }
 
