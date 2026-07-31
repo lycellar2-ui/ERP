@@ -288,28 +288,34 @@ export async function getSalesRepList(): Promise<{ id: string; name: string }[]>
 }
 
 export async function getParentCandidates(currentId?: string) {
-    const where: any = {
-        deletedAt: null,
-        status: 'ACTIVE',
-        customerType: { in: ['HORECA', 'WHOLESALE_DISTRIBUTOR'] },
-        parentId: null,
-    }
+    try {
+        const where: any = {
+            deletedAt: null,
+            status: { in: ['ACTIVE', 'PENDING_APPROVAL'] },
+            OR: [
+                { entityType: 'COMPANY' },
+                { parentId: null }
+            ]
+        }
 
-    if (currentId) {
-        // Also exclude any children of currentId to avoid circular dependency
-        const children = await prisma.customer.findMany({
-            where: { parentId: currentId, deletedAt: null },
-            select: { id: true }
+        if (currentId) {
+            const children = await prisma.customer.findMany({
+                where: { parentId: currentId, deletedAt: null },
+                select: { id: true }
+            })
+            const excludeIds = [currentId, ...children.map(c => c.id)]
+            where.id = { notIn: excludeIds }
+        }
+
+        return await prisma.customer.findMany({
+            where,
+            select: { id: true, name: true, code: true, entityType: true },
+            orderBy: { name: 'asc' },
         })
-        const excludeIds = [currentId, ...children.map(c => c.id)]
-        where.id = { notIn: excludeIds }
+    } catch (err) {
+        console.error('Lỗi getParentCandidates:', err)
+        return []
     }
-
-    return prisma.customer.findMany({
-        where,
-        select: { id: true, name: true, code: true },
-        orderBy: { name: 'asc' },
-    })
 }
 
 // ═══════════════════════════════════════════════════

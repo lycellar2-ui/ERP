@@ -622,9 +622,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 }
                                             }}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                            <option value="">— Chọn Công ty mẹ (Nếu có) —</option>
+                                            <option value="" style={{ background: '#0D1E2B', color: '#E8F1F2' }}>— Chọn Công ty mẹ (Nếu có) —</option>
                                             {parentCandidates.map(c => (
-                                                <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
+                                                <option key={c.id} value={c.id} style={{ background: '#0D1E2B', color: '#E8F1F2' }}>
+                                                    {c.code} — {c.name} {c.entityType === 'COMPANY' ? '🏢' : ''}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
