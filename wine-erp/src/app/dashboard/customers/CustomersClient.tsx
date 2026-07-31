@@ -35,8 +35,9 @@ const CITIES = [
     'Hải Phòng', 'Cần Thơ', 'Huế', 'Vũng Tàu', 'Đà Lạt', 'Quy Nhơn', 'Phan Thiết', 'Sapa',
 ]
 
-function TypeBadge({ type }: { type: string }) {
-    const cfg = CUSTOMER_TYPE[type] ?? { label: type, color: '#8AAEBB', bg: 'rgba(168,152,128,0.12)', emoji: '🏢' }
+function TypeBadge({ type }: { type: string | null }) {
+    const key = type ?? 'HORECA'
+    const cfg = CUSTOMER_TYPE[key] ?? { label: key, color: '#8AAEBB', bg: 'rgba(168,152,128,0.12)', emoji: '🏢' }
     return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
             style={{ color: cfg.color, background: cfg.bg }}>
