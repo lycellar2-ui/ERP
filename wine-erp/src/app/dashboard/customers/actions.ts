@@ -521,7 +521,7 @@ export async function createCustomer(input: CustomerInput) {
 
         revalidateCache('customers')
         revalidatePath('/dashboard/customers')
-        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Customer', entityId: customer.id, newValue: { code: data.code, name: data.name, customerType: data.customerType, creditLimit: Number(data.creditLimit), paymentTerm: data.paymentTerm } })
+        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Customer', entityId: customer.id, newValue: { code: data.code, name: data.name, channel: data.channel, creditLimit: Number(data.creditLimit), paymentTerm: data.paymentTerm } })
         return { success: true }
     } catch (err: any) {
         if (err?.code === 'P2002') return { success: false, error: 'Mã KH đã tồn tại. Vui lòng chọn mã khác.' }
@@ -582,7 +582,6 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.name !== undefined) updateData.name = customerData.name
         if (customerData.shortName !== undefined) updateData.shortName = customerData.shortName
         if (customerData.taxId !== undefined) updateData.taxId = customerData.taxId
-        if (customerData.customerType !== undefined) updateData.customerType = customerData.customerType
         if (customerData.channel !== undefined) updateData.channel = customerData.channel
         if (customerData.paymentTerm !== undefined) updateData.paymentTerm = customerData.paymentTerm
         if (customerData.creditLimit !== undefined) updateData.creditLimit = customerData.creditLimit
@@ -617,7 +616,6 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
                                 name: `${nameForParent} (Mẹ)`,
                                 shortName: (customerData.shortName ?? oldCustomer.shortName) ? `${customerData.shortName ?? oldCustomer.shortName} (Mẹ)` : null,
                                 taxId: customerData.taxId !== undefined ? customerData.taxId : oldCustomer.taxId,
-                                customerType: customerData.customerType ?? oldCustomer.customerType,
                                 channel: customerData.channel !== undefined ? customerData.channel : oldCustomer.channel,
                                 paymentTerm: customerData.paymentTerm ?? oldCustomer.paymentTerm,
                                 creditLimit: customerData.creditLimit ?? Number(oldCustomer.creditLimit),
