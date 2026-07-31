@@ -393,8 +393,17 @@ export async function createCustomer(input: CustomerInput) {
             inputData.code = `TEMP-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${rand}`
             inputData.salesRepId = user.id
         } else {
-            if (!inputData.code) {
-                return { success: false, error: 'Mã KH bắt buộc' }
+            if (!inputData.code || inputData.code.trim() === '') {
+                const gen = await getNextCustomerCode({
+                    channel: inputData.channel ?? undefined,
+                    customerType: inputData.customerType,
+                    parentId: inputData.parentId ?? undefined
+                })
+                if (gen.success && gen.code) {
+                    inputData.code = gen.code
+                } else {
+                    return { success: false, error: 'Không thể tự động khởi tạo mã KH.' }
+                }
             }
             if (inputData.code.startsWith('TEMP-')) {
                 return { success: false, error: 'Mã KH chính thức không được bắt đầu bằng TEMP-' }
@@ -405,6 +414,23 @@ export async function createCustomer(input: CustomerInput) {
         let salesRepId = data.salesRepId
         if (isSalesRepUser) {
             salesRepId = user.id
+        }
+
+        // Check duplicate Tax ID
+        if (data.taxId && data.taxId.trim()) {
+            const existingTax = await prisma.customer.findFirst({
+                where: {
+                    deletedAt: null,
+                    taxId: { equals: data.taxId.trim(), mode: 'insensitive' }
+                },
+                select: { code: true, name: true }
+            })
+            if (existingTax) {
+                return {
+                    success: false,
+                    error: `Mã số thuế '${data.taxId.trim()}' đã tồn tại cho Khách hàng [${existingTax.code}] ${existingTax.name}.`
+                }
+            }
         }
 
         const customer = await prisma.$transaction(async (tx) => {
@@ -1133,5 +1159,161 @@ export async function rejectCustomer(id: string) {
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message ?? 'Lỗi từ chối khách hàng' }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// AUTO-GENERATE CUSTOMER CODE (Master Data Rules)
+// ═══════════════════════════════════════════════════
+export async function getNextCustomerCode(params?: { channel?: string; customerType?: string; parentId?: string }) {
+    try {
+        const { channel, customerType, parentId } = params ?? {}
+
+        // Case 1: If child customer with a parent
+        if (parentId) {
+            const parent = await prisma.customer.findUnique({
+                where: { id: parentId },
+                select: { code: true }
+            })
+            if (parent) {
+                const baseCode = parent.code
+                const existingChildren = await prisma.customer.findMany({
+                    where: {
+                        OR: [
+                            { parentId },
+                            { code: { startsWith: `${baseCode}-` } }
+                        ]
+                    },
+                    select: { code: true }
+                })
+
+                let maxSuffix = 0
+                for (const c of existingChildren) {
+                    const match = c.code.match(/-(\d+)$/)
+                    if (match) {
+                        const num = parseInt(match[1], 10)
+                        if (!isNaN(num) && num > maxSuffix) maxSuffix = num
+                    }
+                }
+                const nextSuffix = (maxSuffix + 1).toString().padStart(2, '0')
+                return { success: true, code: `${baseCode}-${nextSuffix}` }
+            }
+        }
+
+        // Case 2: Standalone / Parent customer based on channel or customerType
+        let prefix = 'KH'
+        const ch = (channel || customerType || '').toUpperCase()
+        if (ch.includes('HORECA')) {
+            prefix = 'HR'
+        } else if (ch.includes('WHOLESALE') || ch.includes('DISTRIBUTOR') || ch.includes('SỈ') || ch.includes('BUÔN')) {
+            prefix = 'WS'
+        } else if (ch.includes('VIP') || ch.includes('RETAIL')) {
+            prefix = 'VIP'
+        } else {
+            prefix = 'KH'
+        }
+
+        const customers = await prisma.customer.findMany({
+            where: {
+                code: { startsWith: prefix }
+            },
+            select: { code: true }
+        })
+
+        let maxNum = 10000 // Base for HR10001 / WS10001 / VIP10001
+        for (const c of customers) {
+            const match = c.code.slice(prefix.length).match(/^(\d+)(?:-.*)?$/)
+            if (match) {
+                const num = parseInt(match[1], 10)
+                if (!isNaN(num) && num > maxNum) maxNum = num
+            }
+        }
+
+        const nextCode = `${prefix}${maxNum + 1}`
+        return { success: true, code: nextCode }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Lỗi sinh mã khách hàng' }
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// DUPLICATE CUSTOMER CHECK (Tax ID, Phone, Name)
+// ═══════════════════════════════════════════════════
+export async function checkCustomerDuplicates(input: {
+    taxId?: string | null
+    phone?: string | null
+    name?: string | null
+    excludeId?: string | null
+}) {
+    try {
+        const warnings: { type: 'TAX_ID' | 'PHONE' | 'NAME'; message: string; customer: { id: string; code: string; name: string } }[] = []
+
+        const whereNotId = input.excludeId ? { id: { not: input.excludeId } } : {}
+
+        // 1. Check Tax ID
+        if (input.taxId && input.taxId.trim()) {
+            const cleanTax = input.taxId.trim()
+            const existingTax = await prisma.customer.findFirst({
+                where: {
+                    ...whereNotId,
+                    deletedAt: null,
+                    taxId: { equals: cleanTax, mode: 'insensitive' }
+                },
+                select: { id: true, code: true, name: true }
+            })
+            if (existingTax) {
+                warnings.push({
+                    type: 'TAX_ID',
+                    message: `Mã số thuế '${cleanTax}' đã tồn tại ở Khách hàng [${existingTax.code}] ${existingTax.name}`,
+                    customer: { id: existingTax.id, code: existingTax.code, name: existingTax.name }
+                })
+            }
+        }
+
+        // 2. Check Phone
+        if (input.phone && input.phone.trim()) {
+            const cleanPhone = input.phone.trim()
+            const existingPhoneContact = await prisma.customerContact.findFirst({
+                where: {
+                    phone: { equals: cleanPhone, mode: 'insensitive' },
+                    customer: {
+                        deletedAt: null,
+                        ...(input.excludeId ? { id: { not: input.excludeId } } : {})
+                    }
+                },
+                include: { customer: { select: { id: true, code: true, name: true } } }
+            })
+            if (existingPhoneContact) {
+                warnings.push({
+                    type: 'PHONE',
+                    message: `Số điện thoại '${cleanPhone}' đã trùng với SĐT liên hệ của [${existingPhoneContact.customer.code}] ${existingPhoneContact.customer.name}`,
+                    customer: { id: existingPhoneContact.customer.id, code: existingPhoneContact.customer.code, name: existingPhoneContact.customer.name }
+                })
+            }
+        }
+
+        // 3. Check Exact Name
+        if (input.name && input.name.trim().length >= 3) {
+            const cleanName = input.name.trim()
+            const existingName = await prisma.customer.findFirst({
+                where: {
+                    ...whereNotId,
+                    deletedAt: null,
+                    name: { equals: cleanName, mode: 'insensitive' }
+                },
+                select: { id: true, code: true, name: true }
+            })
+            if (existingName) {
+                warnings.push({
+                    type: 'NAME',
+                    message: `Tên khách hàng trùng khớp với [${existingName.code}] ${existingName.name}`,
+                    customer: { id: existingName.id, code: existingName.code, name: existingName.name }
+                })
+            }
+        }
+
+        return { success: true, warnings }
+    } catch (err: any) {
+        return { success: false, error: err.message, warnings: [] }
     }
 }

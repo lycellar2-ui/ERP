@@ -11,7 +11,7 @@ import {
     createCustomer, updateCustomer, getCustomers, getCustomerById,
     deleteCustomer, exportCustomersData, bulkImportCustomers, getParentCandidates,
     getCustomerStats, getCustomerChannels, getSalesRepList, exportCustomerOnboardingForm,
-    approveCustomer, rejectCustomer,
+    approveCustomer, rejectCustomer, getNextCustomerCode, checkCustomerDuplicates,
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
@@ -121,6 +121,25 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
     const isEdit = !!editingId
 
+    const [generatingCode, setGeneratingCode] = useState(false)
+
+    const handleAutoGenerateCode = async (channelVal?: string, custTypeVal?: string, parentIdVal?: string | null) => {
+        setGeneratingCode(true)
+        try {
+            const res = await getNextCustomerCode({
+                channel: channelVal !== undefined ? channelVal : form.channel ?? undefined,
+                customerType: custTypeVal !== undefined ? custTypeVal : form.customerType,
+                parentId: parentIdVal !== undefined ? (parentIdVal || undefined) : (form.parentId || undefined)
+            })
+            if (res.success && res.code) {
+                setForm(f => ({ ...f, code: res.code }))
+            }
+        } catch {
+        } finally {
+            setGeneratingCode(false)
+        }
+    }
+
     useEffect(() => {
         if (!open) return
 
@@ -163,9 +182,36 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', customerType: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null })
             setOfficialCodeInput('')
             setApprovalError('')
+            if (!isSalesRep) {
+                handleAutoGenerateCode('HORECA', 'HORECA', null)
+            }
         }
         setErrors({})
+        setDuplicateWarnings([])
     }, [open, editingId, isSalesRep])
+
+    const [duplicateWarnings, setDuplicateWarnings] = useState<{ type: 'TAX_ID' | 'PHONE' | 'NAME'; message: string; customer: { id: string; code: string; name: string } }[]>([])
+
+    useEffect(() => {
+        if (!open) return
+        const timer = setTimeout(() => {
+            if (form.taxId || form.phone || (form.name && form.name.length >= 3)) {
+                checkCustomerDuplicates({
+                    taxId: form.taxId,
+                    phone: form.phone,
+                    name: form.name,
+                    excludeId: editingId || undefined,
+                }).then(res => {
+                    if (res.success && res.warnings) {
+                        setDuplicateWarnings(res.warnings)
+                    }
+                }).catch(() => {})
+            } else {
+                setDuplicateWarnings([])
+            }
+        }, 350)
+        return () => clearTimeout(timer)
+    }, [form.taxId, form.phone, form.name, open, editingId])
 
     const set = (k: keyof CustomerInput, v: any) => setForm(f => ({ ...f, [k]: v }))
     const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
@@ -498,16 +544,46 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             )}
 
+                            {duplicateWarnings.length > 0 && (
+                                <div className="p-3.5 rounded-xl space-y-2 transition-all" style={{ background: 'rgba(212,150,58,0.12)', border: '1px solid rgba(212,150,58,0.4)' }}>
+                                    <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A] flex items-center gap-1.5">
+                                        <AlertCircle size={15} /> Cảnh báo trùng lặp thông tin Khách Hàng
+                                    </p>
+                                    <div className="space-y-1 text-xs" style={{ color: '#E8F1F2' }}>
+                                        {duplicateWarnings.map((w, idx) => (
+                                            <div key={idx} className="flex items-start gap-1.5">
+                                                <span className="text-[#D4963A] font-bold">•</span>
+                                                <span>{w.message}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>── Thông Tin Cơ Bản</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#8B1A2E' }}>*</span>}</label>
-                                    <input className={inputCls} style={inputStyle} 
-                                        value={isEdit ? (form.code ?? '') : (isSalesRep ? 'MÃ TỰ SINH' : (form.code ?? ''))} 
-                                        placeholder={isSalesRep ? 'Sẽ được sinh tự động' : 'CUS-PARKHYATT'}
-                                        onChange={e => set('code', e.target.value.toUpperCase())} 
-                                        disabled={isEdit || isSalesRep}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    <div className="flex gap-2">
+                                        <input className={inputCls} style={inputStyle} 
+                                            value={isEdit ? (form.code ?? '') : (isSalesRep ? 'MÃ TỰ SINH' : (form.code ?? ''))} 
+                                            placeholder={isSalesRep ? 'Sẽ được sinh tự động' : 'VD: HR10023'}
+                                            onChange={e => set('code', e.target.value.toUpperCase())} 
+                                            disabled={isEdit || isSalesRep}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        {!isEdit && !isSalesRep && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAutoGenerateCode()}
+                                                disabled={generatingCode}
+                                                title="Tạo mã tự động theo chuẩn Master Data"
+                                                className="px-2.5 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#2A4355] text-[#87CBB9] border border-[#2A4355] whitespace-nowrap"
+                                                style={{ background: '#1B2E3D' }}
+                                            >
+                                                {generatingCode ? <Loader2 size={13} className="animate-spin" /> : '🎲 Sinh mã'}
+                                            </button>
+                                        )}
+                                    </div>
                                     {errors.code && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.code}</p>}
                                 </div>
                                 <div>
@@ -520,6 +596,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 customerType: val,
                                                 ...(val !== 'HORECA' && val !== 'WHOLESALE_DISTRIBUTOR' ? { parentId: null } : {})
                                             }))
+                                            if (!isEdit && !isSalesRep) {
+                                                handleAutoGenerateCode(form.channel ?? undefined, val, val !== 'HORECA' && val !== 'WHOLESALE_DISTRIBUTOR' ? null : form.parentId)
+                                            }
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
                                         <option value="HORECA">🏨 HORECA</option>
@@ -535,7 +614,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <div>
                                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Công ty mẹ (Gánh nợ)</label>
                                         <select className={inputCls} style={inputStyle} value={form.parentId ?? ''}
-                                            onChange={e => set('parentId', e.target.value || null)}
+                                            onChange={e => {
+                                                const pId = e.target.value || null
+                                                set('parentId', pId)
+                                                if (!isEdit && !isSalesRep) {
+                                                    handleAutoGenerateCode(form.channel ?? undefined, form.customerType, pId)
+                                                }
+                                            }}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
                                             <option value="">— Chọn Công ty mẹ (Nếu có) —</option>
                                             {parentCandidates.map(c => (
@@ -588,6 +673,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     onChange={e => set('name', e.target.value)}
                                     onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                                 {errors.name && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.name}</p>}
+                                {duplicateWarnings.find(w => w.type === 'NAME') && (
+                                    <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
+                                        <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'NAME')?.message}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -602,6 +692,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} placeholder="0302012345"
                                         onChange={e => set('taxId', e.target.value || null)}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
+                                        <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#E05252]">
+                                            <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -609,7 +704,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Kênh bán hàng</label>
                                     <select className={inputCls} style={inputStyle} value={form.channel ?? ''}
-                                        onChange={e => set('channel', e.target.value as any || null)}
+                                        onChange={e => {
+                                            const chVal = e.target.value as any || null
+                                            set('channel', chVal)
+                                            if (!isEdit && !isSalesRep) {
+                                                handleAutoGenerateCode(chVal ?? undefined, form.customerType, form.parentId)
+                                            }
+                                        }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
                                         <option value="">— Chọn kênh —</option>
                                         {Object.entries(CHANNEL_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -639,6 +740,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <input className={inputCls} style={inputStyle} value={form.phone ?? ''} placeholder="0901234567"
                                         onChange={e => set('phone', e.target.value || null)}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    {duplicateWarnings.find(w => w.type === 'PHONE') && (
+                                        <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
+                                            <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'PHONE')?.message}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                             <div>
