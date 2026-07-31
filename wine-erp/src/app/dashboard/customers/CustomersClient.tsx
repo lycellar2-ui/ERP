@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle,
-    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer,
+    Upload, Download, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Printer, ChevronDown,
 } from 'lucide-react'
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
@@ -191,6 +191,30 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     }, [open, editingId, isSalesRep])
 
     const [duplicateWarnings, setDuplicateWarnings] = useState<{ type: 'TAX_ID' | 'PHONE' | 'NAME'; message: string; customer: { id: string; code: string; name: string } }[]>([])
+    const [parentSearch, setParentSearch] = useState('')
+    const [parentDropdownOpen, setParentDropdownOpen] = useState(false)
+    const parentContainerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (parentContainerRef.current && !parentContainerRef.current.contains(e.target as Node)) {
+                setParentDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    useEffect(() => {
+        if (form.parentId && parentCandidates.length > 0) {
+            const found = parentCandidates.find(c => c.id === form.parentId)
+            if (found) {
+                setParentSearch(`${found.code} — ${found.name}`)
+            }
+        } else if (!form.parentId) {
+            setParentSearch('')
+        }
+    }, [form.parentId, parentCandidates])
 
     useEffect(() => {
         if (!open) return
@@ -611,24 +635,115 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                             {(form.customerType === 'HORECA' || form.customerType === 'WHOLESALE_DISTRIBUTOR') && (
                                 <div className="space-y-4">
-                                    <div>
+                                    <div className="relative" ref={parentContainerRef}>
                                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Công ty mẹ (Gánh nợ)</label>
-                                        <select className={inputCls} style={inputStyle} value={form.parentId ?? ''}
-                                            onChange={e => {
-                                                const pId = e.target.value || null
-                                                set('parentId', pId)
-                                                if (!isEdit && !isSalesRep) {
-                                                    handleAutoGenerateCode(form.channel ?? undefined, form.customerType, pId)
-                                                }
-                                            }}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                            <option value="" style={{ background: '#0D1E2B', color: '#E8F1F2' }}>— Chọn Công ty mẹ (Nếu có) —</option>
-                                            {parentCandidates.map(c => (
-                                                <option key={c.id} value={c.id} style={{ background: '#0D1E2B', color: '#E8F1F2' }}>
-                                                    {c.code} — {c.name} {c.entityType === 'COMPANY' ? '🏢' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <div className="relative flex items-center">
+                                            <Search size={14} className="absolute left-3 text-[#4A6A7A] pointer-events-none" />
+                                            <input
+                                                type="text"
+                                                className={`${inputCls} pl-9 pr-8`}
+                                                style={inputStyle}
+                                                placeholder="Gõ tên hoặc mã công ty mẹ để tìm..."
+                                                value={parentSearch}
+                                                onFocus={() => setParentDropdownOpen(true)}
+                                                onChange={e => {
+                                                    setParentSearch(e.target.value)
+                                                    setParentDropdownOpen(true)
+                                                    if (!e.target.value) {
+                                                        set('parentId', null)
+                                                        if (!isEdit && !isSalesRep) {
+                                                            handleAutoGenerateCode(form.channel ?? undefined, form.customerType, null)
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            {form.parentId ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        set('parentId', null)
+                                                        setParentSearch('')
+                                                        setParentDropdownOpen(false)
+                                                        if (!isEdit && !isSalesRep) {
+                                                            handleAutoGenerateCode(form.channel ?? undefined, form.customerType, null)
+                                                        }
+                                                    }}
+                                                    className="absolute right-2.5 p-1 rounded-full text-[#4A6A7A] hover:text-[#E8F1F2] hover:bg-[#2A4355] transition-all"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            ) : (
+                                                <ChevronDown size={14} className="absolute right-3 text-[#4A6A7A] pointer-events-none" />
+                                            )}
+                                        </div>
+
+                                        {parentDropdownOpen && (
+                                            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl border border-[#2A4355]" style={{ background: '#0D1E2B' }}>
+                                                <div className="overflow-y-auto max-h-[210px] divide-y divide-[#1B2E3D]">
+                                                    <button
+                                                        type="button"
+                                                        className="w-full text-left px-3.5 py-2.5 text-xs text-[#8AAEBB] hover:bg-[#1B2E3D] transition-all"
+                                                        onClick={() => {
+                                                            set('parentId', null)
+                                                            setParentSearch('')
+                                                            setParentDropdownOpen(false)
+                                                            if (!isEdit && !isSalesRep) {
+                                                                handleAutoGenerateCode(form.channel ?? undefined, form.customerType, null)
+                                                            }
+                                                        }}
+                                                    >
+                                                        — Không chọn Công ty mẹ —
+                                                    </button>
+                                                    {parentCandidates
+                                                        .filter(c => {
+                                                            if (!parentSearch.trim()) return true
+                                                            const q = parentSearch.toLowerCase()
+                                                            return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+                                                        })
+                                                        .map(c => {
+                                                            const isSelected = form.parentId === c.id
+                                                            return (
+                                                                <button
+                                                                    key={c.id}
+                                                                    type="button"
+                                                                    className={`w-full text-left px-3.5 py-2.5 text-xs transition-all flex items-center justify-between ${
+                                                                        isSelected ? 'bg-[#1B2E3D] text-[#87CBB9] font-bold' : 'text-[#E8F1F2] hover:bg-[#1B2E3D]'
+                                                                    }`}
+                                                                    onClick={() => {
+                                                                        set('parentId', c.id)
+                                                                        setParentSearch(`${c.code} — ${c.name}`)
+                                                                        setParentDropdownOpen(false)
+                                                                        if (!isEdit && !isSalesRep) {
+                                                                            handleAutoGenerateCode(form.channel ?? undefined, form.customerType, c.id)
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <div className="flex items-center gap-2 truncate">
+                                                                        <span className="font-mono text-[#87CBB9] bg-[#142433] px-1.5 py-0.5 rounded text-[11px] font-semibold border border-[#2A4355]">
+                                                                            {c.code}
+                                                                        </span>
+                                                                        <span className="truncate">{c.name}</span>
+                                                                    </div>
+                                                                    {c.entityType === 'COMPANY' && (
+                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#87CBB9]/10 text-[#87CBB9] border border-[#87CBB9]/20 font-semibold shrink-0">
+                                                                            🏢 Cty Mẹ
+                                                                        </span>
+                                                                    )}
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    {parentCandidates.filter(c => {
+                                                        if (!parentSearch.trim()) return true
+                                                        const q = parentSearch.toLowerCase()
+                                                        return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+                                                    }).length === 0 && (
+                                                        <div className="px-3.5 py-3.5 text-center text-xs text-[#4A6A7A]">
+                                                            Không tìm thấy công ty phù hợp
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
