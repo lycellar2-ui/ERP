@@ -117,7 +117,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [exportingExcel, setExportingExcel] = useState(false)
 
-    const [parentCandidates, setParentCandidates] = useState<{ id: string; name: string; code: string }[]>([])
+    const [parentCandidates, setParentCandidates] = useState<{ id: string; name: string; code: string; entityType?: string }[]>([])
 
     const isEdit = !!editingId
 
