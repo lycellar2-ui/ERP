@@ -364,8 +364,7 @@ const customerSchema = z.object({
     name: z.string().min(2, 'Tên KH bắt buộc'),
     shortName: z.string().nullable().optional(),
     taxId: z.string().nullable().optional(),
-    customerType: z.enum(['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'INDIVIDUAL']),
-    channel: z.enum(['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'DIRECT_INDIVIDUAL']).nullable().optional(),
+    channel: z.enum(['HORECA', 'CORPORATE', 'RETAIL']).default('HORECA'),
     paymentTerm: z.string().default('NET30'),
     creditLimit: z.number().default(0),
     salesRepId: z.string().nullable().optional(),
@@ -401,8 +400,7 @@ export async function createCustomer(input: CustomerInput) {
         } else {
             if (!inputData.code || inputData.code.trim() === '') {
                 const gen = await getNextCustomerCode({
-                    channel: inputData.channel ?? undefined,
-                    customerType: inputData.customerType,
+                    channel: inputData.channel,
                     parentId: inputData.parentId ?? undefined
                 })
                 if (gen.success && gen.code) {
@@ -457,8 +455,7 @@ export async function createCustomer(input: CustomerInput) {
                             name: `${data.name} (Mẹ)`,
                             shortName: data.shortName ? `${data.shortName} (Mẹ)` : null,
                             taxId: data.taxId !== undefined ? data.taxId : null,
-                            customerType: data.customerType,
-                            channel: data.channel !== undefined ? data.channel : null,
+                            channel: data.channel,
                             paymentTerm: data.paymentTerm,
                             creditLimit: data.creditLimit,
                             salesRep: salesRepId ? { connect: { id: salesRepId } } : undefined,
@@ -482,8 +479,7 @@ export async function createCustomer(input: CustomerInput) {
                     name: data.name,
                     shortName: data.shortName !== undefined ? data.shortName : null,
                     taxId: data.taxId !== undefined ? data.taxId : null,
-                    customerType: data.customerType,
-                    channel: data.channel !== undefined ? data.channel : null,
+                    channel: data.channel,
                     paymentTerm: data.paymentTerm,
                     creditLimit: finalCreditLimit,
                     salesRep: salesRepId ? { connect: { id: salesRepId } } : undefined,
@@ -1171,9 +1167,9 @@ export async function rejectCustomer(id: string) {
 // ═══════════════════════════════════════════════════
 // AUTO-GENERATE CUSTOMER CODE (Master Data Rules)
 // ═══════════════════════════════════════════════════
-export async function getNextCustomerCode(params?: { channel?: string; customerType?: string; parentId?: string }) {
+export async function getNextCustomerCode(params?: { channel?: string; parentId?: string }) {
     try {
-        const { channel, customerType, parentId } = params ?? {}
+        const { channel, parentId } = params ?? {}
 
         // Case 1: If child customer with a parent
         if (parentId) {
@@ -1207,16 +1203,14 @@ export async function getNextCustomerCode(params?: { channel?: string; customerT
         }
 
         // Case 2: Standalone / Parent customer based on channel or customerType
-        let prefix = 'KH'
-        const ch = (channel || customerType || '').toUpperCase()
-        if (ch.includes('HORECA')) {
-            prefix = 'HR'
-        } else if (ch.includes('WHOLESALE') || ch.includes('DISTRIBUTOR') || ch.includes('SỈ') || ch.includes('BUÔN')) {
-            prefix = 'WS'
-        } else if (ch.includes('VIP') || ch.includes('RETAIL')) {
-            prefix = 'VIP'
+        let prefix = 'HR'
+        const ch = (channel || '').toUpperCase()
+        if (ch.includes('CORPORATE')) {
+            prefix = 'CP'
+        } else if (ch.includes('RETAIL')) {
+            prefix = 'RT'
         } else {
-            prefix = 'KH'
+            prefix = 'HR'
         }
 
         const customers = await prisma.customer.findMany({

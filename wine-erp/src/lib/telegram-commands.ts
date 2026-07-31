@@ -466,7 +466,7 @@ export async function handleSearch(chatId: number, query: string) {
                 ],
                 deletedAt: null,
             },
-            select: { name: true, code: true, customerType: true },
+            select: { name: true, code: true, channel: true },
             take: 5,
         }),
     ])
@@ -492,7 +492,7 @@ export async function handleSearch(chatId: number, query: string) {
     if (customers.length > 0) {
         msg += `<b>👤 Khách hàng (${customers.length}):</b>\n`
         for (const c of customers) {
-            msg += `  • ${escapeHtml(c.name)} [${c.code}] — ${c.customerType}\n`
+            msg += `  • ${escapeHtml(c.name)} [${c.code}] — ${c.channel}\n`
         }
         msg += '\n'
     }

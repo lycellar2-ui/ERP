@@ -43,7 +43,7 @@ export async function getCRMCustomers(filters: {
             { name: { contains: search, mode: 'insensitive' } },
             { code: { contains: search, mode: 'insensitive' } },
         ]
-        if (type) where.customerType = type
+        if (type) where.channel = type as any
 
         const [customers, total] = await Promise.all([
             prisma.customer.findMany({

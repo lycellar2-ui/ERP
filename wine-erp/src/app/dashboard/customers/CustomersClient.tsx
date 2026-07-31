@@ -20,16 +20,14 @@ import { toast } from 'sonner'
 
 const CUSTOMER_TYPE: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
     HORECA: { label: 'HORECA', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)', emoji: '🏨' },
-    WHOLESALE_DISTRIBUTOR: { label: 'Phân Phối', color: '#5BA88A', bg: 'rgba(74,124,89,0.12)', emoji: '🏭' },
-    VIP_RETAIL: { label: 'VIP Retail', color: '#87CBB9', bg: 'rgba(168,130,204,0.12)', emoji: '👑' },
-    INDIVIDUAL: { label: 'Cá Nhân', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)', emoji: '👤' },
+    CORPORATE: { label: 'Corporate', color: '#5BA88A', bg: 'rgba(91,168,138,0.12)', emoji: '🏢' },
+    RETAIL: { label: 'Retail', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)', emoji: '🛍️' },
 }
 
 const CHANNEL_LABEL: Record<string, string> = {
     HORECA: 'HORECA (Khách sạn/Nhà hàng)',
-    WHOLESALE_DISTRIBUTOR: 'Phân Phối Sỉ',
-    VIP_RETAIL: 'Bán Lẻ VIP',
-    DIRECT_INDIVIDUAL: 'Cá Nhân Trực Tiếp',
+    CORPORATE: 'Corporate (Doanh nghiệp)',
+    RETAIL: 'Retail (Bán lẻ)',
 }
 
 const CITIES = [
@@ -106,7 +104,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const isSalesRep = currentUser?.roles?.includes('Sales Rep') || currentUser?.roles?.includes('SALES_REP')
 
     const [form, setForm] = useState<Partial<CustomerInput>>({
-        paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', customerType: 'HORECA',
+        paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA',
         entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null
     })
     const [officialCodeInput, setOfficialCodeInput] = useState('')
@@ -123,12 +121,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
     const [generatingCode, setGeneratingCode] = useState(false)
 
-    const handleAutoGenerateCode = async (channelVal?: string, custTypeVal?: string, parentIdVal?: string | null) => {
+    const handleAutoGenerateCode = async (channelVal?: string, parentIdVal?: string | null) => {
         setGeneratingCode(true)
         try {
             const res = await getNextCustomerCode({
-                channel: channelVal !== undefined ? channelVal : form.channel ?? undefined,
-                customerType: custTypeVal !== undefined ? custTypeVal : form.customerType,
+                channel: channelVal !== undefined ? channelVal : form.channel ?? 'HORECA',
                 parentId: parentIdVal !== undefined ? (parentIdVal || undefined) : (form.parentId || undefined)
             })
             if (res.success && res.code) {
@@ -156,8 +153,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         name: data.name,
                         shortName: data.shortName,
                         taxId: data.taxId,
-                        customerType: data.customerType as any,
-                        channel: data.channel as any,
+                        channel: (data.channel as any) || 'HORECA',
                         paymentTerm: data.paymentTerm,
                         creditLimit: data.creditLimit,
                         salesRepId: data.salesRepId,
@@ -179,11 +175,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 }
             }).finally(() => setLoading(false))
         } else {
-            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', customerType: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null })
+            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null })
             setOfficialCodeInput('')
             setApprovalError('')
             if (!isSalesRep) {
-                handleAutoGenerateCode('HORECA', 'HORECA', null)
+                handleAutoGenerateCode('HORECA', null)
             }
         }
         setErrors({})
@@ -611,29 +607,28 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     {errors.code && <p className="text-xs mt-1" style={{ color: '#8B1A2E' }}>{errors.code}</p>}
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Loại KH</label>
-                                    <select className={inputCls} style={inputStyle} value={form.customerType ?? 'HORECA'}
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Kênh bán hàng *</label>
+                                    <select className={inputCls} style={inputStyle} value={form.channel ?? 'HORECA'}
                                         onChange={e => {
                                             const val = e.target.value as any
                                             setForm(f => ({
                                                 ...f,
-                                                customerType: val,
-                                                ...(val !== 'HORECA' && val !== 'WHOLESALE_DISTRIBUTOR' ? { parentId: null } : {})
+                                                channel: val,
+                                                ...(val !== 'HORECA' ? { parentId: null } : {})
                                             }))
                                             if (!isEdit && !isSalesRep) {
-                                                handleAutoGenerateCode(form.channel ?? undefined, val, val !== 'HORECA' && val !== 'WHOLESALE_DISTRIBUTOR' ? null : form.parentId)
+                                                handleAutoGenerateCode(val, val !== 'HORECA' ? null : form.parentId)
                                             }
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                        <option value="HORECA">🏨 HORECA</option>
-                                        <option value="WHOLESALE_DISTRIBUTOR">🏭 Phân Phối Sỉ</option>
-                                        <option value="VIP_RETAIL">👑 VIP Retail</option>
-                                        <option value="INDIVIDUAL">👤 Cá Nhân</option>
+                                        <option value="HORECA">🏨 HORECA (Nhà hàng / Khách sạn)</option>
+                                        <option value="CORPORATE">🏢 Corporate (Doanh nghiệp)</option>
+                                        <option value="RETAIL">🛍️ Retail (Bán lẻ)</option>
                                     </select>
                                 </div>
                             </div>
 
-                            {(form.customerType === 'HORECA' || form.customerType === 'WHOLESALE_DISTRIBUTOR') && (
+                            {form.channel === 'HORECA' && (
                                 <div className="space-y-4">
                                     <div className="relative" ref={parentContainerRef}>
                                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Công ty mẹ (Gánh nợ)</label>
@@ -652,7 +647,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                     if (!e.target.value) {
                                                         set('parentId', null)
                                                         if (!isEdit && !isSalesRep) {
-                                                            handleAutoGenerateCode(form.channel ?? undefined, form.customerType, null)
+                                                            handleAutoGenerateCode(form.channel ?? undefined, null)
                                                         }
                                                     }
                                                 }}
@@ -665,7 +660,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                         setParentSearch('')
                                                         setParentDropdownOpen(false)
                                                         if (!isEdit && !isSalesRep) {
-                                                            handleAutoGenerateCode(form.channel ?? undefined, form.customerType, null)
+                                                            handleAutoGenerateCode(form.channel ?? undefined, null)
                                                         }
                                                     }}
                                                     className="absolute right-2.5 p-1 rounded-full text-[#4A6A7A] hover:text-[#E8F1F2] hover:bg-[#2A4355] transition-all"
@@ -688,7 +683,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                             setParentSearch('')
                                                             setParentDropdownOpen(false)
                                                             if (!isEdit && !isSalesRep) {
-                                                                handleAutoGenerateCode(form.channel ?? undefined, form.customerType, null)
+                                                                handleAutoGenerateCode(form.channel ?? undefined, null)
                                                             }
                                                         }}
                                                     >
@@ -817,31 +812,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Kênh bán hàng</label>
-                                    <select className={inputCls} style={inputStyle} value={form.channel ?? ''}
-                                        onChange={e => {
-                                            const chVal = e.target.value as any || null
-                                            set('channel', chVal)
-                                            if (!isEdit && !isSalesRep) {
-                                                handleAutoGenerateCode(chVal ?? undefined, form.customerType, form.parentId)
-                                            }
-                                        }}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                        <option value="">— Chọn kênh —</option>
-                                        {Object.entries(CHANNEL_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Sales phụ trách</label>
-                                    <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
-                                        onChange={e => set('salesRepId', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                        <option value="">— Chọn Sales —</option>
-                                        {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Sales phụ trách</label>
+                                <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
+                                    onChange={e => set('salesRepId', e.target.value || null)}
+                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                    <option value="">— Chọn Sales —</option>
+                                    {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Liên Hệ & Địa Chỉ</p>

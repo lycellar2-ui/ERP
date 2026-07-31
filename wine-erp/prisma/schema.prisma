@@ -490,8 +490,8 @@ model Customer {
   name          String
   shortName     String?                // Abbreviated name for reports
   taxId         String?
-  customerType  CustomerType
-  channel       SalesChannel?
+  customerType  CustomerType?
+  channel       SalesChannel           @default(HORECA)
   paymentTerm   String                 @default("NET30")
   creditLimit   Decimal                @default(0)
   creditHold    Boolean                @default(false)

@@ -173,7 +173,7 @@ export async function getOpportunityDetail(id: string): Promise<OpportunityDetai
     const opp = await prisma.salesOpportunity.findUnique({
         where: { id },
         include: {
-            customer: { select: { name: true, code: true, customerType: true } },
+            customer: { select: { name: true, code: true, channel: true } },
             assignee: { select: { name: true } },
         },
     })
@@ -185,7 +185,7 @@ export async function getOpportunityDetail(id: string): Promise<OpportunityDetai
         customerId: opp.customerId,
         customerName: opp.customer.name,
         customerCode: opp.customer.code,
-        customerType: opp.customer.customerType,
+        customerType: opp.customer.channel ?? 'HORECA',
         stage: opp.stage as OppStage,
         previousStage: (opp.previousStage as OppStage) ?? null,
         expectedValue: Number(opp.expectedValue),

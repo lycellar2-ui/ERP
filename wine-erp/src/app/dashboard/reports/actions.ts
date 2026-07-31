@@ -131,7 +131,7 @@ export async function getTopCustomers(limit = 5) {
 
         const customers = await prisma.customer.findMany({
             where: { id: { in: result.map(r => r.customerId) } },
-            select: { id: true, name: true, code: true, customerType: true },
+            select: { id: true, name: true, code: true, channel: true },
         })
 
         return result.map(r => {
@@ -140,7 +140,7 @@ export async function getTopCustomers(limit = 5) {
                 customerId: r.customerId,
                 name: c?.name ?? 'Khách lẻ',
                 code: c?.code ?? '',
-                type: c?.customerType ?? 'DIRECT_INDIVIDUAL',
+                type: c?.channel ?? 'HORECA',
                 revenue: Number(r._sum.totalAmount ?? 0),
                 orders: Number(r._count || 0),
             }
@@ -559,13 +559,13 @@ async function getCustomerRanking() {
     })
     const customers = await prisma.customer.findMany({
         where: { id: { in: result.map(r => r.customerId) } },
-        select: { id: true, name: true, code: true, customerType: true, channel: true },
+        select: { id: true, name: true, code: true, channel: true },
     })
     return result.map((r, i) => {
         const c = customers.find(c => c.id === r.customerId)
         return {
             rank: i + 1, customerCode: c?.code ?? '—', customerName: c?.name ?? '—',
-            customerType: c?.customerType ?? '—', channel: c?.channel ?? '—',
+            customerType: c?.channel ?? '—', channel: c?.channel ?? '—',
             totalRevenue: Number(r._sum.totalAmount ?? 0), orderCount: r._count,
         }
     })
