@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ClipboardList, Plus, X, Play, CheckCircle, ArrowLeftRight, Eye, Save } from 'lucide-react'
+import { ClipboardList, Plus, X, Play, CheckCircle, ArrowLeftRight, Eye, Save, QrCode, Scan } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type StockCountRow,
     getStockCountList, createStockCountSession, getWarehouseOptions,
     startStockCount, getStockCountDetail, recordCountLine, completeStockCount, adjustStockFromCount,
+    recordCountByBarcode,
 } from './actions'
 import { formatDate } from '@/lib/utils'
+import { BarcodeLookupModal } from './BarcodeLookupModal'
+
 
 // Define types for API responses and state
 type WarehouseOption = {
@@ -58,10 +61,16 @@ export function StockCountClient({ initialRows, stats }: {
 }) {
     const [rows, setRows] = useState<StockCountRow[]>(initialRows)
     const [createOpen, setCreateOpen] = useState(false)
+    const [lookupModalOpen, setLookupModalOpen] = useState(false)
     const [detailId, setDetailId] = useState<string | null>(null)
     const [detail, setDetail] = useState<StockCountDetail | null>(null)
     const [warehouses, setWarehouses] = useState<WarehouseOption[]>([])
     const [form, setForm] = useState({ warehouseId: '', zone: '', type: 'FULL' })
+
+    // Barcode scan state in detail drawer
+    const [scanInput, setScanInput] = useState('')
+    const [scanLoading, setScanLoading] = useState(false)
+
 
     const reload = async () => { const data = await getStockCountList(); setRows(data) }
 
@@ -138,6 +147,22 @@ export function StockCountClient({ initialRows, stats }: {
         }
     }
 
+    const handleScanCountSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!scanInput.trim() || !detailId) return
+        setScanLoading(true)
+        const res = await recordCountByBarcode(detailId, scanInput.trim(), 1)
+        setScanLoading(false)
+        if (res.success) {
+            toast.success(`Đã đếm +1 qua barcode!`)
+            setScanInput('')
+            const updated = await getStockCountDetail(detailId)
+            setDetail(updated)
+        } else {
+            toast.error(res.error || 'Lỗi đếm qua mã barcode')
+        }
+    }
+
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <div className="flex items-center justify-between">
@@ -146,14 +171,23 @@ export function StockCountClient({ initialRows, stats }: {
                         Kiểm Kê / Cycle Count
                     </h2>
                     <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Kiểm đếm tồn kho định kỳ, phát hiện chênh lệch
+                        Kiểm đếm tồn kho định kỳ, phát hiện chênh lệch & quét Code 128
                     </p>
                 </div>
-                <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold"
-                    style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
-                    <Plus size={16} /> Tạo Phiên KK
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setLookupModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-md transition-all shadow-sm"
+                    >
+                        <QrCode size={16} /> Tra Cứu Barcode Code 128
+                    </button>
+                    <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold"
+                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
+                        <Plus size={16} /> Tạo Phiên KK
+                    </button>
+                </div>
             </div>
+
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
@@ -279,7 +313,35 @@ export function StockCountClient({ initialRows, stats }: {
                             </div>
                             <button onClick={() => { setDetailId(null); setDetail(null) }} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                         </div>
-                        <div className="p-5">
+                        <div className="p-5 space-y-4">
+                            {/* Barcode Quick Count Input when IN_PROGRESS */}
+                            {detail.status === 'IN_PROGRESS' && (
+                                <form onSubmit={handleScanCountSubmit} className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Scan className="w-3.5 h-3.5" /> Quét Barcode Đếm Nhanh (+1)
+                                        </label>
+                                        <span className="text-[10px] text-white/50">Mã SKU-Vintage</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            value={scanInput}
+                                            onChange={e => setScanInput(e.target.value)}
+                                            placeholder="Quét mã barcode Code 128 (VD: MARGAUX-2018)..."
+                                            className="flex-1 px-3 py-1.5 rounded text-xs bg-[#12141A] border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500 font-mono"
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={scanLoading}
+                                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs rounded transition-colors disabled:opacity-50"
+                                        >
+                                            {scanLoading ? 'Đang ghi...' : 'Ghi Đếm'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
                             <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
@@ -321,6 +383,13 @@ export function StockCountClient({ initialRows, stats }: {
                     </div>
                 </div>
             )}
+
+            {/* Code 128 Stock Lookup Modal */}
+            <BarcodeLookupModal
+                isOpen={lookupModalOpen}
+                onClose={() => setLookupModalOpen(false)}
+            />
         </div>
     )
 }
+
