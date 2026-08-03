@@ -243,12 +243,35 @@ function SortHeader({ label, field, current, dir, onSort, style }: { label: stri
 // ── SO Detail Drawer (Enhanced with Tabs) ────────
 type DetailType = Awaited<ReturnType<typeof getSalesOrderDetail>>
 
-function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string; onClose: () => void; onClone: (id: string) => void; canSeeMargin: boolean }) {
+function SODetailDrawer({ 
+    soId, 
+    onClose, 
+    onClone, 
+    canSeeMargin,
+    canAcctApprove,
+    canApprove,
+    onAcctApprove,
+    onAcctReject,
+    onApprove,
+    onReject
+}: { 
+    soId: string; 
+    onClose: () => void; 
+    onClone: (id: string) => void; 
+    canSeeMargin: boolean;
+    canAcctApprove?: boolean;
+    canApprove?: boolean;
+    onAcctApprove?: (id: string, legalEntityId?: string) => void;
+    onAcctReject?: (id: string) => void;
+    onApprove?: (id: string) => void;
+    onReject?: (id: string) => void;
+}) {
     const [detail, setDetail] = useState<DetailType>(null)
     const [marginData, setMarginData] = useState<SOMarginData | null>(null)
     const [timeline, setTimeline] = useState<SOTimelineEvent[]>([])
     const [loading, setLoading] = useState(true)
     const [timelineLoading, setTimelineLoading] = useState(true)
+
 
     useEffect(() => {
         let cancelled = false
@@ -357,6 +380,34 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                     <div className="flex items-center gap-2">
                         {detail && (
                             <>
+                                {detail.status === 'PENDING_ACCOUNTING' && canAcctApprove && (
+                                    <>
+                                        <button onClick={() => onAcctApprove?.(soId, detail.legalEntityId)}
+                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all shadow-sm"
+                                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                            <CheckCircle2 size={13} /> KT Duyệt
+                                        </button>
+                                        <button onClick={() => onAcctReject?.(soId)}
+                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all border"
+                                            style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.3)' }}>
+                                            <XCircle size={13} /> Trả Về
+                                        </button>
+                                    </>
+                                )}
+                                {detail.status === 'PENDING_APPROVAL' && canApprove && (
+                                    <>
+                                        <button onClick={() => onApprove?.(soId)}
+                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all shadow-sm"
+                                            style={{ background: '#5BA88A', color: '#FFFFFF' }}>
+                                            <CheckCircle2 size={13} /> Duyệt Đơn
+                                        </button>
+                                        <button onClick={() => onReject?.(soId)}
+                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md transition-all border"
+                                            style={{ background: 'rgba(139,26,46,0.15)', color: '#E85D5D', borderColor: 'rgba(139,26,46,0.3)' }}>
+                                            <XCircle size={13} /> Từ Chối
+                                        </button>
+                                    </>
+                                )}
                                 <button onClick={() => window.open(`/dashboard/sales/print?id=${soId}`, '_blank')}
                                     className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md"
                                     style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)' }}
@@ -373,6 +424,7 @@ function SODetailDrawer({ soId, onClose, onClone, canSeeMargin }: { soId: string
                         )}
                         <button onClick={onClose} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
                     </div>
+
                 </div>
 
                 {loading ? (
@@ -1784,8 +1836,34 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                 </div>
             )}
 
-            <CreateSODrawer open={createOpen} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); reload() }} userId={userId} userRoles={userRoles} />
-            {detailId && <SODetailDrawer soId={detailId} onClose={() => setDetailId(null)} onClone={handleClone} canSeeMargin={canSeeMargin} />}
+            {detailId && (
+                <SODetailDrawer 
+                    soId={detailId} 
+                    onClose={() => setDetailId(null)} 
+                    onClone={handleClone} 
+                    canSeeMargin={canSeeMargin}
+                    canAcctApprove={canAcctApprove}
+                    canApprove={isCEO || isSaleAdminOrMgr}
+                    onAcctApprove={(id, entityId) => {
+                        setAcctModalId(id)
+                        if (entityId) setAcctEntityId(entityId)
+                    }}
+                    onAcctReject={(id) => {
+                        setActionLoading(id)
+                        toast.promise(accountingRejectSO(id).then(() => reload()), {
+                            loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
+                        })
+                    }}
+                    onApprove={(id) => setApprovalModalId(id)}
+                    onReject={(id) => {
+                        setActionLoading(id)
+                        toast.promise(rejectSalesOrder(id).then(() => reload()), {
+                            loading: 'Đang từ chối...', success: 'Đã từ chối đơn', error: 'Lỗi', finally: () => setActionLoading(null)
+                        })
+                    }}
+                />
+            )}
+
             {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} userId={userId} />}
             {approvalModalId && (
                 <ApproveSOModal
