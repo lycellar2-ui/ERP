@@ -1266,53 +1266,54 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                     </table>
                                 </div>
 
-                                {/* Bank Account Details */}
-                                <div className="border border-slate-200 rounded p-3 mb-6 bg-slate-50 text-[10px] leading-relaxed">
-                                    <p className="font-bold text-slate-700 uppercase mb-1">Thông tin chuyển khoản thanh toán:</p>
-                                    <table className="w-full">
-                                        <tbody>
-                                            <tr>
-                                                <td className="text-slate-500 w-24">Chủ tài khoản:</td>
-                                                <td className="font-semibold text-slate-800">
-                                                    {entities.find(e => e.id === legalEntityId)?.bankAccountName || "CÔNG TY TNHH LY'S CELLARS"}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td className="text-slate-500">Số tài khoản:</td>
-                                                <td className="font-semibold font-mono text-slate-800">
-                                                    {entities.find(e => e.id === legalEntityId)?.bankAccountNumber || "1023456789"}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td className="text-slate-500">Ngân hàng:</td>
-                                                <td className="text-slate-800 font-semibold">
-                                                    {entities.find(e => e.id === legalEntityId)?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh"}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                {/* Bank Account Details - ONLY FOR COD ORDERS */}
+                                {(paymentTerm === 'COD' || paymentTerm?.toUpperCase().includes('COD')) && (
+                                    <div className="border border-slate-200 rounded p-2.5 mb-3 bg-slate-50 text-[10px] leading-relaxed break-inside-avoid print:break-inside-avoid">
+                                        <p className="font-bold text-slate-700 uppercase mb-1 text-[9px]">Thông tin chuyển khoản thanh toán (COD):</p>
+                                        <table className="w-full">
+                                            <tbody>
+                                                <tr>
+                                                    <td className="text-slate-500 w-20 py-0.5">Chủ tài khoản:</td>
+                                                    <td className="font-semibold text-slate-800 py-0.5">
+                                                        {entities.find(e => e.id === legalEntityId)?.bankAccountName || "CÔNG TY TNHH LY'S CELLARS"}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="text-slate-500 py-0.5">Số tài khoản:</td>
+                                                    <td className="font-semibold font-mono text-slate-800 py-0.5">
+                                                        {entities.find(e => e.id === legalEntityId)?.bankAccountNumber || "1023456789"}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="text-slate-500 py-0.5">Ngân hàng:</td>
+                                                    <td className="text-slate-800 font-semibold py-0.5">
+                                                        {entities.find(e => e.id === legalEntityId)?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh"}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
 
                                 {/* Signatures */}
-                                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-6 pt-3 border-t border-dashed border-slate-300 pb-6 break-inside-avoid print:break-inside-avoid">
-                                    <div className="flex flex-col justify-between h-20">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide">Sale Admin duyệt</p>
-                                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
+                                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-300 pb-4 break-inside-avoid print:break-inside-avoid">
+                                    <div className="flex flex-col justify-between h-16">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Sale Admin duyệt</p>
+                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="flex flex-col justify-between h-20">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide">Kế toán kiểm soát</p>
-                                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
+                                    <div className="flex flex-col justify-between h-16">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Kế toán kiểm soát</p>
+                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="flex flex-col justify-between h-20">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide">Thủ kho</p>
-                                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
+                                    <div className="flex flex-col justify-between h-16">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thủ kho</p>
+                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="flex flex-col justify-between h-20">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide">Người nhận hàng</p>
-                                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
+                                    <div className="flex flex-col justify-between h-16">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Người nhận hàng</p>
+                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                 </div>
-
 
                             </div>
                         </div>
@@ -1322,3 +1323,4 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         </div>
     )
 }
+
