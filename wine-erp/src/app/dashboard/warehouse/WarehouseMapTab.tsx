@@ -354,27 +354,27 @@ export function WarehouseMapTab({
     return (
         <div className="flex flex-col gap-0" style={{ height: 'calc(100vh - 170px)', minHeight: 620 }}>
             {/* ── Top bar ─────────────────────────────── */}
-            <div className="flex items-center gap-3 p-3 rounded-t-xl" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <div className="flex items-center gap-3 p-3 rounded-t-xl" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
 
                 {/* Search */}
                 <div className="flex-1 relative max-w-sm">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#94a3b8' }} />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSearch()}
                         placeholder="Tìm SKU / tên sản phẩm..."
-                        className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
-                        style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#1e293b' }}
+                        className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
+                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                     />
                 </div>
 
                 {/* Zoom controls */}
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-gray-100"><ZoomOut size={14} style={{ color: '#64748b' }} /></button>
-                    <span className="text-xs font-mono w-10 text-center" style={{ color: '#64748b' }}>{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-gray-100"><ZoomIn size={14} style={{ color: '#64748b' }} /></button>
-                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-gray-100"><Maximize2 size={14} style={{ color: '#64748b' }} /></button>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-[#2A4355]"><ZoomOut size={14} style={{ color: '#8AAEBB' }} /></button>
+                    <span className="text-xs font-mono w-10 text-center" style={{ color: '#8AAEBB' }}>{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-[#2A4355]"><ZoomIn size={14} style={{ color: '#8AAEBB' }} /></button>
+                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-[#2A4355]"><Maximize2 size={14} style={{ color: '#8AAEBB' }} /></button>
                 </div>
 
                 {/* Edit controls */}
@@ -383,25 +383,25 @@ export function WarehouseMapTab({
                         {!editMode ? (
                             <button onClick={() => setEditMode(true)}
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
-                                style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#475569' }}>
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
                                 <Move size={13} /> Chỉnh Sửa
                             </button>
                         ) : (
                             <>
                                 <button onClick={handleAutoLayout} disabled={saving}
                                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#475569' }}>
+                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
                                     <Grid3x3 size={13} /> Auto
                                 </button>
                                 <button onClick={handleSaveAll} disabled={saving}
                                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{ background: hasChanges ? '#3b82f6' : '#94a3b8', color: '#fff' }}>
+                                    style={{ background: hasChanges ? '#87CBB9' : '#4A6A7A', color: '#0A1926' }}>
                                     {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                                     Lưu
                                 </button>
                                 <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
                                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#64748b' }}>
+                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
                                     <Eye size={13} /> Xong
                                 </button>
                             </>
@@ -411,10 +411,10 @@ export function WarehouseMapTab({
             </div>
 
             {/* ── Main area ─────────────────────────────── */}
-            <div className="flex flex-1 overflow-hidden rounded-b-xl" style={{ border: '1px solid #e2e8f0', borderTop: 'none' }}>
+            <div className="flex flex-1 overflow-hidden rounded-b-xl" style={{ border: '1px solid #2A4355', borderTop: 'none' }}>
                 {/* Left toolbar (edit mode) */}
                 {editMode && (
-                    <div className="flex flex-col gap-1 p-2" style={{ background: '#f1f5f9', borderRight: '1px solid #e2e8f0', width: 52 }}>
+                    <div className="flex flex-col gap-1 p-2" style={{ background: '#142433', borderRight: '1px solid #2A4355', width: 52 }}>
                         {([
                             { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn' },
                             { key: 'wall' as Tool, icon: Minus, label: 'Tường' },
@@ -426,18 +426,18 @@ export function WarehouseMapTab({
                                 title={t.label}
                                 className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-all"
                                 style={{
-                                    background: tool === t.key ? '#3b82f6' : 'transparent',
-                                    color: tool === t.key ? '#fff' : '#64748b',
+                                    background: tool === t.key ? '#87CBB9' : 'transparent',
+                                    color: tool === t.key ? '#0A1926' : '#8AAEBB',
                                 }}>
                                 <t.icon size={16} />
                                 {t.label}
                             </button>
                         ))}
 
-                        <div className="mt-auto pt-2 border-t" style={{ borderColor: '#e2e8f0' }}>
+                        <div className="mt-auto pt-2 border-t" style={{ borderColor: '#2A4355' }}>
                             <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [] }); setHasChanges(true) }}
                                 title="Xóa tất cả vẽ" className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
-                                style={{ color: '#94a3b8' }}>
+                                style={{ color: '#4A6A7A' }}>
                                 <RotateCcw size={14} />
                                 Reset
                             </button>
@@ -450,8 +450,8 @@ export function WarehouseMapTab({
                     ref={canvasRef}
                     className="flex-1 relative overflow-hidden"
                     style={{
-                        background: '#ffffff',
-                        backgroundImage: 'radial-gradient(circle, #e2e8f0 1px, transparent 1px)',
+                        background: '#0F1D2B',
+                        backgroundImage: 'radial-gradient(circle, #2A4355 1px, transparent 1px)',
                         backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
                         backgroundPosition: `${pan.x}px ${pan.y}px`,
                         cursor: isPanning || spaceHeld ? 'grabbing'
@@ -468,15 +468,15 @@ export function WarehouseMapTab({
                     onWheel={onWheel}
                 >
                     {loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-50">
-                            <Loader2 size={28} className="animate-spin" style={{ color: '#3b82f6' }} />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+                            <Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} />
                         </div>
                     )}
 
                     {!mapData && !loading && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <Box size={40} style={{ color: '#cbd5e1' }} />
-                            <p className="text-sm" style={{ color: '#94a3b8' }}>Chọn kho để xem sơ đồ</p>
+                            <Box size={40} style={{ color: '#2A4355' }} />
+                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chọn kho để xem sơ đồ</p>
                         </div>
                     )}
 
@@ -630,10 +630,10 @@ export function WarehouseMapTab({
                 </div>
 
                 {/* Right panel — Legend + Selected details */}
-                <div className="flex flex-col gap-4 p-4 overflow-y-auto" style={{ width: 240, background: '#f8fafc', borderLeft: '1px solid #e2e8f0' }}>
+                <div className="flex flex-col gap-4 p-4 overflow-y-auto" style={{ width: 240, background: '#142433', borderLeft: '1px solid #2A4355' }}>
                     {/* Legend */}
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>Chú thích</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8AAEBB' }}>Chú thích</h4>
                         <div className="space-y-1.5">
                             {[
                                 { label: 'Trống', pct: 0 },
@@ -646,21 +646,21 @@ export function WarehouseMapTab({
                                 return (
                                     <div key={item.label} className="flex items-center gap-2">
                                         <div className="w-3 h-3 rounded-sm" style={{ background: c.fill, border: `1.5px solid ${c.border}` }} />
-                                        <span className="text-[11px]" style={{ color: '#475569' }}>{item.label}</span>
+                                        <span className="text-[11px]" style={{ color: '#8AAEBB' }}>{item.label}</span>
                                     </div>
                                 )
                             })}
                         </div>
                         {/* Floor plan legend */}
                         {editMode && (
-                            <div className="mt-3 pt-3 border-t space-y-1.5" style={{ borderColor: '#e2e8f0' }}>
+                            <div className="mt-3 pt-3 border-t space-y-1.5" style={{ borderColor: '#2A4355' }}>
                                 <div className="flex items-center gap-2">
-                                    <div style={{ width: 16, height: 4, background: '#334155', borderRadius: 2 }} />
-                                    <span className="text-[11px]" style={{ color: '#475569' }}>Tường</span>
+                                    <div style={{ width: 16, height: 4, background: '#8AAEBB', borderRadius: 2 }} />
+                                    <span className="text-[11px]" style={{ color: '#8AAEBB' }}>Tường</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div style={{ width: 16, height: 6, background: '#fbbf24', borderRadius: 2 }} />
-                                    <span className="text-[11px]" style={{ color: '#475569' }}>Cửa</span>
+                                    <div style={{ width: 16, height: 6, background: '#D4A853', borderRadius: 2 }} />
+                                    <span className="text-[11px]" style={{ color: '#8AAEBB' }}>Cửa</span>
                                 </div>
                             </div>
                         )}
@@ -669,11 +669,11 @@ export function WarehouseMapTab({
                     {/* Zones */}
                     {zones.length > 0 && (
                         <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>Zones</h4>
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8AAEBB' }}>Zones</h4>
                             <div className="flex flex-wrap gap-1.5">
                                 {zones.map(z => (
                                     <span key={z} className="px-2 py-0.5 rounded text-[11px] font-bold"
-                                        style={{ background: ZONE_COLORS[z] ?? '#6b7280', color: '#fff' }}>
+                                        style={{ background: ZONE_COLORS[z] ?? '#4A6A7A', color: '#E8F1F2' }}>
                                         {z}
                                     </span>
                                 ))}
@@ -684,13 +684,13 @@ export function WarehouseMapTab({
                     {/* Stats */}
                     {mapData && (
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2 rounded-lg text-center" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-                                <p className="text-lg font-bold" style={{ color: '#1e293b' }}>{locations.length}</p>
-                                <p className="text-[10px]" style={{ color: '#94a3b8' }}>Vị trí</p>
+                            <div className="p-2 rounded-lg text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>{locations.length}</p>
+                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Vị trí</p>
                             </div>
-                            <div className="p-2 rounded-lg text-center" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-                                <p className="text-lg font-bold" style={{ color: '#1e293b' }}>{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
-                                <p className="text-[10px]" style={{ color: '#94a3b8' }}>Tổng chai</p>
+                            <div className="p-2 rounded-lg text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
+                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Tổng chai</p>
                             </div>
                         </div>
                     )}
@@ -699,16 +699,16 @@ export function WarehouseMapTab({
                     {searchResults.length > 0 && (
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748b' }}>Kết quả</h4>
+                                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Kết quả</h4>
                                 <button onClick={() => { setSearchResults([]); setHighlightLocs([]); setSearchTerm('') }}
-                                    className="p-0.5 rounded hover:bg-gray-200"><X size={12} style={{ color: '#94a3b8' }} /></button>
+                                    className="p-0.5 rounded hover:bg-[#2A4355]"><X size={12} style={{ color: '#8AAEBB' }} /></button>
                             </div>
                             <div className="space-y-1.5">
                                 {searchResults.map(r => (
-                                    <div key={r.skuCode} className="p-2 rounded-lg" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-                                        <p className="text-[11px] font-bold truncate" style={{ color: '#1e293b' }}>{r.skuCode}</p>
-                                        <p className="text-[10px] truncate" style={{ color: '#64748b' }}>{r.productName}</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#f59e0b' }}>{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
+                                    <div key={r.skuCode} className="p-2 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                        <p className="text-[11px] font-bold truncate" style={{ color: '#87CBB9' }}>{r.skuCode}</p>
+                                        <p className="text-[10px] truncate" style={{ color: '#8AAEBB' }}>{r.productName}</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: '#D4A853' }}>{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
                                     </div>
                                 ))}
                             </div>
@@ -718,29 +718,29 @@ export function WarehouseMapTab({
                     {/* Selected location detail */}
                     {selectedLoc && (
                         <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>Chi tiết vị trí</h4>
-                            <div className="p-3 rounded-lg space-y-2" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-                                <p className="text-sm font-bold" style={{ color: '#1e293b' }}>{selectedLoc.locationCode}</p>
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8AAEBB' }}>Chi tiết vị trí</h4>
+                            <div className="p-3 rounded-lg space-y-2" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <p className="text-sm font-bold" style={{ color: '#87CBB9' }}>{selectedLoc.locationCode}</p>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
-                                    <span style={{ color: '#94a3b8' }}>Zone:</span>
-                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.zone}</span>
-                                    <span style={{ color: '#94a3b8' }}>Rack:</span>
-                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.rack ?? '—'}</span>
-                                    <span style={{ color: '#94a3b8' }}>Bin:</span>
-                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.bin ?? '—'}</span>
-                                    <span style={{ color: '#94a3b8' }}>Loại:</span>
-                                    <span className="font-semibold" style={{ color: '#1e293b' }}>{selectedLoc.type}</span>
-                                    <span style={{ color: '#94a3b8' }}>Chiếm:</span>
+                                    <span style={{ color: '#4A6A7A' }}>Zone:</span>
+                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.zone}</span>
+                                    <span style={{ color: '#4A6A7A' }}>Rack:</span>
+                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.rack ?? '—'}</span>
+                                    <span style={{ color: '#4A6A7A' }}>Bin:</span>
+                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.bin ?? '—'}</span>
+                                    <span style={{ color: '#4A6A7A' }}>Loại:</span>
+                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.type}</span>
+                                    <span style={{ color: '#4A6A7A' }}>Chiếm:</span>
                                     <span className="font-semibold" style={{ color: occColor(selectedLoc.occupancyPct).text }}>{selectedLoc.occupancyPct}%</span>
                                 </div>
 
                                 {/* Direct Dimension Editor (Width x Height) */}
                                 {editMode && (
-                                    <div className="pt-2 border-t space-y-2" style={{ borderColor: '#e2e8f0' }}>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#3b82f6' }}>📐 Đổi kích thước ô (px)</p>
+                                    <div className="pt-2 border-t space-y-2" style={{ borderColor: '#2A4355' }}>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>📐 Đổi kích thước ô (px)</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
-                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#64748b' }}>Rộng (W)</label>
+                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#8AAEBB' }}>Rộng (W)</label>
                                                 <input
                                                     type="number"
                                                     value={selectedLoc.width}
@@ -750,11 +750,11 @@ export function WarehouseMapTab({
                                                         setHasChanges(true)
                                                     }}
                                                     className="w-full px-2 py-1 text-xs rounded border outline-none font-mono"
-                                                    style={{ background: '#f8fafc', borderColor: '#cbd5e1', color: '#1e293b' }}
+                                                    style={{ background: '#142433', borderColor: '#2A4355', color: '#E8F1F2' }}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#64748b' }}>Cao (H)</label>
+                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#8AAEBB' }}>Cao (H)</label>
                                                 <input
                                                     type="number"
                                                     value={selectedLoc.height}
@@ -764,12 +764,12 @@ export function WarehouseMapTab({
                                                         setHasChanges(true)
                                                     }}
                                                     className="w-full px-2 py-1 text-xs rounded border outline-none font-mono"
-                                                    style={{ background: '#f8fafc', borderColor: '#cbd5e1', color: '#1e293b' }}
+                                                    style={{ background: '#142433', borderColor: '#2A4355', color: '#E8F1F2' }}
                                                 />
                                             </div>
                                         </div>
                                         {/* Presets */}
-                                        <p className="text-[10px] font-semibold" style={{ color: '#64748b' }}>Kích thước chuẩn:</p>
+                                        <p className="text-[10px] font-semibold" style={{ color: '#8AAEBB' }}>Kích thước chuẩn:</p>
                                         <div className="grid grid-cols-2 gap-1">
                                             {[
                                                 { label: '80x60 (Chuẩn)', w: 80, h: 60 },
@@ -783,8 +783,8 @@ export function WarehouseMapTab({
                                                         setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: p.w, height: p.h } : l))
                                                         setHasChanges(true)
                                                     }}
-                                                    className="text-[10px] py-1 px-1.5 rounded border bg-white hover:bg-blue-50 hover:border-blue-300 font-mono text-center"
-                                                    style={{ borderColor: '#cbd5e1', color: '#334155' }}
+                                                    className="text-[10px] py-1 px-1.5 rounded border transition-colors font-mono text-center"
+                                                    style={{ background: '#142433', borderColor: '#2A4355', color: '#8AAEBB' }}
                                                 >
                                                     {p.label}
                                                 </button>
@@ -793,36 +793,36 @@ export function WarehouseMapTab({
                                     </div>
                                 )}
                                 {selectedLoc.products.length > 0 ? (
-                                    <div className="pt-3 border-t space-y-2" style={{ borderColor: '#e2e8f0' }}>
+                                    <div className="pt-3 border-t space-y-2" style={{ borderColor: '#2A4355' }}>
                                         <div className="flex items-center justify-between">
-                                            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#1e293b' }}>
+                                            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#E8F1F2' }}>
                                                 📦 Hàng trong ô ({selectedLoc.products.length})
                                             </p>
                                             <button
                                                 onClick={() => setShowLocModal(true)}
                                                 className="text-[10px] font-semibold px-2 py-0.5 rounded transition-colors"
-                                                style={{ background: '#3b82f6', color: '#fff' }}
+                                                style={{ background: '#87CBB9', color: '#0A1926' }}
                                             >
                                                 Xem bảng 🔍
                                             </button>
                                         </div>
 
-                                        <div className="border rounded-lg overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+                                        <div className="border rounded-lg overflow-hidden" style={{ borderColor: '#2A4355' }}>
                                             <table className="w-full text-left text-[11px] border-collapse">
                                                 <thead>
-                                                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                                        <th className="p-1.5 font-bold" style={{ color: '#64748b' }}>Mã SKU / Tên Rượu</th>
-                                                        <th className="p-1.5 font-bold text-right" style={{ color: '#64748b' }}>SL (Chai)</th>
+                                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                                        <th className="p-1.5 font-bold" style={{ color: '#4A6A7A' }}>Mã SKU / Tên Rượu</th>
+                                                        <th className="p-1.5 font-bold text-right" style={{ color: '#4A6A7A' }}>SL (Chai)</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y" style={{ borderColor: '#f1f5f9' }}>
+                                                <tbody className="divide-y" style={{ borderColor: 'rgba(42,67,85,0.4)' }}>
                                                     {selectedLoc.products.map((p, i) => (
-                                                        <tr key={i} className="hover:bg-blue-50/50 transition-colors">
+                                                        <tr key={i} className="hover:bg-[rgba(135,203,185,0.04)] transition-colors">
                                                             <td className="p-1.5 min-w-0">
-                                                                <p className="font-bold truncate text-[11px]" style={{ color: '#1e293b' }}>{p.skuCode}</p>
-                                                                <p className="truncate text-[10px]" style={{ color: '#64748b' }}>{p.productName}</p>
+                                                                <p className="font-bold truncate text-[11px]" style={{ color: '#87CBB9' }}>{p.skuCode}</p>
+                                                                <p className="truncate text-[10px]" style={{ color: '#8AAEBB' }}>{p.productName}</p>
                                                             </td>
-                                                            <td className="p-1.5 text-right font-mono font-bold align-top text-xs" style={{ color: '#059669' }}>
+                                                            <td className="p-1.5 text-right font-mono font-bold align-top text-xs" style={{ color: '#5BA88A' }}>
                                                                 {formatNumber(p.qtyAvailable)}
                                                             </td>
                                                         </tr>
@@ -832,8 +832,8 @@ export function WarehouseMapTab({
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="pt-3 border-t text-center" style={{ borderColor: '#e2e8f0' }}>
-                                        <p className="text-[11px] italic" style={{ color: '#94a3b8' }}>Kệ hiện đang trống</p>
+                                    <div className="pt-3 border-t text-center" style={{ borderColor: '#2A4355' }}>
+                                        <p className="text-[11px] italic" style={{ color: '#4A6A7A' }}>Kệ hiện đang trống</p>
                                     </div>
                                 )}
                             </div>
@@ -844,38 +844,39 @@ export function WarehouseMapTab({
 
             {/* Modal: Full Location Product Table */}
             {showLocModal && selectedLoc && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                    <div className="rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden" style={{ background: '#0F1D2B', border: '1px solid #2A4355' }}>
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 bg-slate-900 text-white">
+                        <div className="flex items-center justify-between p-4" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
                             <div>
-                                <h3 className="text-base font-bold flex items-center gap-2">
+                                <h3 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
                                     📍 Vị Trí: {selectedLoc.locationCode}
                                 </h3>
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs" style={{ color: '#4A6A7A' }}>
                                     Zone: {selectedLoc.zone} • Rack: {selectedLoc.rack ?? '—'} • Bin: {selectedLoc.bin ?? '—'}
                                 </p>
                             </div>
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+                                className="p-1.5 rounded-lg transition-colors"
+                                style={{ color: '#8AAEBB' }}
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
                         {/* Summary badges */}
-                        <div className="flex items-center gap-3 p-3 bg-slate-50 border-b border-slate-200 text-xs">
-                            <span className="font-semibold text-slate-700">
-                                Tổng sản phẩm: <strong className="text-blue-600 font-mono">{selectedLoc.products.length} mã</strong>
+                        <div className="flex items-center gap-3 p-3 text-xs" style={{ background: '#1B2E3D', borderBottom: '1px solid #2A4355' }}>
+                            <span className="font-semibold" style={{ color: '#8AAEBB' }}>
+                                Tổng sản phẩm: <strong className="font-mono" style={{ color: '#87CBB9' }}>{selectedLoc.products.length} mã</strong>
                             </span>
-                            <span className="text-slate-300">•</span>
-                            <span className="font-semibold text-slate-700">
-                                Tổng tồn kho: <strong className="text-emerald-600 font-mono">{formatNumber(selectedLoc.totalQty)} chai</strong>
+                            <span style={{ color: '#2A4355' }}>•</span>
+                            <span className="font-semibold" style={{ color: '#8AAEBB' }}>
+                                Tổng tồn kho: <strong className="font-mono" style={{ color: '#5BA88A' }}>{formatNumber(selectedLoc.totalQty)} chai</strong>
                             </span>
-                            <span className="text-slate-300">•</span>
-                            <span className="font-semibold text-slate-700">
-                                Tỷ lệ lấp đầy: <strong className="text-amber-600 font-mono">{selectedLoc.occupancyPct}%</strong>
+                            <span style={{ color: '#2A4355' }}>•</span>
+                            <span className="font-semibold" style={{ color: '#8AAEBB' }}>
+                                Tỷ lệ lấp đầy: <strong className="font-mono" style={{ color: '#D4A853' }}>{selectedLoc.occupancyPct}%</strong>
                             </span>
                         </div>
 
@@ -883,24 +884,24 @@ export function WarehouseMapTab({
                         <div className="p-4 max-h-[60vh] overflow-y-auto">
                             <table className="w-full text-left text-xs border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 uppercase text-[10px] tracking-wider">
-                                        <th className="p-2.5 font-bold">Mã SKU</th>
-                                        <th className="p-2.5 font-bold">Tên Rượu / Sản Phẩm</th>
-                                        <th className="p-2.5 font-bold text-center">Trạng Thái</th>
-                                        <th className="p-2.5 font-bold text-right">Tồn Kho (Chai)</th>
+                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider" style={{ color: '#4A6A7A' }}>Mã SKU</th>
+                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider" style={{ color: '#4A6A7A' }}>Tên Rượu / Sản Phẩm</th>
+                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider text-center" style={{ color: '#4A6A7A' }}>Trạng Thái</th>
+                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider text-right" style={{ color: '#4A6A7A' }}>Tồn Kho (Chai)</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody>
                                     {selectedLoc.products.map((p, i) => (
-                                        <tr key={i} className="hover:bg-slate-50 transition-colors">
-                                            <td className="p-2.5 font-mono font-bold text-slate-800">{p.skuCode}</td>
-                                            <td className="p-2.5 font-medium text-slate-700">{p.productName}</td>
+                                        <tr key={i} className="transition-colors" style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
+                                            <td className="p-2.5 font-mono font-bold" style={{ color: '#87CBB9' }}>{p.skuCode}</td>
+                                            <td className="p-2.5 font-medium" style={{ color: '#E8F1F2' }}>{p.productName}</td>
                                             <td className="p-2.5 text-center">
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }}>
                                                     {p.status === 'AVAILABLE' ? '✅ Sẵn sàng' : p.status}
                                                 </span>
                                             </td>
-                                            <td className="p-2.5 text-right font-mono font-bold text-emerald-600 text-sm">
+                                            <td className="p-2.5 text-right font-mono font-bold text-sm" style={{ color: '#5BA88A' }}>
                                                 {formatNumber(p.qtyAvailable)}
                                             </td>
                                         </tr>
@@ -910,10 +911,11 @@ export function WarehouseMapTab({
                         </div>
 
                         {/* Footer */}
-                        <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                        <div className="p-3 flex justify-end" style={{ background: '#142433', borderTop: '1px solid #2A4355' }}>
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-700"
+                                className="px-4 py-2 rounded-lg text-xs font-semibold"
+                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                             >
                                 Đóng
                             </button>
