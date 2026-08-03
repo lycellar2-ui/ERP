@@ -193,10 +193,6 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                     <td className="text-slate-500 pr-2">Phân kênh:</td>
                                     <td>{order.customer.channel ? (CHANNEL_MAP[order.customer.channel] || order.customer.channel) : '—'}</td>
                                 </tr>
-                                <tr>
-                                    <td className="text-slate-500 pr-2">Hạn mức nợ:</td>
-                                    <td className="font-mono tabular-nums">{Number(order.customer.creditLimit) > 0 ? formatVND(Number(order.customer.creditLimit)) : 'Không giới hạn'}</td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -349,11 +345,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
                 {/* Dynamic Footer Block */}
                 {/* Signatures for Sales Orders */}
-                    <div className="grid grid-cols-5 gap-1 text-center text-xs mt-10 pt-4 border-t border-dashed border-slate-300">
-                        <div className="flex flex-col justify-between h-24">
-                            <p className="font-bold text-slate-800 uppercase tracking-wide">Người lập đơn</p>
-                            <p className="font-semibold text-slate-700">{order.salesRep.name}</p>
-                        </div>
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs mt-10 pt-4 border-t border-dashed border-slate-300">
                         <div className="flex flex-col justify-between h-24">
                             <p className="font-bold text-slate-800 uppercase tracking-wide">Sale Admin duyệt</p>
                             <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
@@ -363,14 +355,15 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                             <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
                         </div>
                         <div className="flex flex-col justify-between h-24">
-                            <p className="font-bold text-slate-800 uppercase tracking-wide">Giám đốc phê duyệt</p>
-                            <p className="text-slate-400 italic">(Ký, đóng dấu)</p>
+                            <p className="font-bold text-slate-800 uppercase tracking-wide">Thủ kho</p>
+                            <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
                         </div>
                         <div className="flex flex-col justify-between h-24">
                             <p className="font-bold text-slate-800 uppercase tracking-wide">Người nhận hàng</p>
                             <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
                         </div>
                     </div>
+
             </div>
         </div>
     )

@@ -1294,11 +1294,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 </div>
 
                                 {/* Signatures */}
-                                <div className="grid grid-cols-5 gap-1 text-center text-xs mt-10 pt-4 border-t border-dashed border-slate-300 pb-12">
-                                    <div className="flex flex-col justify-between h-24">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide">Người lập đơn</p>
-                                        <p className="font-semibold text-slate-700">Tài khoản của bạn</p>
-                                    </div>
+                                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-10 pt-4 border-t border-dashed border-slate-300 pb-12">
                                     <div className="flex flex-col justify-between h-24">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide">Sale Admin duyệt</p>
                                         <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
@@ -1308,14 +1304,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                         <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                     <div className="flex flex-col justify-between h-24">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide">Giám đốc phê duyệt</p>
-                                        <p className="text-slate-400 italic">(Ký, đóng dấu)</p>
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide">Thủ kho</p>
+                                        <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                     <div className="flex flex-col justify-between h-24">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide">Người nhận hàng</p>
                                         <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
