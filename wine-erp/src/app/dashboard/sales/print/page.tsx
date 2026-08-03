@@ -285,35 +285,35 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                 </table>
 
                 {/* Totals Section */}
-                <div className="flex justify-end mb-6">
+                <div className="flex justify-end mb-4 break-inside-avoid print:break-inside-avoid">
                     <table className="w-80 text-xs border-collapse">
                         <tbody>
                             <tr className="border-b border-slate-200">
-                                <td className="py-2 text-slate-500">Cộng tiền hàng (chưa VAT):</td>
-                                <td className="py-2 text-right font-mono tabular-nums">{formatVND(subtotal)}</td>
+                                <td className="py-1.5 text-slate-500">Cộng tiền hàng (chưa VAT):</td>
+                                <td className="py-1.5 text-right font-mono tabular-nums">{formatVND(subtotal)}</td>
                             </tr>
                             {discountAmount > 0 && (
                                 <tr className="border-b border-slate-200">
-                                    <td className="py-2 text-slate-500">Chiết khấu đơn ({Number(order.orderDiscount)}%):</td>
-                                    <td className="py-2 text-right font-mono text-red-600 tabular-nums">-{formatVND(discountAmount)}</td>
+                                    <td className="py-1.5 text-slate-500">Chiết khấu đơn ({Number(order.orderDiscount)}%):</td>
+                                    <td className="py-1.5 text-right font-mono text-red-600 tabular-nums">-{formatVND(discountAmount)}</td>
                                 </tr>
                             )}
                             {!vatIncluded && (
                                 <tr className="border-b border-slate-200">
-                                    <td className="py-2 text-slate-500">Thuế VAT (10%):</td>
-                                    <td className="py-2 text-right font-mono tabular-nums">{formatVND(vatAmount)}</td>
+                                    <td className="py-1.5 text-slate-500">Thuế VAT (10%):</td>
+                                    <td className="py-1.5 text-right font-mono tabular-nums">{formatVND(vatAmount)}</td>
                                 </tr>
                             )}
                             <tr className="font-bold border-t-2 border-black">
-                                <td className="py-3 text-slate-800 text-sm">Tổng cộng thanh toán:</td>
-                                <td className="py-3 text-right font-mono text-sm tabular-nums" style={{ color: '#124967' }}>{formatVND(grandTotal)}</td>
+                                <td className="py-2 text-slate-800 text-sm">Tổng cộng thanh toán:</td>
+                                <td className="py-2 text-right font-mono text-sm tabular-nums" style={{ color: '#124967' }}>{formatVND(grandTotal)}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 {/* Bank Account Details */}
-                <div className="border border-slate-200 rounded p-3 mb-6 bg-slate-50 text-[10px] leading-relaxed">
+                <div className="border border-slate-200 rounded p-3 mb-4 bg-slate-50 text-[10px] leading-relaxed break-inside-avoid print:break-inside-avoid">
                     <p className="font-bold text-slate-700 uppercase mb-1">Thông tin chuyển khoản thanh toán:</p>
                     <table className="w-full">
                         <tbody>
@@ -345,26 +345,26 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
                 {/* Dynamic Footer Block */}
                 {/* Signatures for Sales Orders */}
-                    <div className="grid grid-cols-4 gap-2 text-center text-xs mt-10 pt-4 border-t border-dashed border-slate-300">
-                        <div className="flex flex-col justify-between h-24">
-                            <p className="font-bold text-slate-800 uppercase tracking-wide">Sale Admin duyệt</p>
-                            <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
-                        </div>
-                        <div className="flex flex-col justify-between h-24">
-                            <p className="font-bold text-slate-800 uppercase tracking-wide">Kế toán kiểm soát</p>
-                            <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
-                        </div>
-                        <div className="flex flex-col justify-between h-24">
-                            <p className="font-bold text-slate-800 uppercase tracking-wide">Thủ kho</p>
-                            <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
-                        </div>
-                        <div className="flex flex-col justify-between h-24">
-                            <p className="font-bold text-slate-800 uppercase tracking-wide">Người nhận hàng</p>
-                            <p className="text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
-                        </div>
+                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-6 pt-3 border-t border-dashed border-slate-300 break-inside-avoid print:break-inside-avoid">
+                    <div className="flex flex-col justify-between h-20">
+                        <p className="font-bold text-slate-800 uppercase tracking-wide">Sale Admin duyệt</p>
+                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
                     </div>
-
+                    <div className="flex flex-col justify-between h-20">
+                        <p className="font-bold text-slate-800 uppercase tracking-wide">Kế toán kiểm soát</p>
+                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
+                    </div>
+                    <div className="flex flex-col justify-between h-20">
+                        <p className="font-bold text-slate-800 uppercase tracking-wide">Thủ kho</p>
+                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
+                    </div>
+                    <div className="flex flex-col justify-between h-20">
+                        <p className="font-bold text-slate-800 uppercase tracking-wide">Người nhận hàng</p>
+                        <p className="text-slate-400 italic text-[10px]">(Ký, ghi rõ họ tên)</p>
+                    </div>
+                </div>
             </div>
         </div>
     )
 }
+
