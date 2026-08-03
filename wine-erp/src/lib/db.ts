@@ -1,6 +1,11 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
+import * as dotenv from 'dotenv'
+
+if (!process.env.DATABASE_URL) {
+    dotenv.config({ path: '.env.local' })
+}
 
 // Supabase pooler uses a certificate chain that Node.js v24 rejects.
 // pg.Pool ssl.rejectUnauthorized=false is ignored by PrismaPg adapter.
@@ -14,6 +19,7 @@ const connectionString = process.env.DATABASE_URL
 if (!connectionString) {
     throw new Error('DATABASE_URL environment variable is not set')
 }
+
 
 // Transaction Pooler (port 6543 + pgBouncer)
 // Serverless: max 2 — each Vercel function gets its own pool,

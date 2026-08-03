@@ -46,6 +46,34 @@ async function sendEmail(payload: EmailPayload): Promise<{ success: boolean; id?
 // Telegram notification channel (alongside email)
 // ═══════════════════════════════════════════════════
 
+// Helper to create In-App notifications for recipients
+async function createInAppNotifications(emails: string | string[], title: string, content?: string, link?: string) {
+    try {
+        const emailList = (Array.isArray(emails) ? emails : [emails]).filter(Boolean)
+        if (emailList.length === 0) return
+
+        const users = await prisma.user.findMany({
+            where: { email: { in: emailList, mode: 'insensitive' }, status: 'ACTIVE' },
+            select: { id: true }
+        })
+
+        if (users.length > 0) {
+            await prisma.notification.createMany({
+                data: users.map(u => ({
+                    userId: u.id,
+                    title: title,
+                    content: content || null,
+                    type: 'info',
+                    link: link || '/dashboard/sales',
+                    isRead: false,
+                }))
+            })
+        }
+    } catch (err) {
+        console.error('Error creating in-app notifications:', err)
+    }
+}
+
 async function sendNotification(
     emailPayload: EmailPayload,
     telegramMessage: string
@@ -53,6 +81,12 @@ async function sendNotification(
     const results = await Promise.allSettled([
         sendEmail(emailPayload),
         notifyTelegram(telegramMessage),
+        createInAppNotifications(
+            emailPayload.to,
+            emailPayload.subject,
+            telegramMessage.replace(/<[^>]*>/g, ''),
+            '/dashboard/sales'
+        )
     ])
 
     return {
@@ -60,6 +94,7 @@ async function sendNotification(
         telegram: results[1].status === 'fulfilled' ? results[1].value : { success: false, error: 'Telegram failed' },
     }
 }
+
 
 // ═══════════════════════════════════════════════════
 // Pre-built notification templates
