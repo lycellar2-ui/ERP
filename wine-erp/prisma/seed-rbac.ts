@@ -92,6 +92,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 
     'Thủ Kho': [
         'DSH:READ',
+        'SLS:READ',
         'WMS:READ', 'WMS:CREATE', 'WMS:UPDATE', 'WMS:DELETE',
         'TRS:READ', 'TRS:CREATE', 'TRS:UPDATE',
         'STM:READ', 'STM:CREATE', 'STM:UPDATE',
@@ -198,7 +199,7 @@ async function main() {
     // ─── 4. Create sample users ────────────────────
     console.log('  → Creating sample users...')
     const sampleUsers = [
-        { id: 'user-ketoan', email: 'accounting@lyscellars.com', name: 'Trà (Kế toán)', roleId: 'role-kế-toán' },
+        { id: 'user-ketoan', email: 'accounting@lyscellars.com', name: 'Dinh (Kế toán)', roleId: 'role-kế-toán' },
         { id: 'user-sales-mgr', email: 'jeremie.courivault@lyscellars.com', name: 'Jeremy (CBO)', roleId: 'role-cbo' },
         { id: 'user-sales-01', email: 'sales01@lyscellars.com', name: 'Khánh (Sale rep)', roleId: 'role-sales-rep' },
         { id: 'user-thukho', email: 'thukho@lyscellars.com', name: 'Phạm Quốc Hùng (Thủ Kho)', roleId: 'role-thủ-kho' },

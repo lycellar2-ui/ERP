@@ -205,7 +205,8 @@ function StockTable({ lots, sortConfig, onSort }: {
 
     return (
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
-            <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+            {/* Desktop Table View (>= 768px) */}
+            <div className="hidden md:block" style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -299,6 +300,48 @@ function StockTable({ lots, sortConfig, onSort }: {
                         })}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card List View (< 768px) */}
+            <div className="block md:hidden p-3 space-y-3">
+                {lots.map(lot => {
+                    const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
+                    const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#8AAEBB'
+                    const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#8AAEBB' }
+                    return (
+                        <div key={lot.id} className="p-3.5 rounded-xl space-y-2" style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
+                                    {lot.lotNo}
+                                </span>
+                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: '#1B2E3D', color: '#D4A853' }}>
+                                    📍 {lot.locationCode}
+                                </span>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-white leading-tight">{lot.productName}</h4>
+                                <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: '#4A6A7A' }}>
+                                    {flag} <span className="w-1.5 h-1.5 rounded-full" style={{ background: wineColor }} />
+                                    SKU: {lot.skuCode} {lot.vintage ? `· VTG: ${lot.vintage}` : ''}
+                                </p>
+                            </div>
+                            <div className="flex items-center justify-between pt-2 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
+                                <div>
+                                    <span style={{ color: '#4A6A7A' }}>Tồn kho: </span>
+                                    <span className="font-bold font-mono text-sm" style={{ color: '#5BA88A' }}>
+                                        {lot.qtyAvailable.toLocaleString()} chai
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="font-semibold px-2 py-0.5 rounded-full text-[11px]"
+                                        style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>
+                                        {statusCfg.label}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
         </div>
     )
@@ -504,17 +547,26 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     return (
         <div className="space-y-3 max-w-screen-2xl">
             {/* 1. TOPMOST HEADER CONTAINER */}
-            <div className="flex flex-col gap-2 p-2.5 rounded-xl"
+            <div className="flex flex-col gap-2 p-3 rounded-xl"
                 style={{ background: '#142433', border: '1px solid #2A4355' }}>
                 
                 {/* Top Row: Title + Stat Badges + Create WH Button */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2" style={{ borderColor: '#2A4355' }}>
-                    <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b pb-2" style={{ borderColor: '#2A4355' }}>
+                    <div className="flex items-center justify-between w-full sm:w-auto">
                         <h2 className="text-sm font-bold flex items-center gap-1.5" style={{ color: '#E8F1F2' }}>
                             <Warehouse size={16} style={{ color: '#87CBB9' }} /> Kho Hàng (WMS)
                         </h2>
+                        <button onClick={() => setCreateWHOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold sm:hidden transition-colors"
+                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            <Plus size={13} /> Tạo Kho
+                        </button>
+                    </div>
+
+                    {/* Stat Badges — Horizontally Scrollable on Mobile */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar py-0.5 max-w-full">
                         {statCards.map(s => (
-                            <div key={s.label} className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px]"
+                            <div key={s.label} className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap shrink-0"
                                 style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                 <s.icon size={12} style={{ color: s.accent }} />
                                 <span className="uppercase font-medium" style={{ color: '#8AAEBB' }}>{s.label}:</span>
@@ -522,24 +574,24 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             </div>
                         ))}
                     </div>
+
                     <button onClick={() => setCreateWHOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ml-auto transition-colors"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ml-auto transition-colors shrink-0"
+                        style={{ background: '#87CBB9', color: '#0A1926' }}>
                         <Plus size={13} /> Tạo Kho Mới
                     </button>
                 </div>
 
                 {/* Bottom Row: WMS Navigation Tabs + Inline Warehouse Selector */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                    <div className="flex items-center gap-1 flex-wrap">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-0.5">
+                    {/* WMS Navigation Tabs — Horizontally Scrollable on Mobile */}
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap py-1 max-w-full">
                         {wmsTabs.map(t => {
                             const Icon = t.icon
                             const active = activeTab === t.key
                             return (
                                 <button key={t.key} onClick={() => handleTabChange(t.key)}
-                                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all"
+                                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0"
                                     style={{
                                         background: active ? '#87CBB9' : 'transparent',
                                         color: active ? '#0A1926' : '#8AAEBB',
@@ -557,7 +609,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     </div>
 
                     {/* Warehouse Dropdown List */}
-                    <div className="relative">
+                    <div className="relative shrink-0">
                         <select
                             value={selectedWH ?? ''}
                             onChange={e => {
@@ -570,7 +622,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     selectWarehouse(val)
                                 }
                             }}
-                            className="appearance-none pl-3 pr-8 py-1.5 rounded-md text-xs font-semibold outline-none cursor-pointer"
+                            className="w-full sm:w-auto appearance-none pl-3 pr-8 py-1.5 rounded-md text-xs font-semibold outline-none cursor-pointer"
                             style={{
                                 background: '#1B2E3D',
                                 border: '1px solid #2A4355',

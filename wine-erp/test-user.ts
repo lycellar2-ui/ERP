@@ -1,0 +1,1 @@
+import { prisma } from './src/lib/db'; async function test() { const user = await prisma.user.findFirst({ where: { email: { contains: 'lyscellars' } } }); console.log(user); } test();

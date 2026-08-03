@@ -5,3 +5,6 @@ build/
 .env*
 .DS_Store
 *.log
+.agent/mcp_config.json
+scratch/
+wine-erp/scratch/

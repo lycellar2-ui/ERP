@@ -26,7 +26,7 @@ async function main() {
 
     const renames = [
         { email: 'thumua@lyscellars.com', newName: 'Nga (Mua Hàng)' },
-        { email: 'ketoan@lyscellars.com', newName: 'Trà (Kế toán)' },
+        { email: 'ketoan@lyscellars.com', newName: 'Dinh (Kế toán)' },
         { email: 'sales01@lyscellars.com', newName: 'Khánh (Sale rep)' },
         { email: 'sales.mgr@lyscellars.com', newName: 'Jeremy (Sale Manager)' },
     ]
