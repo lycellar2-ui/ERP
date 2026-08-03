@@ -1405,7 +1405,9 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
             where: { id },
             select: { salesRepId: true },
         })
-        if (!so) return { success: false, error: 'SO không tồn tại' }
+        if (hasRole(user, 'Thủ Kho', 'THU_KHO')) {
+            return { success: false, error: 'Thủ kho không có quyền hủy đơn bán hàng.' }
+        }
 
         if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
             if (so.salesRepId !== user.id) {
@@ -2269,9 +2271,8 @@ export async function deleteSalesOrder(id: string): Promise<{ success: boolean; 
             where: { id },
             select: { status: true, salesRepId: true, soNo: true }
         })
-        if (!so) return { success: false, error: 'Đơn hàng không tồn tại' }
-        if (so.status !== 'DRAFT') {
-            return { success: false, error: 'Chỉ có thể xóa đơn hàng ở trạng thái Nháp (DRAFT)' }
+        if (hasRole(user, 'Thủ Kho', 'THU_KHO')) {
+            return { success: false, error: 'Thủ kho không có quyền xóa đơn bán hàng.' }
         }
 
         if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
