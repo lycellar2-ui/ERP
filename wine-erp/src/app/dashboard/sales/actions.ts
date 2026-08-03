@@ -1397,25 +1397,51 @@ export async function advanceSalesOrderStatus(id: string, toStatus: SOStatus): P
 }
 
 
-// ── Cancel SO — also releases allocation quotas ─
+// ── Cancel SO — releases allocation quotas & enforces strict business logic ─
 export async function cancelSalesOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         const user = await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id },
-            select: { salesRepId: true },
+            select: { id: true, soNo: true, status: true, salesRepId: true, totalAmount: true },
         })
+        if (!so) return { success: false, error: 'Đơn hàng không tồn tại' }
+
+        // 1. Check Role Restrictions
         if (hasRole(user, 'Thủ Kho', 'THU_KHO')) {
             return { success: false, error: 'Thủ kho không có quyền hủy đơn bán hàng.' }
         }
 
-        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
-            if (so.salesRepId !== user.id) {
-                return { success: false, error: 'Bạn không có quyền huỷ đơn hàng của Sales khác.' }
-            }
+        const isManagerOrAdmin = hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
+        const isOwningSalesRep = hasRole(user, 'Sales Rep', 'SALES_REP') && so.salesRepId === user.id
+
+        if (!isManagerOrAdmin && !isOwningSalesRep) {
+            return { success: false, error: 'Bạn không có quyền huỷ đơn hàng này.' }
         }
 
-        // Release allocation quotas linked to this SO
+        // 2. Check Status Restrictions
+        if (['CANCELLED'].includes(so.status)) {
+            return { success: false, error: 'Đơn hàng đã ở trạng thái Đã Hủy.' }
+        }
+
+        if (['DELIVERED', 'INVOICED', 'PAID'].includes(so.status)) {
+            return { success: false, error: 'Không thể hủy đơn hàng đã xuất kho hoặc đã lập hóa đơn/thanh toán. Vui lòng thực hiện quy trình Trả hàng.' }
+        }
+
+        // Sales Reps can only cancel their own order if it's still in DRAFT or PENDING_APPROVAL
+        if (!isManagerOrAdmin && isOwningSalesRep && !['DRAFT', 'PENDING_APPROVAL'].includes(so.status)) {
+            return { success: false, error: 'Đơn hàng đã được duyệt/xác nhận. Sales Rep không thể tự hủy, vui lòng liên hệ Quản lý/Kế toán.' }
+        }
+
+        // 3. Check if there are confirmed/shipped Delivery Orders (DO) in WMS
+        const activeDO = await prisma.deliveryOrder.findFirst({
+            where: { soId: id, status: { in: ['CONFIRMED', 'SHIPPED'] } }
+        })
+        if (activeDO) {
+            return { success: false, error: `Đơn hàng đã có phiếu xuất kho (${activeDO.doNo}) đã xác nhận. Không thể hủy trực tiếp.` }
+        }
+
+        // 4. Release allocation quotas linked to this SO
         const soLines = await prisma.salesOrderLine.findMany({
             where: { soId: id },
             include: { allocationLogs: { where: { action: 'USE' } } },
@@ -1423,7 +1449,6 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
 
         for (const line of soLines) {
             for (const log of line.allocationLogs) {
-                // Decrement qtySold and create RELEASE log
                 await prisma.$transaction([
                     prisma.allocationQuota.update({
                         where: { id: log.quotaId },
@@ -1441,10 +1466,17 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
             }
         }
 
+        // 5. Update SO status to CANCELLED
         await prisma.salesOrder.update({ where: { id }, data: { status: 'CANCELLED' } })
 
         try {
-            await logAudit({ action: 'UPDATE', entityType: 'SalesOrder', entityId: id, newValue: { status: 'CANCELLED', quotaReleased: true } })
+            await logAudit({
+                userId: user.id,
+                action: 'UPDATE',
+                entityType: 'SalesOrder',
+                entityId: id,
+                newValue: { status: 'CANCELLED', previousStatus: so.status, quotaReleased: true }
+            })
         } catch { /* silent */ }
 
         revalidatePath('/dashboard/sales')
