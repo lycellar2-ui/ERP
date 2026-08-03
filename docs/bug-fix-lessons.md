@@ -1206,5 +1206,33 @@ useEffect(() => {
 > ⚠️ **RULE 47: Luôn kiểm tra các hàm chia sẻ dữ liệu chung (shared data actions) khi tích hợp UI để đảm bảo không bị thiếu thuộc tính dữ liệu cần thiết.**
 > Hạn chế việc gán cứng giá trị `null` hoặc `N/A` cho các trường dữ liệu quan trọng như URL hình ảnh, ID định danh nếu database đã lưu trữ sẵn các thông tin này.
 
+---
+
+## BUG-026: Vercel Build Fail — Outdated Script Import & tsconfig.json Included Dev Scripts
+
+**Ngày:** 2026-08-04
+**Severity:** 🔴 Critical — Vercel Production Build thất bại do Type Check lỗi trong thư mục `scripts/`
+
+### Triệu chứng
+```
+./scripts/check_session_permissions.ts:5:10
+Type error: Module '"../src/lib/session"' has no exported member 'getPermissionsForRoles'.
+> 5 | import { getPermissionsForRoles } from '../src/lib/session'
+Error: Command "npm run build" exited with 1
+```
+
+### Nguyên nhân gốc rễ
+1. Script bảo trì `scripts/check_session_permissions.ts` import hàm `getPermissionsForRoles` từ `src/lib/session.ts` nhưng hàm này đã được refactor/xóa trong `session.ts`.
+2. File `tsconfig.json` của Next.js có mảng `"include": ["**/*.ts"]` nhưng `"exclude"` chỉ có `["node_modules"]`, dẫn đến lệnh `next build` quét và biên dịch cả các file script dev/scratch trong thư mục `scripts/`.
+
+### Cách fix
+1. Sửa `scripts/check_session_permissions.ts` bỏ import bị hỏng và tính permissions từ `user.roles` trực tiếp.
+2. Cập nhật `tsconfig.json` bổ sung `"scripts"` và `"scratch"` vào mảng `exclude`.
+
+### Bài học
+
+> ⚠️ **RULE 48: Loại bỏ các thư mục scripts/scratch khỏi tsconfig.json của Next.js để tránh làm hỏng Build Pipeline trên Vercel.**
+> Các script hỗ trợ phát triển/bảo trì cục bộ không nằm trong ứng dụng Web chính cần được loại trừ khỏi `tsconfig.json` để tránh gây lỗi Build trên CI/CD khi refactor code chính.
+
 
 

@@ -2,7 +2,6 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 import * as dotenv from 'dotenv'
-import { getPermissionsForRoles } from '../src/lib/session'
 
 dotenv.config({ path: '.env.local' })
 
@@ -45,8 +44,14 @@ async function main() {
     console.log("User Roles:", roleNames);
     console.log("Role IDs:", roleIds);
 
-    const permissions = await getPermissionsForRoles(roleIds);
-    console.log("Permissions from getPermissionsForRoles:", permissions);
+    const permissions = Array.from(
+        new Set(
+            user.roles.flatMap(r =>
+                r.role.permissions.map(p => `${p.permission.module}:${p.permission.action}`)
+            )
+        )
+    );
+    console.log("Permissions for user:", permissions);
     console.log("Includes SLS:READ?", permissions.includes('SLS:READ'));
 }
 

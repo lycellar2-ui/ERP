@@ -1435,10 +1435,10 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
 
         // 3. Check if there are confirmed/shipped Delivery Orders (DO) in WMS
         const activeDO = await prisma.deliveryOrder.findFirst({
-            where: { soId: id, status: { in: ['CONFIRMED', 'SHIPPED'] } }
+            where: { soId: id, status: { in: ['PICKING', 'PACKED', 'SHIPPED', 'DELIVERED'] } }
         })
         if (activeDO) {
-            return { success: false, error: `Đơn hàng đã có phiếu xuất kho (${activeDO.doNo}) đã xác nhận. Không thể hủy trực tiếp.` }
+            return { success: false, error: `Đơn hàng đã có phiếu xuất kho (${activeDO.doNo}) đã xử lý. Không thể hủy trực tiếp.` }
         }
 
         // 4. Release allocation quotas linked to this SO
@@ -2303,6 +2303,9 @@ export async function deleteSalesOrder(id: string): Promise<{ success: boolean; 
             where: { id },
             select: { status: true, salesRepId: true, soNo: true }
         })
+        if (!so) {
+            return { success: false, error: 'Không tìm thấy đơn bán hàng.' }
+        }
         if (hasRole(user, 'Thủ Kho', 'THU_KHO')) {
             return { success: false, error: 'Thủ kho không có quyền xóa đơn bán hàng.' }
         }
