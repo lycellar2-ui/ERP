@@ -1112,10 +1112,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             {entities.find(e => e.id === legalEntityId)?.name || "CÔNG TY TNHH THẮNG ÂN"}
                                         </h2>
                                         <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
-                                            Địa chỉ: {entities.find(e => e.id === legalEntityId)?.address || "Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội"}<br />
-                                            MST: {entities.find(e => e.id === legalEntityId)?.taxId || "0316123456"} &nbsp;|&nbsp; 
-                                            SĐT: {entities.find(e => e.id === legalEntityId)?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
-                                            Email: {entities.find(e => e.id === legalEntityId)?.email || "orders@lyscellars.com"}
+                                            Địa chỉ: {(entities.find(e => e.id === legalEntityId) as any)?.address || "Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội"}<br />
+                                            MST: {(entities.find(e => e.id === legalEntityId) as any)?.taxId || "0316123456"} &nbsp;|&nbsp; 
+                                            SĐT: {(entities.find(e => e.id === legalEntityId) as any)?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
+                                            Email: {(entities.find(e => e.id === legalEntityId) as any)?.email || "orders@lyscellars.com"}
                                         </p>
                                     </div>
                                     <div className="text-right">
@@ -1156,11 +1156,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             <tbody>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
-                                                    <td className="py-0.5 text-slate-900">{deliveryAddress || 'Nhận tại kho'}</td>
+                                                    <td className="py-0.5 text-slate-900">{selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address || 'Nhận tại kho'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Sales Rep:</td>
-                                                    <td className="py-0.5 text-slate-900">{salesRepId || 'Admin'}</td>
+                                                    <td className="py-0.5 text-slate-900">{salesReps.find(sr => sr.id === salesRepId)?.name || 'Admin'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Thanh toán:</td>
@@ -1192,7 +1192,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             const imgUrl = (p as any)?.media?.[0]?.url || null
                                             const grapes = (p as any)?.profile?.grapes || null
                                             const abv = (p as any)?.abvPercent ? `${Number((p as any).abvPercent)}%` : null
-                                            const wineTypeLabel = (p as any)?.wineType ? (WINE_TYPE_MAP[(p as any).wineType] || (p as any).wineType) : null
+                                            const wineTypeLabel = (p as any)?.wineType || null
+
 
                                             const details = [
                                                 wineTypeLabel ? `Loại: ${wineTypeLabel}` : null,
