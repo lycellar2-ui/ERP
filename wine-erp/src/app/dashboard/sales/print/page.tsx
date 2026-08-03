@@ -125,18 +125,21 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
         ? [order.shippingAddress.address, order.shippingAddress.ward, order.shippingAddress.district, order.shippingAddress.city].filter(Boolean).join(', ')
         : 'Nhận tại kho'
 
+    const totalQty = order.lines.reduce((sum, l) => sum + Number(l.qtyOrdered), 0)
+
     return (
         <div className="min-h-screen bg-[#0A1926] text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
-            {/* Embedded Print CSS to hide browser header/footer */}
+            {/* Embedded Print CSS to force pure white background and hide browser header/footer */}
             <style>{`
                 @media print {
                     @page {
                         size: A4 portrait;
                         margin: 8mm 10mm !important;
                     }
-                    body {
-                        margin: 0 !important;
-                        padding: 0 !important;
+                    html, body, #__next, div {
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        box-shadow: none !important;
                     }
                 }
             `}</style>
@@ -160,93 +163,89 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
             </div>
 
             {/* A4 Sheet Wrapper */}
-            <div className="max-w-[850px] mx-auto bg-white text-black p-6 sm:p-8 shadow-xl border border-slate-200 print:shadow-none print:border-none print:p-0">
-                {/* Print Header */}
+            <div className="max-w-[850px] mx-auto bg-white text-black p-6 sm:p-8 shadow-xl border border-slate-200 print:shadow-none print:border-none print:p-0 min-h-[297mm]">
+                {/* Print Header - No Logo, Clean Company Info */}
                 <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
                     <div>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                            src="/logo/Ly's Cellars - Logo_tagline blue green.png" 
-                            alt="Ly's Cellars Logo" 
-                            className="h-9 w-auto object-contain mb-1"
-                        />
-                        <h2 className="font-bold text-[10px] text-slate-800 uppercase tracking-wide">
-                            {(order as any).legalEntity?.name || "LY'S CELLARS"}
+                        <h2 className="font-bold text-xs text-slate-900 uppercase tracking-wide">
+                            {(order as any).legalEntity?.name || "CÔNG TY TNHH THẮNG ÂN"}
                         </h2>
-                        <p className="text-[9px] text-slate-600 leading-snug mt-0.5">
-                            Địa chỉ: {(order as any).legalEntity?.address || "123 Đường Pasteur, Phường Bến Nghé, Quận 1, TP. HCM"}<br />
-                            MST: {(order as any).legalEntity?.taxId || "0313456789"} &nbsp;|&nbsp; Email: orders@lyscellars.com
+                        <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
+                            Địa chỉ: {(order as any).legalEntity?.address || "Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội"}<br />
+                            MST: {(order as any).legalEntity?.taxId || "0316123456"} &nbsp;|&nbsp; 
+                            SĐT: {(order as any).legalEntity?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
+                            Email: {(order as any).legalEntity?.email || "orders@lyscellars.com"}
                         </p>
                     </div>
                     <div className="text-right">
-                        <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5">
+                        <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
                             ĐƠN BÁN HÀNG
                         </h1>
-                        <p className="text-xs font-bold font-mono" style={{ color: '#124967' }}>
+                        <p className="text-xs font-bold font-mono text-slate-900">
                             {['DRAFT', 'PENDING_APPROVAL'].includes(order.status) ? 'DỰ THẢO - ' : ''}{order.soNo}
                         </p>
-                        <p className="text-[9px] text-slate-500 mt-0.5">Ngày lập: {formatDateTime(order.createdAt)}</p>
+                        <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {formatDateTime(order.createdAt)}</p>
                     </div>
                 </div>
 
                 {/* Customer & Info Grid */}
                 <div className="grid grid-cols-2 gap-4 mb-3 text-xs leading-tight">
                     <div>
-                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-700 uppercase tracking-wide text-[10px]">Thông tin khách hàng</h3>
+                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Thông tin khách hàng</h3>
                         <table className="w-full text-[10px]">
                             <tbody>
                                 <tr>
-                                    <td className="text-slate-500 pr-2 w-20 py-0.5">Khách hàng:</td>
-                                    <td className="font-semibold py-0.5">{order.customer.name}</td>
+                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Khách hàng:</td>
+                                    <td className="font-semibold text-slate-900 py-0.5">{order.customer.name}</td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 pr-2 py-0.5">Mã KH:</td>
-                                    <td className="font-mono py-0.5">{order.customer.code}</td>
+                                    <td className="text-slate-600 pr-2 py-0.5">Mã KH:</td>
+                                    <td className="font-mono text-slate-900 py-0.5">{order.customer.code}</td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 pr-2 py-0.5">Phân kênh:</td>
-                                    <td className="py-0.5">{order.customer.channel ? (CHANNEL_MAP[order.customer.channel] || order.customer.channel) : '—'}</td>
+                                    <td className="text-slate-600 pr-2 py-0.5">Phân kênh:</td>
+                                    <td className="py-0.5 text-slate-900">{order.customer.channel ? (CHANNEL_MAP[order.customer.channel] || order.customer.channel) : '—'}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
                     <div>
-                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-700 uppercase tracking-wide text-[10px]">Thông tin giao nhận</h3>
+                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Thông tin giao nhận</h3>
                         <table className="w-full text-[10px]">
                             <tbody>
                                 <tr>
-                                    <td className="text-slate-500 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
-                                    <td className="py-0.5">{fullAddress}</td>
+                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
+                                    <td className="py-0.5 text-slate-900">{fullAddress}</td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 pr-2 py-0.5">Sales Rep:</td>
-                                    <td className="py-0.5">{order.salesRep.name}</td>
+                                    <td className="text-slate-600 pr-2 py-0.5">Sales Rep:</td>
+                                    <td className="py-0.5 text-slate-900">{order.salesRep.name}</td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 pr-2 py-0.5">Thanh toán:</td>
-                                    <td className="font-semibold py-0.5">{order.paymentTerm}</td>
+                                    <td className="text-slate-600 pr-2 py-0.5">Thanh toán:</td>
+                                    <td className="font-semibold text-slate-900 py-0.5">{order.paymentTerm}</td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 pr-2 py-0.5">Trạng thái:</td>
-                                    <td className="font-semibold py-0.5" style={{ color: '#124967' }}>{STATUS_MAP[order.status] || order.status}</td>
+                                    <td className="text-slate-600 pr-2 py-0.5">Trạng thái:</td>
+                                    <td className="font-semibold text-slate-900 py-0.5">{STATUS_MAP[order.status] || order.status}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                {/* Product Lines Table */}
-                <table className="w-full text-[10px] mb-3 border-collapse">
+                {/* Product Lines Table - WHITE HEADER WITH BLACK TEXT */}
+                <table className="w-full text-[10px] mb-3 border-collapse border border-slate-300">
                     <thead>
-                        <tr className="font-bold" style={{ backgroundColor: '#124967', color: '#FFFFFF' }}>
-                            <td className="px-2 py-1.5 text-center w-8">STT</td>
-                            <td className="px-2 py-1.5 w-20">Mã AX</td>
-                            <td className="px-2 py-1.5 text-center w-12">Ảnh</td>
-                            <td className="px-2 py-1.5">Tên sản phẩm & Đặc tính</td>
-                            <td className="px-2 py-1.5 text-right w-10">SL</td>
-                            <td className="px-2 py-1.5 text-right w-24">Đơn giá</td>
-                            <td className="px-2 py-1.5 text-center w-12">CK %</td>
+                        <tr className="bg-white text-black font-bold border-b-2 border-slate-800">
+                            <td className="px-2 py-1.5 text-center w-8 border-r border-slate-300">STT</td>
+                            <td className="px-2 py-1.5 w-20 border-r border-slate-300">Mã AX</td>
+                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">Ảnh</td>
+                            <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm & Đặc tính</td>
+                            <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">SL</td>
+                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">Đơn giá</td>
+                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">CK %</td>
                             <td className="px-2 py-1.5 text-right w-28">Thành tiền</td>
                         </tr>
                     </thead>
@@ -270,28 +269,28 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
                             return (
                                 <tr key={line.id} className="border-b border-slate-200 align-middle">
-                                    <td className="px-2 py-1.5 text-center text-slate-500">{idx + 1}</td>
-                                    <td className="px-2 py-1.5 font-mono font-semibold text-[10px]">{product.skuCode}</td>
-                                    <td className="px-2 py-1 text-center">
+                                    <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
+                                    <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{product.skuCode}</td>
+                                    <td className="px-2 py-1 text-center border-r border-slate-200">
                                         {imgUrl ? (
                                             /* eslint-disable-next-line @next/next/no-img-element */
                                             <img 
                                                 src={imgUrl} 
                                                 alt={product.productName} 
-                                                className="h-9 w-auto object-contain mx-auto border border-slate-100 rounded bg-white p-0.5 shadow-sm"
+                                                className="h-9 w-auto object-contain mx-auto border border-slate-100 rounded bg-white p-0.5"
                                             />
                                         ) : (
                                             <span className="text-[9px] text-slate-400 italic">No pic</span>
                                         )}
                                     </td>
-                                    <td className="px-2 py-1.5">
+                                    <td className="px-2 py-1.5 border-r border-slate-200">
                                         <div className="font-semibold text-slate-900 leading-tight">{product.productName}</div>
                                         <div className="text-[9px] text-slate-500 leading-normal">{details}</div>
                                     </td>
-                                    <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums">{Number(line.qtyOrdered)}</td>
-                                    <td className="px-2 py-1.5 text-right font-mono tabular-nums">{formatVND(Number(line.unitPrice))}</td>
-                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums">{Number(line.lineDiscountPct) > 0 ? `${line.lineDiscountPct}%` : '—'}</td>
-                                    <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums">{formatVND(lineTotal)}</td>
+                                    <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{Number(line.qtyOrdered)}</td>
+                                    <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(Number(line.unitPrice))}</td>
+                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{Number(line.lineDiscountPct) > 0 ? `${line.lineDiscountPct}%` : '—'}</td>
+                                    <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums text-slate-900">{formatVND(lineTotal)}</td>
                                 </tr>
                             )
                         })}
@@ -300,27 +299,31 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
                 {/* Totals Section */}
                 <div className="flex justify-end mb-3 break-inside-avoid print:break-inside-avoid">
-                    <table className="w-72 text-[11px] border-collapse">
+                    <table className="w-80 text-[11px] border-collapse">
                         <tbody>
+                            <tr className="border-b border-slate-200 font-semibold">
+                                <td className="py-1 text-slate-700">Tổng số lượng hàng hóa:</td>
+                                <td className="py-1 text-right font-mono font-bold text-slate-900 tabular-nums">{totalQty} chai</td>
+                            </tr>
                             <tr className="border-b border-slate-200">
-                                <td className="py-1 text-slate-500">Cộng tiền hàng (chưa VAT):</td>
-                                <td className="py-1 text-right font-mono tabular-nums">{formatVND(subtotal)}</td>
+                                <td className="py-1 text-slate-600">Cộng tiền hàng (chưa VAT):</td>
+                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(subtotal)}</td>
                             </tr>
                             {discountAmount > 0 && (
                                 <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-500">Chiết khấu đơn ({Number(order.orderDiscount)}%):</td>
+                                    <td className="py-1 text-slate-600">Chiết khấu đơn ({Number(order.orderDiscount)}%):</td>
                                     <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(discountAmount)}</td>
                                 </tr>
                             )}
                             {!vatIncluded && (
                                 <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-500">Thuế VAT (10%):</td>
-                                    <td className="py-1 text-right font-mono tabular-nums">{formatVND(vatAmount)}</td>
+                                    <td className="py-1 text-slate-600">Thuế VAT (10%):</td>
+                                    <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
                                 </tr>
                             )}
                             <tr className="font-bold border-t-2 border-black">
-                                <td className="py-1.5 text-slate-800 text-xs">Tổng cộng thanh toán:</td>
-                                <td className="py-1.5 text-right font-mono text-xs tabular-nums" style={{ color: '#124967' }}>{formatVND(grandTotal)}</td>
+                                <td className="py-1.5 text-slate-900 text-xs">Tổng cộng thanh toán:</td>
+                                <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(grandTotal)}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -328,31 +331,31 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
                 {/* Bank Account Details - ONLY FOR COD ORDERS */}
                 {(order.paymentTerm === 'COD' || order.paymentTerm?.toUpperCase().includes('COD')) && (
-                    <div className="border border-slate-200 rounded p-2.5 mb-3 bg-slate-50 text-[10px] leading-relaxed break-inside-avoid print:break-inside-avoid">
-                        <p className="font-bold text-slate-700 uppercase mb-1 text-[9px]">Thông tin chuyển khoản thanh toán (COD):</p>
+                    <div className="border border-slate-300 rounded p-2.5 mb-3 bg-white text-[10px] leading-relaxed break-inside-avoid print:break-inside-avoid">
+                        <p className="font-bold text-slate-900 uppercase mb-1 text-[9px]">Thông tin chuyển khoản thanh toán (COD):</p>
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td className="text-slate-500 w-20 py-0.5">Chủ tài khoản:</td>
-                                    <td className="font-semibold text-slate-800 py-0.5">
+                                    <td className="text-slate-600 w-20 py-0.5">Chủ tài khoản:</td>
+                                    <td className="font-semibold text-slate-900 py-0.5">
                                         {(order as any).legalEntity?.bankAccountName || "CÔNG TY TNHH LY'S CELLARS"}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 py-0.5">Số tài khoản:</td>
-                                    <td className="font-semibold font-mono text-slate-800 py-0.5">
+                                    <td className="text-slate-600 py-0.5">Số tài khoản:</td>
+                                    <td className="font-semibold font-mono text-slate-900 py-0.5">
                                         {(order as any).legalEntity?.bankAccountNumber || "1023456789"}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 py-0.5">Ngân hàng:</td>
-                                    <td className="text-slate-800 font-semibold py-0.5">
+                                    <td className="text-slate-600 py-0.5">Ngân hàng:</td>
+                                    <td className="text-slate-900 font-semibold py-0.5">
                                         {(order as any).legalEntity?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh"}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td className="text-slate-500 py-0.5">Nội dung CK:</td>
-                                    <td className="font-mono text-slate-800 font-semibold py-0.5">Thanh toán đơn hàng <span className="font-bold">{order.soNo}</span></td>
+                                    <td className="text-slate-600 py-0.5">Nội dung CK:</td>
+                                    <td className="font-mono text-slate-900 font-semibold py-0.5">Thanh toán đơn hàng <span className="font-bold">{order.soNo}</span></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -361,22 +364,22 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
                 {/* Dynamic Footer Block */}
                 {/* Signatures for Sales Orders */}
-                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-300 break-inside-avoid print:break-inside-avoid">
+                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-400 break-inside-avoid print:break-inside-avoid">
                     <div className="flex flex-col justify-between h-16">
-                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Sale Admin duyệt</p>
-                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Sale Admin duyệt</p>
+                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                     </div>
                     <div className="flex flex-col justify-between h-16">
-                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Kế toán kiểm soát</p>
-                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Kế toán kiểm soát</p>
+                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                     </div>
                     <div className="flex flex-col justify-between h-16">
-                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thủ kho</p>
-                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Thủ kho</p>
+                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                     </div>
                     <div className="flex flex-col justify-between h-16">
-                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Người nhận hàng</p>
-                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Người nhận hàng</p>
+                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
                     </div>
                 </div>
             </div>

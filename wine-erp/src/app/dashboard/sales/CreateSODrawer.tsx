@@ -1105,104 +1105,95 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                         {/* Invoice Content Area */}
                         <div className="p-0 bg-white text-black font-sans w-full h-full overflow-y-auto print:overflow-visible">
                             <div className="max-w-[850px] mx-auto p-8 sm:p-12 print:p-0 print:max-w-none">
-                                {/* Print Header */}
-                                <div className="flex justify-between items-start border-b-2 border-black pb-4 mb-6">
+                                {/* Print Header - Clean Company Info */}
+                                <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
                                     <div>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img 
-                                            src="/logo/Ly's Cellars - Logo_tagline blue green.png" 
-                                            alt="Ly's Cellars Logo" 
-                                            className="h-12 w-auto object-contain mb-2"
-                                        />
-                                        <h2 className="font-bold text-[11px] text-slate-800 uppercase tracking-wide">
-                                            {entities.find(e => e.id === legalEntityId)?.name || "LY'S CELLARS"}
+                                        <h2 className="font-bold text-xs text-slate-900 uppercase tracking-wide">
+                                            {entities.find(e => e.id === legalEntityId)?.name || "CÔNG TY TNHH THẮNG ÂN"}
                                         </h2>
-                                        <p className="text-[10px] text-slate-600 leading-relaxed mt-0.5">
-                                            Địa chỉ: {entities.find(e => e.id === legalEntityId)?.address || "123 Đường Pasteur, Phường Bến Nghé, Quận 1, TP. HCM"}<br />
-                                            MST: {entities.find(e => e.id === legalEntityId)?.taxId || "0313456789"} &nbsp;|&nbsp; Email: orders@lyscellars.com
+                                        <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
+                                            Địa chỉ: {entities.find(e => e.id === legalEntityId)?.address || "Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội"}<br />
+                                            MST: {entities.find(e => e.id === legalEntityId)?.taxId || "0316123456"} &nbsp;|&nbsp; 
+                                            SĐT: {entities.find(e => e.id === legalEntityId)?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
+                                            Email: {entities.find(e => e.id === legalEntityId)?.email || "orders@lyscellars.com"}
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <h1 className="text-2xl font-bold uppercase tracking-wider mb-1">ĐƠN BÁN HÀNG</h1>
-                                        <p className="text-xs font-bold font-mono" style={{ color: '#124967' }}>DỰ THẢO</p>
-                                        <p className="text-[10px] text-slate-500 mt-1">Ngày lập: {new Date().toLocaleDateString('vi-VN')}</p>
+                                        <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">ĐƠN BÁN HÀNG</h1>
+                                        <p className="text-xs font-bold font-mono text-slate-900">DỰ THẢO</p>
+                                        <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {new Date().toLocaleDateString('vi-VN')}</p>
                                     </div>
                                 </div>
                                 {/* Customer & Info Grid */}
-                                <div className="grid grid-cols-2 gap-8 mb-6 text-xs leading-relaxed">
+                                <div className="grid grid-cols-2 gap-4 mb-3 text-xs leading-tight">
                                     <div>
-                                        <h3 className="font-bold border-b border-slate-300 pb-1 mb-2 text-slate-700 uppercase tracking-wide">Thông tin khách hàng</h3>
-                                        <table className="w-full text-[11px]">
+                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Thông tin khách hàng</h3>
+                                        <table className="w-full text-[10px]">
                                             <tbody>
                                                 <tr>
-                                                    <td className="text-slate-500 pr-2 w-24">Khách hàng:</td>
-                                                    <td className="font-semibold">{selectedCustomer?.name}</td>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Khách hàng:</td>
+                                                    <td className="font-semibold text-slate-900 py-0.5">{selectedCustomer?.name}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-500 pr-2">Mã KH:</td>
-                                                    <td className="font-mono">{selectedCustomer?.code}</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Mã KH:</td>
+                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.code}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-500 pr-2">Phân kênh:</td>
-                                                    <td>{channel || '—'}</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Phân kênh:</td>
+                                                    <td className="py-0.5 text-slate-900">{channel || '—'}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-500 pr-2">Mã số thuế:</td>
-                                                    <td className="font-mono">{selectedCustomer?.taxId || '—'}</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Mã số thuế:</td>
+                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.taxId || '—'}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
 
                                     <div>
-                                        <h3 className="font-bold border-b border-slate-300 pb-1 mb-2 text-slate-700 uppercase tracking-wide">Thông tin giao nhận</h3>
-                                        <table className="w-full text-[11px]">
+                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Thông tin giao nhận</h3>
+                                        <table className="w-full text-[10px]">
                                             <tbody>
                                                 <tr>
-                                                    <td className="text-slate-500 pr-2 w-24">Địa chỉ giao:</td>
-                                                    <td>{selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address || selectedCustomer?.addresses?.[0]?.address || '—'}</td>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
+                                                    <td className="py-0.5 text-slate-900">{deliveryAddress || 'Nhận tại kho'}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-500 pr-2">Sales Rep:</td>
-                                                    <td>Tài khoản của bạn</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Sales Rep:</td>
+                                                    <td className="py-0.5 text-slate-900">{salesRepId || 'Admin'}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-500 pr-2">Thanh toán:</td>
-                                                    <td className="font-semibold">{paymentTerm}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="text-slate-500 pr-2">Trạng thái:</td>
-                                                    <td className="font-semibold text-amber-600">Đang soạn thảo</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Thanh toán:</td>
+                                                    <td className="font-semibold text-slate-900 py-0.5">{paymentTerm}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
 
-                                {/* Product Lines Table */}
-                                <table className="w-full text-[11px] mb-6 border-collapse">
+                                {/* Product Lines Table - WHITE HEADER WITH BLACK TEXT */}
+                                <table className="w-full text-[10px] mb-3 border-collapse border border-slate-300">
                                     <thead>
-                                        <tr className="font-bold" style={{ backgroundColor: '#124967', color: '#FFFFFF' }}>
-                                            <td className="px-2 py-2 text-center w-8">STT</td>
-                                            <td className="px-2 py-2 w-20">Mã AX</td>
-                                            <td className="px-2 py-2 text-center w-14">Ảnh</td>
-                                            <td className="px-2 py-2">Tên sản phẩm & Đặc tính</td>
-                                            <td className="px-2 py-2 text-right w-10">SL</td>
-                                            <td className="px-2 py-2 text-right w-24">Đơn giá</td>
-                                            <td className="px-2 py-2 text-center w-12">CK %</td>
-                                            <td className="px-2 py-2 text-right w-28">Thành tiền</td>
+                                        <tr className="bg-white text-black font-bold border-b-2 border-slate-800">
+                                            <td className="px-2 py-1.5 text-center w-8 border-r border-slate-300">STT</td>
+                                            <td className="px-2 py-1.5 w-20 border-r border-slate-300">Mã AX</td>
+                                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">Ảnh</td>
+                                            <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm & Đặc tính</td>
+                                            <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">SL</td>
+                                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">Đơn giá</td>
+                                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">CK %</td>
+                                            <td className="px-2 py-1.5 text-right w-28">Thành tiền</td>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {lines.filter(l => l.productId).map((l, idx) => {
+                                        {lines.map((l, idx) => {
                                             const p = products.find(prod => prod.id === l.productId)
                                             const lineVal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
-                                            
                                             const imgUrl = (p as any)?.media?.[0]?.url || null
                                             const grapes = (p as any)?.profile?.grapes || null
                                             const abv = (p as any)?.abvPercent ? `${Number((p as any).abvPercent)}%` : null
-                                            const wineTypeLabel = (p as any)?.wineType || null
-                                            
+                                            const wineTypeLabel = (p as any)?.wineType ? (WINE_TYPE_MAP[(p as any).wineType] || (p as any).wineType) : null
+
                                             const details = [
                                                 wineTypeLabel ? `Loại: ${wineTypeLabel}` : null,
                                                 (p as any)?.country ? `Xuất xứ: ${(p as any).country}` : null,
@@ -1212,28 +1203,28 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
                                             return (
                                                 <tr key={idx} className="border-b border-slate-200 align-middle">
-                                                    <td className="px-2 py-3 text-center text-slate-500">{idx + 1}</td>
-                                                    <td className="px-2 py-3 font-mono font-semibold text-[10px]">{p?.skuCode}</td>
-                                                    <td className="px-2 py-2 text-center">
+                                                    <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
+                                                    <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{p?.skuCode}</td>
+                                                    <td className="px-2 py-1 text-center border-r border-slate-200">
                                                         {imgUrl ? (
                                                             /* eslint-disable-next-line @next/next/no-img-element */
                                                             <img 
                                                                 src={imgUrl} 
                                                                 alt={p?.productName || ''} 
-                                                                className="h-12 w-auto object-contain mx-auto border border-slate-100 rounded bg-white p-0.5 shadow-sm"
+                                                                className="h-9 w-auto object-contain mx-auto border border-slate-100 rounded bg-white p-0.5"
                                                             />
                                                         ) : (
-                                                            <span className="text-xs text-slate-400 italic">No pic</span>
+                                                            <span className="text-[9px] text-slate-400 italic">No pic</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-2 py-3">
-                                                        <div className="font-semibold text-slate-900 leading-tight mb-1">{p?.productName}</div>
-                                                        <div className="text-[10px] text-slate-500 leading-normal">{details}</div>
+                                                    <td className="px-2 py-1.5 border-r border-slate-200">
+                                                        <div className="font-semibold text-slate-900 leading-tight">{p?.productName}</div>
+                                                        <div className="text-[9px] text-slate-500 leading-normal">{details}</div>
                                                     </td>
-                                                    <td className="px-2 py-3 text-right font-mono font-semibold tabular-nums">{l.qtyOrdered}</td>
-                                                    <td className="px-2 py-3 text-right font-mono tabular-nums">{formatVND(l.unitPrice)}</td>
-                                                    <td className="px-2 py-3 text-center font-mono text-slate-600 tabular-nums">{l.lineDiscountPct > 0 ? `${l.lineDiscountPct}%` : '—'}</td>
-                                                    <td className="px-2 py-3 text-right font-mono font-bold tabular-nums">{formatVND(lineVal)}</td>
+                                                    <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{l.qtyOrdered}</td>
+                                                    <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(l.unitPrice)}</td>
+                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{l.lineDiscountPct > 0 ? `${l.lineDiscountPct}%` : '—'}</td>
+                                                    <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums text-slate-900">{formatVND(lineVal)}</td>
                                                 </tr>
                                             )
                                         })}
@@ -1241,26 +1232,32 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 </table>
 
                                 {/* Totals Section */}
-                                <div className="flex justify-end mb-6">
-                                    <table className="w-80 text-xs border-collapse">
+                                <div className="flex justify-end mb-3 break-inside-avoid print:break-inside-avoid">
+                                    <table className="w-80 text-[11px] border-collapse">
                                         <tbody>
+                                            <tr className="border-b border-slate-200 font-semibold">
+                                                <td className="py-1 text-slate-700">Tổng số lượng hàng hóa:</td>
+                                                <td className="py-1 text-right font-mono font-bold text-slate-900 tabular-nums">
+                                                    {lines.reduce((sum, item) => sum + Number(item.qtyOrdered), 0)} chai
+                                                </td>
+                                            </tr>
                                             <tr className="border-b border-slate-200">
-                                                <td className="py-2 text-slate-500">Cộng tiền hàng (chưa VAT):</td>
-                                                <td className="py-2 text-right font-mono tabular-nums">{formatVND(subtotal)}</td>
+                                                <td className="py-1 text-slate-600">Cộng tiền hàng (chưa VAT):</td>
+                                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(subtotal)}</td>
                                             </tr>
                                             {orderDiscount > 0 && (
                                                 <tr className="border-b border-slate-200">
-                                                    <td className="py-2 text-slate-500">Chiết khấu đơn ({orderDiscount}%):</td>
-                                                    <td className="py-2 text-right font-mono text-red-600 tabular-nums">-{formatVND(subtotal * (orderDiscount / 100))}</td>
+                                                    <td className="py-1 text-slate-600">Chiết khấu đơn ({orderDiscount}%):</td>
+                                                    <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(subtotal * (orderDiscount / 100))}</td>
                                                 </tr>
                                             )}
                                             <tr className="border-b border-slate-200">
-                                                <td className="py-2 text-slate-500">Thuế VAT:</td>
-                                                <td className="py-2 text-right font-mono tabular-nums">{formatVND(vatAmount)}</td>
+                                                <td className="py-1 text-slate-600">Thuế VAT:</td>
+                                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
                                             </tr>
                                             <tr className="font-bold border-t-2 border-black">
-                                                <td className="py-3 text-slate-800 text-sm">Tổng cộng thanh toán:</td>
-                                                <td className="py-3 text-right font-mono text-sm tabular-nums" style={{ color: '#124967' }}>{formatVND(finalTotal)}</td>
+                                                <td className="py-1.5 text-slate-900 text-xs">Tổng cộng thanh toán:</td>
+                                                <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(finalTotal)}</td>
                                             </tr>
                                         </tbody>
                                     </table>
