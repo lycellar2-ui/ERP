@@ -1160,8 +1160,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Sales Rep:</td>
-                                                    <td className="py-0.5 text-slate-900">{salesReps.find(sr => sr.id === salesRepId)?.name || 'Admin'}</td>
+                                                    <td className="py-0.5 text-slate-900">Tài khoản của bạn</td>
                                                 </tr>
+
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Thanh toán:</td>
                                                     <td className="font-semibold text-slate-900 py-0.5">{paymentTerm}</td>
