@@ -132,7 +132,7 @@ export async function getWarehouseOptions() {
  * Ví dụ: "WIN001-NV" -> { sku: "WIN001", vintage: null }
  * Ví dụ: "SKU1024" -> { sku: "SKU1024", vintage: null }
  */
-export function parseCode128Barcode(barcodeString: string): { sku: string; vintage: number | null } {
+function parseCode128Barcode(barcodeString: string): { sku: string; vintage: number | null } {
     const trimmed = barcodeString.trim()
     if (!trimmed) return { sku: '', vintage: null }
 
@@ -152,7 +152,7 @@ export function parseCode128Barcode(barcodeString: string): { sku: string; vinta
     return { sku: trimmed, vintage: null }
 }
 
-export function formatCasesAndLoose(qty: number, unitsPerCase: number = 6): { cases: number; loose: number; formatted: string } {
+function formatCasesAndLoose(qty: number, unitsPerCase: number = 6): { cases: number; loose: number; formatted: string } {
     const upc = unitsPerCase > 0 ? unitsPerCase : 6
     const cases = Math.floor(qty / upc)
     const loose = Math.round(qty % upc)
@@ -167,6 +167,8 @@ export function formatCasesAndLoose(qty: number, unitsPerCase: number = 6): { ca
     }
     return { cases, loose, formatted }
 }
+
+
 
 export type VintageSummary = {
     vintage: number | null
