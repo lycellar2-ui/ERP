@@ -357,11 +357,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 const resolvedPrice = (mapEntry && mapEntry.price > 0) ? mapEntry.price : 0
                 const wp = p?.wholesalePrice ?? 0
                 const rp = p?.retailPrice ?? 0
-                const fallbackPrice = wp > 0 ? wp : (rp > 0 ? rp : 0)
+                const isWholesaleChan = (channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR')
+                const fallbackPrice = isWholesaleChan
+                    ? (wp > 0 ? wp : (rp > 0 ? rp : 0))
+                    : (rp > 0 ? rp : (wp > 0 ? wp : 0))
                 const autoPrice: number = resolvedPrice > 0 ? resolvedPrice : fallbackPrice
                 const source = (mapEntry && mapEntry.price > 0)
                     ? mapEntry.source
-                    : (wp > 0 ? 'RETAIL_FALLBACK' : (rp > 0 ? 'RETAIL_FALLBACK' : null))
+                    : (isWholesaleChan ? 'CHANNEL_BASE' : 'RETAIL_FALLBACK')
                 
                 // Update search query display
                 setSearchQueries(prevQueries => ({

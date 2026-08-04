@@ -448,6 +448,18 @@ export async function resolveCustomerProductPrice(
         }
     }
 
+    // Priority 4.5: Wholesale Margin Fallback for HORECA/Wholesale customers
+    const isWholesaleChannel = targetChannel === 'WHOLESALE_DISTRIBUTOR' || channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR'
+    if (isWholesaleChannel) {
+        const margin = await prisma.productMarginPrice.findFirst({ where: { productId } })
+        if (margin && Number(margin.wholesalePrice) > 0) {
+            return {
+                price: Number(margin.wholesalePrice),
+                source: 'CHANNEL_BASE',
+            }
+        }
+    }
+
     // Priority 5: Retail Fallback
     const retailPrice = await getChannelBasePrice(productId, 'DIRECT_INDIVIDUAL', now)
     if (retailPrice !== null) {
@@ -534,22 +546,23 @@ export async function getCustomerResolvedPrices(
     const marginPrices = await prisma.productMarginPrice.findMany({
         select: { productId: true, wholesalePrice: true, retailPrice: true }
     })
-    const marginMap: Record<string, number> = {}
+    const marginWholesaleMap: Record<string, number> = {}
+    const marginRetailMap: Record<string, number> = {}
     for (const m of marginPrices) {
-        const p = Number(m.wholesalePrice) > 0 ? Number(m.wholesalePrice) : Number(m.retailPrice)
-        if (p > 0) marginMap[m.productId] = p
-    }
-
-    // Set initial fallback values
-    for (const pId of Object.keys(results)) {
-        if (retailPrices[pId] !== undefined && retailPrices[pId] > 0) {
-            results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
-        } else if (marginMap[pId] !== undefined && marginMap[pId] > 0) {
-            results[pId] = { price: marginMap[pId], source: 'RETAIL_FALLBACK' }
-        }
+        if (Number(m.wholesalePrice) > 0) marginWholesaleMap[m.productId] = Number(m.wholesalePrice)
+        if (Number(m.retailPrice) > 0) marginRetailMap[m.productId] = Number(m.retailPrice)
     }
 
     if (!customerId) {
+        for (const pId of Object.keys(results)) {
+            if (retailPrices[pId] !== undefined && retailPrices[pId] > 0) {
+                results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
+            } else if (marginRetailMap[pId] !== undefined && marginRetailMap[pId] > 0) {
+                results[pId] = { price: marginRetailMap[pId], source: 'RETAIL_FALLBACK' }
+            } else if (marginWholesaleMap[pId] !== undefined && marginWholesaleMap[pId] > 0) {
+                results[pId] = { price: marginWholesaleMap[pId], source: 'RETAIL_FALLBACK' }
+            }
+        }
         return results
     }
 
@@ -561,6 +574,7 @@ export async function getCustomerResolvedPrices(
     const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
     const mapping = await getChannelPriceMapping()
     const targetChannel = mapping[channel] ?? 'DIRECT_INDIVIDUAL'
+    const isWholesaleChannel = targetChannel === 'WHOLESALE_DISTRIBUTOR' || channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR'
 
     // 4. Fetch target channel base price list lines
     const basePrices: Record<string, number> = {}
@@ -590,10 +604,18 @@ export async function getCustomerResolvedPrices(
         }
     }
 
-    // Set channel base prices
+    // Set channel base prices or wholesale margin fallback
     for (const pId of Object.keys(results)) {
         if (basePrices[pId] !== undefined) {
             results[pId] = { price: basePrices[pId], source: 'CHANNEL_BASE' }
+        } else if (isWholesaleChannel && marginWholesaleMap[pId] !== undefined) {
+            // Priority fallback for HORECA & Wholesale channels: Wholesale margin price
+            results[pId] = { price: marginWholesaleMap[pId], source: 'CHANNEL_BASE' }
+            basePrices[pId] = marginWholesaleMap[pId]
+        } else if (retailPrices[pId] !== undefined && retailPrices[pId] > 0) {
+            results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
+        } else if (marginRetailMap[pId] !== undefined && marginRetailMap[pId] > 0) {
+            results[pId] = { price: marginRetailMap[pId], source: 'RETAIL_FALLBACK' }
         }
     }
 
