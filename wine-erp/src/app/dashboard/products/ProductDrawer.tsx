@@ -293,6 +293,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
         const e: Record<string, string> = {}
         if (!form.sku?.trim()) e.sku = 'SKU bắt buộc'
         if (!form.name?.trim()) e.name = 'Tên sản phẩm bắt buộc'
+        if (!form.producerId?.trim()) e.producerId = 'Nhà sản xuất bắt buộc'
         setErrors(e)
         return Object.keys(e).length === 0
     }
@@ -302,7 +303,13 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
         setSaving(true)
 
         const input = formToInput(form)
-        const savePromise = isEdit ? updateProduct(editingId!, input) : createProduct(input)
+        const savePromise = (async () => {
+            const res = isEdit ? await updateProduct(editingId!, input) : await createProduct(input)
+            if (!res.success) {
+                throw new Error((res as any).error ?? 'Lỗi lưu sản phẩm')
+            }
+            return res
+        })()
 
         toast.promise(savePromise, {
             loading: isEdit ? 'Đang cập nhật sản phẩm...' : 'Đang tạo sản phẩm...',
@@ -388,7 +395,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     value={form.sku ?? ''}
                                     onChange={e => set('sku', e.target.value.toUpperCase())}
                                     placeholder="CHATEAU-PETRUS-750"
-                                    style={{ fontFamily: '"DM Mono", monospace' }}
+                                    style={{ fontFamily: 'var(--font-mono)' }}
                                 />
                             </Field>
                         </div>
@@ -405,12 +412,10 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             <Field label="Loại rượu">
                                 <Select value={form.wineType ?? ''} onChange={e => set('wineType', e.target.value || null)}>
                                     <option value="">Chọn loại...</option>
-                                    <option value="RED">🔴 Vang Đỏ</option>
-                                    <option value="WHITE">🟡 Vang Trắng</option>
-                                    <option value="ROSE">🌸 Rosé</option>
-                                    <option value="SPARKLING">🥂 Sâm panh</option>
-                                    <option value="FORTIFIED">🍯 Fortified</option>
-                                    <option value="DESSERT">🍰 Dessert</option>
+                                    <option value="WHITE">Vang trắng</option>
+                                    <option value="RED">Vang đỏ</option>
+                                    <option value="SPARKLING">Vang nổ</option>
+                                    <option value="ROSE">Vang hồng</option>
                                 </Select>
                             </Field>
                             <Field label="Độ cồn ABV (°)">

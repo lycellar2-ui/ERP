@@ -283,7 +283,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     .info-value { width: 70%; }
                     .signatures { width: 100%; margin-top: 60px; border-collapse: collapse; page-break-inside: avoid; }
                     .signatures td { text-align: center; width: 33%; vertical-align: top; border: none; padding: 10px; }
-                    .sign-title { font-weight: bold; margin-bottom: 80px; text-transform: uppercase; }
+                    .sign-title { font-weight: bold; margin-bottom: 3px; text-transform: uppercase; }
                     @media print {
                         body { margin: 20px; }
                     }
@@ -378,15 +378,15 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     <tr>
                         <td>
                             <div class="sign-title">Nhân Viên Kinh Doanh</div>
-                            <div style="font-size: 11px; color: #777;">(Ký & ghi rõ họ tên)</div>
+                            <div style="font-size: 11px; color: #777; margin-bottom: 60px;">(Ký & ghi rõ họ tên)</div>
                         </td>
                         <td>
                             <div class="sign-title">Kế Toán Trưởng</div>
-                            <div style="font-size: 11px; color: #777;">(Ký & ghi rõ họ tên)</div>
+                            <div style="font-size: 11px; color: #777; margin-bottom: 60px;">(Ký & ghi rõ họ tên)</div>
                         </td>
                         <td>
                             <div class="sign-title">Giám Đốc Phê Duyệt</div>
-                            <div style="font-size: 11px; color: #777;">(Ký & ghi rõ họ tên)</div>
+                            <div style="font-size: 11px; color: #777; margin-bottom: 60px;">(Ký & ghi rõ họ tên)</div>
                         </td>
                     </tr>
                 </table>
@@ -650,14 +650,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             {form.channel === 'HORECA' && (
                                 <div className="space-y-4">
                                     <div className="relative" ref={parentContainerRef}>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Công ty mẹ (Gánh nợ)</label>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã cha (Tính công nợ)</label>
                                         <div className="relative flex items-center">
                                             <Search size={14} className="absolute left-3 text-[#4A6A7A] pointer-events-none" />
                                             <input
                                                 type="text"
                                                 className={`${inputCls} pl-9 pr-8`}
                                                 style={inputStyle}
-                                                placeholder="Gõ tên hoặc mã công ty mẹ để tìm..."
+                                                placeholder="Gõ tên hoặc mã cha để tìm..."
                                                 value={parentSearch}
                                                 onFocus={() => setParentDropdownOpen(true)}
                                                 onChange={e => {
@@ -706,7 +706,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                             }
                                                         }}
                                                     >
-                                                        — Không chọn Công ty mẹ —
+                                                        — Không chọn Mã cha —
                                                     </button>
                                                     {parentCandidates
                                                         .filter(c => {
@@ -740,7 +740,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     </div>
                                                                     {c.entityType === 'COMPANY' && (
                                                                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#87CBB9]/10 text-[#87CBB9] border border-[#87CBB9]/20 font-semibold shrink-0">
-                                                                            🏢 Cty Mẹ
+                                                                            🏢 Cty Cha
                                                                         </span>
                                                                     )}
                                                                 </button>
@@ -774,7 +774,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 }}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
                                                 <option value="RESTAURANT">🍽️ Nhà hàng / Chi nhánh con</option>
-                                                <option value="COMPANY">🏢 Công ty mẹ chịu nợ</option>
+                                                <option value="COMPANY">🏢 Công ty cha tính công nợ</option>
                                             </select>
                                         </div>
                                         {form.entityType === 'COMPANY' ? (

@@ -699,7 +699,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
         }
 
         if (customer.entityType === 'COMPANY' && !customer.allowDirectSO) {
-            return { success: false, error: 'Không thể tạo đơn hàng trực tiếp cho công ty chịu nợ. Vui lòng chọn một nhà hàng con.' }
+            return { success: false, error: 'Không thể tạo đơn hàng trực tiếp cho công ty tính công nợ. Vui lòng chọn một nhà hàng con.' }
         }
 
         // Auto credit limit enforcement
@@ -867,7 +867,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
         })
         if (!customer) return { success: false, error: 'Khách hàng không tồn tại' }
         if (customer.entityType === 'COMPANY' && !customer.allowDirectSO) {
-            return { success: false, error: 'Không thể tạo đơn hàng trực tiếp cho công ty chịu nợ. Vui lòng chọn một nhà hàng con.' }
+            return { success: false, error: 'Không thể tạo đơn hàng trực tiếp cho công ty tính công nợ. Vui lòng chọn một nhà hàng con.' }
         }
 
         if (customer) {

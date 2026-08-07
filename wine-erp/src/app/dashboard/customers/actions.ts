@@ -463,8 +463,8 @@ export async function createCustomer(input: CustomerInput) {
                     parentCompany = await tx.customer.create({
                         data: {
                             code: parentCode,
-                            name: `${data.name} (Mẹ)`,
-                            shortName: data.shortName ? `${data.shortName} (Mẹ)` : null,
+                            name: `${data.name} (Cha)`,
+                            shortName: data.shortName ? `${data.shortName} (Cha)` : null,
                             taxId: data.taxId !== undefined ? data.taxId : null,
                             channel: data.channel,
                             paymentTerm: data.paymentTerm,
@@ -637,8 +637,8 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
                         parentCompany = await tx.customer.create({
                             data: {
                                 code: parentCode,
-                                name: `${nameForParent} (Mẹ)`,
-                                shortName: (customerData.shortName ?? oldCustomer.shortName) ? `${customerData.shortName ?? oldCustomer.shortName} (Mẹ)` : null,
+                                name: `${nameForParent} (Cha)`,
+                                shortName: (customerData.shortName ?? oldCustomer.shortName) ? `${customerData.shortName ?? oldCustomer.shortName} (Cha)` : null,
                                 taxId: customerData.taxId !== undefined ? customerData.taxId : oldCustomer.taxId,
                                 channel: customerData.channel !== undefined ? customerData.channel : oldCustomer.channel,
                                 paymentTerm: customerData.paymentTerm ?? oldCustomer.paymentTerm,

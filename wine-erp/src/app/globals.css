@@ -379,7 +379,6 @@ body {
 
 /* ── Number/mono figures ── */
 [class*="font-mono"],
-[style*="DM Mono"],
 [style*="JetBrains Mono"],
 [style*="font-mono"] {
   font-variant-numeric: tabular-nums;

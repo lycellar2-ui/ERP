@@ -588,7 +588,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                                             {isCompany && (
                                                                                 <span className={`flex items-center gap-1 font-medium ${isDisabled ? 'text-slate-400 dark:text-slate-500' : 'text-sky-600 dark:text-sky-400'}`}>
                                                                                     <Building2 size={12} />
-                                                                                    {c.allowDirectSO ? 'Công ty' : 'Công ty Mẹ (Chỉ gánh nợ)'}
+                                                                                    {c.allowDirectSO ? 'Công ty' : 'Công ty Cha (Chỉ tính công nợ)'}
                                                                                 </span>
                                                                             )}
                                                                             {c.brandGroup && (
@@ -1273,21 +1273,21 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
                                 {/* Signatures */}
                                 <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-300 pb-4 break-inside-avoid print:break-inside-avoid">
-                                    <div className="flex flex-col justify-between h-16">
+                                    <div className="flex flex-col pb-12">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Sale Admin duyệt</p>
-                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="flex flex-col justify-between h-16">
+                                    <div className="flex flex-col pb-12">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Kế toán kiểm soát</p>
-                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="flex flex-col justify-between h-16">
+                                    <div className="flex flex-col pb-12">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thủ kho</p>
-                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="flex flex-col justify-between h-16">
+                                    <div className="flex flex-col pb-12">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Người nhận hàng</p>
-                                        <p className="text-slate-400 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                 </div>
 

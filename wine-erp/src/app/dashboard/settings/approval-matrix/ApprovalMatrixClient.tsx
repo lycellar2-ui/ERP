@@ -311,7 +311,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                             background: '#1B2E3D',
                                             border: '1px solid #2A4355',
                                             color: '#87CBB9',
-                                            fontFamily: '"DM Mono", monospace',
+                                            fontFamily: 'var(--font-mono)',
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                                         onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}

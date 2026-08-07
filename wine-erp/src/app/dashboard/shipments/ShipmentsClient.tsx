@@ -424,7 +424,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                     <td className="px-3 py-3">
                                         <button onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
-                                            className="text-xs font-bold hover:underline" style={{ color: '#87CBB9', fontFamily: '"DM Mono"' }}>
+                                            className="text-xs font-bold hover:underline" style={{ color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>
                                             {row.billOfLading}
                                         </button>
                                     </td>

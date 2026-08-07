@@ -415,7 +415,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Giá Bán (VND)</label>
                                 <input type="number" value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="VD: 1500000"
-                                    className="w-full mt-1 px-3 py-2 text-sm outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853', fontFamily: '"DM Mono"', borderRadius: '6px' }} />
+                                    className="w-full mt-1 px-3 py-2 text-sm outline-none" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853', fontFamily: 'var(--font-mono)', borderRadius: '6px' }} />
                             </div>
                             <button onClick={handleAddProduct} disabled={saving || !addProductId || !addPrice}
                                 className="w-full py-2 text-sm font-semibold transition-all disabled:opacity-50"

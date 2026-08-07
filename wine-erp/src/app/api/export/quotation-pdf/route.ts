@@ -442,9 +442,9 @@ function renderHtml(qt: any, style: string): string {
         .cell-num { color: ${t.textMuted}; font-size: 12px; width: 28px; }
         .cell-img { width: 72px; }
         .cell-qty { width: 40px; font-weight: 600; color: ${t.textStrong}; }
-        .cell-price { width: 100px; font-family: 'Consolas', 'Courier New', monospace; color: ${t.textStrong}; }
+        .cell-price { width: 100px; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; color: ${t.textStrong}; }
         .cell-disc { width: 48px; color: ${t.accent}; font-weight: 600; }
-        .cell-total { width: 115px; font-family: 'Consolas', 'Courier New', monospace; font-weight: 700; color: ${t.textStrong}; font-size: 13px; }
+        .cell-total { width: 115px; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-weight: 700; color: ${t.textStrong}; font-size: 13px; }
 
         .product-img {
             height: 48px;
@@ -531,7 +531,7 @@ function renderHtml(qt: any, style: string): string {
             font-size: 13.5px;
         }
         .totals-row .label { color: ${t.textMuted}; }
-        .totals-row .value { color: ${t.textStrong}; font-family: 'Consolas', 'Courier New', monospace; }
+        .totals-row .value { color: ${t.textStrong}; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; }
         .totals-row.discount .value { color: ${t.accent}; }
         .totals-grand {
             border-top: 3px solid ${t.accent};
@@ -550,7 +550,8 @@ function renderHtml(qt: any, style: string): string {
             font-size: 22px;
             font-weight: 800;
             color: ${t.accent};
-            font-family: 'Consolas', 'Courier New', monospace;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-variant-numeric: tabular-nums;
         }
         .vat-note {
             text-align: right;

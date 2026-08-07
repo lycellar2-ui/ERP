@@ -533,7 +533,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px]">
                                                                 {isCompany && (
                                                                     <span className={`font-semibold ${isDisabled ? 'text-slate-500' : 'text-sky-400'}`}>
-                                                                        {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty Mẹ (Chỉ gánh nợ)'}
+                                                                        {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty Cha (Chỉ tính công nợ)'}
                                                                     </span>
                                                                 )}
                                                                 {c.brandGroup && (

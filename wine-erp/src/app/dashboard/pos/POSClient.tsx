@@ -169,7 +169,7 @@ export default function POSClient() {
                             style={{
                                 width: '100%', padding: '8px 10px 8px 34px', borderRadius: '8px',
                                 background: '#142433', border: `1px solid ${barcodeError ? '#8B1A2E' : '#2A4355'}`, color: '#E8F1F2',
-                                fontSize: '13px', outline: 'none', fontFamily: '"DM Mono", monospace',
+                                fontSize: '13px', outline: 'none', fontFamily: 'var(--font-mono)',
                             }}
                         />
                     </div>
