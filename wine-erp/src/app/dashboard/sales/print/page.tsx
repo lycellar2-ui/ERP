@@ -240,9 +240,8 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                     <thead>
                         <tr className="bg-white text-black font-bold border-b-2 border-slate-800">
                             <td className="px-2 py-1.5 text-center w-8 border-r border-slate-300">STT</td>
-                            <td className="px-2 py-1.5 w-20 border-r border-slate-300">Mã AX</td>
-                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">Ảnh</td>
-                            <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm & Đặc tính</td>
+                            <td className="px-2 py-1.5 w-24 border-r border-slate-300">Mã AX</td>
+                            <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm</td>
                             <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">SL</td>
                             <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">Đơn giá</td>
                             <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">CK %</td>
@@ -253,39 +252,13 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         {order.lines.map((line, idx) => {
                             const lineTotal = Number(line.qtyOrdered) * Number(line.unitPrice) * (1 - Number(line.lineDiscountPct) / 100)
                             const product = line.product
-                            
-                            const imgUrl = product.media?.[0]?.url || null
-                            const grapes = product.profile?.grapes || null
-                            const abv = product.abvPercent ? `${Number(product.abvPercent)}%` : null
-                            
-                            const wineTypeLabel = WINE_TYPE_MAP[product.wineType] || product.wineType
-
-                            const details = [
-                                wineTypeLabel ? `Loại: ${wineTypeLabel}` : null,
-                                product.country ? `Xuất xứ: ${product.country}` : null,
-                                grapes ? `Giống nho: ${grapes}` : null,
-                                abv ? `Độ cồn: ${abv}` : null,
-                            ].filter(Boolean).join('  |  ')
 
                             return (
                                 <tr key={line.id} className="border-b border-slate-200 align-middle">
                                     <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
                                     <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{product.skuCode}</td>
-                                    <td className="px-2 py-1 text-center border-r border-slate-200">
-                                        {imgUrl ? (
-                                            /* eslint-disable-next-line @next/next/no-img-element */
-                                            <img 
-                                                src={imgUrl} 
-                                                alt={product.productName} 
-                                                className="h-9 w-auto object-contain mx-auto border border-slate-100 rounded bg-white p-0.5"
-                                            />
-                                        ) : (
-                                            <span className="text-[9px] text-slate-400 italic">No pic</span>
-                                        )}
-                                    </td>
                                     <td className="px-2 py-1.5 border-r border-slate-200">
                                         <div className="font-semibold text-slate-900 leading-tight">{product.productName}</div>
-                                        <div className="text-[9px] text-slate-500 leading-normal">{details}</div>
                                     </td>
                                     <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{Number(line.qtyOrdered)}</td>
                                     <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(Number(line.unitPrice))}</td>
