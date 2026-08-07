@@ -1,33 +1,35 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-07-18 20:00
-> Status: Production — 26 modules, 114 DB models, 33 dashboard routes, TanStack Query Cache Persistence in localStorage (24h), Optimistic UI updates, and Supabase Realtime auto-invalidation
+> Last updated: 2026-08-07 23:20
+> Status: Production — 29 modules, 123 DB models, 77 enums, 35 dashboard routes, Pre-commit docs guardian, Docs Sync Protocol
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 25 rules from 13 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 48 rules from 26 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
 
 ## Tech Stack (Verified)
 - Next.js 16.1.6 (App Router) + React 19.2.3 + TypeScript
-- Prisma 7.4.2 + Supabase PostgreSQL (114 models, 72 enums)
+- Prisma 7.4.2 + Supabase PostgreSQL (123 models, 77 enums)
 - TailwindCSS v4 + Shadcn UI (Radix)
 - Supabase Auth (@supabase/ssr) — NOT NextAuth
 - ImgBB (product images) + Supabase Storage (private docs)
 - Server Actions — NOT tRPC
 - Vercel deploy + GitHub CI/CD
+- Pre-commit hook (.husky/pre-commit) — docs guardian
 
-## Module Registry (26 modules)
+## Module Registry (29 modules)
 SYS (RBAC/Auth) | MDM (Products/Suppliers/Customers) | CRM (360° + Pipeline)
 CNT (Contracts + RegDocs) | TAX (Tax Rates) | PRC (Procurement)
 SHP (Shipment Tracking) | CST (Product Costing) | AGN (Agency Portal)
-WMS (Warehouse + Transfers + StockCount) | QRC (QR Traceability)
-SLS (Sales + Quotations[PDF/Email/ViewTracking] + PriceList + Allocation) | POS (Showroom Retail)
+WMS (Warehouse + Transfers + StockCount + 2D Map) | QRC (QR Traceability)
+SLS (Sales + Quotations[PDF/Email/ViewTracking] + PriceList + Allocation + Field Visits) | POS (Showroom Retail)
 CSG (Consignment HORECA) | TRS (Delivery + E-POD) | FIN (Finance + Declarations)
 STP (Wine Stamps) | RPT (Reports + BI) | DSH (CEO Dashboard) | KPI (Targets)
 AI (6 live: Pipeline/CRM/Catalog Analysis + CEO Briefing + Admin Toggle + Prompt Editor) | TLG (Telegram Bot) | MKT (Media Library)
 PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
+AUD (Audit Log) | MGN (Margin Simulation) | SFV (Sales Field Visit — GPS + Camera)
 
 ## Wine-Specific Concepts
 - Vintage: Year of grape harvest (managed at StockLot level) — affects pricing, allocation
@@ -43,16 +45,14 @@ PRO (Proposals) | APM (Approval Matrix) | RTN (Returns + Credit Notes)
 - Modular-first: Each module has own actions.ts, can be enabled/disabled
 - Soft Delete: Products, Customers, Suppliers use deletedAt (NEVER hard delete)
 - FIFO Strategy: WMS picks oldest lots first for delivery
-- pgBouncer Transaction mode (port 6543) for Vercel serverless
-- ISR stagger: Dashboard 30s, frequent 45s, normal 60s, rare 90s
+- pgBouncer Transaction mode (port 6543), max: 3 (Supabase free tier)
 - Server-side LRU cache (500 entries max) with module-prefix invalidation
 - Auth Guards: requireAuth() + requirePermission() for all mutations
 - Serialization: serialize() utility (src/lib/serialize.ts) for Prisma Decimal/BigInt
 - Structured error returns: { success, data/error } — never throw from Server Actions
-- Env validation: crash-early if critical vars missing (src/lib/env.ts)
-- AI Management: AiSystemConfig singleton (aiEnabled + allowedModules), AiReport (save/pin/archive), AiPromptTemplate (DB-driven prompts with {{data}} placeholder)
-- AI Toggle: useAiStatus('module') client hook + isModuleAiEnabled() server check → 403 when disabled
-- AI Prompt Resolution: resolvePromptTemplate(slug) → DB template or hardcoded fallback
+- AI Management: AiSystemConfig singleton, AiReport (save/pin/archive), AiPromptTemplate (DB-driven)
+- Pre-commit hook: blocks commit if prisma schema or new src files changed without docs update
+- Docs Sync Protocol: GEMINI.md P0 rule — AI must update docs IN SAME OPERATION as code change
 
 ## Documentation Update Rules
 When making code changes, AI agents MUST update:

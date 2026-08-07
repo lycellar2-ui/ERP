@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
-**Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-03-08
+**Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-08-07
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 14 module. Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 29 module (123 models, 77 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain

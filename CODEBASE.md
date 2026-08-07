@@ -29,6 +29,8 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Tax & Market Data**: `wine-erp/src/app/dashboard/tax`, `wine-erp/src/app/dashboard/costing`, `wine-erp/src/app/dashboard/market-price`
 - **Logistics**: `wine-erp/src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `wine-erp/src/app/dashboard/consignment`, `wine-erp/src/app/dashboard/transfers`, `wine-erp/src/app/dashboard/returns`, `wine-erp/src/app/dashboard/stock-count`
 - **CEO Board**: `wine-erp/src/app/dashboard` (**AI CEO Briefing**), `wine-erp/src/app/dashboard/kpi`, `wine-erp/src/app/dashboard/reports`
+- **Margin & Audit**: `wine-erp/src/app/dashboard/margin` (**Margin Simulation**), `wine-erp/src/app/dashboard/audit-log` (**Audit Log Viewer**)
+- **Sales Field**: `wine-erp/src/app/dashboard/sales/visits` (**Field Visit Check-in/Check-out**, GPS, Camera)
 - **AI & Features**: `wine-erp/src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro, **Prompt Template CRUD**, **AI Reports History**), `wine-erp/src/app/api/ceo-summary` (**AI CEO Briefing**), `wine-erp/src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `wine-erp/src/app/api/pipeline-analysis` (**AI Pipeline Analysis**), `wine-erp/src/app/api/crm-analysis` (**AI CRM Analysis**), `wine-erp/src/app/api/catalog-analysis` (**AI Catalog & Market Intelligence**), `wine-erp/src/app/api/ai/status` (**AI Toggle Check**), `wine-erp/src/app/api/ai/reports` (**AI Report Save**)
 - **POS & QR**: `wine-erp/src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `wine-erp/src/app/dashboard/pos/loyalty`, `wine-erp/src/app/dashboard/qr-codes` (Anti-counterfeit)
 - **External Portal**: `wine-erp/src/app/partner-login` (**External Partner Login & Portal**)
@@ -118,16 +120,16 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 □ Bug fix đã bổ sung vào bug-fix-lessons.md?
 ```
 
-### Số liệu hiện tại cần đồng nhất (2026-03-10)
+### Số liệu hiện tại cần đồng nhất (2026-08-07)
 
 | Metric | Giá trị | Nơi ghi nhận |
 |---|---|---|
-| Prisma models | **113** | README.md, llms.txt, tech-stack.md |
-| Prisma enums | **71** | README.md, llms.txt |
-| Dashboard routes | **33** | README.md, wine-erp-plan.md |
+| Prisma models | **123** | README.md, llms.txt, tech-stack.md |
+| Prisma enums | **77** | README.md, llms.txt |
+| Dashboard routes | **35** | README.md, wine-erp-plan.md |
 | Server Action files | **42** | README.md |
-| Module spec files | **24** | README.md |
-| Total modules (codes) | **26** | README.md, llms.txt, wine-erp-plan.md |
+| Module spec files | **27** | README.md |
+| Total modules (codes) | **29** | README.md, llms.txt, wine-erp-plan.md |
 | Next.js version | **16.1.6** | tech-stack.md, wine-erp-plan.md |
 | Auth | **Supabase Auth** | tech-stack.md, wine-erp-plan.md |
 | Image storage | **ImgBB** | tech-stack.md, file-storage-plan.md |
