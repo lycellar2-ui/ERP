@@ -245,7 +245,7 @@ async function main() {
         ]
 
         const startDate = new Date('2026-01-01T00:00:00.000Z')
-        const endDate = new Date('2026-07-31T23:59:59.999Z')
+        const endDate = new Date('2026-08-31T23:59:59.999Z')
 
         for (const custId of [pinchoParent.id, pinchoChild.id]) {
             for (const item of pinchoRules) {

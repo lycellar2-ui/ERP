@@ -69,8 +69,8 @@ async function main() {
 
     let totalImported = 0
 
-    // Set end date to 31/07/2026 23:59:59 as requested by user
-    const endDate = new Date('2026-07-31T23:59:59.999Z')
+    // Set end date to 31/08/2026 23:59:59 as requested by user
+    const endDate = new Date('2026-08-31T23:59:59.999Z')
     const startDate = new Date('2026-01-01T00:00:00.000Z')
 
     for (const filePath of filesToImport) {
