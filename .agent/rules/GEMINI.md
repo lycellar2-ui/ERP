@@ -143,6 +143,51 @@ When user's prompt is NOT in English:
 2. What PRINCIPLES must I apply?
 3. How does this DIFFER from generic output?
 
+### 📝 DOCS SYNC PROTOCOL (MANDATORY — P0 PRIORITY)
+
+> 🔴 **ABSOLUTE RULE: Code change WITHOUT docs update = INCOMPLETE WORK.**
+> This is NOT optional. This is NOT "end of session". Docs MUST be updated IN THE SAME OPERATION as the code change.
+
+**FAILURE TO UPDATE DOCS = PROTOCOL VIOLATION equal to shipping broken code.**
+
+#### When MUST I update docs?
+
+| Code Change | Docs Files MUST Update | Block Level |
+|---|---|:---:|
+| **ANY change to `prisma/schema.prisma`** | `docs/architecture/database-schema.md` + `docs/README.md` (model/enum counts) + `CODEBASE.md` (counts) + `docs/llms.txt` (counts) | 🔴 HARD BLOCK |
+| **New route/module** (new folder in `src/app/dashboard/`) | Create `docs/modules/<module>.md` + add to `docs/README.md` table + `docs/llms.txt` | 🔴 HARD BLOCK |
+| **New `actions.ts` or `actions-*.ts`** | Update `docs/README.md` (action file count) + relevant module spec | 🔴 HARD BLOCK |
+| **New feature in existing module** | Update `docs/modules/<module>.md` with feature description | 🟡 REQUIRED |
+| **Bug fix** | Add entry to `docs/bug-fix-lessons.md` following BUG-XXX template | 🟡 REQUIRED |
+| **Tech stack change** (new dependency, config) | Update `docs/architecture/tech-stack.md` | 🟡 REQUIRED |
+| **UI-only / CSS fix** | No docs update needed | ✅ EXEMPT |
+| **Refactor (no behavior change)** | No docs update needed | ✅ EXEMPT |
+
+#### Self-Check Trigger (BEFORE ending your turn)
+
+> 🔴 **Every time you finish writing code, ask yourself:**
+> "Did I update the relevant docs file?" If NO and the change is not EXEMPT → **GO BACK AND UPDATE DOCS NOW.**
+
+```
+❌ WRONG: Fix bug → Tell user "done" → Forget docs
+❌ WRONG: Add feature → Update docs "later" or "next session"
+✅ CORRECT: Fix bug → Update bug-fix-lessons.md → Update module spec → Tell user "done"
+✅ CORRECT: Add feature → Update module spec → Update README counts if needed → Tell user "done"
+```
+
+#### Numbers That MUST Stay Synchronized
+
+These numbers appear in MULTIPLE files. When ANY of them changes, update ALL locations:
+
+| Metric | Files that contain this number |
+|---|---|
+| Prisma model count | `docs/README.md`, `docs/llms.txt`, `CODEBASE.md`, `docs/architecture/tech-stack.md` |
+| Prisma enum count | `docs/README.md`, `docs/llms.txt`, `CODEBASE.md` |
+| Dashboard route count | `docs/README.md`, `docs/llms.txt` |
+| Server Action file count | `docs/README.md` |
+| Bug count & rule count | `docs/README.md`, `docs/llms.txt` |
+| `Last updated` date | `docs/README.md` (bottom), `docs/llms.txt` (top) |
+
 ---
 
 ## TIER 1: CODE RULES (When Writing Code)
