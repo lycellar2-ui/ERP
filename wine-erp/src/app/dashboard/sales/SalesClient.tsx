@@ -1864,6 +1864,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                 />
             )}
 
+            {createOpen && <CreateSODrawer open={createOpen} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); reload() }} userId={userId} userRoles={userRoles} />}
             {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} userId={userId} />}
             {approvalModalId && (
                 <ApproveSOModal
