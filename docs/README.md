@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 15:03 | Wine ERP v8.4 — 29 modules, 123 models, Proposal Approval Timestamp Print & Legal Entity Display Fixes*
+*Last updated: 2026-08-08 15:46 | Wine ERP v8.5 — 29 modules, 123 models, Unified WMS Command Center 9-Module Grid & Merged Warehouse Operations*
 

@@ -492,6 +492,16 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Missing DB columns** | `prisma db push` chạy trên production để sync `posX/posY/width/height` columns |
 | **Silent error swallowing** | `.catch(() => [])` trong `page.tsx` nuốt mất error. Thay bằng try/catch + console.error |
 
+#### Phase 7: Unified WMS Command Center & Tab Restructuring (08/08/2026)
+
+| Tính năng | File | Ghi chú |
+|---|---|---|
+| **Bảng Chức Năng 9 Thẻ Trực Quan** | `WarehouseClient.tsx` | View Toggle (`grid` vs `workspace`), 9 Feature Cards (Tồn Kho, GR, DO, Chuyển Kho, Kiểm Kê, Sơ Đồ Kho 2D, Vị Trí, Cách Ly, Báo Cáo NXT) |
+| **Integrate Stock Transfers (Chuyển Kho)** | `TransfersTab.tsx` | Wrap `../transfers/actions` vào phân hệ Kho Hàng, giao diện Light Theme |
+| **Integrate Stock Count (Kiểm Kê Kho)** | `StockCountTab.tsx` | Wrap `../stock-count/actions` + quét mã vạch Barcode di động vào phân hệ Kho Hàng |
+| **Navigation Breadcrumb** | `WarehouseClient.tsx` | Nút `← Bảng Chức Năng Kho` + Thanh chuyển subtab nhanh ở header |
+| **DO Light Theme Re-style & Fixes** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Khắc phục thiếu tên KH / SKU trên thẻ chờ xuất, đồng bộ toàn bộ giao diện DO sang Light Theme |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -502,4 +512,5 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-03-10 | Wine ERP v6.7 — WMS Deep Dive + NXT Report + 2D Floor Plan Editor (walls/doors/labels)*
+*Last updated: 2026-08-08 | Wine ERP v7.0 — Unified WMS Command Center + 9-Module Grid + Chuyển Kho & Kiểm Kê Kho Merged*
+

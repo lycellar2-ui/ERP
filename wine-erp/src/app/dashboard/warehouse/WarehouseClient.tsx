@@ -5,7 +5,8 @@ import {
     Warehouse, Package, BarChart3, Plus, Search, MapPin,
     Thermometer, Box, X, Save, Loader2, AlertCircle, CheckCircle2,
     ChevronRight, Layers, PackagePlus, Truck, ShieldAlert, Trash2,
-    DollarSign, AlertTriangle, Clock, Wine, ArrowUpDown, TrendingDown, Download, ChevronDown
+    DollarSign, AlertTriangle, Clock, Wine, ArrowUpDown, TrendingDown, Download, ChevronDown,
+    ArrowRightLeft, ClipboardList, LayoutGrid, ArrowLeft, RefreshCw
 } from 'lucide-react'
 import {
     WarehouseRow, StockLotRow, LocationRow,
@@ -19,6 +20,8 @@ import { DeliveryOrderTab } from './DeliveryOrderTab'
 import { LocationManager } from './LocationManager'
 import { StockMovementTab } from './StockMovementTab'
 import { WarehouseMapTab } from './WarehouseMapTab'
+import { TransfersTab } from './TransfersTab'
+import { StockCountTab } from './StockCountTab'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
@@ -35,11 +38,11 @@ const WINE_TYPE_COLOR: Record<string, string> = {
 }
 
 const LOT_STATUS: Record<string, { label: string; color: string }> = {
-    AVAILABLE: { label: 'Sẵn sàng', color: '#5BA88A' },
-    RESERVED: { label: 'Đã đặt trước', color: '#4A8FAB' },
-    QUARANTINE: { label: 'Cách ly', color: '#D4A853' },
-    CONSUMED: { label: 'Đã xuất', color: '#4A6A7A' },
-    DAMAGED: { label: 'Hư hỏng', color: '#8B1A2E' },
+    AVAILABLE: { label: 'Sẵn sàng', color: '#16A34A' },
+    RESERVED: { label: 'Đã đặt trước', color: '#2563EB' },
+    QUARANTINE: { label: 'Cách ly', color: '#B47816' },
+    CONSUMED: { label: 'Đã xuất', color: '#64748B' },
+    DAMAGED: { label: 'Hư hỏng', color: '#DC2626' },
 }
 
 // ── Create Warehouse Modal ─────────────────────────
@@ -65,23 +68,20 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
         }
     }
 
-    const inputCls = "w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(10,5,2,0.8)' }} onClick={onClose}>
-            <div className="rounded-2xl p-6 space-y-5 w-full max-w-md"
-                style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(15, 23, 42, 0.4)' }} onClick={onClose}>
+            <div className="rounded-2xl p-6 space-y-5 w-full max-w-md shadow-2xl"
+                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                         🏭 Tạo Kho Mới
                     </h3>
-                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
                 </div>
 
-                {error && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(139,26,46,0.2)', color: '#E05252' }}>{error}</div>}
+                {error && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>{error}</div>}
 
                 {[
                     { key: 'code', label: 'Mã Kho (VD: KHO-HCM)', placeholder: 'KHO-HCM-01' },
@@ -89,22 +89,22 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                     { key: 'address', label: 'Địa Chỉ', placeholder: '15 Đường Xuyên Á, Củ Chi, TP.HCM' },
                 ].map(f => (
                     <div key={f.key}>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>{f.label}</label>
-                        <input className={inputCls} style={inputStyle} value={(form as any)[f.key]} placeholder={f.placeholder}
-                            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>{f.label}</label>
+                        <input className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
+                            value={(form as any)[f.key]} placeholder={f.placeholder}
+                            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
                     </div>
                 ))}
 
                 <div className="flex justify-end gap-3 pt-2">
-                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm"
-                        style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}>Hủy</button>
+                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm font-semibold"
+                        style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#F1F5F9' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold shadow-md"
+                        style={{ background: '#D4A853', color: '#0A1926' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {saving ? '...' : 'Lưu'}
+                        {saving ? '...' : 'Lưu Kho'}
                     </button>
                 </div>
             </div>
@@ -112,62 +112,10 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
     )
 }
 
-// ── Warehouse card ─────────────────────────────────
-function WarehouseCard({
-    warehouse, isSelected, onClick
-}: {
-    warehouse: WarehouseRow; isSelected: boolean; onClick: () => void
-}) {
-    return (
-        <button onClick={onClick} className="w-full text-left p-4 rounded-xl transition-all duration-200"
-            style={{
-                background: isSelected ? 'rgba(135,203,185,0.12)' : '#142433',
-                border: `1px solid ${isSelected ? '#87CBB9' : '#2A4355'}`,
-            }}>
-            <div className="flex items-start justify-between gap-2 mb-3">
-                <div>
-                    <p className="font-bold text-sm" style={{ color: '#E8F1F2' }}>{warehouse.name}</p>
-                    <p className="text-xs mt-0.5 font-mono" style={{ color: '#4A6A7A' }}>{warehouse.code}</p>
-                </div>
-                {isSelected && <ChevronRight size={14} style={{ color: '#87CBB9', flexShrink: 0, marginTop: 2 }} />}
-            </div>
-            {warehouse.address && (
-                <p className="text-xs mb-3 flex items-start gap-1.5" style={{ color: '#4A6A7A' }}>
-                    <MapPin size={11} className="mt-0.5 flex-shrink-0" /> {warehouse.address}
-                </p>
-            )}
-            <div className="grid grid-cols-3 gap-2 mb-3">
-                {[
-                    { label: 'Khu vực', value: warehouse.locationCount },
-                    { label: 'Lô hàng', value: warehouse.lotCount },
-                    { label: 'Tồn kho', value: warehouse.totalStock.toLocaleString() },
-                ].map(s => (
-                    <div key={s.label} className="text-center">
-                        <p className="text-base font-bold font-mono" style={{ color: '#87CBB9' }}>{s.value}</p>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                    </div>
-                ))}
-            </div>
-            {/* Inventory Value */}
-            {warehouse.totalValue > 0 && (
-                <div className="flex items-center justify-between px-2 py-1.5 rounded-lg mb-3"
-                    style={{ background: 'rgba(135,203,185,0.06)', border: '1px solid rgba(135,203,185,0.1)' }}>
-                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
-                        <DollarSign size={10} className="inline mr-0.5" />Giá trị kho
-                    </span>
-                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
-                        {formatVND(warehouse.totalValue)}
-                    </span>
-                </div>
-            )}
-        </button>
-    )
-}
-
 // ── Days-in-stock badge ───────────────────────────
 function DaysInStockBadge({ receivedDate }: { receivedDate: Date }) {
     const days = Math.floor((Date.now() - new Date(receivedDate).getTime()) / 86400000)
-    const color = days > 180 ? '#8B1A2E' : days > 90 ? '#D4A853' : '#4A6A7A'
+    const color = days > 180 ? '#DC2626' : days > 90 ? '#B47816' : '#64748B'
     return (
         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
             style={{ color, background: `${color}15` }}>
@@ -184,10 +132,10 @@ function StockTable({ lots, sortConfig, onSort }: {
 }) {
     if (lots.length === 0) {
         return (
-            <div className="flex flex-col items-center py-16 gap-3 rounded-2xl" style={{ border: '1px dashed #2A4355' }}>
-                <Box size={32} style={{ color: '#2A4355' }} />
-                <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tồn kho</p>
-                <p className="text-xs" style={{ color: '#2A4355' }}>Nhập hàng qua Goods Receipt để tạo stock lots</p>
+            <div className="flex flex-col items-center py-16 gap-3 rounded-2xl" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+                <Box size={32} style={{ color: '#94A3B8' }} />
+                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>Chưa có tồn kho</p>
+                <p className="text-xs" style={{ color: '#64748B' }}>Nhập hàng qua Goods Receipt để tạo stock lots</p>
             </div>
         )
     }
@@ -195,7 +143,7 @@ function StockTable({ lots, sortConfig, onSort }: {
     const headers = [
         { key: 'lotNo', label: 'Lô Hàng', align: 'left' as const },
         { key: 'productName', label: 'Sản Phẩm', align: 'left' as const },
-        { key: 'vintage', label: 'Vintage', align: 'center' as const },
+        { key: 'vintage', label: 'VTG', align: 'center' as const },
         { key: 'locationCode', label: 'Vị Trí', align: 'left' as const },
         { key: 'receivedDate', label: 'Nhập Kho', align: 'left' as const },
         { key: 'qtyAvailable', label: 'Tồn', align: 'center' as const },
@@ -204,20 +152,20 @@ function StockTable({ lots, sortConfig, onSort }: {
     ]
 
     return (
-        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+        <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
             {/* Desktop Table View (>= 768px) */}
             <div className="hidden md:block" style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                        <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
                             {headers.map(h => (
-                                <th key={h.key} className={`px-3 py-3 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none text-${h.align}`}
-                                    style={{ color: sortConfig.key === h.key ? '#87CBB9' : '#4A6A7A' }}
+                                <th key={h.key} className={`px-3.5 py-3 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none text-${h.align}`}
+                                    style={{ color: sortConfig.key === h.key ? '#B47816' : '#64748B' }}
                                     onClick={() => onSort(h.key)}>
                                     <span className="inline-flex items-center gap-1">
                                         {h.label}
                                         {sortConfig.key === h.key && (
-                                            <ArrowUpDown size={10} style={{ color: '#87CBB9' }} />
+                                            <ArrowUpDown size={10} style={{ color: '#B47816' }} />
                                         )}
                                     </span>
                                 </th>
@@ -227,71 +175,69 @@ function StockTable({ lots, sortConfig, onSort }: {
                     <tbody>
                         {lots.map(lot => {
                             const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
-                            const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#8AAEBB'
-                            const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#8AAEBB' }
+                            const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
+                            const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
                             const pctRemaining = lot.qtyReceived > 0 ? (lot.qtyAvailable / lot.qtyReceived) * 100 : 0
                             const lotValue = lot.qtyAvailable * lot.unitLandedCost
                             return (
-                                <tr key={lot.id} className="group transition-colors"
-                                    style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-3 py-2.5">
-                                        <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{lot.lotNo}</span>
+                                <tr key={lot.id} className="group transition-colors hover:bg-slate-50"
+                                    style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                    <td className="px-3.5 py-3">
+                                        <span className="text-xs font-bold font-mono" style={{ color: '#B47816' }}>{lot.lotNo}</span>
                                     </td>
-                                    <td className="px-3 py-2.5">
-                                        <p className="text-sm font-medium truncate max-w-[200px]" style={{ color: '#E8F1F2' }}>{lot.productName}</p>
-                                        <p className="text-xs mt-0.5 flex items-center gap-1.5" style={{ color: '#4A6A7A' }}>
+                                    <td className="px-3.5 py-3">
+                                        <p className="text-xs font-bold truncate max-w-[220px]" style={{ color: '#0F172A' }}>{lot.productName}</p>
+                                        <p className="text-[11px] mt-0.5 flex items-center gap-1.5" style={{ color: '#64748B' }}>
                                             {flag}
                                             <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: wineColor }} />
                                             {lot.skuCode}
                                         </p>
                                     </td>
-                                    <td className="px-3 py-2.5 text-center">
+                                    <td className="px-3.5 py-3 text-center">
                                         {lot.vintage ? (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono" style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853' }}>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono" style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
                                                 {lot.vintage}
                                             </span>
                                         ) : (
-                                            <span className="text-xs" style={{ color: '#2A4355' }}>NV</span>
+                                            <span className="text-xs text-[#94A3B8]">NV</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-2.5">
-                                        <span className="text-xs font-bold px-2 py-1 rounded-lg font-mono" style={{ background: '#1B2E3D', color: '#8AAEBB' }}>
+                                    <td className="px-3.5 py-3">
+                                        <span className="text-xs font-bold px-2 py-1 rounded-lg font-mono" style={{ background: '#F1F5F9', color: '#334155' }}>
                                             {lot.locationCode}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-2.5">
+                                    <td className="px-3.5 py-3">
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>{formatDate(lot.receivedDate)}</span>
+                                            <span className="text-xs" style={{ color: '#64748B' }}>{formatDate(lot.receivedDate)}</span>
                                             <DaysInStockBadge receivedDate={lot.receivedDate} />
                                         </div>
                                     </td>
-                                    <td className="px-3 py-2.5 text-center">
+                                    <td className="px-3.5 py-3 text-center">
                                         <div className="flex items-center gap-2 justify-center">
-                                            <span className="text-sm font-bold font-mono" style={{ color: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#D4A853' : '#5BA88A' }}>
+                                            <span className="text-xs font-bold font-mono" style={{ color: pctRemaining < 20 ? '#DC2626' : pctRemaining < 50 ? '#B47816' : '#16A34A' }}>
                                                 {lot.qtyAvailable.toLocaleString()}
                                             </span>
-                                            <div className="w-10 h-1.5 rounded-full overflow-hidden" style={{ background: '#1B2E3D' }}>
+                                            <div className="w-10 h-1.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
                                                 <div className="h-full rounded-full" style={{
                                                     width: `${pctRemaining}%`,
-                                                    background: pctRemaining < 20 ? '#8B1A2E' : pctRemaining < 50 ? '#D4A853' : '#5BA88A',
+                                                    background: pctRemaining < 20 ? '#DC2626' : pctRemaining < 50 ? '#B47816' : '#16A34A',
                                                 }} />
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-3 py-2.5 text-right">
+                                    <td className="px-3.5 py-3 text-right">
                                         {lotValue > 0 ? (
-                                            <span className="text-xs font-mono" style={{ color: '#8AAEBB' }}>
+                                            <span className="text-xs font-mono font-semibold" style={{ color: '#0F172A' }}>
                                                 {formatVND(lotValue)}
                                             </span>
                                         ) : (
-                                            <span className="text-xs" style={{ color: '#2A4355' }}>—</span>
+                                            <span className="text-xs text-[#94A3B8]">—</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-2.5 text-center">
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                                            style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>
+                                    <td className="px-3.5 py-3 text-center">
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                            style={{ color: statusCfg.color, background: `${statusCfg.color}15` }}>
                                             {statusCfg.label}
                                         </span>
                                     </td>
@@ -303,38 +249,38 @@ function StockTable({ lots, sortConfig, onSort }: {
             </div>
 
             {/* Mobile Card List View (< 768px) */}
-            <div className="block md:hidden p-3 space-y-3">
+            <div className="block md:hidden p-3 space-y-2.5">
                 {lots.map(lot => {
                     const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
-                    const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#8AAEBB'
-                    const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#8AAEBB' }
+                    const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
+                    const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
                     return (
-                        <div key={lot.id} className="p-3.5 rounded-xl space-y-2" style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                        <div key={lot.id} className="p-3.5 rounded-xl space-y-2 shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
+                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
                                     {lot.lotNo}
                                 </span>
-                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: '#1B2E3D', color: '#D4A853' }}>
+                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: '#F1F5F9', color: '#0F172A' }}>
                                     📍 {lot.locationCode}
                                 </span>
                             </div>
                             <div>
-                                <h4 className="text-sm font-bold text-white leading-tight">{lot.productName}</h4>
-                                <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: '#4A6A7A' }}>
+                                <h4 className="text-xs font-bold text-[#0F172A] leading-tight">{lot.productName}</h4>
+                                <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: '#64748B' }}>
                                     {flag} <span className="w-1.5 h-1.5 rounded-full" style={{ background: wineColor }} />
                                     SKU: {lot.skuCode} {lot.vintage ? `· VTG: ${lot.vintage}` : ''}
                                 </p>
                             </div>
-                            <div className="flex items-center justify-between pt-2 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
+                            <div className="flex items-center justify-between pt-2 border-t text-xs" style={{ borderColor: '#E2E8F0' }}>
                                 <div>
-                                    <span style={{ color: '#4A6A7A' }}>Tồn kho: </span>
-                                    <span className="font-bold font-mono text-sm" style={{ color: '#5BA88A' }}>
+                                    <span style={{ color: '#64748B' }}>Tồn kho: </span>
+                                    <span className="font-bold font-mono text-xs text-[#16A34A]">
                                         {lot.qtyAvailable.toLocaleString()} chai
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="font-semibold px-2 py-0.5 rounded-full text-[11px]"
-                                        style={{ color: statusCfg.color, background: `${statusCfg.color}20` }}>
+                                    <span className="font-semibold px-2 py-0.5 rounded-full text-[10px]"
+                                        style={{ color: statusCfg.color, background: `${statusCfg.color}15` }}>
                                         {statusCfg.label}
                                     </span>
                                 </div>
@@ -358,59 +304,60 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
         setProcessing(null)
     }
 
-    if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+    if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#D4A853' }} /></div>
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
-                    <ShieldAlert size={14} className="inline mr-1.5" />Hàng Đang Cách Ly
+            <div className="flex items-center justify-between p-4 rounded-xl shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
+                    <ShieldAlert size={16} style={{ color: '#DC2626' }} /> Hàng Đang Cách Ly & Xử Lý Sự Cố
                     {lots.length > 0 && (
-                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full"
-                            style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853' }}>
+                        <span className="ml-2 text-xs px-2.5 py-0.5 rounded-full font-bold"
+                            style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>
                             {lots.length} lô
                         </span>
                     )}
                 </h3>
-                <button onClick={onRefresh} className="text-xs px-3 py-1.5 rounded" style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
+                <button onClick={onRefresh} className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all hover:bg-slate-100"
+                    style={{ border: '1px solid #CBD5E1', color: '#475569', background: '#F1F5F9' }}>
                     Làm Mới
                 </button>
             </div>
 
             {lots.length === 0 ? (
-                <div className="flex flex-col items-center py-12 gap-2 rounded-xl" style={{ border: '1px dashed #2A4355' }}>
-                    <CheckCircle2 size={28} style={{ color: '#5BA88A' }} />
-                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có hàng nào đang cách ly</p>
+                <div className="flex flex-col items-center py-12 gap-2 rounded-xl shadow-xs" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+                    <CheckCircle2 size={28} style={{ color: '#16A34A' }} />
+                    <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>Không có lô hàng nào đang cách ly</p>
                 </div>
             ) : (
-                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                <div className="rounded-xl overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                                 {['Lô Hàng', 'Sản Phẩm', 'SL', 'Vị Trí', 'Ngày Nhập', ''].map(h => (
-                                    <th key={h} className="px-4 py-3 font-semibold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>{h}</th>
+                                    <th key={h} className="px-4 py-3 font-semibold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {lots.map((lot: any) => (
-                                <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                    <td className="px-4 py-3 font-mono font-bold" style={{ color: '#D4A853' }}>{lot.lotNo}</td>
-                                    <td className="px-4 py-3" style={{ color: '#E8F1F2' }}>{lot.product?.productName || lot.productId}</td>
-                                    <td className="px-4 py-3 font-mono" style={{ color: '#8AAEBB' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
-                                    <td className="px-4 py-3 font-mono" style={{ color: '#4A6A7A' }}>{lot.location?.locationCode || '—'}</td>
-                                    <td className="px-4 py-3" style={{ color: '#4A6A7A' }}>{new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</td>
+                                <tr key={lot.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                    <td className="px-4 py-3 font-mono font-bold" style={{ color: '#B47816' }}>{lot.lotNo}</td>
+                                    <td className="px-4 py-3 font-semibold" style={{ color: '#0F172A' }}>{lot.product?.productName || lot.productId}</td>
+                                    <td className="px-4 py-3 font-mono font-bold" style={{ color: '#0F172A' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
+                                    <td className="px-4 py-3 font-mono text-[#64748B]">{lot.location?.locationCode || '—'}</td>
+                                    <td className="px-4 py-3 text-[#64748B]">{new Date(lot.receivedDate).toLocaleDateString('vi-VN')}</td>
                                     <td className="px-4 py-3">
                                         <div className="flex gap-2 justify-end">
                                             <button onClick={() => handleRelease(lot.id, 'RESTORE')} disabled={processing === lot.id}
-                                                className="px-2.5 py-1 rounded text-xs font-semibold"
-                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
+                                                style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}>
                                                 {processing === lot.id ? '...' : 'Khôi Phục'}
                                             </button>
                                             <button onClick={() => handleRelease(lot.id, 'WRITE_OFF')} disabled={processing === lot.id}
-                                                className="px-2.5 py-1 rounded text-xs font-semibold"
-                                                style={{ background: 'rgba(139,26,46,0.12)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.25)' }}>
-                                                <Trash2 size={10} className="inline mr-0.5" />Hủy
+                                                className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
+                                                style={{ background: 'rgba(220,38,38,0.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.25)' }}>
+                                                <Trash2 size={11} className="inline mr-0.5" />Hủy Kho
                                             </button>
                                         </div>
                                     </td>
@@ -424,8 +371,8 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
     )
 }
 
-// ── Main ──────────────────────────────────────────
-type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map'
+// ── Main WMS Client Component ───────────────────────
+type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map' | 'transfer' | 'stock-count'
 
 interface Props {
     initialWarehouses?: WarehouseRow[]
@@ -457,6 +404,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     const [wineFilter, setWineFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
     const [createWHOpen, setCreateWHOpen] = useState(false)
+
+    // View Mode: 'grid' (Bảng Chức Năng Trung Tâm) or 'workspace' (Giao diện tính năng chi tiết)
+    const [viewMode, setViewMode] = useState<'grid' | 'workspace'>('grid')
     const [activeTab, setActiveTab] = useState<WMSTab>('inventory')
     const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'receivedDate', dir: 'desc' })
 
@@ -470,14 +420,109 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
     const warehouseList = warehouses.map(w => ({ id: w.id, code: w.code, name: w.name }))
 
-    const wmsTabs: { key: WMSTab; label: string; icon: any; badge?: number }[] = [
-        { key: 'inventory', label: 'Tồn Kho', icon: Package },
-        { key: 'nxt', label: 'Nhập Xuất Tồn', icon: BarChart3 },
-        { key: 'map', label: 'Sơ Đồ Kho', icon: Layers },
-        { key: 'locations', label: 'Vị Trí Kho', icon: MapPin },
-        { key: 'gr', label: 'Nhập Kho (GR)', icon: PackagePlus },
-        { key: 'do', label: 'Xuất Kho (DO)', icon: Truck },
-        { key: 'quarantine', label: 'Cách Ly', icon: ShieldAlert, badge: stats.quarantinedCount },
+    // 9 Unified Warehouse Feature Modules
+    const wmsFeatureModules: {
+        key: WMSTab
+        title: string
+        subtitle: string
+        icon: any
+        color: string
+        bg: string
+        badge?: number
+        description: string
+        actionLabel: string
+    }[] = [
+        {
+            key: 'inventory',
+            title: '📦 Tồn Kho Chủng Loại',
+            subtitle: 'Stock Inventory',
+            icon: Package,
+            color: '#0F172A',
+            bg: 'rgba(15,23,42,0.06)',
+            description: 'Tra cứu chi tiết từng lô hàng, SKU, loại rượu & tồn khả dụng theo từng kho',
+            actionLabel: 'Mở Tồn Kho'
+        },
+        {
+            key: 'gr',
+            title: '📥 Nhập Kho (GR)',
+            subtitle: 'Goods Receipt',
+            icon: PackagePlus,
+            color: '#16A34A',
+            bg: 'rgba(22,163,74,0.1)',
+            description: 'Tạo phiếu nhập kho GR từ Đơn mua PO, gán lô & vị trí cất hàng, in phiếu GR',
+            actionLabel: 'Tạo / Nhập GR'
+        },
+        {
+            key: 'do',
+            title: '📤 Xuất Kho (DO)',
+            subtitle: 'Delivery Orders',
+            icon: Truck,
+            color: '#B47816',
+            bg: 'rgba(212,168,83,0.15)',
+            description: 'Tự động chọn lô FIFO, tạo phiếu xuất kho DO, xác nhận giao hàng & in phiếu DO',
+            actionLabel: 'Nhặt Hàng Xuất Kho'
+        },
+        {
+            key: 'transfer',
+            title: '🔄 Chuyển Kho Nội Bộ',
+            subtitle: 'Stock Transfers',
+            icon: ArrowRightLeft,
+            color: '#2563EB',
+            bg: 'rgba(37,99,235,0.1)',
+            description: 'Lập lệnh chuyển kho/vị trí, theo dõi hàng đang vận chuyển & xác nhận nhận kho',
+            actionLabel: 'Lập Lệnh Chuyển Kho'
+        },
+        {
+            key: 'stock-count',
+            title: '📋 Kiểm Kê Kho',
+            subtitle: 'Stock Audit & Barcode',
+            icon: ClipboardList,
+            color: '#7C3AED',
+            bg: 'rgba(124,58,237,0.1)',
+            description: 'Tạo đợt kiểm kê, quét Barcode di động, đối soát chênh lệch & tự động chỉnh tồn',
+            actionLabel: 'Kiểm Kê Kho'
+        },
+        {
+            key: 'map',
+            title: '🗺️ Sơ Đồ Kho 2D',
+            subtitle: 'Interactive Layout Map',
+            icon: Layers,
+            color: '#0284C7',
+            bg: 'rgba(2,132,199,0.1)',
+            description: 'Sơ đồ bản đồ 2D trực quan các Zone, Kệ Rack & tỷ lệ lấp đầy kho hàng',
+            actionLabel: 'Xem Sơ Đồ Kho'
+        },
+        {
+            key: 'locations',
+            title: '📍 Quản Lý Vị Trí Kho',
+            subtitle: 'Zones, Racks & Bins',
+            icon: MapPin,
+            color: '#D97706',
+            bg: 'rgba(217,119,6,0.1)',
+            description: 'Quản lý danh mục Zone, kệ Rack, vị trí Bin, nhiệt độ bảo quản & sức chứa',
+            actionLabel: 'Quản Lý Vị Trí'
+        },
+        {
+            key: 'quarantine',
+            title: '⚠️ Cách Ly & Xử Lý',
+            subtitle: 'Quarantine & Write-off',
+            icon: ShieldAlert,
+            color: '#DC2626',
+            bg: 'rgba(220,38,38,0.1)',
+            badge: stats.quarantinedCount,
+            description: 'Quản lý lô hàng hư hỏng, hết hạn, cách ly chờ kiểm định & hủy kho',
+            actionLabel: 'Xử Lý Cách Ly'
+        },
+        {
+            key: 'nxt',
+            title: '📊 Báo Cáo Nhập Xuất Tồn',
+            subtitle: 'Stock Movement Ledger',
+            icon: BarChart3,
+            color: '#059669',
+            bg: 'rgba(5,150,105,0.1)',
+            description: 'Sổ chi tiết luân chuyển kho hàng, tốc độ quay vòng & báo cáo NXT',
+            actionLabel: 'Xem Báo Cáo NXT'
+        },
     ]
 
     const selectWarehouse = async (id: string) => {
@@ -536,84 +581,85 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
         })
 
     const statCards = [
-        { label: 'Số Kho', value: stats.warehouses, accent: '#87CBB9', icon: Warehouse },
-        { label: 'Tổng Tồn Kho', value: `${stats.availableBottles.toLocaleString()} chai`, accent: '#5BA88A', icon: Package },
-        { label: 'Giá Trị Kho', value: formatVND(stats.inventoryValue), accent: '#D4A853', icon: DollarSign },
-        { label: 'Đã Đặt Trước', value: `${stats.reservedBottles.toLocaleString()} chai`, accent: '#4A8FAB', icon: Box },
-        { label: 'Cảnh Báo Tồn Thấp', value: stats.lowStockCount, accent: stats.lowStockCount > 0 ? '#D4A853' : '#5BA88A', icon: AlertTriangle },
-        { label: 'Hàng Nằm Lâu (>180d)', value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#8B1A2E' : '#5BA88A', icon: TrendingDown },
+        { label: 'Số Kho', value: stats.warehouses, accent: '#0F172A', icon: Warehouse },
+        { label: 'Tổng Tồn Kho', value: `${stats.availableBottles.toLocaleString()} chai`, accent: '#16A34A', icon: Package },
+        { label: 'Giá Trị Kho', value: formatVND(stats.inventoryValue), accent: '#B47816', icon: DollarSign },
+        { label: 'Đã Đặt Trước', value: `${stats.reservedBottles.toLocaleString()} chai`, accent: '#2563EB', icon: Box },
+        { label: 'Tồn Thấp', value: stats.lowStockCount, accent: stats.lowStockCount > 0 ? '#B47816' : '#16A34A', icon: AlertTriangle },
+        { label: 'Hàng >180 Ngày', value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#DC2626' : '#16A34A', icon: TrendingDown },
     ]
 
     return (
-        <div className="space-y-3 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl">
             {/* 1. TOPMOST HEADER CONTAINER */}
-            <div className="flex flex-col gap-2 p-3 rounded-xl"
-                style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="flex flex-col gap-3 p-4 rounded-2xl shadow-sm"
+                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 
                 {/* Top Row: Title + Stat Badges + Create WH Button */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b pb-2" style={{ borderColor: '#2A4355' }}>
-                    <div className="flex items-center justify-between w-full sm:w-auto">
-                        <h2 className="text-sm font-bold flex items-center gap-1.5" style={{ color: '#E8F1F2' }}>
-                            <Warehouse size={16} style={{ color: '#87CBB9' }} /> Kho Hàng (WMS)
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: '#E2E8F0' }}>
+                    <div className="flex items-center justify-between w-full sm:w-auto gap-3">
+                        <h2 className="text-base font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
+                            <Warehouse size={20} style={{ color: '#D4A853' }} /> Phân Hệ Kho Hàng (WMS Command Center)
                         </h2>
                         <button onClick={() => setCreateWHOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold sm:hidden transition-colors"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold sm:hidden transition-all shadow-xs"
+                            style={{ background: '#D4A853', color: '#0A1926' }}>
                             <Plus size={13} /> Tạo Kho
                         </button>
                     </div>
 
-                    {/* Stat Badges — Horizontally Scrollable on Mobile with fade hint */}
+                    {/* Stat Badges — Horizontally Scrollable on Mobile */}
                     <div className="relative w-full sm:w-auto">
-                        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar py-0.5 max-w-full pr-6 sm:pr-0">
+                        <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar py-0.5 max-w-full">
                             {statCards.map(s => (
-                                <div key={s.label} className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap shrink-0"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                    <s.icon size={12} style={{ color: s.accent }} />
-                                    <span className="uppercase font-medium" style={{ color: '#8AAEBB' }}>{s.label}:</span>
+                                <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-xs"
+                                    style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                    <s.icon size={13} style={{ color: s.accent }} />
+                                    <span className="uppercase font-semibold" style={{ color: '#64748B' }}>{s.label}:</span>
                                     <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
                                 </div>
                             ))}
                         </div>
-                        {/* Scroll fade hint — mobile only */}
-                        <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none sm:hidden"
-                            style={{ background: 'linear-gradient(to right, transparent, #142433)' }} />
                     </div>
 
                     <button onClick={() => setCreateWHOpen(true)}
-                        className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ml-auto transition-colors shrink-0"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
-                        <Plus size={13} /> Tạo Kho Mới
+                        className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all hover:brightness-105 shrink-0 ml-auto"
+                        style={{ background: '#D4A853', color: '#0A1926' }}>
+                        <Plus size={14} /> Tạo Kho Mới
                     </button>
                 </div>
 
-                {/* Bottom Row: WMS Navigation Tabs + Inline Warehouse Selector */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-0.5">
-                    {/* WMS Navigation Tabs — Horizontally Scrollable on Mobile */}
-                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap py-1 max-w-full">
-                        {wmsTabs.map(t => {
-                            const Icon = t.icon
-                            const active = activeTab === t.key
-                            return (
-                                <button key={t.key} onClick={() => handleTabChange(t.key)}
-                                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0"
-                                    style={{
-                                        background: active ? '#87CBB9' : 'transparent',
-                                        color: active ? '#0A1926' : '#8AAEBB',
-                                    }}>
-                                    <Icon size={14} /> {t.label}
-                                    {t.badge !== undefined && t.badge > 0 && (
-                                        <span className="text-[10px] min-w-[16px] text-center px-1.5 py-0.5 rounded-full font-bold"
-                                            style={{ background: active ? '#0A1926' : 'rgba(212,168,83,0.2)', color: active ? '#87CBB9' : '#D4A853' }}>
-                                            {t.badge}
-                                        </span>
-                                    )}
-                                </button>
-                            )
-                        })}
+                {/* Bottom Row: View Toggle Mode + Inline Warehouse Selector */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    {/* Mode Selector Buttons: Bảng Chức Năng vs Chế độ Làm Việc */}
+                    <div className="flex items-center gap-1.5 p-1 rounded-xl shrink-0" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
+                            style={{
+                                background: viewMode === 'grid' ? '#FFFFFF' : 'transparent',
+                                color: viewMode === 'grid' ? '#0F172A' : '#64748B',
+                                border: viewMode === 'grid' ? '1px solid #CBD5E1' : '1px solid transparent',
+                                boxShadow: viewMode === 'grid' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                            }}
+                        >
+                            <LayoutGrid size={14} style={{ color: viewMode === 'grid' ? '#B47816' : '#64748B' }} /> Bảng Chức Năng Kho
+                        </button>
+                        <button
+                            onClick={() => setViewMode('workspace')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
+                            style={{
+                                background: viewMode === 'workspace' ? '#FFFFFF' : 'transparent',
+                                color: viewMode === 'workspace' ? '#0F172A' : '#64748B',
+                                border: viewMode === 'workspace' ? '1px solid #CBD5E1' : '1px solid transparent',
+                                boxShadow: viewMode === 'workspace' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                            }}
+                        >
+                            <Box size={14} style={{ color: viewMode === 'workspace' ? '#B47816' : '#64748B' }} /> Màn Hình Làm Việc
+                        </button>
                     </div>
 
-                    {/* Warehouse Dropdown List */}
+                    {/* Warehouse Selector Dropdown */}
                     <div className="relative shrink-0">
                         <select
                             value={selectedWH ?? ''}
@@ -627,11 +673,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     selectWarehouse(val)
                                 }
                             }}
-                            className="w-full sm:w-auto appearance-none pl-3 pr-8 py-1.5 rounded-md text-xs font-semibold outline-none cursor-pointer"
+                            className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold outline-none cursor-pointer shadow-xs"
                             style={{
-                                background: '#1B2E3D',
-                                border: '1px solid #2A4355',
-                                color: '#87CBB9',
+                                background: '#FFFFFF',
+                                border: '1px solid #CBD5E1',
+                                color: '#0F172A',
                             }}
                         >
                             <option value="">🏢 Tất cả kho ({stats.warehouses})</option>
@@ -641,146 +687,251 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#87CBB9' }} />
+                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748B]" />
                     </div>
                 </div>
             </div>
 
-            {/* NXT — Stock Movement Report Tab */}
-            {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} />}
+            {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (GRID VIEW) ═══ */}
+            {viewMode === 'grid' && (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>
+                            Danh Mục 9 Nghiệp Vụ Quản Lý Kho
+                        </p>
+                    </div>
 
-            {/* 2D Warehouse Map Tab */}
-            {activeTab === 'map' && <WarehouseMapTab warehouses={warehouseList} selectedWarehouseId={selectedWH} isAdmin={isAdmin} />}
+                    {/* 9 Feature Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                        {wmsFeatureModules.map(mod => {
+                            const Icon = mod.icon
+                            return (
+                                <div
+                                    key={mod.key}
+                                    onClick={() => {
+                                        handleTabChange(mod.key)
+                                        setViewMode('workspace')
+                                    }}
+                                    className="p-4 sm:p-5 rounded-2xl flex flex-col justify-between cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 group shadow-sm"
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
+                                >
+                                    <div>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="p-3 rounded-xl transition-transform group-hover:scale-105 shrink-0"
+                                                style={{ background: mod.bg, color: mod.color }}>
+                                                <Icon size={24} />
+                                            </div>
+                                            {mod.badge !== undefined && mod.badge > 0 && (
+                                                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-extrabold shadow-xs"
+                                                    style={{ background: '#DC2626', color: '#FFFFFF' }}>
+                                                    {mod.badge} cảnh báo
+                                                </span>
+                                            )}
+                                        </div>
 
-            {/* GR Tab */}
-            {activeTab === 'gr' && <GoodsReceiptTab warehouses={warehouseList} />}
+                                        <h4 className="text-sm sm:text-base font-bold mb-1 group-hover:text-[#B47816] transition-colors"
+                                            style={{ color: '#0F172A' }}>
+                                            {mod.title}
+                                        </h4>
+                                        <p className="text-[11px] font-mono mb-2" style={{ color: '#64748B' }}>
+                                            {mod.subtitle}
+                                        </p>
+                                        <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
+                                            {mod.description}
+                                        </p>
+                                    </div>
 
-            {/* DO Tab */}
-            {activeTab === 'do' && <DeliveryOrderTab warehouses={warehouseList} />}
-
-            {/* Quarantine & Write-Off Tab — auto-loads */}
-            {activeTab === 'quarantine' && (
-                <QuarantinePanel lots={quarantineLots} loading={qLoading} onRefresh={async () => {
-                    setQLoading(true)
-                    setQuarantineLots(await getQuarantinedLots())
-                    setQLoading(false)
-                }} />
-            )}
-
-            {/* Locations Tab — Full Width */}
-            {activeTab === 'locations' && (
-                <div className="w-full">
-                    {selectedWH ? (
-                        <LocationManager
-                            key={selectedWH}
-                            warehouseId={selectedWH}
-                            warehouseName={warehouses.find(w => w.id === selectedWH)?.name ?? ''}
-                            initialLocations={selectedLocations}
-                        />
-                    ) : (
-                        <div className="flex flex-col items-center py-20 gap-3 rounded-xl"
-                            style={{ border: '1px dashed #2A4355', background: '#142433' }}>
-                            <MapPin size={36} style={{ color: '#4A6A7A' }} />
-                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
-                                Chọn một kho từ thanh kho ở trên để quản lý vị trí
-                            </p>
-                        </div>
-                    )}
+                                    <div className="mt-4 pt-3 flex items-center justify-between text-xs font-bold"
+                                        style={{ borderTop: '1px solid #F1F5F9', color: mod.color }}>
+                                        <span>{mod.actionLabel}</span>
+                                        <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
                 </div>
             )}
 
-            {/* Inventory Tab — Full Width */}
-            {activeTab === 'inventory' && (
-                <div className="w-full space-y-4">
-                    <div className="flex items-center justify-between">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
-                            {selectedWH
-                                ? `Tồn Kho — ${warehouses.find(w => w.id === selectedWH)?.name ?? ''}`
-                                : 'Tồn Kho — Tất cả kho'}
-                        </p>
-                            {selectedWH && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs px-2 py-1 rounded-lg font-mono" style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.1)' }}>
-                                        {filteredLots.length} lô
-                                    </span>
-                                    <button onClick={() => {
-                                        if (filteredLots.length === 0) return
-                                        const headers = ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Kho', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái']
-                                        const rows = filteredLots.map(l => [
-                                            l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
-                                            l.qtyAvailable, l.unitLandedCost, l.qtyAvailable * l.unitLandedCost,
-                                            new Date(l.receivedDate).toLocaleDateString('vi-VN'), l.status,
-                                        ])
-                                        const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
-                                        const BOM = '\uFEFF'
-                                        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
-                                        const url = URL.createObjectURL(blob)
-                                        const a = document.createElement('a')
-                                        a.href = url
-                                        a.download = `ton-kho-${new Date().toISOString().slice(0, 10)}.csv`
-                                        a.click()
-                                        URL.revokeObjectURL(url)
-                                    }} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors"
-                                        style={{ color: '#87CBB9', background: 'rgba(135,203,185,0.08)', border: '1px solid rgba(135,203,185,0.2)' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.15)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.08)')}>
-                                        <Download size={12} /> Export CSV
+            {/* ═══ VIEW MODE 2: MÀN HÌNH LÀM VIỆC CHI TIẾT (WORKSPACE VIEW) ═══ */}
+            {viewMode === 'workspace' && (
+                <div className="space-y-4">
+                    {/* Workspace Header Switcher & Breadcrumb */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl shadow-xs"
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors hover:bg-slate-100 shrink-0"
+                            style={{ background: '#F1F5F9', color: '#0F172A', border: '1px solid #CBD5E1' }}
+                        >
+                            <ArrowLeft size={14} /> ← Bảng Chức Năng Kho
+                        </button>
+
+                        {/* Quick Navigation Tabs */}
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                            {wmsFeatureModules.map(t => {
+                                const Icon = t.icon
+                                const active = activeTab === t.key
+                                return (
+                                    <button key={t.key} onClick={() => handleTabChange(t.key)}
+                                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all shrink-0"
+                                        style={{
+                                            background: active ? '#D4A853' : 'transparent',
+                                            color: active ? '#0A1926' : '#64748B',
+                                            border: active ? '1px solid #B47816' : '1px solid transparent'
+                                        }}>
+                                        <Icon size={12} /> {t.title.split(' ')[1] || t.title}
+                                        {t.badge !== undefined && t.badge > 0 && (
+                                            <span className="text-[9px] min-w-[14px] text-center px-1 rounded-full font-bold"
+                                                style={{ background: active ? '#0A1926' : 'rgba(220,38,38,0.15)', color: active ? '#D4A853' : '#DC2626' }}>
+                                                {t.badge}
+                                            </span>
+                                        )}
                                     </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* NXT — Stock Movement Report Tab */}
+                    {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} />}
+
+                    {/* 2D Warehouse Map Tab */}
+                    {activeTab === 'map' && <WarehouseMapTab warehouses={warehouseList} selectedWarehouseId={selectedWH} isAdmin={isAdmin} />}
+
+                    {/* GR Tab */}
+                    {activeTab === 'gr' && <GoodsReceiptTab warehouses={warehouseList} />}
+
+                    {/* DO Tab */}
+                    {activeTab === 'do' && <DeliveryOrderTab warehouses={warehouseList} />}
+
+                    {/* Transfer Tab — Gộp mới */}
+                    {activeTab === 'transfer' && <TransfersTab />}
+
+                    {/* Stock Count Tab — Gộp mới */}
+                    {activeTab === 'stock-count' && <StockCountTab />}
+
+                    {/* Quarantine Tab — auto-loads */}
+                    {activeTab === 'quarantine' && (
+                        <QuarantinePanel lots={quarantineLots} loading={qLoading} onRefresh={async () => {
+                            setQLoading(true)
+                            setQuarantineLots(await getQuarantinedLots())
+                            setQLoading(false)
+                        }} />
+                    )}
+
+                    {/* Locations Tab — Full Width */}
+                    {activeTab === 'locations' && (
+                        <div className="w-full">
+                            {selectedWH ? (
+                                <LocationManager
+                                    key={selectedWH}
+                                    warehouseId={selectedWH}
+                                    warehouseName={warehouses.find(w => w.id === selectedWH)?.name ?? ''}
+                                    initialLocations={selectedLocations}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center py-20 gap-3 rounded-xl shadow-xs"
+                                    style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+                                    <MapPin size={36} style={{ color: '#94A3B8' }} />
+                                    <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
+                                        Vui lòng chọn một kho từ danh sách ở trên để quản lý vị trí
+                                    </p>
                                 </div>
                             )}
                         </div>
+                    )}
 
-                        {selectedWH && (
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <div className="relative flex-1 min-w-[200px]">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
-                                    <input placeholder="Tìm lô, sản phẩm, SKU..." value={search}
-                                        onChange={e => setSearch(e.target.value)}
-                                        className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                                        onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
-                                </div>
-                                <div className="flex gap-2">
-                                    <select value={wineFilter} onChange={e => setWineFilter(e.target.value)}
-                                        className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: wineFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                                    <option value="">Tất cả loại</option>
-                                    <option value="RED">🔴 Đỏ</option>
-                                    <option value="WHITE">🟡 Trắng</option>
-                                    <option value="ROSE">🌸 Rosé</option>
-                                    <option value="SPARKLING">🥂 Sủi tăm</option>
-                                    <option value="FORTIFIED">🍯 Fortified</option>
-                                    <option value="DESSERT">🍮 Dessert</option>
-                                </select>
-                                    <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                                        className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                                        <option value="">Tất cả TT</option>
-                                        <option value="AVAILABLE">✅ Sẵn sàng</option>
-                                        <option value="RESERVED">📌 Đã đặt</option>
-                                        <option value="QUARANTINE">⚠️ Cách ly</option>
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        {lotsLoading ? (
-                            <div className="flex items-center justify-center py-12">
-                                <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
-                            </div>
-                        ) : selectedWH ? (
-                            <StockTable lots={filteredLots} sortConfig={sortConfig} onSort={handleSort} />
-                        ) : (
-                            <div className="flex flex-col items-center py-20 gap-3 rounded-xl"
-                                style={{ border: '1px dashed #2A4355' }}>
-                                <Warehouse size={36} style={{ color: '#2A4355' }} />
-                                <p className="text-sm" style={{ color: '#4A6A7A' }}>
-                                    Chọn một kho để xem tồn kho chi tiết
+                    {/* Inventory Tab — Full Width */}
+                    {activeTab === 'inventory' && (
+                        <div className="w-full space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>
+                                    {selectedWH
+                                        ? `Tồn Kho — ${warehouses.find(w => w.id === selectedWH)?.name ?? ''}`
+                                        : 'Tồn Kho — Tất cả kho'}
                                 </p>
+                                {selectedWH && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold" style={{ color: '#B47816', background: 'rgba(212,168,83,0.15)' }}>
+                                            {filteredLots.length} lô
+                                        </span>
+                                        <button onClick={() => {
+                                            if (filteredLots.length === 0) return
+                                            const headers = ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Kho', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái']
+                                            const rows = filteredLots.map(l => [
+                                                l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
+                                                l.qtyAvailable, l.unitLandedCost, l.qtyAvailable * l.unitLandedCost,
+                                                new Date(l.receivedDate).toLocaleDateString('vi-VN'), l.status,
+                                            ])
+                                            const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
+                                            const BOM = '\uFEFF'
+                                            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+                                            const url = URL.createObjectURL(blob)
+                                            const a = document.createElement('a')
+                                            a.href = url
+                                            a.download = `ton-kho-${new Date().toISOString().slice(0, 10)}.csv`
+                                            a.click()
+                                            URL.revokeObjectURL(url)
+                                        }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all font-bold shadow-xs"
+                                            style={{ color: '#0F172A', background: '#F1F5F9', border: '1px solid #CBD5E1' }}>
+                                            <Download size={13} /> Export CSV
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+
+                            {selectedWH && (
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <div className="relative flex-1 min-w-[200px]">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
+                                        <input placeholder="Tìm lô, sản phẩm, SKU..." value={search}
+                                            onChange={e => setSearch(e.target.value)}
+                                            className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none font-medium"
+                                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }} />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <select value={wineFilter} onChange={e => setWineFilter(e.target.value)}
+                                            className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none font-medium"
+                                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: wineFilter ? '#0F172A' : '#64748B' }}>
+                                            <option value="">Tất cả loại rượu</option>
+                                            <option value="RED">🔴 Đỏ</option>
+                                            <option value="WHITE">🟡 Trắng</option>
+                                            <option value="ROSE">🌸 Rosé</option>
+                                            <option value="SPARKLING">🥂 Sủi tăm</option>
+                                            <option value="FORTIFIED">🍯 Fortified</option>
+                                            <option value="DESSERT">🍮 Dessert</option>
+                                        </select>
+                                        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+                                            className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none font-medium"
+                                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: statusFilter ? '#0F172A' : '#64748B' }}>
+                                            <option value="">Tất cả trạng thái</option>
+                                            <option value="AVAILABLE">✅ Sẵn sàng</option>
+                                            <option value="RESERVED">📌 Đã đặt</option>
+                                            <option value="QUARANTINE">⚠️ Cách ly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
+                            {lotsLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 size={24} className="animate-spin" style={{ color: '#D4A853' }} />
+                                </div>
+                            ) : selectedWH ? (
+                                <StockTable lots={filteredLots} sortConfig={sortConfig} onSort={handleSort} />
+                            ) : (
+                                <div className="flex flex-col items-center py-20 gap-3 rounded-xl shadow-xs"
+                                    style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+                                    <Warehouse size={36} style={{ color: '#94A3B8' }} />
+                                    <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
+                                        Vui lòng chọn một kho để xem tồn kho chi tiết
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             )}
 
             <CreateWarehouseModal
