@@ -432,7 +432,7 @@ export async function getTransferOptions() {
             prisma.warehouse.findMany({ select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } }),
             prisma.product.findMany({
                 where: { status: 'ACTIVE' },
-                select: { id: true, skuCode: true, productName: true, country: true, vintage: true },
+                select: { id: true, skuCode: true, productName: true, country: true },
                 orderBy: { skuCode: 'asc' }
             }),
         ])
@@ -473,7 +473,7 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
             toWarehouse: { select: { name: true, code: true } },
             lines: {
                 include: {
-                    product: { select: { productName: true, skuCode: true, vintage: true, country: true } },
+                    product: { select: { productName: true, skuCode: true, country: true } },
                 },
             },
         },
@@ -488,7 +488,7 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
     const userMap = new Map(users.map(u => [u.id, u.name || u.email]))
 
     // Get stock lots at source warehouse & cost info
-    const lineDetails = await Promise.all(to.lines.map(async (l) => {
+    const lineDetails = await Promise.all((to.lines || []).map(async (l: any) => {
         const stockSum = await prisma.stockLot.aggregate({
             where: {
                 productId: l.productId,
@@ -500,7 +500,7 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
 
         const firstLot = await prisma.stockLot.findFirst({
             where: { productId: l.productId },
-            select: { unitLandedCost: true },
+            select: { unitLandedCost: true, vintage: true },
             orderBy: { receivedDate: 'desc' },
         })
 
@@ -511,18 +511,18 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
             productId: l.productId,
             productName: l.product.productName,
             skuCode: l.product.skuCode,
-            vintage: l.product.vintage,
+            vintage: firstLot?.vintage ?? null,
             country: l.product.country,
             qtyTransferred: qtyTrans,
-            qtyReceived: Number(l.qtyReceived),
+            qtyReceived: Number(l.qtyReceived || 0),
             qtyAvailableFromWH: Number(stockSum._sum.qtyAvailable || 0),
             unitCost,
             totalValue: qtyTrans * unitCost,
         }
     }))
 
-    const totalQty = lineDetails.reduce((s, l) => s + l.qtyTransferred, 0)
-    const totalValue = lineDetails.reduce((s, l) => s + l.totalValue, 0)
+    const totalQty = lineDetails.reduce((s: number, l: any) => s + l.qtyTransferred, 0)
+    const totalValue = lineDetails.reduce((s: number, l: any) => s + l.totalValue, 0)
 
     return {
         id: to.id,
