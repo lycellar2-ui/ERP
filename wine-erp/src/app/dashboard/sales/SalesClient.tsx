@@ -2198,7 +2198,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
 
         setSubmitting(true)
         try {
-            const res = await approveMutation.mutateAsync({ id: soId, vintages: vintagesList, warehouseId: selectedWarehouseId || undefined })
+            const res = await approveSalesOrder(soId, vintagesList, selectedWarehouseId || undefined)
             if (res.success) {
                 toast.success('Đã duyệt đơn hàng thành công!')
                 onApproved()
