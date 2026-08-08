@@ -503,6 +503,7 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Tự động mặc định kho theo Pháp nhân** | `SalesClient.tsx`, `DeliveryOrderTab.tsx` | Tự động chọn kho mặc định của Pháp nhân sở hữu đơn bán hàng, vô hiệu hóa kho chỉ điều chuyển (`allowSales: false`) khỏi đơn bán hàng để tránh chọn nhầm |
 | **Tự động mặc định kho theo Pháp nhân** | `SalesClient.tsx`, `DeliveryOrderTab.tsx` | Tự động chọn kho mặc định của Pháp nhân sở hữu đơn bán hàng, vô hiệu hóa kho chỉ điều chuyển (`allowSales: false`) khỏi đơn bán hàng để tránh chọn nhầm |
 | **Tự động tách vị trí nhặt hàng Multi-Location FIFO** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Tự động phân bổ số lượng nhặt tách ra nhiều vị trí/lô theo thứ tự FIFO (VD: nhặt 1 chai ở kệ A, 1 chai ở kệ B cho đủ 2 chai đơn hàng). Bỏ nút phân bổ thừa và hỗ trợ thêm/xóa dòng tách vị trí nhặt linh hoạt |
+| **Phân quyền Cấu hình Kho về Cài đặt & RBAC System Admin** | `SettingsClient.tsx`, `WarehouseClient.tsx` | Đưa toàn bộ cấu hình kho (Pháp nhân quản lý, Cho phép Bán Hàng `allowSales`, Cho phép Điều Chuyển `allowTransfer`, Kho Mặc Định `isDefault`) về mục Cài Đặt hệ thống & RBAC (`SYS:ADMIN`). Gỡ nút Cấu Hình Kho khỏi màn hình WMS để tránh thủ kho chọn nhầm |
 
 ### Chi tiết GR Variance Report
 
@@ -514,5 +515,5 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-08-08 | Wine ERP v8.6 — Unified WMS Command Center + Setup Kho Xuất Bán/Điều Chuyển & Vintage Priority DO Picking*
+*Last updated: 2026-08-08 | Wine ERP v8.9 — Unified WMS Command Center + RBAC Warehouse Setup & Custom Sales Order Date*
 

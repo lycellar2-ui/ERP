@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 16:38 | Wine ERP v8.9 — 29 modules, 123 models, Custom Order Date Selection on Sales Order Creation & Edit*
+*Last updated: 2026-08-08 16:47 | Wine ERP v8.9 — 29 modules, 123 models, RBAC Warehouse Setup in System Settings & Custom Sales Order Date*
 

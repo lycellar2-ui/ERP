@@ -606,26 +606,52 @@ export async function updateLegalEntity(id: string, data: {
 export async function getSystemWarehouses() {
     await requirePermission('SYS', 'ADMIN')
     const list = await prisma.warehouse.findMany({
-        select: { id: true, code: true, name: true, legalEntityId: true },
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            address: true,
+            legalEntityId: true,
+            allowSales: true,
+            allowTransfer: true,
+            isDefault: true,
+        },
         orderBy: { name: 'asc' }
     })
     return serialize(list)
 }
 
-export async function updateWarehouseLegalEntity(warehouseId: string, legalEntityId: string | null) {
+export async function updateWarehouseConfig(warehouseId: string, data: {
+    legalEntityId?: string | null
+    allowSales?: boolean
+    allowTransfer?: boolean
+    isDefault?: boolean
+}) {
     try {
         await requirePermission('SYS', 'ADMIN')
+        if (data.isDefault && data.legalEntityId) {
+            await prisma.warehouse.updateMany({
+                where: { legalEntityId: data.legalEntityId, id: { not: warehouseId } },
+                data: { isDefault: false }
+            })
+        }
         const updated = await prisma.warehouse.update({
             where: { id: warehouseId },
-            data: { legalEntityId }
+            data
         })
         revalidateCache('settings')
         revalidateCache('wms:warehouses')
         revalidatePath('/dashboard/settings')
+        revalidatePath('/dashboard/warehouse')
+        revalidatePath('/dashboard/sales')
         return { success: true, warehouse: serialize(updated) }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
+}
+
+export async function updateWarehouseLegalEntity(warehouseId: string, legalEntityId: string | null) {
+    return updateWarehouseConfig(warehouseId, { legalEntityId })
 }
 
 // ─── Sync user to Supabase Auth ───────────────────

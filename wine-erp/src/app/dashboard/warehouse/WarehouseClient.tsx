@@ -47,138 +47,6 @@ const LOT_STATUS: Record<string, { label: string; color: string }> = {
 }
 
 // ── Create Warehouse Modal ─────────────────────────
-function EditWarehouseModal({ open, warehouse, legalEntities, onClose, onUpdated }: {
-    open: boolean
-    warehouse: WarehouseRow | null
-    legalEntities: { id: string; code: string; name: string }[]
-    onClose: () => void
-    onUpdated: () => void
-}) {
-    const [form, setForm] = useState({
-        name: '',
-        address: '',
-        legalEntityId: '',
-        allowSales: true,
-        allowTransfer: true,
-        isDefault: false
-    })
-    const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
-
-    useEffect(() => {
-        if (warehouse) {
-            setForm({
-                name: warehouse.name || '',
-                address: warehouse.address || '',
-                legalEntityId: warehouse.legalEntityId || '',
-                allowSales: warehouse.allowSales !== false,
-                allowTransfer: warehouse.allowTransfer !== false,
-                isDefault: warehouse.isDefault === true
-            })
-        }
-    }, [warehouse])
-
-    if (!open || !warehouse) return null
-
-    const handleSave = async () => {
-        if (!form.name) return setError('Điền tên kho')
-        setSaving(true)
-        try {
-            await editWarehouse(warehouse.id, {
-                name: form.name,
-                address: form.address || undefined,
-                legalEntityId: form.legalEntityId || null,
-                allowSales: form.allowSales,
-                allowTransfer: form.allowTransfer,
-                isDefault: form.isDefault
-            })
-            onUpdated()
-        } catch (err: any) {
-            setError(err.message)
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(15, 23, 42, 0.5)' }} onClick={onClose}>
-            <div className="rounded-2xl p-6 space-y-4 w-full max-w-md shadow-2xl"
-                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: '#E2E8F0' }}>
-                    <div>
-                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                            ⚙️ Cấu Hình Kho: <span className="text-[#B47816] font-mono">{warehouse.code}</span>
-                        </h3>
-                        <p className="text-xs" style={{ color: '#64748B' }}>Thiết lập phân quyền xuất bán hàng & pháp nhân</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
-                </div>
-
-                {error && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>{error}</div>}
-
-                <div>
-                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>Tên Kho</label>
-                    <input className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
-                        value={form.name} onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} />
-                </div>
-
-                <div>
-                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>Địa Chỉ Kho</label>
-                    <input className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
-                        value={form.address} onChange={e => setForm(prev => ({ ...prev, address: e.target.value }))} />
-                </div>
-
-                <div>
-                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>Pháp Nhân Sở Hữu</label>
-                    <select className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
-                        value={form.legalEntityId} onChange={e => setForm(prev => ({ ...prev, legalEntityId: e.target.value }))}>
-                        <option value="">— Chưa phân gán pháp nhân —</option>
-                        {legalEntities.map(e => (
-                            <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Setup Rules Checkboxes */}
-                <div className="p-3.5 rounded-xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#0F172A]">Mục Đích Sử Dụng Kho</p>
-                    
-                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-medium" style={{ color: '#334155' }}>
-                        <input type="checkbox" checked={form.allowSales} onChange={e => setForm(prev => ({ ...prev, allowSales: e.target.checked }))} className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" />
-                        <span>🛒 <strong>Cho phép xuất Bán Hàng</strong> (Ưu tiên nhặt đơn hàng SO/DO)</span>
-                    </label>
-
-                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-medium" style={{ color: '#334155' }}>
-                        <input type="checkbox" checked={form.allowTransfer} onChange={e => setForm(prev => ({ ...prev, allowTransfer: e.target.checked }))} className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" />
-                        <span>🔄 <strong>Cho phép Xuất/Nhận Điều Chuyển</strong> nội bộ</span>
-                    </label>
-
-                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-medium" style={{ color: '#334155' }}>
-                        <input type="checkbox" checked={form.isDefault} onChange={e => setForm(prev => ({ ...prev, isDefault: e.target.checked }))} className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500" />
-                        <span>⭐ <strong>Kho Mặc Định</strong> của Pháp Nhân này</span>
-                    </label>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-2">
-                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm font-semibold"
-                        style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#F1F5F9' }}>Hủy</button>
-                    <button onClick={handleSave} disabled={saving}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold shadow-md"
-                        style={{ background: '#D4A853', color: '#0A1926' }}>
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {saving ? '...' : 'Cập Nhật Kho'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
 function CreateWarehouseModal({ open, onClose, onCreated }: {
     open: boolean; onClose: () => void; onCreated: () => void
 }) {
@@ -776,21 +644,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         ))}
                     </div>
 
-                    {/* Right Action Group: Warehouse Selector + Setup Button + Create WH Button */}
+                    {/* Right Action Group: Warehouse Selector + Create WH Button */}
                     <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-                        {selectedWH && (
-                            <button
-                                onClick={() => {
-                                    const wh = warehouses.find(w => w.id === selectedWH) || null
-                                    setEditingWH(wh)
-                                }}
-                                className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-lg shadow-xs transition-all hover:bg-slate-100 cursor-pointer"
-                                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#B47816' }}
-                                title="Thiết lập quyền hạn xuất bán hàng và kho mặc định cho kho này"
-                            >
-                                ⚙️ Cấu Hình Kho
-                            </button>
-                        )}
                         <div className="relative shrink-0 flex-1 sm:flex-none">
                             <select
                                 value={selectedWH ?? ''}
@@ -1041,18 +896,6 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 onClose={() => setCreateWHOpen(false)}
                 onCreated={async () => {
                     setCreateWHOpen(false)
-                    const { getWarehouses } = await import('./actions')
-                    setWarehouses(await getWarehouses())
-                }}
-            />
-
-            <EditWarehouseModal
-                open={!!editingWH}
-                warehouse={editingWH}
-                legalEntities={legalEntities}
-                onClose={() => setEditingWH(null)}
-                onUpdated={async () => {
-                    setEditingWH(null)
                     const { getWarehouses } = await import('./actions')
                     setWarehouses(await getWarehouses())
                 }}

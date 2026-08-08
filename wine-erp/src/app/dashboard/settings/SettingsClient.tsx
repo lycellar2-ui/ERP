@@ -11,7 +11,7 @@ import {
     UserRow, RoleRow, createUser, updateUser, updateUserRoles,
     createRole, updateRolePermissions, getRolePermissions, getUsers, getRoles,
     getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate,
-    getLegalEntitiesList, updateLegalEntity, getSystemWarehouses, updateWarehouseLegalEntity,
+    getLegalEntitiesList, updateLegalEntity, getSystemWarehouses, updateWarehouseConfig, updateWarehouseLegalEntity,
     adminResetPassword
 } from './actions'
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
@@ -658,13 +658,18 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         setSavingEntity(false)
     }
 
-    const handleUpdateWarehouseLE = async (warehouseId: string, legalEntityId: string | null) => {
-        const res = await updateWarehouseLegalEntity(warehouseId, legalEntityId)
+    const handleUpdateWarehouseConfigState = async (warehouseId: string, data: {
+        legalEntityId?: string | null
+        allowSales?: boolean
+        allowTransfer?: boolean
+        isDefault?: boolean
+    }) => {
+        const res = await updateWarehouseConfig(warehouseId, data)
         if (res.success) {
-            toast.success('Đã gán pháp nhân cho kho thành công!')
+            toast.success('Đã cập nhật cấu hình kho thành công!')
             await loadEntities()
         } else {
-            toast.error(res.error || 'Lỗi gán pháp nhân')
+            toast.error(res.error || 'Lỗi cập nhật cấu hình kho')
         }
     }
 
@@ -1154,37 +1159,78 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             </div>
                         </div>
 
-                        {/* Warehouses Mapping Section */}
+                        {/* Warehouses Mapping & RBAC Configuration Section */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#D4A853' }}>Ánh Xạ Kho Xuất Hàng</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#D4A853' }}>
+                                <Shield size={16} /> Cấu Hình & Phân Quyền Kho Hàng (RBAC System Admin)
+                            </h3>
                             <div className="p-5 rounded-lg space-y-4" style={card}>
                                 <p className="text-xs leading-relaxed" style={{ color: '#8AAEBB' }}>
-                                    Ánh xạ từng kho xuất hàng vật lý về một pháp nhân cụ thể. Khi Sale Admin phê duyệt đơn hàng, danh sách kho sẽ tự động lọc theo đúng pháp nhân của đơn để chọn.
+                                    Quản trị viên (Admin/CEO) thiết lập vai trò xuất bán, điều chuyển và pháp nhân cho từng kho. Thủ kho chỉ được thao tác trong phạm vi kho được cấu hình tại đây, tránh chọn nhầm kho xuất bán.
                                 </p>
                                 <div className="space-y-4">
                                     {warehouses.map(w => (
-                                        <div key={w.id} className="flex flex-col gap-2 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                            <div className="flex justify-between items-center">
+                                        <div key={w.id} className="flex flex-col gap-3 p-4 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2A4355] pb-2.5">
                                                 <div>
-                                                    <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{w.name}</p>
-                                                    <p className="text-[10px] font-mono mt-0.5" style={{ color: '#4A6A7A' }}>Mã: {w.code}</p>
+                                                    <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#E8F1F2' }}>
+                                                        🏢 {w.name}
+                                                        {w.isDefault && <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-mono font-bold">⭐ Kho Mặc Định</span>}
+                                                        {w.allowSales === false && <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1.5 py-0.5 rounded font-mono font-bold">⛔ Chỉ Xuất Điều Chuyển</span>}
+                                                    </p>
+                                                    <p className="text-[11px] font-mono mt-0.5" style={{ color: '#4A6A7A' }}>Mã: {w.code}{w.address ? ` · Địa chỉ: ${w.address}` : ''}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <label className="text-[10px] uppercase font-semibold whitespace-nowrap" style={{ color: '#8AAEBB' }}>
-                                                    Pháp nhân quản lý
+
+                                            {/* Legal Entity Select */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                <label className="text-xs font-semibold whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                                    Pháp nhân quản lý:
                                                 </label>
                                                 <select
                                                     value={w.legalEntityId || ''}
-                                                    onChange={e => handleUpdateWarehouseLE(w.id, e.target.value || null)}
+                                                    onChange={e => handleUpdateWarehouseConfigState(w.id, { legalEntityId: e.target.value || null })}
                                                     className="flex-1 px-3 py-1.5 text-xs outline-none rounded-md"
                                                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                                                 >
                                                     <option value="">— Chưa gán / Không thuộc pháp nhân nào —</option>
                                                     {entities.map(ent => (
-                                                        <option key={ent.id} value={ent.id}>{ent.name}</option>
+                                                        <option key={ent.id} value={ent.id}>{ent.name} ({ent.code})</option>
                                                     ))}
                                                 </select>
+                                            </div>
+
+                                            {/* Capability Checkboxes */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-[#2A4355]/40">
+                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-[#1B2E3D] transition-colors" style={{ color: '#E8F1F2' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={w.allowSales !== false}
+                                                        onChange={e => handleUpdateWarehouseConfigState(w.id, { allowSales: e.target.checked })}
+                                                        className="w-4 h-4 rounded text-teal-500 focus:ring-teal-400"
+                                                    />
+                                                    <span>🛒 <strong>Cho phép Bán Hàng</strong> (SO/DO)</span>
+                                                </label>
+
+                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-[#1B2E3D] transition-colors" style={{ color: '#E8F1F2' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={w.allowTransfer !== false}
+                                                        onChange={e => handleUpdateWarehouseConfigState(w.id, { allowTransfer: e.target.checked })}
+                                                        className="w-4 h-4 rounded text-teal-500 focus:ring-teal-400"
+                                                    />
+                                                    <span>🔄 <strong>Cho phép Điều Chuyển</strong></span>
+                                                </label>
+
+                                                <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-[#1B2E3D] transition-colors" style={{ color: '#E8F1F2' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={w.isDefault === true}
+                                                        onChange={e => handleUpdateWarehouseConfigState(w.id, { isDefault: e.target.checked })}
+                                                        className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400"
+                                                    />
+                                                    <span>⭐ <strong>Kho Mặc Định</strong></span>
+                                                </label>
                                             </div>
                                         </div>
                                     ))}
