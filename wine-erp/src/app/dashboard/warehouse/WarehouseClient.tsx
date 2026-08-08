@@ -696,7 +696,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     </div>
                 </div>
             </div>
-                
+
             {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (GRID VIEW) ═══ */}
             {viewMode === 'grid' && (
                 <div className="space-y-4">
@@ -832,10 +832,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         <span>{mod.actionLabel}</span>
                                         <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                                     </div>
+                                </div>
                             )
                         })}
                     </div>
                 </div>
+            </div>
             )}
 
             {/* ═══ VIEW MODE 2: MÀN HÌNH LÀM VIỆC CHI TIẾT (WORKSPACE VIEW) ═══ */}
