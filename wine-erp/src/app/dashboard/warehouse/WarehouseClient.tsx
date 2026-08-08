@@ -599,7 +599,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: '#E2E8F0' }}>
                     <div className="flex items-center justify-between w-full sm:w-auto gap-3">
                         <h2 className="text-base font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                            <Warehouse size={20} style={{ color: '#D4A853' }} /> Phân Hệ Kho Hàng (WMS Command Center)
+                            <Warehouse size={20} style={{ color: '#D4A853' }} /> Kho Hàng
                         </h2>
                         <button onClick={() => setCreateWHOpen(true)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold sm:hidden transition-all shadow-xs"
@@ -697,7 +697,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>
-                            Danh Mục 9 Nghiệp Vụ Quản Lý Kho
+                            Chức Năng Quản Lý Kho
                         </p>
                     </div>
 

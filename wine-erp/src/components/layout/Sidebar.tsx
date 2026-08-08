@@ -59,8 +59,6 @@ const NAV_GROUPS: NavGroup[] = [
         label: 'Kho & Bán Hàng',
         items: [
             { href: '/dashboard/warehouse', icon: Warehouse, label: 'Kho Hàng', permission: 'WMS:READ' },
-            { href: '/dashboard/transfers', icon: ArrowRightLeft, label: 'Chuyển Kho', permission: 'TRS:READ' },
-            { href: '/dashboard/stock-count', icon: ClipboardList, label: 'Kiểm Kê', permission: 'WMS:READ' },
             { href: '/dashboard/sales/visits', icon: MapPin, label: 'Check-in Thị Trường', permission: 'SLS:READ' },
             { href: '/dashboard/sales', icon: Briefcase, label: 'Đơn Bán Hàng', permission: 'SLS:READ' },
             { href: '/dashboard/quotations', icon: FileText, label: 'Báo Giá', permission: 'SLS:READ' },
