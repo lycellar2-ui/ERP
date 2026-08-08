@@ -1123,6 +1123,14 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.address || '—'}</span>
                                             </div>
                                             <div className="flex justify-between">
+                                                <span>Số điện thoại:</span>
+                                                <span className="text-white font-medium text-right font-mono">{ent.phone || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Email:</span>
+                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.email || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
                                                 <span>Ngân hàng:</span>
                                                 <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.bankName || '—'}</span>
                                             </div>
@@ -1218,7 +1226,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
     open: boolean; onClose: () => void; onSave: (id: string, data: any) => void; entity: any; saving: boolean
 }) {
     const [form, setForm] = useState({
-        name: '', taxId: '', address: '', bankName: '', bankAccountName: '', bankAccountNumber: ''
+        name: '', taxId: '', address: '', phone: '', email: '', bankName: '', bankAccountName: '', bankAccountNumber: ''
     })
 
     React.useEffect(() => {
@@ -1227,6 +1235,8 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
                 name: entity.name || '',
                 taxId: entity.taxId || '',
                 address: entity.address || '',
+                phone: entity.phone || '',
+                email: entity.email || '',
                 bankName: entity.bankName || '',
                 bankAccountName: entity.bankAccountName || '',
                 bankAccountNumber: entity.bankAccountNumber || ''
@@ -1256,6 +1266,16 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
                         <div>
                             <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Địa Chỉ</label>
                             <input style={inputStyle} {...focusHandler} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Số Điện Thoại</label>
+                                <input style={inputStyle} {...focusHandler} placeholder="e.g. 024.3933.8888" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Email</label>
+                                <input style={inputStyle} {...focusHandler} placeholder="e.g. orders@lyscellars.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                            </div>
                         </div>
                         <div className="pt-4 border-t border-[#2A4355]">
                             <p className="text-xs font-bold uppercase mb-3 flex items-center gap-1.5" style={{ color: '#D4A853' }}>

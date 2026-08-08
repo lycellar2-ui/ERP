@@ -23,6 +23,8 @@ model LegalEntity {
   name              String
   taxId             String?
   address           String?
+  phone             String?
+  email             String?
   bankName          String?
   bankAccountName   String?
   bankAccountNumber String?

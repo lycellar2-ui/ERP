@@ -1109,7 +1109,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
                                     <div>
                                         <h2 className="font-bold text-xs text-slate-900 uppercase tracking-wide">
-                                            {entities.find(e => e.id === legalEntityId)?.name || "CÔNG TY TNHH THẮNG ÂN"}
+                                            {entities.find(e => e.id === legalEntityId)?.name || "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN"}
                                         </h2>
                                         <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
                                             Địa chỉ: {(entities.find(e => e.id === legalEntityId) as any)?.address || "Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội"}<br />

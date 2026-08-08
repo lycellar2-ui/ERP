@@ -582,6 +582,8 @@ export async function updateLegalEntity(id: string, data: {
     name: string
     taxId: string | null
     address: string | null
+    phone?: string | null
+    email?: string | null
     bankName: string | null
     bankAccountName: string | null
     bankAccountNumber: string | null
