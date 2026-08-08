@@ -346,33 +346,53 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     }
 
     const addLine = () => {
-        setLines(prev => [...prev, { productId: '', productName: '', skuCode: '', qtyOrdered: 1, unitPrice: 0, lineDiscountPct: 0, stock: 0, priceSource: null, vatRate: 10 }])
+        const existingLine = lines.find(l => l.productId)
+        const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : 10
+        setLines(prev => [...prev, { productId: '', productName: '', skuCode: '', qtyOrdered: 1, unitPrice: 0, lineDiscountPct: 0, stock: 0, priceSource: null, vatRate: inheritedVatRate }])
     }
 
     const updateLine = (i: number, field: keyof SOLine, value: any) => {
-        setLines(prev => prev.map((l, idx) => {
-            if (idx !== i) return l
-            if (field === 'productId') {
-                const p = products.find(p => p.id === value)!
-                const mapEntry = priceMap[value]
-                const resolvedPrice = (mapEntry && mapEntry.price > 0) ? mapEntry.price : 0
-                const wp = p?.wholesalePrice ?? 0
-                const rp = p?.retailPrice ?? 0
-                const isWholesaleChan = (channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR')
-                const fallbackUnitPrice = isWholesaleChan ? (wp > 0 ? wp : rp) : (rp > 0 ? rp : wp)
-                const unitPrice = resolvedPrice > 0 ? resolvedPrice : fallbackUnitPrice
-                const priceSource = (mapEntry && resolvedPrice > 0) ? mapEntry.source : (isWholesaleChan ? 'WHOLESALE_BASE' : 'RETAIL_BASE')
-                
-                // Update search query display
-                setSearchQueries(prevQueries => ({
-                    ...prevQueries,
-                    [i]: `[${p.skuCode}] ${p.productName}`
-                }))
-
-                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, priceSource, vatRate: p.vatRate ? Number(p.vatRate) : 10 }
+        setLines(prev => {
+            let newVatRate: number | null = null
+            if (field === 'vatRate') {
+                newVatRate = Number(value)
+                toast.info(`Đã áp dụng thuế suất VAT ${newVatRate}% đồng bộ cho toàn bộ đơn hàng`)
             }
-            return { ...l, [field]: value }
-        }))
+
+            return prev.map((l, idx) => {
+                if (field === 'vatRate' && newVatRate !== null) {
+                    return { ...l, vatRate: newVatRate }
+                }
+                if (idx !== i) return l
+                if (field === 'productId') {
+                    const p = products.find(p => p.id === value)!
+                    const mapEntry = priceMap[value]
+                    const resolvedPrice = (mapEntry && mapEntry.price > 0) ? mapEntry.price : 0
+                    const wp = p?.wholesalePrice ?? 0
+                    const rp = p?.retailPrice ?? 0
+                    const isWholesaleChan = (channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR')
+                    const fallbackUnitPrice = isWholesaleChan ? (wp > 0 ? wp : rp) : (rp > 0 ? rp : wp)
+                    const unitPrice = resolvedPrice > 0 ? resolvedPrice : fallbackUnitPrice
+                    const priceSource = (mapEntry && resolvedPrice > 0) ? mapEntry.source : (isWholesaleChan ? 'WHOLESALE_BASE' : 'RETAIL_BASE')
+                    
+                    // Update search query display
+                    setSearchQueries(prevQueries => ({
+                        ...prevQueries,
+                        [i]: `[${p.skuCode}] ${p.productName}`
+                    }))
+
+                    const existingLine = prev.find((item, itemIdx) => itemIdx !== i && item.productId)
+                    const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (p?.vatRate ? Number(p.vatRate) : 10)
+
+                    if (existingLine && p?.vatRate && Number(p.vatRate) !== inheritedVatRate) {
+                        toast.info(`Sản phẩm "${p.productName}" có VAT gốc ${p.vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo đơn hàng để đồng nhất 1 loại thuế suất.`)
+                    }
+
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, priceSource, vatRate: inheritedVatRate }
+                }
+                return { ...l, [field]: value }
+            })
+        })
     }
 
     const removeLine = (i: number) => setLines(prev => prev.filter((_, idx) => idx !== i))
@@ -402,6 +422,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
         if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
         if (lines.some(l => !l.productId)) return toast.error('Vui lòng chọn sản phẩm cho tất cả các dòng')
+
+        const distinctVat = Array.from(new Set(lines.map(l => Number(l.vatRate ?? 10))))
+        if (distinctVat.length > 1) {
+            return toast.error(`Mỗi hóa đơn/đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất! Đơn hiện tại đang dính các mức: ${distinctVat.join('%, ')}%.`)
+        }
 
         setSaving(true)
         const promise = createSalesOrder({

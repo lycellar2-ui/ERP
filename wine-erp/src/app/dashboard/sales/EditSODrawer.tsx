@@ -345,24 +345,49 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         if (!p) return
         const price = priceMap[productId]?.price ?? 0
         const source = priceMap[productId]?.source ?? null
+        const existingLine = lines.find(l => l.productId)
+        const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (p.vatRate ? Number(p.vatRate) : 10)
+
+        if (existingLine && p.vatRate && Number(p.vatRate) !== inheritedVatRate) {
+            toast.info(`Sản phẩm "${p.productName}" có VAT gốc ${p.vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo đơn hàng để đồng nhất 1 loại thuế suất.`)
+        }
+
         setLines(prev => [...prev, {
             productId: p.id, productName: p.productName, skuCode: p.skuCode,
             qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: p.totalStock,
-            priceSource: source, vatRate: p.vatRate ? Number(p.vatRate) : 10,
+            priceSource: source, vatRate: inheritedVatRate,
         }])
     }
 
     const updateLine = (idx: number, field: keyof SOLine, value: any) => {
-        setLines(prev => prev.map((l, i) => {
-            if (i !== idx) return l
-            if (field === 'productId') {
-                const p = products.find(p => p.id === value)!
-                const price = priceMap[value]?.price ?? 0
-                const source = priceMap[value]?.source ?? null
-                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, priceSource: source, vatRate: p.vatRate ? Number(p.vatRate) : 10 }
+        setLines(prev => {
+            let newVatRate: number | null = null
+            if (field === 'vatRate') {
+                newVatRate = Number(value)
+                toast.info(`Đã áp dụng thuế suất VAT ${newVatRate}% đồng bộ cho toàn bộ đơn hàng`)
             }
-            return { ...l, [field]: value }
-        }))
+
+            return prev.map((l, i) => {
+                if (field === 'vatRate' && newVatRate !== null) {
+                    return { ...l, vatRate: newVatRate }
+                }
+                if (i !== idx) return l
+                if (field === 'productId') {
+                    const p = products.find(p => p.id === value)!
+                    const price = priceMap[value]?.price ?? 0
+                    const source = priceMap[value]?.source ?? null
+                    const existingLine = prev.find((item, itemIdx) => itemIdx !== idx && item.productId)
+                    const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (p.vatRate ? Number(p.vatRate) : 10)
+
+                    if (existingLine && p.vatRate && Number(p.vatRate) !== inheritedVatRate) {
+                        toast.info(`Sản phẩm "${p.productName}" có VAT gốc ${p.vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo đơn hàng để đồng nhất 1 loại thuế suất.`)
+                    }
+
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, priceSource: source, vatRate: inheritedVatRate }
+                }
+                return { ...l, [field]: value }
+            })
+        })
     }
 
     const removeLine = (idx: number) => setLines(prev => prev.filter((_, i) => i !== idx))
@@ -391,6 +416,11 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         if (!customerId) return toast.error('Vui lòng chọn khách hàng')
         if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
         if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
+
+        const distinctVat = Array.from(new Set(lines.map(l => Number(l.vatRate ?? 10))))
+        if (distinctVat.length > 1) {
+            return toast.error(`Mỗi hóa đơn/đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất! Đơn hiện tại đang chứa các mức: ${distinctVat.join('%, ')}%.`)
+        }
 
         setSaving(true)
         const promise = updateSalesOrder({

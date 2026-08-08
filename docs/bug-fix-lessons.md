@@ -1360,6 +1360,30 @@ if ('salesRepId' in dataToUpdate) {
 
 > ⚠️ **RULE 53: Khi cấu hình trang in (@media print), bắt buộc phải ẩn toàn bộ các thẻ layout gốc (header, nav, aside) để tránh tiêu đề thanh điều hướng rò rỉ vào bản in.**
 
+---
+
+## BUG-032: Khống Chế 1 Mức Thuế Suất VAT Duy Nhất Trên Đơn Bán Hàng & Báo Giá
+
+**Ngày:** 2026-08-08
+**Severity:** 🟡 High — Hóa đơn điện tử chỉ cho phép 1 mức thuế suất VAT duy nhất trên mỗi hóa đơn xuất ra.
+
+### Triệu chứng
+- Khi tạo đơn hàng SO hoặc Báo giá QTN, các sản phẩm chọn vào có thể dính nhiều mức VAT khác nhau (10%, 8%, 5%, 0%), dẫn đến khi kế toán xuất hóa đơn không xuất được hóa đơn gộp cho đơn hàng.
+
+### Nguyên nhân gốc rễ
+1. `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `QuotationClient.tsx` cho phép chọn mức VAT độc lập trên từng dòng mà không kiểm soát sự đồng nhất.
+2. `createSalesOrder`, `updateSalesOrder`, `createQuotation`, `updateQuotation` chưa validate kiểm tra danh sách mức VAT của các dòng.
+
+### Cách fix
+1. Trên Client: Khi người dùng thay đổi mức VAT ở bất kỳ dòng nào, hệ thống tự động đồng bộ mức VAT đó cho **tất cả các dòng** trong đơn.
+2. Khi chọn/thêm sản phẩm mới vào đơn, tự động kế thừa mức VAT hiện tại của đơn hàng.
+3. Trước khi submit & Server-side Action: Kiểm tra `distinctVatRates.length === 1`. Nếu đơn hàng có nhiều hơn 1 mức VAT, hệ thống sẽ chặn và thông báo lỗi rõ ràng.
+
+### Bài học
+
+> ⚠️ **RULE 54: Đơn Bán Hàng (SO) và Báo Giá (QTN) BẮT BUỘC phải duy nhất 1 loại thuế suất VAT trên toàn bộ các dòng để phục vụ xuất hóa đơn điện tử GTGT hợp lệ.**
+
+
 
 
 

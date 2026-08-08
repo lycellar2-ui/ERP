@@ -739,7 +739,16 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             }
         }
 
-        // --- 3. Create the SO ---
+        // --- 3. Validate Single VAT Rate across all lines ---
+        const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
+        if (distinctVatRates.length > 1) {
+            return {
+                success: false,
+                error: `Mỗi đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất để xuất hóa đơn. Đơn hiện tại có các mức VAT: ${distinctVatRates.join('%, ')}%.`
+            }
+        }
+
+        // --- 4. Create the SO ---
         const count = await prisma.salesOrder.count()
         const soNo = generateSoNo(count + 1)
 
@@ -882,6 +891,15 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                 if (arBalance + finalAmount > creditLimit) {
                     return { success: false, error: `Vượt hạn mức tín dụng! AR: ${arBalance.toLocaleString('vi-VN')}₫ + Đơn: ${Math.round(finalAmount).toLocaleString('vi-VN')}₫ > Limit: ${creditLimit.toLocaleString('vi-VN')}₫` }
                 }
+            }
+        }
+
+        // Validate Single VAT Rate across all lines
+        const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
+        if (distinctVatRates.length > 1) {
+            return {
+                success: false,
+                error: `Mỗi đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất để xuất hóa đơn. Đơn hiện tại đang có các mức VAT: ${distinctVatRates.join('%, ')}%.`
             }
         }
 

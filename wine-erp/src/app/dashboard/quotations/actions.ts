@@ -170,7 +170,13 @@ export async function createQuotation(input: {
 }): Promise<{ success: boolean; id?: string; quotationNo?: string; error?: string }> {
     try {
         const count = await prisma.salesQuotation.count()
-        const quotationNo = `QT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(count + 1).padStart(3, '0')}`
+        const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
+        if (distinctVatRates.length > 1) {
+            return {
+                success: false,
+                error: `Mỗi báo giá/hóa đơn chỉ được phép áp dụng 1 loại thuế suất VAT duy nhất. Báo giá hiện tại đang có các mức VAT: ${distinctVatRates.join('%, ')}%.`
+            }
+        }
 
         const totalAmount = input.lines.reduce((sum, l) => {
             const lineTotal = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
@@ -277,6 +283,14 @@ export async function updateQuotation(id: string, input: {
         if (input.pdfStyle) updateData.pdfStyle = input.pdfStyle
 
         if (input.lines) {
+            const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
+            if (distinctVatRates.length > 1) {
+                return {
+                    success: false,
+                    error: `Mỗi báo giá/hóa đơn chỉ được phép áp dụng 1 loại thuế suất VAT duy nhất. Báo giá hiện tại đang có các mức VAT: ${distinctVatRates.join('%, ')}%.`
+                }
+            }
+
             const totalAmount = input.lines.reduce((sum, l) => {
                 return sum + l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
             }, 0)

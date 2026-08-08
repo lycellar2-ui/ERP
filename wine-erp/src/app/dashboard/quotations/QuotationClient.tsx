@@ -274,11 +274,21 @@ export function QuotationClient({ initialData }: Props) {
         }
     }
 
-    const addLine = () => setFormLines([...formLines, { productId: '', qty: 1, price: 0, discount: 0, vatRate: 10 }])
+    const addLine = () => {
+        const existingLine = formLines.find(l => l.productId)
+        const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : 10
+        setFormLines([...formLines, { productId: '', qty: 1, price: 0, discount: 0, vatRate: inheritedVatRate }])
+    }
     const removeLine = (i: number) => setFormLines(formLines.filter((_, idx) => idx !== i))
     const updateLine = (i: number, field: string, val: any) => {
+        if (field === 'vatRate') {
+            const newVatRate = Number(val)
+            toast.info(`Đã áp dụng thuế suất VAT ${newVatRate}% đồng bộ cho toàn bộ báo giá`)
+            setFormLines(prev => prev.map(l => ({ ...l, vatRate: newVatRate })))
+            return
+        }
         const copy = [...formLines]
-            ; (copy[i] as any)[field] = val
+        ;(copy[i] as any)[field] = val
         setFormLines(copy)
     }
 
@@ -286,10 +296,17 @@ export function QuotationClient({ initialData }: Props) {
         const prod = products.find(p => p.id === productId)
         const resolved = priceMap[productId]
         const resolvedPrice = (resolved && resolved.price > 0) ? resolved.price : (prod ? prod.wholesalePrice : 0)
+        const existingLine = formLines.find((l, idx) => idx !== i && l.productId)
+        const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (prod ? (prod as any).vatRate ?? 10 : 10)
+
+        if (existingLine && (prod as any)?.vatRate && Number((prod as any).vatRate) !== inheritedVatRate) {
+            toast.info(`Sản phẩm "${prod?.name}" có VAT gốc ${(prod as any).vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo báo giá để đồng nhất 1 loại thuế suất.`)
+        }
+
         const copy = [...formLines]
         copy[i].productId = productId
         copy[i].price = resolvedPrice
-        copy[i].vatRate = prod ? (prod as any).vatRate ?? 10 : 10
+        copy[i].vatRate = inheritedVatRate
         setFormLines(copy)
     }
 
@@ -306,18 +323,22 @@ export function QuotationClient({ initialData }: Props) {
 
     const confirmPickerAdd = () => {
         const newLines: typeof formLines = []
+        const existingLine = formLines.find(l => l.productId)
+        const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : 10
+
         for (const [prodId, data] of Object.entries(pickerSelected)) {
             if (data.checked && prodId) {
                 const prod = products.find(p => p.id === prodId)
                 const existing = formLines.find(l => l.productId === prodId)
                 const resolved = priceMap[prodId]
                 const resolvedPrice = (resolved && resolved.price > 0) ? resolved.price : (prod ? prod.wholesalePrice : 0)
+                const vat = existing?.vatRate || inheritedVatRate || (prod ? (prod as any).vatRate ?? 10 : 10)
                 newLines.push({
                     productId: prodId,
                     qty: data.qty,
                     price: existing?.price || resolvedPrice,
                     discount: existing?.discount || 0,
-                    vatRate: existing?.vatRate || (prod ? (prod as any).vatRate ?? 10 : 10)
+                    vatRate: vat
                 })
             }
         }
