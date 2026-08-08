@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 17:05 | Wine ERP v9.3 — 29 modules, 123 models, 2D Warehouse Outer Boundary Frame & Architectural Wall Measuring Tools*
+*Last updated: 2026-08-08 17:10 | Wine ERP v9.4 — 29 modules, 123 models, 2D Warehouse Map High-Contrast Text Fix & Emerald Finish Button*
 

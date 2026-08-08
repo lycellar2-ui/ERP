@@ -456,7 +456,7 @@ export function WarehouseMapTab({
                     <div className="flex items-center gap-2 ml-auto">
                         {!editMode ? (
                             <button onClick={() => setEditMode(true)}
-                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-xs cursor-pointer">
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-xs cursor-pointer">
                                 <Move size={14} /> Chỉnh Sửa Sơ Đồ
                             </button>
                         ) : (
@@ -471,8 +471,8 @@ export function WarehouseMapTab({
                                     Lưu Sơ Đồ
                                 </button>
                                 <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
-                                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 cursor-pointer shadow-xs">
-                                    <Eye size={13} /> Hoàn Tất
+                                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs">
+                                    <Eye size={14} /> Hoàn Tất
                                 </button>
                             </>
                         )}
@@ -579,8 +579,8 @@ export function WarehouseMapTab({
                                 zIndex: 0,
                             }}>
                                 {/* Dimension Badge on Top Left Wall */}
-                                <div className="absolute -top-9 left-2 bg-slate-900 text-white px-3 py-1 rounded-t-lg text-[10px] font-extrabold font-mono flex items-center gap-1.5 shadow-sm">
-                                    <Building2 size={13} className="text-amber-400" />
+                                <div className="absolute -top-9 left-2 bg-amber-500 text-white px-3.5 py-1 rounded-t-xl text-[11px] font-extrabold font-mono flex items-center gap-1.5 shadow-sm border border-amber-600">
+                                    <Building2 size={14} className="text-white" />
                                     RANH GIỚI TỔNG THỂ MẶT BẰNG KHO ({floorW / 100}m × {floorH / 100}m)
                                 </div>
                             </div>
@@ -746,7 +746,7 @@ export function WarehouseMapTab({
                         </div>
                     )}
 
-                    {/* Tool Hint Floating Banners (Crisp Light Theme Pills) */}
+                    {/* Tool Hint Floating Banners (Crisp Amber/White High-Contrast Pills) */}
                     {wallDrawing && (
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-amber-500 text-white shadow-xl border border-amber-600 flex items-center gap-2">
                             <span>🧱 Click chọn điểm kết thúc tường</span>
@@ -764,15 +764,15 @@ export function WarehouseMapTab({
                         </div>
                     )}
                     {editMode && tool === 'wall' && !wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-slate-900 text-white shadow-xl border border-slate-800 flex items-center gap-2">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-amber-500 text-white shadow-xl border border-amber-600 flex items-center gap-2">
                             <span>🧱 Click để chọn điểm bắt đầu vẽ tường</span>
-                            <span className="text-slate-400">• Giữ Space để kéo bản đồ</span>
+                            <span className="bg-amber-700/90 text-amber-100 px-2.5 py-0.5 rounded-lg font-bold">• Giữ Space để kéo bản đồ</span>
                         </div>
                     )}
                     {editMode && tool === 'select' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-white text-slate-800 shadow-md border border-slate-200 flex items-center gap-2">
-                            <Sliders size={14} className="text-amber-600" />
-                            <span>Kéo ô vuông màu cam ở mỗi vị trí để đổi kích thước Rộng x Cao</span>
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-white text-slate-800 shadow-lg border border-slate-300 flex items-center gap-2">
+                            <Sliders size={16} className="text-amber-600" />
+                            <span className="text-slate-900 font-extrabold">📐 Kéo góc vuông màu cam ở mỗi ô để đổi kích thước Rộng x Cao</span>
                         </div>
                     )}
                 </div>
