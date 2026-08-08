@@ -15,11 +15,9 @@ type POOption = {
     lines: { productId: string; productName: string; skuCode: string; qtyOrdered: number }[]
 }
 
-type LocationOption = { id: string; locationCode: string }
-
-const GR_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.15)' },
-    CONFIRMED: { label: 'Đã Xác Nhận', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+const GR_STATUS: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
+    CONFIRMED: { label: 'Đã Xác Nhận', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
 }
 
 type GRDetail = Awaited<ReturnType<typeof getGRDetail>>
@@ -57,74 +55,74 @@ export function GoodsReceiptTab({ warehouses }: {
 
     return (
         <div className="space-y-5">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
-                        <PackagePlus size={16} style={{ color: '#87CBB9' }} /> Phiếu Nhập Kho (Goods Receipt)
-                    </h3>
-                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Nhập hàng từ Purchase Order → Tồn kho</p>
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
+                        <PackagePlus size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-extrabold text-slate-900">
+                            Phiếu Nhập Kho (Goods Receipt)
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium">Nhập hàng từ Purchase Order vào tồn kho thực tế</p>
+                    </div>
                 </div>
                 <button onClick={() => setCreateOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg"
-                    style={{ background: '#87CBB9', color: '#0A1926' }}>
-                    <Plus size={14} /> Tạo GR
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer active:scale-95">
+                    <Plus size={15} /> Tạo GR
                 </button>
             </div>
 
             {/* GR List — Desktop Table */}
-            <div className="rounded-xl overflow-hidden hidden md:block" style={{ border: '1px solid #2A4355' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+            <div className="rounded-2xl overflow-hidden hidden md:block bg-white border border-slate-200 shadow-sm">
+                <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                            {['Số GR', 'Số PO', 'Kho', 'Dòng', 'SL Nhận', 'Trạng Thái', 'Người XN', 'Ngày XN', 'Ngày Tạo', ''].map(h => (
-                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                        <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
+                            {['Số GR', 'Số PO', 'Kho', 'Dòng', 'SL Nhận', 'Trạng Thái', 'Người XN', 'Ngày XN', 'Ngày Tạo', 'Thao Tác'].map(h => (
+                                <th key={h} className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">{h}</th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                         {loading ? (
                             <tr><td colSpan={10} className="text-center py-12">
-                                <Loader2 size={20} className="animate-spin inline" style={{ color: '#87CBB9' }} />
+                                <Loader2 size={20} className="animate-spin inline text-emerald-600" />
                             </td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={10} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Chưa có phiếu nhập kho</td></tr>
+                            <tr><td colSpan={10} className="text-center py-12 text-xs text-slate-400 font-medium">Chưa có phiếu nhập kho nào</td></tr>
                         ) : rows.map(gr => {
                             const st = GR_STATUS[gr.status] ?? GR_STATUS.DRAFT
                             return (
-                                <tr key={gr.id} className="transition-colors cursor-pointer"
-                                    style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}
-                                    onClick={() => openDetail(gr.id)}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                    <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{gr.grNo}</td>
-                                    <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#D4A853' }}>{gr.poNo}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{gr.warehouseName}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{gr.lineCount} SP</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#E8F1F2' }}>
+                                <tr key={gr.id} className="transition-colors cursor-pointer hover:bg-slate-50"
+                                    onClick={() => openDetail(gr.id)}>
+                                    <td className="px-3.5 py-3">
+                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            {gr.grNo}
+                                        </span>
+                                    </td>
+                                    <td className="px-3.5 py-3 text-xs font-mono text-amber-700 font-bold">{gr.poNo}</td>
+                                    <td className="px-3.5 py-3 text-xs text-slate-700 font-medium">{gr.warehouseName}</td>
+                                    <td className="px-3.5 py-3 text-xs text-slate-500 font-medium">{gr.lineCount} SP</td>
+                                    <td className="px-3.5 py-3 text-xs font-bold font-mono text-slate-900">
                                         {gr.totalQtyReceived.toLocaleString()}
                                     </td>
-                                    <td className="px-3 py-2.5">
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                                    <td className="px-3.5 py-3">
+                                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border" style={{ color: st.color, background: st.bg, borderColor: st.border }}>
+                                            {st.label}
+                                        </span>
                                     </td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: gr.confirmedBy ? '#5BA88A' : '#2A4355' }}>
+                                    <td className="px-3.5 py-3 text-xs text-slate-600 font-medium">
                                         {gr.confirmedBy ?? '—'}
                                     </td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>
+                                    <td className="px-3.5 py-3 text-xs text-slate-500 font-medium">
                                         {gr.confirmedAt ? formatDate(gr.confirmedAt) : '—'}
                                     </td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>{formatDate(gr.createdAt)}</td>
-                                    <td className="px-3 py-2.5">
+                                    <td className="px-3.5 py-3 text-xs text-slate-500 font-medium">{formatDate(gr.createdAt)}</td>
+                                    <td className="px-3.5 py-3">
                                         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                                            <button onClick={() => openDetail(gr.id)} className="p-1.5 rounded-lg"
-                                                style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>
-                                                <Eye size={12} />
+                                            <button onClick={() => openDetail(gr.id)} className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer">
+                                                <Eye size={14} />
                                             </button>
-                                            {gr.status === 'DRAFT' && (
-                                                <button onClick={() => handleConfirm(gr.id)} className="p-1.5 rounded-lg"
-                                                    style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A' }}>
-                                                    <CheckCircle2 size={12} />
-                                                </button>
-                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -135,39 +133,36 @@ export function GoodsReceiptTab({ warehouses }: {
             </div>
 
             {/* GR List — Mobile Cards */}
-            <div className="block md:hidden space-y-3">
+            <div className="block md:hidden space-y-2">
                 {loading ? (
-                    <div className="text-center py-12"><Loader2 size={20} className="animate-spin inline" style={{ color: '#87CBB9' }} /></div>
+                    <div className="text-center py-12"><Loader2 size={20} className="animate-spin inline text-emerald-600" /></div>
                 ) : rows.length === 0 ? (
-                    <div className="text-center py-12 text-sm rounded-xl" style={{ color: '#4A6A7A', border: '1px dashed #2A4355' }}>Chưa có phiếu nhập kho</div>
+                    <div className="text-center py-12 text-xs text-slate-400 font-medium bg-white border border-slate-200 rounded-2xl">Chưa có phiếu nhập kho</div>
                 ) : rows.map(gr => {
                     const st = GR_STATUS[gr.status] ?? GR_STATUS.DRAFT
                     return (
                         <div key={gr.id} onClick={() => openDetail(gr.id)}
-                            className="p-3.5 rounded-xl space-y-2 cursor-pointer transition-all active:scale-[0.99]"
-                            style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                            className="p-3.5 rounded-2xl space-y-2 cursor-pointer transition-all active:scale-[0.99] bg-white border border-slate-200 shadow-2xs">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
+                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     GR: {gr.grNo}
                                 </span>
-                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ color: st.color, background: st.bg }}>
+                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border" style={{ color: st.color, background: st.bg, borderColor: st.border }}>
                                     {st.label}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
-                                <span style={{ color: '#4A6A7A' }}>PO: <strong className="font-mono text-[#D4A853]">{gr.poNo}</strong></span>
-                                <span style={{ color: '#8AAEBB' }}>Kho: {gr.warehouseName}</span>
+                                <span className="text-slate-500">PO: <strong className="font-mono text-amber-700">{gr.poNo}</strong></span>
+                                <span className="text-slate-700 font-medium">Kho: {gr.warehouseName}</span>
                             </div>
-                            <div className="flex items-center justify-between pt-2 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
-                                <span style={{ color: '#8AAEBB' }}>{gr.lineCount} sản phẩm · <strong className="font-mono text-white">{gr.totalQtyReceived.toLocaleString()}</strong> chai</span>
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                                <span className="text-slate-500">{gr.lineCount} sản phẩm · <strong className="font-mono text-slate-900">{gr.totalQtyReceived.toLocaleString()}</strong> chai</span>
                                 <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                                    <button onClick={() => openDetail(gr.id)} className="px-2.5 py-1.5 text-xs font-semibold rounded-lg"
-                                        style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>
+                                    <button onClick={() => openDetail(gr.id)} className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer">
                                         Chi Tiết
                                     </button>
                                     {gr.status === 'DRAFT' && (
-                                        <button onClick={() => handleConfirm(gr.id)} className="px-2.5 py-1.5 text-xs font-bold rounded-lg"
-                                            style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A' }}>
+                                        <button onClick={() => handleConfirm(gr.id)} className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer">
                                             Xác Nhận
                                         </button>
                                     )}
@@ -180,23 +175,23 @@ export function GoodsReceiptTab({ warehouses }: {
 
             {/* Detail Drawer */}
             {(detailData || detailLoading) && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs">
+                    <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto bg-white border-l border-slate-200 shadow-2xl">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100">
                             <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                                <h3 className="text-base font-extrabold text-slate-900">
                                     Chi Tiết GR {detailData?.grNo ?? '...'}
                                 </h3>
                                 {detailData && (
-                                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>
+                                    <p className="text-xs mt-0.5 text-slate-500 font-medium">
                                         PO: {detailData.poNo} · NCC: {detailData.supplierName} · Kho: {detailData.warehouseName}
                                     </p>
                                 )}
                             </div>
-                            <button onClick={() => setDetailData(null)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                            <button onClick={() => setDetailData(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600"><X size={18} /></button>
                         </div>
                         {detailLoading ? (
-                            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+                            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-emerald-600" /></div>
                         ) : detailData && (
                             <div className="p-5 space-y-4">
                                 <div className="grid grid-cols-2 gap-3">
@@ -207,57 +202,31 @@ export function GoodsReceiptTab({ warehouses }: {
                                 </div>
 
                                 {/* Detail Lines — Desktop Table */}
-                                <div className="rounded-xl overflow-hidden hidden sm:block" style={{ border: '1px solid #2A4355' }}>
-                                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                <div className="rounded-2xl overflow-hidden hidden sm:block bg-white border border-slate-200">
+                                    <table className="w-full text-left border-collapse">
                                         <thead>
-                                            <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                                            <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
                                                 {['SKU', 'Sản Phẩm', 'Lô', 'Vị Trí', 'Dự Kiến', 'Thực Nhận', 'Chênh Lệch'].map(h => (
-                                                    <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                    <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-extrabold">{h}</th>
                                                 ))}
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody className="divide-y divide-slate-100">
                                             {detailData.lines.map(l => (
-                                                <tr key={l.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
-                                                    <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{l.skuCode}</td>
-                                                    <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.productName}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono" style={{ color: '#D4A853' }}>{l.lotNo}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono" style={{ color: '#8AAEBB' }}>{l.locationCode}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#E8F1F2' }}>{l.qtyExpected}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#87CBB9' }}>{l.qtyReceived}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono font-bold" style={{
-                                                        color: l.variance === 0 ? '#4A6A7A' : l.variance < 0 ? '#8B1A2E' : '#D4A853',
-                                                    }}>
+                                                <tr key={l.id} className="hover:bg-slate-50">
+                                                    <td className="px-3 py-2 text-xs font-bold font-mono text-emerald-700">{l.skuCode}</td>
+                                                    <td className="px-3 py-2 text-xs font-bold text-slate-900">{l.productName}</td>
+                                                    <td className="px-3 py-2 text-xs font-mono text-amber-700 font-bold">{l.lotNo}</td>
+                                                    <td className="px-3 py-2 text-xs font-mono text-slate-600">{l.locationCode}</td>
+                                                    <td className="px-3 py-2 text-xs font-mono font-bold text-slate-700">{l.qtyExpected}</td>
+                                                    <td className="px-3 py-2 text-xs font-mono font-bold text-emerald-600">{l.qtyReceived}</td>
+                                                    <td className="px-3 py-2 text-xs font-mono font-bold text-slate-700">
                                                         {l.variance === 0 ? '—' : (l.variance > 0 ? '+' : '') + l.variance}
                                                     </td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
-                                </div>
-                                {/* Detail Lines — Mobile Cards */}
-                                <div className="block sm:hidden space-y-2">
-                                    {detailData.lines.map(l => (
-                                        <div key={l.id} className="p-3 rounded-xl space-y-1.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{l.skuCode}</span>
-                                                <span className="text-xs font-mono" style={{ color: '#D4A853' }}>Lô: {l.lotNo}</span>
-                                            </div>
-                                            <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{l.productName}</p>
-                                            <div className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
-                                                📍 {l.locationCode}
-                                            </div>
-                                            <div className="flex items-center justify-between pt-1.5 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
-                                                <span style={{ color: '#4A6A7A' }}>Dự kiến: <strong className="font-mono text-white">{l.qtyExpected}</strong></span>
-                                                <span style={{ color: '#4A6A7A' }}>Thực nhận: <strong className="font-mono" style={{ color: '#87CBB9' }}>{l.qtyReceived}</strong></span>
-                                                <span className="font-mono font-bold" style={{
-                                                    color: l.variance === 0 ? '#4A6A7A' : l.variance < 0 ? '#8B1A2E' : '#D4A853',
-                                                }}>
-                                                    {l.variance === 0 ? '—' : (l.variance > 0 ? '+' : '') + l.variance}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
                                 </div>
                             </div>
                         )}
@@ -274,9 +243,9 @@ export function GoodsReceiptTab({ warehouses }: {
 // Small info card helper
 function InfoCard({ label, value }: { label: string; value: string }) {
     return (
-        <div className="px-3 py-2.5 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-            <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{label}</p>
-            <p className="text-sm font-bold mt-0.5" style={{ color: '#E8F1F2' }}>{value}</p>
+        <div className="px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+            <p className="text-[10px] uppercase tracking-wide font-bold text-slate-500">{label}</p>
+            <p className="text-sm font-extrabold mt-0.5 text-slate-900">{value}</p>
         </div>
     )
 }
@@ -330,27 +299,27 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
         setSaving(false)
     }
 
+    const inputCls = "w-full px-3 py-2 rounded-xl text-xs outline-none bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
+
     return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
-                <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Phiếu Nhập Kho (GR)</h3>
-                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs">
+            <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto bg-white border-l border-slate-200 shadow-2xl">
+                <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                    <h3 className="text-base font-extrabold text-slate-900">Tạo Phiếu Nhập Kho (GR)</h3>
+                    <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600"><X size={18} /></button>
                 </div>
                 <div className="p-5 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Purchase Order *</label>
-                            <select value={selectedPO?.id ?? ''} onChange={e => selectPO(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            <label className="block text-xs font-bold mb-1 text-slate-700">Purchase Order *</label>
+                            <select value={selectedPO?.id ?? ''} onChange={e => selectPO(e.target.value)} className={inputCls}>
                                 <option value="">— Chọn PO —</option>
                                 {pos.map(p => <option key={p.id} value={p.id}>{p.poNo} — {p.supplierName}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Kho Nhận *</label>
-                            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                            <label className="block text-xs font-bold mb-1 text-slate-700">Kho Nhận *</label>
+                            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} className={inputCls}>
                                 <option value="">— Chọn kho —</option>
                                 {warehouses.map(w => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
                             </select>
@@ -359,34 +328,32 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
 
                     {selectedPO && lines.length > 0 && (
                         <>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#D4A853' }}>
+                            <p className="text-xs font-extrabold uppercase tracking-wide text-amber-700">
                                 Sản Phẩm ({lines.length} dòng)
                             </p>
                             <div className="space-y-2">
                                 {selectedPO.lines.map((pol, i) => (
-                                    <div key={pol.productId} className="p-3 rounded-lg" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                        <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{pol.productName}</p>
-                                        <p className="text-xs mb-2" style={{ color: '#4A6A7A' }}>
+                                    <div key={pol.productId} className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2">
+                                        <p className="text-xs font-extrabold text-slate-900">{pol.productName}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">
                                             {pol.skuCode} · PO qty: {pol.qtyOrdered}
                                         </p>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
-                                                <label className="text-[10px] block mb-0.5" style={{ color: '#4A6A7A' }}>SL Thực Nhận</label>
+                                                <label className="text-[10px] font-bold block mb-0.5 text-slate-600">SL Thực Nhận</label>
                                                 <input type="number" min={0} value={lines[i]?.qtyReceived ?? 0}
                                                     onChange={e => {
                                                         const v = [...lines]; v[i] = { ...v[i], qtyReceived: Number(e.target.value) }; setLines(v)
                                                     }}
-                                                    className="w-full px-2 py-1.5 rounded text-xs"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853' }} />
+                                                    className={inputCls} />
                                             </div>
                                             <div>
-                                                <label className="text-[10px] block mb-0.5" style={{ color: '#4A6A7A' }}>Vị Trí Kho</label>
+                                                <label className="text-[10px] font-bold block mb-0.5 text-slate-600">Vị Trí Kho</label>
                                                 <input type="text" placeholder="VD: loc_id" value={lines[i]?.locationId ?? ''}
                                                     onChange={e => {
                                                         const v = [...lines]; v[i] = { ...v[i], locationId: e.target.value }; setLines(v)
                                                     }}
-                                                    className="w-full px-2 py-1.5 rounded text-xs"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }} />
+                                                    className={inputCls} />
                                             </div>
                                         </div>
                                     </div>
@@ -396,8 +363,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                     )}
 
                     <button onClick={handleSave} disabled={saving}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
+                        className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         Tạo Phiếu Nhập Kho
                     </button>

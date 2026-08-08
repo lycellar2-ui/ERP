@@ -20,13 +20,13 @@ interface WarehouseOption {
     name: string
 }
 
-const DOC_TYPE_CFG: Record<string, { label: string; color: string; icon: any }> = {
-    GR: { label: 'Nhập Kho', color: '#5BA88A', icon: ArrowDownCircle },
-    DO: { label: 'Xuất Kho', color: '#C74B50', icon: ArrowUpCircle },
-    ADJ: { label: 'Điều Chỉnh', color: '#D4A853', icon: BarChart3 },
-    TRANSFER_IN: { label: 'Chuyển Vào', color: '#4A8FAB', icon: ArrowDownCircle },
-    TRANSFER_OUT: { label: 'Chuyển Ra', color: '#B87333', icon: ArrowUpCircle },
-    WRITE_OFF: { label: 'Hủy', color: '#8B1A2E', icon: TrendingDown },
+const DOC_TYPE_CFG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+    GR: { label: 'Nhập Kho', color: '#059669', bg: '#ECFDF5', icon: ArrowDownCircle },
+    DO: { label: 'Xuất Kho', color: '#E11D48', bg: '#FFF1F2', icon: ArrowUpCircle },
+    ADJ: { label: 'Điều Chỉnh', color: '#D97706', bg: '#FEF3C7', icon: BarChart3 },
+    TRANSFER_IN: { label: 'Chuyển Vào', color: '#0284C7', bg: '#F0F9FF', icon: ArrowDownCircle },
+    TRANSFER_OUT: { label: 'Chuyển Ra', color: '#C05621', bg: '#FFFAF0', icon: ArrowUpCircle },
+    WRITE_OFF: { label: 'Hủy', color: '#991B1B', bg: '#FEF2F2', icon: TrendingDown },
 }
 
 type ViewMode = 'SUMMARY' | 'DETAIL'
@@ -247,27 +247,27 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
         URL.revokeObjectURL(url)
     }
 
-    const inputCls = "px-3 py-2 rounded-lg text-sm outline-none transition-colors"
-    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+    const inputCls = "px-3 py-2 rounded-xl text-xs outline-none transition-colors w-full bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
         <div className="space-y-5">
             {/* ═════════════════════════════════════════════════════ */}
-            {/* GLOBAL FILTER BAR                                    */}
+            {/* GLOBAL FILTER BAR (Light Theme)                      */}
             {/* ═════════════════════════════════════════════════════ */}
-            <div className="p-4 sm:p-5 rounded-2xl space-y-4" style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3" style={{ borderBottom: '1px solid rgba(42,67,85,0.6)' }}>
+            <div className="p-4 sm:p-5 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                         {viewMode === 'DETAIL' ? (
                             <button onClick={() => setViewMode('SUMMARY')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white/10"
-                                style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer">
                                 <ArrowLeft size={14} /> Quay lại Bảng Tổng Hợp
                             </button>
                         ) : (
                             <>
-                                <Layers size={18} style={{ color: '#87CBB9' }} />
-                                <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
+                                    <BarChart3 size={18} />
+                                </div>
+                                <h3 className="text-base font-extrabold text-slate-900">
                                     Báo Cáo Nhập Xuất Tồn Kho (NXT)
                                 </h3>
                             </>
@@ -285,11 +285,11 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                             <button
                                 key={p.id}
                                 onClick={() => applyDatePreset(p.id as any)}
-                                className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap font-medium ${datePreset === p.id ? 'font-bold' : ''}`}
-                                style={{
-                                    background: datePreset === p.id ? '#87CBB9' : 'rgba(42,67,85,0.4)',
-                                    color: datePreset === p.id ? '#0A1926' : '#8AAEBB',
-                                }}>
+                                className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap text-xs font-bold cursor-pointer ${
+                                    datePreset === p.id 
+                                        ? 'bg-emerald-600 text-white shadow-xs' 
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                                }`}>
                                 {p.label}
                             </button>
                         ))}
@@ -299,20 +299,19 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
                     {/* Search */}
                     <div className="lg:col-span-3">
-                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1" style={{ color: '#4A6A7A' }}>
+                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1 text-slate-500">
                             Tìm SKU / Tên sản phẩm
                         </label>
                         <div className="relative">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 placeholder="Nhập SKU, tên sản phẩm..."
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
-                                className={`w-full pl-9 ${inputCls}`}
-                                style={inputStyle}
+                                className={`pl-9 ${inputCls}`}
                             />
                             {search && (
-                                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }}>
+                                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                     <X size={12} />
                                 </button>
                             )}
@@ -321,9 +320,8 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
 
                     {/* Warehouse filter */}
                     <div className="lg:col-span-2">
-                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1" style={{ color: '#4A6A7A' }}>Kho Hàng</label>
-                        <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)}
-                            className={`w-full ${inputCls}`} style={{ ...inputStyle, color: warehouseId ? '#E8F1F2' : '#4A6A7A' }}>
+                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1 text-slate-500">Kho Hàng</label>
+                        <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} className={inputCls}>
                             <option value="">Tất cả các kho</option>
                             {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                         </select>
@@ -331,16 +329,14 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
 
                     {/* Date From */}
                     <div className="lg:col-span-2">
-                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1" style={{ color: '#4A6A7A' }}>Từ Ngày</label>
-                        <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setDatePreset('CUSTOM') }}
-                            className={`w-full ${inputCls}`} style={inputStyle} />
+                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1 text-slate-500">Từ Ngày</label>
+                        <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setDatePreset('CUSTOM') }} className={inputCls} />
                     </div>
 
                     {/* Date To */}
                     <div className="lg:col-span-2">
-                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1" style={{ color: '#4A6A7A' }}>Đến Ngày</label>
-                        <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('CUSTOM') }}
-                            className={`w-full ${inputCls}`} style={inputStyle} />
+                        <label className="text-[10px] uppercase tracking-widest font-bold block mb-1 text-slate-500">Đến Ngày</label>
+                        <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('CUSTOM') }} className={inputCls} />
                     </div>
 
                     {/* Filter Button / Options */}
@@ -351,24 +347,21 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                 else loadDetailReport()
                             }}
                             disabled={loadingSummary || loadingDetail}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
-                            {(loadingSummary || loadingDetail) ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer active:scale-95">
+                            {(loadingSummary || loadingDetail) ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
                             Tra Cứu Báo Cáo
                         </button>
 
                         {viewMode === 'SUMMARY' ? (
                             <button onClick={exportSummaryCSV} disabled={summaryItems.length === 0}
                                 title="Xuất CSV báo cáo kho"
-                                className="px-3 py-2 rounded-lg flex items-center justify-center transition-colors"
-                                style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                className="px-3 py-2 rounded-xl flex items-center justify-center transition-colors bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer disabled:opacity-40">
                                 <Download size={16} />
                             </button>
                         ) : (
                             <button onClick={exportDetailCSV} disabled={movements.length === 0}
                                 title="Xuất CSV sổ chi tiết mã"
-                                className="px-3 py-2 rounded-lg flex items-center justify-center transition-colors"
-                                style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                className="px-3 py-2 rounded-xl flex items-center justify-center transition-colors bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer disabled:opacity-40">
                                 <Download size={16} />
                             </button>
                         )}
@@ -376,13 +369,13 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                 </div>
 
                 {viewMode === 'SUMMARY' && (
-                    <div className="flex items-center gap-4 pt-1 text-xs" style={{ color: '#8AAEBB' }}>
+                    <div className="flex items-center gap-4 pt-1 text-xs text-slate-600 font-medium">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                             <input
                                 type="checkbox"
                                 checked={hideZeroStock}
                                 onChange={e => setHideZeroStock(e.target.checked)}
-                                className="w-4 h-4 rounded accent-[#87CBB9] cursor-pointer"
+                                className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
                             />
                             <span>Chỉ hiện sản phẩm có tồn kho hoặc có phát sinh trong kỳ</span>
                         </label>
@@ -398,166 +391,163 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                     {/* KPI Cards for Warehouse Summary */}
                     {summaryStats && (
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                            <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center justify-between text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Tổng SKU</span>
-                                    <Boxes size={14} style={{ color: '#87CBB9' }} />
+                                    <Boxes size={14} className="text-emerald-600" />
                                 </div>
-                                <p className="text-xl font-bold font-mono" style={{ color: '#E8F1F2' }}>{summaryStats.totalProducts.toLocaleString()}</p>
-                                <p className="text-[10px]" style={{ color: '#8AAEBB' }}>Mặt hàng có dữ liệu</p>
+                                <p className="text-xl font-extrabold font-mono text-slate-900">{summaryStats.totalProducts.toLocaleString()}</p>
+                                <p className="text-[10px] text-slate-500 font-medium">Mặt hàng có dữ liệu</p>
                             </div>
 
-                            <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center justify-between text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Tồn Đầu Kỳ</span>
-                                    <Package size={14} style={{ color: '#D4A853' }} />
+                                    <Package size={14} className="text-amber-600" />
                                 </div>
-                                <p className="text-xl font-bold font-mono" style={{ color: '#D4A853' }}>{summaryStats.totalOpeningQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
-                                <p className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{formatVND(summaryStats.totalOpeningValue)}</p>
+                                <p className="text-xl font-extrabold font-mono text-amber-600">{summaryStats.totalOpeningQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOpeningValue)}</p>
                             </div>
 
-                            <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center justify-between text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Nhập Trong Kỳ</span>
-                                    <ArrowDownCircle size={14} style={{ color: '#5BA88A' }} />
+                                    <ArrowDownCircle size={14} className="text-emerald-600" />
                                 </div>
-                                <p className="text-xl font-bold font-mono" style={{ color: '#5BA88A' }}>+{summaryStats.totalInQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
-                                <p className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{formatVND(summaryStats.totalInValue)}</p>
+                                <p className="text-xl font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                             </div>
 
-                            <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center justify-between text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Xuất Trong Kỳ</span>
-                                    <ArrowUpCircle size={14} style={{ color: '#C74B50' }} />
+                                    <ArrowUpCircle size={14} className="text-rose-600" />
                                 </div>
-                                <p className="text-xl font-bold font-mono" style={{ color: '#C74B50' }}>-{summaryStats.totalOutQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
-                                <p className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{formatVND(summaryStats.totalOutValue)}</p>
+                                <p className="text-xl font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                             </div>
 
-                            <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <div className="flex items-center justify-between text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Tồn Cuối Kỳ</span>
-                                    <TrendingUp size={14} style={{ color: '#87CBB9' }} />
+                                    <TrendingUp size={14} className="text-teal-600" />
                                 </div>
-                                <p className="text-xl font-bold font-mono" style={{ color: '#87CBB9' }}>{summaryStats.totalClosingQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
-                                <p className="text-[10px] font-mono" style={{ color: '#87CBB9' }}>{formatVND(summaryStats.totalClosingValue)}</p>
+                                <p className="text-xl font-extrabold font-mono text-teal-600">{summaryStats.totalClosingQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(summaryStats.totalClosingValue)}</p>
                             </div>
                         </div>
                     )}
 
                     {/* Summary Data Table */}
-                    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                    <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
                         {loadingSummary ? (
                             <div className="flex items-center justify-center py-20 gap-3">
-                                <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
-                                <span className="text-sm font-medium" style={{ color: '#8AAEBB' }}>Đang tính toán sổ kho tổng hợp...</span>
+                                <Loader2 size={24} className="animate-spin text-emerald-600" />
+                                <span className="text-sm font-semibold text-slate-600">Đang tính toán sổ kho tổng hợp...</span>
                             </div>
                         ) : sortedSummaryItems.length === 0 ? (
                             <div className="flex flex-col items-center py-16 gap-3">
-                                <BarChart3 size={36} style={{ color: '#2A4355' }} />
-                                <p className="text-sm font-medium" style={{ color: '#4A6A7A' }}>Không tìm thấy dữ liệu nhập xuất tồn phù hợp bộ lọc</p>
+                                <BarChart3 size={36} className="text-slate-300" />
+                                <p className="text-sm font-semibold text-slate-500">Không tìm thấy dữ liệu nhập xuất tồn phù hợp bộ lọc</p>
                             </div>
                         ) : (
                             <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 380px)', overflowY: 'auto' }}>
                                 <table className="w-full text-left border-collapse min-w-[1000px]">
                                     <thead>
-                                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold" style={{ color: '#4A6A7A' }}>STT</th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold cursor-pointer select-none" style={{ color: '#87CBB9' }} onClick={() => toggleSort('skuCode')}>
+                                        <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700 sticky top-0 z-10">
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">STT</th>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-emerald-700 cursor-pointer select-none" onClick={() => toggleSort('skuCode')}>
                                                 <div className="flex items-center gap-1">
                                                     Mã SKU {sortField === 'skuCode' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold cursor-pointer select-none" style={{ color: '#4A6A7A' }} onClick={() => toggleSort('productName')}>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold cursor-pointer select-none" onClick={() => toggleSort('productName')}>
                                                 <div className="flex items-center gap-1">
                                                     Tên Sản Phẩm {sortField === 'productName' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold text-center" style={{ color: '#4A6A7A' }}>ĐVT</th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold text-right cursor-pointer select-none" style={{ color: '#D4A853' }} onClick={() => toggleSort('openingQty')}>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">ĐVT</th>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-amber-700 cursor-pointer select-none" onClick={() => toggleSort('openingQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Tồn Đầu Kỳ {sortField === 'openingQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold text-right cursor-pointer select-none" style={{ color: '#5BA88A' }} onClick={() => toggleSort('inQty')}>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-emerald-700 cursor-pointer select-none" onClick={() => toggleSort('inQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Nhập Trong Kỳ {sortField === 'inQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold text-right cursor-pointer select-none" style={{ color: '#C74B50' }} onClick={() => toggleSort('outQty')}>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-rose-700 cursor-pointer select-none" onClick={() => toggleSort('outQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Xuất Trong Kỳ {sortField === 'outQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold text-right cursor-pointer select-none" style={{ color: '#87CBB9' }} onClick={() => toggleSort('closingQty')}>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-teal-700 cursor-pointer select-none" onClick={() => toggleSort('closingQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Tồn Cuối Kỳ {sortField === 'closingQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold text-right" style={{ color: '#4A6A7A' }}>Giá Vốn BK</th>
-                                            <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-bold text-center" style={{ color: '#4A6A7A' }}>Thao Tác</th>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right">Giá Vốn BK</th>
+                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">Thao Tác</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-slate-100">
                                         {sortedSummaryItems.map((item, idx) => (
                                             <tr key={item.productId}
-                                                className="group transition-colors hover:bg-[#142433] cursor-pointer"
-                                                style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}
+                                                className="group transition-colors hover:bg-slate-50 cursor-pointer"
                                                 onClick={() => handleDrillDown(item)}>
-                                                <td className="px-3 py-3 text-xs" style={{ color: '#4A6A7A' }}>{idx + 1}</td>
-                                                <td className="px-3 py-3">
-                                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded"
-                                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                <td className="px-3.5 py-3 text-xs text-slate-500 font-medium">{idx + 1}</td>
+                                                <td className="px-3.5 py-3">
+                                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                         {item.skuCode}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3.5 py-3">
                                                     <div className="min-w-0">
-                                                        <p className="text-xs font-semibold truncate" style={{ color: '#E8F1F2' }}>{item.productName}</p>
-                                                        <p className="text-[10px]" style={{ color: '#8AAEBB' }}>{item.wineType} · {item.country}</p>
+                                                        <p className="text-xs font-bold text-slate-900 truncate">{item.productName}</p>
+                                                        <p className="text-[10px] text-slate-500 font-medium">{item.wineType} · {item.country}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-3 text-xs text-center" style={{ color: '#8AAEBB' }}>{item.unit}</td>
+                                                <td className="px-3.5 py-3 text-xs text-center text-slate-500 font-medium">{item.unit}</td>
                                                 
                                                 {/* Tồn Đầu Kỳ */}
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: '#D4A853' }}>{item.openingQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{formatVND(item.openingValue)}</p>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-bold font-mono text-amber-600">{item.openingQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono text-slate-400">{formatVND(item.openingValue)}</p>
                                                 </td>
 
                                                 {/* Nhập Trong Kỳ */}
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: item.inQty > 0 ? '#5BA88A' : '#4A6A7A' }}>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className={`text-xs font-bold font-mono ${item.inQty > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
                                                         {item.inQty > 0 ? `+${item.inQty.toLocaleString()}` : '—'}
                                                     </p>
-                                                    {item.inQty > 0 && <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{formatVND(item.inValue)}</p>}
+                                                    {item.inQty > 0 && <p className="text-[10px] font-mono text-slate-400">{formatVND(item.inValue)}</p>}
                                                 </td>
 
                                                 {/* Xuất Trong Kỳ */}
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: item.outQty > 0 ? '#C74B50' : '#4A6A7A' }}>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className={`text-xs font-bold font-mono ${item.outQty > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
                                                         {item.outQty > 0 ? `-${item.outQty.toLocaleString()}` : '—'}
                                                     </p>
-                                                    {item.outQty > 0 && <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{formatVND(item.outValue)}</p>}
+                                                    {item.outQty > 0 && <p className="text-[10px] font-mono text-slate-400">{formatVND(item.outValue)}</p>}
                                                 </td>
 
                                                 {/* Tồn Cuối Kỳ */}
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{item.closingQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono" style={{ color: '#87CBB9' }}>{formatVND(item.closingValue)}</p>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-bold font-mono text-teal-600">{item.closingQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(item.closingValue)}</p>
                                                 </td>
 
                                                 {/* Đơn giá vốn Landed Cost */}
-                                                <td className="px-3 py-3 text-right text-xs font-mono" style={{ color: '#8AAEBB' }}>
+                                                <td className="px-3.5 py-3 text-right text-xs font-mono text-slate-600 font-medium">
                                                     {formatVND(item.unitCost)}
                                                 </td>
 
                                                 {/* Thao tác Drill-down */}
-                                                <td className="px-3 py-3 text-center" onClick={e => e.stopPropagation()}>
+                                                <td className="px-3.5 py-3 text-center" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => handleDrillDown(item)}
-                                                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-medium transition-all group-hover:bg-[#87CBB9] group-hover:text-[#0A1926]"
-                                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white cursor-pointer">
                                                         <Eye size={12} /> Sổ Chi Tiết
                                                     </button>
                                                 </td>
@@ -566,26 +556,26 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                     </tbody>
                                     {/* Sticky Summary Footer Row */}
                                     {summaryStats && (
-                                        <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10, background: '#142433', borderTop: '2px solid #2A4355' }}>
+                                        <tfoot className="sticky bottom-0 z-10 bg-slate-100 border-t-2 border-slate-300">
                                             <tr>
-                                                <td colSpan={4} className="px-3 py-3 text-xs font-bold uppercase tracking-wider text-right" style={{ color: '#E8F1F2' }}>
+                                                <td colSpan={4} className="px-3.5 py-3 text-xs font-extrabold tracking-wider text-right text-slate-900">
                                                     TỔNG CỘNG TOÀN KHO ({summaryStats.totalProducts} SKU):
                                                 </td>
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: '#D4A853' }}>{summaryStats.totalOpeningQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{formatVND(summaryStats.totalOpeningValue)}</p>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-extrabold font-mono text-amber-600">{summaryStats.totalOpeningQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOpeningValue)}</p>
                                                 </td>
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: '#5BA88A' }}>+{summaryStats.totalInQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{formatVND(summaryStats.totalInValue)}</p>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                                                 </td>
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: '#C74B50' }}>-{summaryStats.totalOutQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono" style={{ color: '#8AAEBB' }}>{formatVND(summaryStats.totalOutValue)}</p>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                                                 </td>
-                                                <td className="px-3 py-3 text-right">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{summaryStats.totalClosingQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono" style={{ color: '#87CBB9' }}>{formatVND(summaryStats.totalClosingValue)}</p>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-extrabold font-mono text-teal-600">{summaryStats.totalClosingQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(summaryStats.totalClosingValue)}</p>
                                                 </td>
                                                 <td colSpan={2}></td>
                                             </tr>
@@ -604,37 +594,34 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
             {viewMode === 'DETAIL' && selectedProduct && (
                 <div className="space-y-5">
                     {/* Header Banner for Selected Product */}
-                    <div className="p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div className="p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200 shadow-sm">
                         <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold">
                                 <Package size={20} />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold font-mono px-2 py-0.5 rounded" style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         {selectedProduct.skuCode}
                                     </span>
-                                    <h2 className="text-base font-bold" style={{ color: '#E8F1F2' }}>{selectedProduct.productName}</h2>
+                                    <h2 className="text-base font-extrabold text-slate-900">{selectedProduct.productName}</h2>
                                 </div>
-                                <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>
-                                    {selectedProduct.wineType} · {selectedProduct.country} | Khoảng thời gian: <span className="font-mono text-[#87CBB9]">{formatDate(dateFrom)}</span> đến <span className="font-mono text-[#87CBB9]">{formatDate(dateTo)}</span>
+                                <p className="text-xs mt-0.5 text-slate-500 font-medium">
+                                    {selectedProduct.wineType} · {selectedProduct.country} | Khoảng thời gian: <span className="font-mono text-emerald-700 font-bold">{formatDate(dateFrom)}</span> đến <span className="font-mono text-emerald-700 font-bold">{formatDate(dateTo)}</span>
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <select value={movementType} onChange={e => setMovementType(e.target.value as any)}
-                                className={`text-xs ${inputCls}`} style={{ ...inputStyle, color: '#E8F1F2' }}>
+                            <select value={movementType} onChange={e => setMovementType(e.target.value as any)} className={`text-xs ${inputCls}`}>
                                 <option value="ALL">Tất cả chứng từ</option>
                                 <option value="IN">Chỉ xem Nhập Kho</option>
                                 <option value="OUT">Chỉ xem Xuất Kho</option>
                             </select>
 
                             <button onClick={() => loadDetailReport()} disabled={loadingDetail}
-                                className="px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1"
-                                style={{ background: '#87CBB9', color: '#0A1926' }}>
-                                {loadingDetail ? <Loader2 size={12} className="animate-spin" /> : <Filter size={12} />} Lọc
+                                className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
+                                {loadingDetail ? <Loader2 size={13} className="animate-spin" /> : <Filter size={13} />} Lọc
                             </button>
                         </div>
                     </div>
@@ -642,25 +629,25 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                     {/* Detail Summary Cards */}
                     {detailSummary && (
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                            <div className="p-3.5 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>Tồn Đầu Kỳ ({formatDate(dateFrom)})</p>
-                                <p className="text-lg font-bold font-mono mt-1" style={{ color: '#D4A853' }}>{detailSummary.openingBalance.toLocaleString()} chai</p>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[10px] uppercase font-bold text-slate-500">Tồn Đầu Kỳ ({formatDate(dateFrom)})</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-amber-600">{detailSummary.openingBalance.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>Tổng Nhập Trong Kỳ</p>
-                                <p className="text-lg font-bold font-mono mt-1" style={{ color: '#5BA88A' }}>+{detailSummary.totalIn.toLocaleString()} chai</p>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[10px] uppercase font-bold text-slate-500">Tổng Nhập Trong Kỳ</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-emerald-600">+{detailSummary.totalIn.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>Tổng Xuất Trong Kỳ</p>
-                                <p className="text-lg font-bold font-mono mt-1" style={{ color: '#C74B50' }}>-{detailSummary.totalOut.toLocaleString()} chai</p>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[10px] uppercase font-bold text-slate-500">Tổng Xuất Trong Kỳ</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-rose-600">-{detailSummary.totalOut.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>Tồn Cuối Kỳ ({formatDate(dateTo)})</p>
-                                <p className="text-lg font-bold font-mono mt-1" style={{ color: '#87CBB9' }}>{detailSummary.closingBalance.toLocaleString()} chai</p>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[10px] uppercase font-bold text-slate-500">Tồn Cuối Kỳ ({formatDate(dateTo)})</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-teal-600">{detailSummary.closingBalance.toLocaleString()} chai</p>
                             </div>
-                            <div className="p-3.5 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-[10px] uppercase font-bold" style={{ color: '#4A6A7A' }}>Giá Trị Tồn Cuối</p>
-                                <p className="text-lg font-bold font-mono mt-1" style={{ color: '#87CBB9' }}>{formatVND(detailSummary.totalValue)}</p>
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[10px] uppercase font-bold text-slate-500">Giá Trị Tồn Cuối</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-teal-700">{formatVND(detailSummary.totalValue)}</p>
                             </div>
                         </div>
                     )}
@@ -670,81 +657,81 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                         {/* Main Ledger Table */}
                         <div className="col-span-12 lg:col-span-8 space-y-3">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
+                                <h4 className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
                                     Sổ Chi Tiết Chứng Từ ({movements.length} giao dịch)
                                 </h4>
                             </div>
 
                             {loadingDetail ? (
                                 <div className="flex items-center justify-center py-16 gap-2">
-                                    <Loader2 size={20} className="animate-spin" style={{ color: '#87CBB9' }} />
-                                    <span className="text-xs" style={{ color: '#8AAEBB' }}>Đang nạp sổ chi tiết...</span>
+                                    <Loader2 size={20} className="animate-spin text-emerald-600" />
+                                    <span className="text-xs font-semibold text-slate-600">Đang nạp sổ chi tiết...</span>
                                 </div>
                             ) : movements.length === 0 ? (
-                                <div className="flex flex-col items-center py-16 gap-3 rounded-2xl" style={{ border: '1px dashed #2A4355' }}>
-                                    <FileText size={32} style={{ color: '#2A4355' }} />
-                                    <p className="text-sm" style={{ color: '#4A6A7A' }}>Không có phát sinh nhập/xuất nào trong khoảng thời gian này</p>
+                                <div className="flex flex-col items-center py-16 gap-3 rounded-2xl bg-white border border-dashed border-slate-300">
+                                    <FileText size={32} className="text-slate-300" />
+                                    <p className="text-sm font-semibold text-slate-500">Không có phát sinh nhập/xuất nào trong khoảng thời gian này</p>
                                 </div>
                             ) : (
-                                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
+                                <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
                                     <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                                         <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
+                                                <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700 sticky top-0 z-10">
                                                     {['Ngày', 'Loại', 'Số CT', 'Kho / Vị Trí', 'Nhập', 'Xuất', 'Tồn Lũy Kế', 'Đơn Giá', 'Tham Chiếu'].map(h => (
-                                                        <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                        <th key={h} className="px-3.5 py-2.5 text-[10px] uppercase tracking-wider font-extrabold">{h}</th>
                                                     ))}
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody className="divide-y divide-slate-100">
                                                 {/* Opening Balance Row */}
                                                 {detailSummary && (
-                                                    <tr style={{ background: 'rgba(212,168,83,0.08)', borderBottom: '1px solid #2A4355' }}>
-                                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#D4A853' }}>{formatDate(dateFrom)}</td>
-                                                        <td colSpan={3} className="px-3 py-2 text-xs font-bold" style={{ color: '#D4A853' }}>--- TỒN ĐẦU KỲ ---</td>
-                                                        <td className="px-3 py-2 text-center text-xs" style={{ color: '#4A6A7A' }}>—</td>
-                                                        <td className="px-3 py-2 text-center text-xs" style={{ color: '#4A6A7A' }}>—</td>
-                                                        <td className="px-3 py-2 text-center text-xs font-bold font-mono" style={{ color: '#D4A853' }}>{detailSummary.openingBalance.toLocaleString()}</td>
-                                                        <td colSpan={2} className="px-3 py-2 text-xs" style={{ color: '#4A6A7A' }}>Mốc bắt đầu báo cáo</td>
+                                                    <tr className="bg-amber-50/60 border-b border-amber-200">
+                                                        <td className="px-3.5 py-2 text-xs font-bold text-amber-700">{formatDate(dateFrom)}</td>
+                                                        <td colSpan={3} className="px-3.5 py-2 text-xs font-bold text-amber-700">--- TỒN ĐẦU KỲ ---</td>
+                                                        <td className="px-3.5 py-2 text-center text-xs text-slate-400">—</td>
+                                                        <td className="px-3.5 py-2 text-center text-xs text-slate-400">—</td>
+                                                        <td className="px-3.5 py-2 text-center text-xs font-extrabold font-mono text-amber-700">{detailSummary.openingBalance.toLocaleString()}</td>
+                                                        <td colSpan={2} className="px-3.5 py-2 text-xs text-slate-500 font-medium">Mốc bắt đầu báo cáo</td>
                                                     </tr>
                                                 )}
 
                                                 {movements.map(m => {
-                                                    const cfg = DOC_TYPE_CFG[m.docType] || { label: m.docType, color: '#8AAEBB', icon: FileText }
+                                                    const cfg = DOC_TYPE_CFG[m.docType] || { label: m.docType, color: '#475569', bg: '#F1F5F9', icon: FileText }
                                                     const Icon = cfg.icon
                                                     return (
-                                                        <tr key={m.id} className="transition-colors hover:bg-[#142433]" style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
-                                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{formatDate(m.date)}</td>
-                                                            <td className="px-3 py-2.5">
-                                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                                    style={{ color: cfg.color, background: `${cfg.color}15` }}>
+                                                        <tr key={m.id} className="transition-colors hover:bg-slate-50">
+                                                            <td className="px-3.5 py-2.5 text-xs text-slate-600 font-medium">{formatDate(m.date)}</td>
+                                                            <td className="px-3.5 py-2.5">
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full"
+                                                                    style={{ color: cfg.color, background: cfg.bg }}>
                                                                     <Icon size={10} /> {cfg.label}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{m.docNo}</td>
-                                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>
+                                                            <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-emerald-700">{m.docNo}</td>
+                                                            <td className="px-3.5 py-2.5 text-xs text-slate-700 font-medium">
                                                                 <div>{m.warehouseName}</div>
-                                                                <div className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>📍 {m.locationCode} · Lô: {m.lotNo}</div>
+                                                                <div className="text-[10px] font-mono text-slate-400">📍 {m.locationCode} · Lô: {m.lotNo}</div>
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-center">
+                                                            <td className="px-3.5 py-2.5 text-center">
                                                                 {m.qtyIn > 0 ? (
-                                                                    <span className="text-xs font-bold font-mono" style={{ color: '#5BA88A' }}>+{m.qtyIn.toLocaleString()}</span>
-                                                                ) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                                    <span className="text-xs font-bold font-mono text-emerald-600">+{m.qtyIn.toLocaleString()}</span>
+                                                                ) : <span className="text-slate-300">—</span>}
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-center">
+                                                            <td className="px-3.5 py-2.5 text-center">
                                                                 {m.qtyOut > 0 ? (
-                                                                    <span className="text-xs font-bold font-mono" style={{ color: '#C74B50' }}>-{m.qtyOut.toLocaleString()}</span>
-                                                                ) : <span style={{ color: '#2A4355' }}>—</span>}
+                                                                    <span className="text-xs font-bold font-mono text-rose-600">-{m.qtyOut.toLocaleString()}</span>
+                                                                ) : <span className="text-slate-300">—</span>}
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-center">
-                                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
+                                                            <td className="px-3.5 py-2.5 text-center">
+                                                                <span className="text-xs font-bold font-mono text-teal-600">
                                                                     {m.balance.toLocaleString()}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#8AAEBB' }}>
+                                                            <td className="px-3.5 py-2.5 text-xs font-mono text-slate-600 font-medium">
                                                                 {formatVND(m.unitCost)}
                                                             </td>
-                                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>{m.reference}</td>
+                                                            <td className="px-3.5 py-2.5 text-xs text-slate-500">{m.reference}</td>
                                                         </tr>
                                                     )
                                                 })}
@@ -757,33 +744,33 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
 
                         {/* Right Column: Stock Breakdown by Location */}
                         <div className="col-span-12 lg:col-span-4 space-y-3">
-                            <h4 className="text-xs uppercase tracking-widest font-bold" style={{ color: '#4A6A7A' }}>
+                            <h4 className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
                                 Phân Bổ Tồn Kho Thực Tế Theo Vị Trí
                             </h4>
                             {stockLocations.length === 0 ? (
-                                <div className="flex flex-col items-center py-8 gap-2 rounded-xl" style={{ border: '1px dashed #2A4355' }}>
-                                    <MapPin size={20} style={{ color: '#2A4355' }} />
-                                    <p className="text-xs" style={{ color: '#4A6A7A' }}>Không có lô hàng khả dụng trong kho</p>
+                                <div className="flex flex-col items-center py-8 gap-2 rounded-2xl bg-white border border-dashed border-slate-300">
+                                    <MapPin size={20} className="text-slate-300" />
+                                    <p className="text-xs font-semibold text-slate-500">Không có lô hàng khả dụng trong kho</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2 max-h-[500px] overflow-y-auto">
                                     {stockLocations.map((loc: any, i: number) => (
-                                        <div key={i} className="p-3 rounded-xl space-y-1.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <div key={i} className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded font-mono" style={{ background: '#1B2E3D', color: '#87CBB9' }}>
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                     📍 {loc.locationCode}
                                                 </span>
-                                                <span className="text-xs font-bold font-mono" style={{ color: '#5BA88A' }}>
+                                                <span className="text-xs font-bold font-mono text-emerald-600">
                                                     {loc.qtyAvailable.toLocaleString()} chai
                                                 </span>
                                             </div>
-                                            <div className="flex items-center justify-between text-[10px]" style={{ color: '#8AAEBB' }}>
+                                            <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
                                                 <span>{loc.warehouseName}</span>
-                                                <span className="font-mono" style={{ color: '#D4A853' }}>Lô: {loc.lotNo}</span>
+                                                <span className="font-mono text-amber-600 font-bold">Lô: {loc.lotNo}</span>
                                             </div>
-                                            <div className="flex items-center justify-between text-[10px]" style={{ color: '#4A6A7A' }}>
+                                            <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
                                                 <span>Khu {loc.zone} · Giá vốn: {formatVND(loc.unitCost)}</span>
-                                                <span>{formatVND(loc.qtyAvailable * loc.unitCost)}</span>
+                                                <span className="text-slate-600 font-bold">{formatVND(loc.qtyAvailable * loc.unitCost)}</span>
                                             </div>
                                         </div>
                                     ))}

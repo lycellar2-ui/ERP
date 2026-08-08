@@ -1,138 +1,141 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, MapPin, Thermometer, Loader2 } from 'lucide-react'
+import { MapPin, Plus, Loader2, Thermometer, Box, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
-import { type LocationRow, getLocations, createLocation, deleteLocation, getLocationHeatmap } from './actions'
 
-type HeatmapItem = { zone: string; totalLocations: number; usedLocations: number; totalCapacity: number; usedBottles: number; occupancyPct: number; hasTempControl: boolean }
+export type LocationItem = {
+    id: string
+    code: string
+    zone: string
+    rack: string | null
+    bin: string | null
+    type: string
+    capacityCases: number
+    tempControlled: boolean
+    active: boolean
+    usedCases?: number
+    lotCount?: number
+}
 
-export function LocationManager({ warehouseId, warehouseName, initialLocations }: {
+type Props = {
     warehouseId: string
     warehouseName: string
-    initialLocations: LocationRow[]
-}) {
-    const [locations, setLocations] = useState(initialLocations)
-    const [heatmap, setHeatmap] = useState<HeatmapItem[]>([])
-    const [showCreate, setShowCreate] = useState(false)
-    const [loading, setLoading] = useState(false)
-    const [form, setForm] = useState({ zone: '', rack: '', bin: '', type: 'STORAGE', capacityCases: '', tempControlled: false })
+    locations: LocationItem[]
+    onLocationCreated?: () => void
+}
 
-    useEffect(() => {
-        setLocations(initialLocations)
-    }, [initialLocations])
+export function LocationManager({ warehouseId, warehouseName, locations, onLocationCreated }: Props) {
+    const [showCreate, setShowCreate] = useState(false)
+    const [heatmap, setHeatmap] = useState<{ zone: string; totalLocations: number; usedLocations: number; occupancyPct: number; hasTempControl: boolean }[]>([])
+    const [loading, setLoading] = useState(false)
+    const [form, setForm] = useState({
+        zone: '', rack: '', bin: '', type: 'STORAGE', capacityCases: '100', tempControlled: false,
+    })
 
     const refresh = async () => {
-        const [locs, hm] = await Promise.all([
-            getLocations(warehouseId),
-            getLocationHeatmap(warehouseId),
-        ])
-        setLocations(locs)
-        setHeatmap(hm as any)
+        try {
+            const res = await fetch(`/api/warehouse/locations?warehouseId=${warehouseId}&heatmap=true`)
+            if (res.ok) {
+                const data = await res.json()
+                setHeatmap(data.heatmap || [])
+            }
+        } catch { }
     }
 
-    useEffect(() => {
-        refresh()
-    }, [warehouseId])
+    useEffect(() => { refresh() }, [warehouseId])
 
     const handleCreate = async () => {
+        if (!form.zone) return toast.error('Vui lòng nhập Zone')
         setLoading(true)
-        toast.promise(
-            createLocation({
-                warehouseId,
-                zone: form.zone,
-                rack: form.rack || null,
-                bin: form.bin || null,
-                type: form.type as any,
-                capacityCases: form.capacityCases ? Number(form.capacityCases) : null,
-                tempControlled: form.tempControlled,
-            }).then(async (res: any) => {
-                if (!res.success) throw new Error(res.error || 'Có lỗi xảy ra')
-                setForm({ zone: '', rack: '', bin: '', type: 'STORAGE', capacityCases: '', tempControlled: false })
-                setShowCreate(false)
-                await refresh()
-                return res
-            }),
-            {
-                loading: 'Đang thêm vị trí...',
-                success: 'Thêm vị trí thành công!',
-                error: (err) => `Lỗi: ${err.message}`,
-                finally: () => setLoading(false)
+        try {
+            const res = await fetch('/api/warehouse/locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    warehouseId,
+                    zone: form.zone.toUpperCase(),
+                    rack: form.rack || null,
+                    bin: form.bin || null,
+                    type: form.type,
+                    capacityCases: parseInt(form.capacityCases) || 100,
+                    tempControlled: form.tempControlled,
+                }),
+            })
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.message || 'Lỗi khi tạo vị trí')
             }
-        )
+            toast.success('Đã tạo vị trí kho mới!')
+            setShowCreate(false)
+            setForm({ zone: '', rack: '', bin: '', type: 'STORAGE', capacityCases: '100', tempControlled: false })
+            onLocationCreated?.()
+            refresh()
+        } catch (e: any) {
+            toast.error(e.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const handleDelete = async (id: string, code: string) => {
-        if (!confirm(`Chắc chắn xóa vị trí ${code}?`)) return
-        toast.promise(
-            deleteLocation(id).then(async (res: any) => {
-                if (!res.success) throw new Error(res.error || 'Có lỗi xảy ra')
-                await refresh()
-                return res
-            }),
-            {
-                loading: 'Đang xóa vị trí...',
-                success: 'Xóa vị trí thành công!',
-                error: (err) => `Lỗi: ${err.message}`
-            }
-        )
-    }
-
-    const typeColor: Record<string, string> = {
-        STORAGE: '#87CBB9', RECEIVING: '#4A8FAB', SHIPPING: '#D4A853', QUARANTINE: '#E05252', VIRTUAL: '#4A6A7A',
-    }
-
-    // Group locations by zone
-    const byZone = locations.reduce<Record<string, LocationRow[]>>((acc, loc) => {
-        acc[loc.zone] = acc[loc.zone] || []
-        acc[loc.zone].push(loc)
+    const byZone = locations.reduce<Record<string, LocationItem[]>>((acc, loc) => {
+        const z = loc.zone || 'KHÁC'
+        if (!acc[z]) acc[z] = []
+        acc[z].push(loc)
         return acc
     }, {})
+
+    const inputCls = "w-full px-3 py-2 rounded-xl text-xs outline-none bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
         <div className="space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
-                    <MapPin size={14} className="inline mr-1" /> Vị Trí Kho: {warehouseName}
-                </h3>
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold">
+                        <MapPin size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-extrabold text-slate-900">
+                            Sơ Đồ Vị Trí Kho: {warehouseName}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium">Quản lý Zone, Rack, Bin & Mức độ lấp đầy thực tế</p>
+                    </div>
+                </div>
                 <div className="flex gap-2">
-                    <button onClick={() => refresh()} className="text-xs px-3 py-1.5 rounded"
-                        style={{ border: '1px solid #2A4355', color: '#87CBB9' }}>
-                        Heatmap
+                    <button onClick={() => refresh()} className="text-xs px-3 py-2 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 shadow-2xs">
+                        <RefreshCw size={13} /> Cập Nhật Heatmap
                     </button>
                     <button onClick={() => setShowCreate(!showCreate)}
-                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
-                        <Plus size={12} /> Thêm Vị Trí
+                        className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs active:scale-95">
+                        <Plus size={15} /> Thêm Vị Trí
                     </button>
                 </div>
             </div>
 
-            {/* Heatmap */}
+            {/* Heatmap Cards */}
             {heatmap.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                     {heatmap.map(h => (
-                        <div key={h.zone} className="p-3 rounded-md" style={{
-                            background: '#1B2E3D',
-                            borderLeft: `3px solid ${h.occupancyPct > 85 ? '#E05252' : h.occupancyPct > 60 ? '#D4A853' : '#5BA88A'}`,
+                        <div key={h.zone} className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs" style={{
+                            borderLeft: `4px solid ${h.occupancyPct > 85 ? '#EF4444' : h.occupancyPct > 60 ? '#F59E0B' : '#10B981'}`,
                         }}>
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{h.zone}</span>
-                                {h.hasTempControl && <Thermometer size={12} style={{ color: '#4A8FAB' }} />}
+                                <span className="text-xs font-extrabold text-slate-900">Zone {h.zone}</span>
+                                {h.hasTempControl && <Thermometer size={14} className="text-sky-600" />}
                             </div>
-                            <div className="w-full h-2 rounded-full mb-1.5" style={{ background: '#142433' }}>
+                            <div className="w-full h-2 rounded-full mb-1.5 bg-slate-100 overflow-hidden">
                                 <div className="h-full rounded-full transition-all" style={{
                                     width: `${Math.min(100, h.occupancyPct)}%`,
-                                    background: h.occupancyPct > 85 ? '#E05252' : h.occupancyPct > 60 ? '#D4A853' : '#5BA88A',
+                                    background: h.occupancyPct > 85 ? '#EF4444' : h.occupancyPct > 60 ? '#F59E0B' : '#10B981',
                                 }} />
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                            <div className="flex justify-between font-mono text-[10px]">
+                                <span className="text-slate-500 font-medium">
                                     {h.usedLocations}/{h.totalLocations} vị trí
                                 </span>
-                                <span className="text-[10px] font-bold" style={{
-                                    color: h.occupancyPct > 85 ? '#E05252' : h.occupancyPct > 60 ? '#D4A853' : '#5BA88A',
+                                <span className="font-bold" style={{
+                                    color: h.occupancyPct > 85 ? '#EF4444' : h.occupancyPct > 60 ? '#F59E0B' : '#10B981',
                                 }}>
                                     {h.occupancyPct}%
                                 </span>
@@ -142,10 +145,10 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
                 </div>
             )}
 
-            {/* Create Form */}
+            {/* Create Form Drawer */}
             {showCreate && (
-                <div className="p-4 rounded-md space-y-3" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                    <h4 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Thêm Vị Trí Mới</h4>
+                <div className="p-4 sm:p-5 rounded-2xl space-y-3.5 bg-white border border-slate-200 shadow-sm">
+                    <h4 className="text-sm font-extrabold text-slate-900">Thêm Vị Trí Kho Mới</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {[
                             { label: 'Zone *', key: 'zone', placeholder: 'A, B, C...' },
@@ -153,46 +156,41 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
                             { label: 'Bin', key: 'bin', placeholder: '01, 02...' },
                         ].map(f => (
                             <div key={f.key}>
-                                <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>{f.label}</label>
+                                <label className="text-[10px] uppercase font-bold block mb-1 text-slate-600">{f.label}</label>
                                 <input value={(form as any)[f.key]} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                                     placeholder={f.placeholder}
-                                    className="w-full px-3 py-2 text-xs rounded outline-none"
-                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                    className={inputCls} />
                             </div>
                         ))}
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Loại</label>
+                            <label className="text-[10px] uppercase font-bold block mb-1 text-slate-600">Loại</label>
                             <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}
-                                className="w-full px-3 py-2 text-xs rounded"
-                                style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                                className={inputCls}>
                                 {['STORAGE', 'RECEIVING', 'SHIPPING', 'QUARANTINE', 'VIRTUAL'].map(t => (
                                     <option key={t} value={t}>{t}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#4A6A7A' }}>Sức chứa (thùng)</label>
+                            <label className="text-[10px] uppercase font-bold block mb-1 text-slate-600">Sức chứa (thùng)</label>
                             <input type="number" value={form.capacityCases} onChange={e => setForm({ ...form, capacityCases: e.target.value })}
-                                className="w-full px-3 py-2 text-xs rounded outline-none"
-                                style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }} />
+                                className={inputCls} />
                         </div>
-                        <div className="flex items-end">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="flex items-end pb-1">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
                                 <input type="checkbox" checked={form.tempControlled} onChange={e => setForm({ ...form, tempControlled: e.target.checked })}
-                                    className="w-4 h-4 accent-emerald-500" />
-                                <span className="text-xs" style={{ color: '#8AAEBB' }}>
-                                    <Thermometer size={12} className="inline mr-1" />Kiểm soát nhiệt độ
+                                    className="w-4 h-4 rounded accent-emerald-600 cursor-pointer" />
+                                <span className="text-xs font-bold text-slate-700">
+                                    <Thermometer size={14} className="inline mr-1 text-sky-600" />Kiểm soát nhiệt độ
                                 </span>
                             </label>
                         </div>
                     </div>
-                    <div className="flex gap-2 justify-end">
-                        <button onClick={() => setShowCreate(false)} className="text-xs px-4 py-2 rounded"
-                            style={{ color: '#4A6A7A' }}>Hủy</button>
+                    <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
+                        <button onClick={() => setShowCreate(false)} className="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 cursor-pointer">Hủy</button>
                         <button onClick={handleCreate} disabled={!form.zone || loading}
-                            className="text-xs px-4 py-2 rounded font-semibold"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
-                            {loading ? <Loader2 size={12} className="animate-spin" /> : 'Tạo'}
+                            className="text-xs font-bold px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
+                            {loading ? <Loader2 size={13} className="animate-spin" /> : 'Tạo Vị Trí'}
                         </button>
                     </div>
                 </div>
@@ -200,96 +198,86 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
 
             {/* Location Table by Zone */}
             {Object.entries(byZone).map(([zone, locs]) => (
-                <div key={zone} className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                    <div className="px-4 py-2 flex items-center justify-between"
-                        style={{ background: '#142433' }}>
-                        <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>Zone {zone}</span>
-                        <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{locs.length} vị trí</span>
+                <div key={zone} className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-2xs">
+                    <div className="px-4 py-3 flex items-center justify-between bg-slate-50 border-b border-slate-200">
+                        <span className="text-xs font-extrabold text-emerald-700">Zone {zone}</span>
+                        <span className="text-[10px] font-bold text-slate-500 font-mono">{locs.length} vị trí</span>
                     </div>
                     {/* Desktop Table */}
-                    <table className="w-full text-xs hidden md:table" style={{ color: '#E8F1F2' }}>
+                    <table className="w-full text-xs hidden md:table border-collapse">
                         <thead>
-                            <tr style={{ background: '#1B2E3D' }}>
-                                <th className="px-4 py-2 text-left font-semibold" style={{ color: '#4A6A7A' }}>Mã</th>
-                                <th className="px-4 py-2 text-left font-semibold" style={{ color: '#4A6A7A' }}>Rack</th>
-                                <th className="px-4 py-2 text-left font-semibold" style={{ color: '#4A6A7A' }}>Bin</th>
-                                <th className="px-4 py-2 text-left font-semibold" style={{ color: '#4A6A7A' }}>Loại</th>
-                                <th className="px-4 py-2 text-center font-semibold" style={{ color: '#4A6A7A' }}>Sức chứa</th>
-                                <th className="px-4 py-2 text-center font-semibold" style={{ color: '#4A6A7A' }}>Tồn</th>
-                                <th className="px-4 py-2 text-center font-semibold" style={{ color: '#4A6A7A' }}>Đã dùng</th>
-                                <th className="px-4 py-2" />
+                            <tr className="bg-slate-100/50 border-b border-slate-200 text-slate-700">
+                                <th className="px-4 py-2.5 text-left font-extrabold uppercase text-[10px]">Mã Vị Trí</th>
+                                <th className="px-4 py-2.5 text-left font-extrabold uppercase text-[10px]">Rack</th>
+                                <th className="px-4 py-2.5 text-left font-extrabold uppercase text-[10px]">Bin</th>
+                                <th className="px-4 py-2.5 text-left font-extrabold uppercase text-[10px]">Loại</th>
+                                <th className="px-4 py-2.5 text-center font-extrabold uppercase text-[10px]">Sức Chứa</th>
+                                <th className="px-4 py-2.5 text-center font-extrabold uppercase text-[10px]">Số Lô Tồn</th>
+                                <th className="px-4 py-2.5 text-center font-extrabold uppercase text-[10px]">Đã Dùng</th>
+                                <th className="px-4 py-2.5" />
                             </tr>
                         </thead>
-                        <tbody>
-                            {locs.map(loc => (
-                                <tr key={loc.id} className="border-t" style={{ borderColor: '#2A4355' }}>
-                                    <td className="px-4 py-2 font-mono font-bold" style={{ color: '#87CBB9' }}>{loc.locationCode}</td>
-                                    <td className="px-4 py-2">{loc.rack ?? '—'}</td>
-                                    <td className="px-4 py-2">{loc.bin ?? '—'}</td>
-                                    <td className="px-4 py-2">
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                            style={{ color: typeColor[loc.type] || '#4A6A7A', background: `${typeColor[loc.type] || '#4A6A7A'}18` }}>
-                                            {loc.type}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-2 text-center font-mono">{loc.capacityCases ?? '∞'}</td>
-                                    <td className="px-4 py-2 text-center font-mono">{loc.stockCount}</td>
-                                    <td className="px-4 py-2 text-center font-mono">{loc.usedBottles}</td>
-                                    <td className="px-4 py-2 text-right">
-                                        {loc.stockCount === 0 && (
-                                            <button onClick={() => handleDelete(loc.id, loc.locationCode)}
-                                                className="p-1 rounded hover:opacity-60 transition-opacity"
-                                                style={{ color: '#E05252' }}>
-                                                <Trash2 size={12} />
-                                            </button>
-                                        )}
-                                        {loc.tempControlled && <Thermometer size={12} style={{ color: '#4A8FAB' }} className="inline ml-1" />}
-                                    </td>
-                                </tr>
-                            ))}
+                        <tbody className="divide-y divide-slate-100">
+                            {locs.map(loc => {
+                                const usedPct = loc.capacityCases > 0 ? Math.round(((loc.usedCases || 0) / loc.capacityCases) * 100) : 0
+                                return (
+                                    <tr key={loc.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-4 py-2.5 font-bold font-mono text-emerald-700">
+                                            <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
+                                                {loc.code}
+                                            </span>
+                                            {loc.tempControlled && <Thermometer size={12} className="inline ml-1 text-sky-600" title="Kho lạnh" />}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-slate-700 font-medium font-mono">{loc.rack || '—'}</td>
+                                        <td className="px-4 py-2.5 text-slate-700 font-medium font-mono">{loc.bin || '—'}</td>
+                                        <td className="px-4 py-2.5 font-bold text-[10px] uppercase text-slate-600">{loc.type}</td>
+                                        <td className="px-4 py-2.5 text-center font-mono font-bold text-slate-900">{loc.capacityCases} thùng</td>
+                                        <td className="px-4 py-2.5 text-center font-mono text-amber-700 font-bold">{loc.lotCount || 0} lô</td>
+                                        <td className="px-4 py-2.5 text-center">
+                                            <div className="flex items-center justify-center gap-2 font-mono text-xs">
+                                                <div className="w-16 h-2 rounded-full bg-slate-100 overflow-hidden">
+                                                    <div className="h-full rounded-full" style={{
+                                                        width: `${Math.min(100, usedPct)}%`,
+                                                        background: usedPct > 85 ? '#EF4444' : usedPct > 60 ? '#F59E0B' : '#10B981',
+                                                    }} />
+                                                </div>
+                                                <span className="font-bold text-[10px]" style={{
+                                                    color: usedPct > 85 ? '#EF4444' : usedPct > 60 ? '#F59E0B' : '#10B981',
+                                                }}>
+                                                    {usedPct}%
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right">
+                                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${loc.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'}`}>
+                                                {loc.active ? 'Hoạt động' : 'Tắt'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
 
                     {/* Mobile Cards */}
-                    <div className="block md:hidden space-y-2 p-2">
+                    <div className="block md:hidden divide-y divide-slate-100">
                         {locs.map(loc => (
-                            <div key={loc.id} className="p-3 rounded-lg space-y-1.5" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                            <div key={loc.id} className="p-3.5 space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{loc.locationCode}</span>
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                        style={{ color: typeColor[loc.type] || '#4A6A7A', background: `${typeColor[loc.type] || '#4A6A7A'}18` }}>
-                                        {loc.type}
+                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        {loc.code}
                                     </span>
+                                    <span className="text-[10px] font-bold uppercase text-slate-500">{loc.type}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-xs" style={{ color: '#8AAEBB' }}>
-                                    <span>Rack: {loc.rack ?? '—'}</span>
-                                    <span>Bin: {loc.bin ?? '—'}</span>
-                                    {loc.tempControlled && <Thermometer size={12} style={{ color: '#4A8FAB' }} />}
-                                </div>
-                                <div className="flex items-center justify-between pt-1.5 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
-                                    <span style={{ color: '#4A6A7A' }}>Sức chứa: <strong className="font-mono text-white">{loc.capacityCases ?? '∞'}</strong></span>
-                                    <span style={{ color: '#4A6A7A' }}>Tồn: <strong className="font-mono text-white">{loc.stockCount}</strong></span>
-                                    <span style={{ color: '#4A6A7A' }}>Dùng: <strong className="font-mono text-white">{loc.usedBottles}</strong></span>
-                                    {loc.stockCount === 0 && (
-                                        <button onClick={() => handleDelete(loc.id, loc.locationCode)}
-                                            className="p-1.5 rounded hover:opacity-60 transition-opacity"
-                                            style={{ color: '#E05252' }}>
-                                            <Trash2 size={14} />
-                                        </button>
-                                    )}
+                                <div className="flex justify-between text-xs text-slate-600 font-medium">
+                                    <span>Rack: {loc.rack || '—'} · Bin: {loc.bin || '—'}</span>
+                                    <span className="font-bold text-slate-900">{loc.capacityCases} thùng</span>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
             ))}
-
-            {locations.length === 0 && (
-                <div className="text-center py-12" style={{ color: '#4A6A7A' }}>
-                    <MapPin size={32} className="mx-auto mb-2 opacity-40" />
-                    <p className="text-sm">Chưa có vị trí nào. Nhấn "Thêm Vị Trí" để bắt đầu.</p>
-                </div>
-            )}
         </div>
     )
 }
