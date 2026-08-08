@@ -1547,32 +1547,70 @@ export async function cancelSalesOrder(id: string): Promise<{ success: boolean; 
 }
 
 // ── Sales stats ─────────────────────────────────
-export async function getSalesStats() {
+export async function getSalesStats(filters: {
+    search?: string
+    dateFrom?: string
+    dateTo?: string
+    salesRepId?: string
+    channel?: SalesChannel
+    legalEntityId?: string
+    warehouseId?: string
+    paymentTerm?: string
+} = {}) {
+    const { 
+        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm 
+    } = filters
+
     const user = await getCurrentUser()
     const isSalesRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
-    const cacheKey = isSalesRep ? `sales:stats:${user.id}` : 'sales:stats:all'
+
+    const userId = user?.id ?? 'anonymous'
+    const cacheKey = `sales:stats:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}`
 
     return cached(cacheKey, async () => {
-        const where: any = {
-            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
-            createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
-        }
-        const groupWhere: any = {}
+        const where: any = {}
 
         if (isSalesRep) {
             where.salesRepId = user.id
-            groupWhere.salesRepId = user.id
+        } else if (salesRepId) {
+            where.salesRepId = salesRepId
+        }
+
+        if (channel) where.channel = channel
+        if (legalEntityId) where.legalEntityId = legalEntityId
+        if (warehouseId) where.warehouseId = warehouseId
+        if (paymentTerm) where.paymentTerm = paymentTerm
+
+        if (dateFrom || dateTo) {
+            where.createdAt = {}
+            if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+            if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+        } else {
+            where.createdAt = { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+        }
+
+        if (search) {
+            where.OR = [
+                { soNo: { contains: search, mode: 'insensitive' } },
+                { customer: { name: { contains: search, mode: 'insensitive' } } },
+                { customer: { code: { contains: search, mode: 'insensitive' } } },
+            ]
+        }
+
+        const revWhere = {
+            ...where,
+            status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] }
         }
 
         const [totals, byStatus] = await Promise.all([
             prisma.salesOrder.aggregate({
-                where,
+                where: revWhere,
                 _sum: { totalAmount: true },
                 _count: true,
             }),
             prisma.salesOrder.groupBy({
                 by: ['status'],
-                where: groupWhere,
+                where,
                 _count: true
             }),
         ])
@@ -1581,7 +1619,7 @@ export async function getSalesStats() {
         return {
             monthRevenue: Number(totals._sum.totalAmount ?? 0),
             monthOrders: totals._count,
-            pendingApproval: statusMap['PENDING_APPROVAL'] ?? 0,
+            pendingApproval: (statusMap['PENDING_APPROVAL'] ?? 0) + (statusMap['PENDING_ACCOUNTING'] ?? 0),
             draft: statusMap['DRAFT'] ?? 0,
             confirmed: statusMap['CONFIRMED'] ?? 0,
         }
@@ -2281,20 +2319,65 @@ export async function exportSalesOrdersExcel(filters: {
 }
 
 // ── Status counts for quick filter tabs ───────────
-export async function getSOStatusCounts(): Promise<Record<string, number>> {
+export async function getSOStatusCounts(filters: {
+    search?: string
+    dateFrom?: string
+    dateTo?: string
+    salesRepId?: string
+    channel?: SalesChannel
+    legalEntityId?: string
+    warehouseId?: string
+    paymentTerm?: string
+    pendingAction?: boolean
+} = {}): Promise<Record<string, number>> {
+    const { 
+        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction 
+    } = filters
+
     const user = await getCurrentUser()
     const isSalesRep = user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
-    const cacheKey = isSalesRep ? `sales:status-counts:${user.id}` : 'sales:status-counts:all'
+
+    const userId = user?.id ?? 'anonymous'
+    const cacheKey = `sales:status-counts:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}`
 
     return cached(cacheKey, async () => {
         const where: any = {}
-        if (isSalesRep) where.salesRepId = user.id
+
+        if (isSalesRep) {
+            where.salesRepId = user.id
+        } else if (salesRepId) {
+            where.salesRepId = salesRepId
+        }
+
+        if (channel) where.channel = channel
+        if (legalEntityId) where.legalEntityId = legalEntityId
+        if (warehouseId) where.warehouseId = warehouseId
+        if (paymentTerm) where.paymentTerm = paymentTerm
+
+        if (pendingAction) {
+            where.status = { in: ['PENDING_APPROVAL', 'PENDING_ACCOUNTING'] }
+        }
+
+        if (dateFrom || dateTo) {
+            where.createdAt = {}
+            if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+            if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+        }
+
+        if (search) {
+            where.OR = [
+                { soNo: { contains: search, mode: 'insensitive' } },
+                { customer: { name: { contains: search, mode: 'insensitive' } } },
+                { customer: { code: { contains: search, mode: 'insensitive' } } },
+            ]
+        }
 
         const counts = await prisma.salesOrder.groupBy({
             by: ['status'],
             where,
             _count: { _all: true },
         })
+
         const result: Record<string, number> = { ALL: 0 }
         for (const c of counts) {
             result[c.status] = c._count._all
@@ -2322,18 +2405,21 @@ export async function getSalesPageData(filters: {
     pendingAction?: boolean
 } = {}, onlyRows = false) {
     if (onlyRows) {
-        const ordersResult = await getSalesOrders(filters)
+        const [ordersResult, statusCounts] = await Promise.all([
+            getSalesOrders(filters),
+            getSOStatusCounts(filters),
+        ])
         return serialize({
             rows: ordersResult.rows,
             total: ordersResult.total,
             stats: { monthRevenue: 0, monthOrders: 0, pendingApproval: 0, draft: 0, confirmed: 0 },
-            statusCounts: {} as Record<string, number>,
+            statusCounts,
         })
     }
     const [ordersResult, stats, statusCounts, salesReps, legalEntities, warehouses, paymentTermsRaw] = await Promise.all([
         getSalesOrders(filters),
-        getSalesStats(),
-        getSOStatusCounts(),
+        getSalesStats(filters),
+        getSOStatusCounts(filters),
         prisma.user.findMany({ where: { status: 'ACTIVE' }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
         prisma.legalEntity.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: 'asc' } }),
         prisma.warehouse.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: 'asc' } }),

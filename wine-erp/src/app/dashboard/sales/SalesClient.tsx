@@ -744,6 +744,16 @@ function SODetailDrawer({
                             </div>
                         </div>
 
+                        {/* Diễn giải / Ghi chú đơn hàng */}
+                        {detail.notes && (
+                            <div className="p-3 rounded-md bg-[#142433] border border-[#2A4355]/40 text-xs">
+                                <span className="font-bold text-[10px] uppercase tracking-wider block mb-1" style={{ color: '#4A6A7A' }}>
+                                    📝 Ghi Chú / Diễn Giải Đơn Hàng
+                                </span>
+                                <p className="text-[#E8F1F2] leading-relaxed whitespace-pre-wrap">{detail.notes}</p>
+                            </div>
+                        )}
+
                         {/* 3. PRODUCTS LIST */}
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide mb-2.5" style={{ color: '#4A6A7A' }}>Sản Phẩm Trong Đơn Hàng ({detail.lines.length} dòng)</p>

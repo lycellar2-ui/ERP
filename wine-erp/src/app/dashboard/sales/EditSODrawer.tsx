@@ -161,6 +161,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     const [channel, setChannel] = useState<SalesChannel>('HORECA')
     const [paymentTerm, setPaymentTerm] = useState('NET30')
     const [orderDiscount, setOrderDiscount] = useState(0)
+    const [notes, setNotes] = useState('')
     const [lines, setLines] = useState<SOLine[]>([])
 
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
@@ -225,6 +226,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         setChannel(detail.channel as SalesChannel)
         setPaymentTerm(detail.paymentTerm)
         setOrderDiscount(Number(detail.orderDiscount ?? 0))
+        setNotes(detail.notes ?? '')
         setLegalEntityId(detail.legalEntityId ?? '')
         setShippingAddressId(detail.shippingAddressId ?? '')
 
@@ -429,6 +431,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
             channel,
             paymentTerm,
             orderDiscount,
+            notes,
             legalEntityId,
             shippingAddressId: shippingAddressId || undefined,
             lines: lines.map(l => ({
@@ -652,6 +655,19 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         {entities.map(e => <option key={e.id} value={e.id}>{e.code}</option>)}
                                     </select>
                                 </div>
+                            </div>
+
+                            {/* Diễn giải / Ghi chú đơn hàng */}
+                            <div>
+                                <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Diễn Giải / Ghi Chú Đơn Hàng</label>
+                                <textarea
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                    placeholder="Nhập diễn giải/ghi chú đơn hàng..."
+                                    rows={2}
+                                    className="w-full px-3 py-1.5 text-xs outline-none rounded"
+                                    style={{ ...inputStyle }}
+                                />
                             </div>
 
                             {/* Credit Warning */}

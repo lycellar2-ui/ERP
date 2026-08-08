@@ -34,6 +34,8 @@
 25. [BUG-034: Lỗi Chữ Tàng Hình / Trắng Trên Nền Trắng Thẻ Xuất Kho (DO Cards)](#bug-034-lỗi-chữ-tàng-hình--trắng-trên-nền-trắng-thẻ-xuất-kho-do-cards)
 26. [BUG-035: Lỗi Foreign Key Constraint (products_appellationId_fkey) Khi Tạo Mới Sản Phẩm](#bug-035-lỗi-foreign-key-constraint-products_appellationid_fkey-khi-tạo-mới-sản-phẩm)
 27. [BUG-036: SWR Cache Stale Trên Tờ Trình, Cột Mã Cha Khách Hàng & Lỗi Chữ Tàng Hình Pháp Nhân](#bug-036-swr-cache-stale-trên-tờ-trình-cột-mã-cha-khách-hàng--lỗi-chữ-tàng-hình-pháp-nhân)
+28. [BUG-037: Diễn Giải / Ghi Chú Đơn Hàng Bị Ẩn Trên Chi Tiết & Trang In](#bug-037-diễn-giải--ghi-chú-đơn-hàng-bị-ẩn-trên-chi-tiết--trang-in)
+29. [BUG-038: Số Lượng Thẻ Trạng Thái (Tab Counts) Không Lọc Theo Bộ Lọc Ngày / Tìm Kiếm](#bug-038-số-lượng-thẻ-trạng-thái-tab-counts-không-lọc-theo-bộ-lọc-ngày--tìm-kiếm)
 
 ---
 
@@ -1488,6 +1490,58 @@ if ('salesRepId' in dataToUpdate) {
 ### Bài học
 
 > ⚠️ **RULE 58: Mọi Server Action cập nhật DB phải gọi đồng thời `revalidateCache('<prefix>')` để xóa SWR in-memory cache, tránh trả về dữ liệu cũ cho client.**
+
+---
+
+## BUG-037: Diễn Giải / Ghi Chú Đơn Hàng Bị Ẩn Trên Chi Tiết & Trang In
+
+**Ngày:** 2026-08-08  
+**Severity:** 🟡 Medium — Ghi chú/diễn giải đơn hàng người dùng nhập không xuất hiện trên chi tiết đơn hàng, trang in SO, trang in DO và bị mất khi sửa đơn.
+
+### Triệu chứng
+1. Khi tạo đơn hàng có nhập "Diễn giải / Ghi chú đơn hàng" (`notes`), mở Drawer Chi tiết đơn hàng (`SODetailDrawer`) không thấy hiển thị dòng ghi chú này.
+2. Khi bấm "In Đơn" (Sales Order print `/dashboard/sales/print`) hoặc xem "Print Preview" (trong Drawer Tạo đơn) hoặc in phiếu xuất kho (Delivery Order print `/dashboard/warehouse/print`), nội dung ghi chú không xuất hiện trên bản in.
+3. Khi mở Drawer Chỉnh sửa đơn hàng (`EditSODrawer`), ô ghi chú cũ không nạp lên và khi lưu sẽ làm mất ghi chú cũ.
+
+### Nguyên nhân gốc rễ
+1. **Drawer Chi tiết & Trang in SO/DO**: Trường `notes` thuộc model `SalesOrder` đã lưu thành công trong DB, nhưng component UI `SODetailDrawer`, `SalesOrderPrintPage`, `DOPrintPage` và `CreateSODrawer` (Print Preview) chưa render JSX hiển thị `notes`.
+2. **Actions Print**: `getDOPrintDetail` trong `actions-print.ts` thiếu trường `soNotes: so.notes`.
+3. **Drawer Edit SO**: `EditSODrawer.tsx` thiếu state `notes`, thiếu ô `<textarea>` nhập liệu và chưa nạp `detail.notes` khi khởi tạo.
+
+### Cách fix
+1. Thêm block hiển thị `detail.notes` trong `SODetailDrawer` (`SalesClient.tsx`).
+2. Thêm block hiển thị `order.notes` trên trang in đơn hàng (`sales/print/page.tsx`) và `Print Preview Modal` (`CreateSODrawer.tsx`).
+3. Bổ sung `soNotes: so.notes` vào `actions-print.ts` và render `data.soNotes` trên trang in phiếu xuất kho (`warehouse/print/page.tsx`).
+4. Thêm state `notes`, nạp dữ liệu ban đầu, bổ sung ô `<textarea>` và truyền `notes` trong `EditSODrawer.tsx`.
+
+### Bài học
+
+> ⚠️ **RULE 59: Mọi trường văn bản ghi chú / diễn giải (`notes`, `memo`, `description`) được nhập ở form khởi tạo PHẢI được thiết kế đồng bộ hiển thị trên: 1) Drawer chi tiết, 2) Trang in (Print Page & Preview), 3) Form chỉnh sửa.**
+
+---
+
+## BUG-038: Số Lượng Thẻ Trạng Thái (Tab Counts) Không Lọc Theo Bộ Lọc Ngày / Tìm Kiếm
+
+**Ngày:** 2026-08-08  
+**Severity:** 🟡 Medium — Số lượng badge trên các tab trạng thái (Tất cả, Chờ KT, Đã XN, Huỷ...) hiển thị cố định tổng toàn bộ hệ thống, không thay đổi khi chọn bộ lọc ngày hay từ khóa tìm kiếm.
+
+### Triệu chứng
+Khi chọn bộ lọc ngày (ví dụ: "Hôm nay" 08/08/2026), bảng danh sách hiển thị 5 đơn hàng của ngày hôm nay, nhưng thanh thẻ trạng thái vẫn giữ nguyên con số tổng toàn thời gian: `Tất cả (11)`, `Chờ KT (4)`, `Đã XN (5)`, `Huỷ (2)`.
+
+### Nguyên nhân gốc rễ
+1. Hàm `getSOStatusCounts()` trong `actions.ts` không nhận tham số bộ lọc (`filters`). Hàm chỉ đếm `groupBy({ by: ['status'] })` trên toàn bộ bảng `sales_orders` không có điều kiện `where` cho ngày tạo, từ khóa, kênh, pháp nhân hay sales rep.
+2. Hàm `getSalesPageData` khi nạp dữ liệu trang không truyền `filters` vào `getSOStatusCounts()`. Khi `onlyRows` là `true` (khi reload bảng), hàm trả về `statusCounts: {}`.
+
+### Cách fix
+1. Cập nhật `getSOStatusCounts(filters)` nhận đầy đủ các tham số bộ lọc (`search`, `dateFrom`, `dateTo`, `salesRepId`, `channel`, `legalEntityId`, `warehouseId`, `paymentTerm`, `pendingAction`) và áp dụng vào câu lệnh `where` của Prisma `groupBy`.
+2. Cập nhật `getSalesStats(filters)` để các thẻ thống kê tổng doanh thu/số đơn cũng áp dụng bộ lọc đang chọn.
+3. Trong `getSalesPageData`, truyền `filters` vào `getSOStatusCounts(filters)` và `getSalesStats(filters)`, đồng thời nạp `statusCounts` ngay cả khi `onlyRows` là `true`.
+
+### Bài học
+
+> ⚠️ **RULE 60: Các hàm tính toán số lượng thẻ gom nhóm (`groupBy` status counts, aggregate stats) PHẢI luôn nhận và áp dụng bộ lọc hiện tại (`dateFrom`, `dateTo`, `search`, v.v...) ngoại trừ chính tiêu chí phân loại của thẻ đó.**
+
+
 
 
 

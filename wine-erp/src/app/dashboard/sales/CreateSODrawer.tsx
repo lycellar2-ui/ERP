@@ -1197,6 +1197,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                     </div>
                                 </div>
 
+                                {/* Ghi chú / Diễn giải đơn hàng */}
+                                {notes && (
+                                    <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed">
+                                        <span className="font-bold text-slate-900 uppercase">Ghi chú / Diễn giải: </span>
+                                        <span className="text-slate-800 italic">{notes}</span>
+                                    </div>
+                                )}
+
                                 {/* Product Lines Table - WHITE HEADER WITH BLACK TEXT */}
                                 <table className="w-full text-[10px] mb-3 border-collapse border border-slate-300">
                                     <thead>

@@ -63,6 +63,7 @@ export async function getDOPrintDetail(doId: string) {
         paymentTerm: so.paymentTerm,
         orderDiscount: Number(so.orderDiscount),
         vatRate: Number(so.vatRate ?? 10),
+        soNotes: so.notes ?? null,
         // Customer
         customer: {
             name: so.customer.name,
