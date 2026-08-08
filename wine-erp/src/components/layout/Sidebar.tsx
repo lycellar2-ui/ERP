@@ -95,7 +95,6 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { href: '/dashboard/audit-log', icon: ScrollText, label: 'Nhật Ký Hệ Thống', permission: 'SYS:READ' },
             { href: '/dashboard/ai', icon: Brain, label: 'AI & Prompt', permission: 'SYS:ADMIN' },
-            { href: '/dashboard/settings/approval-matrix', icon: Shield, label: 'Ma Trận Phân Quyền', permission: 'SYS:ADMIN' },
             { href: '/dashboard/settings', icon: Settings, label: 'Cài Đặt & RBAC', permission: 'SYS:ADMIN' },
         ]
     }
