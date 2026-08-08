@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, POSSaleSchema, POSVATInvoiceSchema, LoyaltyEarnSchema, LoyaltyRedeemSchema } from '@/lib/validations'
-import { requirePermission } from '@/lib/session'
+import { requireAuth, requirePermission } from '@/lib/session'
 import { resolveCustomerProductPrice, getCustomerResolvedPrices } from '@/app/dashboard/price-list/customer-rules-actions'
 
 // ═══════════════════════════════════════════════════
