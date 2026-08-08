@@ -748,9 +748,47 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             }
         }
 
+export async function generateUniqueSoNo(): Promise<string> {
+    const year = new Date().getFullYear().toString().slice(-2)
+    const month = String(new Date().getMonth() + 1).padStart(2, '0')
+    const prefix = `SO-${year}${month}-`
+
+    const lastSO = await prisma.salesOrder.findFirst({
+        where: { soNo: { startsWith: prefix } },
+        orderBy: { soNo: 'desc' },
+        select: { soNo: true }
+    })
+
+    let seq = 1
+    if (lastSO && lastSO.soNo) {
+        const parts = lastSO.soNo.split('-')
+        const lastSeqStr = parts[parts.length - 1]
+        const parsedSeq = parseInt(lastSeqStr, 10)
+        if (!isNaN(parsedSeq)) {
+            seq = parsedSeq + 1
+        }
+    }
+
+    let candidate = `${prefix}${String(seq).padStart(4, '0')}`
+    let existing = await prisma.salesOrder.findUnique({
+        where: { soNo: candidate },
+        select: { id: true }
+    })
+
+    while (existing) {
+        seq++
+        candidate = `${prefix}${String(seq).padStart(4, '0')}`
+        existing = await prisma.salesOrder.findUnique({
+            where: { soNo: candidate },
+            select: { id: true }
+        })
+    }
+
+    return candidate
+}
+
         // --- 4. Create the SO ---
-        const count = await prisma.salesOrder.count()
-        const soNo = generateSoNo(count + 1)
+        const soNo = await generateUniqueSoNo()
 
         const totalAmount = input.lines.reduce((sum, l) => {
             const lineTotal = l.qtyOrdered * l.unitPrice

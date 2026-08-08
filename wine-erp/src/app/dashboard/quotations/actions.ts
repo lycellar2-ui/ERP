@@ -423,8 +423,8 @@ export async function convertQuotationToSO(quotationId: string): Promise<{ succe
         }
         const legalEntityId = defaultEntity.id
 
-        const soCount = await prisma.salesOrder.count()
-        const soNo = `SO-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(soCount + 1).padStart(3, '0')}`
+        const { generateUniqueSoNo } = await import('../sales/actions')
+        const soNo = await generateUniqueSoNo()
 
         // Calculate dynamic VAT amount
         let vatAmount = 0

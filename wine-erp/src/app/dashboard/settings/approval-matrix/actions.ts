@@ -233,7 +233,7 @@ export async function saveProposalRoute(
                 value: {
                     creatorRoles: routeConfig.creatorRoles,
                     steps: routeConfig.steps,
-                },
+                } as any,
                 updatedAt: new Date()
             },
             create: {
@@ -241,7 +241,7 @@ export async function saveProposalRoute(
                 value: {
                     creatorRoles: routeConfig.creatorRoles,
                     steps: routeConfig.steps,
-                },
+                } as any,
                 label: `Tờ trình: ${category}`
             },
         })
@@ -263,8 +263,8 @@ export async function saveThreshold(
         await requirePermission('SYS', 'ADMIN')
         await prisma.approvalConfig.upsert({
             where: { configKey: key },
-            update: { value: { threshold: value }, updatedAt: new Date() },
-            create: { configKey: key, value: { threshold: value }, label: key },
+            update: { value: { threshold: value } as any, updatedAt: new Date() },
+            create: { configKey: key, value: { threshold: value } as any, label: key },
         })
         revalidateCache('settings')
         revalidatePath('/dashboard/settings/approval-matrix')
@@ -290,7 +290,7 @@ export async function saveAllRoutes(
                     value: {
                         creatorRoles: r.creatorRoles,
                         steps: r.steps,
-                    },
+                    } as any,
                     updatedAt: new Date()
                 },
                 create: {
@@ -298,7 +298,7 @@ export async function saveAllRoutes(
                     value: {
                         creatorRoles: r.creatorRoles,
                         steps: r.steps,
-                    },
+                    } as any,
                     label: `Tờ trình: ${r.category}`
                 },
             })
