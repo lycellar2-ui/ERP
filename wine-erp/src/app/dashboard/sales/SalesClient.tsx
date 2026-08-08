@@ -1412,6 +1412,48 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
         onSettled: () => queryClient.invalidateQueries({ queryKey: ['sales'] }),
     })
 
+    const acctApproveMutation = useMutation({
+        mutationFn: async ({ id, legalEntityId }: { id: string; legalEntityId?: string }) => {
+            const r = await accountingApproveSO(id, legalEntityId)
+            if (!r.success) throw new Error(r.error || 'Duyệt không thành công')
+            return r
+        },
+        onMutate: ({ id }) => updateCachedOrderStatus(id, 'CONFIRMED'),
+        onError: (err, variables, context) => rollbackQueries(context),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['sales'] })
+            refetch()
+        },
+    })
+
+    const acctRejectMutation = useMutation({
+        mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+            const r = await accountingRejectSO(id, reason)
+            if (!r.success) throw new Error(r.error || 'Từ chối không thành công')
+            return r
+        },
+        onMutate: ({ id }) => updateCachedOrderStatus(id, 'DRAFT'),
+        onError: (err, variables, context) => rollbackQueries(context),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['sales'] })
+            refetch()
+        },
+    })
+
+    const approveMutation = useMutation({
+        mutationFn: async ({ id, vintages, warehouseId }: { id: string; vintages?: { lineId: string; vintage: number }[]; warehouseId?: string }) => {
+            const r = await approveSalesOrder(id, vintages, warehouseId)
+            if (!r.success) throw new Error(r.error || 'Duyệt không thành công')
+            return r
+        },
+        onMutate: ({ id }) => updateCachedOrderStatus(id, 'PENDING_ACCOUNTING'),
+        onError: (err, variables, context) => rollbackQueries(context),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['sales'] })
+            refetch()
+        },
+    })
+
     const handleConfirm = async (id: string) => {
         setActionLoading(id)
         toast.promise(confirmMutation.mutateAsync(id), {
@@ -1865,8 +1907,11 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                                                     <button onClick={async () => {
                                                         if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
                                                         setActionLoading(row.id)
-                                                        toast.promise(accountingRejectSO(row.id).then(() => reload()), {
-                                                            loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
+                                                        toast.promise(acctRejectMutation.mutateAsync({ id: row.id }).then(() => {
+                                                            if (detailId === row.id) setDetailId(null)
+                                                            reload()
+                                                        }), {
+                                                            loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: (e: any) => `Lỗi: ${e.message}`, finally: () => setActionLoading(null)
                                                         })
                                                     }} disabled={actionLoading === row.id}
                                                         className="flex items-center gap-0.5 px-1.5 py-1 text-[10px] font-bold"
@@ -1939,8 +1984,11 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                             onAcctReject={async () => {
                                 if (!confirm('Trả đơn về DRAFT cho sales sửa?')) return
                                 setActionLoading(row.id)
-                                toast.promise(accountingRejectSO(row.id).then(() => reload()), {
-                                    loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
+                                toast.promise(acctRejectMutation.mutateAsync({ id: row.id }).then(() => {
+                                    if (detailId === row.id) setDetailId(null)
+                                    reload()
+                                }), {
+                                    loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: (e: any) => `Lỗi: ${e.message}`, finally: () => setActionLoading(null)
                                 })
                             }}
                             onCancel={() => handleCancel(row.id)}
@@ -1988,8 +2036,11 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                     }}
                     onAcctReject={(id) => {
                         setActionLoading(id)
-                        toast.promise(accountingRejectSO(id).then(() => reload()), {
-                            loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: 'Lỗi', finally: () => setActionLoading(null)
+                        toast.promise(acctRejectMutation.mutateAsync({ id }).then(() => {
+                            setDetailId(null)
+                            reload()
+                        }), {
+                            loading: 'Đang trả về...', success: 'Đã trả về DRAFT', error: (e: any) => `Lỗi: ${e.message}`, finally: () => setActionLoading(null)
                         })
                     }}
                     onApprove={(id) => setApprovalModalId(id)}
@@ -2042,9 +2093,9 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                             <button onClick={async () => {
                                 if (!acctEntityId) return toast.error('Vui lòng chọn pháp nhân')
                                 setActionLoading(acctModalId)
-                                toast.promise(accountingApproveSO(acctModalId, acctEntityId).then(r => {
-                                    if (!r.success) throw new Error(r.error)
+                                toast.promise(acctApproveMutation.mutateAsync({ id: acctModalId, legalEntityId: acctEntityId }).then(() => {
                                     setAcctModalId(null)
+                                    if (detailId === acctModalId) setDetailId(null)
                                     reload()
                                 }), {
                                     loading: 'Đang duyệt...',
@@ -2147,7 +2198,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
 
         setSubmitting(true)
         try {
-            const res = await approveSalesOrder(soId, vintagesList, selectedWarehouseId || undefined)
+            const res = await approveMutation.mutateAsync({ id: soId, vintages: vintagesList, warehouseId: selectedWarehouseId || undefined })
             if (res.success) {
                 toast.success('Đã duyệt đơn hàng thành công!')
                 onApproved()
