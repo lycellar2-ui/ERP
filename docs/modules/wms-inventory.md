@@ -504,7 +504,7 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Tự động mặc định kho theo Pháp nhân** | `SalesClient.tsx`, `DeliveryOrderTab.tsx` | Tự động chọn kho mặc định của Pháp nhân sở hữu đơn bán hàng, vô hiệu hóa kho chỉ điều chuyển (`allowSales: false`) khỏi đơn bán hàng để tránh chọn nhầm |
 | **Tự động tách vị trí nhặt hàng Multi-Location FIFO** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Tự động phân bổ số lượng nhặt tách ra nhiều vị trí/lô theo thứ tự FIFO (VD: nhặt 1 chai ở kệ A, 1 chai ở kệ B cho đủ 2 chai đơn hàng). Bỏ nút phân bổ thừa và hỗ trợ thêm/xóa dòng tách vị trí nhặt linh hoạt |
 | **Phân quyền Cấu hình Kho về Cài đặt & RBAC System Admin** | `SettingsClient.tsx`, `WarehouseClient.tsx` | Đưa toàn bộ cấu hình kho (Pháp nhân quản lý, Cho phép Bán Hàng `allowSales`, Cho phép Điều Chuyển `allowTransfer`, Kho Mặc Định `isDefault`) về mục Cài Đặt hệ thống & RBAC (`SYS:ADMIN`). Gỡ nút Cấu Hình Kho khỏi màn hình WMS để tránh thủ kho chọn nhầm |
-| **Tái thiết kế Sơ Đồ Kho 2D Light Theme, Vẽ Tường/Cửa/Nhãn + Đổi Kích Thước & Popup Tồn Kho** | `WarehouseMapTab.tsx`, `actions-map.ts` | Chuyển đổi toàn bộ giao diện Sơ đồ kho 2D sang Clean Light Theme (màu sáng cao cấp), hỗ trợ vẽ tường 🧱, cửa 🚪 (xoay 90°/180°), nhãn 🏷️, tẩy xóa 🧹. Thêm công cụ kéo thả 📐 đổi kích thước (Rộng x Cao), đổi size hàng loạt theo Zone. Popup Modal & Bảng tồn kho được thiết kế lại màu sáng tương phản cao, chữ rõ nét dễ đọc |
+| **Tái thiết kế Sơ Đồ Kho 2D Light Theme, Ranh Giới Mặt Bằng Kho & Thước Đo Tường** | `WarehouseMapTab.tsx`, `actions-map.ts` | Bổ sung Khung Ranh Giới Tổng Thể Mặt Bằng Kho (Outer Floor Perimeter Boundary Frame) kèm nhãn chiều rộng x chiều sâu (`24m x 16m`), phân biệt khu vực sàn kho trắng tinh khiết với nền xám bên ngoài. Nâng cấp nét vẽ tường kiến trúc đậm nét `#1E293B` kèm chốt nối góc, thước đo độ dài tường realtime khi vẽ `📏 Length (px/m)`, banner hướng dẫn màu nổi bật và hiệu ứng highlight đỏ khi tẩy tường |
 
 ### Chi tiết GR Variance Report
 
@@ -516,5 +516,5 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-08-08 | Wine ERP v9.2 — Clean Light Theme 2D Warehouse Map & High-Contrast Inventory Popup*
+*Last updated: 2026-08-08 | Wine ERP v9.3 — 2D Warehouse Outer Boundary Frame & Architectural Wall Measuring Tools*
 

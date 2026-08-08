@@ -5,7 +5,8 @@ import {
     Search, Loader2, Save, Move, Maximize2, ZoomIn, ZoomOut, Grid3x3,
     X, Eye, MousePointer2, Minus, DoorOpen, Type, Trash2, RotateCcw,
     ChevronDown, Box, Layers, Package, Calendar, ShieldCheck, Thermometer,
-    Sparkles, RefreshCw, Info, Building2, MapPin, Sliders, Maximize, Check
+    Sparkles, RefreshCw, Info, Building2, MapPin, Sliders, Maximize, Check,
+    Ruler, LayoutTemplate
 } from 'lucide-react'
 import {
     MapLocation, MapWarehouse, MapLocationProduct,
@@ -22,7 +23,8 @@ interface WarehouseOption { id: string; code: string; name: string }
 interface Wall { id: string; x1: number; y1: number; x2: number; y2: number; thickness: number }
 interface Door { id: string; x: number; y: number; width: number; rotation: number }
 interface Label { id: string; x: number; y: number; text: string; fontSize: number }
-interface LayoutConfig { walls: Wall[]; doors: Door[]; labels: Label[] }
+interface Boundary { width: number; height: number }
+interface LayoutConfig { walls: Wall[]; doors: Door[]; labels: Label[]; boundary?: Boundary }
 
 type Tool = 'select' | 'wall' | 'door' | 'label' | 'eraser'
 
@@ -129,12 +131,18 @@ export function WarehouseMapTab({
     const [editMode, setEditMode] = useState(false)
     const [selectedLocId, setSelectedLocId] = useState<string | null>(null)
 
-    // Floor plan elements (Walls, Doors, Labels)
-    const [layoutCfg, setLayoutCfg] = useState<LayoutConfig>({ walls: [], doors: [], labels: [] })
+    // Floor plan elements (Walls, Doors, Labels, Boundary)
+    const [layoutCfg, setLayoutCfg] = useState<LayoutConfig>({
+        walls: [],
+        doors: [],
+        labels: [],
+        boundary: { width: 2400, height: 1600 }
+    })
     const [wallDrawing, setWallDrawing] = useState<{ x1: number; y1: number } | null>(null)
     const [doorRotation, setDoorRotation] = useState<number>(0)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [spaceHeld, setSpaceHeld] = useState(false)
+    const [hoveredWallId, setHoveredWallId] = useState<string | null>(null)
 
     // Drag & Resize location
     const [dragLoc, setDragLoc] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null)
@@ -173,7 +181,12 @@ export function WarehouseMapTab({
             ])
             setMapData(data)
             setLocations(data?.locations ?? [])
-            setLayoutCfg(cfg ?? { walls: [], doors: [], labels: [] })
+            setLayoutCfg(cfg && cfg.boundary ? cfg : {
+                walls: cfg?.walls ?? [],
+                doors: cfg?.doors ?? [],
+                labels: cfg?.labels ?? [],
+                boundary: { width: 2400, height: 1600 }
+            })
             setPan({ x: 40, y: 40 })
             setZoom(1)
         } finally {
@@ -234,7 +247,7 @@ export function WarehouseMapTab({
                     id: uid(),
                     x1: wallDrawing.x1, y1: wallDrawing.y1,
                     x2: snap(pos.x), y2: snap(pos.y),
-                    thickness: 8,
+                    thickness: 10,
                 }
                 setLayoutCfg(prev => ({ ...prev, walls: [...prev.walls, newWall] }))
                 setWallDrawing(null)
@@ -252,7 +265,7 @@ export function WarehouseMapTab({
                 setHasChanges(true)
             }
         } else if (tool === 'eraser') {
-            const threshold = 18
+            const threshold = 20
             const px = pos.x, py = pos.y
             // Walls
             const wallIdx = layoutCfg.walls.findIndex(w => {
@@ -294,6 +307,23 @@ export function WarehouseMapTab({
         }
         const pos = toCanvas(e.clientX, e.clientY)
         setMousePos(pos)
+
+        // Eraser hover check
+        if (tool === 'eraser') {
+            const threshold = 20
+            const px = pos.x, py = pos.y
+            const wall = layoutCfg.walls.find(w => {
+                const dx = w.x2 - w.x1, dy = w.y2 - w.y1
+                const len = Math.sqrt(dx * dx + dy * dy)
+                if (len === 0) return Math.hypot(px - w.x1, py - w.y1) < threshold
+                const t = Math.max(0, Math.min(1, ((px - w.x1) * dx + (py - w.y1) * dy) / (len * len)))
+                const cx = w.x1 + t * dx, cy = w.y1 + t * dy
+                return Math.hypot(px - cx, py - cy) < threshold
+            })
+            setHoveredWallId(wall?.id ?? null)
+        } else {
+            setHoveredWallId(null)
+        }
 
         // Drag location position
         if (dragLoc && editMode && tool === 'select') {
@@ -382,6 +412,8 @@ export function WarehouseMapTab({
 
     const selectedLoc = locations.find(l => l.id === selectedLocId)
     const zones = [...new Set(locations.map(l => l.zone))].sort()
+    const floorW = layoutCfg.boundary?.width ?? 2400
+    const floorH = layoutCfg.boundary?.height ?? 1600
 
     // ═══════════════════════════════════════════════════
     // RENDER (Clean Bright Light Theme)
@@ -482,7 +514,7 @@ export function WarehouseMapTab({
                         )}
 
                         <div className="mt-auto pt-2 border-t border-slate-200">
-                            <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [] }); setHasChanges(true) }}
+                            <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [], boundary: { width: 2400, height: 1600 } }); setHasChanges(true) }}
                                 title="Reset vẽ tường cửa" className="flex flex-col items-center gap-0.5 p-2 rounded-xl text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 w-full cursor-pointer">
                                 <RotateCcw size={14} />
                                 Reset
@@ -496,7 +528,7 @@ export function WarehouseMapTab({
                     ref={canvasRef}
                     className="flex-1 relative overflow-hidden select-none"
                     style={{
-                        background: '#F8FAFC', // Slate 50 Light Blueprint Canvas
+                        background: '#E2E8F0', // Shaded backdrop outside floorplan boundary
                         backgroundImage: 'radial-gradient(circle, #CBD5E1 1.2px, transparent 1.2px)',
                         backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
                         backgroundPosition: `${pan.x}px ${pan.y}px`,
@@ -531,19 +563,55 @@ export function WarehouseMapTab({
 
                     {mapData && (
                         <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
-                            {/* SVG Architectural Layer: Walls, Doors & Drawing Previews */}
-                            <svg style={{ position: 'absolute', top: 0, left: 0, width: 3000, height: 2000, zIndex: 1, pointerEvents: 'none' }}>
-                                {/* Walls */}
-                                {layoutCfg.walls.map(w => (
-                                    <line key={w.id} x1={w.x1} y1={w.y1} x2={w.x2} y2={w.y2}
-                                        stroke="#334155" strokeWidth={w.thickness || 8} strokeLinecap="round" />
-                                ))}
 
-                                {/* Wall drawing active preview */}
+                            {/* 🏢 Outer Warehouse Floor Container & Perimeter Frame */}
+                            <div style={{
+                                position: 'absolute',
+                                left: 0, top: 0,
+                                width: floorW, height: floorH,
+                                background: '#FFFFFF',
+                                backgroundImage: 'radial-gradient(circle, #E2E8F0 1.2px, transparent 1.2px)',
+                                backgroundSize: '24px 24px',
+                                border: '10px solid #1E293B', // Solid Charcoal Outer Wall
+                                borderRadius: 16,
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)',
+                                pointerEvents: 'none',
+                                zIndex: 0,
+                            }}>
+                                {/* Dimension Badge on Top Left Wall */}
+                                <div className="absolute -top-9 left-2 bg-slate-900 text-white px-3 py-1 rounded-t-lg text-[10px] font-extrabold font-mono flex items-center gap-1.5 shadow-sm">
+                                    <Building2 size={13} className="text-amber-400" />
+                                    RANH GIỚI TỔNG THỂ MẶT BẰNG KHO ({floorW / 100}m × {floorH / 100}m)
+                                </div>
+                            </div>
+
+                            {/* SVG Architectural Layer: Walls, Doors & Drawing Previews */}
+                            <svg style={{ position: 'absolute', top: 0, left: 0, width: Math.max(3000, floorW + 400), height: Math.max(2000, floorH + 400), zIndex: 1, pointerEvents: 'none' }}>
+                                {/* Drawn Inner Walls */}
+                                {layoutCfg.walls.map(w => {
+                                    const isHovered = hoveredWallId === w.id
+                                    return (
+                                        <g key={w.id}>
+                                            <line x1={w.x1} y1={w.y1} x2={w.x2} y2={w.y2}
+                                                stroke={isHovered ? '#EF4444' : '#1E293B'}
+                                                strokeWidth={isHovered ? 14 : w.thickness || 10}
+                                                strokeLinecap="round" />
+                                            {/* Wall joint dots */}
+                                            <circle cx={w.x1} cy={w.y1} r={5} fill={isHovered ? '#EF4444' : '#1E293B'} />
+                                            <circle cx={w.x2} cy={w.y2} r={5} fill={isHovered ? '#EF4444' : '#1E293B'} />
+                                        </g>
+                                    )
+                                })}
+
+                                {/* Active Wall drawing preview line */}
                                 {wallDrawing && (
-                                    <line x1={wallDrawing.x1} y1={wallDrawing.y1}
-                                        x2={snap(mousePos.x)} y2={snap(mousePos.y)}
-                                        stroke="#F59E0B" strokeWidth={8} strokeLinecap="round" strokeDasharray="8 4" opacity={0.8} />
+                                    <g>
+                                        <line x1={wallDrawing.x1} y1={wallDrawing.y1}
+                                            x2={snap(mousePos.x)} y2={snap(mousePos.y)}
+                                            stroke="#F59E0B" strokeWidth={10} strokeLinecap="round" strokeDasharray="8 4" opacity={0.9} />
+                                        <circle cx={wallDrawing.x1} cy={wallDrawing.y1} r={6} fill="#F59E0B" />
+                                        <circle cx={snap(mousePos.x)} cy={snap(mousePos.y)} r={6} fill="#F59E0B" />
+                                    </g>
                                 )}
 
                                 {/* Doors with Architectural Swing Arc */}
@@ -558,7 +626,7 @@ export function WarehouseMapTab({
                                 {/* Labels */}
                                 {layoutCfg.labels.map(l => (
                                     <text key={l.id} x={l.x} y={l.y} fontSize={l.fontSize || 14}
-                                        fill="#334155" fontWeight="800" fontFamily="Inter, sans-serif"
+                                        fill="#1E293B" fontWeight="800" fontFamily="Inter, sans-serif"
                                         style={{ userSelect: 'none' }}>
                                         {l.text}
                                     </text>
@@ -678,31 +746,94 @@ export function WarehouseMapTab({
                         </div>
                     )}
 
-                    {/* Tool Hint Banners */}
+                    {/* Tool Hint Floating Banners (Crisp Light Theme Pills) */}
                     {wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-white shadow-lg border border-amber-600">
-                            🧱 Click chọn điểm kết thúc tường • ESC để hủy
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-amber-500 text-white shadow-xl border border-amber-600 flex items-center gap-2">
+                            <span>🧱 Click chọn điểm kết thúc tường</span>
+                            {(() => {
+                                const dist = Math.hypot(snap(mousePos.x) - wallDrawing.x1, snap(mousePos.y) - wallDrawing.y1)
+                                return <span className="bg-amber-700 px-2 py-0.5 rounded-lg font-mono">Chiều dài: {Math.round(dist)}px (~{(dist / 100).toFixed(1)}m)</span>
+                            })()}
+                            <span className="text-amber-100">• ESC để hủy</span>
                         </div>
                     )}
                     {editMode && tool === 'door' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-white shadow-lg border border-amber-600">
-                            🚪 Click để đặt cửa trên sơ đồ • Nhấn nút Xoay ở cột trái để đổi góc
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-amber-500 text-white shadow-xl border border-amber-600 flex items-center gap-2">
+                            <span>🚪 Click vị trí để đặt cửa</span>
+                            <span className="bg-amber-700 px-2 py-0.5 rounded-lg">Góc xoay: {doorRotation}°</span>
                         </div>
                     )}
                     {editMode && tool === 'wall' && !wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-900 text-white shadow-lg border border-slate-800">
-                            🧱 Click để chọn điểm bắt đầu vẽ tường • Giữ Space để kéo bản đồ
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-slate-900 text-white shadow-xl border border-slate-800 flex items-center gap-2">
+                            <span>🧱 Click để chọn điểm bắt đầu vẽ tường</span>
+                            <span className="text-slate-400">• Giữ Space để kéo bản đồ</span>
                         </div>
                     )}
                     {editMode && tool === 'select' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-900 text-white shadow-lg border border-slate-800 flex items-center gap-2">
-                            <span>📐 Kéo góc vuông màu cam ở mỗi ô để đổi kích thước Rộng x Cao</span>
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-white text-slate-800 shadow-md border border-slate-200 flex items-center gap-2">
+                            <Sliders size={14} className="text-amber-600" />
+                            <span>Kéo ô vuông màu cam ở mỗi vị trí để đổi kích thước Rộng x Cao</span>
                         </div>
                     )}
                 </div>
 
                 {/* Right Side Control & Legend Panel (Clean Light Theme) */}
-                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-50 border-l border-slate-200 text-slate-800" style={{ width: 290 }}>
+                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-50 border-l border-slate-200 text-slate-800" style={{ width: 300 }}>
+
+                    {/* 🏢 Warehouse Floorplan Boundary Settings */}
+                    {editMode && (
+                        <div className="p-3.5 rounded-xl bg-white border border-slate-300 shadow-2xs text-xs space-y-2.5">
+                            <h4 className="font-extrabold text-slate-900 flex items-center gap-1.5 text-xs">
+                                <LayoutTemplate size={14} className="text-amber-600" /> Kích Thước Mặt Bằng Kho
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Rộng kho (px)</label>
+                                    <input
+                                        type="number"
+                                        value={floorW}
+                                        onChange={e => {
+                                            const w = Math.max(1000, parseInt(e.target.value) || 2400)
+                                            setLayoutCfg(prev => ({ ...prev, boundary: { width: w, height: prev.boundary?.height ?? 1600 } }))
+                                            setHasChanges(true)
+                                        }}
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Sâu kho (px)</label>
+                                    <input
+                                        type="number"
+                                        value={floorH}
+                                        onChange={e => {
+                                            const h = Math.max(800, parseInt(e.target.value) || 1600)
+                                            setLayoutCfg(prev => ({ ...prev, boundary: { width: prev.boundary?.width ?? 2400, height: h } }))
+                                            setHasChanges(true)
+                                        }}
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-1.5">
+                                {[
+                                    { label: '2000x1400', w: 2000, h: 1400 },
+                                    { label: '2400x1600', w: 2400, h: 1600 },
+                                    { label: '3200x2000', w: 3200, h: 2000 },
+                                ].map(p => (
+                                    <button
+                                        key={p.label}
+                                        onClick={() => {
+                                            setLayoutCfg(prev => ({ ...prev, boundary: { width: p.w, height: p.h } }))
+                                            setHasChanges(true)
+                                        }}
+                                        className="flex-1 py-1 rounded-md bg-slate-100 hover:bg-amber-500 text-slate-700 hover:text-white border border-slate-200 text-[10px] font-mono font-bold transition-colors cursor-pointer text-center"
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* 📐 Dimension & Size Editor for Selected Location */}
                     {selectedLoc && editMode && (
@@ -807,12 +938,16 @@ export function WarehouseMapTab({
                         <div className="pt-3 border-t border-slate-200 space-y-2">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">Vật Thể Bản Đồ</h4>
                             <div className="flex items-center gap-2.5">
-                                <div className="w-5 h-2 rounded bg-slate-700" />
-                                <span className="text-xs font-medium text-slate-700">Tường ngăn</span>
+                                <div className="w-5 h-2.5 rounded bg-slate-800" />
+                                <span className="text-xs font-semibold text-slate-700">Tường ngăn trong</span>
                             </div>
                             <div className="flex items-center gap-2.5">
                                 <div className="w-5 h-2 rounded bg-amber-500" />
-                                <span className="text-xs font-medium text-slate-700">Cửa ra vào</span>
+                                <span className="text-xs font-semibold text-slate-700">Cửa ra vào</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-2.5 rounded bg-slate-900 border border-slate-700" />
+                                <span className="text-xs font-semibold text-slate-700">Tường bao ngoài kho</span>
                             </div>
                         </div>
                     )}
