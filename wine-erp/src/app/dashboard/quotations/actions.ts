@@ -32,8 +32,8 @@ export type QuotationRow = {
 }
 
 // ── List quotations ─────────────────────────────
-export async function getQuotations(filters: { search?: string; status?: string } = {}): Promise<QuotationRow[]> {
-    const cacheKey = `quotations:list:${filters.search ?? ''}:${filters.status ?? ''}`
+export async function getQuotations(filters: { search?: string; status?: string; dateFrom?: string; dateTo?: string } = {}): Promise<QuotationRow[]> {
+    const cacheKey = `quotations:list:${filters.search ?? ''}:${filters.status ?? ''}:${filters.dateFrom ?? ''}:${filters.dateTo ?? ''}`
     return cached(cacheKey, async () => {
         const where: any = {}
         if (filters.status) where.status = filters.status
@@ -44,6 +44,11 @@ export async function getQuotations(filters: { search?: string; status?: string 
                 { companyName: { contains: filters.search, mode: 'insensitive' } },
                 { contactPerson: { contains: filters.search, mode: 'insensitive' } },
             ]
+        }
+        if (filters.dateFrom || filters.dateTo) {
+            where.createdAt = {}
+            if (filters.dateFrom) where.createdAt.gte = new Date(filters.dateFrom)
+            if (filters.dateTo) where.createdAt.lte = new Date(filters.dateTo + 'T23:59:59.999Z')
         }
 
         const rows = await prisma.salesQuotation.findMany({

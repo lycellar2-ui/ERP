@@ -73,6 +73,108 @@ const getInvoiceStatusStyle = (status: string) => {
     }
 }
 
+export type DatePresetKey = 
+    | 'ALL' 
+    | 'TODAY' 
+    | 'YESTERDAY' 
+    | 'THIS_WEEK' 
+    | 'LAST_WEEK' 
+    | 'THIS_MONTH' 
+    | 'LAST_MONTH' 
+    | 'THIS_QUARTER' 
+    | 'LAST_QUARTER' 
+    | 'THIS_YEAR' 
+    | 'LAST_YEAR' 
+    | 'CUSTOM'
+
+export const DATE_PRESET_OPTIONS: { key: DatePresetKey; label: string }[] = [
+    { key: 'ALL', label: 'Tất cả thời gian' },
+    { key: 'TODAY', label: 'Hôm nay' },
+    { key: 'YESTERDAY', label: 'Hôm qua' },
+    { key: 'THIS_WEEK', label: 'Tuần này' },
+    { key: 'LAST_WEEK', label: 'Tuần trước' },
+    { key: 'THIS_MONTH', label: 'Tháng này' },
+    { key: 'LAST_MONTH', label: 'Tháng trước' },
+    { key: 'THIS_QUARTER', label: 'Quý này' },
+    { key: 'LAST_QUARTER', label: 'Quý trước' },
+    { key: 'THIS_YEAR', label: 'Năm nay' },
+    { key: 'LAST_YEAR', label: 'Năm trước' },
+    { key: 'CUSTOM', label: 'Tùy chỉnh' },
+]
+
+export function getDatePresetRange(preset: DatePresetKey): { dateFrom: string; dateTo: string } {
+    const now = new Date()
+    const formatDateStr = (d: Date) => {
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+
+    switch (preset) {
+        case 'TODAY': {
+            const todayStr = formatDateStr(now)
+            return { dateFrom: todayStr, dateTo: todayStr }
+        }
+        case 'YESTERDAY': {
+            const y = new Date(now)
+            y.setDate(y.getDate() - 1)
+            const yStr = formatDateStr(y)
+            return { dateFrom: yStr, dateTo: yStr }
+        }
+        case 'THIS_WEEK': {
+            const dayOfWeek = now.getDay()
+            const diffToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek)
+            const mon = new Date(now)
+            mon.setDate(now.getDate() + diffToMon)
+            return { dateFrom: formatDateStr(mon), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_WEEK': {
+            const dayOfWeek = now.getDay()
+            const diffToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek)
+            const lastMon = new Date(now)
+            lastMon.setDate(now.getDate() + diffToMon - 7)
+            const lastSun = new Date(lastMon)
+            lastSun.setDate(lastMon.getDate() + 6)
+            return { dateFrom: formatDateStr(lastMon), dateTo: formatDateStr(lastSun) }
+        }
+        case 'THIS_MONTH': {
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_MONTH': {
+            const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+            const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(lastDay) }
+        }
+        case 'THIS_QUARTER': {
+            const currentMonth = now.getMonth()
+            const qStartMonth = Math.floor(currentMonth / 3) * 3
+            const firstDay = new Date(now.getFullYear(), qStartMonth, 1)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_QUARTER': {
+            const currentMonth = now.getMonth()
+            const qStartMonth = Math.floor(currentMonth / 3) * 3 - 3
+            const firstDay = new Date(now.getFullYear(), qStartMonth, 1)
+            const lastDay = new Date(now.getFullYear(), qStartMonth + 3, 0)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(lastDay) }
+        }
+        case 'THIS_YEAR': {
+            const firstDay = new Date(now.getFullYear(), 0, 1)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_YEAR': {
+            const firstDay = new Date(now.getFullYear() - 1, 0, 1)
+            const lastDay = new Date(now.getFullYear() - 1, 11, 31)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(lastDay) }
+        }
+        case 'ALL':
+        default:
+            return { dateFrom: '', dateTo: '' }
+    }
+}
+
 const SODetailSkeleton = () => (
     <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 animate-pulse">
         {/* Progress bar skeleton */}
@@ -1075,6 +1177,17 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
     const [dateFrom, setDateFrom] = useState('')
     const [dateTo, setDateTo] = useState('')
+    const [datePreset, setDatePreset] = useState<DatePresetKey>('ALL')
+
+    const handleDatePresetChange = (preset: DatePresetKey) => {
+        setDatePreset(preset)
+        const { dateFrom: df, dateTo: dt } = getDatePresetRange(preset)
+        setDateFrom(df)
+        setDateTo(dt)
+        setPage(1)
+        reload({ dateFrom: df, dateTo: dt, page: 1 }, true)
+    }
+
     const [createOpen, setCreateOpen] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
@@ -1480,16 +1593,41 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                             onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                     </div>
 
-                    {/* Compact Date inputs */}
-                    <div className="flex items-center gap-1 bg-[#1B2E3D] px-2 py-1 border border-[#2A4355] rounded-[4px]">
-                        <Calendar size={12} style={{ color: '#4A6A7A' }} />
-                        <input type="date" value={dateFrom}
-                            onChange={e => { setDateFrom(e.target.value); setPage(1); reload({ dateFrom: e.target.value, page: 1 }, true) }}
-                            className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
-                        <span className="text-[10px]" style={{ color: '#4A6A7A' }}>→</span>
-                        <input type="date" value={dateTo}
-                            onChange={e => { setDateTo(e.target.value); setPage(1); reload({ dateTo: e.target.value, page: 1 }, true) }}
-                            className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                    {/* MISA-style Date Period Preset Dropdown */}
+                    <div className="flex items-center gap-1.5 bg-[#1B2E3D] px-2.5 py-1 border border-[#2A4355] rounded-[4px]">
+                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#4A6A7A' }} />
+                        <select
+                            value={datePreset}
+                            onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
+                            className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1"
+                            style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#E8F1F2' }}
+                        >
+                            {DATE_PRESET_OPTIONS.map(opt => (
+                                <option key={opt.key} value={opt.key} className="bg-[#0D1E2B] text-[#E8F1F2]">
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+
+                        <div className="flex items-center gap-1 border-l border-[#2A4355] pl-1.5 ml-0.5">
+                            <input type="date" value={dateFrom}
+                                onChange={e => {
+                                    setDatePreset('CUSTOM')
+                                    setDateFrom(e.target.value)
+                                    setPage(1)
+                                    reload({ dateFrom: e.target.value, dateTo, page: 1 }, true)
+                                }}
+                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>→</span>
+                            <input type="date" value={dateTo}
+                                onChange={e => {
+                                    setDatePreset('CUSTOM')
+                                    setDateTo(e.target.value)
+                                    setPage(1)
+                                    reload({ dateFrom, dateTo: e.target.value, page: 1 }, true)
+                                }}
+                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                        </div>
                     </div>
 
                     {/* Filter Toggle Button */}
