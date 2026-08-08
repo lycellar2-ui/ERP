@@ -1235,6 +1235,14 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                              userPermissions.includes('FIN:WRITE') || 
                              userPermissions.includes('SYS:ADMIN')
 
+    const canCreateSO = isCEO || 
+                        isSaleAdminOrMgr || 
+                        userRoles.includes('Sales Rep') || 
+                        userRoles.includes('SALES_REP') || 
+                        userPermissions.includes('SLS:CREATE') || 
+                        userPermissions.includes('SLS:WRITE') || 
+                        userPermissions.includes('SYS:ADMIN')
+
     const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<SOStatus | ''>('')
@@ -1650,13 +1658,15 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                         onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.1)')}>
                         <Download size={14} /> Excel
                     </button>
-                    <button onClick={() => setCreateOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
-                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                        <Plus size={16} /> Tạo Đơn Mới
-                    </button>
+                    {canCreateSO && (
+                        <button onClick={() => setCreateOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
+                            style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                            <Plus size={16} /> Tạo Đơn Mới
+                        </button>
+                    )}
                 </div>
             </div>
 

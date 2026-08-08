@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-08-08 17:20
-> Status: Production — 29 modules, 123 DB models, 77 enums, 35 dashboard routes, Clean Light Theme 2D Warehouse Map & Stock Count Session Fix
+> Last updated: 2026-08-08 21:37
+> Status: Production — 29 modules, 125 DB models, 78 enums, 35 dashboard routes, Sample Inventory & Strict RBAC Enforcement (BUG-042)
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

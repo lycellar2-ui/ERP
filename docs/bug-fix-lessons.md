@@ -1610,6 +1610,31 @@ Trên giao diện tab **Xuất Kho (DO)**, thẻ `SO-2608-0013`, `SO-2608-0012`.
 
 > ⚠️ **RULE 63: Mọi câu truy vấn dữ liệu Hóa đơn VAT / Báo cáo Xuất HĐĐT cho Khách hàng PHẢI có cơ chế fallback tự động kế thừa Mã số thuế (`taxId`), Tên công ty (`vatCompanyName`), và Địa chỉ thuế (`vatAddress`) từ Công Ty Mẹ (`parent`) nếu Chi nhánh con chưa nhập riêng.**
 
+---
+
+## BUG-042: Thủ Kho Nhìn Thấy Nút Xuất Hóa Đơn & Nút Tạo Đơn Hàng Do Thiếu Kiểm Tra RBAC Trên UI & Server Action
+
+**Ngày:** 2026-08-08  
+**Severity:** 🔴 High — Vi phạm phân quyền RBAC: Nút `+ Xuất Hóa Đơn` và `+ Tạo Đơn Mới` hiển thị cho người dùng role `Thủ Kho` trong khi Thủ Kho không có quyền Hóa đơn VAT (`TAX:CREATE`) hay Tạo đơn hàng (`SLS:CREATE`).
+
+### Triệu chứng
+1. Khi đăng nhập vai trò `Thủ Kho` mở chi tiết Đơn bán hàng, giao diện vẫn hiển thị nút `+ Xuất Hóa Đơn` và nút `Bấm vào đây để Xuất / Gắn Hóa Đơn VAT`.
+2. Hàm `createARInvoiceForSO` chỉ gọi `requireAuth()`, chưa gọi `requirePermission('TAX', 'CREATE')` để kiểm tra phân quyền tài chính/hóa đơn.
+3. Nút `+ Tạo Đơn Mới` trên thanh công cụ `SalesClient.tsx` chưa được ẩn đối với role `Thủ Kho`.
+
+### Nguyên nhân gốc rễ
+1. Trạng thái hiển thị nút bấm trên Client Component chưa được truyền và kiểm tra mảng quyền `userPermissions` / `userRoles`.
+2. Server Actions `createARInvoiceForSO` và `generatePOSVATInvoice` thiếu lớp bảo vệ `requirePermission` hoặc check vai trò người dùng trước khi thao tác DB.
+
+### Cách fix
+1. **Server Guard**: Thêm kiểm tra quyền `TAX:CREATE`, `TAX:WRITE`, `FIN:WRITE`, `KE_TOAN`, `ACCOUNTANT`, `CEO`, `SYS:ADMIN` vào `createARInvoiceForSO` (`sales/actions.ts`) and `generatePOSVATInvoice` (`pos/actions.ts`). Nếu không có quyền, Server Action lập tức chặn và trả lỗi.
+2. **Client UI Guard**: Truyền `userPermissions` từ `sales/page.tsx` xuống `SalesClient.tsx`.
+3. Khởi tạo `canCreateInvoice` và `canCreateSO` trong `SalesClient.tsx` và bọc toàn bộ nút `+ Xuất Hóa Đơn`, `+ Tạo Đơn Mới` bằng điều kiện kiểm tra quyền.
+
+### Bài học
+
+> ⚠️ **RULE 64: Mọi nút bấm tác động đến Dữ liệu / Tài chính / Hóa đơn (vd: Xuất Hóa Đơn, Tạo Đơn, Duyệt Đơn, Duyệt Kế Toán) PHẢI được bảo vệ bằng điều kiện phân quyền RBAC ở CẢ HAI LỚP: 1) Client UI (ẩn nút bấm nếu `!canPerformAction`), 2) Server Action (gọi `requirePermission` hoặc check role từ Session trước khi ghi DB).**
+
 
 
 
