@@ -2293,7 +2293,24 @@ export async function exportSalesOrdersExcel(filters: {
         orderBy: { createdAt: 'desc' },
         take: 5000,
         include: {
-            customer: { select: { name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true } },
+            customer: {
+                select: {
+                    name: true,
+                    code: true,
+                    taxId: true,
+                    vatCompanyName: true,
+                    vatAddress: true,
+                    vatEmail: true,
+                    parent: {
+                        select: {
+                            taxId: true,
+                            vatCompanyName: true,
+                            vatAddress: true,
+                            vatEmail: true,
+                        },
+                    },
+                },
+            },
             salesRep: { select: { name: true } },
             legalEntity: { select: { name: true } },
             warehouse: { select: { name: true } },
@@ -2309,16 +2326,21 @@ export async function exportSalesOrdersExcel(filters: {
     const lineItemExportData: any[] = []
     for (const o of orders) {
         const orderVatRate = Number(o.vatRate ?? 10)
+        const vatCompanyName = o.customer.vatCompanyName || o.customer.parent?.vatCompanyName || o.customer.name
+        const taxId = o.customer.taxId || o.customer.parent?.taxId || ''
+        const vatAddress = o.customer.vatAddress || o.customer.parent?.vatAddress || ''
+        const vatEmail = o.customer.vatEmail || o.customer.parent?.vatEmail || ''
+
         if (o.lines.length === 0) {
             lineItemExportData.push({
                 'Số Đơn Hàng (SO)': o.soNo,
                 'Ngày Lập Đơn': o.createdAt.toISOString().split('T')[0],
                 'Mã Khách Hàng': o.customer.code,
                 'Tên Khách Hàng': o.customer.name,
-                'Tên Công Ty Xuất HĐ': o.customer.vatCompanyName || o.customer.name,
-                'Mã Số Thuế': o.customer.taxId || '',
-                'Địa Chỉ Thuế VAT': o.customer.vatAddress || '',
-                'Email Nhận HĐ': o.customer.vatEmail || '',
+                'Tên Công Ty Xuất HĐ': vatCompanyName,
+                'Mã Số Thuế': taxId,
+                'Địa Chỉ Thuế VAT': vatAddress,
+                'Email Nhận HĐ': vatEmail,
                 'Kênh Bán Hàng': o.channel,
                 'Pháp Nhân Xuất HĐ': o.legalEntity?.name ?? '',
                 'Kho Xuất': o.warehouse?.name ?? '',
@@ -2353,10 +2375,10 @@ export async function exportSalesOrdersExcel(filters: {
                     'Ngày Lập Đơn': o.createdAt.toISOString().split('T')[0],
                     'Mã Khách Hàng': o.customer.code,
                     'Tên Khách Hàng': o.customer.name,
-                    'Tên Công Ty Xuất HĐ': o.customer.vatCompanyName || o.customer.name,
-                    'Mã Số Thuế': o.customer.taxId || '',
-                    'Địa Chỉ Thuế VAT': o.customer.vatAddress || '',
-                    'Email Nhận HĐ': o.customer.vatEmail || '',
+                    'Tên Công Ty Xuất HĐ': vatCompanyName,
+                    'Mã Số Thuế': taxId,
+                    'Địa Chỉ Thuế VAT': vatAddress,
+                    'Email Nhận HĐ': vatEmail,
                     'Kênh Bán Hàng': o.channel,
                     'Pháp Nhân Xuất HĐ': o.legalEntity?.name ?? '',
                     'Kho Xuất': o.warehouse?.name ?? '',
