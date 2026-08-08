@@ -21,9 +21,9 @@ type AvailableLot = {
 }
 
 const DO_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.15)' },
-    CONFIRMED: { label: 'Đã XN', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    SHIPPED: { label: 'Đã Giao', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9' },
+    CONFIRMED: { label: 'Đã XN', color: '#B47816', bg: 'rgba(212,168,83,0.15)' },
+    SHIPPED: { label: 'Đã Giao', color: '#16A34A', bg: 'rgba(22,163,74,0.12)' },
 }
 
 type DODetail = Awaited<ReturnType<typeof getDODetail>>
@@ -107,32 +107,33 @@ export function DeliveryOrderTab({ warehouses }: {
             {/* Header & Sub-tab Navigation */}
             <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm sm:text-base font-bold flex items-center gap-1.5" style={{ color: '#E8F1F2' }}>
+                    <h3 className="text-sm sm:text-base font-bold flex items-center gap-1.5" style={{ color: '#0F172A' }}>
                         <Truck size={16} style={{ color: '#D4A853' }} /> Xuất Kho (DO)
                     </h3>
                     <button onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
-                        className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-110 shrink-0"
+                        className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-105 shrink-0"
                         style={{ background: '#D4A853', color: '#0A1926' }}>
                         <Plus size={12} /> Tạo DO
                     </button>
                 </div>
 
                 {/* Navigation Tabs */}
-                <div className="flex p-0.5 rounded-lg overflow-x-auto no-scrollbar" style={{ background: '#142433', border: '1px solid #1E3445' }}>
+                <div className="flex p-1 rounded-xl overflow-x-auto no-scrollbar" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
                     <button
                         onClick={() => setActiveSubTab('pending')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all shrink-0"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold rounded-lg transition-all shrink-0 shadow-xs"
                         style={{
-                            background: activeSubTab === 'pending' ? '#D4A853' : 'transparent',
-                            color: activeSubTab === 'pending' ? '#0A1926' : '#6B8A9A'
+                            background: activeSubTab === 'pending' ? '#FFFFFF' : 'transparent',
+                            color: activeSubTab === 'pending' ? '#0F172A' : '#64748B',
+                            border: activeSubTab === 'pending' ? '1px solid #CBD5E1' : '1px solid transparent'
                         }}
                     >
                         Chờ Xuất
                         {pendingSOs.length > 0 && (
                             <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded-full"
                                 style={{
-                                    background: activeSubTab === 'pending' ? '#0A1926' : 'rgba(212,168,83,0.2)',
-                                    color: activeSubTab === 'pending' ? '#D4A853' : '#D4A853'
+                                    background: activeSubTab === 'pending' ? 'rgba(212,168,83,0.2)' : '#CBD5E1',
+                                    color: activeSubTab === 'pending' ? '#B47816' : '#475569'
                                 }}>
                                 {pendingSOs.length}
                             </span>
@@ -140,10 +141,11 @@ export function DeliveryOrderTab({ warehouses }: {
                     </button>
                     <button
                         onClick={() => setActiveSubTab('history')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all shrink-0"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold rounded-lg transition-all shrink-0 shadow-xs"
                         style={{
-                            background: activeSubTab === 'history' ? '#D4A853' : 'transparent',
-                            color: activeSubTab === 'history' ? '#0A1926' : '#6B8A9A'
+                            background: activeSubTab === 'history' ? '#FFFFFF' : 'transparent',
+                            color: activeSubTab === 'history' ? '#0F172A' : '#64748B',
+                            border: activeSubTab === 'history' ? '1px solid #CBD5E1' : '1px solid transparent'
                         }}
                     >
                         Lịch Sử
