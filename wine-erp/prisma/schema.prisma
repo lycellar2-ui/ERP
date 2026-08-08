@@ -105,6 +105,8 @@ model User {
   posShifts              POSShift[]
   notifications          Notification[]     @relation("UserNotifications")
   visitPlans             WeeklyVisitPlan[]  @relation("SalesRepVisitPlans")
+  assignedStockCounts    StockCountSession[] @relation("AssignedStockCounts")
+  createdStockCounts     StockCountSession[] @relation("CreatedStockCounts")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -288,6 +290,7 @@ model Product {
   priceRules           CustomerPriceRule[]
   marginPrice          ProductMarginPrice?
   profile              ProductProfile?
+  stockCountLines      StockCountLine[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -1280,6 +1283,7 @@ model Warehouse {
   salesOrders    SalesOrder[]
   transfersOut   TransferOrder[]  @relation("TransferFrom")
   transfersIn    TransferOrder[]  @relation("TransferTo")
+  stockCountSessions StockCountSession[]
   allowSales     Boolean         @default(true) // Có thể xuất bán hàng
   allowTransfer  Boolean         @default(true) // Có thể xuất/nhận điều chuyển
   isDefault      Boolean         @default(false) // Kho mặc định của Pháp nhân
@@ -1307,6 +1311,7 @@ model Location {
   height         Float?              @default(60)
   stockLots      StockLot[]
   doLines        DeliveryOrderLine[]
+  stockCountLines StockCountLine[]
 
   @@unique([warehouseId, locationCode])
   @@map("locations")
@@ -1421,28 +1426,55 @@ model DeliveryOrderLine {
 }
 
 model StockCountSession {
-  id          String           @id @default(cuid())
-  warehouseId String
-  zone        String?
-  type        CountType
-  status      CountStatus      @default(DRAFT)
-  startedAt   DateTime?
-  completedAt DateTime?
-  lines       StockCountLine[]
-  createdAt   DateTime         @default(now())
+  id                  String           @id @default(cuid())
+  sessionNo           String?          @unique // e.g. KK-20260808-001
+  title               String?          // e.g. "Kiểm kê tổng thể kho Thường Tín"
+  warehouseId         String
+  warehouse           Warehouse        @relation(fields: [warehouseId], references: [id])
+  zone                String?          // Single zone or location filter string
+  type                CountType        @default(CYCLE)
+  scopeType           String?          @default("FULL_WAREHOUSE") // FULL_WAREHOUSE | CYCLE_COUNT | TRANSACTED_ITEMS | SPOT_COUNT
+  isBlindCount        Boolean          @default(false) // Giấu tồn sổ sách trên giao diện đếm
+  status              CountStatus      @default(DRAFT)
+  startedAt           DateTime?
+  completedAt         DateTime?
+  
+  // Staff Assignment
+  assignedToId        String?
+  assignedTo          User?            @relation("AssignedStockCounts", fields: [assignedToId], references: [id])
+  createdById         String?
+  createdBy           User?            @relation("CreatedStockCounts", fields: [createdById], references: [id])
+
+  // Approval Signatures & Audit
+  counterSignature    String?          @db.Text // Chữ ký người kiểm kê
+  managerSignature    String?          @db.Text // Chữ ký thủ kho / quản lý
+  accountantSignature String?          @db.Text // Chữ ký kế toán kho
+  adjustmentVoucherId String?          // Mã phiếu điều chỉnh tự động sinh ra
+  notes               String?          @db.Text
+
+  lines               StockCountLine[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @default(now()) @updatedAt
 
   @@map("stock_count_sessions")
 }
 
 model StockCountLine {
-  id           String            @id @default(cuid())
-  sessionId    String
-  session      StockCountSession @relation(fields: [sessionId], references: [id])
-  productId    String
-  locationCode String
-  qtySystem    Decimal
-  qtyActual    Decimal?
-  variance     Decimal?
+  id             String            @id @default(cuid())
+  sessionId      String
+  session        StockCountSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product           @relation(fields: [productId], references: [id])
+  locationId     String?
+  location       Location?         @relation(fields: [locationId], references: [id])
+  locationCode   String
+  qtySystem      Decimal           @default(0)
+  qtyActual      Decimal?
+  variance       Decimal?
+  varianceReason String?           // BREAKAGE | WRONG_SKU | UNRECORDED_DO | UNRECORDED_GR | LOSS | OTHER
+  photoUrl       String?           @db.Text // Ảnh bằng chứng chênh lệch / hỏng vỡ
+  countedAt      DateTime?
+  notes          String?
 
   @@map("stock_count_lines")
 }

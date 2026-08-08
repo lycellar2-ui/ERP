@@ -177,18 +177,23 @@ Khu riêng biệt (Quarantine Zone) để cách ly hàng chờ xử lý:
 
 ---
 
-## 6. Kiểm Kê (Stock Count / Cycle Count)
+## 6. Kiểm Kê Kho Nâng Cao (Stock Count System)
 
-**2 loại kiểm kê:**
-- **Full Physical Count:** Dừng xuất nhập, kiểm toàn bộ kho (Thường cuối năm)
-- **Cycle Count:** Kiểm từng khu vực theo lịch luân phiên (Không dừng kho)
+Hệ thống kiểm kê kho bãi đa chế độ, hỗ trợ đếm bằng điện thoại theo vị trí, kiểm kê mù, phân công nhân sự và in Biên bản kiểm kê chuẩn kế toán có chữ ký 3 bên.
 
-**Quy trình:**
-1. Tạo Phiên Kiểm Kê (Count Session) cho Zone cần kiểm
-2. Hệ thống in/hiện Count Sheet (SKU, Bin Location, Số lượng hệ thống đang ghi)
-3. Thủ kho đếm thực tế và nhập vào ERP mobile (Không thấy số hệ thống để tránh bias)
-4. Hệ thống tính Variance = Thực Tế - Hệ Thống
-5. Variance được Quản lý Kho review → Approve → Điều chỉnh tồn kho + Finance entry
+### 6.1 4 Chế Độ Phạm Vi Kiểm Kê (Scope Types)
+1. 📦 **Kiểm kê Full Kho (`FULL_WAREHOUSE`):** Quét toàn bộ sản phẩm và tất cả vị trí trong kho (kiểm kê tổng thể cuối kỳ).
+2. 🔄 **Cycle Count (Kiểm kê chu kỳ):** Chọn cụ thể theo **Vị trí (Zone/Rack)** hoặc **Nhóm danh mục sản phẩm (Rượu vang đỏ/trắng/loại rượu)**.
+3. ⚡ **Kiểm kê mã có giao dịch (`TRANSACTED_ITEMS`):** Tự động lọc các mã SKU có phát sinh Giao dịch Nhập (GR), Xuất (DO), hoặc Điều chuyển trong N ngày gần nhất (mặc định 30 ngày).
+4. 🚨 **Kiểm kê Đột xuất (`SPOT_COUNT`):** Cho phép Ban Quản Lý / Kiểm toán chọn cụ thể **Danh sách Mã SKU bất kỳ** HOẶC **Khu vực/Kệ cụ thể** để phát lệnh kiểm kê tức thì không báo trước.
+
+### 6.2 Bộ Tính Năng Kiểm Kê Nâng Cao
+- **Chế độ Kiểm kê Mù (Blind Count Option):** Admin bật tùy chọn "Giấu tồn sổ sách" khi giao việc. Nhân viên cầm điện thoại đếm sẽ KHÔNG nhìn thấy tồn sổ sách (`qtySystem`), bắt buộc đếm thực tế 100% để chống chép lại số liệu.
+- **Phân công Nhân sự (Staff Assignment):** Gán nhân viên chịu trách nhiệm kiểm kê (`assignedTo`). Nhân viên mở điện thoại thấy ngay phiếu cần làm tại tab "Phân công cho tôi".
+- **Đếm Kho Điện Thoại theo Vị Trí (Mobile Location Counter):** Đếm theo từng vị trí (*Kệ trong T1, Kệ ngoài T1, Tủ lạnh...*), nút đếm nhanh cảm ứng `+1`, `-1`, `+6` (1 thùng), `+12`, quét mã QR/Barcode bằng Camera điện thoại, lưu LocalStorage đếm offline khi mất mạng trong hầm.
+- **Phân loại & Chụp ảnh Bằng chứng:** Ghi nhận nguyên nhân chênh lệch (`VỠ_HỎNG`, `NHẦM_MÃ`, `XUẤT_CHƯA_GHI_SỔ`, `THẤT_THOÁT`...) và chụp ảnh bằng chứng bằng Camera.
+- **Tự động Khởi tạo Phiếu Điều Chỉnh Kế Toán (Auto Stock Adjustment Voucher):** Khi duyệt phiếu kiểm kê (`APPROVED`), hệ thống tự động tính giá trị chênh lệch (VND) và sinh Bút toán kế toán điều chỉnh tồn kho (Nợ 632 / Có 156 hoặc Nợ 1388 / Có 156).
+- **In Biên bản kiểm kê chuẩn Kế toán có Chữ ký 3 bên (Printable Audit Report):** Mẫu Biên bản kiểm kê A4 với 3 khung chữ ký điện tử trực tiếp (*Người kiểm kê*, *Thủ kho / BQL Kho*, *Kế toán kho / Kế toán trưởng*).
 
 ---
 

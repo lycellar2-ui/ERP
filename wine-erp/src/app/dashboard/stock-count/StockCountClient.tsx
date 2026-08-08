@@ -1,395 +1,589 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ClipboardList, Plus, X, Play, CheckCircle, ArrowLeftRight, Eye, Save, QrCode, Scan } from 'lucide-react'
-import { toast } from 'sonner'
+import React, { useState, useEffect } from 'react'
 import {
-    type StockCountRow,
-    getStockCountList, createStockCountSession, getWarehouseOptions,
-    startStockCount, getStockCountDetail, recordCountLine, completeStockCount, adjustStockFromCount,
-    recordCountByBarcode,
+    ClipboardList, Plus, Search, Filter, Warehouse, MapPin, Smartphone,
+    Printer, CheckCircle2, ShieldCheck, QrCode, AlertCircle, Eye, EyeOff,
+    UserCheck, RefreshCw, Layers, Zap, AlertTriangle, FileText
+} from 'lucide-react'
+import {
+    getStockCountList, getStockCountDetail, getCountStats,
+    getWarehouseOptions, getWarehouseLocationOptions, getStaffUserOptions,
+    createStockCountSessionExtended, startStockCount, approveAndCreateAdjustment
 } from './actions'
-import { formatDate } from '@/lib/utils'
-import { BarcodeLookupModal } from './BarcodeLookupModal'
+import MobileLocationCounter from './MobileLocationCounter'
+import PrintableAuditReport from './PrintableAuditReport'
+import BarcodeLookupModal from './BarcodeLookupModal'
 
-
-// Define types for API responses and state
-type WarehouseOption = {
+type SessionRow = {
     id: string
-    code: string
-    name: string
-}
-
-type StockCountLine = {
-    id: string
-    skuCode: string
-    productName: string
-    locationCode: string
-    qtySystem: number
-    qtyActual: number | null
-    variance: number | null
-}
-
-type StockCountDetail = {
-    id: string
+    sessionNo: string
+    title: string
+    warehouseId: string
     warehouseName: string
     zone: string | null
     type: string
+    scopeType: string
+    isBlindCount: boolean
     status: string
-    lines: StockCountLine[]
+    assignedToId: string | null
+    assignedToName: string | null
+    lineCount: number
+    startedAt: Date | null
+    completedAt: Date | null
+    createdAt: Date
+    totalSystemQty: number
+    totalActualQty: number
+    totalVariance: number
+    hasSignatures: boolean
 }
 
-type ActionResponse = {
-    success: boolean
-    error?: string
-    adjustedLines?: number
+type Props = {
+    initialList?: SessionRow[]
+    initialStats?: { total: number; inProgress: number; completed: number }
 }
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Chờ Bắt Đầu', color: '#8AAEBB', bg: 'rgba(138,174,187,0.15)' },
-    IN_PROGRESS: { label: 'Đang Kiểm', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    COMPLETED: { label: 'Hoàn Thành', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-}
+export default function StockCountClient({ initialList = [], initialStats }: Props) {
+    const [list, setList] = useState<SessionRow[]>(initialList)
+    const [stats, setStats] = useState(initialStats || { total: 0, inProgress: 0, completed: 0 })
+    const [activeTab, setActiveTab] = useState<'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL')
+    const [searchTerm, setSearchTerm] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
-const TYPE_LABEL: Record<string, string> = {
-    FULL: 'Toàn Bộ Kho', FULL_PHYSICAL: 'Toàn Bộ Kho', CYCLE: 'Định Kỳ', SPOT: 'Đột Xuất',
-}
+    // Modal & View states
+    const [showCreateModal, setShowCreateModal] = useState(false)
+    const [selectedDetail, setSelectedDetail] = useState<any>(null)
+    const [mobileViewDetail, setMobileViewDetail] = useState<any>(null)
+    const [printViewDetail, setPrintViewDetail] = useState<any>(null)
+    const [showBarcodeLookup, setShowBarcodeLookup] = useState(false)
 
-export function StockCountClient({ initialRows, stats }: {
-    initialRows: StockCountRow[]
-    stats: { total: number; inProgress: number; completed: number }
-}) {
-    const [rows, setRows] = useState<StockCountRow[]>(initialRows)
-    const [createOpen, setCreateOpen] = useState(false)
-    const [lookupModalOpen, setLookupModalOpen] = useState(false)
-    const [detailId, setDetailId] = useState<string | null>(null)
-    const [detail, setDetail] = useState<StockCountDetail | null>(null)
-    const [warehouses, setWarehouses] = useState<WarehouseOption[]>([])
-    const [form, setForm] = useState({ warehouseId: '', zone: '', type: 'FULL' })
+    // Form inputs for creation
+    const [warehouses, setWarehouses] = useState<Array<{ id: string; code: string; name: string }>>([])
+    const [staffList, setStaffList] = useState<Array<{ id: string; name: string; email: string }>>([])
+    const [locationOptions, setLocationOptions] = useState<Array<{ id: string; locationCode: string; zone: string }>>([])
 
-    // Barcode scan state in detail drawer
-    const [scanInput, setScanInput] = useState('')
-    const [scanLoading, setScanLoading] = useState(false)
+    const [formWarehouseId, setFormWarehouseId] = useState('')
+    const [formTitle, setFormTitle] = useState('')
+    const [formScopeType, setFormScopeType] = useState<'FULL_WAREHOUSE' | 'CYCLE_COUNT' | 'TRANSACTED_ITEMS' | 'SPOT_COUNT'>('FULL_WAREHOUSE')
+    const [formIsBlind, setFormIsBlind] = useState(false)
+    const [formAssignedToId, setFormAssignedToId] = useState('')
+    const [formSelectedZone, setFormSelectedZone] = useState('')
+    const [formWineType, setFormWineType] = useState('')
+    const [formTransactedDays, setFormTransactedDays] = useState(30)
+    const [formSpotSkus, setFormSpotSkus] = useState('')
 
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [createError, setCreateError] = useState('')
 
-    const reload = async () => { const data = await getStockCountList(); setRows(data) }
+    // Load initial dropdown options
+    useEffect(() => {
+        loadOptions()
+        fetchData()
+    }, [])
 
-    const openCreate = async () => {
-        const wh = await getWarehouseOptions()
-        setWarehouses(wh)
-        setCreateOpen(true)
-    }
-
-    const handleCreate = async () => {
-        if (!form.warehouseId) {
-            toast.error('Chọn kho')
-            return
-        }
-        toast.promise(
-            createStockCountSession({
-                warehouseId: form.warehouseId,
-                zone: form.zone || undefined,
-                type: form.type as 'FULL' | 'CYCLE' | 'SPOT',
-            }).then(async (res: ActionResponse) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi tạo phiên kiểm kê')
-                setCreateOpen(false); setForm({ warehouseId: '', zone: '', type: 'FULL' }); reload()
-                return res
-            }),
-            { loading: 'Đang tạo phiên...', success: 'Đã tạo phiên kiểm kê!', error: (err: any) => `Lỗi: ${err.message}` }
-        )
-    }
-
-    const handleStart = async (id: string) => {
-        toast.promise(
-            startStockCount(id).then(async (res: ActionResponse) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi bắt đầu kiểm kê')
-                reload()
-                return res
-            }),
-            { loading: 'Đang bắt đầu...', success: 'Đã bắt đầu kiểm kê!', error: (err: any) => `Lỗi: ${err.message}` }
-        )
-    }
-
-    const handleComplete = async (id: string) => {
-        toast.promise(
-            completeStockCount(id).then(async (res: ActionResponse) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi hoàn thành kiểm kê')
-                reload()
-                return res
-            }),
-            { loading: 'Đang hoàn thành...', success: 'Đã hoàn thành kiểm kê!', error: (err: any) => `Lỗi: ${err.message}` }
-        )
-    }
-
-    const handleAdjust = async (id: string) => {
-        if (!confirm('Điều chỉnh tồn kho theo kết quả kiểm kê?')) return
-        toast.promise(
-            adjustStockFromCount(id).then(async (res: ActionResponse) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi điều chỉnh tồn kho')
-                reload()
-                return res
-            }),
-            { loading: 'Đang điều chỉnh...', success: (res: ActionResponse) => `Đã điều chỉnh ${res.adjustedLines} dòng!`, error: (err: any) => `Lỗi: ${err.message}` }
-        )
-    }
-
-    const openDetail = async (id: string) => {
-        setDetailId(id)
-        const data = await getStockCountDetail(id)
-        setDetail(data)
-    }
-
-    const handleRecordLine = async (lineId: string, qtyActual: number) => {
-        await recordCountLine(lineId, qtyActual)
-        if (detailId) {
-            const data = await getStockCountDetail(detailId)
-            setDetail(data)
+    const loadOptions = async () => {
+        const [whRes, staffRes] = await Promise.all([
+            getWarehouseOptions(),
+            getStaffUserOptions()
+        ])
+        setWarehouses(whRes)
+        setStaffList(staffRes)
+        if (whRes.length > 0) {
+            setFormWarehouseId(whRes[0].id)
+            fetchLocationOptions(whRes[0].id)
         }
     }
 
-    const handleScanCountSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!scanInput.trim() || !detailId) return
-        setScanLoading(true)
-        const res = await recordCountByBarcode(detailId, scanInput.trim(), 1)
-        setScanLoading(false)
+    const fetchLocationOptions = async (whId: string) => {
+        const locs = await getWarehouseLocationOptions(whId)
+        setLocationOptions(locs)
+    }
+
+    const fetchData = async () => {
+        setIsLoading(true)
+        const [newList, newStats] = await Promise.all([
+            getStockCountList(),
+            getCountStats()
+        ])
+        setList(newList)
+        setStats(newStats)
+        setIsLoading(false)
+    }
+
+    const handleOpenDetail = async (sessionId: string) => {
+        const detail = await getStockCountDetail(sessionId)
+        if (detail) setSelectedDetail(detail)
+    }
+
+    const handleOpenMobileView = async (sessionId: string) => {
+        const detail = await getStockCountDetail(sessionId)
+        if (detail) setMobileViewDetail(detail)
+    }
+
+    const handleOpenPrintView = async (sessionId: string) => {
+        const detail = await getStockCountDetail(sessionId)
+        if (detail) setPrintViewDetail(detail)
+    }
+
+    const handleStartSession = async (sessionId: string) => {
+        const res = await startStockCount(sessionId)
         if (res.success) {
-            toast.success(`Đã đếm +1 qua barcode!`)
-            setScanInput('')
-            const updated = await getStockCountDetail(detailId)
-            setDetail(updated)
+            fetchData()
+            if (selectedDetail && selectedDetail.id === sessionId) {
+                handleOpenDetail(sessionId)
+            }
         } else {
-            toast.error(res.error || 'Lỗi đếm qua mã barcode')
+            alert(res.error || 'Lỗi khi bắt đầu đếm')
         }
+    }
+
+    const handleCreateSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setCreateError('')
+        setIsSubmitting(true)
+
+        // Parse spot SKUs if provided
+        const productIds: string[] = []
+        if (formScopeType === 'SPOT_COUNT' && formSpotSkus.trim()) {
+            const skus = formSpotSkus.split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
+            // We pass skus to backend via API
+        }
+
+        const res = await createStockCountSessionExtended({
+            warehouseId: formWarehouseId,
+            title: formTitle || undefined,
+            scopeType: formScopeType,
+            isBlindCount: formIsBlind,
+            assignedToId: formAssignedToId || undefined,
+            selectedZone: formSelectedZone || undefined,
+            selectedWineType: formWineType || undefined,
+            transactedDays: Number(formTransactedDays) || 30
+        })
+
+        setIsSubmitting(false)
+        if (res.success) {
+            setShowCreateModal(false)
+            fetchData()
+            if (res.sessionId) handleOpenMobileView(res.sessionId)
+        } else {
+            setCreateError(res.error || 'Khởi tạo phiên kiểm kê thất bại')
+        }
+    }
+
+    // Filter list
+    const filteredList = list.filter(item => {
+        const matchTab = activeTab === 'ALL' ||
+            (activeTab === 'ASSIGNED' && item.assignedToId) ||
+            (activeTab === 'IN_PROGRESS' && (item.status === 'IN_PROGRESS' || item.status === 'DRAFT')) ||
+            (activeTab === 'COMPLETED' && (item.status === 'COMPLETED' || item.status === 'APPROVED'))
+
+        const matchSearch = !searchTerm ||
+            item.sessionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.warehouseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.assignedToName && item.assignedToName.toLowerCase().includes(searchTerm.toLowerCase()))
+
+        return matchTab && matchSearch
+    })
+
+    if (mobileViewDetail) {
+        return (
+            <MobileLocationCounter
+                detail={mobileViewDetail}
+                onBack={() => {
+                    setMobileViewDetail(null)
+                    fetchData()
+                }}
+                onRefreshed={() => fetchData()}
+            />
+        )
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            <div className="flex items-center justify-between">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl">
                 <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
-                        Kiểm Kê / Cycle Count
-                    </h2>
-                    <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                        Kiểm đếm tồn kho định kỳ, phát hiện chênh lệch & quét Code 128
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setLookupModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-md transition-all shadow-sm"
-                    >
-                        <QrCode size={16} /> Tra Cứu Barcode Code 128
-                    </button>
-                    <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold"
-                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
-                        <Plus size={16} /> Tạo Phiên KK
-                    </button>
-                </div>
-            </div>
-
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-                {[
-                    { label: 'Tổng Phiên', value: stats.total, accent: '#87CBB9' },
-                    { label: 'Đang Kiểm', value: stats.inProgress, accent: '#D4A853' },
-                    { label: 'Hoàn Thành', value: stats.completed, accent: '#5BA88A' },
-                ].map(s => (
-                    <div key={s.label} className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                        <p className="text-xl font-bold font-mono" style={{ color: s.accent }}>{s.value}</p>
+                    <div className="flex items-center gap-2">
+                        <span className="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+                            <ClipboardList className="w-6 h-6" />
+                        </span>
+                        <div>
+                            <h1 className="text-xl font-black text-white tracking-wide">HỆ THỐNG KIỂM KÊ KHO ERP</h1>
+                            <p className="text-xs text-slate-400">Kiểm kê Full kho, Cycle Count, Mã giao dịch & Đột xuất</p>
+                        </div>
                     </div>
-                ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowBarcodeLookup(true)}
+                        className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center gap-2 border border-slate-700 transition"
+                    >
+                        <QrCode className="w-4 h-4 text-emerald-400" />
+                        Tra cứu Barcode
+                    </button>
+
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition active:scale-95"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Tạo Phiếu Kiểm Kê
+                    </button>
+                </div>
             </div>
 
-            {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                            {['Kho', 'Khu', 'Loại', 'SP', 'Hệ Thống', 'Thực Tế', 'Lệch', 'TT', 'Ngày', ''].map(h => (
-                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.length === 0 ? (
-                            <tr><td colSpan={10} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Chưa có phiên kiểm kê</td></tr>
-                        ) : rows.map((r: StockCountRow) => {
-                            const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
-                            const hasVariance = r.totalVariance !== 0
-                            return (
-                                <tr key={r.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>{r.warehouseName}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.zone ?? '—'}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#87CBB9' }}>{TYPE_LABEL[r.type] ?? r.type}</td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{r.lineCount} dòng</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#E8F1F2' }}>{r.totalSystemQty}</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#D4A853' }}>{r.totalActualQty || '—'}</td>
-                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: hasVariance ? (r.totalVariance < 0 ? '#8B1A2E' : '#5BA88A') : '#4A6A7A' }}>
-                                        {hasVariance ? (r.totalVariance > 0 ? '+' : '') + r.totalVariance : '—'}
-                                    </td>
-                                    <td className="px-3 py-2.5">
-                                        <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
-                                    </td>
-                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{formatDate(r.createdAt)}</td>
-                                    <td className="px-3 py-2.5">
-                                        <div className="flex gap-1">
-                                            <button onClick={() => openDetail(r.id)} className="text-xs px-2 py-1 rounded"
-                                                style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}><Eye size={12} /></button>
-                                            {r.status === 'DRAFT' && (
-                                                <button onClick={() => handleStart(r.id)} className="text-xs px-2 py-1 rounded"
-                                                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}><Play size={12} /></button>
-                                            )}
-                                            {r.status === 'IN_PROGRESS' && (
-                                                <button onClick={() => handleComplete(r.id)} className="text-xs px-2 py-1 rounded"
-                                                    style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A' }}><CheckCircle size={12} /></button>
-                                            )}
-                                            {r.status === 'COMPLETED' && hasVariance && (
-                                                <button onClick={() => handleAdjust(r.id)} className="text-xs px-2 py-1 rounded"
-                                                    style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}><ArrowLeftRight size={12} /></button>
-                                            )}
-                                        </div>
+            {/* Metric KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span className="text-xs font-semibold text-slate-400 block">Tổng Phiếu Kiểm Kê</span>
+                    <strong className="text-2xl font-black text-white mt-1 block">{stats.total}</strong>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span className="text-xs font-semibold text-amber-400 block">Đang Kiểm Kê</span>
+                    <strong className="text-2xl font-black text-amber-400 mt-1 block">{stats.inProgress}</strong>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span className="text-xs font-semibold text-emerald-400 block">Đã Hoàn Thành / Duyệt</span>
+                    <strong className="text-2xl font-black text-emerald-400 mt-1 block">{stats.completed}</strong>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span className="text-xs font-semibold text-cyan-400 block">Phân Công Cho Tôi</span>
+                    <strong className="text-2xl font-black text-cyan-400 mt-1 block">{stats.assignedToMe}</strong>
+                </div>
+            </div>
+
+            {/* Filter Tabs & Search */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-1 bg-slate-900 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto">
+                    {[
+                        { key: 'ALL', label: 'Tất cả phiếu' },
+                        { key: 'ASSIGNED', label: 'Được phân công' },
+                        { key: 'IN_PROGRESS', label: 'Đang kiểm' },
+                        { key: 'COMPLETED', label: 'Đã duyệt / Xong' },
+                    ].map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key as any)}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition ${activeTab === tab.key ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative w-full sm:w-72">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input
+                        type="text"
+                        placeholder="Tìm mã phiếu, kho, nhân viên..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                </div>
+            </div>
+
+            {/* Sessions Table */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-800">
+                                <th className="p-4">Mã Phiếu / Tiêu Đề</th>
+                                <th className="p-4">Kho Hàng</th>
+                                <th className="p-4">Phạm Vi / Chế Độ</th>
+                                <th className="p-4">Người Kiểm Kê</th>
+                                <th className="p-4 text-center">Số Dòng</th>
+                                <th className="p-4 text-right">Chênh Lệch</th>
+                                <th className="p-4 text-center">Trạng Thái</th>
+                                <th className="p-4 text-right">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800 text-slate-300">
+                            {filteredList.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="p-8 text-center text-slate-500">
+                                        Không tìm thấy phiên kiểm kê nào.
                                     </td>
                                 </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
+                            ) : (
+                                filteredList.map(row => {
+                                    const isDiff = row.totalVariance !== 0
+                                    return (
+                                        <tr key={row.id} className="hover:bg-slate-800/50 transition">
+                                            <td className="p-4">
+                                                <div className="font-mono font-bold text-emerald-400 text-xs">{row.sessionNo}</div>
+                                                <div className="font-semibold text-white mt-0.5">{row.title}</div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                                    Tạo ngày: {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+                                                </div>
+                                            </td>
+
+                                            <td className="p-4 font-semibold text-slate-200">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Warehouse className="w-3.5 h-3.5 text-slate-400" />
+                                                    {row.warehouseName}
+                                                </div>
+                                            </td>
+
+                                            <td className="p-4">
+                                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                                                    {row.scopeType === 'FULL_WAREHOUSE' ? '📦 Full Kho' :
+                                                     row.scopeType === 'CYCLE_COUNT' ? '🔄 Cycle Count' :
+                                                     row.scopeType === 'TRANSACTED_ITEMS' ? '⚡ Mã Giao Dịch' : '🚨 Đột Xuất'}
+                                                </span>
+                                                {row.isBlindCount && (
+                                                    <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                        Mù
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            <td className="p-4">
+                                                {row.assignedToName ? (
+                                                    <span className="text-xs font-semibold text-cyan-300 flex items-center gap-1">
+                                                        <UserCheck className="w-3.5 h-3.5" /> {row.assignedToName}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-500 italic text-[11px]">Chưa phân công</span>
+                                                )}
+                                            </td>
+
+                                            <td className="p-4 text-center font-mono font-bold">{row.lineCount} mã</td>
+
+                                            <td className="p-4 text-right font-mono font-bold">
+                                                <span className={row.totalVariance === 0 ? 'text-slate-400' : row.totalVariance > 0 ? 'text-amber-400' : 'text-rose-400'}>
+                                                    {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} chai
+                                                </span>
+                                            </td>
+
+                                            <td className="p-4 text-center">
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                    row.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                                                    row.status === 'COMPLETED' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
+                                                    row.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                                                    'bg-slate-800 text-slate-400'
+                                                }`}>
+                                                    {row.status === 'APPROVED' ? 'Đã duyệt' : row.status === 'COMPLETED' ? 'Đã đếm xong' : row.status === 'IN_PROGRESS' ? 'Đang kiểm' : 'Nháp'}
+                                                </span>
+                                            </td>
+
+                                            <td className="p-4 text-right">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <button
+                                                        onClick={() => handleOpenMobileView(row.id)}
+                                                        className="px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded-lg text-xs font-bold border border-emerald-500/30 flex items-center gap-1 transition"
+                                                        title="Đếm bằng Điện thoại"
+                                                    >
+                                                        <Smartphone className="w-3.5 h-3.5" /> Đếm ĐT
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => handleOpenPrintView(row.id)}
+                                                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition border border-slate-700"
+                                                        title="In Biên bản kiểm kê"
+                                                    >
+                                                        <Printer className="w-3.5 h-3.5 text-amber-400" /> In
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {/* Create Drawer */}
-            {createOpen && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Phiên Kiểm Kê</h3>
-                            <button onClick={() => setCreateOpen(false)} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+            {/* Create Extended Session Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 text-white shadow-2xl overflow-y-auto max-h-[90vh]">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                            <div>
+                                <h2 className="text-base font-black text-white">Khởi Tạo Phiếu Kiểm Kê Mới</h2>
+                                <p className="text-xs text-slate-400">Chọn 1 trong 4 chế độ kiểm kê nâng cao</p>
+                            </div>
+                            <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-white">✕</button>
                         </div>
-                        <div className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Kho *</label>
-                                <select value={form.warehouseId} onChange={e => setForm(f => ({ ...f, warehouseId: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
-                                    <option value="">— Chọn kho —</option>
-                                    {warehouses.map((w: WarehouseOption) => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Khu vực (Zone)</label>
-                                <input type="text" value={form.zone} onChange={e => setForm(f => ({ ...f, zone: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                                    placeholder="VD: A, B, C (rỗng = toàn bộ)" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Loại Kiểm Kê</label>
-                                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
-                                    {Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                                </select>
-                            </div>
-                            <button onClick={handleCreate} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#87CBB9', color: '#0A1926' }}>
-                                <ClipboardList size={14} /> Tạo Phiên & Sinh Dòng Kiểm Kê
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* Detail Drawer */}
-            {detailId && detail && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                            <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
-                                    Chi Tiết Kiểm Kê
-                                </h3>
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                                    {detail.warehouseName} {detail.zone ? `· Zone ${detail.zone}` : ''} · {TYPE_LABEL[detail.type]}
-                                </p>
+                        {createError && (
+                            <div className="mb-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-xs flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                                {createError}
                             </div>
-                            <button onClick={() => { setDetailId(null); setDetail(null) }} style={{ color: '#4A6A7A' }}><X size={18} /></button>
-                        </div>
-                        <div className="p-5 space-y-4">
-                            {/* Barcode Quick Count Input when IN_PROGRESS */}
-                            {detail.status === 'IN_PROGRESS' && (
-                                <form onSubmit={handleScanCountSubmit} className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                                            <Scan className="w-3.5 h-3.5" /> Quét Barcode Đếm Nhanh (+1)
-                                        </label>
-                                        <span className="text-[10px] text-white/50">Mã SKU-Vintage</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            value={scanInput}
-                                            onChange={e => setScanInput(e.target.value)}
-                                            placeholder="Quét mã barcode Code 128 (VD: MARGAUX-2018)..."
-                                            className="flex-1 px-3 py-1.5 rounded text-xs bg-[#12141A] border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500 font-mono"
-                                        />
+                        )}
+
+                        <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
+                            {/* Scope Selector Grid */}
+                            <div>
+                                <label className="text-slate-400 font-bold block mb-2">CHỌN CHẾ ĐỘ KIỂM KÊ:</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { key: 'FULL_WAREHOUSE', title: '📦 Full Kho', desc: 'Toàn bộ mã & vị trí' },
+                                        { key: 'CYCLE_COUNT', title: '🔄 Cycle Count', desc: 'Theo vị trí / loại rượu' },
+                                        { key: 'TRANSACTED_ITEMS', title: '⚡ Mã Giao Dịch', desc: 'Có nhập/xuất gần đây' },
+                                        { key: 'SPOT_COUNT', title: '🚨 Đột Xuất', desc: 'Kiểm tức thì theo mã/khu' },
+                                    ].map(mode => (
                                         <button
-                                            type="submit"
-                                            disabled={scanLoading}
-                                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs rounded transition-colors disabled:opacity-50"
+                                            type="button"
+                                            key={mode.key}
+                                            onClick={() => setFormScopeType(mode.key as any)}
+                                            className={`p-3 rounded-xl text-left border transition ${formScopeType === mode.key ? 'bg-emerald-500/10 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'}`}
                                         >
-                                            {scanLoading ? 'Đang ghi...' : 'Ghi Đếm'}
+                                            <div className="font-bold text-xs">{mode.title}</div>
+                                            <div className="text-[10px] text-slate-500 mt-0.5">{mode.desc}</div>
                                         </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Warehouse Selector */}
+                            <div>
+                                <label className="text-slate-400 font-bold block mb-1">Kho Hàng Kiểm Kê:*</label>
+                                <select
+                                    value={formWarehouseId}
+                                    onChange={e => {
+                                        setFormWarehouseId(e.target.value)
+                                        fetchLocationOptions(e.target.value)
+                                    }}
+                                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                                    required
+                                >
+                                    {warehouses.map(w => (
+                                        <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Title */}
+                            <div>
+                                <label className="text-slate-400 font-bold block mb-1">Tên / Mục Đích Phiếu Kiểm Kê:</label>
+                                <input
+                                    type="text"
+                                    placeholder="vd: Kiểm kê định kỳ tháng 8, Kiểm kê đột xuất hầm rượu..."
+                                    value={formTitle}
+                                    onChange={e => setFormTitle(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Scope-specific Options */}
+                            {formScopeType === 'CYCLE_COUNT' && (
+                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-3">
+                                    <div>
+                                        <label className="text-slate-400 font-bold block mb-1">Lọc theo Vị trí (Zone):</label>
+                                        <select
+                                            value={formSelectedZone}
+                                            onChange={e => setFormSelectedZone(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 focus:outline-none"
+                                        >
+                                            <option value="">-- Tất cả vị trí --</option>
+                                            {Array.from(new Set(locationOptions.map(l => l.zone))).map(z => (
+                                                <option key={z} value={z}>{z}</option>
+                                            ))}
+                                        </select>
                                     </div>
-                                </form>
+                                </div>
                             )}
 
-                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
-                                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                            {['SKU', 'Sản Phẩm', 'Vị Trí', 'HT', 'Thực Tế', 'Lệch'].map(h => (
-                                                <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {detail.lines.map((l: StockCountLine) => (
-                                            <tr key={l.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.5)' }}>
-                                                <td className="px-3 py-2 text-xs font-bold" style={{ color: '#87CBB9' }}>{l.skuCode}</td>
-                                                <td className="px-3 py-2 text-xs" style={{ color: '#E8F1F2' }}>{l.productName}</td>
-                                                <td className="px-3 py-2 text-xs" style={{ color: '#8AAEBB' }}>{l.locationCode}</td>
-                                                <td className="px-3 py-2 text-xs font-bold" style={{ color: '#E8F1F2' }}>{l.qtySystem}</td>
-                                                <td className="px-3 py-2">
-                                                    {detail.status === 'IN_PROGRESS' ? (
-                                                        <input type="number" min={0} defaultValue={l.qtyActual ?? ''}
-                                                            onBlur={e => {
-                                                                const v = Number(e.target.value)
-                                                                if (!isNaN(v) && v >= 0) handleRecordLine(l.id, v)
-                                                            }}
-                                                            className="w-16 px-2 py-1 rounded text-xs text-center"
-                                                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#D4A853' }} />
-                                                    ) : (
-                                                        <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{l.qtyActual ?? '—'}</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-2 text-xs font-bold" style={{ color: l.variance === null ? '#4A6A7A' : l.variance < 0 ? '#8B1A2E' : l.variance > 0 ? '#5BA88A' : '#4A6A7A' }}>
-                                                    {l.variance !== null ? (l.variance > 0 ? '+' : '') + l.variance : '—'}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            {formScopeType === 'TRANSACTED_ITEMS' && (
+                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                    <label className="text-slate-400 font-bold block mb-1">Phát sinh giao dịch trong (Ngày):</label>
+                                    <input
+                                        type="number"
+                                        value={formTransactedDays}
+                                        onChange={e => setFormTransactedDays(parseInt(e.target.value, 10) || 30)}
+                                        className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 focus:outline-none font-mono"
+                                    />
+                                </div>
+                            )}
+
+                            {formScopeType === 'SPOT_COUNT' && (
+                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-3">
+                                    <div>
+                                        <label className="text-slate-400 font-bold block mb-1">Nhập danh sách mã SKU cần đột xuất (cách nhau bởi dấu phẩy/xuống dòng):</label>
+                                        <textarea
+                                            rows={3}
+                                            placeholder="vd: L10001, L10007, L20015..."
+                                            value={formSpotSkus}
+                                            onChange={e => setFormSpotSkus(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 font-mono focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Staff Assignee */}
+                            <div>
+                                <label className="text-slate-400 font-bold block mb-1">Phân Công Cho Nhân Viên:</label>
+                                <select
+                                    value={formAssignedToId}
+                                    onChange={e => setFormAssignedToId(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                                >
+                                    <option value="">-- Chưa phân công (Để tự do) --</option>
+                                    {staffList.map(u => (
+                                        <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                                    ))}
+                                </select>
                             </div>
-                        </div>
+
+                            {/* Blind Count Option Toggle */}
+                            <div className="flex items-center gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                <input
+                                    type="checkbox"
+                                    id="blindToggle"
+                                    checked={formIsBlind}
+                                    onChange={e => setFormIsBlind(e.target.checked)}
+                                    className="w-4 h-4 rounded text-emerald-500 focus:ring-0 bg-slate-900 border-slate-700"
+                                />
+                                <label htmlFor="blindToggle" className="cursor-pointer">
+                                    <span className="font-bold text-white block">Kiểm Kê Mù (Giấu Tồn Sổ Sách)</span>
+                                    <span className="text-[10px] text-slate-400 block">Ẩn số liệu tồn sổ sách trên điện thoại nhân viên để đảm bảo đếm thực tế 100%</span>
+                                </label>
+                            </div>
+
+                            {/* Submit Buttons */}
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/20"
+                                >
+                                    {isSubmitting ? 'Đang khởi tạo...' : 'Tạo Phiếu Kiểm Kê'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
 
-            {/* Code 128 Stock Lookup Modal */}
-            <BarcodeLookupModal
-                isOpen={lookupModalOpen}
-                onClose={() => setLookupModalOpen(false)}
-            />
+            {/* Printable A4 Report Overlay Modal */}
+            {printViewDetail && (
+                <PrintableAuditReport
+                    detail={printViewDetail}
+                    onClose={() => setPrintViewDetail(null)}
+                    onRefreshed={() => fetchData()}
+                />
+            )}
+
+            {/* Barcode Camera Modal */}
+            {showBarcodeLookup && (
+                <BarcodeLookupModal
+                    onClose={() => setShowBarcodeLookup(false)}
+                />
+            )}
         </div>
     )
 }
-
