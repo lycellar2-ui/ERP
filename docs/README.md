@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 21:37 | Wine ERP v9.9 — 29 modules, 125 models, Sample Inventory & Strict RBAC Permission Enforcement (BUG-042)*
+*Last updated: 2026-08-08 21:44 | Wine ERP v9.9 — 29 modules, 125 models, Sample Inventory Management & Strict RBAC UI/Server Enforcement (BUG-042)*
 

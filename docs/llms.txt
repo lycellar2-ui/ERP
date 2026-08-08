@@ -1,5 +1,5 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-08-08 21:37
+> Last updated: 2026-08-08 21:44
 > Status: Production — 29 modules, 125 DB models, 78 enums, 35 dashboard routes, Sample Inventory & Strict RBAC Enforcement (BUG-042)
 
 ## Core Files (MUST READ IN ORDER)
