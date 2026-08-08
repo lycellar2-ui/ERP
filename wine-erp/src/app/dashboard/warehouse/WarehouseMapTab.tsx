@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import {
     Search, Loader2, Save, Move, Maximize2, ZoomIn, ZoomOut, Grid3x3,
     X, Eye, MousePointer2, Minus, DoorOpen, Type, Trash2, RotateCcw,
-    ChevronDown, Box, Layers, Package
+    ChevronDown, Box, Layers, Package, Calendar, ShieldCheck, Thermometer,
+    Sparkles, RefreshCw, Info, Building2, MapPin
 } from 'lucide-react'
 import {
-    MapLocation, MapWarehouse,
+    MapLocation, MapWarehouse, MapLocationProduct,
     getWarehouseMapData, saveWarehouseLayout, autoLayoutWarehouse,
     searchProductLocations, getWarehouseLayoutConfig, saveWarehouseLayoutConfig
 } from './actions-map'
@@ -26,19 +27,66 @@ interface LayoutConfig { walls: Wall[]; doors: Door[]; labels: Label[] }
 type Tool = 'select' | 'wall' | 'door' | 'label' | 'eraser'
 
 // ═══════════════════════════════════════════════════════════
-// Occupancy helpers
+// Modern Aesthetic Color Tokens for Occupancy
 // ═══════════════════════════════════════════════════════════
 function occColor(pct: number) {
-    if (pct >= 90) return { fill: '#fee2e2', border: '#ef4444', text: '#dc2626', dot: '#ef4444' }
-    if (pct >= 70) return { fill: '#fef3c7', border: '#f59e0b', text: '#d97706', dot: '#f59e0b' }
-    if (pct >= 40) return { fill: '#d1fae5', border: '#10b981', text: '#059669', dot: '#10b981' }
-    if (pct > 0) return { fill: '#dbeafe', border: '#3b82f6', text: '#2563eb', dot: '#3b82f6' }
-    return { fill: '#f3f4f6', border: '#d1d5db', text: '#9ca3af', dot: '#d1d5db' }
+    if (pct >= 90) return {
+        fill: '#FFF1F2',
+        border: '#F43F5E',
+        text: '#E11D48',
+        dot: '#F43F5E',
+        badgeBg: '#FFE4E6',
+        badgeText: '#9F1239',
+        label: 'Đầy (>90%)'
+    }
+    if (pct >= 70) return {
+        fill: '#FEF3C7',
+        border: '#F59E0B',
+        text: '#B45309',
+        dot: '#F59E0B',
+        badgeBg: '#FEF3C7',
+        badgeText: '#92400E',
+        label: 'Cao (70-90%)'
+    }
+    if (pct >= 40) return {
+        fill: '#E0F2FE',
+        border: '#0284C7',
+        text: '#0369A1',
+        dot: '#0284C7',
+        badgeBg: '#E0F2FE',
+        badgeText: '#075985',
+        label: 'Trung bình (40-70%)'
+    }
+    if (pct > 0) return {
+        fill: '#E6F4F1',
+        border: '#10B981',
+        text: '#047857',
+        dot: '#10B981',
+        badgeBg: '#D1FAE5',
+        badgeText: '#065F46',
+        label: 'Thấp (1-40%)'
+    }
+    return {
+        fill: '#F8FAFC',
+        border: '#CBD5E1',
+        text: '#64748B',
+        dot: '#94A3B8',
+        badgeBg: '#F1F5F9',
+        badgeText: '#475569',
+        label: 'Trống (0%)'
+    }
 }
 
+// Strictly avoiding violet/purple (Purple Ban)
 const ZONE_COLORS: Record<string, string> = {
-    A: '#3b82f6', B: '#10b981', C: '#f59e0b', D: '#ef4444',
-    E: '#8b5cf6', F: '#ec4899', G: '#14b8a6', H: '#f97316',
+    A: '#0284C7', // Sky Blue
+    B: '#059669', // Emerald Green
+    C: '#D97706', // Amber Gold
+    D: '#DC2626', // Crimson Red
+    E: '#2563EB', // Royal Blue
+    F: '#DB2777', // Rose Pink
+    G: '#0D9488', // Teal Green
+    H: '#EA580C', // Deep Orange
 }
 
 let _nextId = 0
@@ -69,9 +117,9 @@ export function WarehouseMapTab({
         }
     }, [selectedWarehouseId])
 
-    // Canvas
+    // Canvas State
     const [zoom, setZoom] = useState(1)
-    const [pan, setPan] = useState({ x: 0, y: 0 })
+    const [pan, setPan] = useState({ x: 40, y: 40 })
     const [isPanning, setIsPanning] = useState(false)
     const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
     const canvasRef = useRef<HTMLDivElement>(null)
@@ -81,9 +129,10 @@ export function WarehouseMapTab({
     const [editMode, setEditMode] = useState(false)
     const [selectedLocId, setSelectedLocId] = useState<string | null>(null)
 
-    // Floor plan elements
+    // Floor plan elements (Walls, Doors, Labels)
     const [layoutCfg, setLayoutCfg] = useState<LayoutConfig>({ walls: [], doors: [], labels: [] })
     const [wallDrawing, setWallDrawing] = useState<{ x1: number; y1: number } | null>(null)
+    const [doorRotation, setDoorRotation] = useState<number>(0)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [spaceHeld, setSpaceHeld] = useState(false)
 
@@ -93,7 +142,7 @@ export function WarehouseMapTab({
     const [locations, setLocations] = useState<MapLocation[]>([])
     const [hasChanges, setHasChanges] = useState(false)
 
-    // Search
+    // Search & Popups
     const [searchTerm, setSearchTerm] = useState('')
     const [highlightLocs, setHighlightLocs] = useState<string[]>([])
     const [searchResults, setSearchResults] = useState<{ skuCode: string; productName: string; totalQty: number; locationIds: string[] }[]>([])
@@ -181,18 +230,18 @@ export function WarehouseMapTab({
                     id: uid(),
                     x1: wallDrawing.x1, y1: wallDrawing.y1,
                     x2: snap(pos.x), y2: snap(pos.y),
-                    thickness: 6,
+                    thickness: 8,
                 }
                 setLayoutCfg(prev => ({ ...prev, walls: [...prev.walls, newWall] }))
                 setWallDrawing(null)
                 setHasChanges(true)
             }
         } else if (tool === 'door') {
-            const newDoor: Door = { id: uid(), x: snap(pos.x), y: snap(pos.y), width: 40, rotation: 0 }
+            const newDoor: Door = { id: uid(), x: snap(pos.x), y: snap(pos.y), width: 44, rotation: doorRotation }
             setLayoutCfg(prev => ({ ...prev, doors: [...prev.doors, newDoor] }))
             setHasChanges(true)
         } else if (tool === 'label') {
-            const text = prompt('Nhập nội dung nhãn:')
+            const text = prompt('Nhập nội dung nhãn/chú thích trên sơ đồ:')
             if (text) {
                 const newLabel: Label = { id: uid(), x: snap(pos.x), y: snap(pos.y), text, fontSize: 14 }
                 setLayoutCfg(prev => ({ ...prev, labels: [...prev.labels, newLabel] }))
@@ -200,7 +249,7 @@ export function WarehouseMapTab({
             }
         } else if (tool === 'eraser') {
             // Try to remove nearest wall/door/label
-            const threshold = 15
+            const threshold = 18
             const px = pos.x, py = pos.y
             // Walls
             const wallIdx = layoutCfg.walls.findIndex(w => {
@@ -253,42 +302,6 @@ export function WarehouseMapTab({
             ))
             setHasChanges(true)
         }
-
-        // Resize location
-        if (resizeLoc && editMode) {
-            const dx = (e.clientX - resizeLoc.startX) / zoom
-            const dy = (e.clientY - resizeLoc.startY) / zoom
-            setLocations(prev => prev.map(l => {
-                if (l.id !== resizeLoc.id) return l
-                let newW = l.width
-                let newH = l.height
-                let newX = l.posX
-                let newY = l.posY
-
-                if (resizeLoc.handle.includes('r')) {
-                    newW = Math.max(40, snap(resizeLoc.origW + dx))
-                }
-                if (resizeLoc.handle.includes('b')) {
-                    newH = Math.max(30, snap(resizeLoc.origH + dy))
-                }
-                if (resizeLoc.handle.includes('l')) {
-                    const potentialW = snap(resizeLoc.origW - dx)
-                    if (potentialW >= 40) {
-                        newW = potentialW
-                        newX = snap(resizeLoc.origX + dx)
-                    }
-                }
-                if (resizeLoc.handle.includes('t')) {
-                    const potentialH = snap(resizeLoc.origH - dy)
-                    if (potentialH >= 30) {
-                        newH = potentialH
-                        newY = snap(resizeLoc.origY + dy)
-                    }
-                }
-                return { ...l, width: newW, height: newH, posX: newX, posY: newY }
-            }))
-            setHasChanges(true)
-        }
     }
 
     const onCanvasMouseUp = () => {
@@ -317,7 +330,7 @@ export function WarehouseMapTab({
                 showToast('Đã lưu sơ đồ kho thành công!')
                 setHasChanges(false)
             } else {
-                showToast(res1.error || res2.error || 'Lỗi lưu', 'err')
+                showToast(res1.error || res2.error || 'Lỗi lưu sơ đồ', 'err')
             }
         } finally {
             setSaving(false)
@@ -330,7 +343,7 @@ export function WarehouseMapTab({
         try {
             const res = await autoLayoutWarehouse(selectedWH)
             if (res.success) {
-                showToast('Đã tự động sắp xếp!')
+                showToast('Đã tự động sắp xếp sơ đồ!')
                 await loadMap(selectedWH)
                 setHasChanges(false)
             } else showToast(res.error || 'Lỗi', 'err')
@@ -352,57 +365,60 @@ export function WarehouseMapTab({
     // RENDER
     // ═══════════════════════════════════════════════════
     return (
-        <div className="flex flex-col gap-0" style={{ height: 'calc(100vh - 170px)', minHeight: 620 }}>
-            {/* ── Top bar ─────────────────────────────── */}
-            <div className="flex items-center gap-3 p-3 rounded-t-xl" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+        <div className="flex flex-col gap-0 rounded-2xl overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 170px)', minHeight: 640, border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+            {/* ── Top Bar ─────────────────────────────── */}
+            <div className="flex flex-wrap items-center gap-3 p-3.5" style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
 
-                {/* Search */}
-                <div className="flex-1 relative max-w-sm">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                {/* Warehouse Title */}
+                <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <Building2 size={16} className="text-amber-600" />
+                        {mapData ? mapData.name : 'Sơ Đồ Kho 2D'}
+                    </span>
+                </div>
+
+                {/* Search SKU / Product */}
+                <div className="flex-1 relative max-w-xs">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                        placeholder="Tìm SKU / tên sản phẩm..."
-                        className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                        placeholder="Tìm SKU, tên rượu trên sơ đồ..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-lg text-xs outline-none bg-white border border-slate-200 text-slate-800 focus:border-amber-500 transition-all"
                     />
                 </div>
 
-                {/* Zoom controls */}
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-[#2A4355]"><ZoomOut size={14} style={{ color: '#8AAEBB' }} /></button>
-                    <span className="text-xs font-mono w-10 text-center" style={{ color: '#8AAEBB' }}>{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-[#2A4355]"><ZoomIn size={14} style={{ color: '#8AAEBB' }} /></button>
-                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-[#2A4355]"><Maximize2 size={14} style={{ color: '#8AAEBB' }} /></button>
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-200">
+                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600" title="Thu nhỏ"><ZoomOut size={14} /></button>
+                    <span className="text-xs font-mono font-bold w-11 text-center text-slate-700">{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600" title="Phóng to"><ZoomIn size={14} /></button>
+                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-slate-100 text-slate-600" title="Về mặc định"><Maximize2 size={14} /></button>
                 </div>
 
-                {/* Edit controls */}
+                {/* Edit & Save Controls */}
                 {mapData && (
-                    <div className="flex items-center gap-1.5 ml-auto">
+                    <div className="flex items-center gap-2 ml-auto">
                         {!editMode ? (
                             <button onClick={() => setEditMode(true)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
-                                <Move size={13} /> Chỉnh Sửa
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 cursor-pointer">
+                                <Move size={14} /> Chỉnh Sửa Sơ Đồ
                             </button>
                         ) : (
                             <>
                                 <button onClick={handleAutoLayout} disabled={saving}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
-                                    <Grid3x3 size={13} /> Auto
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer">
+                                    <Grid3x3 size={13} /> Sắp Xếp Tự Động
                                 </button>
                                 <button onClick={handleSaveAll} disabled={saving}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{ background: hasChanges ? '#87CBB9' : '#4A6A7A', color: '#0A1926' }}>
+                                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${hasChanges ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm' : 'bg-slate-200 text-slate-600'}`}>
                                     {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                                    Lưu
+                                    Lưu Sơ Đồ
                                 </button>
                                 <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
-                                    <Eye size={13} /> Xong
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white hover:bg-slate-900 cursor-pointer">
+                                    <Eye size={13} /> Hoàn Tất
                                 </button>
                             </>
                         )}
@@ -410,34 +426,42 @@ export function WarehouseMapTab({
                 )}
             </div>
 
-            {/* ── Main area ─────────────────────────────── */}
-            <div className="flex flex-1 overflow-hidden rounded-b-xl" style={{ border: '1px solid #2A4355', borderTop: 'none' }}>
-                {/* Left toolbar (edit mode) */}
+            {/* ── Main Canvas & Control Area ─────────────────────────────── */}
+            <div className="flex flex-1 overflow-hidden relative">
+                {/* Left Drawing Toolbar (Active in Edit Mode) */}
                 {editMode && (
-                    <div className="flex flex-col gap-1 p-2" style={{ background: '#142433', borderRight: '1px solid #2A4355', width: 52 }}>
+                    <div className="flex flex-col gap-1.5 p-2 bg-slate-900 border-r border-slate-800 z-20 shrink-0" style={{ width: 68 }}>
                         {([
-                            { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn' },
-                            { key: 'wall' as Tool, icon: Minus, label: 'Tường' },
-                            { key: 'door' as Tool, icon: DoorOpen, label: 'Cửa' },
+                            { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn/Kéo' },
+                            { key: 'wall' as Tool, icon: Minus, label: 'Vẽ Tường' },
+                            { key: 'door' as Tool, icon: DoorOpen, label: 'Vẽ Cửa' },
                             { key: 'label' as Tool, icon: Type, label: 'Nhãn' },
-                            { key: 'eraser' as Tool, icon: Trash2, label: 'Xóa' },
+                            { key: 'eraser' as Tool, icon: Trash2, label: 'Tẩy' },
                         ]).map(t => (
                             <button key={t.key} onClick={() => { setTool(t.key); setWallDrawing(null) }}
                                 title={t.label}
-                                className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium transition-all"
-                                style={{
-                                    background: tool === t.key ? '#87CBB9' : 'transparent',
-                                    color: tool === t.key ? '#0A1926' : '#8AAEBB',
-                                }}>
-                                <t.icon size={16} />
-                                {t.label}
+                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${tool === t.key ? 'bg-amber-500 text-slate-950 shadow-md scale-105' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                                <t.icon size={18} />
+                                <span>{t.label}</span>
                             </button>
                         ))}
 
-                        <div className="mt-auto pt-2 border-t" style={{ borderColor: '#2A4355' }}>
+                        {/* Door Rotation helper */}
+                        {tool === 'door' && (
+                            <div className="mt-2 pt-2 border-t border-slate-800 flex flex-col items-center gap-1">
+                                <button
+                                    onClick={() => setDoorRotation(r => (r + 90) % 360)}
+                                    className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold hover:bg-amber-500/30 w-full text-center"
+                                    title="Xoay cửa 90 độ"
+                                >
+                                    Xoay {doorRotation}°
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="mt-auto pt-2 border-t border-slate-800">
                             <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [] }); setHasChanges(true) }}
-                                title="Xóa tất cả vẽ" className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium"
-                                style={{ color: '#4A6A7A' }}>
+                                title="Reset vẽ tường cửa" className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium text-rose-400 hover:bg-rose-950/30 w-full">
                                 <RotateCcw size={14} />
                                 Reset
                             </button>
@@ -445,14 +469,14 @@ export function WarehouseMapTab({
                     </div>
                 )}
 
-                {/* Canvas area */}
+                {/* 2D Canvas Area */}
                 <div
                     ref={canvasRef}
-                    className="flex-1 relative overflow-hidden"
+                    className="flex-1 relative overflow-hidden select-none"
                     style={{
-                        background: '#0F1D2B',
-                        backgroundImage: 'radial-gradient(circle, #2A4355 1px, transparent 1px)',
-                        backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+                        background: '#0F172A', // Slate 900 Blueprint Dark Theme
+                        backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)',
+                        backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
                         backgroundPosition: `${pan.x}px ${pan.y}px`,
                         cursor: isPanning || spaceHeld ? 'grabbing'
                             : tool === 'wall' ? 'crosshair'
@@ -468,84 +492,91 @@ export function WarehouseMapTab({
                     onWheel={onWheel}
                 >
                     {loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
-                            <Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} />
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs z-50">
+                            <div className="flex flex-col items-center gap-2 bg-slate-900 p-4 rounded-xl border border-slate-800 text-amber-400 text-xs font-bold">
+                                <Loader2 size={28} className="animate-spin" />
+                                <span>Đang tải dữ liệu sơ đồ kho...</span>
+                            </div>
                         </div>
                     )}
 
                     {!mapData && !loading && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <Box size={40} style={{ color: '#2A4355' }} />
-                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chọn kho để xem sơ đồ</p>
+                            <Box size={44} className="text-slate-700" />
+                            <p className="text-sm font-semibold text-slate-400">Chọn kho để xem sơ đồ 2D vị trí</p>
                         </div>
                     )}
 
                     {mapData && (
                         <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
-                            {/* SVG layer: walls + doors + wall-drawing preview */}
-                            <svg style={{ position: 'absolute', top: 0, left: 0, width: 2000, height: 1500, zIndex: 1, pointerEvents: 'none' }}>
+                            {/* SVG Architectural Layer: Walls, Doors & Drawing Previews */}
+                            <svg style={{ position: 'absolute', top: 0, left: 0, width: 3000, height: 2000, zIndex: 1, pointerEvents: 'none' }}>
                                 {/* Walls */}
                                 {layoutCfg.walls.map(w => (
                                     <line key={w.id} x1={w.x1} y1={w.y1} x2={w.x2} y2={w.y2}
-                                        stroke="#334155" strokeWidth={w.thickness} strokeLinecap="round" />
+                                        stroke="#475569" strokeWidth={w.thickness || 8} strokeLinecap="round" />
                                 ))}
-                                {/* Wall drawing preview */}
+
+                                {/* Wall drawing active preview */}
                                 {wallDrawing && (
                                     <line x1={wallDrawing.x1} y1={wallDrawing.y1}
                                         x2={snap(mousePos.x)} y2={snap(mousePos.y)}
-                                        stroke="#3b82f6" strokeWidth={6} strokeLinecap="round" strokeDasharray="8 4" opacity={0.7} />
+                                        stroke="#F59E0B" strokeWidth={8} strokeLinecap="round" strokeDasharray="8 4" opacity={0.8} />
                                 )}
-                                {/* Doors */}
+
+                                {/* Doors with Architectural Swing Arc */}
                                 {layoutCfg.doors.map(d => (
                                     <g key={d.id} transform={`translate(${d.x}, ${d.y}) rotate(${d.rotation})`}>
-                                        <rect x={-d.width / 2} y={-4} width={d.width} height={8} fill="#fbbf24" stroke="#d97706" strokeWidth={1.5} rx={2} />
+                                        <rect x={-d.width / 2} y={-4} width={d.width} height={8} fill="#F59E0B" stroke="#B45309" strokeWidth={1.5} rx={2} />
                                         <path d={`M ${-d.width / 2} 4 A ${d.width / 2} ${d.width / 2} 0 0 1 ${d.width / 2} 4`}
-                                            fill="none" stroke="#d97706" strokeWidth={1} strokeDasharray="3 2" />
+                                            fill="none" stroke="#F59E0B" strokeWidth={1.5} strokeDasharray="3 2" />
                                     </g>
                                 ))}
+
                                 {/* Labels */}
                                 {layoutCfg.labels.map(l => (
-                                    <text key={l.id} x={l.x} y={l.y} fontSize={l.fontSize}
-                                        fill="#475569" fontWeight="600" fontFamily="Inter, sans-serif"
+                                    <text key={l.id} x={l.x} y={l.y} fontSize={l.fontSize || 14}
+                                        fill="#94A3B8" fontWeight="700" fontFamily="Inter, sans-serif"
                                         style={{ userSelect: 'none' }}>
                                         {l.text}
                                     </text>
                                 ))}
                             </svg>
 
-                            {/* Zone labels */}
+                            {/* Zone Boundary Cards */}
                             {zones.map(zone => {
                                 const zoneLocs = locations.filter(l => l.zone === zone)
                                 if (zoneLocs.length === 0) return null
                                 const minX = Math.min(...zoneLocs.map(l => l.posX))
                                 const minY = Math.min(...zoneLocs.map(l => l.posY))
                                 const maxX = Math.max(...zoneLocs.map(l => l.posX + l.width))
-                                const zColor = ZONE_COLORS[zone] ?? '#6b7280'
+                                const zColor = ZONE_COLORS[zone] ?? '#64748B'
                                 return (
-                                    <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX - 8, top: minY - 32, zIndex: 2, pointerEvents: isDrawingTool ? 'none' : 'auto' }}>
-                                        {/* Zone background */}
+                                    <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX - 10, top: minY - 36, zIndex: 2, pointerEvents: isDrawingTool ? 'none' : 'auto' }}>
+                                        {/* Zone Tinted Container */}
                                         <div style={{
-                                            position: 'absolute', left: 0, top: 28,
-                                            width: (maxX - minX) + 16,
-                                            height: Math.max(...zoneLocs.map(l => l.posY + l.height)) - minY + 16,
-                                            background: `${zColor}08`, border: `1.5px dashed ${zColor}30`,
-                                            borderRadius: 12, pointerEvents: 'none',
+                                            position: 'absolute', left: 0, top: 32,
+                                            width: (maxX - minX) + 20,
+                                            height: Math.max(...zoneLocs.map(l => l.posY + l.height)) - minY + 20,
+                                            background: `${zColor}12`, border: `2px dashed ${zColor}40`,
+                                            borderRadius: 14, pointerEvents: 'none',
                                         }} />
-                                        {/* Zone badge */}
-                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold"
-                                            style={{ background: zColor, color: '#fff', width: 'fit-content', letterSpacing: 0.5 }}>
-                                            <Layers size={11} />
+                                        {/* Zone Badge */}
+                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-extrabold shadow-sm"
+                                            style={{ background: zColor, color: '#FFFFFF', width: 'fit-content', letterSpacing: 0.5 }}>
+                                            <Layers size={12} />
                                             ZONE {zone}
                                         </div>
                                     </div>
                                 )
                             })}
 
-                            {/* Location blocks */}
+                            {/* Location Blocks (Interactive Bins / Shelves) */}
                             {locations.map(loc => {
                                 const oc = occColor(loc.occupancyPct)
                                 const isHighlighted = highlightLocs.includes(loc.id)
                                 const isSelected = selectedLocId === loc.id
+
                                 return (
                                     <div
                                         key={loc.id}
@@ -556,49 +587,51 @@ export function WarehouseMapTab({
                                             }
                                         }}
                                         onClick={e => {
-                                            // Only handle location click in select mode — let other tools pass through
                                             if (!isDrawingTool) {
                                                 e.stopPropagation()
-                                                setSelectedLocId(loc.id === selectedLocId ? null : loc.id)
+                                                setSelectedLocId(loc.id)
+                                                setShowLocModal(true) // Open Inventory Details Popup Modal!
                                             }
                                         }}
-                                        className="absolute transition-shadow"
+                                        className="absolute transition-all duration-150 group"
                                         style={{
                                             left: loc.posX, top: loc.posY,
                                             width: loc.width, height: loc.height,
                                             background: oc.fill,
-                                            border: `2px solid ${isSelected ? '#3b82f6' : isHighlighted ? '#f59e0b' : oc.border}`,
-                                            borderRadius: 8,
+                                            border: `2px solid ${isSelected ? '#2563EB' : isHighlighted ? '#F59E0B' : oc.border}`,
+                                            borderRadius: 10,
                                             zIndex: isSelected ? 20 : isHighlighted ? 15 : 10,
                                             cursor: editMode && isDrawingTool ? 'inherit' : editMode && tool === 'select' ? 'move' : 'pointer',
                                             pointerEvents: editMode && isDrawingTool ? 'none' : 'auto',
-                                            boxShadow: isSelected ? '0 0 0 3px rgba(59,130,246,0.3)' :
-                                                isHighlighted ? '0 0 0 3px rgba(245,158,11,0.3), 0 0 12px rgba(245,158,11,0.2)' :
-                                                    '0 1px 3px rgba(0,0,0,0.06)',
+                                            boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.3), 0 4px 12px rgba(0,0,0,0.15)' :
+                                                isHighlighted ? '0 0 0 4px rgba(245,158,11,0.3), 0 0 16px rgba(245,158,11,0.3)' :
+                                                    '0 2px 4px rgba(0,0,0,0.05)',
                                             padding: '6px 8px',
                                             display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                                             userSelect: 'none',
                                         }}
                                     >
-                                        {/* Top: code */}
+                                        {/* Top: Location Code & Temp badge */}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-bold" style={{ color: '#1e293b', letterSpacing: 0.3 }}>
+                                            <span className="text-[11px] font-extrabold font-mono" style={{ color: '#0F172A', letterSpacing: 0.3 }}>
                                                 {loc.locationCode}
                                             </span>
                                             {loc.tempControlled && (
-                                                <span className="text-xs" title="Kiểm soát nhiệt độ">❄️</span>
+                                                <span className="text-[10px]" title="Kho lạnh bảo quản rượu">❄️</span>
                                             )}
                                         </div>
-                                        {/* Occupancy bar */}
-                                        <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: '#e2e8f0', marginTop: 3 }}>
+
+                                        {/* Occupancy Progress Bar */}
+                                        <div className="w-full rounded-full overflow-hidden bg-slate-200/80 my-1" style={{ height: 5 }}>
                                             <div style={{ width: `${loc.occupancyPct}%`, height: '100%', background: oc.dot, borderRadius: 99, transition: 'width 0.3s' }} />
                                         </div>
-                                        {/* Bottom: qty */}
-                                        <div className="flex items-center justify-between" style={{ marginTop: 3 }}>
-                                            <span className="text-[10px] font-medium" style={{ color: oc.text }}>
-                                                {loc.totalQty > 0 ? formatNumber(loc.totalQty) : '—'}
+
+                                        {/* Bottom: Qty & Occupancy % */}
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-bold font-mono" style={{ color: oc.text }}>
+                                                {loc.totalQty > 0 ? `${formatNumber(loc.totalQty)} chai` : 'Trống'}
                                             </span>
-                                            <span className="text-xs font-semibold" style={{ color: oc.text }}>
+                                            <span className="text-[10px] font-extrabold" style={{ color: oc.text }}>
                                                 {loc.occupancyPct}%
                                             </span>
                                         </div>
@@ -608,36 +641,35 @@ export function WarehouseMapTab({
                         </div>
                     )}
 
-                    {/* Tool hint banners */}
+                    {/* Tool Hint Banners */}
                     {wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-xs font-medium z-50"
-                            style={{ background: '#3b82f6', color: '#fff', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}>
-                            Click để đặt điểm cuối tường • ESC để hủy
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-slate-950 shadow-lg border border-amber-400">
+                            🧱 Click chọn điểm kết thúc tường • ESC để hủy
                         </div>
                     )}
-                    {editMode && tool === 'door' && !wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-xs font-medium z-50"
-                            style={{ background: '#d97706', color: '#fff', boxShadow: '0 2px 8px rgba(217,119,6,0.3)' }}>
-                            Click để đặt cửa • Space+Drag để di chuyển bản đồ
+                    {editMode && tool === 'door' && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-slate-950 shadow-lg border border-amber-400">
+                            🚪 Click để đặt cửa trên sơ đồ • Nhấn nút Xoay ở cột trái để đổi góc
                         </div>
                     )}
                     {editMode && tool === 'wall' && !wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-xs font-medium z-50"
-                            style={{ background: '#334155', color: '#fff', boxShadow: '0 2px 8px rgba(51,65,85,0.3)' }}>
-                            Click để đặt điểm đầu tường • Space+Drag để di chuyển bản đồ
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-800 text-white shadow-lg border border-slate-700">
+                            🧱 Click để chọn điểm bắt đầu vẽ tường • Giữ Space để kéo bản đồ
                         </div>
                     )}
                 </div>
 
-                {/* Right panel — Legend + Selected details */}
-                <div className="flex flex-col gap-4 p-4 overflow-y-auto" style={{ width: 240, background: '#142433', borderLeft: '1px solid #2A4355' }}>
-                    {/* Legend */}
+                {/* Right Side Control & Legend Panel */}
+                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-900 border-l border-slate-800 text-slate-200" style={{ width: 260 }}>
+                    {/* Occupancy Legend */}
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8AAEBB' }}>Chú thích</h4>
-                        <div className="space-y-1.5">
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2.5 text-amber-400 flex items-center gap-1.5">
+                            <Info size={13} /> Chú Thích Mức Tồn
+                        </h4>
+                        <div className="space-y-2">
                             {[
-                                { label: 'Trống', pct: 0 },
-                                { label: 'Thấp (1-40%)', pct: 10 },
+                                { label: 'Trống (0%)', pct: 0 },
+                                { label: 'Thấp (1-40%)', pct: 20 },
                                 { label: 'Trung bình (40-70%)', pct: 50 },
                                 { label: 'Cao (70-90%)', pct: 80 },
                                 { label: 'Đầy (>90%)', pct: 95 },
@@ -645,277 +677,203 @@ export function WarehouseMapTab({
                                 const c = occColor(item.pct)
                                 return (
                                     <div key={item.label} className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-sm" style={{ background: c.fill, border: `1.5px solid ${c.border}` }} />
-                                        <span className="text-[11px]" style={{ color: '#8AAEBB' }}>{item.label}</span>
+                                        <div className="w-3.5 h-3.5 rounded-md shrink-0" style={{ background: c.fill, border: `2px solid ${c.border}` }} />
+                                        <span className="text-xs font-medium text-slate-300">{item.label}</span>
                                     </div>
                                 )
                             })}
                         </div>
-                        {/* Floor plan legend */}
-                        {editMode && (
-                            <div className="mt-3 pt-3 border-t space-y-1.5" style={{ borderColor: '#2A4355' }}>
-                                <div className="flex items-center gap-2">
-                                    <div style={{ width: 16, height: 4, background: '#8AAEBB', borderRadius: 2 }} />
-                                    <span className="text-[11px]" style={{ color: '#8AAEBB' }}>Tường</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div style={{ width: 16, height: 6, background: '#D4A853', borderRadius: 2 }} />
-                                    <span className="text-[11px]" style={{ color: '#8AAEBB' }}>Cửa</span>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
-                    {/* Zones */}
+                    {/* Floor Plan Elements Legend */}
+                    {editMode && (
+                        <div className="pt-3 border-t border-slate-800 space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400">Vật Thể Bản Đồ</h4>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-2 rounded bg-slate-500" />
+                                <span className="text-xs text-slate-300">Tường ngăn</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-2 rounded bg-amber-500" />
+                                <span className="text-xs text-slate-300">Cửa ra vào</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Zones Summary */}
                     {zones.length > 0 && (
-                        <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8AAEBB' }}>Zones</h4>
+                        <div className="pt-3 border-t border-slate-800">
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">Danh Sách Zone</h4>
                             <div className="flex flex-wrap gap-1.5">
                                 {zones.map(z => (
-                                    <span key={z} className="px-2 py-0.5 rounded text-[11px] font-bold"
-                                        style={{ background: ZONE_COLORS[z] ?? '#4A6A7A', color: '#E8F1F2' }}>
-                                        {z}
+                                    <span key={z} className="px-2.5 py-1 rounded-md text-xs font-extrabold"
+                                        style={{ background: ZONE_COLORS[z] ?? '#475569', color: '#FFFFFF' }}>
+                                        ZONE {z}
                                     </span>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* Stats */}
+                    {/* Quick Warehouse Stats */}
                     {mapData && (
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2 rounded-lg text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-lg font-bold" style={{ color: '#87CBB9' }}>{locations.length}</p>
-                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Vị trí</p>
+                        <div className="pt-3 border-t border-slate-800 grid grid-cols-2 gap-2">
+                            <div className="p-2.5 rounded-xl text-center bg-slate-800/80 border border-slate-700/60">
+                                <p className="text-base font-extrabold text-amber-400 font-mono">{locations.length}</p>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase">Tổng Vị Trí</p>
                             </div>
-                            <div className="p-2 rounded-lg text-center" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-lg font-bold" style={{ color: '#5BA88A' }}>{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
-                                <p className="text-[10px]" style={{ color: '#4A6A7A' }}>Tổng chai</p>
+                            <div className="p-2.5 rounded-xl text-center bg-slate-800/80 border border-slate-700/60">
+                                <p className="text-base font-extrabold text-emerald-400 font-mono">{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase">Tổng Chai Tồn</p>
                             </div>
                         </div>
                     )}
 
-                    {/* Search results */}
+                    {/* Search Results Summary */}
                     {searchResults.length > 0 && (
-                        <div>
+                        <div className="pt-3 border-t border-slate-800">
                             <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Kết quả</h4>
+                                <h4 className="text-xs font-bold uppercase text-amber-400">Kết Quả Tìm Kiếm</h4>
                                 <button onClick={() => { setSearchResults([]); setHighlightLocs([]); setSearchTerm('') }}
-                                    className="p-0.5 rounded hover:bg-[#2A4355]"><X size={12} style={{ color: '#8AAEBB' }} /></button>
+                                    className="p-1 rounded hover:bg-slate-800 text-slate-400"><X size={12} /></button>
                             </div>
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                                 {searchResults.map(r => (
-                                    <div key={r.skuCode} className="p-2 rounded-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[11px] font-bold truncate" style={{ color: '#87CBB9' }}>{r.skuCode}</p>
-                                        <p className="text-[10px] truncate" style={{ color: '#8AAEBB' }}>{r.productName}</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#D4A853' }}>{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
+                                    <div key={r.skuCode} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs">
+                                        <p className="font-bold text-amber-300 font-mono">{r.skuCode}</p>
+                                        <p className="text-[11px] text-slate-300 truncate">{r.productName}</p>
+                                        <p className="text-[10px] font-bold text-emerald-400 mt-1">{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
                                     </div>
                                 ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Selected location detail */}
-                    {selectedLoc && (
-                        <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#8AAEBB' }}>Chi tiết vị trí</h4>
-                            <div className="p-3 rounded-lg space-y-2" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-sm font-bold" style={{ color: '#87CBB9' }}>{selectedLoc.locationCode}</p>
-                                <div className="grid grid-cols-2 gap-1 text-[11px]">
-                                    <span style={{ color: '#4A6A7A' }}>Zone:</span>
-                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.zone}</span>
-                                    <span style={{ color: '#4A6A7A' }}>Rack:</span>
-                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.rack ?? '—'}</span>
-                                    <span style={{ color: '#4A6A7A' }}>Bin:</span>
-                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.bin ?? '—'}</span>
-                                    <span style={{ color: '#4A6A7A' }}>Loại:</span>
-                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{selectedLoc.type}</span>
-                                    <span style={{ color: '#4A6A7A' }}>Chiếm:</span>
-                                    <span className="font-semibold" style={{ color: occColor(selectedLoc.occupancyPct).text }}>{selectedLoc.occupancyPct}%</span>
-                                </div>
-
-                                {/* Direct Dimension Editor (Width x Height) */}
-                                {editMode && (
-                                    <div className="pt-2 border-t space-y-2" style={{ borderColor: '#2A4355' }}>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>📐 Đổi kích thước ô (px)</p>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#8AAEBB' }}>Rộng (W)</label>
-                                                <input
-                                                    type="number"
-                                                    value={selectedLoc.width}
-                                                    onChange={e => {
-                                                        const val = Math.max(40, parseInt(e.target.value) || 40)
-                                                        setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: val } : l))
-                                                        setHasChanges(true)
-                                                    }}
-                                                    className="w-full px-2 py-1 text-xs rounded border outline-none font-mono"
-                                                    style={{ background: '#142433', borderColor: '#2A4355', color: '#E8F1F2' }}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] block font-semibold mb-0.5" style={{ color: '#8AAEBB' }}>Cao (H)</label>
-                                                <input
-                                                    type="number"
-                                                    value={selectedLoc.height}
-                                                    onChange={e => {
-                                                        const val = Math.max(30, parseInt(e.target.value) || 30)
-                                                        setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, height: val } : l))
-                                                        setHasChanges(true)
-                                                    }}
-                                                    className="w-full px-2 py-1 text-xs rounded border outline-none font-mono"
-                                                    style={{ background: '#142433', borderColor: '#2A4355', color: '#E8F1F2' }}
-                                                />
-                                            </div>
-                                        </div>
-                                        {/* Presets */}
-                                        <p className="text-[10px] font-semibold" style={{ color: '#8AAEBB' }}>Kích thước chuẩn:</p>
-                                        <div className="grid grid-cols-2 gap-1">
-                                            {[
-                                                { label: '80x60 (Chuẩn)', w: 80, h: 60 },
-                                                { label: '120x80 (Vừa)', w: 120, h: 80 },
-                                                { label: '160x100 (Rộng)', w: 160, h: 100 },
-                                                { label: '240x80 (Kệ dài)', w: 240, h: 80 },
-                                            ].map(p => (
-                                                <button
-                                                    key={p.label}
-                                                    onClick={() => {
-                                                        setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: p.w, height: p.h } : l))
-                                                        setHasChanges(true)
-                                                    }}
-                                                    className="text-[10px] py-1 px-1.5 rounded border transition-colors font-mono text-center"
-                                                    style={{ background: '#142433', borderColor: '#2A4355', color: '#8AAEBB' }}
-                                                >
-                                                    {p.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {selectedLoc.products.length > 0 ? (
-                                    <div className="pt-3 border-t space-y-2" style={{ borderColor: '#2A4355' }}>
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#E8F1F2' }}>
-                                                📦 Hàng trong ô ({selectedLoc.products.length})
-                                            </p>
-                                            <button
-                                                onClick={() => setShowLocModal(true)}
-                                                className="text-[10px] font-semibold px-2 py-0.5 rounded transition-colors"
-                                                style={{ background: '#87CBB9', color: '#0A1926' }}
-                                            >
-                                                Xem bảng 🔍
-                                            </button>
-                                        </div>
-
-                                        <div className="border rounded-lg overflow-hidden" style={{ borderColor: '#2A4355' }}>
-                                            <table className="w-full text-left text-[11px] border-collapse">
-                                                <thead>
-                                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                                        <th className="p-1.5 font-bold" style={{ color: '#4A6A7A' }}>Mã SKU / Tên Rượu</th>
-                                                        <th className="p-1.5 font-bold text-right" style={{ color: '#4A6A7A' }}>SL (Chai)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y" style={{ borderColor: 'rgba(42,67,85,0.4)' }}>
-                                                    {selectedLoc.products.map((p, i) => (
-                                                        <tr key={i} className="hover:bg-[rgba(135,203,185,0.04)] transition-colors">
-                                                            <td className="p-1.5 min-w-0">
-                                                                <p className="font-bold truncate text-[11px]" style={{ color: '#87CBB9' }}>{p.skuCode}</p>
-                                                                <p className="truncate text-[10px]" style={{ color: '#8AAEBB' }}>{p.productName}</p>
-                                                            </td>
-                                                            <td className="p-1.5 text-right font-mono font-bold align-top text-xs" style={{ color: '#5BA88A' }}>
-                                                                {formatNumber(p.qtyAvailable)}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="pt-3 border-t text-center" style={{ borderColor: '#2A4355' }}>
-                                        <p className="text-[11px] italic" style={{ color: '#4A6A7A' }}>Kệ hiện đang trống</p>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Modal: Full Location Product Table */}
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* POPUP MODAL: Detailed Location Inventory Details */}
+            {/* ═══════════════════════════════════════════════════ */}
             {showLocModal && selectedLoc && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-                    <div className="rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden" style={{ background: '#0F1D2B', border: '1px solid #2A4355' }}>
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-4" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                            <div>
-                                <h3 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
-                                    📍 Vị Trí: {selectedLoc.locationCode}
-                                </h3>
-                                <p className="text-xs" style={{ color: '#4A6A7A' }}>
-                                    Zone: {selectedLoc.zone} • Rack: {selectedLoc.rack ?? '—'} • Bin: {selectedLoc.bin ?? '—'}
-                                </p>
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                    <div className="rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden bg-slate-900 border border-slate-800 text-slate-100 flex flex-col max-h-[85vh]">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-4 bg-slate-950 border-b border-slate-800">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+                                    <MapPin size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-extrabold flex items-center gap-2 text-white">
+                                        📍 Vị Trí: <span className="font-mono text-amber-400">{selectedLoc.locationCode}</span>
+                                        {selectedLoc.tempControlled && (
+                                            <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-semibold flex items-center gap-1">
+                                                ❄️ Bảo quản lạnh
+                                            </span>
+                                        )}
+                                    </h3>
+                                    <p className="text-xs text-slate-400 mt-0.5">
+                                        Zone: <strong className="text-slate-200">{selectedLoc.zone}</strong> • Rack: <strong className="text-slate-200">{selectedLoc.rack ?? '—'}</strong> • Bin: <strong className="text-slate-200">{selectedLoc.bin ?? '—'}</strong> • Loại: <strong className="text-slate-200">{selectedLoc.type}</strong>
+                                    </p>
+                                </div>
                             </div>
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="p-1.5 rounded-lg transition-colors"
-                                style={{ color: '#8AAEBB' }}
+                                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                             >
-                                <X size={18} />
+                                <X size={20} />
                             </button>
                         </div>
 
-                        {/* Summary badges */}
-                        <div className="flex items-center gap-3 p-3 text-xs" style={{ background: '#1B2E3D', borderBottom: '1px solid #2A4355' }}>
-                            <span className="font-semibold" style={{ color: '#8AAEBB' }}>
-                                Tổng sản phẩm: <strong className="font-mono" style={{ color: '#87CBB9' }}>{selectedLoc.products.length} mã</strong>
-                            </span>
-                            <span style={{ color: '#2A4355' }}>•</span>
-                            <span className="font-semibold" style={{ color: '#8AAEBB' }}>
-                                Tổng tồn kho: <strong className="font-mono" style={{ color: '#5BA88A' }}>{formatNumber(selectedLoc.totalQty)} chai</strong>
-                            </span>
-                            <span style={{ color: '#2A4355' }}>•</span>
-                            <span className="font-semibold" style={{ color: '#8AAEBB' }}>
-                                Tỷ lệ lấp đầy: <strong className="font-mono" style={{ color: '#D4A853' }}>{selectedLoc.occupancyPct}%</strong>
-                            </span>
+                        {/* Occupancy & Metric Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-950/40 border-b border-slate-800">
+                            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                                <p className="text-[11px] font-semibold text-slate-400 uppercase">Tổng Hàng Trong Kệ</p>
+                                <p className="text-xl font-extrabold text-emerald-400 font-mono mt-0.5">{formatNumber(selectedLoc.totalQty)} <span className="text-xs font-normal">chai</span></p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                                <p className="text-[11px] font-semibold text-slate-400 uppercase">Sức Chứa Tối Đa</p>
+                                <p className="text-xl font-extrabold text-sky-400 font-mono mt-0.5">{selectedLoc.capacityCases ? selectedLoc.capacityCases * 12 : 500} <span className="text-xs font-normal">chai</span></p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                                <p className="text-[11px] font-semibold text-slate-400 uppercase">Tỷ Lệ Lấp Đầy</p>
+                                <div className="flex items-center justify-between mt-0.5">
+                                    <span className="text-xl font-extrabold font-mono" style={{ color: occColor(selectedLoc.occupancyPct).text }}>
+                                        {selectedLoc.occupancyPct}%
+                                    </span>
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: occColor(selectedLoc.occupancyPct).badgeBg, color: occColor(selectedLoc.occupancyPct).badgeText }}>
+                                        {occColor(selectedLoc.occupancyPct).label}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Product Table */}
-                        <div className="p-4 max-h-[60vh] overflow-y-auto">
-                            <table className="w-full text-left text-xs border-collapse">
-                                <thead>
-                                    <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider" style={{ color: '#4A6A7A' }}>Mã SKU</th>
-                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider" style={{ color: '#4A6A7A' }}>Tên Rượu / Sản Phẩm</th>
-                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider text-center" style={{ color: '#4A6A7A' }}>Trạng Thái</th>
-                                        <th className="p-2.5 font-bold uppercase text-[10px] tracking-wider text-right" style={{ color: '#4A6A7A' }}>Tồn Kho (Chai)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {selectedLoc.products.map((p, i) => (
-                                        <tr key={i} className="transition-colors" style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}>
-                                            <td className="p-2.5 font-mono font-bold" style={{ color: '#87CBB9' }}>{p.skuCode}</td>
-                                            <td className="p-2.5 font-medium" style={{ color: '#E8F1F2' }}>{p.productName}</td>
-                                            <td className="p-2.5 text-center">
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }}>
-                                                    {p.status === 'AVAILABLE' ? '✅ Sẵn sàng' : p.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-2.5 text-right font-mono font-bold text-sm" style={{ color: '#5BA88A' }}>
-                                                {formatNumber(p.qtyAvailable)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        {/* Inventory Product / Stock Lots Table */}
+                        <div className="p-4 flex-1 overflow-y-auto">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
+                                <Package size={14} /> Danh Sách Lô Hàng & Rượu Đang Tồn Kho ({selectedLoc.products.length} mã)
+                            </h4>
+
+                            {selectedLoc.products.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-10 text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                                    <Box size={36} className="mb-2" />
+                                    <p className="text-sm font-semibold">Vị trí/kệ này hiện đang trống</p>
+                                </div>
+                            ) : (
+                                <div className="border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-950 border-b border-slate-800 text-slate-400">
+                                                <th className="p-3 font-bold uppercase text-[10px]">Mã Lô (Lot No)</th>
+                                                <th className="p-3 font-bold uppercase text-[10px]">Sản Phẩm & Rượu Vang</th>
+                                                <th className="p-3 font-bold uppercase text-[10px] text-center">Vintage</th>
+                                                <th className="p-3 font-bold uppercase text-[10px] text-center">Trạng Thái</th>
+                                                <th className="p-3 font-bold uppercase text-[10px] text-right">Tồn Kho (Chai)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800">
+                                            {selectedLoc.products.map((p, i) => (
+                                                <tr key={p.id || i} className="hover:bg-slate-800/50 transition-colors">
+                                                    <td className="p-3 font-mono font-bold text-amber-400 whitespace-nowrap">
+                                                        {p.lotNo || '—'}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <p className="font-bold text-slate-100 text-xs">{p.productName}</p>
+                                                        <p className="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
+                                                            <span>SKU: {p.skuCode}</span>
+                                                            {p.country && <span>• Quốc gia: {p.country}</span>}
+                                                        </p>
+                                                    </td>
+                                                    <td className="p-3 text-center font-bold">
+                                                        {p.vintage ? (
+                                                            <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
+                                                                🍷 {p.vintage}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-500 font-mono">N/V</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-3 text-center">
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'AVAILABLE' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : p.status === 'RESERVED' ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}`}>
+                                                            {p.status === 'AVAILABLE' ? '✅ Sẵn sàng' : p.status === 'RESERVED' ? '🔒 Đã đặt' : '⚠️ Cách ly'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 text-right font-mono font-extrabold text-sm text-emerald-400">
+                                                        {formatNumber(p.qtyAvailable)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Footer */}
-                        <div className="p-3 flex justify-end" style={{ background: '#142433', borderTop: '1px solid #2A4355' }}>
+                        {/* Modal Footer */}
+                        <div className="p-3 bg-slate-950 border-t border-slate-800 flex justify-end">
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="px-4 py-2 rounded-lg text-xs font-semibold"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                className="px-5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors cursor-pointer"
                             >
                                 Đóng
                             </button>
@@ -924,13 +882,14 @@ export function WarehouseMapTab({
                 </div>
             )}
 
-            {/* Toast */}
+            {/* Toast Notification */}
             {toast && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg"
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] px-4 py-2.5 rounded-xl text-sm font-bold shadow-xl flex items-center gap-2"
                     style={{
-                        background: toast.type === 'ok' ? '#10b981' : '#ef4444',
-                        color: '#fff',
+                        background: toast.type === 'ok' ? '#10B981' : '#EF4444',
+                        color: '#FFFFFF',
                     }}>
+                    <Sparkles size={16} />
                     {toast.msg}
                 </div>
             )}

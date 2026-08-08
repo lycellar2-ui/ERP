@@ -10,6 +10,19 @@ import { serialize } from '@/lib/serialize'
 // 2D WAREHOUSE MAP — Visual layout management
 // ═══════════════════════════════════════════════════
 
+export interface MapLocationProduct {
+    id: string
+    lotNo: string
+    skuCode: string
+    productName: string
+    vintage?: number | null
+    wineType?: string | null
+    country?: string | null
+    qtyAvailable: number
+    status: string
+    receivedDate?: string | Date
+}
+
 export interface MapLocation {
     id: string
     locationCode: string
@@ -27,12 +40,7 @@ export interface MapLocation {
     stockCount: number
     totalQty: number
     occupancyPct: number
-    products: {
-        skuCode: string
-        productName: string
-        qtyAvailable: number
-        status: string
-    }[]
+    products: MapLocationProduct[]
 }
 
 export interface MapWarehouse {
@@ -68,9 +76,12 @@ export async function getWarehouseMapData(warehouseId: string): Promise<MapWareh
             select: {
                 id: true,
                 locationId: true,
+                lotNo: true,
+                vintage: true,
                 qtyAvailable: true,
                 status: true,
-                product: { select: { skuCode: true, productName: true } },
+                receivedDate: true,
+                product: { select: { skuCode: true, productName: true, wineType: true, country: true } },
             },
         })
 
@@ -110,10 +121,16 @@ export async function getWarehouseMapData(warehouseId: string): Promise<MapWareh
                     totalQty,
                     occupancyPct,
                     products: locLots.map(lot => ({
+                        id: lot.id,
+                        lotNo: lot.lotNo,
                         skuCode: lot.product.skuCode,
                         productName: lot.product.productName,
+                        vintage: lot.vintage,
+                        wineType: lot.product.wineType,
+                        country: lot.product.country,
                         qtyAvailable: Number(lot.qtyAvailable),
                         status: lot.status,
+                        receivedDate: lot.receivedDate,
                     })),
                 }
             }),
