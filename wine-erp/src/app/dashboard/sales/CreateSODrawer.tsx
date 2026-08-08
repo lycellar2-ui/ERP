@@ -259,10 +259,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 setLines(prev => prev.map(l => {
                     const resolved = resolvedPrices[l.productId]
                     if (resolved && resolved.price > 0) {
-                        if (resolved.source === 'FIXED_DISCOUNT' && resolved.basePrice && resolved.discountPct) {
-                            return { ...l, unitPrice: resolved.basePrice, lineDiscountPct: resolved.discountPct, priceSource: resolved.source }
-                        }
-                        return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
+                        return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source }
                     }
                     return l
                 }))
@@ -280,7 +277,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 setLines(prev => prev.map(l => {
                     const resolved = converted[l.productId]
                     if (resolved) {
-                        return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
+                        return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source }
                     }
                     return l
                 }))
@@ -334,10 +331,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 if (!l.productId) return l
                 const resolved = resolvedPrices[l.productId]
                 if (resolved && resolved.price > 0) {
-                    if (resolved.source === 'FIXED_DISCOUNT' && resolved.basePrice && resolved.discountPct) {
-                        return { ...l, unitPrice: resolved.basePrice, lineDiscountPct: resolved.discountPct, priceSource: resolved.source }
-                    }
-                    return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
+                    return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source }
                 }
                 return l
             }))
@@ -373,28 +367,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 if (field === 'productId') {
                     const p = products.find(p => p.id === value)!
                     const mapEntry = priceMap[value]
+                    const resolvedPrice = (mapEntry && mapEntry.price > 0) ? mapEntry.price : 0
                     const wp = p?.wholesalePrice ?? 0
                     const rp = p?.retailPrice ?? 0
                     const isWholesaleChan = (channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR')
                     const fallbackUnitPrice = isWholesaleChan ? (wp > 0 ? wp : rp) : (rp > 0 ? rp : wp)
-                    
-                    let unitPrice = 0
-                    let lineDiscountPct = 0
-                    let priceSource: string | null = null
-
-                    if (mapEntry && mapEntry.price > 0) {
-                        if (mapEntry.source === 'FIXED_DISCOUNT' && mapEntry.basePrice && mapEntry.discountPct) {
-                            unitPrice = mapEntry.basePrice
-                            lineDiscountPct = mapEntry.discountPct
-                            priceSource = mapEntry.source
-                        } else {
-                            unitPrice = mapEntry.price
-                            priceSource = mapEntry.source
-                        }
-                    } else {
-                        unitPrice = fallbackUnitPrice
-                        priceSource = isWholesaleChan ? 'WHOLESALE_BASE' : 'RETAIL_BASE'
-                    }
+                    const unitPrice = resolvedPrice > 0 ? resolvedPrice : fallbackUnitPrice
+                    const priceSource = (mapEntry && resolvedPrice > 0) ? mapEntry.source : (isWholesaleChan ? 'WHOLESALE_BASE' : 'RETAIL_BASE')
                     
                     // Update search query display
                     setSearchQueries(prevQueries => ({
@@ -409,7 +388,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                         toast.info(`Sản phẩm "${p.productName}" có VAT gốc ${p.vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo đơn hàng để đồng nhất 1 loại thuế suất.`)
                     }
 
-                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, lineDiscountPct, priceSource, vatRate: inheritedVatRate }
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, lineDiscountPct: 0, priceSource, vatRate: inheritedVatRate }
                 }
                 return { ...l, [field]: value }
             })

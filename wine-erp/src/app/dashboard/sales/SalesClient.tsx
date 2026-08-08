@@ -1257,7 +1257,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
         initialData: !search && !statusFilter && page === 1 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter
             ? initialData
             : undefined,
-        staleTime: 30_000,
+        staleTime: 0,
     })
 
     const rows = queryData?.rows ?? []

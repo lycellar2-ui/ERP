@@ -225,7 +225,7 @@ export async function getSalesOrders(filters: {
         }
     }
 
-    return cached(cacheKey, fetchData, 30_000)
+    return fetchData()
 }
 
 // ── Fetch single SO detail ───────────────────────
@@ -1567,7 +1567,7 @@ export async function getSalesStats(filters: {
     const userId = user?.id ?? 'anonymous'
     const cacheKey = `sales:stats:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}`
 
-    return cached(cacheKey, async () => {
+    return (async () => {
         const where: any = {}
 
         if (isSalesRep) {
@@ -1623,7 +1623,7 @@ export async function getSalesStats(filters: {
             draft: statusMap['DRAFT'] ?? 0,
             confirmed: statusMap['CONFIRMED'] ?? 0,
         }
-    }, 30_000)
+    })()
 }
 
 // ── SO Margin analysis (per line COGS vs selling price)
@@ -2340,7 +2340,7 @@ export async function getSOStatusCounts(filters: {
     const userId = user?.id ?? 'anonymous'
     const cacheKey = `sales:status-counts:${userId}:${search || 'none'}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}`
 
-    return cached(cacheKey, async () => {
+    return (async () => {
         const where: any = {}
 
         if (isSalesRep) {
@@ -2384,7 +2384,7 @@ export async function getSOStatusCounts(filters: {
             result.ALL += c._count._all
         }
         return result
-    }, 30_000)
+    })()
 }
 
 // ── Combined page data fetching for dashboard and tabs ──
