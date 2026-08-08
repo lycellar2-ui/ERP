@@ -674,20 +674,24 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
             const dataToUpdate: any = { ...updateData }
             
             // Connect relation
-            if (dataToUpdate.parentId) {
+            if ('parentId' in dataToUpdate) {
                 const pid = dataToUpdate.parentId
                 delete dataToUpdate.parentId
-                dataToUpdate.parent = { connect: { id: pid } }
-            } else if (dataToUpdate.parentId === null) {
-                dataToUpdate.parent = { disconnect: true }
+                if (pid) {
+                    dataToUpdate.parent = { connect: { id: pid } }
+                } else {
+                    dataToUpdate.parent = { disconnect: true }
+                }
             }
 
-            if (dataToUpdate.salesRepId) {
+            if ('salesRepId' in dataToUpdate) {
                 const srid = dataToUpdate.salesRepId
                 delete dataToUpdate.salesRepId
-                dataToUpdate.salesRep = { connect: { id: srid } }
-            } else if (dataToUpdate.salesRepId === null) {
-                dataToUpdate.salesRep = { disconnect: true }
+                if (srid) {
+                    dataToUpdate.salesRep = { connect: { id: srid } }
+                } else {
+                    dataToUpdate.salesRep = { disconnect: true }
+                }
             }
 
             await tx.customer.update({

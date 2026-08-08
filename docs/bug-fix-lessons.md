@@ -1257,6 +1257,43 @@ Error: Command "npm run build" exited with 1
 
 > ⚠️ **RULE 49: Luôn gắn đối tượng next/font cho cả --font-sans và --font-mono trên thẻ <html> và áp dụng font-feature-settings: "zero" 0 để loại bỏ hoàn toàn số 0 có chấm.**
 
+---
+
+## BUG-028: Prisma Error "Unknown argument salesRepId" Khi Cập Nhật Điều Khoản Thanh Toán / Thông Tin Khách Hàng
+
+**Ngày:** 2026-08-08
+**Severity:** 🔴 Critical — Không thể lưu cập nhật Khách hàng khi salesRepId hoặc parentId có giá trị null
+
+### Triệu chứng
+Khi chỉnh sửa Điều khoản thanh toán hoặc thông tin khác của Khách hàng, hệ thống báo lỗi Toast màu đỏ:
+```
+Unknown argument 'salesRepId'. Did you mean 'salesRep'? Available options are marked with ?.
+```
+
+### Nguyên nhân gốc rễ
+Trong hàm `updateCustomer` tại `src/app/dashboard/customers/actions.ts`:
+- Khi `salesRepId` là `null`, mã nguồn gán `dataToUpdate.salesRep = { disconnect: true }` nhưng **quên không xóa `delete dataToUpdate.salesRepId`**.
+- Prisma 7 khi nhận cả trường quan hệ `salesRep: { disconnect: true }` đồng thời trường thô `salesRepId: null` trong object `data` sẽ báo lỗi `Unknown argument 'salesRepId'`.
+
+### Cách fix
+Cập nhật khối xử lý quan hệ trong `updateCustomer`:
+```ts
+if ('salesRepId' in dataToUpdate) {
+    const srid = dataToUpdate.salesRepId
+    delete dataToUpdate.salesRepId
+    if (srid) {
+        dataToUpdate.salesRep = { connect: { id: srid } }
+    } else {
+        dataToUpdate.salesRep = { disconnect: true }
+    }
+}
+```
+
+### Bài học
+
+> ⚠️ **RULE 50: Luôn delete trường ID thô (salesRepId, parentId...) khỏi object dataToUpdate trước khi gọi prisma.update khi chuyển đổi sang quan hệ Prisma (connect/disconnect).**
+
+
 
 
 
