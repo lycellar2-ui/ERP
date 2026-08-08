@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-08-08 09:38
-> Status: Production — 29 modules, 123 DB models, 77 enums, 35 dashboard routes, Clean Inter Font (Zero-dot disabled), Self-Declaration & Tasting Note URLs, LegalEntity Phone & Email
+> Last updated: 2026-08-08 10:35
+> Status: Production — 29 modules, 123 DB models, 77 enums, 35 dashboard routes, Customer VAT parent inheritance & MISA date period filters
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

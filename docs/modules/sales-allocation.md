@@ -96,9 +96,14 @@ PAID / CLOSED
 1. **Credit Check:** `Công nợ hiện tại + Giá trị SO này > Credit Limit` → Cảnh báo / Block
 2. **Stock Check:** Tồn kho Available < Số đặt → Cảnh báo lấy thiếu
 3. **Allocation Check:** SKU có Allocation Campaign → Kiểm tra Quota (xem mục 5)
-4. **Approval Trigger:** SO > Ngưỡng giá trị hoặc Chiết khấu > X% → Tự động send Approval Workflow
+4. **Single VAT Enforcement:** Mỗi Đơn hàng Bán (SO) và Báo Giá (QTN) bắt buộc áp dụng **duy nhất 1 mức thuế suất VAT** trên toàn bộ các dòng sản phẩm để đảm bảo tính hợp lệ của Hóa đơn điện tử GTGT. Khi đổi VAT dòng bất kỳ, hệ thống tự động đồng bộ tất cả các dòng còn lại.
+5. **Approval Trigger:** SO > Ngưỡng giá trị hoặc Chiết khấu > X% → Tự động send Approval Workflow
 
-### D. Chiết Khấu 2 Cấp
+### D. Bộ Lọc & Tìm Kiếm Đơn Hàng Chuẩn MISA
+- **Bộ lọc Kỳ Thời Gian MISA (Date Period Filter)**: Cho phép lọc nhanh đơn hàng theo các preset thời gian tiêu chuẩn: *Tất cả thời gian, Hôm nay, Hôm qua, Tuần này, Tuần trước, Tháng này, Tháng trước, Quý này (Q1-Q4), Quý trước, Năm nay, Năm trước, Tùy chỉnh*.
+- **Bộ lọc đa chiều (Advanced Filters)**: Tìm kiếm số SO / tên KH / mã KH, Lọc theo Trạng thái (Tabs), Sales phụ trách, Kênh phân phối, Pháp nhân, Kho xuất, Điều khoản công nợ và Cảnh báo cần xử lý.
+
+### E. Chiết Khấu 2 Cấp
 - **Chiết khấu dòng (Line Discount):** Áp dụng cho từng SKU riêng lẻ
 - **Chiết khấu tổng đơn (Order Discount):** Giảm thêm % trên tổng giá trị SO
 - **Tổng Chiết Khấu vượt ngưỡng cài sẵn** → Bắt buộc qua Approval Workflow

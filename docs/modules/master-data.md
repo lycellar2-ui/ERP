@@ -170,14 +170,21 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
 | `short_name` | Tên viết tắt cho reports/báo cáo | ✅ Đã triển khai |
 | `customer_type` | HORECA / WHOLESALE_DISTRIBUTOR / VIP_RETAIL / INDIVIDUAL | ✅ Dropdown |
 | `channel` | Kênh phân phối (HORECA / WHOLESALE / VIP_RETAIL / DIRECT_INDIVIDUAL) | ✅ Dropdown + Filter |
-| `tax_id` | MST để xuất hóa đơn VAT | ✅ Tìm kiếm được |
-| `payment_term` | Công nợ bao nhiêu ngày (COD / NET15 / NET30 / NET45 / NET60) | ✅ Dropdown |
+| `tax_id` | MST để xuất hóa đơn VAT | ✅ Tìm kiếm & Kế thừa từ Cty Cha |
+| `vat_company_name` | Tên Công Ty / Đơn vị Xuất Hóa Đơn VAT | ✅ Tùy chọn (Tự động lấy Cty Cha nếu để trống) |
+| `vat_address` | Địa Chỉ Đăng Ký Thuế xuất Hóa Đơn VAT | ✅ Tùy chọn (Tự động lấy Cty Cha nếu để trống) |
+| `vat_email` | Email Nhận Hóa Đơn Điện Tử VAT | ✅ Tùy chọn (Tự động lấy Cty Cha nếu để trống) |
+| `payment_term` | Công nợ bao nhiêu ngày (EOM 10 / NET15 / NET30 / NET45 / NET60) | ✅ Dropdown |
 | `credit_limit` | Hạn mức công nợ tối đa được phép (VND) — Đặt ở thực thể cha COMPANY | ✅ Sortable |
 | `sales_rep_id` | Nhân viên Sales phụ trách (chọn từ danh sách Users) | ✅ Dropdown + Cột bảng |
 | `entityType` | Loại thực thể (`COMPANY` — Công ty mẹ chịu nợ / `RESTAURANT` — Nhà hàng con) | ✅ Badge hiển thị |
 | `allowDirectSO` | Cho phép đặt SO trực tiếp cho công ty mẹ (chỉ có ý nghĩa khi `entityType === 'COMPANY'`) | ✅ Checkbox |
 | `brandGroup` | Tên Brand của nhà hàng (chỉ có ý nghĩa khi `entityType === 'RESTAURANT'`) | ✅ Nhập văn bản |
 | `status` | ACTIVE / PENDING_APPROVAL / REJECTED / CREDIT_HOLD / INACTIVE | ✅ Filter |
+
+> ℹ️ **Cơ chế Kế thừa Thông tin VAT từ Công Ty Cha (Parent Inheritance):**
+> Đối với các chi nhánh / nhà hàng con (`RESTAURANT` có `parentId`), nếu các trường thông tin xuất hóa đơn VAT (`vatCompanyName`, `taxId`, `vatAddress`, `vatEmail`) được để trống, hệ thống sẽ tự động kế thừa toàn bộ thông tin VAT từ **Công Ty Cha (`COMPANY`)**.
+> Trên giao diện quản lý khách hàng, nếu mã số thuế được kế thừa từ công ty cha, danh sách sẽ hiển thị badge màu hổ da cam dạng `0316123456 (Cha)` để dễ phân biệt.
 
 **Địa chỉ (CustomerAddress):**
 
