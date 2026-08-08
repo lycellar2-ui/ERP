@@ -3,6 +3,7 @@
 import { Bell, LogOut, User, Key, X, Save, Loader2, AlertCircle } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { type SessionUser } from '@/lib/session'
 import { signOut } from '@/app/login/actions'
 import { updatePersonalProfile } from '@/app/dashboard/settings/actions'
@@ -447,6 +448,11 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
     const [name, setName] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     useEffect(() => {
         if (currentUser) {
@@ -457,7 +463,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
         }
     }, [currentUser, open])
 
-    if (!open || !currentUser) return null
+    if (!open || !currentUser || !mounted) return null
 
     const inputStyle: React.CSSProperties = {
         width: '100%',
@@ -506,8 +512,8 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
         }
     }
 
-    return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)' }}>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex justify-end" style={{ background: 'rgba(10,25,38,0.75)' }}>
             <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
                 style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
                 <div>
@@ -539,7 +545,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                         <div>
                             <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8AAEBB' }}>Vai Trò</label>
                             <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                {currentUser.roles.map(r => (
+                                {(currentUser.roles || []).map(r => (
                                     <span key={r} className="text-xs px-2 py-0.5 rounded font-bold"
                                         style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9' }}>
                                         {r}
@@ -600,6 +606,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                     {saving ? 'Đang lưu thay đổi...' : 'Lưu Thay Đổi'}
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

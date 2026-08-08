@@ -18,11 +18,13 @@ SALES ORDER — CONFIRMED
 DELIVERY ORDER (DO)
      ↓  [Shipper giao, E-POD]
 DELIVERED
-     ↓  [Xuất hóa đơn điện tử]
+     ↓  [Kế toán bấm "Xuất / Gắn Hóa Đơn VAT" trên Drawer chi tiết SO]
 INVOICED
      ↓  [KH thanh toán]
 PAID / CLOSED
 ```
+
+> **Hóa Đơn Công Nợ (AR)**: Trên Drawer chi tiết đơn hàng (`SalesClient.tsx`), Kế toán/Admin có thể nhấp trực tiếp nút **`+ Xuất / Gắn Hóa Đơn VAT`** để tự động sinh mã hóa đơn hệ thống (`VAT-SO-xxxxxx`) hoặc điền mã Hóa đơn điện tử VAT (từ MISA/VNPT/Viettel). Đơn hàng sẽ tự động chuyển trạng thái sang **`INVOICED`** và ghi nhận vào sổ công nợ AR.
 
 ---
 

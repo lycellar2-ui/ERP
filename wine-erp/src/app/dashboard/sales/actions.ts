@@ -2519,4 +2519,92 @@ export async function getSimpleWarehouses() {
     return serialize(list)
 }
 
+// ── Create/Issue AR Invoice for Sales Order (called by Accountant/CEO/Admin) ─
+export async function createARInvoiceForSO(
+    soId: string,
+    customInvoiceNo?: string
+): Promise<{ success: boolean; invoiceNo?: string; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const so = await prisma.salesOrder.findUnique({
+            where: { id: soId },
+            include: {
+                lines: true,
+                customer: { select: { paymentTerm: true } },
+                arInvoices: { select: { id: true, invoiceNo: true } }
+            }
+        })
+        if (!so) return { success: false, error: 'Đơn hàng không tồn tại' }
+
+        // Check if invoice already exists
+        if (so.arInvoices.length > 0 && !customInvoiceNo) {
+            return { success: false, error: `Đơn hàng ${so.soNo} đã được xuất hóa đơn (${so.arInvoices[0].invoiceNo})` }
+        }
+
+        const count = await prisma.aRInvoice.count()
+        const defaultInvoiceNo = `VAT-SO-${String(count + 1).padStart(6, '0')}`
+        const invoiceNo = customInvoiceNo?.trim() || defaultInvoiceNo
+
+        // Check invoiceNo unique
+        const existingInv = await prisma.aRInvoice.findUnique({ where: { invoiceNo } })
+        if (existingInv) {
+            return { success: false, error: `Mã hóa đơn "${invoiceNo}" đã tồn tại trong hệ thống` }
+        }
+
+        const netAmount = Number(so.totalAmount || 0)
+        const vatAmount = Number(so.vatAmount || 0)
+        const totalAmount = netAmount + vatAmount
+
+        // Due date calculation
+        let days = 30
+        if (so.paymentTerm?.includes('15')) days = 15
+        if (so.paymentTerm?.includes('45')) days = 45
+        if (so.paymentTerm?.includes('60')) days = 60
+        if (so.paymentTerm?.includes('COD')) days = 1
+        const dueDate = new Date(Date.now() + days * 86400000)
+
+        const inv = await prisma.aRInvoice.create({
+            data: {
+                invoiceNo,
+                legalEntityId: so.legalEntityId,
+                soId: so.id,
+                customerId: so.customerId,
+                amount: netAmount,
+                vatAmount,
+                totalAmount,
+                dueDate,
+                status: 'UNPAID',
+            }
+        })
+
+        // Advance SO status to INVOICED if CONFIRMED or DELIVERED or PARTIALLY_DELIVERED
+        if (so.status === 'CONFIRMED' || so.status === 'DELIVERED' || so.status === 'PARTIALLY_DELIVERED') {
+            await prisma.salesOrder.update({
+                where: { id: soId },
+                data: { status: 'INVOICED' }
+            })
+        }
+
+        try {
+            await logAudit({
+                userId: user.id,
+                userName: user.name,
+                action: 'CREATE',
+                entityType: 'ARInvoice',
+                entityId: inv.id,
+                newValue: { invoiceNo, soNo: so.soNo, totalAmount }
+            })
+        } catch { /* silent */ }
+
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/finance')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true, invoiceNo: inv.invoiceNo }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+
 

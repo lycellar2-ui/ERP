@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
@@ -373,6 +373,33 @@ function SODetailDrawer({
     const [timeline, setTimeline] = useState<SOTimelineEvent[]>([])
     const [loading, setLoading] = useState(true)
     const [timelineLoading, setTimelineLoading] = useState(true)
+    const [creatingInvoice, setCreatingInvoice] = useState(false)
+
+    const handleCreateInvoice = async () => {
+        if (!soId || creatingInvoice) return
+        const customNo = window.prompt(
+            'Nhập mã hóa đơn điện tử VAT (ví dụ: VAT-001234, hoặc để trống để tự động sinh mã hệ thống):',
+            ''
+        )
+        if (customNo === null) return
+
+        setCreatingInvoice(true)
+        try {
+            const res = await createARInvoiceForSO(soId, customNo || undefined)
+            if (res.success) {
+                toast.success(`Đã xuất hóa đơn ${res.invoiceNo} cho đơn hàng thành công!`)
+                const updated = await getSalesOrderDetail(soId)
+                setDetail(updated)
+                getSOTimeline(soId).then(setTimeline).catch(() => {})
+            } else {
+                toast.error(res.error || 'Lỗi xuất hóa đơn')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi kết nối hệ thống')
+        } finally {
+            setCreatingInvoice(false)
+        }
+    }
 
 
     useEffect(() => {
@@ -906,9 +933,32 @@ function SODetailDrawer({
                             </div>
 
                             <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#4A6A7A' }}>Hóa Đơn Công Nợ (AR)</p>
+                                <div className="flex items-center justify-between mb-2.5">
+                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Hóa Đơn Công Nợ (AR)</p>
+                                    <button
+                                        onClick={handleCreateInvoice}
+                                        disabled={creatingInvoice}
+                                        className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all hover:opacity-90 disabled:opacity-50 shadow-sm"
+                                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                                        title="Xuất hoặc gắn mã hóa đơn VAT cho đơn hàng này"
+                                    >
+                                        {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
+                                        + Xuất Hóa Đơn
+                                    </button>
+                                </div>
                                 {detail.arInvoices.length === 0 ? (
-                                    <p className="text-xs py-4 text-center" style={{ color: '#4A6A7A' }}>Chưa xuất hóa đơn</p>
+                                    <div className="text-center py-4 px-2 rounded-md" style={{ background: 'rgba(27,46,61,0.5)', border: '1px dashed #2A4355' }}>
+                                        <p className="text-xs mb-2.5" style={{ color: '#8AAEBB' }}>Chưa xuất hóa đơn cho đơn hàng này</p>
+                                        <button
+                                            onClick={handleCreateInvoice}
+                                            disabled={creatingInvoice}
+                                            className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50"
+                                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                                        >
+                                            {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
+                                            Bấm vào đây để Xuất / Gắn Hóa Đơn VAT
+                                        </button>
+                                    </div>
                                 ) : (
                                     <div className="space-y-1.5">
                                         {detail.arInvoices.map(inv => (

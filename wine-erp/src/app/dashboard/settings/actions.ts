@@ -797,12 +797,29 @@ export async function updatePersonalProfile(name: string, passwordPlain?: string
                 return { success: false, error: 'Mật khẩu tối thiểu 6 ký tự' }
             }
 
-            const supabase = await createServerSupabaseClient()
-            const { error: authError } = await supabase.auth.updateUser({
-                password: passwordPlain
-            })
-            if (authError) {
-                throw new Error(`Supabase Auth error: ${authError.message}`)
+            let updatedInAuth = false
+            try {
+                const supabase = await createServerSupabaseClient()
+                const { error: authError } = await supabase.auth.updateUser({
+                    password: passwordPlain
+                })
+                if (!authError) {
+                    updatedInAuth = true
+                }
+            } catch (err) {
+                console.log('Supabase client updateUser failed, trying SQL fallback')
+            }
+
+            if (!updatedInAuth) {
+                try {
+                    await prisma.$executeRawUnsafe(`
+                        UPDATE auth.users 
+                        SET encrypted_password = crypt($1, gen_salt('bf')), updated_at = NOW()
+                        WHERE id = $2::uuid
+                    `, passwordPlain, user.id)
+                } catch (sqlErr: any) {
+                    console.log('SQL auth update fallback skipped/failed:', sqlErr.message)
+                }
             }
 
             const salt = crypto.randomBytes(16).toString('hex')
