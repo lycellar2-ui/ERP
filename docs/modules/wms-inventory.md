@@ -53,6 +53,8 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 - Khi xuất kho, hệ thống tự động chọn Lot cũ nhất (Ngày nhập sớm nhất) của SKU đó
 - Người xuất kho không được bỏ qua FIFO trừ khi có lý do đặc biệt (Có log + Duyệt)
 
+> **Bảng Danh Mục Tồn Kho (Stock Lots Table)**: Đã tối ưu hóa bố cục dạng Compact Table với chiều cao dòng tối thiểu để hiển thị được nhiều hàng nhất trên 1 màn hình. Cột **Mã SKU** được tách riêng lên Cột 1 (`font-mono font-bold`), Cột **Mã Lô (Lot)** được chuyển về phía sau (`Col 4`), giúp tra cứu rượu vang và phân bổ kho nhanh chóng.
+
 ---
 
 ## 3. Nghiệp Vụ Nhập Kho (Goods Receipt — GR)
