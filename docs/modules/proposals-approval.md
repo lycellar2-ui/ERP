@@ -51,28 +51,28 @@ DRAFT → SUBMITTED → [REVIEWING/APPROVED_L1/APPROVED_L2] → APPROVED → IN_
 
 ---
 
-## 3. Ma Trận Phân Quyền Duyệt (Category Routing)
+## 3. Ma Trận Phân Quyền & Luồng Duyệt Động (Dynamic Approval Matrix)
 
-Mỗi loại tờ trình có luồng duyệt khác nhau:
+Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Trận Phân Quyền** (`/dashboard/settings/approval-matrix`):
 
-| Loại Tờ Trình | Code | Cấp 1 (TP) | Cấp 2 (KT) | Cấp 3 (CEO) |
-|---|---|:---:|:---:|:---:|
-| Xin Ngân Sách | `BUDGET_REQUEST` | ✓ | ✓ | ✓ |
-| Mua Sắm TSCĐ | `CAPITAL_EXPENDITURE` | ✓ | ✓ | ✓ |
-| Điều Chỉnh Giá | `PRICE_ADJUSTMENT` | ✓ | ✓ | ✓ |
-| NCC Mới | `NEW_SUPPLIER` | ✓ | - | ✓ |
-| Sản Phẩm Mới | `NEW_PRODUCT` | ✓ | - | ✓ |
-| Thay Đổi Quy Trình | `POLICY_CHANGE` | - | - | ✓ |
-| Tuyển Dụng | `STAFF_REQUISITION` | ✓ | - | ✓ |
-| Lịch Thanh Toán | `PAYMENT_SCHEDULE` | - | ✓ | ✓ |
-| Chương Trình KM | `PROMOTION_CAMPAIGN` | ✓ | ✓ | ✓ |
-| Sự Kiện / Tasting | `SPECIAL_EVENT` | ✓ | ✓ | ✓ |
-| Gia Hạn Giấy Phép | `LICENSE_RENEWAL` | - | ✓ | ✓ |
-| Ký Hợp Đồng | `CONTRACT_SIGNING` | - | ✓ | ✓ |
-| Xoá Nợ Khó Đòi | `DEBT_WRITE_OFF` | - | ✓ | ✓ |
-| Khác | `OTHER` | ✓ | - | ✓ |
+1. **Tùy chỉnh Số Cấp Duyệt (Step Count):** Chủ động thiết lập từ 1 cấp đến 4 cấp duyệt cho từng loại tờ trình.
+2. **Gán Role Duyệt Theo Cấp (Step Role Assignment):** Chọn cụ thể Role phụ trách duyệt ở từng bước (VD: Cấp 1 = `SALES_MGR`, Cấp 2 = `KE_TOAN`, Cấp 3 = `CEO`...).
+3. **Phân Quyền Role Được Tạo (Creator Role Permissions):** Chọn các Role được quyền mở form tạo loại tờ trình tương ứng (trống = tất cả Role).
+4. **Cơ chế Lưu Cấu Hình (`ApprovalConfig`):** Dữ liệu lưu trong bảng `approval_configs` với key `proposal.<CATEGORY>` chứa JSON `{ creatorRoles: [...], steps: [{ level: 1, role: '...' }, ...] }`. Khi khởi tạo hoặc duyệt tờ trình, server action sẽ tự động áp dụng đúng luồng đã thiết lập trong DB.
 
-> **Lưu ý:** Ma trận này có thể cấu hình qua trang **Ma Trận Phân Quyền** (`/dashboard/settings/approval-matrix`).
+---
+
+| Loại Tờ Trình | Code | Cấp Duyệt Mặc Định | Role Tạo Mặc Định |
+|---|---|---|---|
+| **Cơ Chế Giá** | `PRICE_ADJUSTMENT` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
+| **Xin Ngân Sách** | `BUDGET_REQUEST` | Cấp 1 (TP) ➔ Cấp 2 (KT) ➔ Cấp 3 (CEO) | Tất cả |
+| **Mua Sắm TSCĐ** | `CAPITAL_EXPENDITURE` | Cấp 1 (TP) ➔ Cấp 2 (KT) ➔ Cấp 3 (CEO) | Tất cả |
+| **NCC Mới** | `NEW_SUPPLIER` | Cấp 1 (Thu Mua) ➔ Cấp 2 (CEO) | Thu Mua, Admin |
+| **Sản Phẩm Mới** | `NEW_PRODUCT` | Cấp 1 (Thu Mua) ➔ Cấp 2 (CEO) | Thu Mua, CBO, Admin |
+| **Thay Đổi Chính Sách** | `POLICY_CHANGE` | Cấp 1 (CEO) | CEO, Admin |
+| **Lịch Thanh Toán** | `PAYMENT_SCHEDULE` | Cấp 1 (KT) ➔ Cấp 2 (CEO) | Kế Toán, Admin |
+
+> **Lưu ý:** Admin / CEO có thể thay đổi số cấp và Role duyệt bất kỳ lúc nào tại giao diện Admin Settings mà không cần can thiệp code.
 
 ---
 
