@@ -499,8 +499,8 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Bảng Chức Năng 9 Thẻ Trực Quan** | `WarehouseClient.tsx` | View Toggle (`grid` vs `workspace`), 9 Feature Cards (Tồn Kho, GR, DO, Chuyển Kho, Kiểm Kê, Sơ Đồ Kho 2D, Vị Trí, Cách Ly, Báo Cáo NXT) |
 | **Integrate Stock Transfers (Chuyển Kho)** | `TransfersTab.tsx` | Wrap `../transfers/actions` vào phân hệ Kho Hàng, giao diện Light Theme |
 | **Integrate Stock Count (Kiểm Kê Kho)** | `StockCountTab.tsx` | Wrap `../stock-count/actions` + quét mã vạch Barcode di động vào phân hệ Kho Hàng |
-| **Navigation Breadcrumb** | `WarehouseClient.tsx` | Nút `← Bảng Chức Năng Kho` + Thanh chuyển subtab nhanh ở header |
-| **Cấu hình xuất bán / điều chuyển kho** | `WarehouseClient.tsx`, `actions.ts` | Thêm modal `⚙️ Cấu Hình Kho` thiết lập `allowSales` (có thể xuất bán), `allowTransfer` (có thể điều chuyển), `isDefault` (kho mặc định) và `legalEntityId` (pháp nhân) |
+| **Tối ưu thanh Header WMS** | `WarehouseClient.tsx` | Đưa dropdown chọn kho & nút `⚙️ Cấu Hình Kho` lên hàng header trên cùng bên cạnh `+ Tạo Kho Mới`. Bỏ hoàn toàn thanh bên dưới và nút quay lại thừa |
+| **Tự động mặc định kho theo Pháp nhân** | `SalesClient.tsx`, `DeliveryOrderTab.tsx` | Tự động chọn kho mặc định của Pháp nhân sở hữu đơn bán hàng, vô hiệu hóa kho chỉ điều chuyển (`allowSales: false`) khỏi đơn bán hàng để tránh chọn nhầm |
 | **Tự động mặc định kho theo Pháp nhân** | `SalesClient.tsx`, `DeliveryOrderTab.tsx` | Tự động chọn kho mặc định của Pháp nhân sở hữu đơn bán hàng, vô hiệu hóa kho chỉ điều chuyển (`allowSales: false`) khỏi đơn bán hàng để tránh chọn nhầm |
 | **Tự động tách vị trí nhặt hàng Multi-Location FIFO** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Tự động phân bổ số lượng nhặt tách ra nhiều vị trí/lô theo thứ tự FIFO (VD: nhặt 1 chai ở kệ A, 1 chai ở kệ B cho đủ 2 chai đơn hàng). Bỏ nút phân bổ thừa và hỗ trợ thêm/xóa dòng tách vị trí nhặt linh hoạt |
 

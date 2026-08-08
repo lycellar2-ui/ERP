@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 16:30 | Wine ERP v8.7 — 29 modules, 123 models, Multi-Location Auto-Split FIFO Picking for Delivery Orders*
+*Last updated: 2026-08-08 16:32 | Wine ERP v8.8 — 29 modules, 123 models, Consolidated Header Layout & Topmost Warehouse Selector*
 

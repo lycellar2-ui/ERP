@@ -741,92 +741,57 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* 1. TOPMOST HEADER CONTAINER */}
-            <div className="flex flex-col gap-3 p-4 rounded-2xl shadow-sm"
+            <div className="p-3.5 rounded-2xl shadow-sm"
                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 
-                {/* Top Row: Title + Stat Badges + Create WH Button */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: '#E2E8F0' }}>
-                    <div className="flex items-center justify-between w-full sm:w-auto gap-3">
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
-                                title="Nhấn để về trang Bảng Chức Năng Kho"
-                            >
-                                <Warehouse size={20} style={{ color: '#D4A853' }} /> Kho Hàng
-                            </button>
-
-                            {viewMode === 'workspace' && (
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg transition-all hover:bg-slate-100 cursor-pointer"
-                                    style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #CBD5E1' }}
-                                    title="Quay lại Bảng Chức Năng Kho"
-                                >
-                                    <ChevronRight size={14} /> {activeModule?.title}
-                                </button>
-                            )}
-                        </div>
-
-                        <button onClick={() => setCreateWHOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold sm:hidden transition-all shadow-xs"
-                            style={{ background: '#D4A853', color: '#0A1926' }}>
-                            <Plus size={13} /> Tạo Kho
+                {/* Single Consolidated Top Header Row */}
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                    {/* Left: Title & Active Breadcrumb */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                            title="Nhấn vào Kho Hàng để về trang Bảng Chức Năng Kho"
+                            style={{ color: '#0F172A' }}
+                        >
+                            <Warehouse size={20} style={{ color: '#D4A853' }} /> Kho Hàng
                         </button>
-                    </div>
 
-                    {/* Stat Badges — Horizontally Scrollable on Mobile */}
-                    <div className="relative w-full sm:w-auto">
-                        <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar py-0.5 max-w-full">
-                            {statCards.map(s => (
-                                <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-xs"
-                                    style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <s.icon size={13} style={{ color: s.accent }} />
-                                    <span className="uppercase font-semibold" style={{ color: '#64748B' }}>{s.label}:</span>
-                                    <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <button onClick={() => setCreateWHOpen(true)}
-                        className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all hover:brightness-105 shrink-0 ml-auto"
-                        style={{ background: '#D4A853', color: '#0A1926' }}>
-                        <Plus size={14} /> Tạo Kho Mới
-                    </button>
-                </div>
-
-                {/* Bottom Row: Inline Warehouse Selector */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    {/* Active Module Indicator when in Workspace */}
-                    <div>
                         {viewMode === 'workspace' && (
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className="flex items-center gap-1.5 text-xs font-bold transition-all hover:text-[#B47816]"
-                                style={{ color: '#0F172A' }}
-                            >
-                                <ArrowLeft size={14} style={{ color: '#B47816' }} /> Quay lại Bảng Chức Năng Kho
-                            </button>
+                            <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
+                                <ChevronRight size={14} /> <span className="text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">{activeModule?.title}</span>
+                            </div>
                         )}
                     </div>
 
-                    {/* Warehouse Selector Dropdown & Setup Button */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    {/* Middle: Stat Badges */}
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                        {statCards.map(s => (
+                            <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-xs"
+                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                <s.icon size={13} style={{ color: s.accent }} />
+                                <span className="uppercase font-semibold" style={{ color: '#64748B' }}>{s.label}:</span>
+                                <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Right Action Group: Warehouse Selector + Setup Button + Create WH Button */}
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
                         {selectedWH && (
                             <button
                                 onClick={() => {
                                     const wh = warehouses.find(w => w.id === selectedWH) || null
                                     setEditingWH(wh)
                                 }}
-                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg shadow-xs transition-all hover:bg-slate-100"
+                                className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-lg shadow-xs transition-all hover:bg-slate-100 cursor-pointer"
                                 style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#B47816' }}
                                 title="Thiết lập quyền hạn xuất bán hàng và kho mặc định cho kho này"
                             >
                                 ⚙️ Cấu Hình Kho
                             </button>
                         )}
-                        <div className="relative shrink-0">
+                        <div className="relative shrink-0 flex-1 sm:flex-none">
                             <select
                                 value={selectedWH ?? ''}
                                 onChange={e => {
@@ -855,6 +820,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             </select>
                             <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748B]" />
                         </div>
+
+                        <button onClick={() => setCreateWHOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105 shrink-0 cursor-pointer"
+                            style={{ background: '#D4A853', color: '#0A1926' }}>
+                            <Plus size={14} /> Tạo Kho Mới
+                        </button>
                     </div>
                 </div>
             </div>
