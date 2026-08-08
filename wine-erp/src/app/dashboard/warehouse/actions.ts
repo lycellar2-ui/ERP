@@ -1110,9 +1110,19 @@ export async function getStockCountSessions(warehouseId?: string) {
 export async function createStockCountSession(input: {
     warehouseId: string
     zone?: string
-    type: 'FULL' | 'CYCLE' | 'SPOT'
+    type: 'FULL' | 'FULL_PHYSICAL' | 'CYCLE' | 'SPOT' | string
 }): Promise<{ success: boolean; sessionId?: string; error?: string }> {
     try {
+        // Safe mapping for Prisma CountType enum
+        let countType: any = 'CYCLE'
+        if (input.type === 'FULL' || input.type === 'FULL_PHYSICAL') {
+            countType = 'FULL_PHYSICAL'
+        } else if (input.type === 'SPOT') {
+            countType = 'SPOT'
+        } else if (input.type === 'CYCLE') {
+            countType = 'CYCLE'
+        }
+
         // Get all stock lots for this warehouse/zone
         const locationFilter: any = { warehouse: { id: input.warehouseId } }
         if (input.zone) locationFilter.zone = input.zone
@@ -1133,7 +1143,7 @@ export async function createStockCountSession(input: {
             data: {
                 warehouseId: input.warehouseId,
                 zone: input.zone,
-                type: input.type as any,
+                type: countType,
                 status: 'DRAFT',
                 lines: {
                     create: locations.flatMap(loc =>

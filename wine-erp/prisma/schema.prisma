@@ -2384,8 +2384,10 @@ enum DOStatus {
 }
 
 enum CountType {
+  FULL
   FULL_PHYSICAL
   CYCLE
+  SPOT
 }
 
 enum CountStatus {

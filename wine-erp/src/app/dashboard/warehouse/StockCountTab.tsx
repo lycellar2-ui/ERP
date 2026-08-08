@@ -250,7 +250,7 @@ export function StockCountTab() {
                                         <td className="px-3.5 py-3 text-xs font-bold" style={{ color: '#0F172A' }}>{r.warehouseName}</td>
                                         <td className="px-3.5 py-3 text-xs font-mono" style={{ color: '#B47816' }}>{r.zone || 'Tất cả Zone'}</td>
                                         <td className="px-3.5 py-3 text-xs" style={{ color: '#475569' }}>
-                                            {r.type === 'FULL' ? 'Kiểm Toàn Bộ Kho' : 'Kiểm Định Kỳ (Cycle)'}
+                                            {r.type === 'FULL' || r.type === 'FULL_PHYSICAL' ? 'Kiểm Toàn Bộ Kho' : r.type === 'SPOT' ? 'Kiểm Đột Xuất' : 'Kiểm Định Kỳ (Cycle)'}
                                         </td>
                                         <td className="px-3.5 py-3">
                                             <span className="text-[10px] px-2.5 py-0.5 rounded-md font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>

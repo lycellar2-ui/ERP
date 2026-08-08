@@ -52,7 +52,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
 }
 
 const TYPE_LABEL: Record<string, string> = {
-    FULL: 'Toàn Bộ', CYCLE: 'Luân Phiên', SPOT: 'Đột Xuất',
+    FULL: 'Toàn Bộ Kho', FULL_PHYSICAL: 'Toàn Bộ Kho', CYCLE: 'Định Kỳ', SPOT: 'Đột Xuất',
 }
 
 export function StockCountClient({ initialRows, stats }: {

@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 17:10 | Wine ERP v9.4 — 29 modules, 123 models, 2D Warehouse Map High-Contrast Text Fix & Emerald Finish Button*
+*Last updated: 2026-08-08 17:17 | Wine ERP v9.5 — 29 modules, 123 models, Fix Stock Count Session Creation & CountType Enum Sync*
 
