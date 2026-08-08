@@ -13,7 +13,7 @@ import {
 } from './actions'
 import MobileLocationCounter from './MobileLocationCounter'
 import PrintableAuditReport from './PrintableAuditReport'
-import BarcodeLookupModal from './BarcodeLookupModal'
+import { BarcodeLookupModal } from './BarcodeLookupModal'
 
 type SessionRow = {
     id: string
@@ -40,12 +40,16 @@ type SessionRow = {
 
 type Props = {
     initialList?: SessionRow[]
-    initialStats?: { total: number; inProgress: number; completed: number }
+    initialRows?: SessionRow[]
+    initialStats?: { total: number; inProgress: number; completed: number; assignedToMe?: number }
+    stats?: { total: number; inProgress: number; completed: number; assignedToMe?: number }
 }
 
-export default function StockCountClient({ initialList = [], initialStats }: Props) {
-    const [list, setList] = useState<SessionRow[]>(initialList)
-    const [stats, setStats] = useState(initialStats || { total: 0, inProgress: 0, completed: 0 })
+export function StockCountClient({ initialList, initialRows = [], initialStats, stats: propsStats }: Props) {
+    const defaultList = initialList || initialRows
+    const defaultStats = initialStats || propsStats || { total: 0, inProgress: 0, completed: 0, assignedToMe: 0 }
+    const [list, setList] = useState<SessionRow[]>(defaultList)
+    const [stats, setStats] = useState<{ total: number; inProgress: number; completed: number; assignedToMe?: number }>(defaultStats)
     const [activeTab, setActiveTab] = useState<'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL')
     const [searchTerm, setSearchTerm] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -579,11 +583,12 @@ export default function StockCountClient({ initialList = [], initialStats }: Pro
             )}
 
             {/* Barcode Camera Modal */}
-            {showBarcodeLookup && (
-                <BarcodeLookupModal
-                    onClose={() => setShowBarcodeLookup(false)}
-                />
-            )}
+            <BarcodeLookupModal
+                isOpen={showBarcodeLookup}
+                onClose={() => setShowBarcodeLookup(false)}
+            />
         </div>
     )
 }
+
+export default StockCountClient

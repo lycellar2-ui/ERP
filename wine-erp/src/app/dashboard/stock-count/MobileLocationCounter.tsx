@@ -6,7 +6,7 @@ import {
     Plus, Minus, Save, Eye, EyeOff, Camera, AlertTriangle, RefreshCw
 } from 'lucide-react'
 import { recordMobileCountLine } from './actions'
-import BarcodeLookupModal from './BarcodeLookupModal'
+import { BarcodeLookupModal } from './BarcodeLookupModal'
 
 type LineItem = {
     id: string
@@ -338,15 +338,10 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
             </div>
 
             {/* Barcode Camera Lookup Modal */}
-            {showBarcodeModal && (
-                <BarcodeLookupModal
-                    sessionId={detail.id}
-                    onClose={() => setShowBarcodeModal(false)}
-                    onRecorded={() => {
-                        if (onRefreshed) onRefreshed()
-                    }}
-                />
-            )}
+            <BarcodeLookupModal
+                isOpen={showBarcodeModal}
+                onClose={() => setShowBarcodeModal(false)}
+            />
         </div>
     )
 }
