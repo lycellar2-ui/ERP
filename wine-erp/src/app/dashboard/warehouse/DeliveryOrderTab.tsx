@@ -91,55 +91,54 @@ export function DeliveryOrderTab({ warehouses }: {
     return (
         <div className="space-y-5">
             {/* Header & Sub-tab Navigation */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h3 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
-                        <Truck size={18} style={{ color: '#87CBB9' }} /> Xuất Kho & Nhặt Hàng (Fulfillment)
-                    </h3>
-                    <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Theo dõi đơn hàng cần xuất & Tạo phiếu xuất kho (DO) FIFO</p>
+            <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                            <Truck size={18} style={{ color: '#87CBB9' }} /> Xuất Kho & Nhặt Hàng (Fulfillment)
+                        </h3>
+                        <p className="text-xs mt-0.5 hidden sm:block" style={{ color: '#4A6A7A' }}>Theo dõi đơn hàng cần xuất & Tạo phiếu xuất kho (DO) FIFO</p>
+                    </div>
+                    <button onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
+                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl shadow-sm transition-all hover:brightness-110 shrink-0"
+                        style={{ background: '#D4A853', color: '#0A1926' }}>
+                        <Plus size={14} /> <span className="hidden sm:inline">Tạo DO Mới</span><span className="sm:hidden">Tạo DO</span>
+                    </button>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {/* Navigation Tabs */}
-                    <div className="flex p-1 rounded-xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                        <button
-                            onClick={() => setActiveSubTab('pending')}
-                            className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all"
-                            style={{
-                                background: activeSubTab === 'pending' ? '#87CBB9' : 'transparent',
-                                color: activeSubTab === 'pending' ? '#0A1926' : '#8AAEBB'
-                            }}
-                        >
-                            <PackageCheck size={14} />
-                            Đơn Đang Chờ Xuất
-                            {pendingSOs.length > 0 && (
-                                <span className="px-1.5 py-0.2 text-[10px] font-extrabold rounded-full"
-                                    style={{
-                                        background: activeSubTab === 'pending' ? '#0A1926' : 'rgba(212,168,83,0.2)',
-                                        color: activeSubTab === 'pending' ? '#87CBB9' : '#D4A853'
-                                    }}>
-                                    {pendingSOs.length}
-                                </span>
-                            )}
-                        </button>
-                        <button
-                            onClick={() => setActiveSubTab('history')}
-                            className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all"
-                            style={{
-                                background: activeSubTab === 'history' ? '#87CBB9' : 'transparent',
-                                color: activeSubTab === 'history' ? '#0A1926' : '#8AAEBB'
-                            }}
-                        >
-                            <Truck size={14} />
-                            Lịch Sử Phiếu DO
-                            <span className="text-[10px] opacity-75">({rows.length})</span>
-                        </button>
-                    </div>
-
-                    <button onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition-all hover:brightness-110"
-                        style={{ background: '#D4A853', color: '#0A1926' }}>
-                        <Plus size={14} /> Tạo DO Mới
+                {/* Navigation Tabs */}
+                <div className="flex p-1 rounded-xl overflow-x-auto no-scrollbar" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <button
+                        onClick={() => setActiveSubTab('pending')}
+                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0"
+                        style={{
+                            background: activeSubTab === 'pending' ? '#87CBB9' : 'transparent',
+                            color: activeSubTab === 'pending' ? '#0A1926' : '#8AAEBB'
+                        }}
+                    >
+                        <PackageCheck size={14} />
+                        Đơn Chờ Xuất
+                        {pendingSOs.length > 0 && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-extrabold rounded-full"
+                                style={{
+                                    background: activeSubTab === 'pending' ? '#0A1926' : 'rgba(212,168,83,0.2)',
+                                    color: activeSubTab === 'pending' ? '#87CBB9' : '#D4A853'
+                                }}>
+                                {pendingSOs.length}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveSubTab('history')}
+                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0"
+                        style={{
+                            background: activeSubTab === 'history' ? '#87CBB9' : 'transparent',
+                            color: activeSubTab === 'history' ? '#0A1926' : '#8AAEBB'
+                        }}
+                    >
+                        <Truck size={14} />
+                        Lịch Sử DO
+                        <span className="text-[10px] opacity-75">({rows.length})</span>
                     </button>
                 </div>
             </div>
@@ -148,20 +147,20 @@ export function DeliveryOrderTab({ warehouses }: {
             {activeSubTab === 'pending' && (
                 <div className="space-y-4">
                     {/* Search & Stats Bar */}
-                    <div className="flex items-center justify-between gap-4 p-3 rounded-xl" style={{ background: '#102230', border: '1px solid #2A4355' }}>
-                        <div className="relative flex-1 max-w-md">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl" style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                        <div className="relative flex-1 sm:max-w-md">
                             <Search size={14} className="absolute left-3 top-2.5" style={{ color: '#4A6A7A' }} />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Tìm theo Mã SO, Tên Khách Hàng, SKU..."
-                                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg outline-none"
+                                placeholder="Tìm theo Mã SO, Tên KH, SKU..."
+                                className="w-full pl-9 pr-3 py-2 text-xs rounded-lg outline-none"
                                 style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                             />
                         </div>
-                        <div className="text-xs" style={{ color: '#8AAEBB' }}>
-                            Hiển thị <span className="font-bold text-white">{filteredPendingSOs.length}</span> / {pendingSOs.length} đơn hàng đã xác nhận
+                        <div className="text-xs text-center sm:text-right" style={{ color: '#8AAEBB' }}>
+                            Hiển thị <span className="font-bold text-white">{filteredPendingSOs.length}</span> / {pendingSOs.length} đơn
                         </div>
                     </div>
 
@@ -231,8 +230,8 @@ export function DeliveryOrderTab({ warehouses }: {
                                             </span>
                                             <button
                                                 onClick={() => handleStartPicking(so.id)}
-                                                className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-105"
-                                                style={{ background: '#87CBB9', color: '#0A1926' }}
+                                                className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-105 active:scale-100"
+                                                style={{ background: '#87CBB9', color: '#0A1926', minHeight: '44px' }}
                                             >
                                                 <Box size={14} /> Nhặt Hàng & Xuất Kho <ArrowRight size={12} />
                                             </button>
@@ -377,7 +376,8 @@ export function DeliveryOrderTab({ warehouses }: {
                                     <InfoCard label="Ngày tạo" value={formatDate(detailData.createdAt)} />
                                 </div>
 
-                                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                {/* Detail Lines — Desktop Table */}
+                                <div className="rounded-xl overflow-hidden hidden sm:block" style={{ border: '1px solid #2A4355' }}>
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
@@ -401,6 +401,25 @@ export function DeliveryOrderTab({ warehouses }: {
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                                {/* Detail Lines — Mobile Cards */}
+                                <div className="block sm:hidden space-y-2">
+                                    {detailData.lines.map(l => (
+                                        <div key={l.id} className="p-3 rounded-xl space-y-1.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{l.skuCode}</span>
+                                                <span className="text-xs font-mono" style={{ color: '#D4A853' }}>Lô: {l.lotNo}</span>
+                                            </div>
+                                            <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{l.productName}</p>
+                                            <div className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
+                                                📍 {l.locationCode}
+                                            </div>
+                                            <div className="flex items-center justify-between pt-1.5 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
+                                                <span style={{ color: '#4A6A7A' }}>Picked: <strong className="font-mono text-white">{l.qtyPicked}</strong></span>
+                                                <span style={{ color: '#4A6A7A' }}>Shipped: <strong className="font-mono" style={{ color: '#5BA88A' }}>{l.qtyShipped}</strong></span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -442,6 +461,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     const [lines, setLines] = useState<{ productId: string; lotId: string; locationId: string; qtyPicked: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [lotsMap, setLotsMap] = useState<Record<string, any[]>>({})
+    const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1)
 
     useEffect(() => {
         if (!selectedSO || !warehouseId) {
@@ -462,7 +482,6 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 )
                 if (active) {
                     setLotsMap(map)
-                    // Auto-assign FIFO (oldest lot) for each line item by default
                     setLines(prev => {
                         return selectedSO.lines.map((sol, i) => {
                             const availLots = map[sol.productId] || []
@@ -540,6 +559,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     } else if (warehouses.length > 0) {
                         setWarehouseId(warehouses[0].id)
                     }
+                    setMobileStep(2)
                 }
             }
         })
@@ -587,141 +607,333 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         }
     }
 
+    const canGoStep2 = !!selectedSO && !!warehouseId
+    const validLinesCount = lines.filter(l => l.qtyPicked > 0 && l.lotId).length
+    const totalPicked = lines.reduce((sum, l) => sum + (l.lotId ? l.qtyPicked : 0), 0)
+
+    // ── Shared sub-components ───────────────────────
+    const renderSOSelect = () => (
+        <div>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#8AAEBB' }}>Sales Order *</label>
+            <select value={selectedSO?.id ?? ''} onChange={e => selectSO(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm font-mono" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                <option value="">— Chọn SO —</option>
+                {sos.map(s => <option key={s.id} value={s.id}>{s.soNo} — {s.customerName}</option>)}
+            </select>
+        </div>
+    )
+
+    const renderWarehouseSelect = () => (
+        <div>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#8AAEBB' }}>Kho Xuất *</label>
+            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
+                <option value="">— Chọn kho —</option>
+                {warehouses.map(w => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
+            </select>
+        </div>
+    )
+
+    const renderProductLines = () => (
+        <>
+            <div className="flex items-center justify-between pt-2">
+                <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#D4A853' }}>
+                    Nhặt Hàng ({lines.length} loại)
+                </p>
+                <button
+                    onClick={handleAutoAssignFIFO}
+                    className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:brightness-110 shadow-sm"
+                    style={{ background: 'rgba(135,203,185,0.15)', border: '1px solid #87CBB9', color: '#87CBB9', minHeight: '36px' }}
+                    title="Tự động chọn các lô cũ nhất theo nguyên tắc FIFO"
+                >
+                    ⚡ FIFO
+                </button>
+            </div>
+
+            <div className="space-y-3">
+                {selectedSO!.lines.map((sol, i) => {
+                    const availLots = lotsMap[sol.productId] || []
+                    const selectedLot = availLots.find(l => l.id === lines[i]?.lotId)
+                    const isInsufficient = selectedLot && selectedLot.qtyAvailable < (lines[i]?.qtyPicked || 0)
+
+                    return (
+                        <div key={sol.productId} className="p-3.5 rounded-xl space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-bold leading-tight" style={{ color: '#E8F1F2' }}>{sol.productName}</p>
+                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded shrink-0" style={{ background: '#1B2E3D', color: '#87CBB9' }}>
+                                    ×{sol.qtyOrdered}
+                                </span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs" style={{ color: '#4A6A7A' }}>
+                                <span>SKU: {sol.skuCode} {sol.vintage ? `· VTG: ${sol.vintage}` : ''}</span>
+                                {selectedLot ? (
+                                    <span className={`text-[11px] font-semibold ${isInsufficient ? 'text-amber-400 font-bold' : 'text-emerald-400'}`}>
+                                        {isInsufficient ? `⚠️ Thiếu (Tồn: ${selectedLot.qtyAvailable})` : `✅ Đủ (Tồn: ${selectedLot.qtyAvailable})`}
+                                    </span>
+                                ) : (
+                                    <span className="text-[11px] text-amber-400 italic">
+                                        {availLots.length > 0 ? '⚠️ Chưa chọn lô' : '❌ Hết hàng'}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                                <div className="sm:col-span-2">
+                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#8AAEBB' }}>Lô Hàng (FIFO)</label>
+                                    <select
+                                        value={lines[i]?.lotId ?? ''}
+                                        onChange={e => {
+                                            const lotId = e.target.value
+                                            const chosenLot = availLots.find(l => l.id === lotId)
+                                            const v = [...lines]
+                                            v[i] = { 
+                                                ...v[i], 
+                                                lotId, 
+                                                locationId: chosenLot?.locationId ?? '' 
+                                            }
+                                            setLines(v)
+                                        }}
+                                        className="w-full px-2.5 py-2 rounded-lg text-xs outline-none font-mono"
+                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: lines[i]?.lotId ? '#D4A853' : '#4A6A7A' }}
+                                    >
+                                        <option value="">— Chọn lô —</option>
+                                        {availLots.map((lot, idx) => (
+                                            <option key={lot.id} value={lot.id}>
+                                                {idx === 0 ? '⭐ ' : ''}📍 {lot.zone}{lot.rack ? ` / ${lot.rack}` : ''}{lot.bin ? ` / ${lot.bin}` : ''} · {lot.lotNo} (Tồn: {lot.qtyAvailable})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {selectedLot && (
+                                        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded-lg flex-wrap" style={{ background: 'rgba(74,143,171,0.1)', color: '#8AAEBB' }}>
+                                            📍 <span className="font-bold">{selectedLot.zone}</span>
+                                            {selectedLot.rack && <><span style={{ color: '#4A6A7A' }}>/</span> <span>{selectedLot.rack}</span></>}
+                                            {selectedLot.bin && <><span style={{ color: '#4A6A7A' }}>/</span> <span>{selectedLot.bin}</span></>}
+                                            <span style={{ color: '#4A6A7A' }}>·</span>
+                                            <span className="font-mono" style={{ color: '#4A6A7A' }}>{selectedLot.locationCode}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#8AAEBB' }}>SL Nhặt</label>
+                                    <input type="number" min={0} value={lines[i]?.qtyPicked ?? 0}
+                                        onChange={e => {
+                                            const v = [...lines]; v[i] = { ...v[i], qtyPicked: Number(e.target.value) }; setLines(v)
+                                        }}
+                                        className="w-full px-2.5 py-2 rounded-lg text-sm font-mono font-bold text-center"
+                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#87CBB9' }} />
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+        </>
+    )
+
+    const renderSaveButtons = () => (
+        <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button onClick={() => handleSave(false)} disabled={saving}
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl transition-all hover:brightness-110"
+                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', minHeight: '48px' }}>
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                Lưu Nháp DO
+            </button>
+
+            <button onClick={() => handleSave(true)} disabled={saving}
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl shadow-md transition-all hover:brightness-110"
+                style={{ background: '#87CBB9', color: '#0A1926', minHeight: '48px' }}>
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                ⚡ Xác Nhận Xuất Kho
+            </button>
+        </div>
+    )
+
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="w-full sm:w-[580px] max-w-full h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
-                <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <div>
-                        <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>Nhặt Hàng & Tạo Phiếu Xuất (DO)</h3>
+            <div className="w-full sm:w-[580px] max-w-full h-full flex flex-col" style={{ background: '#0F1D2B' }}>
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 sm:p-5 shrink-0" style={{ borderBottom: '1px solid #2A4355' }}>
+                    <div className="min-w-0">
+                        <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>Nhặt Hàng & Tạo DO</h3>
                         {selectedSO && (
-                            <p className="text-xs mt-0.5 font-mono font-semibold" style={{ color: '#D4A853' }}>
-                                Đơn hàng: {selectedSO.soNo} · {selectedSO.customerName}
+                            <p className="text-xs mt-0.5 font-mono font-semibold truncate" style={{ color: '#D4A853' }}>
+                                {selectedSO.soNo} · {selectedSO.customerName}
                             </p>
                         )}
                     </div>
-                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <button onClick={onClose} className="p-2 rounded-lg shrink-0" style={{ color: '#4A6A7A' }}><X size={20} /></button>
                 </div>
-                <div className="p-5 space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Sales Order *</label>
-                            <select value={selectedSO?.id ?? ''} onChange={e => selectSO(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg text-sm font-mono" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
-                                <option value="">— Chọn SO —</option>
-                                {sos.map(s => <option key={s.id} value={s.id}>{s.soNo} — {s.customerName}</option>)}
-                            </select>
+
+                {/* Mobile Step Indicator */}
+                <div className="flex sm:hidden items-center gap-1 px-4 py-3 shrink-0" style={{ borderBottom: '1px solid #2A4355', background: '#142433' }}>
+                    {[
+                        { step: 1 as const, label: 'Chọn Đơn' },
+                        { step: 2 as const, label: 'Nhặt Hàng' },
+                        { step: 3 as const, label: 'Xác Nhận' },
+                    ].map((s, idx) => (
+                        <div key={s.step} className="flex items-center gap-1 flex-1">
+                            <button
+                                onClick={() => {
+                                    if (s.step === 1) setMobileStep(1)
+                                    else if (s.step === 2 && canGoStep2) setMobileStep(2)
+                                    else if (s.step === 3 && canGoStep2 && validLinesCount > 0) setMobileStep(3)
+                                }}
+                                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold w-full justify-center transition-all"
+                                style={{
+                                    background: mobileStep === s.step ? '#87CBB9' : mobileStep > s.step ? 'rgba(91,168,138,0.15)' : '#1B2E3D',
+                                    color: mobileStep === s.step ? '#0A1926' : mobileStep > s.step ? '#5BA88A' : '#4A6A7A',
+                                }}
+                            >
+                                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0"
+                                    style={{
+                                        background: mobileStep === s.step ? '#0A1926' : 'transparent',
+                                        color: mobileStep === s.step ? '#87CBB9' : 'inherit',
+                                        border: mobileStep === s.step ? 'none' : '1px solid currentColor',
+                                    }}>
+                                    {mobileStep > s.step ? '✓' : s.step}
+                                </span>
+                                {s.label}
+                            </button>
+                            {idx < 2 && <div className="w-3 h-px shrink-0" style={{ background: '#2A4355' }} />}
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Kho Xuất *</label>
-                            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
-                                <option value="">— Chọn kho —</option>
-                                {warehouses.map(w => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
-                            </select>
+                    ))}
+                </div>
+
+                {/* Content — scrollable */}
+                <div className="flex-1 overflow-y-auto">
+                    {/* ═══ DESKTOP: Single page ═══ */}
+                    <div className="hidden sm:block p-5 space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                            {renderSOSelect()}
+                            {renderWarehouseSelect()}
                         </div>
+                        {selectedSO && lines.length > 0 && renderProductLines()}
+                        {renderSaveButtons()}
                     </div>
 
-                    {selectedSO && lines.length > 0 && (
-                        <>
-                            <div className="flex items-center justify-between pt-2">
-                                <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#D4A853' }}>
-                                    Danh Sách Sản Phẩm Nhặt ({lines.length} loại)
-                                </p>
+                    {/* ═══ MOBILE: Step Wizard ═══ */}
+                    <div className="block sm:hidden p-4 space-y-4">
+                        {/* Step 1 */}
+                        {mobileStep === 1 && (
+                            <div className="space-y-4">
+                                <div className="p-3 rounded-xl" style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                                    <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#D4A853' }}>
+                                        Bước 1: Chọn Đơn Hàng & Kho
+                                    </p>
+                                    <div className="space-y-3">
+                                        {renderSOSelect()}
+                                        {renderWarehouseSelect()}
+                                    </div>
+                                </div>
+                                {selectedSO && (
+                                    <div className="p-3 rounded-xl space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                        <p className="text-xs font-semibold" style={{ color: '#8AAEBB' }}>Sản phẩm trong đơn:</p>
+                                        {selectedSO.lines.map(l => (
+                                            <div key={l.productId} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg"
+                                                style={{ background: '#1B2E3D' }}>
+                                                <span className="truncate pr-2" style={{ color: '#E8F1F2' }}>{l.productName}</span>
+                                                <span className="font-mono font-bold shrink-0" style={{ color: '#87CBB9' }}>×{l.qtyOrdered}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                                 <button
-                                    onClick={handleAutoAssignFIFO}
-                                    className="text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all hover:brightness-110 shadow-sm"
-                                    style={{ background: 'rgba(135,203,185,0.15)', border: '1px solid #87CBB9', color: '#87CBB9' }}
-                                    title="Tự động chọn các lô cũ nhất theo nguyên tắc FIFO"
-                                >
-                                    ⚡ Tự Động Phân Bổ FIFO
+                                    onClick={() => setMobileStep(2)}
+                                    disabled={!canGoStep2}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold rounded-xl transition-all"
+                                    style={{
+                                        background: canGoStep2 ? '#87CBB9' : '#1B2E3D',
+                                        color: canGoStep2 ? '#0A1926' : '#4A6A7A',
+                                        minHeight: '48px',
+                                    }}>
+                                    Tiếp Theo → Nhặt Hàng <ArrowRight size={16} />
                                 </button>
                             </div>
+                        )}
 
-                            <div className="space-y-3">
-                                {selectedSO.lines.map((sol, i) => {
-                                    const availLots = lotsMap[sol.productId] || []
-                                    const selectedLot = availLots.find(l => l.id === lines[i]?.lotId)
-                                    const isInsufficient = selectedLot && selectedLot.qtyAvailable < (lines[i]?.qtyPicked || 0)
-
-                                    return (
-                                        <div key={sol.productId} className="p-3.5 rounded-xl space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{sol.productName}</p>
-                                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded" style={{ background: '#1B2E3D', color: '#87CBB9' }}>
-                                                    Cần xuất: {sol.qtyOrdered} chai
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-xs" style={{ color: '#4A6A7A' }}>
-                                                <span>SKU: {sol.skuCode} {sol.vintage ? `· VTG: ${sol.vintage}` : ''}</span>
-                                                {selectedLot ? (
-                                                    <span className={`text-[11px] font-semibold ${isInsufficient ? 'text-amber-400 font-bold' : 'text-emerald-400'}`}>
-                                                        {isInsufficient ? `⚠️ Thiếu (Tồn lô: ${selectedLot.qtyAvailable})` : `✅ Đủ tồn kho lô (Tồn: ${selectedLot.qtyAvailable})`}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[11px] text-amber-400 italic">
-                                                        {availLots.length > 0 ? '⚠️ Chưa chọn lô' : '❌ Hết hàng khả dụng'}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-2 pt-1">
-                                                <div className="col-span-2">
-                                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#8AAEBB' }}>Chọn Vị Trí / Lô Hàng Tồn (FIFO)</label>
-                                                    <select
-                                                        value={lines[i]?.lotId ?? ''}
-                                                        onChange={e => {
-                                                            const lotId = e.target.value
-                                                            const chosenLot = availLots.find(l => l.id === lotId)
-                                                            const v = [...lines]
-                                                            v[i] = { 
-                                                                ...v[i], 
-                                                                lotId, 
-                                                                locationId: chosenLot?.locationId ?? '' 
-                                                            }
-                                                            setLines(v)
-                                                        }}
-                                                        className="w-full px-2.5 py-1.5 rounded-lg text-xs outline-none font-mono"
-                                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: lines[i]?.lotId ? '#D4A853' : '#4A6A7A' }}
-                                                    >
-                                                        <option value="">— Vị Trí / Lô Hàng —</option>
-                                                        {availLots.map((lot, idx) => (
-                                                            <option key={lot.id} value={lot.id}>
-                                                                {idx === 0 ? '⭐ [FIFO Cũ nhất] ' : ''}📍 {lot.locationCode} · Lô: {lot.lotNo} (Tồn: {lot.qtyAvailable})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#8AAEBB' }}>SL Nhặt</label>
-                                                    <input type="number" min={0} value={lines[i]?.qtyPicked ?? 0}
-                                                        onChange={e => {
-                                                            const v = [...lines]; v[i] = { ...v[i], qtyPicked: Number(e.target.value) }; setLines(v)
-                                                        }}
-                                                        className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold text-center"
-                                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#87CBB9' }} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
+                        {/* Step 2 */}
+                        {mobileStep === 2 && selectedSO && lines.length > 0 && (
+                            <div className="space-y-4">
+                                {renderProductLines()}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setMobileStep(1)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl"
+                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', minHeight: '48px' }}>
+                                        ← Quay Lại
+                                    </button>
+                                    <button
+                                        onClick={() => setMobileStep(3)}
+                                        disabled={validLinesCount === 0}
+                                        className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl"
+                                        style={{
+                                            background: validLinesCount > 0 ? '#87CBB9' : '#1B2E3D',
+                                            color: validLinesCount > 0 ? '#0A1926' : '#4A6A7A',
+                                            minHeight: '48px',
+                                        }}>
+                                        Xác Nhận ({validLinesCount}/{lines.length}) →
+                                    </button>
+                                </div>
                             </div>
-                        </>
-                    )}
+                        )}
 
-                    <div className="pt-3 grid grid-cols-2 gap-3">
-                        <button onClick={() => handleSave(false)} disabled={saving}
-                            className="flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-110"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}>
-                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                            Lưu Nháp DO
-                        </button>
-
-                        <button onClick={() => handleSave(true)} disabled={saving}
-                            className="flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-xl shadow-md transition-all hover:brightness-110"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}>
-                            {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                            ⚡ Xác Nhận Xuất Kho Ngay
-                        </button>
+                        {/* Step 3 */}
+                        {mobileStep === 3 && selectedSO && (
+                            <div className="space-y-4">
+                                <div className="p-3 rounded-xl" style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                                    <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#D4A853' }}>
+                                        Bước 3: Xác Nhận Xuất Kho
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2 mb-3">
+                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#142433' }}>
+                                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Đơn hàng</p>
+                                            <p className="text-sm font-bold font-mono" style={{ color: '#D4A853' }}>{selectedSO.soNo}</p>
+                                        </div>
+                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#142433' }}>
+                                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Kho xuất</p>
+                                            <p className="text-sm font-bold" style={{ color: '#8AAEBB' }}>
+                                                {warehouses.find(w => w.id === warehouseId)?.code ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#142433' }}>
+                                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Sản phẩm</p>
+                                            <p className="text-sm font-bold" style={{ color: '#87CBB9' }}>{validLinesCount} loại</p>
+                                        </div>
+                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#142433' }}>
+                                            <p className="text-[10px] uppercase" style={{ color: '#4A6A7A' }}>Tổng nhặt</p>
+                                            <p className="text-sm font-bold font-mono" style={{ color: '#87CBB9' }}>{totalPicked.toLocaleString()} chai</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        {selectedSO.lines.map((sol, i) => {
+                                            const line = lines[i]
+                                            const lot = lotsMap[sol.productId]?.find(l => l.id === line?.lotId)
+                                            return (
+                                                <div key={sol.productId} className="flex items-center justify-between text-xs px-2.5 py-2 rounded-lg"
+                                                    style={{ background: '#142433', border: line?.lotId ? '1px solid rgba(91,168,138,0.2)' : '1px solid rgba(212,168,83,0.2)' }}>
+                                                    <div className="min-w-0 pr-2">
+                                                        <p className="truncate font-medium" style={{ color: '#E8F1F2' }}>{sol.productName}</p>
+                                                        <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>
+                                                            {lot ? `📍 ${lot.zone}${lot.rack ? ` / ${lot.rack}` : ''}${lot.bin ? ` / ${lot.bin}` : ''} · ${lot.lotNo}` : '⚠️ Chưa chọn lô'}
+                                                        </p>
+                                                    </div>
+                                                    <span className="font-mono font-bold shrink-0" style={{ color: line?.lotId ? '#5BA88A' : '#D4A853' }}>
+                                                        {line?.lotId ? `✓ ${line.qtyPicked}` : '—'}
+                                                    </span>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setMobileStep(2)}
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl"
+                                    style={{ background: 'transparent', border: '1px solid #2A4355', color: '#8AAEBB' }}>
+                                    ← Sửa Lại Nhặt Hàng
+                                </button>
+                                {renderSaveButtons()}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

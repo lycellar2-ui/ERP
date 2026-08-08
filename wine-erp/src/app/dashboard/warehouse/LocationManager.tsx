@@ -111,7 +111,7 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
 
             {/* Heatmap */}
             {heatmap.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                     {heatmap.map(h => (
                         <div key={h.zone} className="p-3 rounded-md" style={{
                             background: '#1B2E3D',
@@ -146,7 +146,7 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
             {showCreate && (
                 <div className="p-4 rounded-md space-y-3" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                     <h4 className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>Thêm Vị Trí Mới</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {[
                             { label: 'Zone *', key: 'zone', placeholder: 'A, B, C...' },
                             { label: 'Rack', key: 'rack', placeholder: '01, 02...' },
@@ -206,7 +206,8 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
                         <span className="text-xs font-bold" style={{ color: '#87CBB9' }}>Zone {zone}</span>
                         <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{locs.length} vị trí</span>
                     </div>
-                    <table className="w-full text-xs" style={{ color: '#E8F1F2' }}>
+                    {/* Desktop Table */}
+                    <table className="w-full text-xs hidden md:table" style={{ color: '#E8F1F2' }}>
                         <thead>
                             <tr style={{ background: '#1B2E3D' }}>
                                 <th className="px-4 py-2 text-left font-semibold" style={{ color: '#4A6A7A' }}>Mã</th>
@@ -248,6 +249,38 @@ export function LocationManager({ warehouseId, warehouseName, initialLocations }
                             ))}
                         </tbody>
                     </table>
+
+                    {/* Mobile Cards */}
+                    <div className="block md:hidden space-y-2 p-2">
+                        {locs.map(loc => (
+                            <div key={loc.id} className="p-3 rounded-lg space-y-1.5" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{loc.locationCode}</span>
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                        style={{ color: typeColor[loc.type] || '#4A6A7A', background: `${typeColor[loc.type] || '#4A6A7A'}18` }}>
+                                        {loc.type}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs" style={{ color: '#8AAEBB' }}>
+                                    <span>Rack: {loc.rack ?? '—'}</span>
+                                    <span>Bin: {loc.bin ?? '—'}</span>
+                                    {loc.tempControlled && <Thermometer size={12} style={{ color: '#4A8FAB' }} />}
+                                </div>
+                                <div className="flex items-center justify-between pt-1.5 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
+                                    <span style={{ color: '#4A6A7A' }}>Sức chứa: <strong className="font-mono text-white">{loc.capacityCases ?? '∞'}</strong></span>
+                                    <span style={{ color: '#4A6A7A' }}>Tồn: <strong className="font-mono text-white">{loc.stockCount}</strong></span>
+                                    <span style={{ color: '#4A6A7A' }}>Dùng: <strong className="font-mono text-white">{loc.usedBottles}</strong></span>
+                                    {loc.stockCount === 0 && (
+                                        <button onClick={() => handleDelete(loc.id, loc.locationCode)}
+                                            className="p-1.5 rounded hover:opacity-60 transition-opacity"
+                                            style={{ color: '#E05252' }}>
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             ))}
 

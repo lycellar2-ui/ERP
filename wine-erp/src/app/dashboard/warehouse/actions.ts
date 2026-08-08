@@ -753,7 +753,7 @@ export async function getAvailableLotsForProduct(
     const lots = await prisma.stockLot.findMany({
         where,
         include: {
-            location: { select: { locationCode: true } }
+            location: { select: { locationCode: true, zone: true, rack: true, bin: true, type: true } }
         },
         orderBy: { receivedDate: 'asc' } // FIFO sorting
     })
@@ -763,6 +763,10 @@ export async function getAvailableLotsForProduct(
         lotNo: l.lotNo,
         locationId: l.locationId,
         locationCode: l.location.locationCode,
+        zone: l.location.zone,
+        rack: l.location.rack,
+        bin: l.location.bin,
+        locationType: l.location.type,
         qtyAvailable: Number(l.qtyAvailable),
         vintage: l.vintage
     }))

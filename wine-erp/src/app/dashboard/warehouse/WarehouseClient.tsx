@@ -563,16 +563,21 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         </button>
                     </div>
 
-                    {/* Stat Badges — Horizontally Scrollable on Mobile */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar py-0.5 max-w-full">
-                        {statCards.map(s => (
-                            <div key={s.label} className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap shrink-0"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <s.icon size={12} style={{ color: s.accent }} />
-                                <span className="uppercase font-medium" style={{ color: '#8AAEBB' }}>{s.label}:</span>
-                                <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
-                            </div>
-                        ))}
+                    {/* Stat Badges — Horizontally Scrollable on Mobile with fade hint */}
+                    <div className="relative w-full sm:w-auto">
+                        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar py-0.5 max-w-full pr-6 sm:pr-0">
+                            {statCards.map(s => (
+                                <div key={s.label} className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap shrink-0"
+                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <s.icon size={12} style={{ color: s.accent }} />
+                                    <span className="uppercase font-medium" style={{ color: '#8AAEBB' }}>{s.label}:</span>
+                                    <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Scroll fade hint — mobile only */}
+                        <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none sm:hidden"
+                            style={{ background: 'linear-gradient(to right, transparent, #142433)' }} />
                     </div>
 
                     <button onClick={() => setCreateWHOpen(true)}
@@ -726,19 +731,20 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         </div>
 
                         {selectedWH && (
-                            <div className="flex gap-2 flex-wrap">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <div className="relative flex-1 min-w-[200px]">
                                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                                     <input placeholder="Tìm lô, sản phẩm, SKU..." value={search}
                                         onChange={e => setSearch(e.target.value)}
-                                        className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
+                                        className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none"
                                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                                         onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                                 </div>
-                                <select value={wineFilter} onChange={e => setWineFilter(e.target.value)}
-                                    className="px-3 py-2 rounded-lg text-sm outline-none"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: wineFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                                <div className="flex gap-2">
+                                    <select value={wineFilter} onChange={e => setWineFilter(e.target.value)}
+                                        className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none"
+                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: wineFilter ? '#E8F1F2' : '#4A6A7A' }}>
                                     <option value="">Tất cả loại</option>
                                     <option value="RED">🔴 Đỏ</option>
                                     <option value="WHITE">🟡 Trắng</option>
@@ -747,14 +753,15 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     <option value="FORTIFIED">🍯 Fortified</option>
                                     <option value="DESSERT">🍮 Dessert</option>
                                 </select>
-                                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                                    className="px-3 py-2 rounded-lg text-sm outline-none"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
-                                    <option value="">Tất cả TT</option>
-                                    <option value="AVAILABLE">✅ Sẵn sàng</option>
-                                    <option value="RESERVED">📌 Đã đặt</option>
-                                    <option value="QUARANTINE">⚠️ Cách ly</option>
-                                </select>
+                                    <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+                                        className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-sm outline-none"
+                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: statusFilter ? '#E8F1F2' : '#4A6A7A' }}>
+                                        <option value="">Tất cả TT</option>
+                                        <option value="AVAILABLE">✅ Sẵn sàng</option>
+                                        <option value="RESERVED">📌 Đã đặt</option>
+                                        <option value="QUARANTINE">⚠️ Cách ly</option>
+                                    </select>
+                                </div>
                             </div>
                         )}
 

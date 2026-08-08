@@ -126,9 +126,9 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                     <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Sổ Nhập Xuất Tồn — Tra Cứu Theo Mã Hàng</h3>
                 </div>
 
-                <div className="grid grid-cols-12 gap-3">
+                <div className="grid grid-cols-4 sm:grid-cols-12 gap-3">
                     {/* Product selector */}
-                    <div className="col-span-12 lg:col-span-4 relative">
+                    <div className="col-span-4 sm:col-span-12 lg:col-span-4 relative">
                         <label className="text-[10px] uppercase tracking-widest font-bold block mb-1.5" style={{ color: '#4A6A7A' }}>Mã Hàng / SKU</label>
                         {selectedProduct ? (
                             <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(135,203,185,0.1)', border: '1px solid #87CBB9' }}>
@@ -177,7 +177,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                     </div>
 
                     {/* Warehouse filter */}
-                    <div className="col-span-6 lg:col-span-2">
+                    <div className="col-span-2 sm:col-span-6 lg:col-span-2">
                         <label className="text-[10px] uppercase tracking-widest font-bold block mb-1.5" style={{ color: '#4A6A7A' }}>Kho</label>
                         <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)}
                             className={`w-full ${inputCls}`} style={{ ...inputStyle, color: warehouseId ? '#E8F1F2' : '#4A6A7A' }}>
@@ -187,19 +187,19 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                     </div>
 
                     {/* Date range */}
-                    <div className="col-span-6 lg:col-span-2">
+                    <div className="col-span-2 sm:col-span-6 lg:col-span-2">
                         <label className="text-[10px] uppercase tracking-widest font-bold block mb-1.5" style={{ color: '#4A6A7A' }}>Từ Ngày</label>
                         <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
                             className={`w-full ${inputCls}`} style={inputStyle} />
                     </div>
-                    <div className="col-span-6 lg:col-span-2">
+                    <div className="col-span-2 sm:col-span-6 lg:col-span-2">
                         <label className="text-[10px] uppercase tracking-widest font-bold block mb-1.5" style={{ color: '#4A6A7A' }}>Đến Ngày</label>
                         <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
                             className={`w-full ${inputCls}`} style={inputStyle} />
                     </div>
 
                     {/* Movement type + Action */}
-                    <div className="col-span-6 lg:col-span-2 flex flex-col justify-end gap-2">
+                    <div className="col-span-2 sm:col-span-6 lg:col-span-2 flex flex-col justify-end gap-2">
                         <select value={movementType} onChange={e => setMovementType(e.target.value as any)}
                             className={`w-full ${inputCls}`} style={{ ...inputStyle, color: movementType !== 'ALL' ? '#E8F1F2' : '#4A6A7A' }}>
                             <option value="ALL">Tất cả</option>
@@ -269,7 +269,8 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                             </div>
                         ) : (
                             <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
-                                <div style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
+                                {/* Desktop Table */}
+                                <div className="hidden md:block" style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -335,6 +336,44 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                             })}
                                         </tbody>
                                     </table>
+                                </div>
+                                {/* Mobile Cards */}
+                                <div className="block md:hidden space-y-2 p-3" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto' }}>
+                                    {movements.map(m => {
+                                        const cfg = DOC_TYPE_CFG[m.docType] || { label: m.docType, color: '#8AAEBB', icon: FileText }
+                                        const Icon = cfg.icon
+                                        return (
+                                            <div key={m.id} className="p-3 rounded-xl space-y-1.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                                                        style={{ color: cfg.color, background: `${cfg.color}15` }}>
+                                                        <Icon size={10} /> {cfg.label}
+                                                    </span>
+                                                    <span className="text-[11px]" style={{ color: '#8AAEBB' }}>{formatDate(m.date)}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="font-bold font-mono" style={{ color: '#87CBB9' }}>{m.docNo}</span>
+                                                    <span className="font-mono" style={{ color: '#D4A853' }}>Lô: {m.lotNo}</span>
+                                                </div>
+                                                <div className="text-[11px]" style={{ color: '#4A6A7A' }}>
+                                                    {m.warehouseName} · 📍 {m.locationCode}
+                                                </div>
+                                                <div className="flex items-center justify-between pt-1.5 border-t" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
+                                                    <div className="flex gap-4">
+                                                        {m.qtyIn > 0 && (
+                                                            <span className="text-sm font-bold font-mono" style={{ color: '#5BA88A' }}>+{m.qtyIn.toLocaleString()}</span>
+                                                        )}
+                                                        {m.qtyOut > 0 && (
+                                                            <span className="text-sm font-bold font-mono" style={{ color: '#C74B50' }}>-{m.qtyOut.toLocaleString()}</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm font-bold font-mono" style={{ color: m.balance > 0 ? '#87CBB9' : m.balance < 0 ? '#C74B50' : '#4A6A7A' }}>
+                                                        Tồn: {m.balance.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}

@@ -71,8 +71,8 @@ export function GoodsReceiptTab({ warehouses }: {
                 </button>
             </div>
 
-            {/* GR List Table */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+            {/* GR List — Desktop Table */}
+            <div className="rounded-xl overflow-hidden hidden md:block" style={{ border: '1px solid #2A4355' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
@@ -134,10 +134,54 @@ export function GoodsReceiptTab({ warehouses }: {
                 </table>
             </div>
 
+            {/* GR List — Mobile Cards */}
+            <div className="block md:hidden space-y-3">
+                {loading ? (
+                    <div className="text-center py-12"><Loader2 size={20} className="animate-spin inline" style={{ color: '#87CBB9' }} /></div>
+                ) : rows.length === 0 ? (
+                    <div className="text-center py-12 text-sm rounded-xl" style={{ color: '#4A6A7A', border: '1px dashed #2A4355' }}>Chưa có phiếu nhập kho</div>
+                ) : rows.map(gr => {
+                    const st = GR_STATUS[gr.status] ?? GR_STATUS.DRAFT
+                    return (
+                        <div key={gr.id} onClick={() => openDetail(gr.id)}
+                            className="p-3.5 rounded-xl space-y-2 cursor-pointer transition-all active:scale-[0.99]"
+                            style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
+                                    GR: {gr.grNo}
+                                </span>
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ color: st.color, background: st.bg }}>
+                                    {st.label}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span style={{ color: '#4A6A7A' }}>PO: <strong className="font-mono text-[#D4A853]">{gr.poNo}</strong></span>
+                                <span style={{ color: '#8AAEBB' }}>Kho: {gr.warehouseName}</span>
+                            </div>
+                            <div className="flex items-center justify-between pt-2 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
+                                <span style={{ color: '#8AAEBB' }}>{gr.lineCount} sản phẩm · <strong className="font-mono text-white">{gr.totalQtyReceived.toLocaleString()}</strong> chai</span>
+                                <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                                    <button onClick={() => openDetail(gr.id)} className="px-2.5 py-1.5 text-xs font-semibold rounded-lg"
+                                        style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>
+                                        Chi Tiết
+                                    </button>
+                                    {gr.status === 'DRAFT' && (
+                                        <button onClick={() => handleConfirm(gr.id)} className="px-2.5 py-1.5 text-xs font-bold rounded-lg"
+                                            style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A' }}>
+                                            Xác Nhận
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+
             {/* Detail Drawer */}
             {(detailData || detailLoading) && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
+                    <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                             <div>
                                 <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
@@ -162,7 +206,8 @@ export function GoodsReceiptTab({ warehouses }: {
                                     <InfoCard label="Ngày xác nhận" value={detailData.confirmedAt ? formatDate(detailData.confirmedAt) : '—'} />
                                 </div>
 
-                                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                                {/* Detail Lines — Desktop Table */}
+                                <div className="rounded-xl overflow-hidden hidden sm:block" style={{ border: '1px solid #2A4355' }}>
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
@@ -189,6 +234,30 @@ export function GoodsReceiptTab({ warehouses }: {
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                                {/* Detail Lines — Mobile Cards */}
+                                <div className="block sm:hidden space-y-2">
+                                    {detailData.lines.map(l => (
+                                        <div key={l.id} className="p-3 rounded-xl space-y-1.5" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{l.skuCode}</span>
+                                                <span className="text-xs font-mono" style={{ color: '#D4A853' }}>Lô: {l.lotNo}</span>
+                                            </div>
+                                            <p className="text-sm font-medium" style={{ color: '#E8F1F2' }}>{l.productName}</p>
+                                            <div className="flex items-center gap-1 text-xs" style={{ color: '#8AAEBB' }}>
+                                                📍 {l.locationCode}
+                                            </div>
+                                            <div className="flex items-center justify-between pt-1.5 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
+                                                <span style={{ color: '#4A6A7A' }}>Dự kiến: <strong className="font-mono text-white">{l.qtyExpected}</strong></span>
+                                                <span style={{ color: '#4A6A7A' }}>Thực nhận: <strong className="font-mono" style={{ color: '#87CBB9' }}>{l.qtyReceived}</strong></span>
+                                                <span className="font-mono font-bold" style={{
+                                                    color: l.variance === 0 ? '#4A6A7A' : l.variance < 0 ? '#8B1A2E' : '#D4A853',
+                                                }}>
+                                                    {l.variance === 0 ? '—' : (l.variance > 0 ? '+' : '') + l.variance}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -263,13 +332,13 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="w-[560px] h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
+            <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto" style={{ background: '#0F1D2B' }}>
                 <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
                     <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>Tạo Phiếu Nhập Kho (GR)</h3>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
                 </div>
                 <div className="p-5 space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: '#8AAEBB' }}>Purchase Order *</label>
                             <select value={selectedPO?.id ?? ''} onChange={e => selectPO(e.target.value)}
