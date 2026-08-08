@@ -1411,3 +1411,83 @@ export async function checkCustomerDuplicates(input: {
         return { success: false, error: err.message, warnings: [] }
     }
 }
+
+// ── Auto Cục Thuế (GDT) Tax Lookup API ───────────
+export async function lookupTaxInfo(taxId: string): Promise<{
+    success: boolean
+    data?: {
+        taxId: string
+        vatCompanyName: string
+        vatAddress: string
+        status: string
+    }
+    error?: string
+}> {
+    try {
+        if (!taxId || !taxId.trim()) return { success: false, error: 'Mã số thuế không được để trống' }
+        const cleanTaxId = taxId.trim().replace(/\.$/, '')
+        const res = await fetch(`https://api.vietqr.io/v2/business/${cleanTaxId}`, { cache: 'no-store' })
+        const json = await res.json()
+        if (json.code === '00' && json.data) {
+            return {
+                success: true,
+                data: {
+                    taxId: cleanTaxId,
+                    vatCompanyName: json.data.name,
+                    vatAddress: json.data.address || '',
+                    status: json.data.status || 'NNT đang hoạt động',
+                },
+            }
+        }
+        return { success: false, error: json.desc || 'Không tìm thấy thông tin đăng ký thuế cho MST này' }
+    } catch (err: any) {
+        return { success: false, error: 'Lỗi kết nối Cục Thuế: ' + err.message }
+    }
+}
+
+export async function syncCustomerTaxInfoFromGDT(customerId: string): Promise<{ success: boolean; error?: string; updatedInfo?: any }> {
+    try {
+        const customer = await prisma.customer.findUnique({
+            where: { id: customerId },
+            include: { parent: true },
+        })
+        if (!customer) return { success: false, error: 'Không tìm thấy khách hàng' }
+
+        const taxIdToQuery = customer.taxId || customer.parent?.taxId
+        if (!taxIdToQuery) return { success: false, error: 'Khách hàng này chưa nhập Mã số thuế' }
+
+        const lookup = await lookupTaxInfo(taxIdToQuery)
+        if (!lookup.success || !lookup.data) {
+            return { success: false, error: lookup.error }
+        }
+
+        const updated = await prisma.customer.update({
+            where: { id: customerId },
+            data: {
+                taxId: taxIdToQuery,
+                vatCompanyName: lookup.data.vatCompanyName,
+                vatAddress: lookup.data.vatAddress,
+            },
+        })
+
+        // Also sync to children if this is a parent company
+        const children = await prisma.customer.findMany({ where: { parentId: customerId } })
+        for (const child of children) {
+            await prisma.customer.update({
+                where: { id: child.id },
+                data: {
+                    taxId: taxIdToQuery,
+                    vatCompanyName: lookup.data.vatCompanyName,
+                    vatAddress: lookup.data.vatAddress,
+                },
+            })
+        }
+
+        revalidateCache('customers')
+        revalidatePath('/dashboard/customers')
+        revalidatePath('/dashboard/sales')
+        return { success: true, updatedInfo: lookup.data }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
