@@ -444,8 +444,9 @@ export async function processProposalApproval(input: {
                     link: `/dashboard/proposals?id=${proposal.id}`
                 })
             } else {
+                await triggerNotificationForRole(nextStep.role, {
                     title: `Tờ trình ${proposal.proposalNo} chờ phê duyệt`,
-                    content: `Tờ trình "${proposal.title}" đã được duyệt ở mức ${currentLevel} và đang chờ bạn phê duyệt ở mức ${nextLevel}.`,
+                    content: `Tờ trình "${proposal.title}" đã được duyệt ở Cấp ${currentLevel} và đang chờ bạn phê duyệt ở Cấp ${nextStep.level}.`,
                     type: 'info',
                     link: `/dashboard/proposals?id=${proposal.id}`
                 })
