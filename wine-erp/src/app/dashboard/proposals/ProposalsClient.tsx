@@ -125,7 +125,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 return `
                     <tr>
                         <td style="border: 1px solid #000; padding: 8px; text-align: center;">${i + 1}</td>
-                        <td style="border: 1px solid #000; padding: 8px; font-family: monospace;">${item.product?.skuCode || ''}</td>
+                        <td style="border: 1px solid #000; padding: 8px; font-family: Arial, sans-serif;">${item.product?.skuCode || ''}</td>
                         <td style="border: 1px solid #000; padding: 8px;">${item.product?.productName || ''}</td>
                         <td style="border: 1px solid #000; padding: 8px; text-align: right;">${formatVND(originalPrice)}</td>
                         <td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">${formatVND(item.proposedPrice)}</td>
@@ -155,7 +155,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     .price-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-size: 13px; }
                     .signatures-table { width: 100%; margin-top: 50px; border-collapse: collapse; page-break-inside: avoid; }
                     .signatures-table td { text-align: center; width: 25%; vertical-align: top; border: none; padding: 5px; }
-                    .sign-title { font-weight: bold; text-transform: uppercase; margin-bottom: 70px; font-size: 12px; }
+                    .sign-title { font-weight: bold; text-transform: uppercase; margin-bottom: 3px; font-size: 12px; }
                     @media print {
                         body { margin: 20px; }
                     }
@@ -166,7 +166,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     <tr>
                         <td style="text-align: center; font-weight: bold; width: 35%;">
                             <p style="margin: 0; font-size: 13px; text-transform: uppercase; tracking-wide;">LY'S CELLARS</p>
-                            <p style="margin: 5px 0 0 0; font-size: 11px; font-family: monospace; font-weight: normal;">Số: ${detail.proposalNo}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 11px; font-family: Arial, sans-serif; font-weight: normal;">Số: ${detail.proposalNo}</p>
                         </td>
                         <td style="text-align: center; width: 65%;">
                             <p style="margin: 0; font-weight: bold; font-size: 13px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>

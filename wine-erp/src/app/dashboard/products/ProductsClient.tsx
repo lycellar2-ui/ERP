@@ -24,10 +24,10 @@ const COUNTRY_NAMES: Record<string, string> = {
 }
 
 const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    RED: { label: 'Đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
-    WHITE: { label: 'Trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
-    ROSE: { label: 'Rosé', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
-    SPARKLING: { label: 'Sâm panh', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
+    WHITE: { label: 'Vang trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
+    SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
+    ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
     FORTIFIED: { label: 'Fortified', color: '#87CBB9', bg: 'rgba(168,130,204,0.15)' },
     DESSERT: { label: 'Dessert', color: '#D4963A', bg: 'rgba(212,150,58,0.12)' },
 }
@@ -371,12 +371,10 @@ export function ProductsClient({
                         className="px-2.5 py-1.5 rounded-lg text-xs outline-none cursor-pointer animate-none"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: typeFilter ? '#E8F1F2' : '#4A6A7A' }}>
                         <option value="">Tất cả loại</option>
-                        <option value="RED">🔴 Vang Đỏ</option>
-                        <option value="WHITE">🟡 Vang Trắng</option>
-                        <option value="ROSE">🌸 Rosé</option>
-                        <option value="SPARKLING">🥂 Sâm panh</option>
-                        <option value="FORTIFIED">🍯 Fortified</option>
-                        <option value="DESSERT">🍰 Dessert</option>
+                        <option value="WHITE">Vang trắng</option>
+                        <option value="RED">Vang đỏ</option>
+                        <option value="SPARKLING">Vang nổ</option>
+                        <option value="ROSE">Vang hồng</option>
                     </select>
                     <select value={statusFilter}
                         onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}

@@ -262,6 +262,8 @@ model Product {
   classification       String?
   status               ProductStatus          @default(ACTIVE)
   vatRate              Decimal                @default(10)
+  selfDeclarationUrl   String?
+  tastingNoteUrl       String?
   media                ProductMedia[]
   awards               ProductAward[]
   priceLines           PriceListLine[]
@@ -2971,6 +2973,8 @@ view ProductRowView {
   volumeMl         Int?
   hsCode           String?
   isAllocationEligible Boolean?
+  selfDeclarationUrl   String?
+  tastingNoteUrl       String?
   // Pricing (from product_margin_prices)
   retailPrice      Float?
   wholesalePrice   Float?

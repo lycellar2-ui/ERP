@@ -135,6 +135,8 @@ erDiagram
         wine_type       enum
         is_allocation   boolean
         status          enum
+        self_declaration_url string
+        tasting_note_url string
     }
     Producer {
         id      uuid PK

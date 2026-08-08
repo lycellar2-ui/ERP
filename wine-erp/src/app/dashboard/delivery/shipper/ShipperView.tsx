@@ -380,7 +380,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
         ctx.fillText(row1, 20, textY)
 
         if (lat !== null && lon !== null) {
-            ctx.font = `${fontSize * 0.85}px monospace`
+            ctx.font = `${fontSize * 0.85}px sans-serif`
             const row2 = `📍 Định vị: ${lat.toFixed(5)}, ${lon.toFixed(5)}`
             ctx.fillText(row2, 20, textY + rowHeight)
         }

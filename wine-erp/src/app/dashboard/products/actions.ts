@@ -33,6 +33,8 @@ export type ProductRow = {
     volumeMl: number | null
     hsCode: string | null
     isAllocationEligible: boolean | null
+    selfDeclarationUrl: string | null
+    tastingNoteUrl: string | null
     retailPrice: number | null
     wholesalePrice: number | null
     profile: {
@@ -141,6 +143,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
                     volumeMl: true,
                     hsCode: true,
                     isAllocationEligible: true,
+                    selfDeclarationUrl: true,
+                    tastingNoteUrl: true,
                     retailPrice: true,
                     wholesalePrice: true,
                 }
@@ -174,6 +178,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
                 volumeMl: r.volumeMl ?? null,
                 hsCode: r.hsCode ?? null,
                 isAllocationEligible: r.isAllocationEligible ?? null,
+                selfDeclarationUrl: r.selfDeclarationUrl ?? null,
+                tastingNoteUrl: r.tastingNoteUrl ?? null,
                 retailPrice: r.retailPrice ?? null,
                 wholesalePrice: r.wholesalePrice ?? null,
                 profile: null, // Skip heavy profile columns for listing to reduce wire transfer payload size
@@ -267,6 +273,8 @@ export async function getProductById(id: string) {
         storageTempMax: p.storageTempMax ? Number(p.storageTempMax) : null,
         isAllocationEligible: p.isAllocationEligible,
         classification: p.classification,
+        selfDeclarationUrl: p.selfDeclarationUrl,
+        tastingNoteUrl: p.tastingNoteUrl,
         vatRate: p.vatRate ? Number(p.vatRate) : 10,
         profile: p.profile ? {
             originDetail: p.profile.originDetail,
@@ -364,6 +372,8 @@ const productSchema = z.object({
     isAllocationEligible: z.boolean().optional().default(false),
     status: z.enum(['ACTIVE', 'DISCONTINUED', 'ALLOCATION_ONLY']).default('ACTIVE'),
     vatRate: z.number().default(10),
+    selfDeclarationUrl: z.string().nullable().optional(),
+    tastingNoteUrl: z.string().nullable().optional(),
     profile: z.object({
         originDetail: z.string().nullable().optional(),
         certification: z.string().nullable().optional(),
@@ -406,6 +416,8 @@ export async function createProduct(input: ProductInput) {
                 isAllocationEligible: data.isAllocationEligible ?? false,
                 status: data.status,
                 vatRate: data.vatRate,
+                selfDeclarationUrl: data.selfDeclarationUrl ?? null,
+                tastingNoteUrl: data.tastingNoteUrl ?? null,
                 profile: data.profile ? {
                     create: {
                         originDetail: data.profile.originDetail ?? null,
@@ -482,6 +494,8 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 ...(data.hsCode && { hsCode: data.hsCode }),
                 ...(data.status && { status: data.status }),
                 ...(data.vatRate !== undefined && { vatRate: data.vatRate }),
+                selfDeclarationUrl: data.selfDeclarationUrl !== undefined ? data.selfDeclarationUrl : undefined,
+                tastingNoteUrl: data.tastingNoteUrl !== undefined ? data.tastingNoteUrl : undefined,
                 ...(data.profile !== undefined && {
                     profile: data.profile ? {
                         upsert: {

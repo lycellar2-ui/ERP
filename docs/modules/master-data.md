@@ -36,6 +36,8 @@ Mỗi sản phẩm rượu vang có các thuộc tính đặc thù ngành mà ER
 | `classification` | String | Phân hạng (Premier Grand Cru Classé, DOC, DOCG...) | |
 | `wine_type` | Enum | Red / White / Rosé / Sparkling / Fortified / Dessert | ✅ |
 | `tasting_notes` | Text | Mô tả hương vị (Marketing, hiển thị cho Sales) | |
+| `self_declaration_url` | String | Đường link tài liệu Tự công bố sản phẩm | |
+| `tasting_note_url` | String | Đường link bản Tasting Note sản phẩm | |
 | `status` | Enum | ACTIVE / DISCONTINUED / ALLOCATION_ONLY | ✅ |
 
 ### A.2 Xem Chi Tiết & Tồn Kho (Product Detail View)

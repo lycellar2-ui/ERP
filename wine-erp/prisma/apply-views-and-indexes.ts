@@ -32,6 +32,8 @@ SELECT
     p."volumeMl" AS "volumeMl",
     p."hsCode" AS "hsCode",
     p."isAllocationEligible" AS "isAllocationEligible",
+    p."selfDeclarationUrl" AS "selfDeclarationUrl",
+    p."tastingNoteUrl" AS "tastingNoteUrl",
     -- Pricing (1-to-1 join, negligible cost)
     mp."retailPrice"::float AS "retailPrice",
     mp."wholesalePrice"::float AS "wholesalePrice",

@@ -188,6 +188,7 @@ export function QuotationClient({ initialData }: Props) {
         setActionLoading(id)
         toast.promise(
             updateQuotationStatus(id, status).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi cập nhật trạng thái')
                 reload()
                 return res
             }),

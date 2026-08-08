@@ -426,7 +426,7 @@ export function PipelinePanel() {
                                     <div className="p-3 rounded-md text-center" style={{ background: '#142433' }}>
                                         {editing ? (
                                             <input type="number" value={editForm.expectedValue} onChange={e => setEditForm(f => ({ ...f, expectedValue: e.target.value }))}
-                                                className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, fontFamily: 'var(--font-mono)', color: '#D4A853' }} />
+                                                className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, fontFamily: 'var(--font-sans)', color: '#D4A853' }} />
                                         ) : (
                                             <p className="text-sm font-bold" style={{ color: '#D4A853' }}>
                                                 {formatVND(detail.expectedValue)}
@@ -587,7 +587,7 @@ export function PipelinePanel() {
                                     {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
                                 <input type="number" value={formValue} onChange={e => setFormValue(e.target.value)} placeholder="Giá trị kỳ vọng"
-                                    className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#D4A853', fontFamily: 'var(--font-mono)' }} />
+                                    className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#D4A853', fontFamily: 'var(--font-sans)' }} />
                             </div>
                             <input type="date" value={formCloseDate} onChange={e => setFormCloseDate(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />

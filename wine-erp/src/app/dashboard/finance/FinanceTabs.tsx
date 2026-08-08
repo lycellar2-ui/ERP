@@ -964,7 +964,7 @@ export function BalanceSheetTab() {
                                         }}>
                                             <td className="px-4 py-2.5 text-xs" style={{
                                                 color: isSummary ? '#E8F1F2' : '#4A6A7A',
-                                                fontFamily: 'var(--font-mono)',
+                                                fontFamily: 'var(--font-sans)',
                                                 paddingLeft: `${16 + (line.indent ?? 0) * 20}px`,
                                                 fontWeight: isSummary ? 700 : 400,
                                             }}>
@@ -1610,7 +1610,7 @@ export function AccountLedgerTab() {
                 <div className="flex gap-2 flex-wrap">
                     <select value={accountCode} onChange={e => { setAccountCode(e.target.value); setData(null) }}
                         className="text-xs px-3 py-1.5 rounded"
-                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#87CBB9', fontFamily: 'var(--font-mono)' }}>
+                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#87CBB9', fontFamily: 'var(--font-sans)' }}>
                         {accountOptions.map(([code, name]) => (
                             <option key={code} value={code}>{code} - {name}</option>
                         ))}

@@ -19,10 +19,10 @@ const COUNTRY_NAMES: Record<string, string> = {
 }
 
 const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    RED: { label: 'Đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
-    WHITE: { label: 'Trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)' },
-    ROSE: { label: 'Rosé', color: '#D4607A', bg: 'rgba(212,96,122,0.12)' },
-    SPARKLING: { label: 'Sâm panh', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)' },
+    WHITE: { label: 'Vang trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)' },
+    RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.12)' },
+    SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.12)' },
+    ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.12)' },
     FORTIFIED: { label: 'Fortified', color: '#B39EDB', bg: 'rgba(179,158,219,0.12)' },
     DESSERT: { label: 'Dessert', color: '#D4A853', bg: 'rgba(212,168,83,0.12)' },
 }

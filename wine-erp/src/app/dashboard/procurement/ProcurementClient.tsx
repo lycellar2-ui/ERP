@@ -291,11 +291,15 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
     const handleAction = async (target: string) => {
         setUpdating(true)
         toast.promise(
-            updatePOStatus(poId, target).then(() => onUpdate()),
+            updatePOStatus(poId, target).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi chuyển trạng thái')
+                onUpdate()
+                return res
+            }),
             {
                 loading: 'Đang cập nhật...',
                 success: 'Đã chuyển trạng thái',
-                error: 'Lỗi chuyển trạng thái',
+                error: (err: any) => `Lỗi: ${err.message}`,
                 finally: () => setUpdating(false)
             }
         )
@@ -305,11 +309,15 @@ function StatusStepper({ current, poId, onUpdate }: { current: string; poId: str
         if (!confirm('Huỷ PO này?')) return
         setUpdating(true)
         toast.promise(
-            updatePOStatus(poId, 'CANCELLED').then(() => onUpdate()),
+            updatePOStatus(poId, 'CANCELLED').then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi huỷ PO')
+                onUpdate()
+                return res
+            }),
             {
                 loading: 'Đang huỷ...',
                 success: 'Đã huỷ PO',
-                error: 'Lỗi',
+                error: (err: any) => `Lỗi: ${err.message}`,
                 finally: () => setUpdating(false)
             }
         )

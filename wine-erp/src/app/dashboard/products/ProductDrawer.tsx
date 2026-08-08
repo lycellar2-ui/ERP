@@ -102,6 +102,8 @@ interface ProductFormState {
     isAllocationEligible?: boolean
     status?: string
     vatRate?: number
+    selfDeclarationUrl?: string | null
+    tastingNoteUrl?: string | null
 }
 
 function formToInput(f: ProductFormState): ProductInput {
@@ -124,6 +126,8 @@ function formToInput(f: ProductFormState): ProductInput {
         isAllocationEligible: f.isAllocationEligible ?? false,
         status: (f.status ?? 'ACTIVE') as any,
         vatRate: f.vatRate ?? 10,
+        selfDeclarationUrl: f.selfDeclarationUrl ?? null,
+        tastingNoteUrl: f.tastingNoteUrl ?? null,
         profile: {
             originDetail: f.originDetail ?? null,
             certification: f.certification ?? null,
@@ -279,6 +283,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 grapes: data.profile?.grapes ?? null,
                 status: data.status,
                 vatRate: data.vatRate ? Number(data.vatRate) : 10,
+                selfDeclarationUrl: (data as any).selfDeclarationUrl ?? null,
+                tastingNoteUrl: (data as any).tastingNoteUrl ?? null,
             }))
             setLoading(false)
         }).catch(() => {
@@ -395,7 +401,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     value={form.sku ?? ''}
                                     onChange={e => set('sku', e.target.value.toUpperCase())}
                                     placeholder="CHATEAU-PETRUS-750"
-                                    style={{ fontFamily: 'var(--font-mono)' }}
+                                    style={{ fontFamily: 'var(--font-sans)' }}
                                 />
                             </Field>
                         </div>
@@ -497,7 +503,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     <option value="JP">🇯🇵 Nhật Bản</option>
                                 </Select>
                             </Field>
-                            <Field label="Nhà sản xuất">
+                            <Field label="Nhà sản xuất" required error={errors.producerId}>
                                 <div className="flex gap-1.5">
                                     <Select className="flex-1" value={form.producerId ?? ''} onChange={e => set('producerId', e.target.value || null)}>
                                         <option value="">— Chọn nhà SX —</option>
@@ -626,6 +632,31 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     value={form.peakDrinkEnd ?? ''}
                                     onChange={e => set('peakDrinkEnd', e.target.value ? Number(e.target.value) : null)}
                                     placeholder="2045"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    {/* Section: Tài liệu & Link công bố */}
+                    <div className="space-y-4">
+                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#87CBB9' }}>
+                            ── Tài Liệu & Đường Link
+                        </p>
+                        <div className="space-y-4">
+                            <Field label="Đường link Tự Công Bố">
+                                <Input
+                                    type="url"
+                                    value={form.selfDeclarationUrl ?? ''}
+                                    onChange={e => set('selfDeclarationUrl', e.target.value || null)}
+                                    placeholder="https://drive.google.com/... hoặc link công bố"
+                                />
+                            </Field>
+                            <Field label="Đường link Tasting Note">
+                                <Input
+                                    type="url"
+                                    value={form.tastingNoteUrl ?? ''}
+                                    onChange={e => set('tastingNoteUrl', e.target.value || null)}
+                                    placeholder="https://drive.google.com/... hoặc link tasting note"
                                 />
                             </Field>
                         </div>

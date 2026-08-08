@@ -268,7 +268,7 @@ export function WeeklyVisitPlannerPanel() {
         
         const rowsHtml = completedVisits.map(v => `
             <tr>
-                <td style="border: 1px solid #ddd; padding: 8px; font-family: monospace;">${v.customer?.code || ''}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; font-family: Arial, sans-serif;">${v.customer?.code || ''}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${v.customer?.name || ''}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${new Date(v.visitDate).toLocaleString('vi-VN')}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${v.purpose}</td>

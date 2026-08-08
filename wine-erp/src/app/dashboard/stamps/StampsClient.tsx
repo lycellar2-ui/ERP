@@ -103,7 +103,8 @@ export default function StampsClient({ purchases, summary }: Props) {
         e.preventDefault()
         setLoading(true)
         toast.promise(
-            createStampPurchase(formData).then((res) => {
+            createStampPurchase(formData).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi lưu lô tem')
                 setShowAddForm(false)
                 setFormData({
                     purchaseDate: new Date().toISOString().split('T')[0],
@@ -134,7 +135,8 @@ export default function StampsClient({ purchases, summary }: Props) {
                 qtyDamaged: usageData.qtyDamaged,
                 reportedBy: 'system', // TODO: replace with actual user ID
                 notes: usageData.notes || undefined,
-            }).then((res) => {
+            }).then((res: any) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi ghi nhận sử dụng tem')
                 setShowUsageForm(null)
                 setUsageData({ qtyUsed: 0, qtyDamaged: 0, notes: '' })
                 router.refresh()

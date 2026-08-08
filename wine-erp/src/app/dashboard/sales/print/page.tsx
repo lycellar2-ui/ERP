@@ -338,21 +338,21 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                 {/* Dynamic Footer Block */}
                 {/* Signatures for Sales Orders */}
                 <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-400 break-inside-avoid print:break-inside-avoid">
-                    <div className="flex flex-col justify-between h-16">
+                    <div className="flex flex-col pb-12">
                         <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Sale Admin duyệt</p>
-                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="text-slate-500 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                     </div>
-                    <div className="flex flex-col justify-between h-16">
+                    <div className="flex flex-col pb-12">
                         <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Kế toán kiểm soát</p>
-                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="text-slate-500 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                     </div>
-                    <div className="flex flex-col justify-between h-16">
+                    <div className="flex flex-col pb-12">
                         <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Thủ kho</p>
-                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="text-slate-500 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                     </div>
-                    <div className="flex flex-col justify-between h-16">
+                    <div className="flex flex-col pb-12">
                         <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Người nhận hàng</p>
-                        <p className="text-slate-500 italic text-[9px]">(Ký, ghi rõ họ tên)</p>
+                        <p className="text-slate-500 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                     </div>
                 </div>
             </div>

@@ -102,6 +102,8 @@ export const ProductCreateSchema = z.object({
     volumeMl: z.number().int().positive().optional(),
     grapeVariety: z.string().optional(),
     description: z.string().max(2000).optional(),
+    selfDeclarationUrl: z.string().optional().nullable(),
+    tastingNoteUrl: z.string().optional().nullable(),
 })
 
 export const CustomerCreateSchema = z.object({

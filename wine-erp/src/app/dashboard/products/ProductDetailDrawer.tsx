@@ -32,10 +32,10 @@ const COUNTRY_NAMES: Record<string, string> = {
 }
 
 const WINE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    RED: { label: 'Vang Đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
-    WHITE: { label: 'Vang Trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
-    ROSE: { label: 'Rosé', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
-    SPARKLING: { label: 'Sâm panh', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
+    RED: { label: 'Vang đỏ', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
+    WHITE: { label: 'Vang trắng', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)' },
+    ROSE: { label: 'Vang hồng', color: '#D4607A', bg: 'rgba(212,96,122,0.15)' },
+    SPARKLING: { label: 'Vang nổ', color: '#7AC4C4', bg: 'rgba(122,196,196,0.15)' },
     FORTIFIED: { label: 'Fortified', color: '#87CBB9', bg: 'rgba(168,130,204,0.15)' },
     DESSERT: { label: 'Dessert', color: '#D4963A', bg: 'rgba(212,150,58,0.12)' },
 }
@@ -283,6 +283,38 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             </div>
                         </div>
                     </div>
+
+                    {((activeProduct as any)?.selfDeclarationUrl || (activeProduct as any)?.tastingNoteUrl) && (
+                        <div className="space-y-3">
+                            <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#87CBB9' }}>
+                                <Clipboard size={13} /> Tài Liệu & Đường Link
+                            </h4>
+                            <div className="flex flex-wrap gap-3">
+                                {(activeProduct as any)?.selfDeclarationUrl && (
+                                    <a
+                                        href={(activeProduct as any).selfDeclarationUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
+                                        style={{ background: 'rgba(135,203,185,0.12)', border: '1px solid rgba(135,203,185,0.3)', color: '#87CBB9' }}
+                                    >
+                                        📄 Xem bản Tự Công Bố ↗
+                                    </a>
+                                )}
+                                {(activeProduct as any)?.tastingNoteUrl && (
+                                    <a
+                                        href={(activeProduct as any).tastingNoteUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
+                                        style={{ background: 'rgba(74,143,171,0.12)', border: '1px solid rgba(74,143,171,0.3)', color: '#7AC4C4' }}
+                                    >
+                                        🍷 Xem Tasting Note ↗
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
 
                     {effectiveProfile && (

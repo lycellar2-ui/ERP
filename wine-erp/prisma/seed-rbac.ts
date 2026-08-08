@@ -178,11 +178,11 @@ async function main() {
     console.log(`  ✓ Admin user: ${adminUser.email} → CEO role`)
 
     const adminUser2 = await prisma.user.upsert({
-        where: { email: 'admin2@lyscellars.com' },
+        where: { email: 'lyptc@lyscellars.com' },
         update: { name: 'CEO Secondary' },
         create: {
             id: 'user-admin2',
-            email: 'admin2@lyscellars.com',
+            email: 'lyptc@lyscellars.com',
             name: 'CEO Secondary',
             passwordHash: 'supabase-managed',
             status: 'ACTIVE',
