@@ -502,7 +502,7 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Navigation Breadcrumb** | `WarehouseClient.tsx` | Nút `← Bảng Chức Năng Kho` + Thanh chuyển subtab nhanh ở header |
 | **Cấu hình xuất bán / điều chuyển kho** | `WarehouseClient.tsx`, `actions.ts` | Thêm modal `⚙️ Cấu Hình Kho` thiết lập `allowSales` (có thể xuất bán), `allowTransfer` (có thể điều chuyển), `isDefault` (kho mặc định) và `legalEntityId` (pháp nhân) |
 | **Tự động mặc định kho theo Pháp nhân** | `SalesClient.tsx`, `DeliveryOrderTab.tsx` | Tự động chọn kho mặc định của Pháp nhân sở hữu đơn bán hàng, vô hiệu hóa kho chỉ điều chuyển (`allowSales: false`) khỏi đơn bán hàng để tránh chọn nhầm |
-| **Ưu tiên Niên vụ Vintage nhặt hàng DO** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Hiển thị nổi bật 🍇 Niên vụ (Vintage) & 📍 Vị trí kho (Khu vực/Kệ/Ô) trong form nhặt hàng DO thay cho mã Lô rườm rà |
+| **Tự động tách vị trí nhặt hàng Multi-Location FIFO** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Tự động phân bổ số lượng nhặt tách ra nhiều vị trí/lô theo thứ tự FIFO (VD: nhặt 1 chai ở kệ A, 1 chai ở kệ B cho đủ 2 chai đơn hàng). Bỏ nút phân bổ thừa và hỗ trợ thêm/xóa dòng tách vị trí nhặt linh hoạt |
 
 ### Chi tiết GR Variance Report
 

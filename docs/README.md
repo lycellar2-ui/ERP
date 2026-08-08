@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 16:30 | Wine ERP v8.6 — 29 modules, 123 models, Warehouse Setup (Allow Sales/Transfer, Default Legal Entity) & Vintage Priority DO Picking*
+*Last updated: 2026-08-08 16:30 | Wine ERP v8.7 — 29 modules, 123 models, Multi-Location Auto-Split FIFO Picking for Delivery Orders*
 

@@ -510,26 +510,46 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 )
                 if (active) {
                     setLotsMap(map)
-                    setLines(prev => {
-                        return selectedSO.lines.map((sol, i) => {
+                    setLines(() => {
+                        const allocatedLines: { productId: string; lotId: string; locationId: string; qtyPicked: number }[] = []
+                        for (const sol of selectedSO.lines) {
                             const availLots = map[sol.productId] || []
-                            const oldestLot = availLots[0]
-                            const existingLine = prev[i]
-                            if (oldestLot) {
-                                return {
+                            let remainingNeeded = sol.qtyOrdered
+
+                            if (availLots.length === 0) {
+                                allocatedLines.push({
                                     productId: sol.productId,
-                                    lotId: existingLine?.lotId || oldestLot.id,
-                                    locationId: existingLine?.locationId || oldestLot.locationId,
-                                    qtyPicked: existingLine?.qtyPicked ?? sol.qtyOrdered
+                                    lotId: '',
+                                    locationId: '',
+                                    qtyPicked: sol.qtyOrdered
+                                })
+                            } else {
+                                for (const lot of availLots) {
+                                    if (remainingNeeded <= 0) break
+                                    const allocQty = Math.min(remainingNeeded, lot.qtyAvailable)
+                                    if (allocQty > 0) {
+                                        allocatedLines.push({
+                                            productId: sol.productId,
+                                            lotId: lot.id,
+                                            locationId: lot.locationId,
+                                            qtyPicked: allocQty
+                                        })
+                                        remainingNeeded -= allocQty
+                                    }
+                                }
+                                // If total stock across all lots < qtyOrdered
+                                if (remainingNeeded > 0) {
+                                    const lastLot = availLots[availLots.length - 1]
+                                    allocatedLines.push({
+                                        productId: sol.productId,
+                                        lotId: lastLot.id,
+                                        locationId: lastLot.locationId,
+                                        qtyPicked: remainingNeeded
+                                    })
                                 }
                             }
-                            return existingLine || {
-                                productId: sol.productId,
-                                lotId: '',
-                                locationId: '',
-                                qtyPicked: sol.qtyOrdered
-                            }
-                        })
+                        }
+                        return allocatedLines
                     })
                 }
             } catch (err: any) {
@@ -544,31 +564,6 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         }
     }, [selectedSO, warehouseId])
 
-    const handleAutoAssignFIFO = () => {
-        if (!selectedSO) return
-        setLines(prev => {
-            return selectedSO.lines.map((sol, i) => {
-                const availLots = lotsMap[sol.productId] || []
-                const oldestLot = availLots[0]
-                if (oldestLot) {
-                    return {
-                        productId: sol.productId,
-                        lotId: oldestLot.id,
-                        locationId: oldestLot.locationId,
-                        qtyPicked: sol.qtyOrdered
-                    }
-                }
-                return prev[i] || {
-                    productId: sol.productId,
-                    lotId: '',
-                    locationId: '',
-                    qtyPicked: sol.qtyOrdered
-                }
-            })
-        })
-        toast.success('Đã tự động phân bổ lô hàng theo chuẩn FIFO (Cũ nhất xuất trước)!')
-    }
-
     useEffect(() => {
         getSOsForDelivery().then(data => {
             setSOs(data as any)
@@ -576,12 +571,6 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 const targetSO = (data as any[]).find(s => s.id === initialSOId)
                 if (targetSO) {
                     setSelectedSO(targetSO)
-                    setLines(targetSO.lines.map((l: any) => ({
-                        productId: l.productId,
-                        lotId: '',
-                        locationId: '',
-                        qtyPicked: l.qtyOrdered,
-                    })))
                     if (targetSO.warehouseId) {
                         setWarehouseId(targetSO.warehouseId)
                     } else if (warehouses.length > 0) {
@@ -600,29 +589,12 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     const selectSO = (soId: string) => {
         const so = sos.find(s => s.id === soId) || null
         setSelectedSO(so)
-        if (so) {
-            setLines(so.lines.map(l => ({
-                productId: l.productId,
-                lotId: '',
-                locationId: '',
-                qtyPicked: l.qtyOrdered,
-            })))
-            if ((so as any).warehouseId) {
-                setWarehouseId((so as any).warehouseId)
-            } else if (warehouses.length > 0) {
-                const entityWhs = warehouses.filter((w: any) => !w.legalEntityId || w.legalEntityId === (so as any).legalEntityId)
-                const defaultWh = entityWhs.find((w: any) => w.isDefault && w.allowSales !== false)
-                    ?? entityWhs.find((w: any) => w.allowSales !== false)
-                    ?? entityWhs[0]
-                if (defaultWh) setWarehouseId(defaultWh.id)
-            }
-        }
     }
 
     const handleSave = async (autoConfirm = false) => {
         if (!selectedSO || !warehouseId) return toast.error('Chọn SO và kho xuất hàng')
         const validLines = lines.filter(l => l.qtyPicked > 0 && l.lotId)
-        if (validLines.length === 0) return toast.error('Chưa có vị trí nhặt hàng nào được chọn. Hãy bấm [⚡ Tự Động Phân Bổ FIFO]')
+        if (validLines.length === 0) return toast.error('Chưa có vị trí nhặt hàng nào được chọn.')
         setSaving(true)
         try {
             const res = await createDeliveryOrder({ soId: selectedSO.id, warehouseId, lines: validLines })
@@ -694,26 +666,24 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         <>
             <div className="flex items-center justify-between pt-2">
                 <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#B47816' }}>
-                    Nhặt Hàng ({lines.length} loại)
+                    Nhặt Hàng ({selectedSO!.lines.length} loại sản phẩm)
                 </p>
-                <button
-                    onClick={handleAutoAssignFIFO}
-                    className="text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all hover:brightness-105 shadow-sm"
-                    style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid #D4A853', color: '#B47816', minHeight: '36px' }}
-                    title="Tự động chọn các lô cũ nhất theo nguyên tắc FIFO"
-                >
-                    ⚡ Tự Động Phân Bổ FIFO
-                </button>
             </div>
 
             <div className="space-y-3">
-                {selectedSO!.lines.map((sol, i) => {
+                {selectedSO!.lines.map((sol) => {
                     const availLots = lotsMap[sol.productId] || []
-                    const selectedLot = availLots.find(l => l.id === lines[i]?.lotId)
-                    const isInsufficient = selectedLot && selectedLot.qtyAvailable < (lines[i]?.qtyPicked || 0)
+                    const productPicks = lines
+                        .map((l, globalIdx) => ({ ...l, globalIdx }))
+                        .filter(l => l.productId === sol.productId)
+                    
+                    const totalPickedForProduct = productPicks.reduce((sum, p) => sum + (p.lotId ? p.qtyPicked : 0), 0)
+                    const totalStockAvailable = availLots.reduce((sum, l) => sum + l.qtyAvailable, 0)
+                    const isSufficient = totalPickedForProduct === sol.qtyOrdered
+                    const isOverPicked = totalPickedForProduct > sol.qtyOrdered
 
                     return (
-                        <div key={sol.productId} className="p-3.5 rounded-xl space-y-2"
+                        <div key={sol.productId} className="p-3.5 rounded-xl space-y-3"
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold leading-tight" style={{ color: '#0F172A' }}>{sol.productName}</p>
@@ -724,66 +694,106 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs" style={{ color: '#64748B' }}>
                                 <span>SKU: <strong className="font-mono text-[#334155]">{sol.skuCode}</strong> · 🍇 Vintage Đơn Hàng: <strong className="font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">{sol.vintage ? sol.vintage : 'NV'}</strong></span>
-                                {selectedLot ? (
-                                    <span className={`text-[11px] font-semibold ${isInsufficient ? 'text-amber-600 font-bold' : 'text-emerald-600'}`}>
-                                        {isInsufficient ? `⚠️ Thiếu (Tồn: ${selectedLot.qtyAvailable})` : `✅ Đủ (Tồn: ${selectedLot.qtyAvailable})`}
-                                    </span>
-                                ) : (
-                                    <span className="text-[11px] text-amber-600 italic">
-                                        {availLots.length > 0 ? '⚠️ Chưa chọn vị trí nhặt hàng' : '❌ Hết hàng'}
-                                    </span>
-                                )}
+                                <span className={`text-[11px] font-semibold ${isOverPicked ? 'text-amber-600 font-bold' : isSufficient ? 'text-emerald-600' : 'text-amber-600 font-bold'}`}>
+                                    {isSufficient 
+                                        ? `✅ Đủ (Tồn kho: ${totalStockAvailable} — Nhặt ${totalPickedForProduct}/${sol.qtyOrdered} chai)`
+                                        : isOverPicked 
+                                        ? `⚠️ Nhặt vượt nhu cầu (${totalPickedForProduct}/${sol.qtyOrdered} chai)`
+                                        : `⚠️ Thiếu (Tồn kho: ${totalStockAvailable} — Nhặt ${totalPickedForProduct}/${sol.qtyOrdered} chai)`
+                                    }
+                                </span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                                <div className="sm:col-span-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: '#475569' }}>Vị Trí Kho & Niên Vụ (Vintage)</label>
-                                    <select
-                                        value={lines[i]?.lotId ?? ''}
-                                        onChange={e => {
-                                            const lotId = e.target.value
-                                            const chosenLot = availLots.find(l => l.id === lotId)
-                                            const v = [...lines]
-                                            v[i] = { 
-                                                ...v[i], 
-                                                lotId, 
-                                                locationId: chosenLot?.locationId ?? '' 
-                                            }
-                                            setLines(v)
-                                        }}
-                                        className="w-full px-2.5 py-2 rounded-lg text-xs outline-none font-sans font-medium"
-                                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: lines[i]?.lotId ? '#B47816' : '#64748B' }}
-                                    >
-                                        <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn vị trí nhặt hàng —</option>
-                                        {availLots.map((lot, idx) => {
-                                            const vtg = lot.vintage ? lot.vintage : (sol.vintage ? sol.vintage : 'NV')
-                                            return (
-                                                <option key={lot.id} value={lot.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>
-                                                    {idx === 0 ? '⭐ [Ưu Tiên FIFO] ' : ''}📍 {lot.zone}{lot.rack ? ` / Kệ: ${lot.rack}` : ''}{lot.bin ? ` / Ô: ${lot.bin}` : ''} · 🍇 Vintage: {vtg} (Tồn: {lot.qtyAvailable} chai)
-                                                </option>
-                                            )
-                                        })}
-                                    </select>
-                                    {selectedLot && (
-                                        <div className="mt-1.5 flex items-center gap-2 text-[11px] px-3 py-2 rounded-lg flex-wrap font-medium"
-                                            style={{ background: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.3)', color: '#1E293B' }}>
-                                            <span>📍 Vị Trí: <strong className="font-bold text-slate-900">{selectedLot.zone}</strong>{selectedLot.rack && <> / Kệ: <strong className="font-bold text-slate-900">{selectedLot.rack}</strong></>}{selectedLot.bin && <> / Ô: <strong className="font-bold text-slate-900">{selectedLot.bin}</strong></>}</span>
-                                            <span style={{ color: '#CBD5E1' }}>|</span>
-                                            <span className="flex items-center gap-1">🍇 Vintage: <strong className="font-bold text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded">{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
-                                            <span style={{ color: '#CBD5E1' }}>|</span>
-                                            <span>📦 Tồn Kho: <strong className="font-bold text-emerald-700">{selectedLot.qtyAvailable} chai</strong></span>
+                            {/* Render Split Location Pick Lines for this Product */}
+                            <div className="space-y-2.5 pt-1">
+                                {productPicks.map((pick, pickIdx) => {
+                                    const selectedLot = availLots.find(l => l.id === pick.lotId)
+                                    const isLocInsufficient = selectedLot && selectedLot.qtyAvailable < pick.qtyPicked
+
+                                    return (
+                                        <div key={pick.globalIdx} className="p-2.5 rounded-lg border bg-white grid grid-cols-1 sm:grid-cols-12 gap-2 items-end"
+                                            style={{ borderColor: isLocInsufficient ? '#FCA5A5' : '#E2E8F0' }}>
+                                            <div className="sm:col-span-8">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: '#475569' }}>
+                                                    Vị Trí Kho & Niên Vụ (Vintage) {productPicks.length > 1 ? `· Vị trí ${pickIdx + 1}` : ''}
+                                                </label>
+                                                <select
+                                                    value={pick.lotId}
+                                                    onChange={e => {
+                                                        const lotId = e.target.value
+                                                        const chosenLot = availLots.find(l => l.id === lotId)
+                                                        const v = [...lines]
+                                                        v[pick.globalIdx] = {
+                                                            ...v[pick.globalIdx],
+                                                            lotId,
+                                                            locationId: chosenLot?.locationId ?? ''
+                                                        }
+                                                        setLines(v)
+                                                    }}
+                                                    className="w-full px-2.5 py-1.5 rounded-lg text-xs outline-none font-sans font-medium"
+                                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: pick.lotId ? '#B47816' : '#64748B' }}
+                                                >
+                                                    <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn vị trí nhặt hàng —</option>
+                                                    {availLots.map((lot, idx) => {
+                                                        const vtg = lot.vintage ? lot.vintage : (sol.vintage ? sol.vintage : 'NV')
+                                                        return (
+                                                            <option key={lot.id} value={lot.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>
+                                                                {idx === 0 ? '⭐ [Ưu Tiên FIFO] ' : ''}📍 {lot.zone}{lot.rack ? ` / Kệ: ${lot.rack}` : ''}{lot.bin ? ` / Ô: ${lot.bin}` : ''} · 🍇 Vintage: {vtg} (Tồn: {lot.qtyAvailable} chai)
+                                                            </option>
+                                                        )
+                                                    })}
+                                                </select>
+                                                {selectedLot && (
+                                                    <div className="mt-1 flex items-center gap-2 text-[10px] px-2 py-1 rounded flex-wrap font-medium"
+                                                        style={{ background: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.3)', color: '#1E293B' }}>
+                                                        <span>📍 Vị Trí: <strong className="font-bold text-slate-900">{selectedLot.zone}</strong>{selectedLot.rack && <> / Kệ: {selectedLot.rack}</>}{selectedLot.bin && <> / Ô: {selectedLot.bin}</>}</span>
+                                                        <span>| 🍇 Vintage: <strong className="font-bold text-amber-800">{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
+                                                        <span>| 📦 Tồn: <strong className="font-bold text-emerald-700">{selectedLot.qtyAvailable} chai</strong></span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="sm:col-span-4 flex items-center gap-2">
+                                                <div className="flex-1">
+                                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#64748B' }}>SL Nhặt</label>
+                                                    <input type="number" min={0} value={pick.qtyPicked}
+                                                        onChange={e => {
+                                                            const v = [...lines]
+                                                            v[pick.globalIdx] = { ...v[pick.globalIdx], qtyPicked: Number(e.target.value) }
+                                                            setLines(v)
+                                                        }}
+                                                        className="w-full px-2.5 py-1.5 rounded-lg text-sm font-mono font-bold text-center"
+                                                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: isLocInsufficient ? '#DC2626' : '#16A34A' }} />
+                                                </div>
+                                                {productPicks.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setLines(prev => prev.filter((_, idx) => idx !== pick.globalIdx))
+                                                        }}
+                                                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0 mt-4 transition-colors"
+                                                        title="Xóa vị trí nhặt hàng này"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#64748B' }}>SL Nhặt</label>
-                                    <input type="number" min={0} value={lines[i]?.qtyPicked ?? 0}
-                                        onChange={e => {
-                                            const v = [...lines]; v[i] = { ...v[i], qtyPicked: Number(e.target.value) }; setLines(v)
-                                        }}
-                                        className="w-full px-2.5 py-2 rounded-lg text-sm font-mono font-bold text-center"
-                                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#16A34A' }} />
-                                </div>
+                                    )
+                                })}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setLines(prev => [
+                                            ...prev,
+                                            { productId: sol.productId, lotId: '', locationId: '', qtyPicked: 1 }
+                                        ])
+                                    }}
+                                    className="text-xs font-semibold text-amber-700 flex items-center gap-1 hover:underline pt-1"
+                                >
+                                    <Plus size={14} /> Thêm vị trí nhặt hàng khác cho sản phẩm này (Tách vị trí)
+                                </button>
                             </div>
                         </div>
                     )
