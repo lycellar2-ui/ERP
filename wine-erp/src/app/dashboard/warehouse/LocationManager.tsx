@@ -12,7 +12,7 @@ export type LocationItem = {
     rack?: string | null
     bin?: string | null
     type: string
-    capacityCases?: number
+    capacityCases?: number | null
     tempControlled?: boolean
     active?: boolean
     isOccupied?: boolean
@@ -223,7 +223,8 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {locs.map(loc => {
-                                const usedPct = loc.capacityCases > 0 ? Math.round(((loc.usedCases || 0) / loc.capacityCases) * 100) : 0
+                                const cap = loc.capacityCases || 0
+                                const usedPct = cap > 0 ? Math.round(((loc.usedCases || 0) / cap) * 100) : 0
                                 return (
                                     <tr key={loc.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-2.5 font-bold font-mono text-emerald-700">
