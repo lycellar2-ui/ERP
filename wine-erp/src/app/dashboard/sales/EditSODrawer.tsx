@@ -157,6 +157,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
     const [loadingSO, setLoadingSO] = useState(true)
 
+    const [orderDate, setOrderDate] = useState('')
     const [customerId, setCustomerId] = useState('')
     const [channel, setChannel] = useState<SalesChannel>('HORECA')
     const [paymentTerm, setPaymentTerm] = useState('NET30')
@@ -222,6 +223,9 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         }
 
         setSoNo(detail.soNo)
+        if (detail.createdAt) {
+            setOrderDate(new Date(detail.createdAt).toISOString().split('T')[0])
+        }
         setCustomerId(detail.customerId)
         setChannel(detail.channel as SalesChannel)
         setPaymentTerm(detail.paymentTerm)
@@ -427,6 +431,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         setSaving(true)
         const promise = updateSalesOrder({
             soId,
+            orderDate,
             customerId,
             channel,
             paymentTerm,
@@ -631,8 +636,8 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 </div>
                             )}
 
-                            {/* Channel + Payment + Legal Entity */}
-                            <div className="grid grid-cols-3 gap-3">
+                            {/* Channel + Payment + Legal Entity + Order Date */}
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                                 <div>
                                     <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Kênh bán</label>
                                     <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
@@ -654,6 +659,16 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                         <option value="">— Chọn —</option>
                                         {entities.map(e => <option key={e.id} value={e.id}>{e.code}</option>)}
                                     </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>📅 Ngày Đơn Hàng</label>
+                                    <input
+                                        type="date"
+                                        value={orderDate}
+                                        onChange={e => setOrderDate(e.target.value)}
+                                        className="w-full px-3 py-2 text-sm font-mono outline-none rounded"
+                                        style={inputStyle}
+                                    />
                                 </div>
                             </div>
 

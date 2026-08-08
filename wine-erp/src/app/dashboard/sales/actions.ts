@@ -44,6 +44,7 @@ export interface SOLineCreate {
 }
 
 export interface SOCreateInput {
+    orderDate?: string | Date
     customerId: string
     salesRepId: string
     channel: SalesChannel
@@ -809,9 +810,12 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
         }
 
+        const orderDateObj = input.orderDate ? new Date(input.orderDate) : new Date()
+
         const so = await prisma.salesOrder.create({
             data: {
                 soNo,
+                createdAt: orderDateObj,
                 customerId: input.customerId,
                 salesRepId: salesRepId,
                 channel: input.channel,
@@ -867,6 +871,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
 // ── Update Sales Order (DRAFT only) ──────────────
 export interface SOUpdateInput {
     soId: string
+    orderDate?: string | Date
     customerId: string
     channel: SalesChannel
     paymentTerm: string
@@ -959,6 +964,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             prisma.salesOrder.update({
                 where: { id: input.soId },
                 data: {
+                    ...(input.orderDate ? { createdAt: new Date(input.orderDate) } : {}),
                     customerId: input.customerId,
                     channel: input.channel,
                     paymentTerm: input.paymentTerm,

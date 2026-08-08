@@ -154,6 +154,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         return result
     }, [customers])
 
+    const [orderDate, setOrderDate] = useState(() => new Date().toISOString().split('T')[0])
     const [customerId, setCustomerId] = useState('')
     const [channel, setChannel] = useState<SalesChannel>('HORECA')
     const [paymentTerm, setPaymentTerm] = useState('NET30')
@@ -430,6 +431,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
         setSaving(true)
         const promise = createSalesOrder({
+            orderDate,
             customerId,
             salesRepId: userId || 'SYSTEM',
             channel,
@@ -463,6 +465,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
     }
 
     const resetForm = () => {
+        setOrderDate(new Date().toISOString().split('T')[0])
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
         setArBalance(0); setPriceMap({}); setLegalEntityId(''); setSearchQueries({})
@@ -504,10 +507,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
 
                     {!loadingData && (
                         <>
-                            {/* Row 1: Customer & Address */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Row 1: Customer, Address & Order Date */}
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                                 {/* Customer Autocomplete Search */}
-                                <div>
+                                <div className="md:col-span-5">
                                     <div className="flex items-center justify-between mb-1">
                                         <label className="block text-[11px] font-bold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
                                             Khách Hàng *
@@ -546,7 +549,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                     setCustomerSearchInput(e.target.value)
                                                     setCustomerDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-3 pr-10 py-2.5 text-sm font-semibold text-slate-900 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-[#6A8A9A]"
+                                                className="w-full pl-3 pr-10 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-[#6A8A9A]"
                                             />
                                             {selectedCustomer ? (
                                                 <button
@@ -558,45 +561,46 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                                         setCustomerDropdownOpen(true)
                                                     }}
                                                     className="absolute right-2 p-1.5 text-slate-400 hover:text-white hover:bg-rose-500 dark:bg-[#1F3547] rounded-md transition-colors"
-                                                    title="Bỏ chọn khách hàng"
+                                                    title="Xóa khách hàng đã chọn"
                                                 >
                                                     <X size={14} />
                                                 </button>
                                             ) : (
-                                                <div className="absolute right-3 text-slate-400 pointer-events-none">
-                                                    <ChevronDown size={16} />
+                                                <div className="absolute right-3 pointer-events-none text-slate-400">
+                                                    <ChevronDown size={14} />
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Dropdown Results List */}
                                         {customerDropdownOpen && (
-                                            <div className="absolute left-0 mt-2 max-h-80 overflow-y-auto z-[100] rounded-md bg-white dark:bg-[#0F1C28] border border-slate-200 dark:border-[#2A4355] w-full shadow-2xl divide-y divide-slate-100 dark:divide-[#1F3547]">
+                                            <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] shadow-xl py-1 divide-y divide-slate-100 dark:divide-[#1F3547]">
                                                 {filteredCustomers.length === 0 ? (
-                                                    <div className="px-4 py-8 flex flex-col items-center justify-center text-slate-400 gap-2 bg-slate-50 dark:bg-[#142433]">
-                                                        <Search size={24} className="text-slate-400 dark:text-slate-500" />
-                                                        <span className="text-sm font-medium">Không tìm thấy khách hàng khớp với từ khóa</span>
+                                                    <div className="px-4 py-3 text-xs text-slate-400 text-center">
+                                                        Không tìm thấy khách hàng phù hợp
                                                     </div>
                                                 ) : (
                                                     filteredCustomers.map(c => {
                                                         const isCompany = c.entityType === 'COMPANY'
                                                         const isDisabled = isCompany && !c.allowDirectSO
-                                                        const isSelected = selectedCustomer?.id === c.id
+                                                        const isSelected = c.id === customerId
+
                                                         return (
                                                             <div
                                                                 key={c.id}
-                                                                onMouseDown={() => {
-                                                                    if (isDisabled) return
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault()
+                                                                    if (isDisabled) {
+                                                                        toast.error('Công ty này chỉ dùng để quản lý công nợ tập trung. Vui lòng chọn Nhà hàng/Chi nhánh con bên dưới để lên đơn!')
+                                                                        return
+                                                                    }
                                                                     handleCustomerChange(c.id)
+                                                                    setCustomerSearchInput(`[${c.code}] ${c.name}`)
                                                                     setCustomerDropdownOpen(false)
                                                                 }}
-                                                                className={`px-4 py-3.5 text-left transition-all border-l-4 ${
-                                                                    isDisabled 
-                                                                        ? 'bg-slate-50 dark:bg-[#0A141E] text-slate-400 dark:text-slate-500 opacity-70 cursor-not-allowed border-l-transparent' 
-                                                                        : isSelected
-                                                                        ? 'bg-teal-50 dark:bg-[#182C3D] border-l-teal-500 dark:border-l-[#87CBB9]'
-                                                                        : 'bg-white dark:bg-[#0F1C28] cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1B2E3D] border-l-transparent hover:border-l-teal-500/50 dark:hover:border-l-[#87CBB9]/50'
-                                                                }`}
+                                                                className={`px-3.5 py-2.5 cursor-pointer transition-colors ${isDisabled ? 'bg-slate-50 opacity-60 cursor-not-allowed dark:bg-[#0E1A24]' : isSelected ? 'bg-teal-50 dark:bg-[#1A3040]' : 'hover:bg-slate-50 dark:hover:bg-[#1F3547]'}`}
                                                             >
-                                                                <div className="flex items-start justify-between gap-2">
+                                                                <div className="flex items-center justify-between">
                                                                     <div className="flex flex-col gap-1">
                                                                         <div className="flex items-center gap-2 flex-wrap">
                                                                             <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-500' : 'bg-teal-100 text-teal-700 dark:bg-[#1C3344] dark:text-[#87CBB9]'}`}>
@@ -642,16 +646,16 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                 </div>
 
                                 {/* Shipping Address Selection */}
-                                <div>
+                                <div className="md:col-span-4">
                                     <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#4A6A7A' }}>
                                         Địa Chỉ Giao Hàng *
                                     </label>
                                     {!selectedCustomer ? (
-                                        <div className="w-full px-3 py-1.5 text-xs rounded border border-[#2A4355] text-gray-500 bg-[#0A1926]/40">
+                                        <div className="w-full px-3 py-2 text-xs rounded border border-[#2A4355] text-gray-500 bg-[#0A1926]/40">
                                             Chưa chọn khách hàng
                                         </div>
                                     ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
-                                        <div className="px-3 py-1 text-xs bg-red-950/20 border border-red-500/20 text-red-400 rounded">
+                                        <div className="px-3 py-2 text-xs bg-red-950/20 border border-red-500/20 text-red-400 rounded">
                                             ⚠️ Chưa có địa chỉ giao hàng
                                         </div>
                                     ) : (
@@ -659,7 +663,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             <select
                                                 value={shippingAddressId}
                                                 onChange={e => setShippingAddressId(e.target.value)}
-                                                className="w-full px-3 py-1.5 text-xs outline-none rounded"
+                                                className="w-full px-3 py-2 text-xs outline-none rounded"
                                                 style={{ ...inputStyle }}
                                             >
                                                 <option value="">-- Chọn địa chỉ --</option>
@@ -671,6 +675,20 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                                             </select>
                                         </div>
                                     )}
+                                </div>
+
+                                {/* Order Date Selection */}
+                                <div className="md:col-span-3">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color: '#4A6A7A' }}>
+                                        📅 Ngày Đơn Hàng *
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={orderDate}
+                                        onChange={e => setOrderDate(e.target.value)}
+                                        className="w-full px-3 py-2 text-xs font-semibold outline-none rounded font-mono"
+                                        style={{ ...inputStyle }}
+                                    />
                                 </div>
                             </div>
 
