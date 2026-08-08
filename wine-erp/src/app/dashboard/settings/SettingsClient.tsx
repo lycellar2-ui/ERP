@@ -690,6 +690,12 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         setApprovalsLoaded(true)
     }, [])
 
+    React.useEffect(() => {
+        if (tab === 'audit' && !auditLoaded) loadAudit()
+        if (tab === 'approvals' && !approvalsLoaded) loadApprovals()
+        if (tab === 'entities' && !entitiesLoaded) loadEntities()
+    }, [tab, auditLoaded, approvalsLoaded, entitiesLoaded, loadAudit, loadApprovals, loadEntities])
+
     const handleApproval = async (requestId: string, action: 'APPROVE' | 'REJECT') => {
         setProcessingId(requestId)
         await processApproval({ requestId, action })
@@ -1118,27 +1124,27 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         </div>
                                         
                                         <div className="space-y-2 border-t border-[#2A4355] pt-3 text-xs" style={{ color: '#8AAEBB' }}>
-                                            <div className="flex justify-between">
-                                                <span>Địa chỉ:</span>
-                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.address || '—'}</span>
+                                            <div className="flex justify-between items-start gap-4">
+                                                <span className="shrink-0">Địa chỉ:</span>
+                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.address || '—'}</span>
                                             </div>
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between items-center">
                                                 <span>Số điện thoại:</span>
-                                                <span className="text-white font-medium text-right font-mono">{ent.phone || '—'}</span>
+                                                <span className="font-medium text-right font-mono" style={{ color: '#E8F1F2' }}>{ent.phone || '—'}</span>
                                             </div>
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between items-center">
                                                 <span>Email:</span>
-                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.email || '—'}</span>
+                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.email || '—'}</span>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span>Ngân hàng:</span>
-                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.bankName || '—'}</span>
+                                            <div className="flex justify-between items-start gap-4">
+                                                <span className="shrink-0">Ngân hàng:</span>
+                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.bankName || '—'}</span>
                                             </div>
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between items-center">
                                                 <span>Chủ tài khoản:</span>
-                                                <span className="text-white font-medium text-right max-w-[200px] truncate">{ent.bankAccountName || '—'}</span>
+                                                <span className="font-medium text-right" style={{ color: '#E8F1F2' }}>{ent.bankAccountName || '—'}</span>
                                             </div>
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between items-center">
                                                 <span>Số tài khoản:</span>
                                                 <span className="text-[#87CBB9] font-mono font-bold">{ent.bankAccountNumber || '—'}</span>
                                             </div>
@@ -1216,6 +1222,13 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 roles={roles}
                 currentUser={currentUser}
                 onUpdated={reload}
+            />
+            <EditEntityDrawer
+                open={!!editingEntity}
+                onClose={() => setEditingEntity(null)}
+                onSave={handleSaveEntity}
+                entity={editingEntity}
+                saving={savingEntity}
             />
         </div>
     )

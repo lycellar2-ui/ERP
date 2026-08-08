@@ -186,6 +186,7 @@ export async function createProposal(input: {
         })
 
         revalidatePath('/dashboard/proposals')
+        revalidateCache('proposals')
         return { success: true, id: proposal.id }
     } catch (err: any) {
         console.error('[Proposal] Create error:', err)
@@ -252,6 +253,7 @@ export async function updateProposal(id: string, input: {
         })
 
         revalidatePath('/dashboard/proposals')
+        revalidateCache('proposals')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -318,6 +320,7 @@ export async function submitProposal(id: string, userId: string): Promise<{ succ
 
         revalidatePath('/dashboard/proposals')
         revalidatePath('/dashboard')
+        revalidateCache('proposals')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -463,6 +466,7 @@ export async function processProposalApproval(input: {
 
         revalidatePath('/dashboard/proposals')
         revalidatePath('/dashboard')
+        revalidateCache('proposals')
         return { success: true, newStatus }
     } catch (err: any) {
         console.error('[Proposal] Approval error:', err)
@@ -499,6 +503,7 @@ export async function addProposalComment(input: {
         }
 
         revalidatePath('/dashboard/proposals')
+        revalidateCache('proposals')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -591,6 +596,7 @@ export async function updateProposalStatus(
             newValue: { status },
         })
         revalidatePath('/dashboard/proposals')
+        revalidateCache('proposals')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }

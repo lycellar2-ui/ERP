@@ -33,6 +33,7 @@
 24. [BUG-033: Lỗi Trùng Mã Đơn Hàng (soNo Unique Constraint Failed) Khi Tạo Đơn Bán Hàng](#bug-033-lỗi-trùng-mã-đơn-hàng-sono-unique-constraint-failed-khi-tạo-đơn-bán-hàng)
 25. [BUG-034: Lỗi Chữ Tàng Hình / Trắng Trên Nền Trắng Thẻ Xuất Kho (DO Cards)](#bug-034-lỗi-chữ-tàng-hình--trắng-trên-nền-trắng-thẻ-xuất-kho-do-cards)
 26. [BUG-035: Lỗi Foreign Key Constraint (products_appellationId_fkey) Khi Tạo Mới Sản Phẩm](#bug-035-lỗi-foreign-key-constraint-products_appellationid_fkey-khi-tạo-mới-sản-phẩm)
+27. [BUG-036: SWR Cache Stale Trên Tờ Trình, Cột Mã Cha Khách Hàng & Lỗi Chữ Tàng Hình Pháp Nhân](#bug-036-swr-cache-stale-trên-tờ-trình-cột-mã-cha-khách-hàng--lỗi-chữ-tàng-hình-pháp-nhân)
 
 ---
 
@@ -1461,6 +1462,32 @@ if ('salesRepId' in dataToUpdate) {
 ### Bài học
 
 > ⚠️ **RULE 57: Phải luôn kiểm tra kỹ định nghĩa quan hệ Schema (FK constraint). Nếu khóa ngoại trỏ vào `Appellation`, ô select bắt buộc phải nạp danh sách `Appellation` (chứa FK `Appellation.id`), không được nhầm lẫn với bảng cha `WineRegion`.**
+
+---
+
+## BUG-036: SWR Cache Stale Trên Tờ Trình, Cột Mã Cha Khách Hàng & Lỗi Chữ Tàng Hình Pháp Nhân
+
+**Ngày:** 2026-08-08  
+**Severity:** 🟡 Medium — Trạng thái tờ trình không đổi sau khi trình duyệt, cột mã cha hiển thị nhầm số chi nhánh và thông tin pháp nhân bị chìm chữ.
+
+### Triệu chứng
+1. Khi nhấn nút "Trình" duyệt tờ trình trên trang `/dashboard/proposals`, giao diện không thay đổi trạng thái từ Draft sang Pending Approval, các thẻ Stat Cards không phản hồi.
+2. Trên trang Khách hàng (`/dashboard/customers`), cột `MÃ CHA` của công ty mẹ hiển thị `(2)` gây hiểu nhầm là mã cha bị hỏng.
+3. Trên trang Cài đặt (`/dashboard/settings` tab Pháp Nhân & Kho), các ô thông tin Địa chỉ, Điện thoại, Email, Ngân hàng bị ẩn trắng không nhìn thấy. Nút "Chỉnh sửa" không bật được modal.
+
+### Nguyên nhân gốc rễ
+1. **Tờ trình**: Các Server Action (`submitProposal`, `processProposalApproval`, `createProposal`...) chỉ gọi `revalidatePath('/dashboard/proposals')` mà quên xóa cache SWR `revalidateCache('proposals')`. Dữ liệu SWR trả về bản ghi cũ trong bộ nhớ đệm 30s. Stat cards dùng `initialStats` server prop tĩnh thay vì tính toán động từ state `proposals`.
+2. **Khách hàng**: Cột `MÃ CHA` cũ tự động fallback hiển thị số chi nhánh `(childrenCount)` nếu không có `parentCode`.
+3. **Pháp nhân**: Các nhãn giá trị dùng `text-white` bị chìm trắng trên nền sáng, và `<EditEntityDrawer>` chưa được bao hàm trong JSX chính.
+
+### Cách fix
+1. Thêm `revalidateCache('proposals')` vào tất cả Server Action tờ trình; chuyển Stat Cards sang dùng `useMemo` tính từ `proposals` client state.
+2. Sửa cột `MÃ CHA` chỉ hiển thị mã cha thực tế `row.parentCode` hoặc `—`, đưa chỉ số chi nhánh về badge Công ty.
+3. Thay `text-white` bằng `style={{ color: '#E8F1F2' }}` trực tiếp trên các trường thông tin Pháp nhân và gắn `<EditEntityDrawer>` vào JSX.
+
+### Bài học
+
+> ⚠️ **RULE 58: Mọi Server Action cập nhật DB phải gọi đồng thời `revalidateCache('<prefix>')` để xóa SWR in-memory cache, tránh trả về dữ liệu cũ cho client.**
 
 
 

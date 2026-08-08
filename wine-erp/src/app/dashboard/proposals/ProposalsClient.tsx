@@ -15,6 +15,7 @@ import { formatVND } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import { getCustomersForSO, getProductsWithStock } from '../sales/actions'
+import { toast } from 'sonner'
 
 function formatCompactVND(amount: number): string {
     if (amount >= 1_000_000_000) {
@@ -88,19 +89,48 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         setLoading(false)
     }, [])
 
+    const handleSubmitProposal = useCallback(async (proposalId: string) => {
+        setActionLoading(proposalId)
+        try {
+            const res = await submitProposal(proposalId, userId)
+            if (res.success) {
+                toast.success('Đã trình tờ trình phê duyệt thành công!')
+                await refreshList()
+                if (detailId === proposalId) await openDetail(proposalId)
+            } else {
+                toast.error(res.error || 'Không thể trình tờ trình')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi hệ thống khi trình tờ trình')
+        } finally {
+            setActionLoading(null)
+        }
+    }, [userId, refreshList, detailId, openDetail])
+
     const handleApproval = useCallback(async (proposalId: string, action: 'APPROVE' | 'REJECT' | 'RETURN', comment?: string) => {
         setActionLoading(proposalId)
-        const result = await processProposalApproval({
-            proposalId,
-            action,
-            approverId: userId,
-            comment,
-        })
-        if (result.success) {
-            await refreshList()
-            if (detailId === proposalId) await openDetail(proposalId)
+        try {
+            const result = await processProposalApproval({
+                proposalId,
+                action,
+                approverId: userId,
+                comment,
+            })
+            if (result.success) {
+                toast.success(
+                    action === 'APPROVE' ? 'Đã duyệt tờ trình thành công!' :
+                    action === 'RETURN' ? 'Đã trả lại tờ trình' : 'Đã từ chối tờ trình'
+                )
+                await refreshList()
+                if (detailId === proposalId) await openDetail(proposalId)
+            } else {
+                toast.error(result.error || 'Lỗi khi xử lý phê duyệt')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi hệ thống')
+        } finally {
+            setActionLoading(null)
         }
-        setActionLoading(null)
     }, [userId, refreshList, detailId, openDetail])
 
     const handlePrint = useCallback(() => {
@@ -112,6 +142,26 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             detail.scope === 'ENTIRE_PORTFOLIO' ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
             detail.scope === 'SPECIFIC_PRODUCTS' ? 'Áp dụng cho một số sản phẩm cụ thể' :
             detail.scope === 'MIXED' ? 'Kết hợp chiết khấu danh mục và giá riêng cho một số sản phẩm' : 'N/A'
+
+        const formatPrintDateTime = (d: Date | string | null | undefined) => {
+            if (!d) return ''
+            const dt = new Date(d)
+            const hours = String(dt.getHours()).padStart(2, '0')
+            const minutes = String(dt.getMinutes()).padStart(2, '0')
+            const day = String(dt.getDate()).padStart(2, '0')
+            const month = String(dt.getMonth() + 1).padStart(2, '0')
+            const year = dt.getFullYear()
+            return `${hours}:${minutes} - ${day}/${month}/${year}`
+        }
+
+        const l1Log = detail.approvalLogs?.find((l: any) => l.level === 1 && (l.action === 'APPROVE' || l.action === 'CONFIRM'))
+        const l2Log = detail.approvalLogs?.find((l: any) => l.level === 2 && (l.action === 'APPROVE' || l.action === 'CONFIRM'))
+        const l3Log = detail.approvalLogs?.find((l: any) => l.level === 3 && (l.action === 'APPROVE' || l.action === 'CONFIRM'))
+
+        const creatorSignedAt = formatPrintDateTime(detail.submittedAt || detail.createdAt)
+        const l1SignedAt = l1Log ? formatPrintDateTime(l1Log.createdAt) : null
+        const l2SignedAt = l2Log ? formatPrintDateTime(l2Log.createdAt) : null
+        const l3SignedAt = l3Log ? formatPrintDateTime(l3Log.createdAt) : null
 
         const dateStr = `Hà Nội, ngày ${new Date(detail.createdAt).getDate()} tháng ${new Date(detail.createdAt).getMonth() + 1} năm ${new Date(detail.createdAt).getFullYear()}`
 
@@ -153,7 +203,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     .content-title { font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 10px; }
                     .content-body { padding-left: 15px; white-space: pre-wrap; word-break: break-word; }
                     .price-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-size: 13px; }
-                    .signatures-table { width: 100%; margin-top: 50px; border-collapse: collapse; page-break-inside: avoid; }
+                    .signatures-table { width: 100%; margin-top: 40px; border-collapse: collapse; page-break-inside: avoid; }
                     .signatures-table td { text-align: center; width: 25%; vertical-align: top; border: none; padding: 5px; }
                     .sign-title { font-weight: bold; text-transform: uppercase; margin-bottom: 3px; font-size: 12px; }
                     @media print {
@@ -248,23 +298,49 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     <tr>
                         <td>
                             <div class="sign-title">Người trình duyệt</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Ký, ghi rõ họ tên)</div>
-                            <div style="font-weight: bold; margin-top: 10px;">${detail.creator?.name || ''}</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Ký, ghi rõ họ tên)</div>
+                            <div style="font-weight: bold; font-size: 13px;">${detail.creator?.name || ''}</div>
+                            <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã lập & trình</div>
+                            <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${creatorSignedAt}</div>
                         </td>
                         <td>
                             <div class="sign-title">Trưởng bộ phận</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Ý kiến & Ký tên)</div>
-                            <div style="color: #777; margin-top: 10px;">...........................</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Ý kiến & Ký tên)</div>
+                            ${l1Log ? `
+                                <div style="font-weight: bold; font-size: 13px;">${l1Log.approver?.name || ''}</div>
+                                <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã duyệt</div>
+                                <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${l1SignedAt}</div>
+                                ${l1Log.comment ? `<div style="font-size: 10px; color: #333; font-style: italic; margin-top: 2px;">"${l1Log.comment}"</div>` : ''}
+                            ` : `
+                                <div style="color: #999; margin-top: 15px;">...........................</div>
+                                <div style="font-size: 11px; color: #888; margin-top: 4px;">(Chưa duyệt)</div>
+                            `}
                         </td>
                         <td>
                             <div class="sign-title">Kế toán trưởng</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Ý kiến & Ký tên)</div>
-                            <div style="color: #777; margin-top: 10px;">...........................</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Ý kiến & Ký tên)</div>
+                            ${l2Log ? `
+                                <div style="font-weight: bold; font-size: 13px;">${l2Log.approver?.name || ''}</div>
+                                <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã duyệt</div>
+                                <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${l2SignedAt}</div>
+                                ${l2Log.comment ? `<div style="font-size: 10px; color: #333; font-style: italic; margin-top: 2px;">"${l2Log.comment}"</div>` : ''}
+                            ` : `
+                                <div style="color: #999; margin-top: 15px;">...........................</div>
+                                <div style="font-size: 11px; color: #888; margin-top: 4px;">(Chưa duyệt)</div>
+                            `}
                         </td>
                         <td>
                             <div class="sign-title">Tổng giám đốc</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 50px;">(Phê duyệt & Ký tên)</div>
-                            <div style="color: #777; margin-top: 10px;">...........................</div>
+                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Phê duyệt & Ký tên)</div>
+                            ${l3Log ? `
+                                <div style="font-weight: bold; font-size: 13px;">${l3Log.approver?.name || ''}</div>
+                                <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã duyệt</div>
+                                <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${l3SignedAt}</div>
+                                ${l3Log.comment ? `<div style="font-size: 10px; color: #333; font-style: italic; margin-top: 2px;">"${l3Log.comment}"</div>` : ''}
+                            ` : `
+                                <div style="color: #999; margin-top: 15px;">...........................</div>
+                                <div style="font-size: 11px; color: #888; margin-top: 4px;">(Chưa duyệt)</div>
+                            `}
                         </td>
                     </tr>
                 </table>
@@ -280,6 +356,15 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         printWindow.document.write(htmlContent)
         printWindow.document.close()
     }, [detail])
+
+    const currentStats = React.useMemo(() => {
+        const total = proposals.length
+        const pending = proposals.filter(p => ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)).length
+        const approved = proposals.filter(p => ['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(p.status)).length
+        const rejected = proposals.filter(p => p.status === 'REJECTED').length
+        const draft = proposals.filter(p => p.status === 'DRAFT' || p.status === 'RETURNED').length
+        return { total, pending, approved, rejected, draft }
+    }, [proposals])
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -305,11 +390,11 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             {/* Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {[
-                    { label: 'Tổng', value: stats.total, accent: '#8AAEBB' },
-                    { label: 'Chờ Duyệt', value: stats.pending, accent: '#D4A853' },
-                    { label: 'Bản Nháp', value: stats.draft, accent: '#4A6A7A' },
-                    { label: 'Đã Duyệt', value: stats.approved, accent: '#5BA88A' },
-                    { label: 'Từ Chối', value: stats.rejected, accent: '#8B1A2E' },
+                    { label: 'Tổng', value: currentStats.total, accent: '#8AAEBB' },
+                    { label: 'Chờ Duyệt', value: currentStats.pending, accent: '#D4A853' },
+                    { label: 'Bản Nháp', value: currentStats.draft, accent: '#4A6A7A' },
+                    { label: 'Đã Duyệt', value: currentStats.approved, accent: '#5BA88A' },
+                    { label: 'Từ Chối', value: currentStats.rejected, accent: '#8B1A2E' },
                 ].map(s => (
                     <div key={s.label} className="rounded-md p-4" style={{ background: '#1B2E3D', border: '1px solid #2A4355', borderLeft: `3px solid ${s.accent}` }}>
                         <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>{s.label}</p>
@@ -448,14 +533,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             </button>
                                         </>
                                     )}
-                                    {p.status === 'DRAFT' && p.creatorName && (
+                                    {(p.status === 'DRAFT' || p.status === 'RETURNED') && (
                                         <button
-                                            onClick={async () => {
-                                                setActionLoading(p.id)
-                                                await submitProposal(p.id, userId)
-                                                await refreshList()
-                                                setActionLoading(null)
-                                            }}
+                                            onClick={() => handleSubmitProposal(p.id)}
                                             disabled={actionLoading === p.id}
                                             className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
                                             style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
@@ -605,14 +685,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                             </button>
                                                         </>
                                                     )}
-                                                    {p.status === 'DRAFT' && p.creatorName && (
+                                                    {(p.status === 'DRAFT' || p.status === 'RETURNED') && (
                                                         <button
-                                                            onClick={async () => {
-                                                                setActionLoading(p.id)
-                                                                await submitProposal(p.id, userId)
-                                                                await refreshList()
-                                                                setActionLoading(null)
-                                                            }}
+                                                            onClick={() => handleSubmitProposal(p.id)}
                                                             disabled={actionLoading === p.id}
                                                             className="px-2 py-1.5 text-xs font-semibold rounded transition-all whitespace-nowrap"
                                                             style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>

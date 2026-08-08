@@ -1408,7 +1408,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                             <p className="text-[13px] font-semibold truncate max-w-[200px]" style={{ color: '#E8F1F2' }} title={row.name}>{row.name}</p>
                                             {row.entityType === 'COMPANY' ? (
                                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0D1E2B', background: '#8AAEBB' }}>
-                                                    🏢 Công ty {row.allowDirectSO && '(Bán trực tiếp)'}
+                                                    🏢 Công ty {row.allowDirectSO && '(Bán trực tiếp)'} {row.childrenCount > 0 && `• ${row.childrenCount} chi nhánh`}
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap" style={{ color: '#0D1E2B', background: '#5BA88A' }}>
@@ -1423,13 +1423,9 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                         </div>
                                     </td>
                                     <td className="px-3 py-1.5 text-xs">
-                                        {row.entityType === 'RESTAURANT' && row.parentId ? (
+                                        {row.parentCode ? (
                                             <span style={{ color: '#8AAEBB' }} className="font-mono text-[11px] whitespace-nowrap">
                                                 {row.parentCode}
-                                            </span>
-                                        ) : row.entityType === 'COMPANY' && row.childrenCount > 0 ? (
-                                            <span style={{ color: '#D4A853' }} className="text-[11px] whitespace-nowrap">
-                                                ({row.childrenCount})
                                             </span>
                                         ) : (
                                             <span style={{ color: '#4A6A7A' }} className="text-xs">—</span>
