@@ -908,6 +908,63 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             )}
 
+            {/* FLOATING MOBILE BOTTOM NAVIGATION BAR FOR WMS */}
+            <div className="block md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 p-2 z-40 shadow-2xl">
+                <div className="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
+                    <button
+                        onClick={() => setViewMode('grid')}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                    >
+                        <LayoutGrid size={16} />
+                        Menu Kho
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setActiveTab('inventory')
+                            setViewMode('workspace')
+                        }}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                    >
+                        <Package size={16} />
+                        Tồn Kho
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setActiveTab('do')
+                            setViewMode('workspace')
+                        }}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                    >
+                        <Truck size={16} />
+                        Xuất Kho
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setActiveTab('gr')
+                            setViewMode('workspace')
+                        }}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                    >
+                        <PackagePlus size={16} />
+                        Nhập Kho
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setActiveTab('stock-count')
+                            setViewMode('workspace')
+                        }}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                    >
+                        <ClipboardList size={16} />
+                        Kiểm Kê
+                    </button>
+                </div>
+            </div>
+
             <CreateWarehouseModal
                 open={createWHOpen}
                 onClose={() => setCreateWHOpen(false)}
