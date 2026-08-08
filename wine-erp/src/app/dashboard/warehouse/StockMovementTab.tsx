@@ -418,6 +418,11 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                             </div>
 
+                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
+                                    <span>Xuất Trong Kỳ</span>
+                                    <ArrowUpCircle size={14} className="text-rose-600" />
+                                </div>
                                 <p className="text-xl font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                             </div>
@@ -639,22 +644,6 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                     </div>
                                 </div>
                             ))
-                        )}
-                    </div>         </td>
-                                                <td className="px-3.5 py-3 text-right">
-                                                    <p className="text-xs font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
-                                                </td>
-                                                <td className="px-3.5 py-3 text-right">
-                                                    <p className="text-xs font-extrabold font-mono text-teal-600">{summaryStats.totalClosingQty.toLocaleString()}</p>
-                                                    <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(summaryStats.totalClosingValue)}</p>
-                                                </td>
-                                                <td colSpan={2}></td>
-                                            </tr>
-                                        </tfoot>
-                                    )}
-                                </table>
-                            </div>
                         )}
                     </div>
                 </div>
