@@ -622,136 +622,31 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
     return (
         <div className="space-y-4 max-w-screen-2xl">
-            {/* 📱 NATIVE MOBILE WMS APP DASHBOARD (DISPLAYED ONLY ON MOBILE DEVICES < 768px) */}
-            <div className="block md:hidden space-y-4 pb-20">
-                {/* Mobile Header Card */}
-                <div className="bg-slate-950 p-4 rounded-3xl border border-slate-800 shadow-2xl text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black text-lg">
-                                🍷
-                            </div>
-                            <div>
-                                <h2 className="text-xs font-black text-white tracking-wider uppercase">LYS WMS APP</h2>
-                                <p className="text-[10px] text-slate-400 font-semibold">Vận Hành Kho Trên Di Động</p>
-                            </div>
-                        </div>
-
-                        {/* Mobile Warehouse Selector Pill */}
-                        <div className="relative">
-                            <select
-                                value={selectedWH ?? ''}
-                                onChange={e => {
-                                    const val = e.target.value
-                                    if (!val) { setSelectedWH(null); setLots([]); setSelectedLocations([]) }
-                                    else selectWarehouse(val)
-                                }}
-                                className="bg-slate-900 border border-slate-700 text-amber-400 text-xs font-black px-3 py-2 rounded-xl appearance-none pr-7 focus:outline-none"
-                            >
-                                <option value="">🏢 Tất cả kho ({stats.warehouses})</option>
-                                {warehouses.map(w => (
-                                    <option key={w.id} value={w.id}>🏢 {w.name}</option>
-                                ))}
-                            </select>
-                            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 pointer-events-none" />
-                        </div>
-                    </div>
-
-                    {/* Mobile 4 Giant Quick Launcher Buttons (1-Hand Ergonomics) */}
-                    <div className="grid grid-cols-2 gap-2.5 mt-4">
-                        <button
-                            onClick={() => { setActiveTab('inventory'); setViewMode('workspace') }}
-                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
-                        >
-                            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold mb-2">
-                                <Package size={20} />
-                            </div>
-                            <div className="text-xs font-black text-white">Tra Cứu Tồn Kho</div>
-                            <div className="text-[10px] text-emerald-400 font-bold mt-0.5">{stats.availableBottles.toLocaleString()} chai khả dụng ➔</div>
-                        </button>
-
-                        <button
-                            onClick={() => { setActiveTab('do'); setViewMode('workspace') }}
-                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
-                        >
-                            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold mb-2">
-                                <Truck size={20} />
-                            </div>
-                            <div className="text-xs font-black text-white">Xuất Kho (DO)</div>
-                            <div className="text-[10px] text-amber-400 font-bold mt-0.5">Nhặt hàng theo đơn ➔</div>
-                        </button>
-
-                        <button
-                            onClick={() => { setActiveTab('gr'); setViewMode('workspace') }}
-                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
-                        >
-                            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold mb-2">
-                                <PackagePlus size={20} />
-                            </div>
-                            <div className="text-xs font-black text-white">Nhập Kho (GR)</div>
-                            <div className="text-[10px] text-cyan-400 font-bold mt-0.5">Tạo lô hàng nhập ➔</div>
-                        </button>
-
-                        <button
-                            onClick={() => { setActiveTab('stock-count'); setViewMode('workspace') }}
-                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
-                        >
-                            <div className="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold mb-2">
-                                <ClipboardList size={20} />
-                            </div>
-                            <div className="text-xs font-black text-white">Kiểm Kê Kho</div>
-                            <div className="text-[10px] text-teal-400 font-bold mt-0.5">Đếm từng vị trí ➔</div>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Module App List */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-3 space-y-1.5 shadow-xl text-white">
-                    <span className="text-[10px] font-black uppercase text-slate-400 px-3 py-1 block">CÁC CHỨC NĂNG KHO MỞ RỘNG</span>
-                    {wmsFeatureModules.map(mod => {
-                        const Icon = mod.icon
-                        return (
-                            <button
-                                key={mod.key}
-                                onClick={() => { handleTabChange(mod.key); setViewMode('workspace') }}
-                                className="w-full p-3 rounded-2xl bg-slate-950/60 hover:bg-slate-950 border border-slate-800/80 flex items-center justify-between text-left active:scale-98 transition"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
-                                        <Icon size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="text-xs font-black text-white">{mod.title}</div>
-                                        <div className="text-[10px] text-slate-400">{mod.subtitle}</div>
-                                    </div>
-                                </div>
-                                <ChevronRight size={16} className="text-slate-500" />
-                            </button>
-                        )
-                    })}
-                </div>
-            </div>
-
-            {/* 🖥️ DESKTOP HEADER & LAYOUT (DISPLAYED ON SCREENS >= 768px) */}
-            <div className="hidden md:block p-3.5 rounded-2xl shadow-sm"
-                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                
-                {/* Single Consolidated Top Header Row */}
+            {/* ═══ TOP HEADER (SHARED BETWEEN DESKTOP & MOBILE WORKSPACE) ═══ */}
+            <div className="p-3.5 rounded-2xl shadow-sm bg-white border border-slate-200">
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                     {/* Left: Title & Active Breadcrumb */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 justify-between sm:justify-start">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                            className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-slate-900"
                             title="Nhấn vào Kho Hàng để về trang Bảng Chức Năng Kho"
-                            style={{ color: '#0F172A' }}
                         >
-                            <Warehouse size={20} style={{ color: '#D4A853' }} /> Kho Hàng
+                            <Warehouse size={20} className="text-amber-500" /> Kho Hàng
                         </button>
 
                         {viewMode === 'workspace' && (
-                            <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
-                                <ChevronRight size={14} /> <span className="text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">{activeModule?.title}</span>
+                            <div className="flex items-center gap-1.5">
+                                <ChevronRight size={14} className="text-slate-400" />
+                                <span className="text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg text-xs font-bold">
+                                    {activeModule?.title}
+                                </span>
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className="ml-2 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                                >
+                                    ← Về Menu Kho
+                                </button>
                             </div>
                         )}
                     </div>
@@ -759,10 +654,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     {/* Middle: Stat Badges */}
                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
                         {statCards.map(s => (
-                            <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-xs"
-                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                            <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-2xs bg-slate-50 border border-slate-200">
                                 <s.icon size={13} style={{ color: s.accent }} />
-                                <span className="uppercase font-semibold" style={{ color: '#64748B' }}>{s.label}:</span>
+                                <span className="uppercase font-semibold text-slate-500">{s.label}:</span>
                                 <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
                             </div>
                         ))}
@@ -783,12 +677,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold outline-none cursor-pointer shadow-xs"
-                                style={{
-                                    background: '#FFFFFF',
-                                    border: '1px solid #CBD5E1',
-                                    color: '#0F172A',
-                                }}
+                                className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-extrabold outline-none cursor-pointer shadow-2xs bg-white border border-slate-300 text-slate-900"
                             >
                                 <option value="">🏢 Tất cả kho ({stats.warehouses})</option>
                                 {warehouses.map(w => (
@@ -797,21 +686,101 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                     </option>
                                 ))}
                             </select>
-                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748B]" />
+                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
                         </div>
 
                         <button onClick={() => setCreateWHOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105 shrink-0 cursor-pointer"
-                            style={{ background: '#D4A853', color: '#0A1926' }}>
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all hover:brightness-105 shrink-0 cursor-pointer bg-amber-500 text-slate-950">
                             <Plus size={14} /> Tạo Kho Mới
                         </button>
                     </div>
                 </div>
             </div>
-
-            {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (DESKTOP GRID VIEW) ═══ */}
+                
+            {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (GRID VIEW) ═══ */}
             {viewMode === 'grid' && (
-                <div className="hidden md:block space-y-4">
+                <div className="space-y-4">
+                    {/* 📱 MOBILE LAUNCHER GRID (< 768px) - LIGHT LUXURY THEME */}
+                    <div className="block md:hidden space-y-3">
+                        <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500 px-1">
+                            Bảng Chức Năng Quản Lý Kho
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2.5">
+                            <button
+                                onClick={() => { setActiveTab('inventory'); setViewMode('workspace') }}
+                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold mb-2">
+                                    <Package size={20} />
+                                </div>
+                                <div className="text-xs font-black text-slate-900">Tra Cứu Tồn Kho</div>
+                                <div className="text-[10px] text-emerald-600 font-bold mt-0.5">{stats.availableBottles.toLocaleString()} chai khả dụng ➔</div>
+                            </button>
+
+                            <button
+                                onClick={() => { setActiveTab('do'); setViewMode('workspace') }}
+                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold mb-2">
+                                    <Truck size={20} />
+                                </div>
+                                <div className="text-xs font-black text-slate-900">Xuất Kho (DO)</div>
+                                <div className="text-[10px] text-amber-600 font-bold mt-0.5">Nhặt hàng theo đơn ➔</div>
+                            </button>
+
+                            <button
+                                onClick={() => { setActiveTab('gr'); setViewMode('workspace') }}
+                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold mb-2">
+                                    <PackagePlus size={20} />
+                                </div>
+                                <div className="text-xs font-black text-slate-900">Nhập Kho (GR)</div>
+                                <div className="text-[10px] text-cyan-600 font-bold mt-0.5">Tạo lô hàng nhập ➔</div>
+                            </button>
+
+                            <button
+                                onClick={() => { setActiveTab('stock-count'); setViewMode('workspace') }}
+                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold mb-2">
+                                    <ClipboardList size={20} />
+                                </div>
+                                <div className="text-xs font-black text-slate-900">Kiểm Kê Kho</div>
+                                <div className="text-[10px] text-teal-600 font-bold mt-0.5">Đếm từng vị trí ➔</div>
+                            </button>
+                        </div>
+
+                        {/* Mobile Module Row List */}
+                        <div className="bg-white border border-slate-200 rounded-2xl p-2 space-y-1 shadow-sm">
+                            <span className="text-[10px] font-black uppercase text-slate-400 px-3 py-1.5 block">CÁC CHỨC NĂNG KHO MỞ RỘNG</span>
+                            {wmsFeatureModules.map(mod => {
+                                const Icon = mod.icon
+                                return (
+                                    <button
+                                        key={mod.key}
+                                        onClick={() => { handleTabChange(mod.key); setViewMode('workspace') }}
+                                        className="w-full p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between text-left active:scale-98 transition"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
+                                                <Icon size={18} />
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-900">{mod.title}</div>
+                                                <div className="text-[10px] text-slate-500">{mod.subtitle}</div>
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={16} className="text-slate-400" />
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* 🖥️ DESKTOP GRID VIEW (>= 768px) */}
+                    <div className="hidden md:block space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>
                             Chức Năng Quản Lý Kho
@@ -863,7 +832,6 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         <span>{mod.actionLabel}</span>
                                         <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                                     </div>
-                                </div>
                             )
                         })}
                     </div>
@@ -1018,12 +986,12 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             )}
 
-            {/* FLOATING MOBILE BOTTOM NAVIGATION BAR FOR WMS */}
-            <div className="block md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 p-2 z-40 shadow-2xl">
+            {/* FLOATING MOBILE BOTTOM NAVIGATION BAR FOR WMS - LIGHT LUXURY THEME */}
+            <div className="block md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 p-2 z-40 shadow-2xl">
                 <div className="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'grid' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <LayoutGrid size={16} />
                         Menu Kho
@@ -1034,7 +1002,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('inventory')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'inventory' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <Package size={16} />
                         Tồn Kho
@@ -1045,7 +1013,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('do')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'do' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <Truck size={16} />
                         Xuất Kho
@@ -1056,7 +1024,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('gr')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'gr' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <PackagePlus size={16} />
                         Nhập Kho
@@ -1067,7 +1035,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             setActiveTab('stock-count')
                             setViewMode('workspace')
                         }}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[9px] transition ${viewMode === 'workspace' && activeTab === 'stock-count' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                     >
                         <ClipboardList size={16} />
                         Kiểm Kê
