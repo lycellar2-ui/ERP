@@ -352,6 +352,7 @@ function SODetailDrawer({
     canSeeMargin,
     canAcctApprove,
     canApprove,
+    canCreateInvoice,
     onAcctApprove,
     onAcctReject,
     onApprove,
@@ -363,6 +364,7 @@ function SODetailDrawer({
     canSeeMargin: boolean;
     canAcctApprove?: boolean;
     canApprove?: boolean;
+    canCreateInvoice?: boolean;
     onAcctApprove?: (id: string, legalEntityId?: string) => void;
     onAcctReject?: (id: string) => void;
     onApprove?: (id: string) => void;
@@ -935,29 +937,33 @@ function SODetailDrawer({
                             <div className="p-4 rounded-md" style={{ background: '#142433', border: '1px solid #2A4355' }}>
                                 <div className="flex items-center justify-between mb-2.5">
                                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Hóa Đơn Công Nợ (AR)</p>
-                                    <button
-                                        onClick={handleCreateInvoice}
-                                        disabled={creatingInvoice}
-                                        className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all hover:opacity-90 disabled:opacity-50 shadow-sm"
-                                        style={{ background: '#87CBB9', color: '#0A1926' }}
-                                        title="Xuất hoặc gắn mã hóa đơn VAT cho đơn hàng này"
-                                    >
-                                        {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
-                                        + Xuất Hóa Đơn
-                                    </button>
+                                    {canCreateInvoice && (
+                                        <button
+                                            onClick={handleCreateInvoice}
+                                            disabled={creatingInvoice}
+                                            className="text-[11px] px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition-all hover:opacity-90 disabled:opacity-50 shadow-sm"
+                                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                                            title="Xuất hoặc gắn mã hóa đơn VAT cho đơn hàng này"
+                                        >
+                                            {creatingInvoice ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
+                                            + Xuất Hóa Đơn
+                                        </button>
+                                    )}
                                 </div>
                                 {detail.arInvoices.length === 0 ? (
                                     <div className="text-center py-4 px-2 rounded-md" style={{ background: 'rgba(27,46,61,0.5)', border: '1px dashed #2A4355' }}>
                                         <p className="text-xs mb-2.5" style={{ color: '#8AAEBB' }}>Chưa xuất hóa đơn cho đơn hàng này</p>
-                                        <button
-                                            onClick={handleCreateInvoice}
-                                            disabled={creatingInvoice}
-                                            className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50"
-                                            style={{ background: '#87CBB9', color: '#0A1926' }}
-                                        >
-                                            {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
-                                            Bấm vào đây để Xuất / Gắn Hóa Đơn VAT
-                                        </button>
+                                        {canCreateInvoice && (
+                                            <button
+                                                onClick={handleCreateInvoice}
+                                                disabled={creatingInvoice}
+                                                className="text-xs px-3 py-1.5 rounded-md font-bold inline-flex items-center gap-1.5 transition-all hover:opacity-90 shadow-md disabled:opacity-50"
+                                                style={{ background: '#87CBB9', color: '#0A1926' }}
+                                            >
+                                                {creatingInvoice ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
+                                                Bấm vào đây để Xuất / Gắn Hóa Đơn VAT
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-1.5">
@@ -1212,14 +1218,22 @@ type Props = {
     initialData?: SalesPageResult
     userId: string
     userRoles: string[]
+    userPermissions?: string[]
 }
 
-export function SalesClient({ initialData, userId, userRoles }: Props) {
+export function SalesClient({ initialData, userId, userRoles, userPermissions = [] }: Props) {
     const queryClient = useQueryClient()
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const isCEO = userRoles.includes('CEO')
     const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
     const canAcctApprove = userRoles.includes('Kế Toán') || userRoles.includes('KE_TOAN')
+
+    const canCreateInvoice = isCEO || 
+                             canAcctApprove || 
+                             userPermissions.includes('TAX:CREATE') || 
+                             userPermissions.includes('TAX:WRITE') || 
+                             userPermissions.includes('FIN:WRITE') || 
+                             userPermissions.includes('SYS:ADMIN')
 
     const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
@@ -2090,6 +2104,7 @@ export function SalesClient({ initialData, userId, userRoles }: Props) {
                     canSeeMargin={canSeeMargin}
                     canAcctApprove={canAcctApprove}
                     canApprove={isCEO || isSaleAdminOrMgr}
+                    canCreateInvoice={canCreateInvoice}
                     onAcctApprove={(id, entityId) => {
                         setAcctModalId(id)
                         if (entityId) setAcctEntityId(entityId)

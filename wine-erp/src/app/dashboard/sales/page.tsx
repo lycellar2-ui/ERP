@@ -10,6 +10,7 @@ export const metadata = {
 export default async function SalesPage() {
     const user = await getCurrentUser()
     const userRoles = user?.roles ?? []
+    const userPermissions = user?.permissions ?? []
 
     // Server-side initial data — hydrated into TanStack Query on client
     const data = await getSalesPageData({ page: 1, pageSize: 20 })
@@ -19,6 +20,7 @@ export default async function SalesPage() {
             initialData={data}
             userId={user?.id ?? ''}
             userRoles={userRoles}
+            userPermissions={userPermissions}
         />
     )
 }

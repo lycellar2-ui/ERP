@@ -2634,6 +2634,19 @@ export async function createARInvoiceForSO(
 ): Promise<{ success: boolean; invoiceNo?: string; error?: string }> {
     try {
         const user = await requireAuth()
+        const canInvoice = user.permissions.includes('TAX:CREATE') || 
+                           user.permissions.includes('TAX:WRITE') || 
+                           user.permissions.includes('FIN:WRITE') || 
+                           user.permissions.includes('SYS:ADMIN') || 
+                           user.roles.includes('CEO') || 
+                           user.roles.includes('KE_TOAN') ||
+                           user.roles.includes('Kế Toán') ||
+                           user.roles.includes('ACCOUNTANT')
+                           
+        if (!canInvoice) {
+            return { success: false, error: 'Tài khoản của bạn không có quyền xuất hóa đơn (Cần quyền Kế toán / TAX:CREATE)' }
+        }
+
         const so = await prisma.salesOrder.findUnique({
             where: { id: soId },
             include: {
