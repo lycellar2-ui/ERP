@@ -11,7 +11,7 @@ import {
 import { formatDate } from '@/lib/utils'
 
 type SOOption = {
-    id: string; soNo: string; customerName: string; createdAt?: Date | string; warehouseId?: string
+    id: string; soNo: string; customerName: string; createdAt?: Date | string; warehouseId?: string; legalEntityId?: string | null
     lines: { productId: string; productName: string; skuCode: string; qtyOrdered: number; vintage: number | null }[]
 }
 
@@ -585,7 +585,11 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     if (targetSO.warehouseId) {
                         setWarehouseId(targetSO.warehouseId)
                     } else if (warehouses.length > 0) {
-                        setWarehouseId(warehouses[0].id)
+                        const entityWhs = warehouses.filter((w: any) => !w.legalEntityId || w.legalEntityId === (targetSO as any).legalEntityId)
+                        const defaultWh = entityWhs.find((w: any) => w.isDefault && w.allowSales !== false)
+                            ?? entityWhs.find((w: any) => w.allowSales !== false)
+                            ?? entityWhs[0]
+                        if (defaultWh) setWarehouseId(defaultWh.id)
                     }
                     setMobileStep(2)
                 }
@@ -606,15 +610,19 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
             if ((so as any).warehouseId) {
                 setWarehouseId((so as any).warehouseId)
             } else if (warehouses.length > 0) {
-                setWarehouseId(warehouses[0].id)
+                const entityWhs = warehouses.filter((w: any) => !w.legalEntityId || w.legalEntityId === (so as any).legalEntityId)
+                const defaultWh = entityWhs.find((w: any) => w.isDefault && w.allowSales !== false)
+                    ?? entityWhs.find((w: any) => w.allowSales !== false)
+                    ?? entityWhs[0]
+                if (defaultWh) setWarehouseId(defaultWh.id)
             }
         }
     }
 
     const handleSave = async (autoConfirm = false) => {
-        if (!selectedSO || !warehouseId) return toast.error('Chọn SO và kho')
+        if (!selectedSO || !warehouseId) return toast.error('Chọn SO và kho xuất hàng')
         const validLines = lines.filter(l => l.qtyPicked > 0 && l.lotId)
-        if (validLines.length === 0) return toast.error('Chưa có lô hàng nào được chọn. Hãy bấm [⚡ Tự Động Phân Bổ FIFO]')
+        if (validLines.length === 0) return toast.error('Chưa có vị trí nhặt hàng nào được chọn. Hãy bấm [⚡ Tự Động Phân Bổ FIFO]')
         setSaving(true)
         try {
             const res = await createDeliveryOrder({ soId: selectedSO.id, warehouseId, lines: validLines })
@@ -654,12 +662,30 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
     const renderWarehouseSelect = () => (
         <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#475569' }}>Kho Xuất *</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#475569' }}>Kho Xuất Bán Hàng *</label>
             <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors font-medium"
                 style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}>
-                <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn kho —</option>
-                {warehouses.map(w => <option key={w.id} value={w.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>{w.code} — {w.name}</option>)}
+                <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn kho xuất bán —</option>
+                {warehouses
+                    .filter((w: any) => !selectedSO?.legalEntityId || w.legalEntityId === (selectedSO as any).legalEntityId)
+                    .sort((a: any, b: any) => {
+                        if (a.allowSales !== b.allowSales) return a.allowSales ? -1 : 1
+                        if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1
+                        return a.name.localeCompare(b.name)
+                    })
+                    .map((w: any) => {
+                        const isAllowed = w.allowSales !== false
+                        return (
+                            <option key={w.id} value={w.id} disabled={!isAllowed} style={{ background: '#FFFFFF', color: isAllowed ? '#0F172A' : '#94A3B8' }}>
+                                {isAllowed
+                                    ? `${w.isDefault ? '⭐ [Kho Mặc Định]' : '✔️ [Kho Xuất Bán]'} ${w.code} — ${w.name}`
+                                    : `⛔ [Chỉ Điều Chuyển - Không Xuất Bán] ${w.code} — ${w.name}`
+                                }
+                            </option>
+                        )
+                    })
+                }
             </select>
         </div>
     )

@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 15:46 | Wine ERP v8.5 — 29 modules, 123 models, Unified WMS Command Center 9-Module Grid & Merged Warehouse Operations*
+*Last updated: 2026-08-08 16:30 | Wine ERP v8.6 — 29 modules, 123 models, Warehouse Setup (Allow Sales/Transfer, Default Legal Entity) & Vintage Priority DO Picking*
 

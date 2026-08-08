@@ -71,7 +71,7 @@ export async function getSOsForDelivery() {
     const raw = await prisma.salesOrder.findMany({
         where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED'] } },
         select: {
-            id: true, soNo: true, warehouseId: true, createdAt: true,
+            id: true, soNo: true, warehouseId: true, legalEntityId: true, createdAt: true,
             customer: { select: { name: true } },
             lines: {
                 select: {
@@ -89,6 +89,7 @@ export async function getSOsForDelivery() {
         id: so.id,
         soNo: so.soNo,
         warehouseId: so.warehouseId,
+        legalEntityId: so.legalEntityId,
         createdAt: so.createdAt,
         customerName: so.customer?.name ?? '',
         lines: so.lines.map(l => ({

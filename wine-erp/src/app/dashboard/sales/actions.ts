@@ -2507,8 +2507,8 @@ export async function deleteSalesOrder(id: string): Promise<{ success: boolean; 
 // ── Simple Warehouse list for dropdown filtering ─────────
 export async function getSimpleWarehouses() {
     const list = await prisma.warehouse.findMany({
-        select: { id: true, code: true, name: true, legalEntityId: true },
-        orderBy: { name: 'asc' }
+        select: { id: true, code: true, name: true, legalEntityId: true, allowSales: true, allowTransfer: true, isDefault: true },
+        orderBy: [{ isDefault: 'desc' }, { allowSales: 'desc' }, { name: 'asc' }]
     })
     return serialize(list)
 }

@@ -15,6 +15,10 @@ export type WarehouseRow = {
     code: string
     name: string
     address: string | null
+    legalEntityId?: string | null
+    allowSales?: boolean
+    allowTransfer?: boolean
+    isDefault?: boolean
     locationCount: number
     lotCount: number
     totalStock: number // bottles
@@ -108,6 +112,10 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
                 code: w.code,
                 name: w.name,
                 address: w.address,
+                legalEntityId: w.legalEntityId,
+                allowSales: w.allowSales ?? true,
+                allowTransfer: w.allowTransfer ?? true,
+                isDefault: w.isDefault ?? false,
                 locationCount: w._count.locations,
                 lotCount: whStock.get(w.id)?.lotCount ?? 0,
                 totalStock: whStock.get(w.id)?.qty ?? 0,
@@ -1896,8 +1904,22 @@ export async function getDODetail(doId: string) {
 }
 
 // ─── Edit Warehouse ─────────────────────────────────
-export async function editWarehouse(id: string, input: { name?: string; address?: string }) {
+export async function editWarehouse(id: string, input: { 
+    name?: string; 
+    address?: string;
+    legalEntityId?: string | null;
+    allowSales?: boolean;
+    allowTransfer?: boolean;
+    isDefault?: boolean;
+}) {
     try {
+        if (input.isDefault && input.legalEntityId) {
+            // Unset previous default warehouse for this legal entity
+            await prisma.warehouse.updateMany({
+                where: { legalEntityId: input.legalEntityId },
+                data: { isDefault: false }
+            })
+        }
         await prisma.warehouse.update({ where: { id }, data: input })
         revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')

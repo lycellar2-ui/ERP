@@ -500,7 +500,9 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Integrate Stock Transfers (Chuyển Kho)** | `TransfersTab.tsx` | Wrap `../transfers/actions` vào phân hệ Kho Hàng, giao diện Light Theme |
 | **Integrate Stock Count (Kiểm Kê Kho)** | `StockCountTab.tsx` | Wrap `../stock-count/actions` + quét mã vạch Barcode di động vào phân hệ Kho Hàng |
 | **Navigation Breadcrumb** | `WarehouseClient.tsx` | Nút `← Bảng Chức Năng Kho` + Thanh chuyển subtab nhanh ở header |
-| **DO Light Theme Re-style & Fixes** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Khắc phục thiếu tên KH / SKU trên thẻ chờ xuất, đồng bộ toàn bộ giao diện DO sang Light Theme |
+| **Cấu hình xuất bán / điều chuyển kho** | `WarehouseClient.tsx`, `actions.ts` | Thêm modal `⚙️ Cấu Hình Kho` thiết lập `allowSales` (có thể xuất bán), `allowTransfer` (có thể điều chuyển), `isDefault` (kho mặc định) và `legalEntityId` (pháp nhân) |
+| **Tự động mặc định kho theo Pháp nhân** | `SalesClient.tsx`, `DeliveryOrderTab.tsx` | Tự động chọn kho mặc định của Pháp nhân sở hữu đơn bán hàng, vô hiệu hóa kho chỉ điều chuyển (`allowSales: false`) khỏi đơn bán hàng để tránh chọn nhầm |
+| **Ưu tiên Niên vụ Vintage nhặt hàng DO** | `DeliveryOrderTab.tsx`, `actions-do.ts` | Hiển thị nổi bật 🍇 Niên vụ (Vintage) & 📍 Vị trí kho (Khu vực/Kệ/Ô) trong form nhặt hàng DO thay cho mã Lô rườm rà |
 
 ### Chi tiết GR Variance Report
 
@@ -512,5 +514,5 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-08-08 | Wine ERP v7.0 — Unified WMS Command Center + 9-Module Grid + Chuyển Kho & Kiểm Kê Kho Merged*
+*Last updated: 2026-08-08 | Wine ERP v8.6 — Unified WMS Command Center + Setup Kho Xuất Bán/Điều Chuyển & Vintage Priority DO Picking*
 

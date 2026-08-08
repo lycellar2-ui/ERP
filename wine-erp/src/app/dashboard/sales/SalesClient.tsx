@@ -2139,18 +2139,27 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
     useEffect(() => {
         let active = true
         setLoading(true)
-        // Load warehouses
-        getSimpleWarehouses().then((whs) => {
-            if (active) {
-                setWarehouses(whs)
-            }
-        })
-        
-        getSalesOrderDetailWithMargin(soId).then(async (res) => {
+        // Load warehouses & auto select default sales warehouse for this legal entity
+        Promise.all([
+            getSimpleWarehouses(),
+            getSalesOrderDetailWithMargin(soId)
+        ]).then(([whs, res]) => {
             if (!active) return
+            setWarehouses(whs)
             const detailObj = res.detail
             if (detailObj) {
                 setDetail(detailObj)
+
+                // Auto select matching default warehouse for this Legal Entity
+                const entityWhs = whs.filter((w: any) => !w.legalEntityId || w.legalEntityId === detailObj.legalEntityId)
+                const defaultWh = entityWhs.find((w: any) => w.legalEntityId === detailObj.legalEntityId && w.isDefault && w.allowSales !== false)
+                    ?? entityWhs.find((w: any) => w.legalEntityId === detailObj.legalEntityId && w.allowSales !== false)
+                    ?? entityWhs.find((w: any) => w.allowSales !== false)
+                    ?? entityWhs[0]
+                if (defaultWh) {
+                    setSelectedWarehouseId(defaultWh.id)
+                }
+
                 const initialVintages: Record<string, number> = {}
                 for (const line of detailObj.lines) {
                     initialVintages[line.id] = (line as any).vintage || 0
@@ -2158,20 +2167,21 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                 setSelectedVintages(initialVintages)
                 
                 const productIds = detailObj.lines.map(l => l.productId)
-                const vintagesData = await getAvailableVintagesForProducts(productIds)
-                if (active) {
-                    setAvailableVintages(vintagesData)
-                    setSelectedVintages(prev => {
-                        const updated = { ...prev }
-                        for (const line of detailObj.lines) {
-                            const avail = vintagesData[line.productId] || []
-                            if (avail.length > 0 && !updated[line.id]) {
-                                updated[line.id] = avail[0] // Default to the lowest (first) vintage
+                getAvailableVintagesForProducts(productIds).then(vintagesData => {
+                    if (active) {
+                        setAvailableVintages(vintagesData)
+                        setSelectedVintages(prev => {
+                            const updated = { ...prev }
+                            for (const line of detailObj.lines) {
+                                const avail = vintagesData[line.productId] || []
+                                if (avail.length > 0 && !updated[line.id]) {
+                                    updated[line.id] = avail[0]
+                                }
                             }
-                        }
-                        return updated
-                    })
-                }
+                            return updated
+                        })
+                    }
+                })
             }
             if (active) setLoading(false)
         }).catch(err => {
@@ -2250,20 +2260,33 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                         {/* Warehouse selector */}
                         <div className="p-3 rounded-lg flex flex-col gap-1.5" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.2)' }}>
                             <label className="text-xs font-semibold" style={{ color: '#D4A853' }}>
-                                Kho Xuất Hàng * (Pháp nhân: {detail.legalEntity?.name || detail.legalEntity?.code || '—'})
+                                Kho Xuất Bán Hàng * (Pháp nhân: {detail.legalEntity?.name || detail.legalEntity?.code || '—'})
                             </label>
                             <select
                                 value={selectedWarehouseId}
                                 onChange={e => setSelectedWarehouseId(e.target.value)}
-                                className="w-full px-3 py-2 text-xs outline-none rounded"
+                                className="w-full px-3 py-2 text-xs outline-none rounded font-medium"
                                 style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
                             >
                                 <option value="">— Chọn kho xuất hàng —</option>
                                 {warehouses
-                                    .filter(w => w.legalEntityId === detail.legalEntityId)
-                                    .map(w => (
-                                        <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
-                                    ))
+                                    .filter(w => !detail.legalEntityId || w.legalEntityId === detail.legalEntityId)
+                                    .sort((a: any, b: any) => {
+                                        if (a.allowSales !== b.allowSales) return a.allowSales ? -1 : 1
+                                        if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1
+                                        return a.name.localeCompare(b.name)
+                                    })
+                                    .map((w: any) => {
+                                        const isAllowed = w.allowSales !== false
+                                        return (
+                                            <option key={w.id} value={w.id} disabled={!isAllowed} style={{ color: isAllowed ? '#E8F1F2' : '#64748B' }}>
+                                                {isAllowed
+                                                    ? `${w.isDefault ? '⭐ [Kho Mặc Định]' : '✔️ [Kho Xuất Bán]'} ${w.code} — ${w.name}`
+                                                    : `⛔ [Chỉ Điều Chuyển - Không Xuất Bán] ${w.code} — ${w.name}`
+                                                }
+                                            </option>
+                                        )
+                                    })
                                 }
                             </select>
                         </div>

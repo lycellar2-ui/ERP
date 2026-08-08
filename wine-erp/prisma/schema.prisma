@@ -1279,6 +1279,9 @@ model Warehouse {
   salesOrders    SalesOrder[]
   transfersOut   TransferOrder[]  @relation("TransferFrom")
   transfersIn    TransferOrder[]  @relation("TransferTo")
+  allowSales     Boolean         @default(true) // Có thể xuất bán hàng
+  allowTransfer  Boolean         @default(true) // Có thể xuất/nhận điều chuyển
+  isDefault      Boolean         @default(false) // Kho mặc định của Pháp nhân
   createdAt      DateTime        @default(now())
   layoutConfig   Json?           // Floor plan: walls, doors, labels, annotations
 
