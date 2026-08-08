@@ -140,6 +140,7 @@ export function WarehouseMapTab({
     })
     const [wallDrawing, setWallDrawing] = useState<{ x1: number; y1: number } | null>(null)
     const [doorRotation, setDoorRotation] = useState<number>(0)
+    const [doorWidth, setDoorWidth] = useState<number>(44)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [spaceHeld, setSpaceHeld] = useState(false)
     const [hoveredWallId, setHoveredWallId] = useState<string | null>(null)
@@ -254,7 +255,7 @@ export function WarehouseMapTab({
                 setHasChanges(true)
             }
         } else if (tool === 'door') {
-            const newDoor: Door = { id: uid(), x: snap(pos.x), y: snap(pos.y), width: 44, rotation: doorRotation }
+            const newDoor: Door = { id: uid(), x: snap(pos.x), y: snap(pos.y), width: doorWidth, rotation: doorRotation }
             setLayoutCfg(prev => ({ ...prev, doors: [...prev.doors, newDoor] }))
             setHasChanges(true)
         } else if (tool === 'label') {
@@ -500,12 +501,32 @@ export function WarehouseMapTab({
                             </button>
                         ))}
 
-                        {/* Door Rotation helper */}
+                        {/* Door Controls (Width & Rotation) */}
                         {tool === 'door' && (
-                            <div className="mt-2 pt-2 border-t border-slate-200 flex flex-col items-center gap-1">
+                            <div className="mt-2 pt-2 border-t border-slate-200 flex flex-col gap-1.5 text-[10px]">
+                                <label className="font-bold text-slate-600 block text-[9px] uppercase tracking-wider">Độ dài cửa (px):</label>
+                                <input
+                                    type="number"
+                                    value={doorWidth}
+                                    min={15}
+                                    max={300}
+                                    onChange={e => setDoorWidth(Math.max(15, parseInt(e.target.value) || 44))}
+                                    className="w-full px-2 py-1 rounded bg-slate-100 border border-slate-300 font-mono font-bold text-center text-slate-900 text-xs outline-none focus:border-amber-500"
+                                />
+                                <div className="grid grid-cols-2 gap-1 mt-0.5">
+                                    {[30, 44, 60, 80].map(w => (
+                                        <button
+                                            key={w}
+                                            onClick={() => setDoorWidth(w)}
+                                            className={`py-1 rounded text-[9px] font-bold border transition-colors cursor-pointer ${doorWidth === w ? 'bg-amber-500 text-white border-amber-600' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'}`}
+                                        >
+                                            {w}px {w === 44 ? '★' : ''}
+                                        </button>
+                                    ))}
+                                </div>
                                 <button
                                     onClick={() => setDoorRotation(r => (r + 90) % 360)}
-                                    className="p-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold hover:bg-amber-200 w-full text-center cursor-pointer"
+                                    className="mt-1 p-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold hover:bg-amber-200 w-full text-center cursor-pointer"
                                     title="Xoay cửa 90 độ"
                                 >
                                     Xoay {doorRotation}°
@@ -622,6 +643,15 @@ export function WarehouseMapTab({
                                             fill="none" stroke="#F59E0B" strokeWidth={1.5} strokeDasharray="3 2" />
                                     </g>
                                 ))}
+
+                                {/* Ghost Door preview when placing */}
+                                {editMode && tool === 'door' && (
+                                    <g transform={`translate(${snap(mousePos.x)}, ${snap(mousePos.y)}) rotate(${doorRotation})`} opacity={0.75}>
+                                        <rect x={-doorWidth / 2} y={-4} width={doorWidth} height={8} fill="#F59E0B" stroke="#B45309" strokeWidth={1.5} rx={2} strokeDasharray="3 2" />
+                                        <path d={`M ${-doorWidth / 2} 4 A ${doorWidth / 2} ${doorWidth / 2} 0 0 1 ${doorWidth / 2} 4`}
+                                            fill="none" stroke="#F59E0B" strokeWidth={1.5} strokeDasharray="3 2" />
+                                    </g>
+                                )}
 
                                 {/* Labels */}
                                 {layoutCfg.labels.map(l => (
@@ -830,6 +860,75 @@ export function WarehouseMapTab({
                                     >
                                         {p.label}
                                     </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🚪 Door List & Width/Length Manager */}
+                    {editMode && layoutCfg.doors.length > 0 && (
+                        <div className="p-3.5 rounded-xl bg-white border border-amber-300 shadow-2xs text-xs space-y-2.5">
+                            <h4 className="font-extrabold text-amber-800 flex items-center justify-between text-xs">
+                                <span className="flex items-center gap-1.5"><DoorOpen size={14} className="text-amber-600" /> Thay Đổi Độ Dài Cửa Kho</span>
+                                <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">{layoutCfg.doors.length} cửa</span>
+                            </h4>
+                            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                {layoutCfg.doors.map((d, idx) => (
+                                    <div key={d.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-[11px] text-slate-800">🚪 Cửa ra vào #{idx + 1}</span>
+                                            <button
+                                                onClick={() => {
+                                                    setLayoutCfg(prev => ({ ...prev, doors: prev.doors.filter(item => item.id !== d.id) }))
+                                                    setHasChanges(true)
+                                                }}
+                                                className="p-1 rounded text-rose-500 hover:bg-rose-100 hover:text-rose-700 cursor-pointer transition-colors"
+                                                title="Xóa cửa này khỏi sơ đồ"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Độ dài cửa (px)</label>
+                                                <input
+                                                    type="number"
+                                                    min={15}
+                                                    max={400}
+                                                    value={d.width}
+                                                    onChange={e => {
+                                                        const w = Math.max(15, parseInt(e.target.value) || 44)
+                                                        setLayoutCfg(prev => ({
+                                                            ...prev,
+                                                            doors: prev.doors.map(item => item.id === d.id ? { ...item, width: w } : item)
+                                                        }))
+                                                        setHasChanges(true)
+                                                    }}
+                                                    className="w-full px-2 py-1 rounded bg-white border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Góc xoay</label>
+                                                <select
+                                                    value={d.rotation}
+                                                    onChange={e => {
+                                                        const rot = parseInt(e.target.value) || 0
+                                                        setLayoutCfg(prev => ({
+                                                            ...prev,
+                                                            doors: prev.doors.map(item => item.id === d.id ? { ...item, rotation: rot } : item)
+                                                        }))
+                                                        setHasChanges(true)
+                                                    }}
+                                                    className="w-full px-2 py-1 rounded bg-white border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500 cursor-pointer"
+                                                >
+                                                    <option value={0}>0° (Ngang)</option>
+                                                    <option value={90}>90° (Dọc)</option>
+                                                    <option value={180}>180°</option>
+                                                    <option value={270}>270°</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -1144,41 +1243,46 @@ export function WarehouseMapTab({
                                     <table className="w-full text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                                                <th className="p-3 font-bold uppercase text-[11px]">Mã Lô (Lot No)</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] whitespace-nowrap">Mã SKU</th>
                                                 <th className="p-3 font-bold uppercase text-[11px]">Sản Phẩm & Rượu Vang</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-center">Vintage</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-center">Trạng Thái</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-right">Tồn Kho (Chai)</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] text-center whitespace-nowrap">Vintage</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] whitespace-nowrap">Mã Lô (Lot No)</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] text-center whitespace-nowrap">Trạng Thái</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] text-right whitespace-nowrap">Tồn Kho (Chai)</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-200 bg-white">
                                             {selectedLoc.products.map((p, i) => (
                                                 <tr key={p.id || i} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="p-3 font-mono font-extrabold text-amber-700 whitespace-nowrap">
-                                                        {p.lotNo || '—'}
+                                                    <td className="p-3 font-mono font-extrabold text-slate-800 whitespace-nowrap">
+                                                        {p.skuCode || '—'}
                                                     </td>
                                                     <td className="p-3">
                                                         <p className="font-bold text-slate-900 text-xs">{p.productName}</p>
-                                                        <p className="text-[11px] text-slate-500 font-mono mt-0.5 flex items-center gap-2">
-                                                            <span>SKU: {p.skuCode}</span>
-                                                            {p.country && <span>• Quốc gia: {p.country}</span>}
-                                                        </p>
+                                                        {p.country && (
+                                                            <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                                                                Quốc gia: {p.country}
+                                                            </p>
+                                                        )}
                                                     </td>
-                                                    <td className="p-3 text-center font-bold">
+                                                    <td className="p-3 text-center font-bold whitespace-nowrap">
                                                         {p.vintage ? (
-                                                            <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-300 font-mono">
+                                                            <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-300 font-mono inline-flex items-center gap-1 whitespace-nowrap">
                                                                 🍷 {p.vintage}
                                                             </span>
                                                         ) : (
                                                             <span className="text-slate-400 font-mono">N/V</span>
                                                         )}
                                                     </td>
-                                                    <td className="p-3 text-center">
-                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-300' : p.status === 'RESERVED' ? 'bg-sky-50 text-sky-700 border border-sky-300' : 'bg-rose-50 text-rose-700 border border-rose-300'}`}>
+                                                    <td className="p-3 font-mono font-bold text-amber-700 whitespace-nowrap">
+                                                        {p.lotNo || '—'}
+                                                    </td>
+                                                    <td className="p-3 text-center whitespace-nowrap">
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${p.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-300' : p.status === 'RESERVED' ? 'bg-sky-50 text-sky-700 border border-sky-300' : 'bg-rose-50 text-rose-700 border border-rose-300'}`}>
                                                             {p.status === 'AVAILABLE' ? '✅ Sẵn sàng' : p.status === 'RESERVED' ? '🔒 Đã đặt' : '⚠️ Cách ly'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 text-right font-mono font-extrabold text-sm text-emerald-700">
+                                                    <td className="p-3 text-right font-mono font-extrabold text-sm text-emerald-700 whitespace-nowrap">
                                                         {formatNumber(p.qtyAvailable)}
                                                     </td>
                                                 </tr>
@@ -1193,7 +1297,8 @@ export function WarehouseMapTab({
                         <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="px-5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-xs"
+                                className="px-6 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shadow-xs hover:opacity-90 border"
+                                style={{ background: '#0F172A', color: '#FFFFFF', borderColor: '#1E293B' }}
                             >
                                 Đóng
                             </button>
