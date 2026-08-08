@@ -1052,6 +1052,12 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const [exporting, setExporting] = useState(false)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
 
+    const queryClient = useQueryClient()
+
+    const reload = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ['customers'] })
+    }, [queryClient])
+
     // TanStack Query — cache customers page data
     const { data: queryData, isLoading, isFetching } = useQuery({
         queryKey: ['customers', filters],
@@ -1109,7 +1115,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             const result = await deleteCustomer(id)
             if (result.success) {
                 toast.success(`Đã xóa "${name}"`)
-                applyFilter({})
+                reload()
             } else {
                 toast.error(result.error ?? 'Không thể xóa')
             }
@@ -1437,7 +1443,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 salesReps={salesReps}
                 legalEntities={legalEntities}
                 onClose={() => setDrawerOpen(false)}
-                onSaved={() => { setDrawerOpen(false); applyFilter({}) }}
+                onSaved={() => { setDrawerOpen(false); reload() }}
                 currentUser={currentUser}
             />
 
@@ -1462,7 +1468,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     { header: 'Thành Phố', sample: 'Hồ Chí Minh' },
                 ]}
                 onImport={bulkImportCustomers}
-                onComplete={() => applyFilter({})}
+                onComplete={() => reload()}
             />
         </div>
     )

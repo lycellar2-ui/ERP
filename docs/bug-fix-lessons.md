@@ -1293,6 +1293,30 @@ if ('salesRepId' in dataToUpdate) {
 
 > ⚠️ **RULE 50: Luôn delete trường ID thô (salesRepId, parentId...) khỏi object dataToUpdate trước khi gọi prisma.update khi chuyển đổi sang quan hệ Prisma (connect/disconnect).**
 
+---
+
+## BUG-029: Giao Diện Danh Sách Khách Hàng Không Tải Lại Dữ Liệu Sau Khi Sửa / Xóa (TanStack Query Stale Cache)
+
+**Ngày:** 2026-08-08
+**Severity:** 🔴 Critical — Thay đổi hoặc xóa khách hàng thành công ở DB nhưng bảng UI giữ nguyên dữ liệu cũ
+
+### Triệu chứng
+- Sửa thông tin hoặc bấm Xóa Khách hàng xong thì bảng danh sách không cập nhật ngay, vẫn giữ nguyên thông tin cũ.
+- Xóa khách hàng Công ty cha bị báo lỗi hoặc giữ nguyên cơ sở con.
+
+### Nguyên nhân gốc rễ
+1. Trong `CustomersClient.tsx`, TanStack Query sử dụng `staleTime: 30_000` (30 giây). Khi gọi `applyFilter({})`, mảng state `filters` không thay đổi giá trị nên TanStack Query không kích hoạt hàm fetch lại dữ liệu từ server.
+2. Hàm `deleteCustomer` ở server chưa kiểm tra ràng buộc nhánh con (`childrenCount > 0`), dẫn đến nếu xóa Công ty cha có con sẽ gặp lỗi ràng buộc dữ liệu.
+
+### Cách fix
+1. Gọi `queryClient.invalidateQueries({ queryKey: ['customers'] })` trong hàm `reload()` mỗi khi `onSaved()`, `handleDelete()`, hoặc `onComplete()` thực thi xong để giải phóng cache ngay lập tức.
+2. Bổ sung kiểm tra cơ sở con trong `deleteCustomer`: Thông báo rõ ràng nếu khách hàng là Công ty cha có cơ sở con trực thuộc.
+
+### Bài học
+
+> ⚠️ **RULE 51: Khi sử dụng TanStack Query với staleTime > 0, bắt buộc phải gọi queryClient.invalidateQueries() sau mỗi thao tác Mutation (Thêm/Sửa/Xóa) để ép UI làm tươi dữ liệu tức thì.**
+
+
 
 
 

@@ -794,13 +794,27 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
 export async function deleteCustomer(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         const user = await requirePermission('MDM', 'WRITE')
-        const customer = await prisma.customer.findUnique({ where: { id }, select: { code: true, name: true, customerType: true, creditLimit: true, salesRepId: true } })
+        const customer = await prisma.customer.findUnique({
+            where: { id },
+            select: {
+                code: true,
+                name: true,
+                customerType: true,
+                creditLimit: true,
+                salesRepId: true,
+                children: { where: { deletedAt: null }, select: { id: true } }
+            }
+        })
         if (!customer) return { success: false, error: 'Khách hàng không tồn tại' }
 
         if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
             if (customer.salesRepId !== user.id) {
                 return { success: false, error: 'Bạn không có quyền xoá khách hàng của Sales khác.' }
             }
+        }
+
+        if (customer.children && customer.children.length > 0) {
+            return { success: false, error: `Không thể xoá. Khách hàng này đang có ${customer.children.length} cơ sở/nhà hàng con trực thuộc.` }
         }
 
         const activeSOs = await prisma.salesOrder.count({
