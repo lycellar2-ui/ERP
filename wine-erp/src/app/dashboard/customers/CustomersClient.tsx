@@ -12,6 +12,7 @@ import {
     deleteCustomer, exportCustomersData, bulkImportCustomers, getParentCandidates,
     getCustomerStats, getCustomerChannels, getSalesRepList, exportCustomerOnboardingForm,
     approveCustomer, rejectCustomer, getNextCustomerCode, checkCustomerDuplicates,
+    lookupTaxInfo, syncCustomerTaxInfoFromGDT,
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
@@ -197,6 +198,30 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     }, [open, editingId, isSalesRep])
 
     const [duplicateWarnings, setDuplicateWarnings] = useState<{ type: 'TAX_ID' | 'PHONE' | 'NAME'; message: string; customer: { id: string; code: string; name: string } }[]>([])
+    const [taxLookupLoading, setTaxLookupLoading] = useState(false)
+
+    const handleLookupTax = async () => {
+        const taxToQuery = form.taxId
+        if (!taxToQuery || !taxToQuery.trim()) {
+            toast.error('Vui lòng nhập Mã số thuế trước khi tra cứu')
+            return
+        }
+        setTaxLookupLoading(true)
+        try {
+            const res = await lookupTaxInfo(taxToQuery)
+            if (!res.success || !res.data) {
+                toast.error(res.error || 'Không tìm thấy thông tin đăng ký thuế cho MST này')
+                return
+            }
+            set('vatCompanyName', res.data.vatCompanyName)
+            set('vatAddress', res.data.vatAddress)
+            toast.success(`✅ Lấy thành công: ${res.data.vatCompanyName}`)
+        } catch (err: any) {
+            toast.error('Lỗi tra cứu Cục Thuế: ' + err.message)
+        } finally {
+            setTaxLookupLoading(false)
+        }
+    }
     const [parentSearch, setParentSearch] = useState('')
     const [parentDropdownOpen, setParentDropdownOpen] = useState(false)
     const parentContainerRef = useRef<HTMLDivElement>(null)
@@ -857,9 +882,21 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
-                                            Mã Số Thuế VAT
-                                        </label>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#8AAEBB' }}>
+                                                Mã Số Thuế VAT
+                                            </label>
+                                            <button
+                                                type="button"
+                                                disabled={taxLookupLoading}
+                                                onClick={handleLookupTax}
+                                                className="px-2 py-0.5 rounded text-[11px] font-extrabold bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 transition-all flex items-center gap-1 cursor-pointer border border-teal-500/30 active:scale-95"
+                                                title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
+                                            >
+                                                {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
+                                                <span>Tra Cứu Cục Thuế</span>
+                                            </button>
+                                        </div>
                                         <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
                                             placeholder={form.parentId ? "Tự động dùng MST Công ty Cha" : "0302012345"}
                                             onChange={e => set('taxId', e.target.value || null)}
@@ -1432,15 +1469,38 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                         )}
                                     </td>
                                     <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#4A6A7A' }}>
-                                        {row.taxId ? (
-                                            row.taxId
-                                        ) : row.resolvedVatInfo?.taxId ? (
-                                            <span title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`} className="text-amber-400 font-semibold bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px]">
-                                                {row.resolvedVatInfo.taxId} (Cha)
-                                            </span>
-                                        ) : (
-                                            '—'
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            {row.taxId ? (
+                                                <span>{row.taxId}</span>
+                                            ) : row.resolvedVatInfo?.taxId ? (
+                                                <span title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`} className="text-amber-400 font-semibold bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px]">
+                                                    {row.resolvedVatInfo.taxId} (Cha)
+                                                </span>
+                                            ) : (
+                                                '—'
+                                            )}
+                                            {(row.taxId || row.resolvedVatInfo?.taxId) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        toast.promise(syncCustomerTaxInfoFromGDT(row.id), {
+                                                            loading: 'Đang tra cứu Cục Thuế...',
+                                                            success: (res) => {
+                                                                if (!res.success) throw new Error(res.error)
+                                                                queryClient.invalidateQueries({ queryKey: ['customers'] })
+                                                                return `✅ Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
+                                                            },
+                                                            error: (err) => `Lỗi tra cứu: ${err.message}`
+                                                        })
+                                                    }}
+                                                    className="p-1 hover:bg-teal-500/20 text-teal-400 rounded transition-colors cursor-pointer"
+                                                    title="Tự động tra cứu & đồng bộ Tên công ty / Địa chỉ từ Cục Thuế"
+                                                >
+                                                    <Search size={11} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
                                         {row.salesRepName ?? '—'}
