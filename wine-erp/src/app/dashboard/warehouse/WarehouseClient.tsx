@@ -622,8 +622,118 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
     return (
         <div className="space-y-4 max-w-screen-2xl">
-            {/* 1. TOPMOST HEADER CONTAINER */}
-            <div className="p-3.5 rounded-2xl shadow-sm"
+            {/* 📱 NATIVE MOBILE WMS APP DASHBOARD (DISPLAYED ONLY ON MOBILE DEVICES < 768px) */}
+            <div className="block md:hidden space-y-4 pb-20">
+                {/* Mobile Header Card */}
+                <div className="bg-slate-950 p-4 rounded-3xl border border-slate-800 shadow-2xl text-white">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black text-lg">
+                                🍷
+                            </div>
+                            <div>
+                                <h2 className="text-xs font-black text-white tracking-wider uppercase">LYS WMS APP</h2>
+                                <p className="text-[10px] text-slate-400 font-semibold">Vận Hành Kho Trên Di Động</p>
+                            </div>
+                        </div>
+
+                        {/* Mobile Warehouse Selector Pill */}
+                        <div className="relative">
+                            <select
+                                value={selectedWH ?? ''}
+                                onChange={e => {
+                                    const val = e.target.value
+                                    if (!val) { setSelectedWH(null); setLots([]); setSelectedLocations([]) }
+                                    else selectWarehouse(val)
+                                }}
+                                className="bg-slate-900 border border-slate-700 text-amber-400 text-xs font-black px-3 py-2 rounded-xl appearance-none pr-7 focus:outline-none"
+                            >
+                                <option value="">🏢 Tất cả kho ({stats.warehouses})</option>
+                                {warehouses.map(w => (
+                                    <option key={w.id} value={w.id}>🏢 {w.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {/* Mobile 4 Giant Quick Launcher Buttons (1-Hand Ergonomics) */}
+                    <div className="grid grid-cols-2 gap-2.5 mt-4">
+                        <button
+                            onClick={() => { setActiveTab('inventory'); setViewMode('workspace') }}
+                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
+                        >
+                            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold mb-2">
+                                <Package size={20} />
+                            </div>
+                            <div className="text-xs font-black text-white">Tra Cứu Tồn Kho</div>
+                            <div className="text-[10px] text-emerald-400 font-bold mt-0.5">{stats.availableBottles.toLocaleString()} chai khả dụng ➔</div>
+                        </button>
+
+                        <button
+                            onClick={() => { setActiveTab('do'); setViewMode('workspace') }}
+                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
+                        >
+                            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold mb-2">
+                                <Truck size={20} />
+                            </div>
+                            <div className="text-xs font-black text-white">Xuất Kho (DO)</div>
+                            <div className="text-[10px] text-amber-400 font-bold mt-0.5">Nhặt hàng theo đơn ➔</div>
+                        </button>
+
+                        <button
+                            onClick={() => { setActiveTab('gr'); setViewMode('workspace') }}
+                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
+                        >
+                            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold mb-2">
+                                <PackagePlus size={20} />
+                            </div>
+                            <div className="text-xs font-black text-white">Nhập Kho (GR)</div>
+                            <div className="text-[10px] text-cyan-400 font-bold mt-0.5">Tạo lô hàng nhập ➔</div>
+                        </button>
+
+                        <button
+                            onClick={() => { setActiveTab('stock-count'); setViewMode('workspace') }}
+                            className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl text-left active:scale-95 transition shadow-lg"
+                        >
+                            <div className="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold mb-2">
+                                <ClipboardList size={20} />
+                            </div>
+                            <div className="text-xs font-black text-white">Kiểm Kê Kho</div>
+                            <div className="text-[10px] text-teal-400 font-bold mt-0.5">Đếm từng vị trí ➔</div>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile Module App List */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-3 space-y-1.5 shadow-xl text-white">
+                    <span className="text-[10px] font-black uppercase text-slate-400 px-3 py-1 block">CÁC CHỨC NĂNG KHO MỞ RỘNG</span>
+                    {wmsFeatureModules.map(mod => {
+                        const Icon = mod.icon
+                        return (
+                            <button
+                                key={mod.key}
+                                onClick={() => { handleTabChange(mod.key); setViewMode('workspace') }}
+                                className="w-full p-3 rounded-2xl bg-slate-950/60 hover:bg-slate-950 border border-slate-800/80 flex items-center justify-between text-left active:scale-98 transition"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
+                                        <Icon size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-black text-white">{mod.title}</div>
+                                        <div className="text-[10px] text-slate-400">{mod.subtitle}</div>
+                                    </div>
+                                </div>
+                                <ChevronRight size={16} className="text-slate-500" />
+                            </button>
+                        )
+                    })}
+                </div>
+            </div>
+
+            {/* 🖥️ DESKTOP HEADER & LAYOUT (DISPLAYED ON SCREENS >= 768px) */}
+            <div className="hidden md:block p-3.5 rounded-2xl shadow-sm"
                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 
                 {/* Single Consolidated Top Header Row */}
@@ -699,9 +809,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 </div>
             </div>
 
-            {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (GRID VIEW) ═══ */}
+            {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (DESKTOP GRID VIEW) ═══ */}
             {viewMode === 'grid' && (
-                <div className="space-y-4">
+                <div className="hidden md:block space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B' }}>
                             Chức Năng Quản Lý Kho
