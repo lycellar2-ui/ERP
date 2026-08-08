@@ -152,17 +152,23 @@ table[style*="border-top:1px solid #2A4355"] {
   border-color: var(--color-lys-border) !important;
 }
 
-/* 6. Text primary (#E8F1F2) -> var(--color-lys-ivory) */
+/* 6. Text primary (#E8F1F2 / #C8D8E4) -> var(--color-lys-ivory) */
 [style*="color: #E8F1F2"],
 [style*="color:#E8F1F2"],
 [style*="color: #e8f1f2"],
 [style*="color:#e8f1f2"],
+[style*="color: #C8D8E4"],
+[style*="color:#C8D8E4"],
+[style*="color: #c8d8e4"],
+[style*="color:#c8d8e4"],
 [style*="color: rgb(232, 241, 242)"],
 [style*="color:rgb(232, 241, 242)"] {
   color: var(--color-lys-ivory) !important;
 }
 [class*="text-[#E8F1F2]"],
-[class*="text-[#e8f1f2]"] {
+[class*="text-[#e8f1f2]"],
+[class*="text-[#C8D8E4]"],
+[class*="text-[#c8d8e4]"] {
   color: var(--color-lys-ivory) !important;
 }
 

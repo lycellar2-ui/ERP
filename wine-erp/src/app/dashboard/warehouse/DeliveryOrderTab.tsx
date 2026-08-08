@@ -157,16 +157,16 @@ export function DeliveryOrderTab({ warehouses }: {
                 <div className="space-y-2.5 sm:space-y-4">
                     {/* Search Bar - compact */}
                     <div className="relative">
-                        <Search size={14} className="absolute left-3 top-2" style={{ color: '#4A6A7A' }} />
+                        <Search size={14} className="absolute left-3 top-2.5" style={{ color: '#64748B' }} />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Tìm Mã SO, Tên KH, SKU..."
-                            className="w-full pl-9 pr-3 py-1.5 text-[11px] rounded-lg outline-none"
-                            style={{ background: '#142433', border: '1px solid #1E3445', color: '#E8F1F2' }}
+                            className="w-full pl-9 pr-3 py-2 text-[11px] rounded-lg outline-none font-medium"
+                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                         />
-                        <span className="absolute right-3 top-2 text-[10px]" style={{ color: '#4A6A7A' }}>
+                        <span className="absolute right-3 top-2.5 text-[10px] font-semibold" style={{ color: '#64748B' }}>
                             {filteredPendingSOs.length} / {pendingSOs.length}
                         </span>
                     </div>
@@ -176,52 +176,52 @@ export function DeliveryOrderTab({ warehouses }: {
                             <Loader2 size={20} className="animate-spin" style={{ color: '#D4A853' }} />
                         </div>
                     ) : filteredPendingSOs.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 gap-2 rounded-xl" style={{ border: '1px dashed #1E3445', background: '#0D1E2B' }}>
-                            <CheckCircle2 size={28} style={{ color: '#5BA88A' }} />
-                            <p className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>
+                        <div className="flex flex-col items-center justify-center py-12 gap-2 rounded-xl" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
+                            <CheckCircle2 size={28} style={{ color: '#16A34A' }} />
+                            <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>
                                 {searchQuery ? 'Không tìm thấy đơn hàng' : 'Không có đơn chờ xuất'}
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                             {filteredPendingSOs.map(so => {
                                 const totalItems = so.lines.reduce((sum, l) => sum + l.qtyOrdered, 0)
                                 return (
                                     <div
                                         key={so.id}
-                                        className="p-3 sm:p-4 rounded-xl flex flex-col justify-between transition-all"
-                                        style={{ background: '#0F1D2B', border: '1px solid #1E3445' }}
+                                        className="p-3.5 sm:p-4 rounded-xl flex flex-col justify-between transition-all shadow-sm hover:shadow-md"
+                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                                     >
                                         <div>
                                             {/* SO Header */}
-                                            <div className="flex items-center justify-between mb-1.5">
+                                            <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="px-2 py-0.5 text-[11px] font-extrabold font-mono rounded"
-                                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>
+                                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
                                                         {so.soNo}
                                                     </span>
                                                     <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
-                                                        style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A' }}>
+                                                        style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A' }}>
                                                         Sẵn Sàng
                                                     </span>
                                                 </div>
-                                                <span className="text-[10px] font-semibold" style={{ color: '#6B8A9A' }}>
+                                                <span className="text-[10px] font-semibold" style={{ color: '#64748B' }}>
                                                     {so.lines.length} SP ({totalItems} chai)
                                                 </span>
                                             </div>
 
                                             {/* Customer Name */}
-                                            <h4 className="text-[13px] font-bold truncate mb-2" style={{ color: '#E8F1F2' }}>
+                                            <h4 className="text-[13px] font-bold truncate mb-2.5" style={{ color: '#0F172A' }}>
                                                 {so.customerName}
                                             </h4>
 
                                             {/* Product Lines */}
-                                            <div className="space-y-1 max-h-28 overflow-y-auto">
+                                            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-0.5">
                                                 {so.lines.map(line => (
-                                                    <div key={line.productId} className="flex items-center justify-between text-[11px] px-2 py-1.5 rounded-md"
-                                                        style={{ background: '#142433' }}>
-                                                        <span className="truncate pr-2 font-medium" style={{ color: '#C8D8E4' }}>{line.productName}</span>
-                                                        <span className="font-mono font-bold shrink-0" style={{ color: '#D4A853' }}>
+                                                    <div key={line.productId} className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg"
+                                                        style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                                        <span className="truncate pr-2 font-semibold" style={{ color: '#0F172A' }}>{line.productName}</span>
+                                                        <span className="font-mono font-bold shrink-0" style={{ color: '#D97706' }}>
                                                             x{line.qtyOrdered}
                                                         </span>
                                                     </div>
@@ -230,14 +230,14 @@ export function DeliveryOrderTab({ warehouses }: {
                                         </div>
 
                                         {/* Action Footer */}
-                                        <div className="mt-2.5 pt-2 flex items-center justify-between" style={{ borderTop: '1px solid #1E3445' }}>
-                                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                                        <div className="mt-3 pt-2.5 flex items-center justify-between" style={{ borderTop: '1px solid #E2E8F0' }}>
+                                            <span className="text-[10px] font-medium" style={{ color: '#64748B' }}>
                                                 FIFO tự động
                                             </span>
                                             <button
                                                 onClick={() => handleStartPicking(so.id)}
-                                                className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:scale-105 active:scale-100"
-                                                style={{ background: '#D4A853', color: '#0A1926', minHeight: '40px' }}
+                                                className="flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-105 active:scale-95"
+                                                style={{ background: '#D4A853', color: '#0A1926', minHeight: '36px' }}
                                             >
                                                 Nhặt Hàng & Xuất Kho <ArrowRight size={12} />
                                             </button>
