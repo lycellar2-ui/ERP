@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 20:27 | Wine ERP v9.6 — 29 modules, 123 models, Automated GDT Tax Lookup API & Internal Warehouse Transfer Voucher system*
+*Last updated: 2026-08-08 20:39 | Wine ERP v9.7 — 29 modules, 123 models, Comprehensive Warehouse Inventory Summary Report (NXT) & Drill-Down Stock Ledger*
 

@@ -4,8 +4,38 @@ import { prisma } from '@/lib/db'
 import { cached } from '@/lib/cache'
 
 // ═══════════════════════════════════════════════════
-// NHẬP - XUẤT - TỒN — Stock Movement Report
+// NHẬP - XUẤT - TỒN — Stock Movement & Inventory Summary
 // ═══════════════════════════════════════════════════
+
+export interface WarehouseNXTItem {
+    productId: string
+    skuCode: string
+    productName: string
+    wineType: string
+    country: string
+    unit: string
+    openingQty: number
+    openingValue: number
+    inQty: number
+    inValue: number
+    outQty: number
+    outValue: number
+    closingQty: number
+    closingValue: number
+    unitCost: number
+}
+
+export interface WarehouseNXTSummary {
+    totalProducts: number
+    totalOpeningQty: number
+    totalOpeningValue: number
+    totalInQty: number
+    totalInValue: number
+    totalOutQty: number
+    totalOutValue: number
+    totalClosingQty: number
+    totalClosingValue: number
+}
 
 export interface StockMovementRow {
     id: string
@@ -19,7 +49,7 @@ export interface StockMovementRow {
     lotNo: string
     qtyIn: number
     qtyOut: number
-    balance: number // running balance — calculated client-side or in-query
+    balance: number // running balance
     unitCost: number
     reference: string // PO/SO number or reason
     note: string
@@ -42,7 +72,235 @@ export interface ProductOption {
     country: string
 }
 
-// ── Get products for search/select ────────────────
+// Helper: Robust Date Range Parser (Avoids UTC Timezone Shift)
+function parseDateRange(dateFromStr?: string, dateToStr?: string) {
+    let fromDate: Date
+    let toDate: Date
+
+    if (dateFromStr) {
+        const [y, m, d] = dateFromStr.split('-').map(Number)
+        fromDate = new Date(y, m - 1, d, 0, 0, 0, 0)
+    } else {
+        const now = new Date()
+        fromDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+    }
+
+    if (dateToStr) {
+        const [y, m, d] = dateToStr.split('-').map(Number)
+        toDate = new Date(y, m - 1, d, 23, 59, 59, 999)
+    } else {
+        toDate = new Date()
+        toDate.setHours(23, 59, 59, 999)
+    }
+
+    return { fromDate, toDate }
+}
+
+// ── 1. Warehouse NXT Summary Report (Bảng Nhập Xuất Tồn Cả Kho) ───────
+export async function getWarehouseNXTReport(filters: {
+    warehouseId?: string
+    dateFrom?: string
+    dateTo?: string
+    search?: string
+    wineType?: string
+    hideZeroStock?: boolean
+}): Promise<{ items: WarehouseNXTItem[]; summary: WarehouseNXTSummary }> {
+    const { warehouseId, dateFrom, dateTo, search, wineType, hideZeroStock = false } = filters
+
+    const { fromDate, toDate } = parseDateRange(dateFrom, dateTo)
+
+    // 1. Fetch matching products
+    const productWhere: any = {}
+    if (search) {
+        productWhere.OR = [
+            { skuCode: { contains: search, mode: 'insensitive' } },
+            { productName: { contains: search, mode: 'insensitive' } },
+        ]
+    }
+    if (wineType && wineType !== 'ALL') {
+        productWhere.wineType = wineType
+    }
+
+    const products = await prisma.product.findMany({
+        where: productWhere,
+        select: {
+            id: true,
+            skuCode: true,
+            productName: true,
+            wineType: true,
+            country: true,
+        },
+        orderBy: { skuCode: 'asc' },
+    })
+
+    if (products.length === 0) {
+        return {
+            items: [],
+            summary: {
+                totalProducts: 0,
+                totalOpeningQty: 0,
+                totalOpeningValue: 0,
+                totalInQty: 0,
+                totalInValue: 0,
+                totalOutQty: 0,
+                totalOutValue: 0,
+                totalClosingQty: 0,
+                totalClosingValue: 0,
+            },
+        }
+    }
+
+    // 2. Fetch Aggregates using groupBy for extreme performance
+    const grWarehouseFilter = warehouseId ? { warehouseId } : {}
+    const doWarehouseFilter = warehouseId ? { warehouseId } : {}
+
+    // A. Opening GR (CONFIRMED before fromDate)
+    const openingGr = await prisma.goodsReceiptLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyReceived: true },
+        where: {
+            gr: {
+                status: 'CONFIRMED',
+                confirmedAt: { lt: fromDate },
+                ...grWarehouseFilter,
+            },
+        },
+    })
+    const openingGrMap = new Map<string, number>()
+    openingGr.forEach(item => openingGrMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
+
+    // B. Opening DO (SHIPPED/DELIVERED before fromDate)
+    const openingDo = await prisma.deliveryOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyShipped: true },
+        where: {
+            do: {
+                status: { in: ['SHIPPED', 'DELIVERED'] },
+                createdAt: { lt: fromDate },
+                ...doWarehouseFilter,
+            },
+        },
+    })
+    const openingDoMap = new Map<string, number>()
+    openingDo.forEach(item => openingDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
+
+    // C. Period GR (CONFIRMED between fromDate and toDate)
+    const periodGr = await prisma.goodsReceiptLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyReceived: true },
+        where: {
+            gr: {
+                status: 'CONFIRMED',
+                confirmedAt: { gte: fromDate, lte: toDate },
+                ...grWarehouseFilter,
+            },
+        },
+    })
+    const periodGrMap = new Map<string, number>()
+    periodGr.forEach(item => periodGrMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
+
+    // D. Period DO (SHIPPED/DELIVERED between fromDate and toDate)
+    const periodDo = await prisma.deliveryOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyShipped: true },
+        where: {
+            do: {
+                status: { in: ['SHIPPED', 'DELIVERED'] },
+                createdAt: { gte: fromDate, lte: toDate },
+                ...doWarehouseFilter,
+            },
+        },
+    })
+    const periodDoMap = new Map<string, number>()
+    periodDo.forEach(item => periodDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
+
+    // E. Avg Landed Cost per Product from stock lots
+    const landedCosts = await prisma.stockLot.groupBy({
+        by: ['productId'],
+        _avg: { unitLandedCost: true },
+        where: {
+            status: { in: ['AVAILABLE', 'RESERVED', 'QUARANTINE'] },
+            ...(warehouseId ? { location: { warehouseId } } : {}),
+        },
+    })
+    const landedCostMap = new Map<string, number>()
+    landedCosts.forEach(item => landedCostMap.set(item.productId, Number(item._avg.unitLandedCost ?? 0)))
+
+    // 3. Assemble report rows
+    const items: WarehouseNXTItem[] = []
+    let totalOpeningQty = 0
+    let totalOpeningValue = 0
+    let totalInQty = 0
+    let totalInValue = 0
+    let totalOutQty = 0
+    let totalOutValue = 0
+    let totalClosingQty = 0
+    let totalClosingValue = 0
+
+    for (const p of products) {
+        const opIn = openingGrMap.get(p.id) ?? 0
+        const opOut = openingDoMap.get(p.id) ?? 0
+        const openingQty = Math.max(0, opIn - opOut)
+
+        const inQty = periodGrMap.get(p.id) ?? 0
+        const outQty = periodDoMap.get(p.id) ?? 0
+        const closingQty = Math.max(0, openingQty + inQty - outQty)
+
+        // Skip zero stock / zero activity products if requested
+        if (hideZeroStock && openingQty === 0 && inQty === 0 && outQty === 0 && closingQty === 0) {
+            continue
+        }
+
+        const unitCost = landedCostMap.get(p.id) || 0
+        const openingValue = openingQty * unitCost
+        const inValue = inQty * unitCost
+        const outValue = outQty * unitCost
+        const closingValue = closingQty * unitCost
+
+        items.push({
+            productId: p.id,
+            skuCode: p.skuCode,
+            productName: p.productName,
+            wineType: p.wineType,
+            country: p.country,
+            unit: 'Chai',
+            openingQty,
+            openingValue,
+            inQty,
+            inValue,
+            outQty,
+            outValue,
+            closingQty,
+            closingValue,
+            unitCost,
+        })
+
+        totalOpeningQty += openingQty
+        totalOpeningValue += openingValue
+        totalInQty += inQty
+        totalInValue += inValue
+        totalOutQty += outQty
+        totalOutValue += outValue
+        totalClosingQty += closingQty
+        totalClosingValue += closingValue
+    }
+
+    const summary: WarehouseNXTSummary = {
+        totalProducts: items.length,
+        totalOpeningQty,
+        totalOpeningValue,
+        totalInQty,
+        totalInValue,
+        totalOutQty,
+        totalOutValue,
+        totalClosingQty,
+        totalClosingValue,
+    }
+
+    return { items, summary }
+}
+
+// ── 2. Get products for search/select ────────────────
 export async function getProductSearchOptions(search?: string): Promise<ProductOption[]> {
     return cached(`nxt-product-search:${search ?? ''}`, async () => {
         const where: any = {}
@@ -71,7 +329,7 @@ export async function getProductSearchOptions(search?: string): Promise<ProductO
     }, 30_000)
 }
 
-// ── Stock Movement Report — per product ───────────
+// ── 3. Stock Movement Detail Ledger — per product ─────
 export async function getStockMovements(filters: {
     productId: string
     warehouseId?: string
@@ -88,20 +346,47 @@ export async function getStockMovements(filters: {
         }
     }
 
+    const { fromDate, toDate } = parseDateRange(dateFrom, dateTo)
+
+    // 1. Calculate Opening Balance before fromDate
+    const [opGr, opDo] = await Promise.all([
+        prisma.goodsReceiptLine.aggregate({
+            where: {
+                productId,
+                gr: {
+                    status: 'CONFIRMED',
+                    confirmedAt: { lt: fromDate },
+                    ...(warehouseId ? { warehouseId } : {}),
+                },
+            },
+            _sum: { qtyReceived: true },
+        }),
+        prisma.deliveryOrderLine.aggregate({
+            where: {
+                productId,
+                do: {
+                    status: { in: ['SHIPPED', 'DELIVERED'] },
+                    createdAt: { lt: fromDate },
+                    ...(warehouseId ? { warehouseId } : {}),
+                },
+            },
+            _sum: { qtyShipped: true },
+        }),
+    ])
+    const opIn = Number(opGr._sum.qtyReceived ?? 0)
+    const opOut = Number(opDo._sum.qtyShipped ?? 0)
+    const openingBalance = Math.max(0, opIn - opOut)
+
     const movements: StockMovementRow[] = []
 
-    // ── 1. GR Lines (NHẬP) — GoodsReceiptLine ────────
+    // ── 2. GR Lines (NHẬP) ────────
     if (movementType === 'ALL' || movementType === 'IN') {
         const grWhere: any = {
             productId,
             gr: { status: 'CONFIRMED' },
         }
         if (warehouseId) grWhere.gr = { ...grWhere.gr, warehouseId }
-        if (dateFrom || dateTo) {
-            grWhere.gr.confirmedAt = {}
-            if (dateFrom) grWhere.gr.confirmedAt.gte = new Date(dateFrom)
-            if (dateTo) grWhere.gr.confirmedAt.lte = new Date(dateTo + 'T23:59:59')
-        }
+        grWhere.gr.confirmedAt = { gte: fromDate, lte: toDate }
 
         const grLines = await prisma.goodsReceiptLine.findMany({
             where: grWhere,
@@ -132,24 +417,20 @@ export async function getStockMovements(filters: {
                 qtyOut: 0,
                 balance: 0,
                 unitCost: Number(line.lot?.unitLandedCost ?? 0),
-                reference: `PO: ${line.gr.po.poNo}`,
-                note: `Variance: ${Number(line.variance)}`,
+                reference: line.gr.po?.poNo ? `PO: ${line.gr.po.poNo}` : 'Nhập Kho',
+                note: `Chênh lệch: ${Number(line.variance)}`,
             })
         }
     }
 
-    // ── 2. DO Lines (XUẤT) — DeliveryOrderLine ───────
+    // ── 3. DO Lines (XUẤT) ───────
     if (movementType === 'ALL' || movementType === 'OUT') {
         const doWhere: any = {
             productId,
             do: { status: { in: ['SHIPPED', 'DELIVERED'] } },
         }
         if (warehouseId) doWhere.do = { ...doWhere.do, warehouseId }
-        if (dateFrom || dateTo) {
-            doWhere.do.createdAt = {}
-            if (dateFrom) doWhere.do.createdAt.gte = new Date(dateFrom)
-            if (dateTo) doWhere.do.createdAt.lte = new Date(dateTo + 'T23:59:59')
-        }
+        doWhere.do.createdAt = { gte: fromDate, lte: toDate }
 
         const doLines = await prisma.deliveryOrderLine.findMany({
             where: doWhere,
@@ -181,56 +462,54 @@ export async function getStockMovements(filters: {
                 qtyOut: Number(line.qtyShipped),
                 balance: 0,
                 unitCost: Number(line.lot?.unitLandedCost ?? 0),
-                reference: `SO: ${line.do.so.soNo}`,
+                reference: line.do.so?.soNo ? `SO: ${line.do.so.soNo}` : 'Xuất Kho',
                 note: '',
             })
         }
     }
 
-    // ── 3. Sort by date ──────────────────────────────
+    // ── 4. Sort by date ──────────────────────────────
     movements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-    // ── 4. Calculate running balance ─────────────────
-    let balance = 0
+    // ── 5. Calculate step-by-step running balance ───
+    let currentBal = openingBalance
     let totalIn = 0
     let totalOut = 0
 
     for (const m of movements) {
         totalIn += m.qtyIn
         totalOut += m.qtyOut
-        balance += m.qtyIn - m.qtyOut
-        m.balance = balance
+        currentBal += m.qtyIn - m.qtyOut
+        m.balance = currentBal
     }
 
-    // ── 5. Current stock for this product ────────────
-    const currentStockAgg = await prisma.stockLot.aggregate({
-        where: {
-            productId,
-            status: { in: ['AVAILABLE', 'RESERVED'] },
-            ...(warehouseId ? { location: { warehouseId } } : {}),
-        },
-        _sum: { qtyAvailable: true },
-    })
-    const currentStock = Number(currentStockAgg._sum.qtyAvailable ?? 0)
+    const closingBalance = openingBalance + totalIn - totalOut
 
-    // Get avg unit cost
-    const avgCost = movements.length > 0
-        ? movements.reduce((sum, m) => sum + m.unitCost, 0) / movements.length
-        : 0
+    // Get product landed cost fallback if movements in period is 0
+    let avgCost = 0
+    if (movements.length > 0) {
+        avgCost = movements.reduce((sum, m) => sum + m.unitCost, 0) / movements.length
+    } else {
+        const lotAgg = await prisma.stockLot.aggregate({
+            where: { productId, status: { in: ['AVAILABLE', 'RESERVED', 'QUARANTINE'] } },
+            _avg: { unitLandedCost: true },
+        })
+        avgCost = Number(lotAgg._avg.unitLandedCost ?? 0)
+    }
 
     const summary: NXTSummary = {
-        openingBalance: 0, // For filtered date range, this is approximate
+        openingBalance,
         totalIn,
         totalOut,
-        closingBalance: currentStock,
-        totalValue: currentStock * avgCost,
+        closingBalance,
+        totalValue: closingBalance * avgCost,
         movementCount: movements.length,
     }
 
     return { movements, summary }
 }
 
-// ── Get current stock by location for a product ───
+// ── 4. Get current stock by location for a product ───
 export async function getProductStockByLocation(productId: string) {
     const lots = await prisma.stockLot.findMany({
         where: {

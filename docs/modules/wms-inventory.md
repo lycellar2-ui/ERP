@@ -241,35 +241,37 @@ searchProductLocations(warehouseId, term) → Find product → return locationId
 
 ---
 
-## 11. Sổ Nhập Xuất Tồn — Stock Movement Report (NXT)
+## 11. Sổ Nhập Xuất Tồn Kho — Warehouse Inventory Summary & Detail Ledger (NXT)
 
-> **Tab "Nhập Xuất Tồn" trong module WMS** — Sổ kho theo từng phiếu cho bất kỳ sản phẩm.
+> **Tab "Nhập Xuất Tồn" trong module WMS** — Báo cáo Nhập - Xuất - Tồn toàn bộ kho hàng với khả năng lọc theo khoảng thời gian và **Drill-down Sổ Chi Tiết**.
 
-### 11.1 Tính Năng
+### 11.1 Tính Năng Báo Cáo Tổng Hợp Kho (Summary View)
 
 | Tính năng | Mô tả |
 |---|---|
-| **Tìm sản phẩm** | Search dropdown: SKU, tên sản phẩm → chọn → tải báo cáo |
-| **Bộ lọc** | Kho, Ngày từ/đến, Loại phiếu (Tất cả / Chỉ Nhập / Chỉ Xuất) |
-| **Timeline table** | Mỗi dòng = 1 phiếu GR (nhập) hoặc DO (xuất), hiển thị: Ngày, Loại, Số CT, Kho, Vị trí, Lô, Nhập, Xuất, **Tồn (running balance)**, Tham chiếu |
-| **Summary cards** | 5 KPI: Tổng Nhập, Tổng Xuất, Tồn Hiện Tại, Giá Trị Tồn, Số Phiếu |
-| **Vị trí tồn** | Panel bên phải: danh sách vị trí hiện có tồn kho của SP (location, zone, lô, SL, giá trị) |
-| **Export CSV** | Xuất sổ kho CSV (10 cột) với BOM cho Excel, tên file theo SKU |
+| **Bộ lọc khoảng thời gian** | Từ ngày → Đến ngày với các preset nhanh: *Tháng này*, *Tháng trước*, *Quý này*, *Năm nay*, *Tùy chỉnh* |
+| **Bộ lọc kho hàng** | Tất cả các kho hoặc chọn 1 kho cụ thể |
+| **Bảng tổng hợp cả kho** | Hiển thị tất cả SKU với các cột: Mã SKU, Tên SP, ĐVT, **Tồn Đầu Kỳ** (SL & Giá trị), **Nhập Trong Kỳ** (SL & Giá trị), **Xuất Trong Kỳ** (SL & Giá trị), **Tồn Cuối Kỳ** (SL & Giá trị), **Đơn Giá Vốn BK (Landed Cost)** |
+| **Thẻ KPI tổng quan** | 5 chỉ số: *Tổng SKU*, *Tồn Đầu Kỳ*, *Tổng Nhập Trong Kỳ*, *Tổng Xuất Trong Kỳ*, *Tồn Cuối Kỳ* |
+| **Lọc phát sinh** | Option *Chỉ hiện sản phẩm có tồn kho hoặc có phát sinh* để tối ưu báo cáo |
+| **Export CSV** | Xuất báo cáo Nhập Xuất Tồn tổng hợp 13 cột với mã định dạng UTF-8 BOM cho Excel |
 
-### 11.2 Nguồn Dữ Liệu
+### 11.2 Tính Năng Sổ Chi Tiết Mã Sản Phẩm (Drill-Down Detail View)
 
-| Loại | Source | Điều kiện |
-|---|---|---|
-| **Nhập (IN)** | `GoodsReceiptLine` → `GoodsReceipt` | GR status = CONFIRMED |
-| **Xuất (OUT)** | `DeliveryOrderLine` → `DeliveryOrder` | DO status = SHIPPED/DELIVERED |
+| Tính năng | Mô tả |
+|---|---|
+| **Kích hoạt Drill-down** | Click vào mã SKU hoặc nút *Sổ Chi Tiết* ở bất kỳ dòng nào trong Bảng Tổng Hợp |
+| **Giao diện chi tiết** | Banner thông tin sản phẩm (SKU, tên, loại rượu, xuất xứ, tồn kho hiện tại) + Nút `← Quay lại Bảng Tổng Hợp` |
+| **Mốc Tồn Đầu Kỳ** | Dòng hiển thị số dư Tồn Đầu Kỳ chuẩn xác tại mốc ngày `dateFrom` |
+| **Sổ chứng từ lũy kế** | Danh sách phiếu GR (nhập) / DO (xuất) trong khoảng thời gian, tự động tính **Tồn Lũy Kế (Running Balance)** từng dòng |
+| **Phân bổ vị trí kho** | Panel bên phải hiển thị chi tiết các Lô hàng (`StockLot`) & Vị trí (`LocationCode`) đang lưu trữ thực tế |
 
-Được sắp xếp theo ngày → tính toán **running balance** (cộng dồn) cho mỗi dòng.
+### 11.3 Backend (`actions-nxt.ts`)
 
-### 11.3 Backend (actions-nxt.ts)
-
-```
+```typescript
+getWarehouseNXTReport(filters)           → { items: WarehouseNXTItem[], summary: WarehouseNXTSummary }
+getStockMovements(filters)                → { movements: StockMovementRow[], summary: NXTSummary } (Tính openingBalance chuẩn & running balance)
 getProductSearchOptions(search?)          → ProductOption[] (SKU, name)
-getStockMovements(filters)                → { movements: StockMovementRow[], summary: NXTSummary }
 getProductStockByLocation(productId)      → Current lots with location details
 ```
 
