@@ -700,79 +700,41 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             {/* ═══ VIEW MODE 1: BẢNG CHỨC NĂNG TRUNG TÂM (GRID VIEW) ═══ */}
             {viewMode === 'grid' && (
                 <div className="space-y-4">
-                    {/* 📱 MOBILE LAUNCHER GRID (< 768px) - LIGHT LUXURY THEME */}
-                    <div className="block md:hidden space-y-3">
-                        <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500 px-1">
-                            Bảng Chức Năng Quản Lý Kho
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-2.5">
-                            <button
-                                onClick={() => { setActiveTab('inventory'); setViewMode('workspace') }}
-                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
-                            >
-                                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold mb-2">
-                                    <Package size={20} />
-                                </div>
-                                <div className="text-xs font-black text-slate-900">Tra Cứu Tồn Kho</div>
-                                <div className="text-[10px] text-emerald-600 font-bold mt-0.5">{stats.availableBottles.toLocaleString()} chai khả dụng ➔</div>
-                            </button>
-
-                            <button
-                                onClick={() => { setActiveTab('do'); setViewMode('workspace') }}
-                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
-                            >
-                                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold mb-2">
-                                    <Truck size={20} />
-                                </div>
-                                <div className="text-xs font-black text-slate-900">Xuất Kho (DO)</div>
-                                <div className="text-[10px] text-amber-600 font-bold mt-0.5">Nhặt hàng theo đơn ➔</div>
-                            </button>
-
-                            <button
-                                onClick={() => { setActiveTab('gr'); setViewMode('workspace') }}
-                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
-                            >
-                                <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold mb-2">
-                                    <PackagePlus size={20} />
-                                </div>
-                                <div className="text-xs font-black text-slate-900">Nhập Kho (GR)</div>
-                                <div className="text-[10px] text-cyan-600 font-bold mt-0.5">Tạo lô hàng nhập ➔</div>
-                            </button>
-
-                            <button
-                                onClick={() => { setActiveTab('stock-count'); setViewMode('workspace') }}
-                                className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-sm"
-                            >
-                                <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold mb-2">
-                                    <ClipboardList size={20} />
-                                </div>
-                                <div className="text-xs font-black text-slate-900">Kiểm Kê Kho</div>
-                                <div className="text-[10px] text-teal-600 font-bold mt-0.5">Đếm từng vị trí ➔</div>
-                            </button>
+                    {/* 📱 MOBILE UNIFIED FEATURE GRID (< 768px) - NO REDUNDANT DUPLICATIONS */}
+                    <div className="block md:hidden space-y-3 pb-20">
+                        <div className="flex items-center justify-between px-1">
+                            <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
+                                Bảng Chức Năng Quản Lý Kho
+                            </p>
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                {wmsFeatureModules.length} Phân Hệ
+                            </span>
                         </div>
 
-                        {/* Mobile Module Row List */}
-                        <div className="bg-white border border-slate-200 rounded-2xl p-2 space-y-1 shadow-sm">
-                            <span className="text-[10px] font-black uppercase text-slate-400 px-3 py-1.5 block">CÁC CHỨC NĂNG KHO MỞ RỘNG</span>
+                        {/* Single Unified 2-Column Mobile Grid for All 9 Modules */}
+                        <div className="grid grid-cols-2 gap-2.5">
                             {wmsFeatureModules.map(mod => {
                                 const Icon = mod.icon
                                 return (
                                     <button
                                         key={mod.key}
                                         onClick={() => { handleTabChange(mod.key); setViewMode('workspace') }}
-                                        className="w-full p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between text-left active:scale-98 transition"
+                                        className="p-3.5 bg-white border border-slate-200 rounded-2xl text-left active:scale-95 transition shadow-2xs flex flex-col justify-between"
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-start justify-between mb-2">
                                             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: mod.bg, color: mod.color }}>
                                                 <Icon size={18} />
                                             </div>
-                                            <div>
-                                                <div className="text-xs font-bold text-slate-900">{mod.title}</div>
-                                                <div className="text-[10px] text-slate-500">{mod.subtitle}</div>
-                                            </div>
+                                            {mod.badge !== undefined && mod.badge > 0 && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-extrabold bg-rose-600 text-white">
+                                                    {mod.badge}
+                                                </span>
+                                            )}
                                         </div>
-                                        <ChevronRight size={16} className="text-slate-400" />
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-900 leading-snug">{mod.title}</div>
+                                            <div className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">{mod.subtitle}</div>
+                                        </div>
                                     </button>
                                 )
                             })}
