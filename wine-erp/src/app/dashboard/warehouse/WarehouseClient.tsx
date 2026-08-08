@@ -589,6 +589,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
         { label: 'Hàng >180 Ngày', value: stats.slowMovingCount, accent: stats.slowMovingCount > 0 ? '#DC2626' : '#16A34A', icon: TrendingDown },
     ]
 
+    const activeModule = wmsFeatureModules.find(m => m.key === activeTab)
+
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* 1. TOPMOST HEADER CONTAINER */}
@@ -598,9 +600,27 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 {/* Top Row: Title + Stat Badges + Create WH Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: '#E2E8F0' }}>
                     <div className="flex items-center justify-between w-full sm:w-auto gap-3">
-                        <h2 className="text-base font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                            <Warehouse size={20} style={{ color: '#D4A853' }} /> Kho Hàng
-                        </h2>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                                title="Nhấn để về trang Bảng Chức Năng Kho"
+                            >
+                                <Warehouse size={20} style={{ color: '#D4A853' }} /> Kho Hàng
+                            </button>
+
+                            {viewMode === 'workspace' && (
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg transition-all hover:bg-slate-100 cursor-pointer"
+                                    style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #CBD5E1' }}
+                                    title="Quay lại Bảng Chức Năng Kho"
+                                >
+                                    <ChevronRight size={14} /> {activeModule?.title}
+                                </button>
+                            )}
+                        </div>
+
                         <button onClick={() => setCreateWHOpen(true)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold sm:hidden transition-all shadow-xs"
                             style={{ background: '#D4A853', color: '#0A1926' }}>
@@ -629,34 +649,19 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     </button>
                 </div>
 
-                {/* Bottom Row: View Toggle Mode + Inline Warehouse Selector */}
+                {/* Bottom Row: Inline Warehouse Selector */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    {/* Mode Selector Buttons: Bảng Chức Năng vs Chế độ Làm Việc */}
-                    <div className="flex items-center gap-1.5 p-1 rounded-xl shrink-0" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
-                            style={{
-                                background: viewMode === 'grid' ? '#FFFFFF' : 'transparent',
-                                color: viewMode === 'grid' ? '#0F172A' : '#64748B',
-                                border: viewMode === 'grid' ? '1px solid #CBD5E1' : '1px solid transparent',
-                                boxShadow: viewMode === 'grid' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
-                            }}
-                        >
-                            <LayoutGrid size={14} style={{ color: viewMode === 'grid' ? '#B47816' : '#64748B' }} /> Bảng Chức Năng Kho
-                        </button>
-                        <button
-                            onClick={() => setViewMode('workspace')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
-                            style={{
-                                background: viewMode === 'workspace' ? '#FFFFFF' : 'transparent',
-                                color: viewMode === 'workspace' ? '#0F172A' : '#64748B',
-                                border: viewMode === 'workspace' ? '1px solid #CBD5E1' : '1px solid transparent',
-                                boxShadow: viewMode === 'workspace' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
-                            }}
-                        >
-                            <Box size={14} style={{ color: viewMode === 'workspace' ? '#B47816' : '#64748B' }} /> Màn Hình Làm Việc
-                        </button>
+                    {/* Active Module Indicator when in Workspace */}
+                    <div>
+                        {viewMode === 'workspace' && (
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className="flex items-center gap-1.5 text-xs font-bold transition-all hover:text-[#B47816]"
+                                style={{ color: '#0F172A' }}
+                            >
+                                <ArrowLeft size={14} style={{ color: '#B47816' }} /> Quay lại Bảng Chức Năng Kho
+                            </button>
+                        )}
                     </div>
 
                     {/* Warehouse Selector Dropdown */}
@@ -756,42 +761,6 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             {/* ═══ VIEW MODE 2: MÀN HÌNH LÀM VIỆC CHI TIẾT (WORKSPACE VIEW) ═══ */}
             {viewMode === 'workspace' && (
                 <div className="space-y-4">
-                    {/* Workspace Header Switcher & Breadcrumb */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl shadow-xs"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors hover:bg-slate-100 shrink-0"
-                            style={{ background: '#F1F5F9', color: '#0F172A', border: '1px solid #CBD5E1' }}
-                        >
-                            <ArrowLeft size={14} /> ← Bảng Chức Năng Kho
-                        </button>
-
-                        {/* Quick Navigation Tabs */}
-                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 max-w-full">
-                            {wmsFeatureModules.map(t => {
-                                const Icon = t.icon
-                                const active = activeTab === t.key
-                                return (
-                                    <button key={t.key} onClick={() => handleTabChange(t.key)}
-                                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all shrink-0"
-                                        style={{
-                                            background: active ? '#D4A853' : 'transparent',
-                                            color: active ? '#0A1926' : '#64748B',
-                                            border: active ? '1px solid #B47816' : '1px solid transparent'
-                                        }}>
-                                        <Icon size={12} /> {t.title.split(' ')[1] || t.title}
-                                        {t.badge !== undefined && t.badge > 0 && (
-                                            <span className="text-[9px] min-w-[14px] text-center px-1 rounded-full font-bold"
-                                                style={{ background: active ? '#0A1926' : 'rgba(220,38,38,0.15)', color: active ? '#D4A853' : '#DC2626' }}>
-                                                {t.badge}
-                                            </span>
-                                        )}
-                                    </button>
-                                )
-                            })}
-                        </div>
-                    </div>
 
                     {/* NXT — Stock Movement Report Tab */}
                     {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} />}
