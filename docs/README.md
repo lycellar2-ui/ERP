@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 16:56 | Wine ERP v9.1 — 29 modules, 123 models, 2D Warehouse Map Location & Zone Resizing Tools*
+*Last updated: 2026-08-08 16:59 | Wine ERP v9.2 — 29 modules, 123 models, Clean Light Theme 2D Warehouse Map & High-Contrast Inventory Popup*
 

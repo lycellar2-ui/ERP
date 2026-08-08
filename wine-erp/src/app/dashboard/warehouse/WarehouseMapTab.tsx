@@ -27,13 +27,13 @@ interface LayoutConfig { walls: Wall[]; doors: Door[]; labels: Label[] }
 type Tool = 'select' | 'wall' | 'door' | 'label' | 'eraser'
 
 // ═══════════════════════════════════════════════════════════
-// Modern Aesthetic Color Tokens for Occupancy
+// Clean High-Contrast Light Theme Color Tokens
 // ═══════════════════════════════════════════════════════════
 function occColor(pct: number) {
     if (pct >= 90) return {
         fill: '#FFF1F2',
         border: '#F43F5E',
-        text: '#E11D48',
+        text: '#BE123C',
         dot: '#F43F5E',
         badgeBg: '#FFE4E6',
         badgeText: '#9F1239',
@@ -49,7 +49,7 @@ function occColor(pct: number) {
         label: 'Cao (70-90%)'
     }
     if (pct >= 40) return {
-        fill: '#E0F2FE',
+        fill: '#F0F9FF',
         border: '#0284C7',
         text: '#0369A1',
         dot: '#0284C7',
@@ -58,7 +58,7 @@ function occColor(pct: number) {
         label: 'Trung bình (40-70%)'
     }
     if (pct > 0) return {
-        fill: '#E6F4F1',
+        fill: '#ECFDF5',
         border: '#10B981',
         text: '#047857',
         dot: '#10B981',
@@ -69,10 +69,10 @@ function occColor(pct: number) {
     return {
         fill: '#F8FAFC',
         border: '#CBD5E1',
-        text: '#64748B',
+        text: '#475569',
         dot: '#94A3B8',
         badgeBg: '#F1F5F9',
-        badgeText: '#475569',
+        badgeText: '#334155',
         label: 'Trống (0%)'
     }
 }
@@ -217,7 +217,6 @@ export function WarehouseMapTab({
     const isDrawingTool = tool === 'wall' || tool === 'door' || tool === 'label' || tool === 'eraser'
 
     const onCanvasMouseDown = (e: React.MouseEvent) => {
-        // Pan: middle-click, or left-click in view mode, or space+left-click in edit mode
         if (e.button === 1 || (e.button === 0 && (tool === 'select' && !editMode)) || (e.button === 0 && spaceHeld && editMode)) {
             setIsPanning(true)
             panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y }
@@ -253,7 +252,6 @@ export function WarehouseMapTab({
                 setHasChanges(true)
             }
         } else if (tool === 'eraser') {
-            // Try to remove nearest wall/door/label
             const threshold = 18
             const px = pos.x, py = pos.y
             // Walls
@@ -386,17 +384,17 @@ export function WarehouseMapTab({
     const zones = [...new Set(locations.map(l => l.zone))].sort()
 
     // ═══════════════════════════════════════════════════
-    // RENDER
+    // RENDER (Clean Bright Light Theme)
     // ═══════════════════════════════════════════════════
     return (
-        <div className="flex flex-col gap-0 rounded-2xl overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 170px)', minHeight: 640, border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
+        <div className="flex flex-col gap-0 rounded-2xl overflow-hidden shadow-sm bg-white border border-slate-200" style={{ height: 'calc(100vh - 170px)', minHeight: 640 }}>
             {/* ── Top Bar ─────────────────────────────── */}
-            <div className="flex flex-wrap items-center gap-3 p-3.5" style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+            <div className="flex flex-wrap items-center gap-3 p-3.5 bg-slate-50 border-b border-slate-200">
 
                 {/* Warehouse Title */}
                 <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-                        <Building2 size={16} className="text-amber-600" />
+                    <span className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
+                        <Building2 size={18} className="text-amber-600" />
                         {mapData ? mapData.name : 'Sơ Đồ Kho 2D'}
                     </span>
                 </div>
@@ -409,16 +407,16 @@ export function WarehouseMapTab({
                         onChange={e => setSearchTerm(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSearch()}
                         placeholder="Tìm SKU, tên rượu trên sơ đồ..."
-                        className="w-full pl-9 pr-3 py-1.5 rounded-lg text-xs outline-none bg-white border border-slate-200 text-slate-800 focus:border-amber-500 transition-all"
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs outline-none bg-white border border-slate-300 text-slate-900 focus:border-amber-500 shadow-2xs transition-all"
                     />
                 </div>
 
                 {/* Zoom Controls */}
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-200">
-                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600" title="Thu nhỏ"><ZoomOut size={14} /></button>
-                    <span className="text-xs font-mono font-bold w-11 text-center text-slate-700">{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600" title="Phóng to"><ZoomIn size={14} /></button>
-                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-slate-100 text-slate-600" title="Về mặc định"><Maximize2 size={14} /></button>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white border border-slate-300 shadow-2xs">
+                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Thu nhỏ"><ZoomOut size={14} /></button>
+                    <span className="text-xs font-mono font-bold w-11 text-center text-slate-800">{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Phóng to"><ZoomIn size={14} /></button>
+                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Về mặc định"><Maximize2 size={14} /></button>
                 </div>
 
                 {/* Edit & Save Controls */}
@@ -426,22 +424,22 @@ export function WarehouseMapTab({
                     <div className="flex items-center gap-2 ml-auto">
                         {!editMode ? (
                             <button onClick={() => setEditMode(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 cursor-pointer">
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-xs cursor-pointer">
                                 <Move size={14} /> Chỉnh Sửa Sơ Đồ
                             </button>
                         ) : (
                             <>
                                 <button onClick={handleAutoLayout} disabled={saving}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer">
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
                                     <Grid3x3 size={13} /> Sắp Xếp Tự Động
                                 </button>
                                 <button onClick={handleSaveAll} disabled={saving}
-                                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${hasChanges ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm' : 'bg-slate-200 text-slate-600'}`}>
+                                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${hasChanges ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-sm' : 'bg-slate-200 text-slate-600'}`}>
                                     {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                                     Lưu Sơ Đồ
                                 </button>
                                 <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white hover:bg-slate-900 cursor-pointer">
+                                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 cursor-pointer shadow-xs">
                                     <Eye size={13} /> Hoàn Tất
                                 </button>
                             </>
@@ -454,7 +452,7 @@ export function WarehouseMapTab({
             <div className="flex flex-1 overflow-hidden relative">
                 {/* Left Drawing Toolbar (Active in Edit Mode) */}
                 {editMode && (
-                    <div className="flex flex-col gap-1.5 p-2 bg-slate-900 border-r border-slate-800 z-20 shrink-0" style={{ width: 68 }}>
+                    <div className="flex flex-col gap-1.5 p-2 bg-slate-100 border-r border-slate-200 z-20 shrink-0 shadow-2xs" style={{ width: 72 }}>
                         {([
                             { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn/Sửa' },
                             { key: 'wall' as Tool, icon: Minus, label: 'Vẽ Tường' },
@@ -464,7 +462,7 @@ export function WarehouseMapTab({
                         ]).map(t => (
                             <button key={t.key} onClick={() => { setTool(t.key); setWallDrawing(null) }}
                                 title={t.label}
-                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${tool === t.key ? 'bg-amber-500 text-slate-950 shadow-md scale-105' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${tool === t.key ? 'bg-amber-500 text-white shadow-sm scale-105' : 'text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200'}`}>
                                 <t.icon size={18} />
                                 <span>{t.label}</span>
                             </button>
@@ -472,10 +470,10 @@ export function WarehouseMapTab({
 
                         {/* Door Rotation helper */}
                         {tool === 'door' && (
-                            <div className="mt-2 pt-2 border-t border-slate-800 flex flex-col items-center gap-1">
+                            <div className="mt-2 pt-2 border-t border-slate-200 flex flex-col items-center gap-1">
                                 <button
                                     onClick={() => setDoorRotation(r => (r + 90) % 360)}
-                                    className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold hover:bg-amber-500/30 w-full text-center cursor-pointer"
+                                    className="p-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold hover:bg-amber-200 w-full text-center cursor-pointer"
                                     title="Xoay cửa 90 độ"
                                 >
                                     Xoay {doorRotation}°
@@ -483,9 +481,9 @@ export function WarehouseMapTab({
                             </div>
                         )}
 
-                        <div className="mt-auto pt-2 border-t border-slate-800">
+                        <div className="mt-auto pt-2 border-t border-slate-200">
                             <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [] }); setHasChanges(true) }}
-                                title="Reset vẽ tường cửa" className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium text-rose-400 hover:bg-rose-950/30 w-full cursor-pointer">
+                                title="Reset vẽ tường cửa" className="flex flex-col items-center gap-0.5 p-2 rounded-xl text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 w-full cursor-pointer">
                                 <RotateCcw size={14} />
                                 Reset
                             </button>
@@ -493,13 +491,13 @@ export function WarehouseMapTab({
                     </div>
                 )}
 
-                {/* 2D Canvas Area */}
+                {/* 2D Canvas Area (Clean Light Graph Paper) */}
                 <div
                     ref={canvasRef}
                     className="flex-1 relative overflow-hidden select-none"
                     style={{
-                        background: '#0F172A', // Slate 900 Blueprint Dark Theme
-                        backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)',
+                        background: '#F8FAFC', // Slate 50 Light Blueprint Canvas
+                        backgroundImage: 'radial-gradient(circle, #CBD5E1 1.2px, transparent 1.2px)',
                         backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
                         backgroundPosition: `${pan.x}px ${pan.y}px`,
                         cursor: isPanning || spaceHeld ? 'grabbing'
@@ -516,9 +514,9 @@ export function WarehouseMapTab({
                     onWheel={onWheel}
                 >
                     {loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs z-50">
-                            <div className="flex flex-col items-center gap-2 bg-slate-900 p-4 rounded-xl border border-slate-800 text-amber-400 text-xs font-bold">
-                                <Loader2 size={28} className="animate-spin" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-xs z-50">
+                            <div className="flex flex-col items-center gap-2 bg-white p-5 rounded-2xl border border-slate-200 text-amber-700 text-xs font-bold shadow-xl">
+                                <Loader2 size={32} className="animate-spin text-amber-600" />
                                 <span>Đang tải dữ liệu sơ đồ kho...</span>
                             </div>
                         </div>
@@ -526,8 +524,8 @@ export function WarehouseMapTab({
 
                     {!mapData && !loading && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <Box size={44} className="text-slate-700" />
-                            <p className="text-sm font-semibold text-slate-400">Chọn kho để xem sơ đồ 2D vị trí</p>
+                            <Box size={44} className="text-slate-400" />
+                            <p className="text-sm font-semibold text-slate-500">Chọn kho để xem sơ đồ 2D vị trí</p>
                         </div>
                     )}
 
@@ -538,7 +536,7 @@ export function WarehouseMapTab({
                                 {/* Walls */}
                                 {layoutCfg.walls.map(w => (
                                     <line key={w.id} x1={w.x1} y1={w.y1} x2={w.x2} y2={w.y2}
-                                        stroke="#475569" strokeWidth={w.thickness || 8} strokeLinecap="round" />
+                                        stroke="#334155" strokeWidth={w.thickness || 8} strokeLinecap="round" />
                                 ))}
 
                                 {/* Wall drawing active preview */}
@@ -560,7 +558,7 @@ export function WarehouseMapTab({
                                 {/* Labels */}
                                 {layoutCfg.labels.map(l => (
                                     <text key={l.id} x={l.x} y={l.y} fontSize={l.fontSize || 14}
-                                        fill="#94A3B8" fontWeight="700" fontFamily="Inter, sans-serif"
+                                        fill="#334155" fontWeight="800" fontFamily="Inter, sans-serif"
                                         style={{ userSelect: 'none' }}>
                                         {l.text}
                                     </text>
@@ -582,11 +580,11 @@ export function WarehouseMapTab({
                                             position: 'absolute', left: 0, top: 32,
                                             width: (maxX - minX) + 20,
                                             height: Math.max(...zoneLocs.map(l => l.posY + l.height)) - minY + 20,
-                                            background: `${zColor}12`, border: `2px dashed ${zColor}40`,
+                                            background: `${zColor}10`, border: `2px dashed ${zColor}60`,
                                             borderRadius: 14, pointerEvents: 'none',
                                         }} />
                                         {/* Zone Badge */}
-                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-extrabold shadow-sm"
+                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-extrabold shadow-xs"
                                             style={{ background: zColor, color: '#FFFFFF', width: 'fit-content', letterSpacing: 0.5 }}>
                                             <Layers size={12} />
                                             ZONE {zone}
@@ -628,9 +626,9 @@ export function WarehouseMapTab({
                                             zIndex: isSelected ? 20 : isHighlighted ? 15 : 10,
                                             cursor: editMode && isDrawingTool ? 'inherit' : editMode && tool === 'select' ? 'move' : 'pointer',
                                             pointerEvents: editMode && isDrawingTool ? 'none' : 'auto',
-                                            boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.3), 0 4px 12px rgba(0,0,0,0.15)' :
-                                                isHighlighted ? '0 0 0 4px rgba(245,158,11,0.3), 0 0 16px rgba(245,158,11,0.3)' :
-                                                    '0 2px 4px rgba(0,0,0,0.05)',
+                                            boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.25), 0 4px 12px rgba(0,0,0,0.1)' :
+                                                isHighlighted ? '0 0 0 4px rgba(245,158,11,0.3), 0 0 16px rgba(245,158,11,0.2)' :
+                                                    '0 2px 4px rgba(0,0,0,0.04)',
                                             padding: '6px 8px',
                                             display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                                             userSelect: 'none',
@@ -638,7 +636,7 @@ export function WarehouseMapTab({
                                     >
                                         {/* Top: Location Code & Temp badge */}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-extrabold font-mono" style={{ color: '#0F172A', letterSpacing: 0.3 }}>
+                                            <span className="text-[11px] font-extrabold font-mono text-slate-900" style={{ letterSpacing: 0.3 }}>
                                                 {loc.locationCode}
                                             </span>
                                             {loc.tempControlled && (
@@ -647,7 +645,7 @@ export function WarehouseMapTab({
                                         </div>
 
                                         {/* Occupancy Progress Bar */}
-                                        <div className="w-full rounded-full overflow-hidden bg-slate-200/80 my-1" style={{ height: 5 }}>
+                                        <div className="w-full rounded-full overflow-hidden bg-slate-200 my-1" style={{ height: 5 }}>
                                             <div style={{ width: `${loc.occupancyPct}%`, height: '100%', background: oc.dot, borderRadius: 99, transition: 'width 0.3s' }} />
                                         </div>
 
@@ -668,10 +666,10 @@ export function WarehouseMapTab({
                                                     e.stopPropagation()
                                                     setResizeLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origW: loc.width, origH: loc.height })
                                                 }}
-                                                className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-amber-500 border border-slate-900 rounded-sm cursor-se-resize shadow-md flex items-center justify-center hover:scale-125 transition-transform z-30"
+                                                className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-amber-500 border border-white rounded-sm cursor-se-resize shadow-md flex items-center justify-center hover:scale-125 transition-transform z-30"
                                                 title="Kéo góc này để thay đổi Kích thước (Rộng x Cao)"
                                             >
-                                                <Maximize size={10} className="text-slate-950" />
+                                                <Maximize size={10} className="text-white" />
                                             </div>
                                         )}
                                     </div>
@@ -682,44 +680,44 @@ export function WarehouseMapTab({
 
                     {/* Tool Hint Banners */}
                     {wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-slate-950 shadow-lg border border-amber-400">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-white shadow-lg border border-amber-600">
                             🧱 Click chọn điểm kết thúc tường • ESC để hủy
                         </div>
                     )}
                     {editMode && tool === 'door' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-slate-950 shadow-lg border border-amber-400">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-amber-500 text-white shadow-lg border border-amber-600">
                             🚪 Click để đặt cửa trên sơ đồ • Nhấn nút Xoay ở cột trái để đổi góc
                         </div>
                     )}
                     {editMode && tool === 'wall' && !wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-800 text-white shadow-lg border border-slate-700">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-900 text-white shadow-lg border border-slate-800">
                             🧱 Click để chọn điểm bắt đầu vẽ tường • Giữ Space để kéo bản đồ
                         </div>
                     )}
                     {editMode && tool === 'select' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-800 text-white shadow-lg border border-slate-700 flex items-center gap-2">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-900 text-white shadow-lg border border-slate-800 flex items-center gap-2">
                             <span>📐 Kéo góc vuông màu cam ở mỗi ô để đổi kích thước Rộng x Cao</span>
                         </div>
                     )}
                 </div>
 
-                {/* Right Side Control & Legend Panel */}
-                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-900 border-l border-slate-800 text-slate-200" style={{ width: 280 }}>
+                {/* Right Side Control & Legend Panel (Clean Light Theme) */}
+                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-50 border-l border-slate-200 text-slate-800" style={{ width: 290 }}>
 
                     {/* 📐 Dimension & Size Editor for Selected Location */}
                     {selectedLoc && editMode && (
-                        <div className="p-3.5 rounded-xl bg-slate-800/90 border border-amber-500/40 text-xs space-y-2.5">
+                        <div className="p-3.5 rounded-xl bg-white border border-amber-300 shadow-xs text-xs space-y-2.5">
                             <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+                                <h4 className="font-extrabold text-amber-700 flex items-center gap-1.5 text-xs">
                                     <Sliders size={14} /> Chỉnh Kích Thước: {selectedLoc.locationCode}
                                 </h4>
-                                <button onClick={() => setSelectedLocId(null)} className="text-slate-400 hover:text-white"><X size={12} /></button>
+                                <button onClick={() => setSelectedLocId(null)} className="text-slate-400 hover:text-slate-700 cursor-pointer"><X size={12} /></button>
                             </div>
 
                             {/* Direct W x H Numerical Inputs */}
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 block mb-1">Rộng (Width - px)</label>
+                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Rộng (Width - px)</label>
                                     <input
                                         type="number"
                                         value={selectedLoc.width}
@@ -728,11 +726,11 @@ export function WarehouseMapTab({
                                             setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: w } : l))
                                             setHasChanges(true)
                                         }}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono font-bold text-xs outline-none focus:border-amber-500"
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-slate-900 font-mono font-bold text-xs outline-none focus:border-amber-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 block mb-1">Cao (Height - px)</label>
+                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Cao (Height - px)</label>
                                     <input
                                         type="number"
                                         value={selectedLoc.height}
@@ -741,14 +739,14 @@ export function WarehouseMapTab({
                                             setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, height: h } : l))
                                             setHasChanges(true)
                                         }}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono font-bold text-xs outline-none focus:border-amber-500"
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-slate-900 font-mono font-bold text-xs outline-none focus:border-amber-500"
                                     />
                                 </div>
                             </div>
 
                             {/* Quick Presets */}
                             <div>
-                                <p className="text-[10px] font-bold text-slate-400 mb-1">Mẫu kích thước chuẩn:</p>
+                                <p className="text-[10px] font-bold text-slate-500 mb-1">Mẫu kích thước chuẩn:</p>
                                 <div className="grid grid-cols-2 gap-1.5">
                                     {[
                                         { label: '80×60 (Chuẩn)', w: 80, h: 60 },
@@ -762,7 +760,7 @@ export function WarehouseMapTab({
                                                 setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: p.w, height: p.h } : l))
                                                 setHasChanges(true)
                                             }}
-                                            className="px-2 py-1 rounded-md bg-slate-900 border border-slate-700 hover:border-amber-500 text-[10px] font-mono font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-center"
+                                            className="px-2 py-1 rounded-md bg-slate-50 border border-slate-200 hover:border-amber-500 text-[10px] font-mono font-semibold text-slate-700 hover:text-amber-800 transition-colors cursor-pointer text-center"
                                         >
                                             {p.label}
                                         </button>
@@ -773,7 +771,7 @@ export function WarehouseMapTab({
                             {/* Bulk Zone Resize Button */}
                             <button
                                 onClick={() => handleApplyZoneResize(selectedLoc.zone, selectedLoc.width, selectedLoc.height)}
-                                className="w-full py-1.5 px-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                                className="w-full py-1.5 px-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-[11px] font-bold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-1"
                             >
                                 <Sparkles size={13} /> Áp dụng {selectedLoc.width}x{selectedLoc.height} cho ZONE {selectedLoc.zone}
                             </button>
@@ -782,8 +780,8 @@ export function WarehouseMapTab({
 
                     {/* Occupancy Legend */}
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2.5 text-amber-400 flex items-center gap-1.5">
-                            <Info size={13} /> Chú Thích Mức Tồn
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2.5 text-slate-800 flex items-center gap-1.5">
+                            <Info size={14} className="text-amber-600" /> Chú Thích Mức Tồn Kho
                         </h4>
                         <div className="space-y-2">
                             {[
@@ -796,8 +794,8 @@ export function WarehouseMapTab({
                                 const c = occColor(item.pct)
                                 return (
                                     <div key={item.label} className="flex items-center gap-2">
-                                        <div className="w-3.5 h-3.5 rounded-md shrink-0" style={{ background: c.fill, border: `2px solid ${c.border}` }} />
-                                        <span className="text-xs font-medium text-slate-300">{item.label}</span>
+                                        <div className="w-4 h-4 rounded-md shrink-0 shadow-2xs" style={{ background: c.fill, border: `2px solid ${c.border}` }} />
+                                        <span className="text-xs font-semibold text-slate-700">{item.label}</span>
                                     </div>
                                 )
                             })}
@@ -806,31 +804,31 @@ export function WarehouseMapTab({
 
                     {/* Floor Plan Elements Legend */}
                     {editMode && (
-                        <div className="pt-3 border-t border-slate-800 space-y-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400">Vật Thể Bản Đồ</h4>
+                        <div className="pt-3 border-t border-slate-200 space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">Vật Thể Bản Đồ</h4>
                             <div className="flex items-center gap-2.5">
-                                <div className="w-5 h-2 rounded bg-slate-500" />
-                                <span className="text-xs text-slate-300">Tường ngăn</span>
+                                <div className="w-5 h-2 rounded bg-slate-700" />
+                                <span className="text-xs font-medium text-slate-700">Tường ngăn</span>
                             </div>
                             <div className="flex items-center gap-2.5">
                                 <div className="w-5 h-2 rounded bg-amber-500" />
-                                <span className="text-xs text-slate-300">Cửa ra vào</span>
+                                <span className="text-xs font-medium text-slate-700">Cửa ra vào</span>
                             </div>
                         </div>
                     )}
 
                     {/* Zones Summary & Batch Resize */}
                     {zones.length > 0 && (
-                        <div className="pt-3 border-t border-slate-800">
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">Danh Sách Zone & Đổi Size hàng loạt</h4>
+                        <div className="pt-3 border-t border-slate-200">
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-800">Danh Sách Zone ({zones.length})</h4>
                             <div className="space-y-2">
                                 {zones.map(z => {
                                     const zLocs = locations.filter(l => l.zone === z)
                                     const avgW = zLocs.length > 0 ? zLocs[0].width : 80
                                     const avgH = zLocs.length > 0 ? zLocs[0].height : 60
                                     return (
-                                        <div key={z} className="p-2 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-between">
-                                            <span className="px-2.5 py-0.5 rounded text-xs font-extrabold"
+                                        <div key={z} className="p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs">
+                                            <span className="px-2.5 py-1 rounded text-xs font-extrabold"
                                                 style={{ background: ZONE_COLORS[z] ?? '#475569', color: '#FFFFFF' }}>
                                                 ZONE {z} ({zLocs.length} ô)
                                             </span>
@@ -841,7 +839,7 @@ export function WarehouseMapTab({
                                                         setZoneW(avgW)
                                                         setZoneH(avgH)
                                                     }}
-                                                    className="px-2 py-0.5 rounded bg-slate-700 hover:bg-amber-500 text-slate-300 hover:text-slate-950 text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                                    className="px-2 py-1 rounded bg-slate-100 hover:bg-amber-500 text-slate-700 hover:text-white text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1 border border-slate-200"
                                                 >
                                                     <Sliders size={11} /> {avgW}x{avgH}
                                                 </button>
@@ -855,32 +853,32 @@ export function WarehouseMapTab({
 
                     {/* Quick Warehouse Stats */}
                     {mapData && (
-                        <div className="pt-3 border-t border-slate-800 grid grid-cols-2 gap-2">
-                            <div className="p-2.5 rounded-xl text-center bg-slate-800/80 border border-slate-700/60">
-                                <p className="text-base font-extrabold text-amber-400 font-mono">{locations.length}</p>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase">Tổng Vị Trí</p>
+                        <div className="pt-3 border-t border-slate-200 grid grid-cols-2 gap-2">
+                            <div className="p-2.5 rounded-xl text-center bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-base font-extrabold text-amber-600 font-mono">{locations.length}</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase">Tổng Vị Trí</p>
                             </div>
-                            <div className="p-2.5 rounded-xl text-center bg-slate-800/80 border border-slate-700/60">
-                                <p className="text-base font-extrabold text-emerald-400 font-mono">{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase">Tổng Chai Tồn</p>
+                            <div className="p-2.5 rounded-xl text-center bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-base font-extrabold text-emerald-600 font-mono">{formatNumber(locations.reduce((s, l) => s + l.totalQty, 0))}</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase">Tổng Chai Tồn</p>
                             </div>
                         </div>
                     )}
 
                     {/* Search Results Summary */}
                     {searchResults.length > 0 && (
-                        <div className="pt-3 border-t border-slate-800">
+                        <div className="pt-3 border-t border-slate-200">
                             <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-xs font-bold uppercase text-amber-400">Kết Quả Tìm Kiếm</h4>
+                                <h4 className="text-xs font-bold uppercase text-amber-700">Kết Quả Tìm Kiếm</h4>
                                 <button onClick={() => { setSearchResults([]); setHighlightLocs([]); setSearchTerm('') }}
-                                    className="p-1 rounded hover:bg-slate-800 text-slate-400"><X size={12} /></button>
+                                    className="p-1 rounded hover:bg-slate-200 text-slate-500 cursor-pointer"><X size={12} /></button>
                             </div>
                             <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                                 {searchResults.map(r => (
-                                    <div key={r.skuCode} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs">
-                                        <p className="font-bold text-amber-300 font-mono">{r.skuCode}</p>
-                                        <p className="text-[11px] text-slate-300 truncate">{r.productName}</p>
-                                        <p className="text-[10px] font-bold text-emerald-400 mt-1">{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
+                                    <div key={r.skuCode} className="p-2 rounded-xl bg-white border border-slate-200 text-xs shadow-2xs">
+                                        <p className="font-bold text-amber-600 font-mono">{r.skuCode}</p>
+                                        <p className="text-[11px] text-slate-700 truncate">{r.productName}</p>
+                                        <p className="text-[10px] font-bold text-emerald-600 mt-1">{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
                                     </div>
                                 ))}
                             </div>
@@ -890,46 +888,46 @@ export function WarehouseMapTab({
             </div>
 
             {/* ═══════════════════════════════════════════════════ */}
-            {/* MODAL: Batch Zone Resize Modal */}
+            {/* MODAL: Batch Zone Resize Modal (Clean Light Theme) */}
             {/* ═══════════════════════════════════════════════════ */}
             {resizeZoneName && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-                    <div className="rounded-2xl shadow-2xl max-w-sm w-full bg-slate-900 border border-slate-800 text-slate-100 p-5 space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[999] flex items-center justify-center p-4">
+                    <div className="rounded-2xl shadow-2xl max-w-sm w-full bg-white border border-slate-200 text-slate-900 p-5 space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
                                 📐 Đổi Kích Thước Tất Cả Ô Thuộc ZONE {resizeZoneName}
                             </h3>
-                            <button onClick={() => setResizeZoneName(null)} className="text-slate-400 hover:text-white"><X size={16} /></button>
+                            <button onClick={() => setResizeZoneName(null)} className="text-slate-400 hover:text-slate-700 cursor-pointer"><X size={16} /></button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 text-xs">
                             <div>
-                                <label className="text-[11px] font-bold text-slate-400 block mb-1">Rộng mới (Width - px)</label>
+                                <label className="text-[11px] font-bold text-slate-600 block mb-1">Rộng mới (Width - px)</label>
                                 <input
                                     type="number"
                                     value={zoneW}
                                     onChange={e => setZoneW(Math.max(40, parseInt(e.target.value) || 40))}
-                                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 font-mono font-bold text-sm text-slate-100 outline-none focus:border-amber-500"
+                                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 font-mono font-bold text-sm text-slate-900 outline-none focus:border-amber-500"
                                 />
                             </div>
                             <div>
-                                <label className="text-[11px] font-bold text-slate-400 block mb-1">Cao mới (Height - px)</label>
+                                <label className="text-[11px] font-bold text-slate-600 block mb-1">Cao mới (Height - px)</label>
                                 <input
                                     type="number"
                                     value={zoneH}
                                     onChange={e => setZoneH(Math.max(30, parseInt(e.target.value) || 30))}
-                                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 font-mono font-bold text-sm text-slate-100 outline-none focus:border-amber-500"
+                                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 font-mono font-bold text-sm text-slate-900 outline-none focus:border-amber-500"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                            <button onClick={() => setResizeZoneName(null)} className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300">
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+                            <button onClick={() => setResizeZoneName(null)} className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
                                 Hủy
                             </button>
                             <button
                                 onClick={() => handleApplyZoneResize(resizeZoneName, zoneW, zoneH)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-600 flex items-center gap-1.5 cursor-pointer"
+                                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 flex items-center gap-1.5 cursor-pointer shadow-xs"
                             >
                                 <Check size={14} /> Đồng Ý Đổi Size
                             </button>
@@ -939,113 +937,113 @@ export function WarehouseMapTab({
             )}
 
             {/* ═══════════════════════════════════════════════════ */}
-            {/* POPUP MODAL: Detailed Location Inventory Details */}
+            {/* POPUP MODAL: Detailed Location Inventory (Clean Light Theme) */}
             {/* ═══════════════════════════════════════════════════ */}
             {showLocModal && selectedLoc && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-                    <div className="rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden bg-slate-900 border border-slate-800 text-slate-100 flex flex-col max-h-[85vh]">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-4">
+                    <div className="rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden bg-white border border-slate-200 text-slate-900 flex flex-col max-h-[85vh]">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-4 bg-slate-950 border-b border-slate-800">
+                        <div className="flex items-center justify-between p-4.5 bg-slate-50 border-b border-slate-200">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
                                     <MapPin size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-extrabold flex items-center gap-2 text-white">
-                                        📍 Vị Trí: <span className="font-mono text-amber-400">{selectedLoc.locationCode}</span>
+                                    <h3 className="text-base font-extrabold flex items-center gap-2 text-slate-900">
+                                        📍 Vị Trí: <span className="font-mono text-amber-700">{selectedLoc.locationCode}</span>
                                         {selectedLoc.tempControlled && (
-                                            <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-semibold flex items-center gap-1">
+                                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-semibold flex items-center gap-1">
                                                 ❄️ Bảo quản lạnh
                                             </span>
                                         )}
                                     </h3>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                        Zone: <strong className="text-slate-200">{selectedLoc.zone}</strong> • Rack: <strong className="text-slate-200">{selectedLoc.rack ?? '—'}</strong> • Bin: <strong className="text-slate-200">{selectedLoc.bin ?? '—'}</strong> • Loại: <strong className="text-slate-200">{selectedLoc.type}</strong>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Zone: <strong className="text-slate-800">{selectedLoc.zone}</strong> • Rack: <strong className="text-slate-800">{selectedLoc.rack ?? '—'}</strong> • Bin: <strong className="text-slate-800">{selectedLoc.bin ?? '—'}</strong> • Loại: <strong className="text-slate-800">{selectedLoc.type}</strong>
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
                         {/* Occupancy & Metric Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-950/40 border-b border-slate-800">
-                            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                                <p className="text-[11px] font-semibold text-slate-400 uppercase">Tổng Hàng Trong Kệ</p>
-                                <p className="text-xl font-extrabold text-emerald-400 font-mono mt-0.5">{formatNumber(selectedLoc.totalQty)} <span className="text-xs font-normal">chai</span></p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-50 border-b border-slate-200">
+                            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[11px] font-bold text-slate-500 uppercase">Tổng Hàng Trong Kệ</p>
+                                <p className="text-xl font-extrabold text-emerald-600 font-mono mt-0.5">{formatNumber(selectedLoc.totalQty)} <span className="text-xs font-normal">chai</span></p>
                             </div>
-                            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                                <p className="text-[11px] font-semibold text-slate-400 uppercase">Sức Chứa Tối Đa</p>
-                                <p className="text-xl font-extrabold text-sky-400 font-mono mt-0.5">{selectedLoc.capacityCases ? selectedLoc.capacityCases * 12 : 500} <span className="text-xs font-normal">chai</span></p>
+                            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[11px] font-bold text-slate-500 uppercase">Sức Chứa Tối Đa</p>
+                                <p className="text-xl font-extrabold text-sky-600 font-mono mt-0.5">{selectedLoc.capacityCases ? selectedLoc.capacityCases * 12 : 500} <span className="text-xs font-normal">chai</span></p>
                             </div>
-                            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                                <p className="text-[11px] font-semibold text-slate-400 uppercase">Tỷ Lệ Lấp Đầy</p>
+                            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[11px] font-bold text-slate-500 uppercase">Tỷ Lệ Lấp Đầy</p>
                                 <div className="flex items-center justify-between mt-0.5">
                                     <span className="text-xl font-extrabold font-mono" style={{ color: occColor(selectedLoc.occupancyPct).text }}>
                                         {selectedLoc.occupancyPct}%
                                     </span>
-                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: occColor(selectedLoc.occupancyPct).badgeBg, color: occColor(selectedLoc.occupancyPct).badgeText }}>
+                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ background: occColor(selectedLoc.occupancyPct).badgeBg, color: occColor(selectedLoc.occupancyPct).badgeText }}>
                                         {occColor(selectedLoc.occupancyPct).label}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Inventory Product / Stock Lots Table */}
+                        {/* Inventory Product / Stock Lots Table (Clean High-Contrast Light Table) */}
                         <div className="p-4 flex-1 overflow-y-auto">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-                                <Package size={14} /> Danh Sách Lô Hàng & Rượu Đang Tồn Kho ({selectedLoc.products.length} mã)
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-3 flex items-center gap-2">
+                                <Package size={16} className="text-amber-600" /> Danh Sách Lô Hàng & Rượu Đang Tồn Kho ({selectedLoc.products.length} mã)
                             </h4>
 
                             {selectedLoc.products.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-10 text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                                    <Box size={36} className="mb-2" />
-                                    <p className="text-sm font-semibold">Vị trí/kệ này hiện đang trống</p>
+                                <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                                    <Box size={38} className="mb-2 text-slate-300" />
+                                    <p className="text-sm font-semibold text-slate-500">Vị trí/kệ này hiện đang trống</p>
                                 </div>
                             ) : (
-                                <div className="border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
                                     <table className="w-full text-left text-xs border-collapse">
                                         <thead>
-                                            <tr className="bg-slate-950 border-b border-slate-800 text-slate-400">
-                                                <th className="p-3 font-bold uppercase text-[10px]">Mã Lô (Lot No)</th>
-                                                <th className="p-3 font-bold uppercase text-[10px]">Sản Phẩm & Rượu Vang</th>
-                                                <th className="p-3 font-bold uppercase text-[10px] text-center">Vintage</th>
-                                                <th className="p-3 font-bold uppercase text-[10px] text-center">Trạng Thái</th>
-                                                <th className="p-3 font-bold uppercase text-[10px] text-right">Tồn Kho (Chai)</th>
+                                            <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
+                                                <th className="p-3 font-bold uppercase text-[11px]">Mã Lô (Lot No)</th>
+                                                <th className="p-3 font-bold uppercase text-[11px]">Sản Phẩm & Rượu Vang</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] text-center">Vintage</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] text-center">Trạng Thái</th>
+                                                <th className="p-3 font-bold uppercase text-[11px] text-right">Tồn Kho (Chai)</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-800">
+                                        <tbody className="divide-y divide-slate-200 bg-white">
                                             {selectedLoc.products.map((p, i) => (
-                                                <tr key={p.id || i} className="hover:bg-slate-800/50 transition-colors">
-                                                    <td className="p-3 font-mono font-bold text-amber-400 whitespace-nowrap">
+                                                <tr key={p.id || i} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="p-3 font-mono font-extrabold text-amber-700 whitespace-nowrap">
                                                         {p.lotNo || '—'}
                                                     </td>
                                                     <td className="p-3">
-                                                        <p className="font-bold text-slate-100 text-xs">{p.productName}</p>
-                                                        <p className="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
+                                                        <p className="font-bold text-slate-900 text-xs">{p.productName}</p>
+                                                        <p className="text-[11px] text-slate-500 font-mono mt-0.5 flex items-center gap-2">
                                                             <span>SKU: {p.skuCode}</span>
                                                             {p.country && <span>• Quốc gia: {p.country}</span>}
                                                         </p>
                                                     </td>
                                                     <td className="p-3 text-center font-bold">
                                                         {p.vintage ? (
-                                                            <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
+                                                            <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-300 font-mono">
                                                                 🍷 {p.vintage}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-slate-500 font-mono">N/V</span>
+                                                            <span className="text-slate-400 font-mono">N/V</span>
                                                         )}
                                                     </td>
                                                     <td className="p-3 text-center">
-                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'AVAILABLE' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : p.status === 'RESERVED' ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}`}>
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-300' : p.status === 'RESERVED' ? 'bg-sky-50 text-sky-700 border border-sky-300' : 'bg-rose-50 text-rose-700 border border-rose-300'}`}>
                                                             {p.status === 'AVAILABLE' ? '✅ Sẵn sàng' : p.status === 'RESERVED' ? '🔒 Đã đặt' : '⚠️ Cách ly'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 text-right font-mono font-extrabold text-sm text-emerald-400">
+                                                    <td className="p-3 text-right font-mono font-extrabold text-sm text-emerald-700">
                                                         {formatNumber(p.qtyAvailable)}
                                                     </td>
                                                 </tr>
@@ -1057,10 +1055,10 @@ export function WarehouseMapTab({
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-3 bg-slate-950 border-t border-slate-800 flex justify-end">
+                        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="px-5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors cursor-pointer"
+                                className="px-5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-xs"
                             >
                                 Đóng
                             </button>
