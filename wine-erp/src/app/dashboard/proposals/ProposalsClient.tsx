@@ -651,6 +651,107 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     )
 }
 
+// ─── Searchable Customer Combobox ───────────────────────────
+function SearchableCustomerCombobox({
+    customers,
+    selectedCustomerId,
+    onSelect,
+}: {
+    customers: any[]
+    selectedCustomerId: string
+    onSelect: (customer: any) => void
+}) {
+    const [open, setOpen] = useState(false)
+    const [query, setQuery] = useState('')
+
+    const selectedCust = React.useMemo(() => {
+        return customers.find((c: any) => c.id === selectedCustomerId)
+    }, [customers, selectedCustomerId])
+
+    const filtered = React.useMemo(() => {
+        const q = query.trim().toLowerCase()
+        if (!q) return customers.slice(0, 40)
+        return customers.filter((c: any) => 
+            (c.name && c.name.toLowerCase().includes(q)) || 
+            (c.code && c.code.toLowerCase().includes(q))
+        ).slice(0, 40)
+    }, [customers, query])
+
+    const displayValue = selectedCust ? `[${selectedCust.code}] ${selectedCust.name}` : query
+
+    return (
+        <div className="relative w-full">
+            <div className="relative">
+                <input
+                    type="text"
+                    value={open ? query : displayValue}
+                    onFocus={() => { setOpen(true); setQuery(''); }}
+                    onChange={e => {
+                        setQuery(e.target.value)
+                        if (!open) setOpen(true)
+                    }}
+                    placeholder="Gõ mã (VD: HR10084) hoặc tên khách hàng để tìm..."
+                    style={{ ...inputStyle, padding: '9px 36px 9px 32px', fontSize: '13px', background: '#142433' }}
+                />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                {selectedCust ? (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onSelect({ id: '', name: '', code: '' })
+                            setQuery('')
+                            setOpen(false)
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700/50"
+                        title="Xóa lựa chọn"
+                    >
+                        <X size={13} />
+                    </button>
+                ) : (
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                )}
+            </div>
+
+            {open && (
+                <>
+                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl"
+                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        {filtered.length === 0 ? (
+                            <div className="p-3 text-xs text-center text-gray-400">
+                                {query ? `Không tìm thấy khách hàng khớp với "${query}"` : 'Chưa có dữ liệu khách hàng'}
+                            </div>
+                        ) : (
+                            filtered.map((c: any) => (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onSelect(c)
+                                        setOpen(false)
+                                    }}
+                                    className={`w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs ${c.id === selectedCustomerId ? 'bg-[#1B2E3D]' : ''}`}
+                                >
+                                    <div className="min-w-0 flex-1 pr-2">
+                                        <span className="font-mono font-bold text-[#D4A853] mr-2 text-xs">[{c.code}]</span>
+                                        <span className="text-[#E8F1F2] font-medium">{c.name}</span>
+                                    </div>
+                                    {c.channel && (
+                                        <span className="text-[10px] text-[#8AAEBB] bg-[#1B2E3D] px-1.5 py-0.5 rounded whitespace-nowrap border border-[#2A4355]">
+                                            {c.channel}
+                                        </span>
+                                    )}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}
+
 // ─── Searchable Product Combobox ───────────────────────────
 function SearchableProductCombobox({
     products,
@@ -896,8 +997,11 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     const customers = refData?.customers ?? []
     const products = refData?.products ?? []
 
+    const searchParams = useSearchParams()
+    const initialCategory = searchParams?.get('category') || 'BUDGET_REQUEST'
+
     const [form, setForm] = useState({
-        category: 'BUDGET_REQUEST',
+        category: initialCategory,
         priority: 'NORMAL',
         title: '',
         content: '',
@@ -911,17 +1015,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     })
     const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number }[]>([])
     const [saving, setSaving] = useState(false)
-    const [customerSearch, setCustomerSearch] = useState('')
     const [batchPickerOpen, setBatchPickerOpen] = useState(false)
-
-    const filteredCustomersForSelect = React.useMemo(() => {
-        const q = customerSearch.trim().toLowerCase()
-        if (!q) return customers.slice(0, 100)
-        return customers.filter((c: any) => 
-            c.name.toLowerCase().includes(q) || 
-            c.code.toLowerCase().includes(q)
-        ).slice(0, 100)
-    }, [customers, customerSearch])
 
     const handleSave = async () => {
         if (!form.title || !form.content) return alert('Vui lòng nhập tiêu đề và nội dung')
@@ -981,29 +1075,17 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         <div className="space-y-4 p-4 rounded-md border border-[#2A4355] bg-[#1B2E3D]">
                             <div>
                                 <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Khách hàng áp dụng *</label>
-                                <div className="space-y-1">
-                                    <div className="relative mb-1">
-                                        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            value={customerSearch}
-                                            onChange={e => setCustomerSearch(e.target.value)}
-                                            placeholder="Gõ mã hoặc tên khách hàng để tìm nhanh..."
-                                            className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded"
-                                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                                        />
-                                    </div>
-                                    <select 
-                                        value={form.customerId} 
-                                        onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))} 
-                                        style={{ ...inputStyle, background: '#142433' }}
-                                    >
-                                        <option value="">-- Chọn khách hàng --</option>
-                                        {filteredCustomersForSelect.map((c: any) => (
-                                            <option key={c.id} value={c.id}>[{c.code}] {c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <SearchableCustomerCombobox
+                                    customers={customers}
+                                    selectedCustomerId={form.customerId}
+                                    onSelect={(cust: any) => {
+                                        setForm(f => ({
+                                            ...f,
+                                            customerId: cust.id,
+                                            title: !f.title && cust.name ? `Đề xuất cơ chế giá cho khách hàng ${cust.name}` : f.title
+                                        }))
+                                    }}
+                                />
                             </div>
 
                             <div>
