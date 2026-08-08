@@ -45,7 +45,7 @@ const SYSTEM_ROLES: SystemRoleInfo[] = [
     { code: 'THU_MUA', name: 'Trưởng / NV Mua Hàng' },
     { code: 'THU_KHO', name: 'Thủ Kho' },
     { code: 'CEO', name: 'Tổng Giám Đốc (CEO)' },
-    { code: 'OPERATION_MGR', name: 'Giám Đốc Vận Hành (Operation Manager)' },
+    { code: 'OPERATION_MGR', name: 'Operation Manager' },
     { code: 'ADMIN', name: 'Admin Hệ Thống' },
 ]
 
