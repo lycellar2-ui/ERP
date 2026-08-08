@@ -921,6 +921,77 @@ export async function confirmDeliveryOrder(
         return { success: false, error: err.message }
     }
 }
+// ── Mark DO as Delivered ──────────────────────────
+export async function markDODelivered(
+    doId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const deliveryOrder = await prisma.deliveryOrder.findUnique({
+            where: { id: doId },
+            select: { status: true, doNo: true, soId: true },
+        })
+        if (!deliveryOrder) return { success: false, error: 'Không tìm thấy phiếu xuất kho' }
+
+        // Allow from any active status
+        if (deliveryOrder.status === 'DELIVERED') {
+            return { success: false, error: 'Đơn hàng đã được đánh dấu giao rồi' }
+        }
+        if (deliveryOrder.status === 'CANCELLED') {
+            return { success: false, error: 'Đơn hàng đã bị hủy' }
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // If still DRAFT, confirm first (set qtyShipped = qtyPicked)
+            if (deliveryOrder.status === 'DRAFT') {
+                const doLines = await tx.deliveryOrderLine.findMany({ where: { doId } })
+                for (const line of doLines) {
+                    await tx.deliveryOrderLine.update({
+                        where: { id: line.id },
+                        data: { qtyShipped: line.qtyPicked },
+                    })
+                }
+
+                // Auto COGS journal
+                const user = await getCurrentUser()
+                const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
+                const journalResult = await generateDeliveryOrderCOGSJournal(doId, user?.id ?? 'system', tx)
+                if (!journalResult.success) {
+                    throw new Error(journalResult.error || 'Lỗi sinh bút toán giá vốn hàng bán')
+                }
+            }
+
+            // Update DO status
+            await tx.deliveryOrder.update({
+                where: { id: doId },
+                data: { status: 'DELIVERED' },
+            })
+
+            // Update SO status
+            await tx.salesOrder.update({
+                where: { id: deliveryOrder.soId },
+                data: { status: 'DELIVERED' },
+            })
+        })
+
+        const user = await getCurrentUser()
+        if (user?.id) {
+            logAudit({
+                userId: user.id,
+                action: 'UPDATE',
+                entityType: 'DeliveryOrder',
+                entityId: doId,
+                description: `Đánh dấu đã giao ${deliveryOrder.doNo}`,
+            })
+        }
+
+        revalidateCache('wms')
+        revalidatePath('/dashboard/warehouse')
+        revalidatePath('/dashboard/sales')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
 
 // ═══════════════════════════════════════════════════
 // STOCK TRANSFER — Internal transfer between locations

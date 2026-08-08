@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box } from 'lucide-react'
+import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
-    getDeliveryOrders, getSOsForDelivery, createDeliveryOrder, confirmDeliveryOrder,
+    getDeliveryOrders, getSOsForDelivery, createDeliveryOrder, confirmDeliveryOrder, markDODelivered,
     getDODetail, getAvailableLotsForProduct,
 } from './actions'
 import { formatDate } from '@/lib/utils'
@@ -82,47 +82,57 @@ export function DeliveryOrderTab({ warehouses }: {
             confirmDeliveryOrder(id).then(async (res) => {
                 if (!res.success) throw new Error(res.error || 'Lỗi xác nhận DO')
                 reload()
+                setDetailData(null)
                 return res
             }),
             { loading: 'Đang xác nhận...', success: 'DO đã xác nhận — Hàng đã xuất kho!', error: (err: Error) => `Lỗi: ${err.message}` }
         )
     }
 
+    const handleMarkDelivered = async (id: string) => {
+        if (!confirm('Đánh dấu đơn hàng đã giao thành công?')) return
+        toast.promise(
+            markDODelivered(id).then(async (res) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi cập nhật trạng thái')
+                reload()
+                setDetailData(null)
+                return res
+            }),
+            { loading: 'Đang cập nhật...', success: '✅ Đơn hàng đã giao thành công!', error: (err: Error) => `Lỗi: ${err.message}` }
+        )
+    }
+
     return (
-        <div className="space-y-5">
+        <div className="space-y-3 sm:space-y-5">
             {/* Header & Sub-tab Navigation */}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <h3 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
-                            <Truck size={18} style={{ color: '#87CBB9' }} /> Xuất Kho & Nhặt Hàng (Fulfillment)
-                        </h3>
-                        <p className="text-xs mt-0.5 hidden sm:block" style={{ color: '#4A6A7A' }}>Theo dõi đơn hàng cần xuất & Tạo phiếu xuất kho (DO) FIFO</p>
-                    </div>
+            <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm sm:text-base font-bold flex items-center gap-1.5" style={{ color: '#E8F1F2' }}>
+                        <Truck size={16} style={{ color: '#D4A853' }} /> Xuất Kho (DO)
+                    </h3>
                     <button onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
-                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl shadow-sm transition-all hover:brightness-110 shrink-0"
+                        className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-110 shrink-0"
                         style={{ background: '#D4A853', color: '#0A1926' }}>
-                        <Plus size={14} /> <span className="hidden sm:inline">Tạo DO Mới</span><span className="sm:hidden">Tạo DO</span>
+                        <Plus size={12} /> Tạo DO
                     </button>
                 </div>
 
                 {/* Navigation Tabs */}
-                <div className="flex p-1 rounded-xl overflow-x-auto no-scrollbar" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="flex p-0.5 rounded-lg overflow-x-auto no-scrollbar" style={{ background: '#142433', border: '1px solid #1E3445' }}>
                     <button
                         onClick={() => setActiveSubTab('pending')}
-                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all shrink-0"
                         style={{
-                            background: activeSubTab === 'pending' ? '#87CBB9' : 'transparent',
-                            color: activeSubTab === 'pending' ? '#0A1926' : '#8AAEBB'
+                            background: activeSubTab === 'pending' ? '#D4A853' : 'transparent',
+                            color: activeSubTab === 'pending' ? '#0A1926' : '#6B8A9A'
                         }}
                     >
-                        <PackageCheck size={14} />
-                        Đơn Chờ Xuất
+                        Chờ Xuất
                         {pendingSOs.length > 0 && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-extrabold rounded-full"
+                            <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded-full"
                                 style={{
                                     background: activeSubTab === 'pending' ? '#0A1926' : 'rgba(212,168,83,0.2)',
-                                    color: activeSubTab === 'pending' ? '#87CBB9' : '#D4A853'
+                                    color: activeSubTab === 'pending' ? '#D4A853' : '#D4A853'
                                 }}>
                                 {pendingSOs.length}
                             </span>
@@ -130,93 +140,88 @@ export function DeliveryOrderTab({ warehouses }: {
                     </button>
                     <button
                         onClick={() => setActiveSubTab('history')}
-                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all shrink-0"
                         style={{
-                            background: activeSubTab === 'history' ? '#87CBB9' : 'transparent',
-                            color: activeSubTab === 'history' ? '#0A1926' : '#8AAEBB'
+                            background: activeSubTab === 'history' ? '#D4A853' : 'transparent',
+                            color: activeSubTab === 'history' ? '#0A1926' : '#6B8A9A'
                         }}
                     >
-                        <Truck size={14} />
-                        Lịch Sử DO
-                        <span className="text-[10px] opacity-75">({rows.length})</span>
+                        Lịch Sử
+                        <span className="text-[9px] opacity-60">({rows.length})</span>
                     </button>
                 </div>
             </div>
 
             {/* TAB 1: PENDING SALES ORDERS WAITING FOR FULFILLMENT */}
             {activeSubTab === 'pending' && (
-                <div className="space-y-4">
-                    {/* Search & Stats Bar */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl" style={{ background: '#102230', border: '1px solid #2A4355' }}>
-                        <div className="relative flex-1 sm:max-w-md">
-                            <Search size={14} className="absolute left-3 top-2.5" style={{ color: '#4A6A7A' }} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Tìm theo Mã SO, Tên KH, SKU..."
-                                className="w-full pl-9 pr-3 py-2 text-xs rounded-lg outline-none"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                            />
-                        </div>
-                        <div className="text-xs text-center sm:text-right" style={{ color: '#8AAEBB' }}>
-                            Hiển thị <span className="font-bold text-white">{filteredPendingSOs.length}</span> / {pendingSOs.length} đơn
-                        </div>
+                <div className="space-y-2.5 sm:space-y-4">
+                    {/* Search Bar - compact */}
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-2" style={{ color: '#4A6A7A' }} />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Tìm Mã SO, Tên KH, SKU..."
+                            className="w-full pl-9 pr-3 py-1.5 text-[11px] rounded-lg outline-none"
+                            style={{ background: '#142433', border: '1px solid #1E3445', color: '#E8F1F2' }}
+                        />
+                        <span className="absolute right-3 top-2 text-[10px]" style={{ color: '#4A6A7A' }}>
+                            {filteredPendingSOs.length} / {pendingSOs.length}
+                        </span>
                     </div>
 
                     {loading ? (
-                        <div className="flex justify-center py-16">
-                            <Loader2 size={24} className="animate-spin" style={{ color: '#87CBB9' }} />
+                        <div className="flex justify-center py-12">
+                            <Loader2 size={20} className="animate-spin" style={{ color: '#D4A853' }} />
                         </div>
                     ) : filteredPendingSOs.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 gap-3 rounded-2xl" style={{ border: '1px dashed #2A4355', background: '#0D1E2B' }}>
-                            <CheckCircle2 size={36} style={{ color: '#5BA88A' }} />
-                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
-                                {searchQuery ? 'Không tìm thấy đơn hàng phù hợp' : 'Không có đơn hàng nào chờ xuất kho'}
+                        <div className="flex flex-col items-center justify-center py-12 gap-2 rounded-xl" style={{ border: '1px dashed #1E3445', background: '#0D1E2B' }}>
+                            <CheckCircle2 size={28} style={{ color: '#5BA88A' }} />
+                            <p className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>
+                                {searchQuery ? 'Không tìm thấy đơn hàng' : 'Không có đơn chờ xuất'}
                             </p>
-                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Các đơn bán hàng sau khi được xác nhận sẽ tự động xuất hiện ở đây.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {filteredPendingSOs.map(so => {
                                 const totalItems = so.lines.reduce((sum, l) => sum + l.qtyOrdered, 0)
                                 return (
                                     <div
                                         key={so.id}
-                                        className="p-4 rounded-2xl flex flex-col justify-between transition-all"
-                                        style={{ background: '#102230', border: '1px solid #2A4355' }}
+                                        className="p-3 sm:p-4 rounded-xl flex flex-col justify-between transition-all"
+                                        style={{ background: '#0F1D2B', border: '1px solid #1E3445' }}
                                     >
                                         <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="px-2.5 py-1 text-xs font-extrabold font-mono rounded-lg"
-                                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                            {/* SO Header */}
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="px-2 py-0.5 text-[11px] font-extrabold font-mono rounded"
+                                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853' }}>
                                                         {so.soNo}
                                                     </span>
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                                                        style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A' }}>
-                                                        Sẵn Sàng Xuất Kho
+                                                    <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
+                                                        style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A' }}>
+                                                        Sẵn Sàng
                                                     </span>
                                                 </div>
-                                                <span className="text-xs font-semibold" style={{ color: '#8AAEBB' }}>
-                                                    {so.lines.length} sản phẩm ({totalItems} chai)
+                                                <span className="text-[10px] font-semibold" style={{ color: '#6B8A9A' }}>
+                                                    {so.lines.length} SP ({totalItems} chai)
                                                 </span>
                                             </div>
 
-                                            <h4 className="text-sm font-bold truncate" style={{ color: '#E8F1F2' }}>
+                                            {/* Customer Name */}
+                                            <h4 className="text-[13px] font-bold truncate mb-2" style={{ color: '#E8F1F2' }}>
                                                 {so.customerName}
                                             </h4>
 
-                                            {/* Product Lines Preview */}
-                                            <div className="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                                            {/* Product Lines */}
+                                            <div className="space-y-1 max-h-28 overflow-y-auto">
                                                 {so.lines.map(line => (
-                                                    <div key={line.productId} className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg"
-                                                        style={{ background: '#172C3C', border: '1px solid rgba(42,67,85,0.5)' }}>
-                                                        <div className="truncate pr-2">
-                                                            <span className="font-semibold text-white truncate block">{line.productName}</span>
-                                                            <span className="text-[10px] text-[#4A6A7A]">{line.skuCode} {line.vintage ? `· VTG: ${line.vintage}` : ''}</span>
-                                                        </div>
-                                                        <span className="font-mono font-bold text-[#87CBB9] whitespace-nowrap">
+                                                    <div key={line.productId} className="flex items-center justify-between text-[11px] px-2 py-1.5 rounded-md"
+                                                        style={{ background: '#142433' }}>
+                                                        <span className="truncate pr-2 font-medium" style={{ color: '#C8D8E4' }}>{line.productName}</span>
+                                                        <span className="font-mono font-bold shrink-0" style={{ color: '#D4A853' }}>
                                                             x{line.qtyOrdered}
                                                         </span>
                                                     </div>
@@ -224,16 +229,17 @@ export function DeliveryOrderTab({ warehouses }: {
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: '1px solid rgba(42,67,85,0.5)' }}>
-                                            <span className="text-[11px]" style={{ color: '#4A6A7A' }}>
-                                                Tự động phân bổ lô theo FIFO
+                                        {/* Action Footer */}
+                                        <div className="mt-2.5 pt-2 flex items-center justify-between" style={{ borderTop: '1px solid #1E3445' }}>
+                                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
+                                                FIFO tự động
                                             </span>
                                             <button
                                                 onClick={() => handleStartPicking(so.id)}
-                                                className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-105 active:scale-100"
-                                                style={{ background: '#87CBB9', color: '#0A1926', minHeight: '44px' }}
+                                                className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:scale-105 active:scale-100"
+                                                style={{ background: '#D4A853', color: '#0A1926', minHeight: '40px' }}
                                             >
-                                                <Box size={14} /> Nhặt Hàng & Xuất Kho <ArrowRight size={12} />
+                                                Nhặt Hàng & Xuất Kho <ArrowRight size={12} />
                                             </button>
                                         </div>
                                     </div>
@@ -246,52 +252,52 @@ export function DeliveryOrderTab({ warehouses }: {
 
             {/* TAB 2: PROCESSED DELIVERY ORDERS HISTORY */}
             {activeSubTab === 'history' && (
-                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #1E3445' }}>
                     {/* Desktop Table (>= 768px) */}
                     <div className="hidden md:block">
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                    {['Số DO', 'Số SO', 'Kho', 'Dòng', 'SL Xuất', 'Trạng Thái', 'Ngày Tạo', ''].map(h => (
-                                        <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
+                                <tr style={{ background: '#142433', borderBottom: '1px solid #1E3445' }}>
+                                    {['Số DO', 'Số SO', 'Kho', 'SP', 'SL', 'Trạng Thái', 'Ngày', ''].map(h => (
+                                        <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#4A6A7A' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan={8} className="text-center py-12">
-                                        <Loader2 size={20} className="animate-spin inline" style={{ color: '#87CBB9' }} />
+                                    <tr><td colSpan={8} className="text-center py-10">
+                                        <Loader2 size={18} className="animate-spin inline" style={{ color: '#D4A853' }} />
                                     </td></tr>
                                 ) : rows.length === 0 ? (
-                                    <tr><td colSpan={8} className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Chưa có phiếu xuất kho nào được tạo</td></tr>
+                                    <tr><td colSpan={8} className="text-center py-10 text-xs" style={{ color: '#4A6A7A' }}>Chưa có DO nào</td></tr>
                                 ) : rows.map(d => {
                                     const st = DO_STATUS[d.status] ?? DO_STATUS.DRAFT
                                     return (
                                         <tr key={d.id} className="transition-colors cursor-pointer"
-                                            style={{ borderBottom: '1px solid rgba(42,67,85,0.4)' }}
+                                            style={{ borderBottom: '1px solid rgba(30,52,69,0.6)' }}
                                             onClick={() => openDetail(d.id)}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.03)')}
                                             onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>{d.doNo}</td>
-                                            <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#D4A853' }}>{d.soNo}</td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{d.warehouseName}</td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#8AAEBB' }}>{d.lineCount} SP</td>
-                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#E8F1F2' }}>
+                                            <td className="px-3 py-2 text-[11px] font-bold font-mono" style={{ color: '#D4A853' }}>{d.doNo}</td>
+                                            <td className="px-3 py-2 text-[11px] font-mono" style={{ color: '#8AAEBB' }}>{d.soNo}</td>
+                                            <td className="px-3 py-2 text-[11px]" style={{ color: '#6B8A9A' }}>{d.warehouseName}</td>
+                                            <td className="px-3 py-2 text-[11px]" style={{ color: '#6B8A9A' }}>{d.lineCount}</td>
+                                            <td className="px-3 py-2 text-[11px] font-bold font-mono" style={{ color: '#E8F1F2' }}>
                                                 {d.totalQtyShipped.toLocaleString()}
                                             </td>
-                                            <td className="px-3 py-2.5">
-                                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                                            <td className="px-3 py-2">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#4A6A7A' }}>{formatDate(d.createdAt)}</td>
-                                            <td className="px-3 py-2.5">
+                                            <td className="px-3 py-2 text-[10px]" style={{ color: '#4A6A7A' }}>{formatDate(d.createdAt)}</td>
+                                            <td className="px-3 py-2">
                                                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                                                    <button onClick={() => openDetail(d.id)} className="p-1.5 rounded-lg"
-                                                        style={{ background: 'rgba(74,143,171,0.12)', color: '#4A8FAB' }}>
+                                                    <button onClick={() => openDetail(d.id)} className="p-1 rounded"
+                                                        style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
                                                         <Eye size={12} />
                                                     </button>
                                                     {d.status === 'DRAFT' && (
-                                                        <button onClick={() => handleConfirm(d.id)} className="p-1.5 rounded-lg"
-                                                            style={{ background: 'rgba(91,168,138,0.12)', color: '#5BA88A' }}>
+                                                        <button onClick={() => handleConfirm(d.id)} className="p-1 rounded"
+                                                            style={{ background: 'rgba(91,168,138,0.1)', color: '#5BA88A' }}>
                                                             <CheckCircle2 size={12} />
                                                         </button>
                                                     )}
@@ -305,43 +311,28 @@ export function DeliveryOrderTab({ warehouses }: {
                     </div>
 
                     {/* Mobile Cards (< 768px) */}
-                    <div className="block md:hidden p-3 space-y-3">
+                    <div className="block md:hidden p-2 space-y-2">
                         {loading ? (
-                            <div className="text-center py-12"><Loader2 size={20} className="animate-spin inline" style={{ color: '#87CBB9' }} /></div>
+                            <div className="text-center py-10"><Loader2 size={18} className="animate-spin inline" style={{ color: '#D4A853' }} /></div>
                         ) : rows.length === 0 ? (
-                            <div className="text-center py-12 text-sm" style={{ color: '#4A6A7A' }}>Chưa có phiếu xuất kho nào</div>
+                            <div className="text-center py-10 text-xs" style={{ color: '#4A6A7A' }}>Chưa có DO nào</div>
                         ) : rows.map(d => {
                             const st = DO_STATUS[d.status] ?? DO_STATUS.DRAFT
                             return (
                                 <div key={d.id} onClick={() => openDetail(d.id)}
-                                    className="p-3.5 rounded-xl space-y-2 cursor-pointer transition-all active:scale-[0.99]"
-                                    style={{ background: '#102230', border: '1px solid #2A4355' }}>
+                                    className="p-2.5 rounded-lg space-y-1.5 cursor-pointer transition-all active:scale-[0.99]"
+                                    style={{ background: '#0F1D2B', border: '1px solid #1E3445' }}>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
-                                            DO: {d.doNo}
+                                        <span className="text-[11px] font-bold font-mono" style={{ color: '#D4A853' }}>
+                                            {d.doNo}
                                         </span>
-                                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ color: st.color, background: st.bg }}>
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded" style={{ color: st.color, background: st.bg }}>
                                             {st.label}
                                         </span>
                                     </div>
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span style={{ color: '#4A6A7A' }}>Đơn hàng SO: <strong className="font-mono text-[#D4A853]">{d.soNo}</strong></span>
-                                        <span style={{ color: '#8AAEBB' }}>Kho: {d.warehouseName}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between pt-2 border-t text-xs" style={{ borderColor: 'rgba(42,67,85,0.5)' }}>
-                                        <span style={{ color: '#8AAEBB' }}>{d.lineCount} sản phẩm · {d.totalQtyShipped.toLocaleString()} chai</span>
-                                        <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                                            <button onClick={() => openDetail(d.id)} className="px-2.5 py-1 text-xs font-semibold rounded-lg"
-                                                style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB' }}>
-                                                Chi Tiết
-                                            </button>
-                                            {d.status === 'DRAFT' && (
-                                                <button onClick={() => handleConfirm(d.id)} className="px-2.5 py-1 text-xs font-bold rounded-lg"
-                                                    style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A' }}>
-                                                    Xác Nhận
-                                                </button>
-                                            )}
-                                        </div>
+                                    <div className="flex items-center justify-between text-[11px]">
+                                        <span style={{ color: '#6B8A9A' }}>SO: <strong className="font-mono text-[#8AAEBB]">{d.soNo}</strong></span>
+                                        <span className="font-mono font-bold" style={{ color: '#E8F1F2' }}>{d.totalQtyShipped} chai</span>
                                     </div>
                                 </div>
                             )
@@ -374,6 +365,35 @@ export function DeliveryOrderTab({ warehouses }: {
                                 <div className="grid grid-cols-2 gap-3">
                                     <InfoCard label="Trạng thái" value={(DO_STATUS[detailData.status] ?? DO_STATUS.DRAFT).label} />
                                     <InfoCard label="Ngày tạo" value={formatDate(detailData.createdAt)} />
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => window.open(`/dashboard/warehouse/print?id=${detailData.id}`, '_blank')}
+                                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-110"
+                                        style={{ background: '#D4A853', color: '#0A1926' }}
+                                    >
+                                        <Printer size={14} /> In Phiếu Xuất Kho
+                                    </button>
+                                    {detailData.status === 'DRAFT' && (
+                                        <button
+                                            onClick={() => handleConfirm(detailData.id)}
+                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-110"
+                                            style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}
+                                        >
+                                            <CheckCircle2 size={14} /> Xác Nhận Xuất Kho
+                                        </button>
+                                    )}
+                                    {(detailData.status === 'DRAFT' || detailData.status === 'PICKING' || detailData.status === 'PACKED' || detailData.status === 'SHIPPED') && (
+                                        <button
+                                            onClick={() => handleMarkDelivered(detailData.id)}
+                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-110"
+                                            style={{ background: 'rgba(74,143,171,0.2)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}
+                                        >
+                                            <Truck size={14} /> Đã Giao Hàng
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Detail Lines — Desktop Table */}

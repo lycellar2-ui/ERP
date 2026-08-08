@@ -82,11 +82,11 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 4. **Write-off** (Bể vỡ, hỏng — Cần Approve đặc biệt)
 
 **Luồng xuất kho từ SO:**
-1. SO Approved + Allocated → Hệ thống tạo **Pick List** cho thủ kho
-2. Pick List chỉ định: SKU nào, Lô nào (FIFO), Vị trí nào, số lượng bao nhiêu
-3. Thủ kho đi nhặt hàng, quét Barcode tại Bin Location để xác nhận
-4. Sau khi pick xong → **Pack & Ship**: In tem, đóng thùng, giao cho TRS module
-5. Confirm DO → Tồn kho giảm, Finance tạo COGS entry
+1. SO Approved + Allocated → Hệ thống tạo **Delivery Order (DO / Pick List)** cho thủ kho.
+2. Pick List chỉ định: SKU nào, Lô nào (FIFO), Vị trí (Khu vực / Zone), số lượng bao nhiêu.
+3. Thủ kho nhặt hàng trên điện thoại với giao diện mobile tối ưu (3-step wizard & compact layout).
+4. Sau khi nhặt xong → In **Phiếu Xuất Kho (PDF)** — mẫu in tiêu chuẩn A4 (đồng bộ layout với Đơn Bán Hàng), kèm hàng giao cho Shipper / Khách hàng.
+5. Khi giao thành công → Bấm **"Đã Giao Hàng"** (status: DELIVERED) → SO chuyển DELIVERED, Tồn kho tự động cập nhật & tự sinh bút toán Giá vốn hàng bán (COGS).
 
 ---
 
