@@ -68,10 +68,10 @@ export async function getDeliveryOrders(filters: {
 
 // ── Get SOs ready for delivery ────────────────────
 export async function getSOsForDelivery() {
-    return prisma.salesOrder.findMany({
+    const raw = await prisma.salesOrder.findMany({
         where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED'] } },
         select: {
-            id: true, soNo: true,
+            id: true, soNo: true, warehouseId: true, createdAt: true,
             customer: { select: { name: true } },
             lines: {
                 select: {
@@ -84,6 +84,22 @@ export async function getSOsForDelivery() {
         },
         orderBy: { createdAt: 'desc' },
     })
+
+    return raw.map(so => ({
+        id: so.id,
+        soNo: so.soNo,
+        warehouseId: so.warehouseId,
+        createdAt: so.createdAt,
+        customerName: so.customer?.name ?? '',
+        lines: so.lines.map(l => ({
+            id: l.id,
+            productId: l.productId,
+            productName: l.product?.productName ?? '',
+            skuCode: l.product?.skuCode ?? '',
+            qtyOrdered: l.qtyOrdered,
+            vintage: l.vintage,
+        })),
+    }))
 }
 
 // ── Create Delivery Order from SO ─────────────────

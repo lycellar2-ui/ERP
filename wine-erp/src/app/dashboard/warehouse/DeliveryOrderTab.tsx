@@ -212,20 +212,28 @@ export function DeliveryOrderTab({ warehouses }: {
 
                                             {/* Customer Name */}
                                             <h4 className="text-[13px] font-bold truncate mb-2.5" style={{ color: '#0F172A' }}>
-                                                {so.customerName}
+                                                {so.customerName || (so as any).customer?.name || 'Khách hàng'}
                                             </h4>
 
                                             {/* Product Lines */}
                                             <div className="space-y-1.5 max-h-32 overflow-y-auto pr-0.5">
-                                                {so.lines.map(line => (
-                                                    <div key={line.productId} className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg"
-                                                        style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                                        <span className="truncate pr-2 font-semibold" style={{ color: '#0F172A' }}>{line.productName}</span>
-                                                        <span className="font-mono font-bold shrink-0" style={{ color: '#D97706' }}>
-                                                            x{line.qtyOrdered}
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                                {so.lines.map(line => {
+                                                    const pName = line.productName || (line as any).product?.productName || ''
+                                                    const pCode = line.skuCode || (line as any).product?.skuCode || ''
+                                                    return (
+                                                        <div key={line.productId} className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg"
+                                                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                                            <div className="truncate pr-2 flex items-center gap-1.5 min-w-0">
+                                                                {pCode && <span className="font-mono font-extrabold text-[#4A6A7A] shrink-0">{pCode}</span>}
+                                                                {pCode && pName && <span className="text-[#CBD5E1] shrink-0">•</span>}
+                                                                <span className="font-semibold text-[#0F172A] truncate">{pName || pCode || 'Sản phẩm'}</span>
+                                                            </div>
+                                                            <span className="font-mono font-bold shrink-0 text-[#D97706] ml-2">
+                                                                x{line.qtyOrdered}
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                })}
                                             </div>
                                         </div>
 

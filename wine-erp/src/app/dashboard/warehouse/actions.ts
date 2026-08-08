@@ -718,6 +718,7 @@ export async function getSOsForDelivery() {
             id: true,
             soNo: true,
             warehouseId: true,
+            createdAt: true,
             customer: { select: { name: true } },
             lines: {
                 select: {
@@ -731,7 +732,21 @@ export async function getSOsForDelivery() {
         },
         orderBy: { createdAt: 'desc' },
     })
-    return serialize(raw)
+    return serialize(raw.map(so => ({
+        id: so.id,
+        soNo: so.soNo,
+        warehouseId: so.warehouseId,
+        createdAt: so.createdAt,
+        customerName: so.customer?.name ?? '',
+        lines: so.lines.map(l => ({
+            id: l.id,
+            productId: l.productId,
+            productName: l.product?.productName ?? '',
+            skuCode: l.product?.skuCode ?? '',
+            qtyOrdered: l.qtyOrdered,
+            vintage: l.vintage,
+        })),
+    })))
 }
 
 // ── Get available lots for product filtered by vintage ──

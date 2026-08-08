@@ -36,6 +36,7 @@
 27. [BUG-036: SWR Cache Stale Trên Tờ Trình, Cột Mã Cha Khách Hàng & Lỗi Chữ Tàng Hình Pháp Nhân](#bug-036-swr-cache-stale-trên-tờ-trình-cột-mã-cha-khách-hàng--lỗi-chữ-tàng-hình-pháp-nhân)
 28. [BUG-037: Diễn Giải / Ghi Chú Đơn Hàng Bị Ẩn Trên Chi Tiết & Trang In](#bug-037-diễn-giải--ghi-chú-đơn-hàng-bị-ẩn-trên-chi-tiết--trang-in)
 29. [BUG-038: Số Lượng Thẻ Trạng Thái (Tab Counts) Không Lọc Theo Bộ Lọc Ngày / Tìm Kiếm](#bug-038-số-lượng-thẻ-trạng-thái-tab-counts-không-lọc-theo-bộ-lọc-ngày--tìm-kiếm)
+30. [BUG-039: Thẻ Xuất Kho DO Không Hiển Thị Tên Khách Hàng và Mã SKU / Tên Sản Phẩm](#bug-039-thẻ-xuất-kho-do-không-hiển-thị-tên-khách-hàng-và-mã-sku--tên-sản-phẩm)
 
 ---
 
@@ -1540,6 +1541,29 @@ Khi chọn bộ lọc ngày (ví dụ: "Hôm nay" 08/08/2026), bảng danh sách
 ### Bài học
 
 > ⚠️ **RULE 60: Các hàm tính toán số lượng thẻ gom nhóm (`groupBy` status counts, aggregate stats) PHẢI luôn nhận và áp dụng bộ lọc hiện tại (`dateFrom`, `dateTo`, `search`, v.v...) ngoại trừ chính tiêu chí phân loại của thẻ đó.**
+
+---
+
+## BUG-039: Thẻ Xuất Kho DO Không Hiển Thị Tên Khách Hàng và Mã SKU / Tên Sản Phẩm
+
+**Ngày:** 2026-08-08  
+**Severity:** 🟡 Medium — Các thẻ đơn chờ xuất kho (DO Cards) trên giao diện `/dashboard/warehouse` bị trống tên khách hàng và trống tên/mã sản phẩm.
+
+### Triệu chứng
+Trên giao diện tab **Xuất Kho (DO)**, thẻ `SO-2608-0013`, `SO-2608-0012`... chỉ hiển thị số lượng `x6`, `x1` ở góc phải, còn dòng tiêu đề khách hàng và các khung thông tin sản phẩm bị trống chữ.
+
+### Nguyên nhân gốc rễ
+1. Hàm `getSOsForDelivery()` trong `actions.ts` và `actions-do.ts` khi truy vấn Prisma trả về cấu trúc đối tượng lồng nhau: `customer: { name }` và `product: { productName, skuCode }`.
+2. Giao diện `DeliveryOrderTab.tsx` truy cập trực tiếp các thuộc tính phẳng `so.customerName`, `line.productName`, `line.skuCode`. Do backend trả về đối tượng lồng nhau mà không map thành thuộc tính phẳng, các thuộc tính này bị `undefined`.
+
+### Cách fix
+1. Trong `getSOsForDelivery()` (`actions.ts` & `actions-do.ts`), map dữ liệu Prisma trả về dạng phẳng: `customerName: so.customer?.name`, `productName: l.product?.productName`, `skuCode: l.product?.skuCode`.
+2. Trong `DeliveryOrderTab.tsx`, cập nhật hiển thị đồng thời **Mã SKU** (font bold monospace) + **Tên sản phẩm** + **Tên khách hàng** cùng với các fallback bảo vệ.
+
+### Bài học
+
+> ⚠️ **RULE 61: Mọi hàm Server Action trả dữ liệu danh sách cho component React UI PHẢI chuẩn hóa (map) các thuộc tính lồng (`customer.name` -> `customerName`, `product.productName` -> `productName`, `product.skuCode` -> `skuCode`) khớp đúng với TypeScript interface định nghĩa ở Client.**
+
 
 
 
