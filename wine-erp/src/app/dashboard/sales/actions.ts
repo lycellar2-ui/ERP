@@ -2293,33 +2293,119 @@ export async function exportSalesOrdersExcel(filters: {
         orderBy: { createdAt: 'desc' },
         take: 5000,
         include: {
-            customer: { select: { name: true, code: true } },
+            customer: { select: { name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true } },
             salesRep: { select: { name: true } },
             legalEntity: { select: { name: true } },
             warehouse: { select: { name: true } },
-            _count: { select: { lines: true } },
+            lines: {
+                include: {
+                    product: { select: { skuCode: true, productName: true, country: true } },
+                },
+            },
         },
     })
 
-    const excelData = orders.map(o => ({
+    // Sheet 1: Chi Tiết Đơn Hàng Dùng Xuất Hóa Đơn Điện Tử (MISA, Viettel S-Invoice, VNPT)
+    const lineItemExportData: any[] = []
+    for (const o of orders) {
+        const orderVatRate = Number(o.vatRate ?? 10)
+        if (o.lines.length === 0) {
+            lineItemExportData.push({
+                'Số Đơn Hàng (SO)': o.soNo,
+                'Ngày Lập Đơn': o.createdAt.toISOString().split('T')[0],
+                'Mã Khách Hàng': o.customer.code,
+                'Tên Khách Hàng': o.customer.name,
+                'Tên Công Ty Xuất HĐ': o.customer.vatCompanyName || o.customer.name,
+                'Mã Số Thuế': o.customer.taxId || '',
+                'Địa Chỉ Thuế VAT': o.customer.vatAddress || '',
+                'Email Nhận HĐ': o.customer.vatEmail || '',
+                'Kênh Bán Hàng': o.channel,
+                'Pháp Nhân Xuất HĐ': o.legalEntity?.name ?? '',
+                'Kho Xuất': o.warehouse?.name ?? '',
+                'Mã SKU': '',
+                'Tên Sản Phẩm / Rượu Vang': '',
+                'Vintage / Năm SX': '',
+                'Đơn Vị Tính': '',
+                'Số Lượng': 0,
+                'Đơn Giá Trước Thuế (VND)': 0,
+                'Chiết Khấu Dòng (%)': 0,
+                'Thành Tiền Trước Thuế (VND)': 0,
+                'Thuế Suất VAT (%)': orderVatRate,
+                'Tiền Thuế VAT (VND)': Number(o.vatAmount || 0),
+                'Tổng Thanh Toán (Sau Thuế)': Number(o.totalAmount),
+                'Nhân Viên Sales': o.salesRep.name,
+                'Điều Khoản Thanh Toán': o.paymentTerm,
+                'Trạng Thái Đơn': o.status,
+                'Ghi Chú': o.notes || '',
+            })
+        } else {
+            for (const line of o.lines) {
+                const qty = Number(line.qtyOrdered)
+                const price = Number(line.unitPrice)
+                const lineDisc = Number(line.lineDiscountPct || 0)
+                const lineSubtotal = qty * price * (1 - lineDisc / 100)
+                const vatRate = Number(line.vatRate ?? orderVatRate)
+                const lineVat = lineSubtotal * (vatRate / 100)
+                const lineTotal = lineSubtotal + lineVat
+
+                lineItemExportData.push({
+                    'Số Đơn Hàng (SO)': o.soNo,
+                    'Ngày Lập Đơn': o.createdAt.toISOString().split('T')[0],
+                    'Mã Khách Hàng': o.customer.code,
+                    'Tên Khách Hàng': o.customer.name,
+                    'Tên Công Ty Xuất HĐ': o.customer.vatCompanyName || o.customer.name,
+                    'Mã Số Thuế': o.customer.taxId || '',
+                    'Địa Chỉ Thuế VAT': o.customer.vatAddress || '',
+                    'Email Nhận HĐ': o.customer.vatEmail || '',
+                    'Kênh Bán Hàng': o.channel,
+                    'Pháp Nhân Xuất HĐ': o.legalEntity?.name ?? '',
+                    'Kho Xuất': o.warehouse?.name ?? '',
+                    'Mã SKU': line.product.skuCode,
+                    'Tên Sản Phẩm / Rượu Vang': line.product.productName,
+                    'Vintage / Năm SX': line.vintage ? String(line.vintage) : 'NV',
+                    'Đơn Vị Tính': 'Chai',
+                    'Số Lượng': qty,
+                    'Đơn Giá Trước Thuế (VND)': price,
+                    'Chiết Khấu Dòng (%)': lineDisc,
+                    'Thành Tiền Trước Thuế (VND)': Math.round(lineSubtotal),
+                    'Thuế Suất VAT (%)': vatRate,
+                    'Tiền Thuế VAT (VND)': Math.round(lineVat),
+                    'Tổng Thanh Toán (Sau Thuế)': Math.round(lineTotal),
+                    'Nhân Viên Sales': o.salesRep.name,
+                    'Điều Khoản Thanh Toán': o.paymentTerm,
+                    'Trạng Thái Đơn': o.status,
+                    'Ghi Chú': o.notes || '',
+                })
+            }
+        }
+    }
+
+    // Sheet 2: Tổng Hợp Đơn Hàng
+    const summaryExportData = orders.map(o => ({
         'Số Đơn Hàng (SO)': o.soNo,
+        'Ngày Tạo': o.createdAt.toISOString().split('T')[0],
         'Khách Hàng': o.customer.name,
         'Mã Khách Hàng': o.customer.code,
+        'Mã Số Thuế': o.customer.taxId || '',
         'Kênh Bán Hàng': o.channel,
         'Doanh Số (VND)': Number(o.totalAmount),
         'Chiết Khấu (%)': Number(o.orderDiscount),
+        'Tiền Thuế VAT': Number(o.vatAmount || 0),
         'Điều Khoản Thanh Toán': o.paymentTerm,
         'Nhân Viên Sales': o.salesRep.name,
         'Pháp Nhân': o.legalEntity?.name ?? '',
         'Kho Xuất': o.warehouse?.name ?? '',
         'Trạng Thái': o.status,
-        'Số Dòng Hàng': o._count.lines,
-        'Ngày Tạo': o.createdAt.toISOString().split('T')[0],
+        'Số Dòng Hàng': o.lines.length,
     }))
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData)
     const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Đơn Bán Hàng")
+    const wsDetail = XLSX.utils.json_to_sheet(lineItemExportData)
+    const wsSummary = XLSX.utils.json_to_sheet(summaryExportData)
+
+    XLSX.utils.book_append_sheet(workbook, wsDetail, "Chi Tiết Đơn (Xuất HĐĐT)")
+    XLSX.utils.book_append_sheet(workbook, wsSummary, "Tổng Hợp Đơn Hàng")
+
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
     return { base64: buffer.toString('base64') }
 }
