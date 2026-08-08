@@ -282,7 +282,10 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                 if (updateLines) {
                     setLines(prev => prev.map(l => {
                         const resolved = resolvedPrices[l.productId]
-                        if (resolved) {
+                        if (resolved && resolved.price > 0) {
+                            if (resolved.source === 'FIXED_DISCOUNT' && resolved.basePrice && resolved.discountPct) {
+                                return { ...l, unitPrice: resolved.basePrice, lineDiscountPct: resolved.discountPct, priceSource: resolved.source }
+                            }
                             return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
                         }
                         return l
@@ -345,8 +348,22 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         if (lines.find(l => l.productId === productId)) return toast.error('Sản phẩm đã có trong đơn')
         const p = products.find(p => p.id === productId)
         if (!p) return
-        const price = priceMap[productId]?.price ?? 0
-        const source = priceMap[productId]?.source ?? null
+        const mapEntry = priceMap[productId]
+        let price = 0
+        let discountPct = 0
+        let source: string | null = null
+
+        if (mapEntry && mapEntry.price > 0) {
+            if (mapEntry.source === 'FIXED_DISCOUNT' && mapEntry.basePrice && mapEntry.discountPct) {
+                price = mapEntry.basePrice
+                discountPct = mapEntry.discountPct
+                source = mapEntry.source
+            } else {
+                price = mapEntry.price
+                source = mapEntry.source
+            }
+        }
+
         const existingLine = lines.find(l => l.productId)
         const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (p.vatRate ? Number(p.vatRate) : 10)
 
@@ -356,7 +373,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
         setLines(prev => [...prev, {
             productId: p.id, productName: p.productName, skuCode: p.skuCode,
-            qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: p.totalStock,
+            qtyOrdered: 1, unitPrice: price, lineDiscountPct: discountPct, stock: p.totalStock,
             priceSource: source, vatRate: inheritedVatRate,
         }])
     }
@@ -376,8 +393,21 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                 if (i !== idx) return l
                 if (field === 'productId') {
                     const p = products.find(p => p.id === value)!
-                    const price = priceMap[value]?.price ?? 0
-                    const source = priceMap[value]?.source ?? null
+                    const mapEntry = priceMap[value]
+                    let price = 0
+                    let discountPct = 0
+                    let source: string | null = null
+
+                    if (mapEntry && mapEntry.price > 0) {
+                        if (mapEntry.source === 'FIXED_DISCOUNT' && mapEntry.basePrice && mapEntry.discountPct) {
+                            price = mapEntry.basePrice
+                            discountPct = mapEntry.discountPct
+                            source = mapEntry.source
+                        } else {
+                            price = mapEntry.price
+                            source = mapEntry.source
+                        }
+                    }
                     const existingLine = prev.find((item, itemIdx) => itemIdx !== idx && item.productId)
                     const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (p.vatRate ? Number(p.vatRate) : 10)
 
@@ -385,7 +415,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                         toast.info(`Sản phẩm "${p.productName}" có VAT gốc ${p.vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo đơn hàng để đồng nhất 1 loại thuế suất.`)
                     }
 
-                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, priceSource: source, vatRate: inheritedVatRate }
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, lineDiscountPct: discountPct, priceSource: source, vatRate: inheritedVatRate }
                 }
                 return { ...l, [field]: value }
             })
