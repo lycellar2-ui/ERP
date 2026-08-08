@@ -391,6 +391,20 @@ const productSchema = z.object({
 export type ProductInput = z.infer<typeof productSchema>
 
 // ─── Create ───────────────────────────────────────
+function formatP2003Error(err: any): string {
+    const target = String(err?.meta?.field_name ?? err?.meta?.target ?? err?.message ?? '')
+    if (target.includes('appellationId') || target.includes('appellation')) {
+        return 'Vùng / Appellation được chọn không tồn tại trong hệ thống.'
+    }
+    if (target.includes('producerId') || target.includes('producer')) {
+        return 'Nhà sản xuất được chọn không tồn tại trong hệ thống.'
+    }
+    if (target.includes('supplierId') || target.includes('supplier')) {
+        return 'Nhà cung cấp được chọn không tồn tại trong hệ thống.'
+    }
+    return 'Dữ liệu liên kết (Vùng / Nhà sản xuất / Nhà cung cấp) không hợp lệ.'
+}
+
 export async function createProduct(input: ProductInput) {
     try {
         await requirePermission('MDM', 'WRITE')
@@ -448,7 +462,7 @@ export async function createProduct(input: ProductInput) {
             return { success: false, error: 'SKU đã tồn tại. Vui lòng chọn mã SKU khác.' }
         }
         if (err?.code === 'P2003') {
-            return { success: false, error: 'Vùng / Appellation hoặc Nhà sản xuất không tồn tại trong hệ thống.' }
+            return { success: false, error: formatP2003Error(err) }
         }
         return { success: false, error: err.message ?? 'Lỗi tạo sản phẩm không xác định' }
     }
