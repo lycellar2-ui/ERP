@@ -253,38 +253,38 @@ function StockTable({ lots, sortConfig, onSort }: {
             </div>
 
             {/* Mobile Card List View (< 768px) */}
-            <div className="block md:hidden p-3 space-y-2.5">
+            <div className="block md:hidden p-3 space-y-3">
                 {lots.map(lot => {
                     const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
                     const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
                     const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
                     return (
-                        <div key={lot.id} className="p-3.5 rounded-xl space-y-2 shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <div key={lot.id} className="p-4 rounded-2xl space-y-2.5 shadow-xl bg-slate-900 border border-slate-800 text-slate-100">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
+                                <span className="text-xs font-black font-mono px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">
                                     {lot.lotNo}
                                 </span>
-                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: '#F1F5F9', color: '#0F172A' }}>
+                                <span className="text-xs font-black font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 border border-slate-700">
                                     📍 {lot.locationCode}
                                 </span>
                             </div>
                             <div>
-                                <h4 className="text-xs font-bold text-[#0F172A] leading-tight">{lot.productName}</h4>
-                                <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: '#64748B' }}>
-                                    {flag} <span className="w-1.5 h-1.5 rounded-full" style={{ background: wineColor }} />
-                                    SKU: {lot.skuCode} {lot.vintage ? `· VTG: ${lot.vintage}` : ''}
+                                <h4 className="text-xs font-black text-white leading-tight">{lot.productName}</h4>
+                                <p className="text-[11px] mt-1 flex items-center gap-1.5 text-slate-400 font-medium">
+                                    {flag} <span className="w-2 h-2 rounded-full" style={{ background: wineColor }} />
+                                    SKU: <strong className="text-slate-200 font-mono">{lot.skuCode}</strong> {lot.vintage ? `· Vintage: ${lot.vintage}` : ''}
                                 </p>
                             </div>
-                            <div className="flex items-center justify-between pt-2 border-t text-xs" style={{ borderColor: '#E2E8F0' }}>
+                            <div className="flex items-center justify-between pt-2.5 border-t border-slate-800 text-xs">
                                 <div>
-                                    <span style={{ color: '#64748B' }}>Tồn kho: </span>
-                                    <span className="font-bold font-mono text-xs text-[#16A34A]">
+                                    <span className="text-slate-400 text-[10px] uppercase font-bold block">Khả Dụng:</span>
+                                    <span className="font-black font-mono text-sm text-emerald-400">
                                         {lot.qtyAvailable.toLocaleString()} chai
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="font-semibold px-2 py-0.5 rounded-full text-[10px]"
-                                        style={{ color: statusCfg.color, background: `${statusCfg.color}15` }}>
+                                    <span className="font-bold px-2.5 py-1 rounded-full text-[10px] uppercase border"
+                                        style={{ color: statusCfg.color, background: `${statusCfg.color}20`, borderColor: `${statusCfg.color}40` }}>
                                         {statusCfg.label}
                                     </span>
                                 </div>
