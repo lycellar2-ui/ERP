@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 17:17 | Wine ERP v9.5 — 29 modules, 123 models, Fix Stock Count Session Creation & CountType Enum Sync*
+*Last updated: 2026-08-08 20:27 | Wine ERP v9.6 — 29 modules, 123 models, Automated GDT Tax Lookup API & Internal Warehouse Transfer Voucher system*
 

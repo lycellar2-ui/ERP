@@ -1564,6 +1564,53 @@ Trên giao diện tab **Xuất Kho (DO)**, thẻ `SO-2608-0013`, `SO-2608-0012`.
 
 > ⚠️ **RULE 61: Mọi hàm Server Action trả dữ liệu danh sách cho component React UI PHẢI chuẩn hóa (map) các thuộc tính lồng (`customer.name` -> `customerName`, `product.productName` -> `productName`, `product.skuCode` -> `skuCode`) khớp đúng với TypeScript interface định nghĩa ở Client.**
 
+---
+
+## BUG-040: Lỗi Chọn Mã Hàng Sản Phẩm Trong Drawer Chuyển Kho do Dropdown Clipping & Blur Race Condition
+
+**Ngày:** 2026-08-08  
+**Severity:** 🔴 High — Người dùng không thể chọn sản phẩm khi tìm kiếm SKU trên Drawer Chuyển Kho Nội Bộ.
+
+### Triệu chứng
+1. Khi bấm gõ tìm kiếm SKU trên Drawer Chuyển Kho Nội Bộ (`CreateTransferDrawer`), danh sách sản phẩm bị che/cắt khung (clipping) do container bảng có `overflow-hidden` / `overflow-y-auto`.
+2. Khi bấm chọn sản phẩm trong danh sách xổ xuống, sự kiện `onBlur` của ô input kích hoạt trước khiến dropdown tự đóng lại mà chưa ghi nhận giá trị vừa chọn.
+
+### Nguyên nhân gốc rễ
+1. Dropdown popover sử dụng `position: absolute` bên trong thẻ chứa bảng có `overflow-hidden`.
+2. Lắng nghe sự kiện click thông thường trên option bị race condition với sự kiện `onBlur` của input text.
+
+### Cách fix
+1. Đặt `onMouseDown={(e) => { e.preventDefault(); onChange(p.id); setIsOpen(false); }}` trên option item để ngăn `onBlur` race condition.
+2. Thêm `overflow-visible` cho container bảng và đặt z-index `z-[300]` cho danh sách popover.
+
+### Bài học
+
+> ⚠️ **RULE 62: Với mọi Combobox / Autocomplete Select component dạng Popover nằm trong Modal / Drawer / Scroll Table: 1) Đặt `onMouseDown` kèm `preventDefault()` trên option để tránh race condition với `onBlur`, 2) Container chứa bảng PHẢI có `overflow-visible` hoặc popover dùng Portal / Fixed Positioning z-index cao.**
+
+---
+
+## BUG-041: Thiếu Mã Số Thuế VAT & Tên Công Ty Xuất Hóa Đơn Chi Nhánh Con Khi Xuất Excel HĐĐT
+
+**Ngày:** 2026-08-08  
+**Severity:** 🟡 Medium — File Excel xuất báo cáo đơn bán hàng phục vụ upload Hóa đơn điện tử (MISA, VNPT, Viettel S-Invoice) bị trống Mã số thuế và Tên công ty đối với các đơn hàng lên cho chi nhánh con (nhà hàng).
+
+### Triệu chứng
+Đơn hàng lên cho nhà hàng chi nhánh con (vd: `HR10114-01` Mediterraneo Italian Restaurant) khi xuất Excel bị trống MST và Tên công ty VAT, dù công ty mẹ (`HR10114` Mediterraneo) đã có MST `0110538425` và tên công ty đăng ký thuế.
+
+### Nguyên nhân gốc rễ
+1. Các nhà hàng / chi nhánh con không lưu MST riêng mà sử dụng chung Mã số thuế của Công ty Mẹ / Công ty Chủ quản.
+2. Hàm `exportSalesOrdersExcel` chỉ kiểm tra thuộc tính trực tiếp `o.customer.taxId` và `o.customer.vatCompanyName` mà chưa query thuộc tính của `o.customer.parent`.
+
+### Cách fix
+1. Cập nhật `exportSalesOrdersExcel` query thêm `parent: { select: { taxId, vatCompanyName, vatAddress, vatEmail } }`.
+2. Áp dụng logic fallback: `taxId = o.customer.taxId || o.customer.parent?.taxId || ''`, `vatCompanyName = o.customer.vatCompanyName || o.customer.parent?.vatCompanyName || o.customer.name`.
+3. Tích hợp API tự động tra cứu Tổng cục Thuế GDT (`api.vietqr.io/v2/business/`) và đồng bộ dữ liệu MST công ty mẹ xuống chi nhánh con.
+
+### Bài học
+
+> ⚠️ **RULE 63: Mọi câu truy vấn dữ liệu Hóa đơn VAT / Báo cáo Xuất HĐĐT cho Khách hàng PHẢI có cơ chế fallback tự động kế thừa Mã số thuế (`taxId`), Tên công ty (`vatCompanyName`), và Địa chỉ thuế (`vatAddress`) từ Công Ty Mẹ (`parent`) nếu Chi nhánh con chưa nhập riêng.**
+
+
 
 
 
