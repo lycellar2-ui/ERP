@@ -77,6 +77,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
     // Auto trigger print when loaded successfully
     useEffect(() => {
         if (order) {
+            document.title = `${order.soNo}`
             const timer = setTimeout(() => {
                 window.print()
             }, 800)
@@ -135,6 +136,9 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                     @page {
                         size: A4 portrait;
                         margin: 8mm 10mm !important;
+                    }
+                    header, nav, aside, .no-print {
+                        display: none !important;
                     }
                     html, body, #__next, div {
                         background: #ffffff !important;

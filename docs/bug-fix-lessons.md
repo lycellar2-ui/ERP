@@ -1338,6 +1338,29 @@ if ('salesRepId' in dataToUpdate) {
 
 > ⚠️ **RULE 52: Tất cả màn hình liên quan tới tính giá bán (Đơn Hàng SO, Báo Giá QTN, Đơn POS) BẮT BUỘC phải gọi getCustomerResolvedPrices(customerId) để ưu tiên quy tắc Giá Đặc Biệt (SPECIAL_PRICE) vượt lên trên giá kênh bán hàng mặc định.**
 
+---
+
+## BUG-031: Header Chứa Chữ 'Đơn Bán Hàng' Rò Rỉ Vào Trang In Phiếu SO
+
+**Ngày:** 2026-08-08
+**Severity:** 🟡 Medium — Tiêu đề trang Dashboard Header (`Đơn Bán Hàng`) bị hiển thị ở đỉnh tờ giấy khi in Đơn SO.
+
+### Triệu chứng
+- Khi bấm In Đơn bán hàng, phía trên cùng tờ giấy in (nằm trên tên CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN) có dòng chữ `Đơn Bán Hàng` bị thừa.
+
+### Nguyên nhân gốc rễ
+1. Thanh Header chung của Dashboard (`Header.tsx`) sử dụng thẻ `<header>` nhưng trong CSS cũ rule `@media print` chỉ ẩn `header:has(nav)` nên thẻ `<header>` chính của giao diện không bị ẩn khi in.
+2. Tiêu đề `document.title` của trình duyệt mặc định đặt theo tên route `Đơn Bán Hàng`.
+
+### Cách fix
+1. Trong `globals.css` và `sales/print/page.tsx`, bổ sung quy tắc `@media print { header, nav, aside { display: none !important; } }` để ẩn 100% thanh Header layout chung khi in.
+2. Thiết lập `document.title = order.soNo` để file in/xóa bớt tiêu đề thừa và lưu tên file PDF theo mã đơn hàng (VD: `SO-2608-0010.pdf`).
+
+### Bài học
+
+> ⚠️ **RULE 53: Khi cấu hình trang in (@media print), bắt buộc phải ẩn toàn bộ các thẻ layout gốc (header, nav, aside) để tránh tiêu đề thanh điều hướng rò rỉ vào bản in.**
+
+
 
 
 

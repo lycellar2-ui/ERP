@@ -452,11 +452,11 @@ a,
   }
 
   /* ── Hide Navigation / Interactive ── */
+  header,
   nav,
   aside,
   .sidebar,
   [data-sidebar],
-  header:has(nav),
   .no-print,
   button:not(.print-keep),
   form:not(.print-keep),
