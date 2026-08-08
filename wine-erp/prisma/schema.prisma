@@ -283,6 +283,7 @@ model Product {
   transferOrderLines   TransferOrderLine[]
   proposalPriceItems   ProposalPriceItem[]
   qrCodes              QRCode[]
+  sampleProducts       SampleProduct[]
   regulatedDocs        RegulatedDocument[]
   priceRules           CustomerPriceRule[]
   marginPrice          ProductMarginPrice?
@@ -1444,6 +1445,71 @@ model StockCountLine {
   variance     Decimal?
 
   @@map("stock_count_lines")
+}
+
+// ── Sample Wine Inventory (Tồn kho Hàng Mẫu) ──
+
+enum SampleOriginType {
+  FORMAL   // Chính ngạch (có tờ khai HQ, tem nhãn đầy đủ)
+  INFORMAL // Tiểu ngạch / Xách tay / Hàng mẫu tặng kèm từ Winery
+}
+
+enum SampleTxType {
+  INBOUND     // Nhập kho hàng mẫu
+  OUTBOUND    // Xuất kho hàng mẫu
+  ADJUSTMENT  // Điều chỉnh kiểm kê hàng mẫu
+}
+
+enum SampleReason {
+  SUPPLIER_SAMPLE // Mẫu nhà cung cấp / Winery gửi thử
+  FORMAL_IMPORT   // Nhập mẫu chính ngạch
+  TASTING         // Xuất thử rượu / Event tasting
+  CUSTOMER_GIFT   // Xuất tặng khách hàng VIP / Khách mua lớn
+  MARKETING_MEDIA // Xuất chụp ảnh / Quay video Marketing
+  QUALITY_TESTING // Xuất kiểm định chất lượng / Thử nghiệm
+  DAMAGE_LOSS     // Hỏng / Vỡ / Hủy mẫu
+  OTHER           // Khác
+}
+
+model SampleProduct {
+  id             String              @id @default(cuid())
+  sampleCode     String              @unique // SMP-2026-0001
+  productId      String?             // Link đến Product chính thức nếu đã có SKU
+  product        Product?            @relation(fields: [productId], references: [id])
+  productName    String              // Tên rượu mẫu (VD: Château Margaux 2018 - Sample)
+  wineType       String?             // Rượu Đỏ, Rượu Trắng, Sâm Panh...
+  vintage        Int?                // Niên vụ
+  country        String?             // Quốc gia
+  producer       String?             // Nhà sản xuất
+  volumeMl       Int?                @default(750)
+  originType     SampleOriginType    @default(INFORMAL)
+  estimatedValue Decimal             @default(0) // Giá trị ước tính (VND)
+  qtyOnHand      Decimal             @default(0) // Tồn kho hiện tại (Chai)
+  unit           String              @default("Chai")
+  notes          String?
+  transactions   SampleTransaction[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@map("sample_products")
+}
+
+model SampleTransaction {
+  id              String        @id @default(cuid())
+  docNo           String        @unique // SMR-2026-0001 (Nhập) hoặc SMO-2026-0001 (Xuất)
+  type            SampleTxType
+  reason          SampleReason
+  sampleProductId String
+  sampleProduct   SampleProduct @relation(fields: [sampleProductId], references: [id])
+  qty             Decimal
+  unitCost        Decimal       @default(0)
+  recipient       String?       // Khách hàng / Sommelier / Sự kiện nhận
+  requestedBy     String?       // Nhân viên đề xuất
+  performedAt     DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+
+  @@map("sample_transactions")
 }
 
 // =============================================================

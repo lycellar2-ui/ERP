@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 20:39 | Wine ERP v9.7 — 29 modules, 123 models, Comprehensive Warehouse Inventory Summary Report (NXT) & Drill-Down Stock Ledger*
+*Last updated: 2026-08-08 20:57 | Wine ERP v9.8 — 29 modules, 125 models, Sample Wine Inventory Management (Tồn kho Hàng Mẫu)*
 

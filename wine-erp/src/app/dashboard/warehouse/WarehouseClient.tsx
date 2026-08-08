@@ -23,6 +23,7 @@ import { StockMovementTab } from './StockMovementTab'
 import { WarehouseMapTab } from './WarehouseMapTab'
 import { TransfersTab } from './TransfersTab'
 import { StockCountTab } from './StockCountTab'
+import { SampleInventoryTab } from './SampleInventoryTab'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
@@ -375,7 +376,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
 }
 
 // ── Main WMS Client Component ───────────────────────
-type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map' | 'transfer' | 'stock-count'
+type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map' | 'transfer' | 'stock-count' | 'sample'
 
 interface Props {
     initialWarehouses?: WarehouseRow[]
@@ -539,6 +540,16 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             bg: 'rgba(5,150,105,0.1)',
             description: 'Sổ chi tiết luân chuyển kho hàng, tốc độ quay vòng & báo cáo NXT',
             actionLabel: 'Xem Báo Cáo NXT'
+        },
+        {
+            key: 'sample',
+            title: '🍷 Quản Lý Hàng Mẫu',
+            subtitle: 'Sample Wine Inventory',
+            icon: Wine,
+            color: '#D4A853',
+            bg: 'rgba(212,168,83,0.1)',
+            description: 'Kho hàng mẫu riêng biệt không bán hàng, quản lý nguồn ngạch & xuất sử dụng',
+            actionLabel: 'Quản Lý Hàng Mẫu'
         },
     ]
 
@@ -770,6 +781,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                     {/* Stock Count Tab — Gộp mới */}
                     {activeTab === 'stock-count' && <StockCountTab />}
+
+                    {/* Sample Wine Inventory Tab — Mới */}
+                    {activeTab === 'sample' && <SampleInventoryTab />}
 
                     {/* Quarantine Tab — auto-loads */}
                     {activeTab === 'quarantine' && (

@@ -277,6 +277,25 @@ getProductStockByLocation(productId)      → Current lots with location details
 
 ---
 
+## 12. Quản Lý Tồn Kho Hàng Mẫu — Sample Wine Inventory
+
+> **Tab "🍷 Quản Lý Hàng Mẫu" trong module WMS** — Quản lý hàng mẫu riêng biệt không bán hàng thương mại, hỗ trợ hàng có SKU / chưa có SKU, hàng chính ngạch và tiểu ngạch.
+
+### 12.1 Đặc Điểm Tính Năng
+- **Tách biệt 100% kho bán hàng**: Dữ liệu lưu tại model `SampleProduct` và `SampleTransaction`, không bị xuất bán nhầm.
+- **Hỗ trợ 2 dạng mẫu**: Đã có mã SKU hệ thống OR Chưa có SKU (tự nhập tên rượu mẫu).
+- **Phân loại nguồn ngạch**: `Chính Ngạch` (FORMAL) vs `Tiểu Ngạch / Xách Tay` (INFORMAL).
+- **Nhật ký xuất mẫu theo mục đích**: *Thử rượu/Sommelier tasting*, *Tặng khách VIP*, *Marketing/Media*, *Kiểm định chất lượng*, *Hỏng/Hủy*.
+
+### 12.2 Backend (`actions-sample.ts`)
+```typescript
+getSampleProducts(filters)       → SampleProductItem[]
+getSampleInventoryStats()        → SampleInventoryStats (5 KPI stats)
+createSampleProduct(data)        → Create sample item & initial inbound receipt
+createSampleTransaction(data)    → Create SMR/SMO/SMA doc & update qtyOnHand
+getSampleTransactions(filters)   → SampleTransactionItem[]
+```
+
 ## 8. Database Design
 
 ```
