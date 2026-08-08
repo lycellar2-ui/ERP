@@ -1316,6 +1316,29 @@ if ('salesRepId' in dataToUpdate) {
 
 > ⚠️ **RULE 51: Khi sử dụng TanStack Query với staleTime > 0, bắt buộc phải gọi queryClient.invalidateQueries() sau mỗi thao tác Mutation (Thêm/Sửa/Xóa) để ép UI làm tươi dữ liệu tức thì.**
 
+---
+
+## BUG-030: Đơn Hàng SO & Báo Giá Quotation Không Tự Động Lấy Giá Đặc Biệt (CustomerPriceRule)
+
+**Ngày:** 2026-08-08
+**Severity:** 🔴 Critical — Khách hàng có chính sách Giá Đặc Biệt (SPECIAL_PRICE) nhưng khi lên đơn SO hoặc Báo Giá lại lấy giá bán buôn tiêu chuẩn.
+
+### Triệu chứng
+- Nhóm khách hàng Paolo & Chi (`HR10092`, `HR10092-01`, `HR10092-02`, `HR10092-03`) đã được duyệt 12 quy tắc **Giá Đặc Biệt**, nhưng khi nhân viên lên đơn SO hoặc tạo Báo Giá (QTN) cho các mã như `L10029`, `L60001`, `L30001`... hệ thống vẫn lấy giá niêm yết cũ (ví dụ `450.000 đ` thay vì `390.000 đ`).
+
+### Nguyên nhân gốc rễ
+1. Màn hình Tạo Báo Giá (`QuotationClient.tsx`) trước đây chưa tích hợp hàm `getCustomerResolvedPrices(customerId)`, luôn mặc định gán `product.wholesalePrice`.
+2. Màn hình Tạo Đơn Hàng (`CreateSODrawer.tsx`) khi người dùng chọn sản phẩm trước khi chọn khách hàng hoặc khi API `getCustomerResolvedPrices` phản hồi chậm, hàm `updateLine` bị lấy nhầm giá mặc định channel base thay vì chờ giá giải mã từ quy tắc khách hàng.
+
+### Cách fix
+1. Tích hợp `getCustomerResolvedPrices(customerId)` vào `QuotationClient.tsx`: Mỗi khi chọn khách hàng, tự động tải bảng giá giải mã (bao gồm Giá Đặc Biệt, Giá Cố Định, Chiết Khấu) để điền chính xác vào từng dòng báo giá.
+2. Cập nhật logic gán đơn giá trong `CreateSODrawer.tsx`: Đảm bảo `unitPrice` và `priceSource` được cập nhật đồng bộ 100% sang `SPECIAL_PRICE` ngay khi chọn khách hàng hoặc thêm sản phẩm.
+
+### Bài học
+
+> ⚠️ **RULE 52: Tất cả màn hình liên quan tới tính giá bán (Đơn Hàng SO, Báo Giá QTN, Đơn POS) BẮT BUỘC phải gọi getCustomerResolvedPrices(customerId) để ưu tiên quy tắc Giá Đặc Biệt (SPECIAL_PRICE) vượt lên trên giá kênh bán hàng mặc định.**
+
+
 
 
 

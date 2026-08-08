@@ -328,8 +328,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
             
             // Auto-update existing lines to resolved prices and source
             setLines(prev => prev.map(l => {
+                if (!l.productId) return l
                 const resolved = resolvedPrices[l.productId]
-                if (resolved) {
+                if (resolved && resolved.price > 0) {
                     return { ...l, unitPrice: resolved.price, priceSource: resolved.source }
                 }
                 return l
@@ -358,13 +359,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                 const wp = p?.wholesalePrice ?? 0
                 const rp = p?.retailPrice ?? 0
                 const isWholesaleChan = (channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR')
-                const fallbackPrice = isWholesaleChan
-                    ? (wp > 0 ? wp : (rp > 0 ? rp : 0))
-                    : (rp > 0 ? rp : (wp > 0 ? wp : 0))
-                const autoPrice: number = resolvedPrice > 0 ? resolvedPrice : fallbackPrice
-                const source = (mapEntry && mapEntry.price > 0)
-                    ? mapEntry.source
-                    : (isWholesaleChan ? 'CHANNEL_BASE' : 'RETAIL_FALLBACK')
+                const fallbackUnitPrice = isWholesaleChan ? (wp > 0 ? wp : rp) : (rp > 0 ? rp : wp)
+                const unitPrice = resolvedPrice > 0 ? resolvedPrice : fallbackUnitPrice
+                const priceSource = (mapEntry && resolvedPrice > 0) ? mapEntry.source : (isWholesaleChan ? 'WHOLESALE_BASE' : 'RETAIL_BASE')
                 
                 // Update search query display
                 setSearchQueries(prevQueries => ({
@@ -372,7 +369,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
                     [i]: `[${p.skuCode}] ${p.productName}`
                 }))
 
-                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: autoPrice, priceSource: source, vatRate: p.vatRate ? Number(p.vatRate) : 10 }
+                return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, priceSource, vatRate: p.vatRate ? Number(p.vatRate) : 10 }
             }
             return { ...l, [field]: value }
         }))

@@ -6,6 +6,7 @@ import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, 
 import { toast } from 'sonner'
 import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation, sendQuotation, duplicateQuotation, exportQuotationExcel } from './actions'
 import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/actions'
+import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const STATUS_CFG: Record<QuotationStatus, { label: string; color: string; bg: string }> = {
@@ -115,6 +116,7 @@ export function QuotationClient({ initialData }: Props) {
     const [pickerCountry, setPickerCountry] = useState('')
     const [pickerWineType, setPickerWineType] = useState('')
     const [pickerSelected, setPickerSelected] = useState<Record<string, { qty: number; checked: boolean }>>({})
+    const [priceMap, setPriceMap] = useState<Record<string, ResolvedPrice>>({})
 
     // TanStack Query — cache quotations list
     const { data: rows = [], isLoading: loading, refetch } = useQuery({
@@ -250,6 +252,28 @@ export function QuotationClient({ initialData }: Props) {
         )
     }
 
+    const handleCustomerChangeInQuotation = async (customerId: string) => {
+        setFormData(f => ({ ...f, customerId }))
+        if (customerId && customerId !== 'TEMP_CUSTOMER') {
+            try {
+                const resolved = await getCustomerResolvedPrices(customerId)
+                setPriceMap(resolved)
+                setFormLines(prev => prev.map(l => {
+                    if (!l.productId) return l
+                    const resPrice = resolved[l.productId]
+                    if (resPrice && resPrice.price > 0) {
+                        return { ...l, price: resPrice.price }
+                    }
+                    return l
+                }))
+            } catch (err) {
+                console.error('Lỗi tải giá khách hàng cho báo giá:', err)
+            }
+        } else {
+            setPriceMap({})
+        }
+    }
+
     const addLine = () => setFormLines([...formLines, { productId: '', qty: 1, price: 0, discount: 0, vatRate: 10 }])
     const removeLine = (i: number) => setFormLines(formLines.filter((_, idx) => idx !== i))
     const updateLine = (i: number, field: string, val: any) => {
@@ -260,9 +284,11 @@ export function QuotationClient({ initialData }: Props) {
 
     const selectProductForLine = (i: number, productId: string) => {
         const prod = products.find(p => p.id === productId)
+        const resolved = priceMap[productId]
+        const resolvedPrice = (resolved && resolved.price > 0) ? resolved.price : (prod ? prod.wholesalePrice : 0)
         const copy = [...formLines]
         copy[i].productId = productId
-        copy[i].price = prod ? prod.wholesalePrice : 0
+        copy[i].price = resolvedPrice
         copy[i].vatRate = prod ? (prod as any).vatRate ?? 10 : 10
         setFormLines(copy)
     }
@@ -284,10 +310,12 @@ export function QuotationClient({ initialData }: Props) {
             if (data.checked && prodId) {
                 const prod = products.find(p => p.id === prodId)
                 const existing = formLines.find(l => l.productId === prodId)
+                const resolved = priceMap[prodId]
+                const resolvedPrice = (resolved && resolved.price > 0) ? resolved.price : (prod ? prod.wholesalePrice : 0)
                 newLines.push({
                     productId: prodId,
                     qty: data.qty,
-                    price: existing?.price || (prod ? prod.wholesalePrice : 0),
+                    price: existing?.price || resolvedPrice,
                     discount: existing?.discount || 0,
                     vatRate: existing?.vatRate || (prod ? (prod as any).vatRate ?? 10 : 10)
                 })
@@ -761,7 +789,7 @@ export function QuotationClient({ initialData }: Props) {
                                     </label>
                                 </div>
                                 {!isNewCustomer ? (
-                                    <select value={formData.customerId} onChange={e => setFormData({ ...formData, customerId: e.target.value })}
+                                    <select value={formData.customerId} onChange={e => handleCustomerChangeInQuotation(e.target.value)}
                                         className="w-full mt-1.5 px-3 py-2.5 text-sm outline-none"
                                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}>
                                         <option value="">Chọn khách hàng...</option>
