@@ -107,14 +107,34 @@ export const ROLE_NAME_MAP: Record<string, string> = {
     'Sales Admin': 'SALES_ADMIN',
 }
 
+const ROLE_ALIASES: Record<string, string[]> = {
+    'CEO': ['CEO', 'ADMIN', 'SYS:ADMIN', 'DIRECTOR', 'BOD', 'Admin'],
+    'ADMIN': ['ADMIN', 'SYS:ADMIN', 'CEO'],
+    'KE_TOAN': ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
+    'Kế Toán': ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
+    'SALES_MGR': ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG'],
+    'Sales Manager': ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG'],
+    'SALES_ADMIN': ['SALES_ADMIN', 'Sales Admin'],
+    'Sales Admin': ['SALES_ADMIN', 'Sales Admin'],
+    'THU_KHO': ['THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG'],
+    'Thủ Kho': ['THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG'],
+}
+
 // Check if user has specific permission
 export function hasPermission(user: SessionUser, module: string, action: string): boolean {
+    if (!user) return false
+    if (hasRole(user, 'CEO', 'ADMIN')) return true
+    if (action === 'READ' && hasRole(user, 'Kế Toán', 'KE_TOAN')) {
+        if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS'].includes(module)) return true
+    }
     return user.permissions.includes(`${module}:${action}`)
 }
 
 // Check if user has any of the specified roles
 export function hasRole(user: SessionUser, ...roleNames: string[]): boolean {
-    return roleNames.some(r => user.roles.includes(r))
+    if (!user || !user.roles) return false
+    const expandedTargetRoles = roleNames.flatMap(r => ROLE_ALIASES[r] ?? [r])
+    return expandedTargetRoles.some(r => user.roles.includes(r))
 }
 
 // ── Report Permission Mapping ─────────────────────

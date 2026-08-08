@@ -39,6 +39,7 @@
 30. [BUG-039: Thẻ Xuất Kho DO Không Hiển Thị Tên Khách Hàng và Mã SKU / Tên Sản Phẩm](#bug-039-thẻ-xuất-kho-do-không-hiển-thị-tên-khách-hàng-và-mã-sku--tên-sản-phẩm)
 31. [BUG-042: Thủ Kho Nhìn Thấy Nút Xuất Hóa Đơn & Nút Tạo Đơn Hàng](#bug-042-thủ-kho-nhìn-thấy-nút-xuất-hóa-đơn--nút-tạo-đơn-hàng-do-thiếu-kiểm-tra-rbac-trên-ui--server-action)
 32. [BUG-043: Kế Toán & Trưởng Phòng Không Hiển Thị Nút Duyệt Tờ Trình Cơ Chế Giá](#bug-043-kế-toán--trưởng-phòng-không-hiển-thị-nút-duyệt-tờ-trình-cơ-chế-giá-do-hardcode-điều-kiện-isceo)
+33. [BUG-044: Tài Khoản Kế Toán Không Xem Được Danh Sách Khách Hàng (Chưa có khách hàng nào)](#bug-044-tài-khoản-kế-toán-không-xem-được-danh-sách-khách-hàng-chưa-có-khách-hàng-nào-do-lỗi-alias-role-và-quyền-mdmread)
 
 ---
 
@@ -1662,3 +1663,30 @@ Trên giao diện tab **Xuất Kho (DO)**, thẻ `SO-2608-0013`, `SO-2608-0012`.
 ### Bài học
 
 > ⚠️ **RULE 65: Đối với quy trình phê duyệt nhiều cấp (Multi-level Approval Workflow), điều kiện hiển thị nút Duyệt trên giao diện KHÔNG ĐƯỢC hardcode theo 1 role duy nhất (như CEO), mà PHẢI dựa theo bảng ánh xạ vai trò linh hoạt tương ứng với cấp duyệt hiện tại (`currentLevel`) của tài liệu.**
+
+---
+
+## BUG-044: Tài Khoản Kế Toán Không Xem Được Danh Sách Khách Hàng (Chưa có khách hàng nào) Do Lỗi Alias Role và Quyền MDM:READ
+
+**Ngày:** 2026-08-08  
+**Severity:** 🔴 High — Người dùng vai trò Kế toán (`ketoan@lyscellars.com` / `Dinh (Kế toán)`) truy cập trang Khách Hàng (`/dashboard/customers`) bị báo "Chưa có khách hàng nào" (0 khách hàng).
+
+### Triệu chứng
+1. Đăng nhập tài khoản `Dinh (Kế toán)` vào trang Danh sách Khách Hàng (`/dashboard/customers`).
+2. Màn hình chỉ hiển thị: "B2B: Khách sạn, nhà hàng, phân phối, VIP retail — 0 khách hàng", Tổng KH: 0, "Chưa có khách hàng nào".
+
+### Nguyên nhân gốc rễ
+1. Hàm `hasRole(user, 'Kế Toán', 'KE_TOAN')` chỉ kiểm tra đúng chính xác 2 chuỗi tên role đó. Nếu trong Database vai trò của user được lưu dưới các biến thể tên gọi như `ACCOUNTANT`, `ACCOUNTING`, `CHIEF_ACCOUNTANT`, `KE_TOAN_TRUONG`, `Kế toán`, hệ thống sẽ coi user đó KHÔNG PHẢI Kế toán.
+2. Khi `!hasRole(user, ..., 'Kế Toán', 'KE_TOAN')` trả về `true` và user có role `Sales Rep` hoặc mặc định, hệ thống tự ép điều kiện `where.salesRepId = user.id`. Vì Kế toán không phụ trách trực tiếp làm Sale Rep cho khách hàng nào, truy vấn trả về 0 kết quả.
+3. Nếu role của Kế toán trong DB chưa có quyền `MDM:READ`, `requirePermission('MDM', 'READ')` ném ngoại lệ làm cho `getCustomers()` thất bại và `page.tsx` bắt lỗi trả về danh sách rỗng (`rows: []`).
+
+### Cách fix
+1. Trong `src/lib/session.ts`, bổ sung bảng ánh xạ đồng bộ vai trò `ROLE_ALIASES`:
+   - `KE_TOAN` / `Kế Toán` tự động ánh xạ bao gồm tất cả các alias: `['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng']`.
+2. Cập nhật `hasRole` tự động mở rộng (expand) danh sách vai trò cần kiểm tra thông qua `ROLE_ALIASES`.
+3. Cập nhật `hasPermission`: Tự động cấp quyền `READ` cho tài khoản Kế toán (`Kế Toán`, `KE_TOAN`) đối với các module dữ liệu danh mục & tài chính (`MDM`, `FIN`, `TAX`, `SLS`, `PRC`, `CNT`, `CST`, `RPT`, `STM`, `DSH`, `WMS`, `TRS`).
+
+### Bài học
+
+> ⚠️ **RULE 66: Hàm `hasRole` và `hasPermission` PHẢI sử dụng cơ chế Bảng Ánh Xạ Đồng Bộ Alias (`ROLE_ALIASES`) và mặc định cho phép Kế toán (`KE_TOAN`) truy cập READ các module Danh mục (`MDM`), Đơn hàng (`SLS`), Tài chính (`FIN`), Hóa đơn (`TAX`) để tránh tình trạng lọc nhầm `salesRepId` hoặc ném ngoại lệ thiếu quyền khi người dùng đăng nhập bằng các vai trò kế toán khác nhau.**
+
