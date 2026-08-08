@@ -5,7 +5,7 @@ import {
     Search, Loader2, Save, Move, Maximize2, ZoomIn, ZoomOut, Grid3x3,
     X, Eye, MousePointer2, Minus, DoorOpen, Type, Trash2, RotateCcw,
     ChevronDown, Box, Layers, Package, Calendar, ShieldCheck, Thermometer,
-    Sparkles, RefreshCw, Info, Building2, MapPin
+    Sparkles, RefreshCw, Info, Building2, MapPin, Sliders, Maximize, Check
 } from 'lucide-react'
 import {
     MapLocation, MapWarehouse, MapLocationProduct,
@@ -138,9 +138,14 @@ export function WarehouseMapTab({
 
     // Drag & Resize location
     const [dragLoc, setDragLoc] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null)
-    const [resizeLoc, setResizeLoc] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origX: number; origY: number } | null>(null)
+    const [resizeLoc, setResizeLoc] = useState<{ id: string; startX: number; startY: number; origW: number; origH: number } | null>(null)
     const [locations, setLocations] = useState<MapLocation[]>([])
     const [hasChanges, setHasChanges] = useState(false)
+
+    // Zone resize modal
+    const [resizeZoneName, setResizeZoneName] = useState<string | null>(null)
+    const [zoneW, setZoneW] = useState<number>(80)
+    const [zoneH, setZoneH] = useState<number>(60)
 
     // Search & Popups
     const [searchTerm, setSearchTerm] = useState('')
@@ -292,12 +297,23 @@ export function WarehouseMapTab({
         const pos = toCanvas(e.clientX, e.clientY)
         setMousePos(pos)
 
-        // Drag location
+        // Drag location position
         if (dragLoc && editMode && tool === 'select') {
             const dx = (e.clientX - dragLoc.startX) / zoom
             const dy = (e.clientY - dragLoc.startY) / zoom
             setLocations(prev => prev.map(l => l.id === dragLoc.id
                 ? { ...l, posX: snap(dragLoc.origX + dx), posY: snap(dragLoc.origY + dy) }
+                : l
+            ))
+            setHasChanges(true)
+        }
+
+        // Drag location resize
+        if (resizeLoc && editMode && tool === 'select') {
+            const dx = (e.clientX - resizeLoc.startX) / zoom
+            const dy = (e.clientY - resizeLoc.startY) / zoom
+            setLocations(prev => prev.map(l => l.id === resizeLoc.id
+                ? { ...l, width: Math.max(40, snap(resizeLoc.origW + dx)), height: Math.max(30, snap(resizeLoc.origH + dy)) }
                 : l
             ))
             setHasChanges(true)
@@ -348,6 +364,14 @@ export function WarehouseMapTab({
                 setHasChanges(false)
             } else showToast(res.error || 'Lỗi', 'err')
         } finally { setSaving(false) }
+    }
+
+    // Batch Zone Resize
+    const handleApplyZoneResize = (zoneName: string, w: number, h: number) => {
+        setLocations(prev => prev.map(l => l.zone === zoneName ? { ...l, width: w, height: h } : l))
+        setHasChanges(true)
+        setResizeZoneName(null)
+        showToast(`Đã đổi kích thước tất cả các vị trí thuộc ZONE ${zoneName} thành ${w}x${h}px!`)
     }
 
     // ── Search ─────────────────────────────────────────
@@ -432,7 +456,7 @@ export function WarehouseMapTab({
                 {editMode && (
                     <div className="flex flex-col gap-1.5 p-2 bg-slate-900 border-r border-slate-800 z-20 shrink-0" style={{ width: 68 }}>
                         {([
-                            { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn/Kéo' },
+                            { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn/Sửa' },
                             { key: 'wall' as Tool, icon: Minus, label: 'Vẽ Tường' },
                             { key: 'door' as Tool, icon: DoorOpen, label: 'Vẽ Cửa' },
                             { key: 'label' as Tool, icon: Type, label: 'Nhãn' },
@@ -451,7 +475,7 @@ export function WarehouseMapTab({
                             <div className="mt-2 pt-2 border-t border-slate-800 flex flex-col items-center gap-1">
                                 <button
                                     onClick={() => setDoorRotation(r => (r + 90) % 360)}
-                                    className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold hover:bg-amber-500/30 w-full text-center"
+                                    className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold hover:bg-amber-500/30 w-full text-center cursor-pointer"
                                     title="Xoay cửa 90 độ"
                                 >
                                     Xoay {doorRotation}°
@@ -461,7 +485,7 @@ export function WarehouseMapTab({
 
                         <div className="mt-auto pt-2 border-t border-slate-800">
                             <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [] }); setHasChanges(true) }}
-                                title="Reset vẽ tường cửa" className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium text-rose-400 hover:bg-rose-950/30 w-full">
+                                title="Reset vẽ tường cửa" className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-[10px] font-medium text-rose-400 hover:bg-rose-950/30 w-full cursor-pointer">
                                 <RotateCcw size={14} />
                                 Reset
                             </button>
@@ -583,6 +607,7 @@ export function WarehouseMapTab({
                                         onMouseDown={e => {
                                             if (editMode && tool === 'select' && !spaceHeld) {
                                                 e.stopPropagation()
+                                                setSelectedLocId(loc.id)
                                                 setDragLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origX: loc.posX, origY: loc.posY })
                                             }
                                         }}
@@ -590,7 +615,7 @@ export function WarehouseMapTab({
                                             if (!isDrawingTool) {
                                                 e.stopPropagation()
                                                 setSelectedLocId(loc.id)
-                                                setShowLocModal(true) // Open Inventory Details Popup Modal!
+                                                if (!editMode) setShowLocModal(true) // Open Popup Modal in View mode!
                                             }
                                         }}
                                         className="absolute transition-all duration-150 group"
@@ -635,6 +660,20 @@ export function WarehouseMapTab({
                                                 {loc.occupancyPct}%
                                             </span>
                                         </div>
+
+                                        {/* Drag-to-Resize Handle (Active in Edit Mode) */}
+                                        {editMode && tool === 'select' && (
+                                            <div
+                                                onMouseDown={e => {
+                                                    e.stopPropagation()
+                                                    setResizeLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origW: loc.width, origH: loc.height })
+                                                }}
+                                                className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-amber-500 border border-slate-900 rounded-sm cursor-se-resize shadow-md flex items-center justify-center hover:scale-125 transition-transform z-30"
+                                                title="Kéo góc này để thay đổi Kích thước (Rộng x Cao)"
+                                            >
+                                                <Maximize size={10} className="text-slate-950" />
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}
@@ -657,10 +696,90 @@ export function WarehouseMapTab({
                             🧱 Click để chọn điểm bắt đầu vẽ tường • Giữ Space để kéo bản đồ
                         </div>
                     )}
+                    {editMode && tool === 'select' && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-xs font-bold z-50 bg-slate-800 text-white shadow-lg border border-slate-700 flex items-center gap-2">
+                            <span>📐 Kéo góc vuông màu cam ở mỗi ô để đổi kích thước Rộng x Cao</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Side Control & Legend Panel */}
-                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-900 border-l border-slate-800 text-slate-200" style={{ width: 260 }}>
+                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-900 border-l border-slate-800 text-slate-200" style={{ width: 280 }}>
+
+                    {/* 📐 Dimension & Size Editor for Selected Location */}
+                    {selectedLoc && editMode && (
+                        <div className="p-3.5 rounded-xl bg-slate-800/90 border border-amber-500/40 text-xs space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+                                    <Sliders size={14} /> Chỉnh Kích Thước: {selectedLoc.locationCode}
+                                </h4>
+                                <button onClick={() => setSelectedLocId(null)} className="text-slate-400 hover:text-white"><X size={12} /></button>
+                            </div>
+
+                            {/* Direct W x H Numerical Inputs */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 block mb-1">Rộng (Width - px)</label>
+                                    <input
+                                        type="number"
+                                        value={selectedLoc.width}
+                                        onChange={e => {
+                                            const w = Math.max(40, parseInt(e.target.value) || 40)
+                                            setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: w } : l))
+                                            setHasChanges(true)
+                                        }}
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono font-bold text-xs outline-none focus:border-amber-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 block mb-1">Cao (Height - px)</label>
+                                    <input
+                                        type="number"
+                                        value={selectedLoc.height}
+                                        onChange={e => {
+                                            const h = Math.max(30, parseInt(e.target.value) || 30)
+                                            setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, height: h } : l))
+                                            setHasChanges(true)
+                                        }}
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono font-bold text-xs outline-none focus:border-amber-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Quick Presets */}
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 mb-1">Mẫu kích thước chuẩn:</p>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {[
+                                        { label: '80×60 (Chuẩn)', w: 80, h: 60 },
+                                        { label: '120×80 (Vừa)', w: 120, h: 80 },
+                                        { label: '160×100 (Rộng)', w: 160, h: 100 },
+                                        { label: '240×80 (Kệ Dài)', w: 240, h: 80 },
+                                    ].map(p => (
+                                        <button
+                                            key={p.label}
+                                            onClick={() => {
+                                                setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: p.w, height: p.h } : l))
+                                                setHasChanges(true)
+                                            }}
+                                            className="px-2 py-1 rounded-md bg-slate-900 border border-slate-700 hover:border-amber-500 text-[10px] font-mono font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-center"
+                                        >
+                                            {p.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Bulk Zone Resize Button */}
+                            <button
+                                onClick={() => handleApplyZoneResize(selectedLoc.zone, selectedLoc.width, selectedLoc.height)}
+                                className="w-full py-1.5 px-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                            >
+                                <Sparkles size={13} /> Áp dụng {selectedLoc.width}x{selectedLoc.height} cho ZONE {selectedLoc.zone}
+                            </button>
+                        </div>
+                    )}
+
                     {/* Occupancy Legend */}
                     <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-2.5 text-amber-400 flex items-center gap-1.5">
@@ -700,17 +819,36 @@ export function WarehouseMapTab({
                         </div>
                     )}
 
-                    {/* Zones Summary */}
+                    {/* Zones Summary & Batch Resize */}
                     {zones.length > 0 && (
                         <div className="pt-3 border-t border-slate-800">
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">Danh Sách Zone</h4>
-                            <div className="flex flex-wrap gap-1.5">
-                                {zones.map(z => (
-                                    <span key={z} className="px-2.5 py-1 rounded-md text-xs font-extrabold"
-                                        style={{ background: ZONE_COLORS[z] ?? '#475569', color: '#FFFFFF' }}>
-                                        ZONE {z}
-                                    </span>
-                                ))}
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-400">Danh Sách Zone & Đổi Size hàng loạt</h4>
+                            <div className="space-y-2">
+                                {zones.map(z => {
+                                    const zLocs = locations.filter(l => l.zone === z)
+                                    const avgW = zLocs.length > 0 ? zLocs[0].width : 80
+                                    const avgH = zLocs.length > 0 ? zLocs[0].height : 60
+                                    return (
+                                        <div key={z} className="p-2 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-between">
+                                            <span className="px-2.5 py-0.5 rounded text-xs font-extrabold"
+                                                style={{ background: ZONE_COLORS[z] ?? '#475569', color: '#FFFFFF' }}>
+                                                ZONE {z} ({zLocs.length} ô)
+                                            </span>
+                                            {editMode && (
+                                                <button
+                                                    onClick={() => {
+                                                        setResizeZoneName(z)
+                                                        setZoneW(avgW)
+                                                        setZoneH(avgH)
+                                                    }}
+                                                    className="px-2 py-0.5 rounded bg-slate-700 hover:bg-amber-500 text-slate-300 hover:text-slate-950 text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                                >
+                                                    <Sliders size={11} /> {avgW}x{avgH}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
                     )}
@@ -750,6 +888,55 @@ export function WarehouseMapTab({
                     )}
                 </div>
             </div>
+
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* MODAL: Batch Zone Resize Modal */}
+            {/* ═══════════════════════════════════════════════════ */}
+            {resizeZoneName && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                    <div className="rounded-2xl shadow-2xl max-w-sm w-full bg-slate-900 border border-slate-800 text-slate-100 p-5 space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                                📐 Đổi Kích Thước Tất Cả Ô Thuộc ZONE {resizeZoneName}
+                            </h3>
+                            <button onClick={() => setResizeZoneName(null)} className="text-slate-400 hover:text-white"><X size={16} /></button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label className="text-[11px] font-bold text-slate-400 block mb-1">Rộng mới (Width - px)</label>
+                                <input
+                                    type="number"
+                                    value={zoneW}
+                                    onChange={e => setZoneW(Math.max(40, parseInt(e.target.value) || 40))}
+                                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 font-mono font-bold text-sm text-slate-100 outline-none focus:border-amber-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[11px] font-bold text-slate-400 block mb-1">Cao mới (Height - px)</label>
+                                <input
+                                    type="number"
+                                    value={zoneH}
+                                    onChange={e => setZoneH(Math.max(30, parseInt(e.target.value) || 30))}
+                                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 font-mono font-bold text-sm text-slate-100 outline-none focus:border-amber-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                            <button onClick={() => setResizeZoneName(null)} className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300">
+                                Hủy
+                            </button>
+                            <button
+                                onClick={() => handleApplyZoneResize(resizeZoneName, zoneW, zoneH)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-600 flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <Check size={14} /> Đồng Ý Đổi Size
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ═══════════════════════════════════════════════════ */}
             {/* POPUP MODAL: Detailed Location Inventory Details */}
