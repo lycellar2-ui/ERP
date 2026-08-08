@@ -280,7 +280,7 @@ export async function getDODetail(doId: string) {
             lines: {
                 include: {
                     product: { select: { productName: true, skuCode: true } },
-                    lot: { select: { lotNo: true } },
+                    lot: { select: { lotNo: true, vintage: true } },
                     location: { select: { locationCode: true } },
                 },
             },
@@ -293,7 +293,7 @@ export async function getDODetail(doId: string) {
         warehouseName: d.warehouse.name, status: d.status, createdAt: d.createdAt,
         lines: d.lines.map(l => ({
             id: l.id, productName: l.product.productName, skuCode: l.product.skuCode,
-            lotNo: l.lot.lotNo, locationCode: l.location.locationCode,
+            lotNo: l.lot.lotNo, vintage: l.lot.vintage, locationCode: l.location.locationCode,
             qtyPicked: Number(l.qtyPicked), qtyShipped: Number(l.qtyShipped),
         })),
     }

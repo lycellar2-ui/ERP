@@ -409,7 +409,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                                {['SKU', 'Sản Phẩm', 'Lô Hàng', 'Vị Trí', 'Picked', 'Shipped'].map(h => (
+                                                {['SKU', 'Sản Phẩm', 'Vintage', 'Vị Trí Kho', 'Picked', 'Shipped'].map(h => (
                                                     <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                                 ))}
                                             </tr>
@@ -421,8 +421,8 @@ export function DeliveryOrderTab({ warehouses }: {
                                                         {l.skuCode}
                                                     </td>
                                                     <td className="px-3 py-2 text-xs" style={{ color: '#0F172A' }}>{l.productName}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#16A34A' }}>{l.lotNo}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono" style={{ color: '#475569' }}>{l.locationCode}</td>
+                                                    <td className="px-3 py-2 text-xs font-bold text-amber-700 font-mono">{(l as any).vintage ?? 'NV'}</td>
+                                                    <td className="px-3 py-2 text-xs font-mono font-medium" style={{ color: '#475569' }}>{l.locationCode}</td>
                                                     <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#0F172A' }}>{l.qtyPicked}</td>
                                                     <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#16A34A' }}>{l.qtyShipped}</td>
                                                 </tr>
@@ -436,7 +436,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                         <div key={l.id} className="p-3 rounded-xl space-y-1.5 shadow-sm" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold font-mono" style={{ color: '#B47816' }}>{l.skuCode}</span>
-                                                <span className="text-xs font-mono font-bold text-[#16A34A]">Lô: {l.lotNo}</span>
+                                                <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">🍇 Vintage: {(l as any).vintage ?? 'NV'}</span>
                                             </div>
                                             <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{l.productName}</p>
                                             <div className="flex items-center gap-1 text-xs" style={{ color: '#64748B' }}>
@@ -697,21 +697,21 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 </span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs" style={{ color: '#64748B' }}>
-                                <span>SKU: <strong className="font-mono text-[#334155]">{sol.skuCode}</strong> {sol.vintage ? `· VTG: ${sol.vintage}` : ''}</span>
+                                <span>SKU: <strong className="font-mono text-[#334155]">{sol.skuCode}</strong> · 🍇 Vintage Đơn Hàng: <strong className="font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">{sol.vintage ? sol.vintage : 'NV'}</strong></span>
                                 {selectedLot ? (
                                     <span className={`text-[11px] font-semibold ${isInsufficient ? 'text-amber-600 font-bold' : 'text-emerald-600'}`}>
                                         {isInsufficient ? `⚠️ Thiếu (Tồn: ${selectedLot.qtyAvailable})` : `✅ Đủ (Tồn: ${selectedLot.qtyAvailable})`}
                                     </span>
                                 ) : (
                                     <span className="text-[11px] text-amber-600 italic">
-                                        {availLots.length > 0 ? '⚠️ Chưa chọn lô' : '❌ Hết hàng'}
+                                        {availLots.length > 0 ? '⚠️ Chưa chọn vị trí nhặt hàng' : '❌ Hết hàng'}
                                     </span>
                                 )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                                 <div className="sm:col-span-2">
-                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#64748B' }}>Lô Hàng (FIFO)</label>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: '#475569' }}>Vị Trí Kho & Niên Vụ (Vintage)</label>
                                     <select
                                         value={lines[i]?.lotId ?? ''}
                                         onChange={e => {
@@ -725,24 +725,27 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             }
                                             setLines(v)
                                         }}
-                                        className="w-full px-2.5 py-2 rounded-lg text-xs outline-none font-mono"
+                                        className="w-full px-2.5 py-2 rounded-lg text-xs outline-none font-sans font-medium"
                                         style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: lines[i]?.lotId ? '#B47816' : '#64748B' }}
                                     >
-                                        <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn lô —</option>
-                                        {availLots.map((lot, idx) => (
-                                            <option key={lot.id} value={lot.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>
-                                                {idx === 0 ? '⭐ ' : ''}📍 {lot.zone}{lot.rack ? ` / ${lot.rack}` : ''}{lot.bin ? ` / ${lot.bin}` : ''} · {lot.lotNo} (Tồn: {lot.qtyAvailable})
-                                            </option>
-                                        ))}
+                                        <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn vị trí nhặt hàng —</option>
+                                        {availLots.map((lot, idx) => {
+                                            const vtg = lot.vintage ? lot.vintage : (sol.vintage ? sol.vintage : 'NV')
+                                            return (
+                                                <option key={lot.id} value={lot.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>
+                                                    {idx === 0 ? '⭐ [Ưu Tiên FIFO] ' : ''}📍 {lot.zone}{lot.rack ? ` / Kệ: ${lot.rack}` : ''}{lot.bin ? ` / Ô: ${lot.bin}` : ''} · 🍇 Vintage: {vtg} (Tồn: {lot.qtyAvailable} chai)
+                                                </option>
+                                            )
+                                        })}
                                     </select>
                                     {selectedLot && (
-                                        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg flex-wrap"
-                                            style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.25)', color: '#334155' }}>
-                                            📍 <span className="font-bold">{selectedLot.zone}</span>
-                                            {selectedLot.rack && <><span style={{ color: '#94A3B8' }}>/</span> <span>{selectedLot.rack}</span></>}
-                                            {selectedLot.bin && <><span style={{ color: '#94A3B8' }}>/</span> <span>{selectedLot.bin}</span></>}
-                                            <span style={{ color: '#94A3B8' }}>·</span>
-                                            <span className="font-mono font-bold text-[#B47816]">{selectedLot.locationCode}</span>
+                                        <div className="mt-1.5 flex items-center gap-2 text-[11px] px-3 py-2 rounded-lg flex-wrap font-medium"
+                                            style={{ background: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.3)', color: '#1E293B' }}>
+                                            <span>📍 Vị Trí: <strong className="font-bold text-slate-900">{selectedLot.zone}</strong>{selectedLot.rack && <> / Kệ: <strong className="font-bold text-slate-900">{selectedLot.rack}</strong></>}{selectedLot.bin && <> / Ô: <strong className="font-bold text-slate-900">{selectedLot.bin}</strong></>}</span>
+                                            <span style={{ color: '#CBD5E1' }}>|</span>
+                                            <span className="flex items-center gap-1">🍇 Vintage: <strong className="font-bold text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded">{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
+                                            <span style={{ color: '#CBD5E1' }}>|</span>
+                                            <span>📦 Tồn Kho: <strong className="font-bold text-emerald-700">{selectedLot.qtyAvailable} chai</strong></span>
                                         </div>
                                     )}
                                 </div>
@@ -946,8 +949,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                     style={{ background: '#FFFFFF', border: line?.lotId ? '1px solid rgba(22,163,74,0.3)' : '1px solid rgba(212,168,83,0.3)' }}>
                                                     <div className="min-w-0 pr-2">
                                                         <p className="truncate font-medium" style={{ color: '#0F172A' }}>{sol.productName}</p>
-                                                        <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>
-                                                            {lot ? `📍 ${lot.zone}${lot.rack ? ` / ${lot.rack}` : ''}${lot.bin ? ` / ${lot.bin}` : ''} · ${lot.lotNo}` : '⚠️ Chưa chọn lô'}
+                                                        <p className="text-[10px] font-medium" style={{ color: '#64748B' }}>
+                                                            {lot ? `📍 Vị Trí: ${lot.zone}${lot.rack ? ` / Kệ: ${lot.rack}` : ''}${lot.bin ? ` / Ô: ${lot.bin}` : ''} · 🍇 Vintage: ${lot.vintage ? lot.vintage : (sol.vintage ? sol.vintage : 'NV')}` : '⚠️ Chưa chọn vị trí'}
                                                         </p>
                                                     </div>
                                                     <span className="font-mono font-bold shrink-0" style={{ color: line?.lotId ? '#16A34A' : '#B47816' }}>
