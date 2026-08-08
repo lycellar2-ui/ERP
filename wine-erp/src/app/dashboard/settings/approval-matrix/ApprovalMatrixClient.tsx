@@ -1,16 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Shield, Save, ChevronRight, AlertTriangle, CheckCircle2, Settings2, DollarSign, Percent, FileText, Loader2 } from 'lucide-react'
+import { Shield, Save, ChevronRight, AlertTriangle, Settings2, DollarSign, Percent, FileText, Loader2, Plus, Trash2, UserCheck, Layers, Edit3, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { CATEGORY_LABELS } from '../../proposals/constants'
-import { type ApprovalMatrixData, type ProposalRouteConfig, type ThresholdConfig, saveAllRoutes, saveAllThresholds } from './actions'
-
-const LEVEL_LABELS: Record<number, { label: string; role: string; color: string; bg: string }> = {
-    1: { label: 'Cấp 1', role: 'TP Bộ Phận', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)' },
-    2: { label: 'Cấp 2', role: 'KT Trưởng', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
-    3: { label: 'Cấp 3', role: 'CEO', color: '#E05252', bg: 'rgba(224,82,82,0.15)' },
-}
+import { type ApprovalMatrixData, type ProposalRouteConfig, type ThresholdConfig, type StepRoleConfig, type SystemRoleInfo, saveAllRoutes, saveAllThresholds } from './actions'
 
 interface Props {
     initialData: ApprovalMatrixData
@@ -19,42 +13,40 @@ interface Props {
 export function ApprovalMatrixClient({ initialData }: Props) {
     const safeProposalRoutes = initialData?.proposalRoutes ?? []
     const safeThresholds = initialData?.thresholds ?? []
+    const availableRoles = initialData?.availableRoles ?? []
 
     const [routes, setRoutes] = useState<ProposalRouteConfig[]>(safeProposalRoutes)
     const [thresholds, setThresholds] = useState<ThresholdConfig[]>(safeThresholds)
     const [savingRoutes, setSavingRoutes] = useState(false)
     const [savingThresholds, setSavingThresholds] = useState(false)
     const [dirty, setDirty] = useState({ routes: false, thresholds: false })
+    
+    // Modal state for editing a route configuration
+    const [editingCategory, setEditingCategory] = useState<string | null>(null)
+    const [editDraft, setEditDraft] = useState<ProposalRouteConfig | null>(null)
 
-    const toggleLevel = (catIdx: number, level: number) => {
-        setRoutes(prev => {
-            const updated = [...prev]
-            const current = updated[catIdx]
-            const has = current.levels.includes(level)
-
-            // CEO (level 3) must always be included
-            if (level === 3 && has) {
-                toast.error('CEO phải luôn có quyền duyệt cuối cùng')
-                return prev
-            }
-
-            if (has) {
-                updated[catIdx] = { ...current, levels: current.levels.filter(l => l !== level).sort() }
-            } else {
-                updated[catIdx] = { ...current, levels: [...current.levels, level].sort() }
-            }
-            return updated
-        })
-        setDirty(d => ({ ...d, routes: true }))
+    const getRoleName = (code: string) => {
+        const found = availableRoles.find(r => r.code === code)
+        return found ? found.name : code
     }
 
-    const updateThreshold = (idx: number, value: number) => {
-        setThresholds(prev => {
-            const updated = [...prev]
-            updated[idx] = { ...updated[idx], value }
-            return updated
-        })
-        setDirty(d => ({ ...d, thresholds: true }))
+    const openEditModal = (route: ProposalRouteConfig) => {
+        setEditingCategory(route.category)
+        setEditDraft(JSON.parse(JSON.stringify(route)))
+    }
+
+    const handleSaveEditDraft = () => {
+        if (!editDraft) return
+        if (editDraft.steps.length === 0) {
+            toast.error('Phải có ít nhất 1 cấp phê duyệt')
+            return
+        }
+
+        setRoutes(prev => prev.map(r => r.category === editDraft.category ? editDraft : r))
+        setDirty(d => ({ ...d, routes: true }))
+        setEditingCategory(null)
+        setEditDraft(null)
+        toast.success(`Đã cập nhật cấu hình cho ${CATEGORY_LABELS[editDraft.category] ?? editDraft.category}`)
     }
 
     const handleSaveRoutes = async () => {
@@ -91,8 +83,13 @@ export function ApprovalMatrixClient({ initialData }: Props) {
         )
     }
 
-    const getRouteDescription = (levels: number[]): string => {
-        return levels.map(l => LEVEL_LABELS[l]?.role ?? `Cấp ${l}`).join(' → ')
+    const updateThreshold = (idx: number, value: number) => {
+        setThresholds(prev => {
+            const updated = [...prev]
+            updated[idx] = { ...updated[idx], value }
+            return updated
+        })
+        setDirty(d => ({ ...d, thresholds: true }))
     }
 
     return (
@@ -106,31 +103,13 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                     </div>
                     <div>
                         <h2 className="text-2xl font-bold" style={{ color: '#E8F1F2' }}>
-                            Ma Trận Phân Quyền Phê Duyệt
+                            Ma Trận Phân Quyền & Luồng Duyệt
                         </h2>
                         <p className="text-sm mt-0.5" style={{ color: '#4A6A7A' }}>
-                            Cấu hình luồng duyệt tờ trình, ngưỡng phê duyệt đơn hàng, và phân quyền theo cấp
+                            Chủ động tùy chỉnh số cấp duyệt, phân quyền Role Tạo & Role Duyệt cho từng loại Tờ trình
                         </p>
                     </div>
                 </div>
-            </div>
-
-            {/* Legend */}
-            <div className="flex items-center gap-6 px-4 py-3 rounded-xl"
-                style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <span className="text-xs uppercase tracking-wider font-bold" style={{ color: '#4A6A7A' }}>Chú giải:</span>
-                {Object.entries(LEVEL_LABELS).map(([lv, cfg]) => (
-                    <div key={lv} className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold"
-                            style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}40` }}>
-                            {lv}
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold" style={{ color: cfg.color }}>{cfg.role}</p>
-                            <p className="text-[10px]" style={{ color: '#4A6A7A' }}>{cfg.label}</p>
-                        </div>
-                    </div>
-                ))}
             </div>
 
             {/* ═══ Section 1: Proposal Routing Matrix ═══ */}
@@ -141,8 +120,8 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                     <div className="flex items-center gap-3">
                         <FileText size={18} style={{ color: '#87CBB9' }} />
                         <div>
-                            <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Luồng Phê Duyệt Tờ Trình</h3>
-                            <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Click vào ô để bật/tắt cấp duyệt cho từng loại tờ trình</p>
+                            <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Cấu Hình Luồng Duyệt Tờ Trình (Theo Cấp & Role)</h3>
+                            <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tùy chỉnh số cấp duyệt, Role tạo, và Role duyệt ở từng bước</p>
                         </div>
                     </div>
                     <button
@@ -155,99 +134,104 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         }}
                     >
                         {savingRoutes ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {savingRoutes ? 'Đang lưu...' : dirty.routes ? 'Lưu Thay Đổi' : 'Đã lưu'}
+                        {savingRoutes ? 'Đang lưu...' : dirty.routes ? 'Lưu Toàn Bộ Mẫu' : 'Đã lưu'}
                     </button>
                 </div>
 
                 {/* Matrix table */}
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 800 }}>
+                    <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
                         <thead>
                             <tr style={{ background: '#0D1E2B' }}>
                                 <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A', width: '35%' }}>Loại Tờ Trình</th>
-                                {[1, 2, 3].map(lv => {
-                                    const cfg = LEVEL_LABELS[lv]
-                                    return (
-                                        <th key={lv} className="px-4 py-3 text-center" style={{ width: '12%' }}>
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-xs font-bold" style={{ color: cfg.color }}>{cfg.role}</span>
-                                                <span className="text-[10px]" style={{ color: '#4A6A7A' }}>{cfg.label}</span>
-                                            </div>
-                                        </th>
-                                    )
-                                })}
+                                    style={{ color: '#4A6A7A', width: '25%' }}>Loại Tờ Trình</th>
+                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '10%' }}>Số Cấp</th>
+                                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '25%' }}>Quyền Tạo</th>
                                 <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
-                                    style={{ color: '#4A6A7A' }}>Luồng Duyệt</th>
+                                    style={{ color: '#4A6A7A', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
+                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '10%' }}>Tùy Chỉnh</th>
                             </tr>
                         </thead>
                         <tbody>
                             {(routes ?? []).map((route, idx) => {
                                 const catLabel = CATEGORY_LABELS[route.category] ?? route.category
-                                const routeLevels = route.levels ?? []
-                                const isDirectCEO = routeLevels.length === 1 && routeLevels[0] === 3
+                                const steps = route.steps ?? []
+                                const creatorRoles = route.creatorRoles ?? []
+
                                 return (
                                     <tr key={route.category}
                                         style={{
                                             borderBottom: '1px solid rgba(42,67,85,0.5)',
                                             background: idx % 2 === 0 ? 'transparent' : 'rgba(20,36,51,0.4)',
                                         }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(135,203,185,0.04)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(20,36,51,0.4)')}
+                                        className="hover:bg-[#1B2E3D]/50 transition"
                                     >
-                                        <td className="px-5 py-3">
-                                            <span className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>
+                                        <td className="px-5 py-3.5">
+                                            <span className="text-sm font-bold block" style={{ color: '#E8F1F2' }}>
                                                 {catLabel}
                                             </span>
+                                            <span className="text-[10px] font-mono text-[#6A8A9A]">{route.category}</span>
                                         </td>
-                                        {[1, 2, 3].map(lv => {
-                                            const active = routeLevels.includes(lv)
-                                            const cfg = LEVEL_LABELS[lv] ?? { label: `Cấp ${lv}`, role: `Cấp ${lv}`, color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' }
-                                            const isCEO = lv === 3
-                                            return (
-                                                <td key={lv} className="px-4 py-3 text-center">
-                                                    <button
-                                                        onClick={() => toggleLevel(idx, lv)}
-                                                        className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto transition-all duration-200"
-                                                        style={{
-                                                            background: active ? cfg.bg : 'rgba(42,67,85,0.2)',
-                                                            border: `2px solid ${active ? cfg.color : '#2A4355'}`,
-                                                            cursor: isCEO && active ? 'not-allowed' : 'pointer',
-                                                        }}
-                                                        title={isCEO && active ? 'CEO phải luôn duyệt cuối' : `${active ? 'Bỏ' : 'Thêm'} ${cfg.role}`}
-                                                    >
-                                                        {active ? (
-                                                            <CheckCircle2 size={18} style={{ color: cfg.color }} />
-                                                        ) : (
-                                                            <div className="w-4 h-4 rounded-sm" style={{ background: '#2A4355', opacity: 0.5 }} />
-                                                        )}
-                                                    </button>
-                                                </td>
-                                            )
-                                        })}
-                                        <td className="px-5 py-3">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                {isDirectCEO && (
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                        style={{ background: 'rgba(224,82,82,0.12)', color: '#E05252' }}>
-                                                        CEO TRỰC TIẾP
-                                                    </span>
-                                                )}
-                                                {routeLevels.map((lv, i) => {
-                                                    const cfg = LEVEL_LABELS[lv] ?? { label: `Cấp ${lv}`, role: `Cấp ${lv}`, color: '#4A6A7A', bg: 'rgba(74,106,122,0.15)' }
-                                                    return (
-                                                        <span key={lv} className="flex items-center gap-1">
-                                                            <span className="text-xs font-bold px-1.5 py-0.5 rounded"
-                                                                style={{ background: cfg.bg, color: cfg.color }}>
-                                                                {cfg.role}
-                                                            </span>
-                                                            {i < routeLevels.length - 1 && (
-                                                                <ChevronRight size={12} style={{ color: '#4A6A7A' }} />
-                                                            )}
+
+                                        {/* Number of steps */}
+                                        <td className="px-4 py-3.5 text-center">
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
+                                                style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                                <Layers size={12} /> {steps.length} cấp
+                                            </span>
+                                        </td>
+
+                                        {/* Creator Roles */}
+                                        <td className="px-4 py-3.5">
+                                            {creatorRoles.length === 0 ? (
+                                                <span className="text-xs text-gray-400 font-medium italic">Tất cả các Role</span>
+                                            ) : (
+                                                <div className="flex gap-1 flex-wrap">
+                                                    {creatorRoles.map(rCode => (
+                                                        <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded"
+                                                            style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid #2A4355' }}>
+                                                            {getRoleName(rCode)}
                                                         </span>
-                                                    )
-                                                })}
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        {/* Approval steps visual sequence */}
+                                        <td className="px-5 py-3.5">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                {steps.map((st, i) => (
+                                                    <span key={i} className="flex items-center gap-1">
+                                                        <span className="text-xs font-bold px-2 py-1 rounded flex items-center gap-1"
+                                                            style={{
+                                                                background: i === steps.length - 1 ? 'rgba(224,82,82,0.15)' : 'rgba(74,143,171,0.15)',
+                                                                color: i === steps.length - 1 ? '#E05252' : '#4A8FAB',
+                                                                border: `1px solid ${i === steps.length - 1 ? '#E05252' : '#4A8FAB'}40`
+                                                            }}>
+                                                            <span className="text-[9px] opacity-75 font-mono">Cấp {st.level}:</span>
+                                                            {getRoleName(st.role)}
+                                                        </span>
+                                                        {i < steps.length - 1 && (
+                                                            <ChevronRight size={14} style={{ color: '#4A6A7A' }} />
+                                                        )}
+                                                    </span>
+                                                ))}
                                             </div>
+                                        </td>
+
+                                        {/* Edit button */}
+                                        <td className="px-4 py-3.5 text-center">
+                                            <button
+                                                onClick={() => openEditModal(route)}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all"
+                                                style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid #2A4355' }}
+                                                title="Sửa số cấp và phân quyền Role"
+                                            >
+                                                <Edit3 size={13} /> Sửa
+                                            </button>
                                         </td>
                                     </tr>
                                 )
@@ -311,7 +295,6 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                             background: '#1B2E3D',
                                             border: '1px solid #2A4355',
                                             color: '#87CBB9',
-                                            fontFamily: 'var(--font-sans)',
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
                                         onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}
@@ -327,73 +310,161 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 </div>
             </div>
 
-            {/* ═══ Section 3: Quick reference summary ═══ */}
-            <div className="rounded-xl p-5 space-y-4" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <div className="flex items-center gap-2">
-                    <AlertTriangle size={16} style={{ color: '#D4A853' }} />
-                    <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Tóm Tắt Quy Tắc Hiện Hành</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {/* SO rules */}
-                    <div className="p-4 rounded-lg" style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}>
-                        <p className="text-xs uppercase tracking-wider font-bold mb-2" style={{ color: '#87CBB9' }}>
-                            Đơn Bán Hàng (SO)
-                        </p>
-                        <div className="space-y-1.5 text-xs">
-                            {thresholds.filter(t => t.key.startsWith('so.')).map(t => (
-                                <div key={t.key} className="flex justify-between">
-                                    <span style={{ color: '#8AAEBB' }}>{t.label.replace('SO: ', '')}</span>
-                                    <span className="font-bold" style={{ color: '#E8F1F2' }}>
-                                        {t.key.includes('discount') ? `${t.value}%` : `${(t.value / 1e6).toFixed(0)}M`}
-                                    </span>
+            {/* ═══ Edit Route Modal ═══ */}
+            {editDraft && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+                    <div className="w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
+                            <div>
+                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                                    Cấu Hình Luồng Phê Duyệt: {CATEGORY_LABELS[editDraft.category] ?? editDraft.category}
+                                </h3>
+                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Mã danh mục: {editDraft.category}</p>
+                            </div>
+                            <button onClick={() => { setEditingCategory(null); setEditDraft(null); }} className="p-1 rounded hover:bg-[#1B2E3D]">
+                                <X size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                            {/* 1. Creator Roles Selection */}
+                            <div>
+                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#87CBB9' }}>
+                                    1. Quyền Tạo Tờ Trình (Các Role được mở form tạo)
+                                </label>
+                                <p className="text-xs text-gray-400 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo loại tờ trình này.</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {availableRoles.map(r => {
+                                        const isChecked = editDraft.creatorRoles.includes(r.code)
+                                        return (
+                                            <button
+                                                key={r.code}
+                                                type="button"
+                                                onClick={() => {
+                                                    setEditDraft(prev => {
+                                                        if (!prev) return prev
+                                                        const nextRoles = isChecked
+                                                            ? prev.creatorRoles.filter(c => c !== r.code)
+                                                            : [...prev.creatorRoles, r.code]
+                                                        return { ...prev, creatorRoles: nextRoles }
+                                                    })
+                                                }}
+                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#87CBB9]' : 'bg-[#1B2E3D] border-[#2A4355] text-gray-300'}`}
+                                            >
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-[#87CBB9] border-[#87CBB9]' : 'border-gray-500'}`}>
+                                                    {isChecked && <Check size={12} className="text-[#0A1926]" />}
+                                                </div>
+                                                <span>{r.name}</span>
+                                            </button>
+                                        )
+                                    })}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                    {/* PO rules */}
-                    <div className="p-4 rounded-lg" style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}>
-                        <p className="text-xs uppercase tracking-wider font-bold mb-2" style={{ color: '#D4A853' }}>
-                            Đơn Mua Hàng (PO)
-                        </p>
-                        <div className="space-y-1.5 text-xs">
-                            {thresholds.filter(t => t.key.startsWith('po.')).map(t => (
-                                <div key={t.key} className="flex justify-between">
-                                    <span style={{ color: '#8AAEBB' }}>{t.label.replace('PO: ', '')}</span>
-                                    <span className="font-bold" style={{ color: '#E8F1F2' }}>
-                                        {`${(t.value / 1e6).toFixed(0)}M`}
-                                    </span>
+                            </div>
+
+                            {/* 2. Number of Approval Steps & Roles */}
+                            <div className="pt-4 border-t border-[#2A4355]">
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="text-xs font-bold uppercase tracking-wider block" style={{ color: '#D4A853' }}>
+                                        2. Số Cấp & Role Phê Duyệt Theo Thứ Tự
+                                    </label>
+                                    <button
+                                        type="button"
+                                        disabled={editDraft.steps.length >= 4}
+                                        onClick={() => {
+                                            setEditDraft(prev => {
+                                                if (!prev || prev.steps.length >= 4) return prev
+                                                const nextLevel = prev.steps.length + 1
+                                                const defaultRole = nextLevel === 1 ? 'SALES_MGR' : nextLevel === 2 ? 'KE_TOAN' : 'CEO'
+                                                return {
+                                                    ...prev,
+                                                    steps: [...prev.steps, { level: nextLevel, role: defaultRole }]
+                                                }
+                                            })
+                                        }}
+                                        className="text-xs flex items-center gap-1 font-bold text-[#87CBB9] hover:underline disabled:opacity-40"
+                                    >
+                                        <Plus size={14} /> Thêm cấp duyệt
+                                    </button>
                                 </div>
-                            ))}
+
+                                <div className="space-y-3">
+                                    {editDraft.steps.map((step, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-[#2A4355]" style={{ background: '#1B2E3D' }}>
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0"
+                                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                                {idx + 1}
+                                            </div>
+                                            
+                                            <div className="flex-1">
+                                                <label className="text-[10px] text-gray-400 block mb-1">Role chịu trách nhiệm duyệt Cấp {idx + 1}</label>
+                                                <select
+                                                    value={step.role}
+                                                    onChange={e => {
+                                                        const newRole = e.target.value
+                                                        setEditDraft(prev => {
+                                                            if (!prev) return prev
+                                                            const copy = [...prev.steps]
+                                                            copy[idx] = { ...copy[idx], role: newRole }
+                                                            return { ...prev, steps: copy }
+                                                        })
+                                                    }}
+                                                    className="w-full p-2 text-xs font-semibold rounded outline-none"
+                                                    style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                >
+                                                    {availableRoles.map(r => (
+                                                        <option key={r.code} value={r.code}>{r.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {editDraft.steps.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setEditDraft(prev => {
+                                                            if (!prev) return prev
+                                                            const filtered = prev.steps.filter((_, i) => i !== idx)
+                                                            // Re-index levels
+                                                            const reindexed = filtered.map((st, i) => ({ ...st, level: i + 1 }))
+                                                            return { ...prev, steps: reindexed }
+                                                        })
+                                                    }}
+                                                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-md shrink-0 mt-3"
+                                                    title="Xóa cấp này"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    {/* Proposals */}
-                    <div className="p-4 rounded-lg" style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}>
-                        <p className="text-xs uppercase tracking-wider font-bold mb-2" style={{ color: '#E05252' }}>
-                            Tờ Trình — Luồng CEO
-                        </p>
-                        <div className="space-y-1.5 text-xs">
-                            <div className="flex justify-between">
-                                <span style={{ color: '#8AAEBB' }}>Số loại 3 cấp</span>
-                                <span className="font-bold" style={{ color: '#E8F1F2' }}>
-                                    {(routes ?? []).filter(r => (r.levels ?? []).length === 3).length}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span style={{ color: '#8AAEBB' }}>Số loại 2 cấp</span>
-                                <span className="font-bold" style={{ color: '#E8F1F2' }}>
-                                    {(routes ?? []).filter(r => (r.levels ?? []).length === 2).length}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span style={{ color: '#8AAEBB' }}>CEO trực tiếp</span>
-                                <span className="font-bold" style={{ color: '#E05252' }}>
-                                    {(routes ?? []).filter(r => (r.levels ?? []).length === 1 && r.levels?.[0] === 3).length}
-                                </span>
-                            </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 border-t border-[#2A4355] flex justify-end gap-3" style={{ background: '#102230' }}>
+                            <button
+                                type="button"
+                                onClick={() => { setEditingCategory(null); setEditDraft(null); }}
+                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-[#1B2E3D]"
+                            >
+                                Huỷ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveEditDraft}
+                                className="px-5 py-2 text-xs font-bold rounded shadow transition-all"
+                                style={{ background: '#87CBB9', color: '#0A1926' }}
+                            >
+                                Áp Dụng Thay Đổi
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }

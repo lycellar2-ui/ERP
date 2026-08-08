@@ -267,14 +267,36 @@ export async function submitProposal(id: string, userId: string): Promise<{ succ
             return { success: false, error: 'Chỉ có thể trình tờ trình ở trạng thái Nháp hoặc Trả lại' }
         }
 
-        const levels = CATEGORY_ROUTING[proposal.category] ?? [1, 3]
-        const firstLevel = levels[0]
+        // Read dynamic routing configuration from database
+        const config = await prisma.approvalConfig.findUnique({
+            where: { configKey: `proposal.${proposal.category}` }
+        })
+
+        let steps: { level: number; role: string }[] = [
+            { level: 1, role: 'SALES_MGR' },
+            { level: 2, role: 'KE_TOAN' },
+            { level: 3, role: 'CEO' }
+        ]
+
+        if (config?.value && typeof config.value === 'object') {
+            const val = config.value as any
+            if (Array.isArray(val.steps) && val.steps.length > 0) {
+                steps = val.steps
+            } else if (Array.isArray(val.levels) && val.levels.length > 0) {
+                steps = (val.levels as number[]).map(l => ({
+                    level: l,
+                    role: l === 1 ? 'SALES_MGR' : l === 2 ? 'KE_TOAN' : 'CEO'
+                }))
+            }
+        }
+
+        const firstStep = steps[0] ?? { level: 1, role: 'SALES_MGR' }
 
         await prisma.proposal.update({
             where: { id },
             data: {
                 status: 'SUBMITTED',
-                currentLevel: firstLevel,
+                currentLevel: firstStep.level,
                 submittedAt: new Date(),
             },
         })
@@ -284,13 +306,12 @@ export async function submitProposal(id: string, userId: string): Promise<{ succ
             action: 'STATUS_CHANGE',
             entityType: 'Proposal',
             entityId: id,
-            newValue: { status: 'SUBMITTED', level: firstLevel },
+            newValue: { status: 'SUBMITTED', level: firstStep.level },
         })
 
-        const targetRole = firstLevel === 1 ? 'SALES_MGR' : firstLevel === 2 ? 'KE_TOAN' : 'CEO'
-        await triggerNotificationForRole(targetRole, {
+        await triggerNotificationForRole(firstStep.role, {
             title: `Tờ trình ${proposal.proposalNo} đang chờ phê duyệt`,
-            content: `Tờ trình "${proposal.title}" đang chờ bạn phê duyệt ở mức ${firstLevel}.`,
+            content: `Tờ trình "${proposal.title}" đang chờ bạn phê duyệt ở Cấp ${firstStep.level}.`,
             type: 'info',
             link: `/dashboard/proposals?id=${proposal.id}`
         })
@@ -317,8 +338,31 @@ export async function processProposalApproval(input: {
             return { success: false, error: 'Tờ trình không ở trạng thái chờ duyệt' }
         }
 
-        const levels = CATEGORY_ROUTING[proposal.category] ?? [1, 3]
+        // Read dynamic steps
+        const config = await prisma.approvalConfig.findUnique({
+            where: { configKey: `proposal.${proposal.category}` }
+        })
+
+        let steps: { level: number; role: string }[] = [
+            { level: 1, role: 'SALES_MGR' },
+            { level: 2, role: 'KE_TOAN' },
+            { level: 3, role: 'CEO' }
+        ]
+
+        if (config?.value && typeof config.value === 'object') {
+            const val = config.value as any
+            if (Array.isArray(val.steps) && val.steps.length > 0) {
+                steps = val.steps
+            } else if (Array.isArray(val.levels) && val.levels.length > 0) {
+                steps = (val.levels as number[]).map(l => ({
+                    level: l,
+                    role: l === 1 ? 'SALES_MGR' : l === 2 ? 'KE_TOAN' : 'CEO'
+                }))
+            }
+        }
+
         const currentLevel = proposal.currentLevel
+        const currentIdx = steps.findIndex(s => s.level === currentLevel)
 
         // Log the action
         await prisma.proposalApprovalLog.create({
@@ -332,6 +376,7 @@ export async function processProposalApproval(input: {
         })
 
         let newStatus: string
+        let nextStep: { level: number; role: string } | null = null
 
         if (input.action === 'REJECT') {
             newStatus = 'REJECTED'
@@ -346,11 +391,10 @@ export async function processProposalApproval(input: {
                 data: { status: 'RETURNED' },
             })
         } else {
-            // APPROVE — find next level
-            const currentIdx = levels.indexOf(currentLevel)
-            const nextLevel = currentIdx < levels.length - 1 ? levels[currentIdx + 1] : null
+            // APPROVE — find next step
+            nextStep = (currentIdx >= 0 && currentIdx < steps.length - 1) ? steps[currentIdx + 1] : null
 
-            if (nextLevel === null) {
+            if (nextStep === null) {
                 // Final approval
                 newStatus = 'APPROVED'
                 await prisma.proposal.update({
@@ -362,15 +406,13 @@ export async function processProposalApproval(input: {
                     },
                 })
             } else {
-                // Move to next level
-                newStatus = currentLevel === 1 ? 'APPROVED_L1'
-                    : currentLevel === 2 ? 'APPROVED_L2'
-                        : 'REVIEWING'
+                // Move to next step level
+                newStatus = `APPROVED_L${currentLevel}`
                 await prisma.proposal.update({
                     where: { id: input.proposalId },
                     data: {
                         status: newStatus as any,
-                        currentLevel: nextLevel,
+                        currentLevel: nextStep.level,
                     },
                 })
             }
@@ -393,19 +435,15 @@ export async function processProposalApproval(input: {
                 link: `/dashboard/proposals?id=${proposal.id}`
             })
         } else {
-            const currentIdx = levels.indexOf(currentLevel)
-            const nextLevel = currentIdx < levels.length - 1 ? levels[currentIdx + 1] : null
-            if (nextLevel === null) {
+            if (nextStep === null) {
                 await createNotification({
                     userId: proposal.createdBy,
-                    title: `Tờ trình ${proposal.proposalNo} đã được duyệt hoàn toàn`,
-                    content: `Tờ trình "${proposal.title}" của bạn đã được phê duyệt thành công bởi CEO.`,
+                    title: `Tờ trình ${proposal.proposalNo} đã được phê duyệt!`,
+                    content: `Tờ trình "${proposal.title}" của bạn đã được phê duyệt hoàn tất.`,
                     type: 'success',
                     link: `/dashboard/proposals?id=${proposal.id}`
                 })
             } else {
-                const targetRole = nextLevel === 1 ? 'SALES_MGR' : nextLevel === 2 ? 'KE_TOAN' : 'CEO'
-                await triggerNotificationForRole(targetRole, {
                     title: `Tờ trình ${proposal.proposalNo} chờ phê duyệt`,
                     content: `Tờ trình "${proposal.title}" đã được duyệt ở mức ${currentLevel} và đang chờ bạn phê duyệt ở mức ${nextLevel}.`,
                     type: 'info',

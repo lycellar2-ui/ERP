@@ -6,9 +6,16 @@ import { cached, revalidateCache } from '@/lib/cache'
 import { requirePermission } from '@/lib/session'
 
 // ─── Types ───────────────────────────────────────
+export interface StepRoleConfig {
+    level: number
+    role: string // e.g. 'SALES_MGR', 'KE_TOAN', 'CEO', 'THU_MUA', 'SALES_REP', 'SALES_ADMIN', 'ADMIN'
+    label?: string
+}
+
 export interface ProposalRouteConfig {
     category: string
-    levels: number[] // [1,2,3] = TP → KT → CEO
+    creatorRoles: string[] // Roles allowed to CREATE this proposal (empty = All roles)
+    steps: StepRoleConfig[] // List of approval steps in order
 }
 
 export interface ThresholdConfig {
@@ -18,27 +25,147 @@ export interface ThresholdConfig {
     description: string
 }
 
+export interface SystemRoleInfo {
+    code: string
+    name: string
+}
+
 export interface ApprovalMatrixData {
     proposalRoutes: ProposalRouteConfig[]
     thresholds: ThresholdConfig[]
+    availableRoles: SystemRoleInfo[]
 }
 
+// Available system roles for selection
+const SYSTEM_ROLES: SystemRoleInfo[] = [
+    { code: 'SALES_REP', name: 'Sales Rep (Kinh doanh)' },
+    { code: 'SALES_ADMIN', name: 'Sales Admin (Hỗ trợ KD)' },
+    { code: 'SALES_MGR', name: 'Trưởng Phòng Kinh Doanh (CBO)' },
+    { code: 'KE_TOAN', name: 'Kế Toán / GĐ Tài Chính' },
+    { code: 'THU_MUA', name: 'Trưởng / NV Mua Hàng' },
+    { code: 'THU_KHO', name: 'Thủ Kho' },
+    { code: 'CEO', name: 'Tổng Giám Đốc (CEO)' },
+    { code: 'ADMIN', name: 'Admin Hệ Thống' },
+]
+
 // Default routing (fallback when no DB config exists)
-const DEFAULT_ROUTING: Record<string, number[]> = {
-    BUDGET_REQUEST: [1, 2, 3],
-    CAPITAL_EXPENDITURE: [1, 2, 3],
-    PRICE_ADJUSTMENT: [1, 2, 3],
-    NEW_SUPPLIER: [1, 3],
-    NEW_PRODUCT: [1, 3],
-    POLICY_CHANGE: [3],
-    STAFF_REQUISITION: [1, 3],
-    PAYMENT_SCHEDULE: [2, 3],
-    PROMOTION_CAMPAIGN: [1, 2, 3],
-    SPECIAL_EVENT: [1, 2, 3],
-    LICENSE_RENEWAL: [2, 3],
-    CONTRACT_SIGNING: [2, 3],
-    DEBT_WRITE_OFF: [2, 3],
-    OTHER: [1, 3],
+const DEFAULT_ROUTING_FULL: Record<string, ProposalRouteConfig> = {
+    PRICE_ADJUSTMENT: {
+        category: 'PRICE_ADJUSTMENT',
+        creatorRoles: ['SALES_REP', 'SALES_ADMIN', 'SALES_MGR', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng Kinh Doanh' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    BUDGET_REQUEST: {
+        category: 'BUDGET_REQUEST',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    CAPITAL_EXPENDITURE: {
+        category: 'CAPITAL_EXPENDITURE',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    NEW_SUPPLIER: {
+        category: 'NEW_SUPPLIER',
+        creatorRoles: ['THU_MUA', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'THU_MUA', label: 'Trưởng Phòng Mua Hàng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    NEW_PRODUCT: {
+        category: 'NEW_PRODUCT',
+        creatorRoles: ['THU_MUA', 'SALES_MGR', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'THU_MUA', label: 'Trưởng Phòng Mua Hàng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    POLICY_CHANGE: {
+        category: 'POLICY_CHANGE',
+        creatorRoles: ['CEO', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    STAFF_REQUISITION: {
+        category: 'STAFF_REQUISITION',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    PAYMENT_SCHEDULE: {
+        category: 'PAYMENT_SCHEDULE',
+        creatorRoles: ['KE_TOAN', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    PROMOTION_CAMPAIGN: {
+        category: 'PROMOTION_CAMPAIGN',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    SPECIAL_EVENT: {
+        category: 'SPECIAL_EVENT',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    LICENSE_RENEWAL: {
+        category: 'LICENSE_RENEWAL',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    CONTRACT_SIGNING: {
+        category: 'CONTRACT_SIGNING',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    DEBT_WRITE_OFF: {
+        category: 'DEBT_WRITE_OFF',
+        creatorRoles: ['KE_TOAN', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
+    OTHER: {
+        category: 'OTHER',
+        creatorRoles: [],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Trưởng Phòng' },
+            { level: 2, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
 }
 
 const DEFAULT_THRESHOLDS: ThresholdConfig[] = [
@@ -56,12 +183,27 @@ export async function getApprovalMatrix(): Promise<ApprovalMatrixData> {
         const configMap = new Map(configs.map(c => [c.configKey, c.value]))
 
         // Build proposal routes
-        const proposalRoutes: ProposalRouteConfig[] = Object.entries(DEFAULT_ROUTING).map(([category, defaultLevels]) => {
+        const proposalRoutes: ProposalRouteConfig[] = Object.entries(DEFAULT_ROUTING_FULL).map(([category, defaultCfg]) => {
             const dbValue = configMap.get(`proposal.${category}`)
-            const levels = dbValue && typeof dbValue === 'object' && 'levels' in (dbValue as any)
-                ? (dbValue as any).levels as number[]
-                : defaultLevels
-            return { category, levels }
+            if (dbValue && typeof dbValue === 'object') {
+                const val = dbValue as any
+                let steps: StepRoleConfig[] = []
+                if (Array.isArray(val.steps)) {
+                    steps = val.steps
+                } else if (Array.isArray(val.levels)) {
+                    // Legacy fallback: convert number[] to StepRoleConfig[]
+                    steps = (val.levels as number[]).map(l => ({
+                        level: l,
+                        role: l === 1 ? 'SALES_MGR' : l === 2 ? 'KE_TOAN' : 'CEO',
+                    }))
+                } else {
+                    steps = defaultCfg.steps
+                }
+
+                const creatorRoles: string[] = Array.isArray(val.creatorRoles) ? val.creatorRoles : defaultCfg.creatorRoles
+                return { category, creatorRoles, steps }
+            }
+            return defaultCfg
         })
 
         // Build thresholds
@@ -73,22 +215,35 @@ export async function getApprovalMatrix(): Promise<ApprovalMatrixData> {
             return { ...dt, value }
         })
 
-        return { proposalRoutes, thresholds }
-    }, 120_000) // 120s — config data hiếm thay đổi
+        return { proposalRoutes, thresholds, availableRoles: SYSTEM_ROLES }
+    }, 120_000)
 }
 
-// ─── Save proposal routing ───────────────────────
+// ─── Save single proposal route ──────────────────
 export async function saveProposalRoute(
     category: string,
-    levels: number[],
+    routeConfig: ProposalRouteConfig,
 ): Promise<{ success: boolean; error?: string }> {
     try {
         await requirePermission('SYS', 'ADMIN')
         const key = `proposal.${category}`
         await prisma.approvalConfig.upsert({
             where: { configKey: key },
-            update: { value: { levels }, updatedAt: new Date() },
-            create: { configKey: key, value: { levels }, label: `Tờ trình: ${category}` },
+            update: {
+                value: {
+                    creatorRoles: routeConfig.creatorRoles,
+                    steps: routeConfig.steps,
+                },
+                updatedAt: new Date()
+            },
+            create: {
+                configKey: key,
+                value: {
+                    creatorRoles: routeConfig.creatorRoles,
+                    steps: routeConfig.steps,
+                },
+                label: `Tờ trình: ${category}`
+            },
         })
         revalidateCache('settings')
         revalidatePath('/dashboard/settings/approval-matrix')
@@ -131,8 +286,21 @@ export async function saveAllRoutes(
             const key = `proposal.${r.category}`
             await prisma.approvalConfig.upsert({
                 where: { configKey: key },
-                update: { value: { levels: r.levels }, updatedAt: new Date() },
-                create: { configKey: key, value: { levels: r.levels }, label: `Tờ trình: ${r.category}` },
+                update: {
+                    value: {
+                        creatorRoles: r.creatorRoles,
+                        steps: r.steps,
+                    },
+                    updatedAt: new Date()
+                },
+                create: {
+                    configKey: key,
+                    value: {
+                        creatorRoles: r.creatorRoles,
+                        steps: r.steps,
+                    },
+                    label: `Tờ trình: ${r.category}`
+                },
             })
         }
         revalidateCache('settings')
