@@ -142,8 +142,8 @@ export function TransfersTab() {
                 </div>
             </div>
 
-            {/* List Table */}
-            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            {/* Desktop List Table */}
+            <div className="hidden md:block border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                         <thead>
@@ -228,6 +228,56 @@ export function TransfersTab() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Mobile Card List View (< 768px) */}
+            <div className="block md:hidden space-y-3">
+                {filteredRows.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-2xl">
+                        Không tìm thấy phiếu chuyển kho nào
+                    </div>
+                ) : (
+                    filteredRows.map(r => {
+                        const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
+                        return (
+                            <div
+                                key={r.id}
+                                onClick={() => setSelectedId(r.id)}
+                                className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-3 shadow-xl active:scale-98 transition cursor-pointer"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span className="font-mono text-xs font-black text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-lg border border-amber-500/30">
+                                        {r.transferNo}
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
+                                        style={{ color: st.color, background: st.bg, borderColor: st.border }}>
+                                        {st.label}
+                                    </span>
+                                </div>
+
+                                {/* Route indicator */}
+                                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs font-semibold">
+                                    <span className="text-rose-300 font-bold truncate">🔴 {r.fromWarehouse}</span>
+                                    <span className="text-slate-500 px-1 font-bold">➔</span>
+                                    <span className="text-emerald-300 font-bold truncate">🟢 {r.toWarehouse}</span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
+                                    <div>
+                                        <span className="text-slate-400 text-[10px] uppercase block font-bold">Tổng số chai:</span>
+                                        <span className="font-mono font-black text-emerald-400 text-sm">{r.totalQty.toLocaleString()} chai</span>
+                                    </div>
+                                    <button
+                                        onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}
+                                        className="px-3 py-1.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1 shadow-md"
+                                    >
+                                        <Eye size={12} /> Xem Chi Tiết
+                                    </button>
+                                </div>
+                            </div>
+                        )
+                    })
+                )}
             </div>
 
             {/* Create Drawer */}

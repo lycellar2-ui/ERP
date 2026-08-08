@@ -265,18 +265,20 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                     </table>
 
                     {/* Mobile Cards */}
-                    <div className="block md:hidden divide-y divide-slate-100">
+                    <div className="block md:hidden p-3 space-y-3">
                         {locs.map(loc => (
-                            <div key={loc.id} className="p-3.5 space-y-1.5">
+                            <div key={loc.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-2 shadow-xl">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        {loc.code}
+                                    <span className="text-xs font-black font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 border border-slate-700">
+                                        📍 {loc.code}
                                     </span>
-                                    <span className="text-[10px] font-bold uppercase text-slate-500">{loc.type}</span>
+                                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${loc.active ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}`}>
+                                        {loc.active ? 'Hoạt động' : 'Tắt'}
+                                    </span>
                                 </div>
-                                <div className="flex justify-between text-xs text-slate-600 font-medium">
-                                    <span>Rack: {loc.rack || '—'} · Bin: {loc.bin || '—'}</span>
-                                    <span className="font-bold text-slate-900">{loc.capacityCases} thùng</span>
+                                <div className="flex justify-between items-center text-xs text-slate-300 pt-1">
+                                    <span className="font-semibold text-slate-400">Rack: <strong className="text-white">{loc.rack || '—'}</strong> · Bin: <strong className="text-white">{loc.bin || '—'}</strong></span>
+                                    <span className="font-mono font-bold text-amber-400">{loc.capacityCases} thùng</span>
                                 </div>
                             </div>
                         ))}

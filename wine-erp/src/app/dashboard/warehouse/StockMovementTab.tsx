@@ -418,11 +418,6 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                             </div>
 
-                            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
-                                <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
-                                    <span>Xuất Trong Kỳ</span>
-                                    <ArrowUpCircle size={14} className="text-rose-600" />
-                                </div>
                                 <p className="text-xl font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                             </div>
@@ -438,8 +433,8 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                         </div>
                     )}
 
-                    {/* Summary Data Table */}
-                    <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+                    {/* Summary Data Table — Desktop View */}
+                    <div className="hidden md:block rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
                         {loadingSummary ? (
                             <div className="flex items-center justify-center py-20 gap-3">
                                 <Loader2 size={24} className="animate-spin text-emerald-600" />
@@ -569,6 +564,83 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                                     <p className="text-xs font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                                                 </td>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
+                                                </td>
+                                                <td className="px-3.5 py-3 text-right">
+                                                    <p className="text-xs font-extrabold font-mono text-teal-700">{summaryStats.totalClosingQty.toLocaleString()}</p>
+                                                    <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(summaryStats.totalClosingValue)}</p>
+                                                </td>
+                                                <td colSpan={2}></td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Summary Data Cards — Mobile View (< 768px) */}
+                    <div className="block md:hidden space-y-3">
+                        {loadingSummary ? (
+                            <div className="p-8 text-center text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-2xl">
+                                <Loader2 size={20} className="animate-spin inline text-emerald-400 mr-2" /> Đang tải báo cáo NXT...
+                            </div>
+                        ) : sortedSummaryItems.length === 0 ? (
+                            <div className="p-8 text-center text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-2xl">
+                                Không tìm thấy dữ liệu NXT phù hợp
+                            </div>
+                        ) : (
+                            sortedSummaryItems.map((item) => (
+                                <div
+                                    key={item.productId}
+                                    onClick={() => handleDrillDown(item)}
+                                    className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white space-y-3 shadow-xl active:scale-98 transition cursor-pointer"
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="font-mono text-xs font-black text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
+                                                {item.skuCode}
+                                            </span>
+                                            <h4 className="text-xs font-black text-white mt-1">{item.productName}</h4>
+                                        </div>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDrillDown(item) }}
+                                            className="px-2.5 py-1 bg-emerald-500 text-slate-950 font-bold text-[11px] rounded-lg shrink-0 shadow"
+                                        >
+                                            Sổ Chi Tiết ➔
+                                        </button>
+                                    </div>
+
+                                    {/* 4 Metric Pills Grid */}
+                                    <div className="grid grid-cols-4 gap-1.5 bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center font-mono">
+                                        <div>
+                                            <span className="text-[9px] uppercase text-slate-500 font-bold block">Đầu kỳ</span>
+                                            <span className="text-xs font-bold text-amber-400">{item.openingQty}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[9px] uppercase text-slate-500 font-bold block">Nhập</span>
+                                            <span className="text-xs font-bold text-emerald-400">{item.inQty > 0 ? `+${item.inQty}` : '0'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[9px] uppercase text-slate-500 font-bold block">Xuất</span>
+                                            <span className="text-xs font-bold text-rose-400">{item.outQty > 0 ? `-${item.outQty}` : '0'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[9px] uppercase text-slate-500 font-bold block">Cuối kỳ</span>
+                                            <span className="text-xs font-black text-teal-400">{item.closingQty}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center text-[11px] pt-1 border-t border-slate-800/80">
+                                        <span className="text-slate-400 font-semibold">Giá trị tồn cuối:</span>
+                                        <span className="font-mono font-black text-teal-400">{formatVND(item.closingValue)}</span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>         </td>
                                                 <td className="px-3.5 py-3 text-right">
                                                     <p className="text-xs font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
