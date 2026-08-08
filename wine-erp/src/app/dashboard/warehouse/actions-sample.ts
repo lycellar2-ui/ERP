@@ -168,6 +168,7 @@ export async function getSampleInventoryStats(): Promise<SampleInventoryStats> {
 // ── 3. Create Sample Product ────────────────────────
 export async function createSampleProduct(data: {
     productId?: string
+    skuCode?: string
     productName: string
     wineType?: string
     vintage?: number

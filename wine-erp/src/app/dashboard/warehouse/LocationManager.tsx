@@ -6,14 +6,16 @@ import { toast } from 'sonner'
 
 export type LocationItem = {
     id: string
-    code: string
+    code?: string
+    locationCode?: string
     zone: string
-    rack: string | null
-    bin: string | null
+    rack?: string | null
+    bin?: string | null
     type: string
-    capacityCases: number
-    tempControlled: boolean
-    active: boolean
+    capacityCases?: number
+    tempControlled?: boolean
+    active?: boolean
+    isOccupied?: boolean
     usedCases?: number
     lotCount?: number
 }
@@ -226,7 +228,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                                     <tr key={loc.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-2.5 font-bold font-mono text-emerald-700">
                                             <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
-                                                {loc.code}
+                                                {loc.code || loc.locationCode || loc.id}
                                             </span>
                                             {loc.tempControlled && <span title="Kho lạnh"><Thermometer size={12} className="inline ml-1 text-sky-600" /></span>}
                                         </td>
