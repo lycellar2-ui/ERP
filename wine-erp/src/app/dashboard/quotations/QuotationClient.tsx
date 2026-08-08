@@ -300,7 +300,7 @@ export function QuotationClient({ initialData }: Props) {
         const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (prod ? (prod as any).vatRate ?? 10 : 10)
 
         if (existingLine && (prod as any)?.vatRate && Number((prod as any).vatRate) !== inheritedVatRate) {
-            toast.info(`Sản phẩm "${prod?.name}" có VAT gốc ${(prod as any).vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo báo giá để đồng nhất 1 loại thuế suất.`)
+            toast.info(`Sản phẩm "${prod?.productName}" có VAT gốc ${(prod as any).vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo báo giá để đồng nhất 1 loại thuế suất.`)
         }
 
         const copy = [...formLines]

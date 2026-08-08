@@ -170,6 +170,7 @@ export async function createQuotation(input: {
 }): Promise<{ success: boolean; id?: string; quotationNo?: string; error?: string }> {
     try {
         const count = await prisma.salesQuotation.count()
+        const quotationNo = `QT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(count + 1).padStart(3, '0')}`
         const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
         if (distinctVatRates.length > 1) {
             return {
