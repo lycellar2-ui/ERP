@@ -154,6 +154,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         name: data.name,
                         shortName: data.shortName,
                         taxId: data.taxId,
+                        vatCompanyName: data.vatCompanyName,
+                        vatAddress: data.vatAddress,
+                        vatEmail: data.vatEmail,
                         channel: (data.channel as any) || 'HORECA',
                         paymentTerm: data.paymentTerm,
                         creditLimit: data.creditLimit,
@@ -182,7 +185,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 }
             }).finally(() => setLoading(false))
         } else {
-            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO' })
+            setForm({ paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null })
             setOfficialCodeInput('')
             setApprovalError('')
             if (!isSalesRep) {
@@ -819,26 +822,74 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Mã số thuế</label>
-                                    <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} placeholder="0302012345"
-                                        onChange={e => set('taxId', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
-                                    {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
-                                        <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#E05252]">
-                                            <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
-                                        </p>
-                                    )}
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Sales phụ trách</label>
+                                    <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
+                                        onChange={e => set('salesRepId', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
+                                        <option value="">— Chọn Sales —</option>
+                                        {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#4A6A7A' }}>Sales phụ trách</label>
-                                <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
-                                    onChange={e => set('salesRepId', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')}>
-                                    <option value="">— Chọn Sales —</option>
-                                    {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
+                            {/* VAT INVOICE SECTION */}
+                            <div className="p-3.5 rounded-xl space-y-3.5" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.25)' }}>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#D4A853' }}>
+                                        <FileText size={14} /> Thông Tin Xuất Hóa Đơn VAT
+                                    </p>
+                                    {form.parentId && (
+                                        <span className="text-[10px] font-medium text-amber-300 bg-amber-950/70 px-2 py-0.5 rounded border border-amber-700/50">
+                                            ℹ️ Để trống sẽ tự động lấy theo Công Ty Cha
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                        Tên Công Ty Xuất Hóa Đơn VAT
+                                    </label>
+                                    <input className={inputCls} style={inputStyle} value={form.vatCompanyName ?? ''} 
+                                        placeholder={form.parentId ? "Tự động lấy theo Tên Công ty Cha nếu để trống..." : "CÔNG TY TNHH ABC..."}
+                                        onChange={e => set('vatCompanyName', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                            Mã Số Thuế VAT
+                                        </label>
+                                        <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
+                                            placeholder={form.parentId ? "Tự động dùng MST Công ty Cha" : "0302012345"}
+                                            onChange={e => set('taxId', e.target.value || null)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
+                                            <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#E05252]">
+                                                <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                            Email Nhận Hóa Đơn VAT
+                                        </label>
+                                        <input className={inputCls} style={inputStyle} value={form.vatEmail ?? ''} 
+                                            placeholder={form.parentId ? "Tự động dùng Email Công ty Cha" : "ketoan@company.com"}
+                                            onChange={e => set('vatEmail', e.target.value || null)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#8AAEBB' }}>
+                                        Địa Chỉ Đăng Ký Thuế VAT
+                                    </label>
+                                    <input className={inputCls} style={inputStyle} value={form.vatAddress ?? ''} 
+                                        placeholder={form.parentId ? "Tự động dùng Địa chỉ Công ty Cha nếu để trống..." : "Số 123 Đường ABC, Phường X, Quận Y, TP..."}
+                                        onChange={e => set('vatAddress', e.target.value || null)}
+                                        onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                </div>
                             </div>
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#87CBB9' }}>── Liên Hệ & Địa Chỉ</p>
@@ -1385,7 +1436,15 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                         )}
                                     </td>
                                     <td className="px-3 py-1.5 text-[11px] whitespace-nowrap font-mono" style={{ color: '#4A6A7A' }}>
-                                        {row.taxId ?? '—'}
+                                        {row.taxId ? (
+                                            row.taxId
+                                        ) : row.resolvedVatInfo?.taxId ? (
+                                            <span title={`Kế thừa MST từ công ty cha ${row.parentName || ''}`} className="text-amber-400 font-semibold bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px]">
+                                                {row.resolvedVatInfo.taxId} (Cha)
+                                            </span>
+                                        ) : (
+                                            '—'
+                                        )}
                                     </td>
                                     <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: row.salesRepName ? '#8AAEBB' : '#2A4355' }}>
                                         {row.salesRepName ?? '—'}

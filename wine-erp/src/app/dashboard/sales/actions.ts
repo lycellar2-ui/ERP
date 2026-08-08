@@ -236,7 +236,7 @@ export async function getSalesOrderDetail(id: string) {
         include: {
             legalEntity: true,
             warehouse: true,
-            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, parent: { select: { id: true, name: true } } } },
+            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {
@@ -288,7 +288,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
         include: {
             legalEntity: true,
             warehouse: true,
-            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, parent: { select: { id: true, name: true } } } },
+            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {

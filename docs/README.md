@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-07 23:57 | Wine ERP v8.0 — 29 modules, 123 models (Product +2 link fields), 77 enums, 42 action files, Pre-commit hook docs guardian, Docs Sync Protocol in GEMINI.md*
+*Last updated: 2026-08-08 10:20 | Wine ERP v8.1 — 29 modules, 123 models, Customer VAT & Parent Fallback support*
 

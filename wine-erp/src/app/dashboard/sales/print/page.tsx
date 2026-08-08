@@ -207,6 +207,26 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                     <td className="font-mono text-slate-900 py-0.5">{order.customer.code}</td>
                                 </tr>
                                 <tr>
+                                    <td className="text-slate-600 pr-2 py-0.5">MST VAT:</td>
+                                    <td className="font-mono text-slate-900 py-0.5">
+                                        {(order.customer as any).taxId ? (
+                                            (order.customer as any).taxId
+                                        ) : (order.customer as any).parent?.taxId ? (
+                                            <span>{(order.customer as any).parent.taxId} (Cty Cha)</span>
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
+                                </tr>
+                                {((order.customer as any).vatCompanyName || (order.customer as any).parent?.vatCompanyName || (order.customer as any).parent?.name) && (
+                                    <tr>
+                                        <td className="text-slate-600 pr-2 py-0.5">Đơn vị VAT:</td>
+                                        <td className="font-semibold text-slate-900 py-0.5">
+                                            {(order.customer as any).vatCompanyName || (order.customer as any).parent?.vatCompanyName || (order.customer as any).parent?.name}
+                                        </td>
+                                    </tr>
+                                )}
+                                <tr>
                                     <td className="text-slate-600 pr-2 py-0.5">Phân kênh:</td>
                                     <td className="py-0.5 text-slate-900">{order.customer.channel ? (CHANNEL_MAP[order.customer.channel] || order.customer.channel) : '—'}</td>
                                 </tr>

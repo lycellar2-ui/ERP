@@ -494,6 +494,9 @@ model Customer {
   name          String
   shortName     String?                // Abbreviated name for reports
   taxId         String?
+  vatCompanyName String?               // Tên Công Ty Xuất Hóa Đơn VAT
+  vatAddress     String?               // Địa Chỉ Đăng Ký Thuế VAT
+  vatEmail       String?               // Email Nhận Hóa Đơn VAT
   customerType  CustomerType?
   channel       SalesChannel           @default(HORECA)
   paymentTerm   String                 @default("NET30")

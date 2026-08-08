@@ -20,6 +20,16 @@ export type CustomerRow = {
     name: string
     shortName: string | null
     taxId: string | null
+    vatCompanyName: string | null
+    vatAddress: string | null
+    vatEmail: string | null
+    resolvedVatInfo?: {
+        taxId: string | null
+        vatCompanyName: string | null
+        vatAddress: string | null
+        vatEmail: string | null
+        isInherited: boolean
+    }
     customerType: string | null
     channel: string | null
     paymentTerm: string
@@ -102,7 +112,8 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
                 include: {
                     salesRep: { select: { id: true, name: true } },
                     salesOrders: { select: { id: true } },
-                    parent: { select: { id: true, name: true, code: true } },
+                    addresses: { where: { isDefault: true }, take: 1 },
+                    parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } },
                     children: { where: { deletedAt: null }, select: { id: true } },
                 },
                 orderBy,
@@ -112,29 +123,46 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
             prisma.customer.count({ where }),
         ])
 
-        let rows: CustomerRow[] = items.map(c => ({
-            id: c.id,
-            code: c.code,
-            name: c.name,
-            shortName: c.shortName,
-            taxId: c.taxId,
-            customerType: c.customerType,
-            channel: c.channel,
-            paymentTerm: c.paymentTerm,
-            creditLimit: Number(c.creditLimit),
-            salesRepId: c.salesRepId,
-            salesRepName: c.salesRep?.name ?? null,
-            status: c.status,
-            orderCount: c.salesOrders.length,
-            createdAt: c.createdAt,
-            parentId: c.parent?.id ?? null,
-            parentCode: c.parent?.code ?? null,
-            parentName: c.parent?.name ?? null,
-            childrenCount: c.children.length,
-            entityType: c.entityType as 'COMPANY' | 'RESTAURANT',
-            allowDirectSO: c.allowDirectSO,
-            brandGroup: c.brandGroup,
-        }))
+        let rows: CustomerRow[] = items.map(c => {
+            const hasSelfVat = Boolean(c.taxId || c.vatCompanyName)
+            const isInherited = Boolean(c.parentId && !hasSelfVat)
+            const defaultAddress = c.addresses?.[0]?.address ?? null
+            const parentDefaultAddress = c.parent?.addresses?.[0]?.address ?? null
+
+            return {
+                id: c.id,
+                code: c.code,
+                name: c.name,
+                shortName: c.shortName,
+                taxId: c.taxId,
+                vatCompanyName: c.vatCompanyName,
+                vatAddress: c.vatAddress,
+                vatEmail: c.vatEmail,
+                resolvedVatInfo: {
+                    taxId: c.taxId || c.parent?.taxId || null,
+                    vatCompanyName: c.vatCompanyName || c.parent?.vatCompanyName || (c.parent ? c.parent.name : c.name),
+                    vatAddress: c.vatAddress || c.parent?.vatAddress || defaultAddress || parentDefaultAddress || null,
+                    vatEmail: c.vatEmail || c.parent?.vatEmail || null,
+                    isInherited
+                },
+                customerType: c.customerType,
+                channel: c.channel,
+                paymentTerm: c.paymentTerm,
+                creditLimit: Number(c.creditLimit),
+                salesRepId: c.salesRepId,
+                salesRepName: c.salesRep?.name ?? null,
+                status: c.status,
+                orderCount: c.salesOrders.length,
+                createdAt: c.createdAt,
+                parentId: c.parent?.id ?? null,
+                parentCode: c.parent?.code ?? null,
+                parentName: c.parent?.name ?? null,
+                childrenCount: c.children.length,
+                entityType: c.entityType as 'COMPANY' | 'RESTAURANT',
+                allowDirectSO: c.allowDirectSO,
+                brandGroup: c.brandGroup,
+            }
+        })
 
         // Client-side sort for computed field
         if (sortBy === 'orderCount') {
@@ -162,6 +190,7 @@ export async function getCustomerById(id: string) {
             salesRep: { select: { id: true, name: true } },
             contacts: { where: { isPrimary: true }, take: 1 },
             addresses: { where: { isDefault: true }, take: 1 },
+            parent: { select: { id: true, code: true, name: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } },
         },
     })
     if (!c) return null
@@ -169,12 +198,27 @@ export async function getCustomerById(id: string) {
     const contact = c.contacts[0]
     const addr = c.addresses[0]
 
+    const hasSelfVat = Boolean(c.taxId || c.vatCompanyName)
+    const isInherited = Boolean(c.parentId && !hasSelfVat)
+    const defaultAddress = addr?.address ?? null
+    const parentDefaultAddress = c.parent?.addresses?.[0]?.address ?? null
+
     return {
         id: c.id,
         code: c.code,
         name: c.name,
         shortName: c.shortName,
         taxId: c.taxId,
+        vatCompanyName: c.vatCompanyName,
+        vatAddress: c.vatAddress,
+        vatEmail: c.vatEmail,
+        resolvedVatInfo: {
+            taxId: c.taxId || c.parent?.taxId || null,
+            vatCompanyName: c.vatCompanyName || c.parent?.vatCompanyName || (c.parent ? c.parent.name : c.name),
+            vatAddress: c.vatAddress || c.parent?.vatAddress || defaultAddress || parentDefaultAddress || null,
+            vatEmail: c.vatEmail || c.parent?.vatEmail || null,
+            isInherited
+        },
         customerType: c.customerType,
         channel: c.channel,
         paymentTerm: c.paymentTerm,
@@ -182,6 +226,8 @@ export async function getCustomerById(id: string) {
         salesRepId: c.salesRepId,
         status: c.status,
         parentId: c.parentId,
+        parentCode: c.parent?.code ?? null,
+        parentName: c.parent?.name ?? null,
         contactName: contact?.name ?? null,
         contactTitle: contact?.title ?? null,
         email: contact?.email ?? null,
@@ -369,6 +415,9 @@ const customerSchema = z.object({
     name: z.string().min(2, 'Tên KH bắt buộc'),
     shortName: z.string().nullable().optional(),
     taxId: z.string().nullable().optional(),
+    vatCompanyName: z.string().nullable().optional(),
+    vatAddress: z.string().nullable().optional(),
+    vatEmail: z.string().nullable().optional(),
     channel: z.enum(['HORECA', 'CORPORATE', 'RETAIL']).default('HORECA'),
     paymentTerm: z.string().default('NET30'),
     creditLimit: z.number().default(0),
@@ -466,6 +515,9 @@ export async function createCustomer(input: CustomerInput) {
                             name: `${data.name} (Cha)`,
                             shortName: data.shortName ? `${data.shortName} (Cha)` : null,
                             taxId: data.taxId !== undefined ? data.taxId : null,
+                            vatCompanyName: data.vatCompanyName !== undefined ? data.vatCompanyName : null,
+                            vatAddress: data.vatAddress !== undefined ? data.vatAddress : null,
+                            vatEmail: data.vatEmail !== undefined ? data.vatEmail : null,
                             channel: data.channel,
                             paymentTerm: data.paymentTerm,
                             creditLimit: data.creditLimit,
@@ -600,6 +652,9 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.name !== undefined) updateData.name = customerData.name
         if (customerData.shortName !== undefined) updateData.shortName = customerData.shortName
         if (customerData.taxId !== undefined) updateData.taxId = customerData.taxId
+        if (customerData.vatCompanyName !== undefined) updateData.vatCompanyName = customerData.vatCompanyName
+        if (customerData.vatAddress !== undefined) updateData.vatAddress = customerData.vatAddress
+        if (customerData.vatEmail !== undefined) updateData.vatEmail = customerData.vatEmail
         if (customerData.channel !== undefined) updateData.channel = customerData.channel
         if (customerData.paymentTerm !== undefined) updateData.paymentTerm = customerData.paymentTerm
         if (customerData.creditLimit !== undefined) updateData.creditLimit = customerData.creditLimit
