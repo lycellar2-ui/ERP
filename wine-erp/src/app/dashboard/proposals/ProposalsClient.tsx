@@ -42,6 +42,26 @@ interface Props {
     userRoles: string[]
 }
 
+function canApproveAtLevel(level: number, roles: string[] = []): boolean {
+    if (!roles || roles.length === 0) return false
+    const upperRoles = roles.map(r => r.toUpperCase())
+
+    if (upperRoles.includes('ADMIN') || upperRoles.includes('CEO') || upperRoles.includes('BOD') || upperRoles.includes('DIRECTOR')) {
+        return true
+    }
+
+    if (level === 1) {
+        return upperRoles.some(r => ['SALES_MGR', 'SALES_ADMIN', 'MANAGER', 'TP', 'TRUONG_PHONG'].includes(r))
+    }
+    if (level === 2) {
+        return upperRoles.some(r => ['KE_TOAN', 'CHIEF_ACCOUNTANT', 'ACCOUNTANT', 'ACCOUNTING', 'KT', 'KE_TOAN_TRUONG'].includes(r))
+    }
+    if (level === 3) {
+        return upperRoles.some(r => ['CEO', 'BOD', 'DIRECTOR', 'GIAM_DOC'].includes(r))
+    }
+    return false
+}
+
 export default function ProposalsClient({ initialProposals, stats, userId, userName, userRoles }: Props) {
     const [proposals, setProposals] = useState(initialProposals)
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'DRAFT' | 'APPROVED' | 'REJECTED'>('ALL')
@@ -446,7 +466,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
                         const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
                         const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
-                        const isCEOLevel = p.currentLevel === 3
+                        const canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)
 
                         return (
                             <div
@@ -454,7 +474,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 className="p-4 rounded-lg space-y-3 transition-all cursor-pointer"
                                 style={{
                                     background: '#1B2E3D',
-                                    border: isPending && isCEOLevel && isCEO ? '1px solid #D4A853' : '1px solid #2A4355',
+                                    border: canApproveThis ? '1px solid #D4A853' : '1px solid #2A4355',
                                 }}
                                 onClick={() => openDetail(p.id)}
                             >
@@ -512,7 +532,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                         style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
                                         <Eye size={12} className="inline mr-1" />Chi tiết
                                     </button>
-                                    {isPending && isCEOLevel && isCEO && (
+                                    {canApproveThis && (
                                         <>
                                             <button
                                                 onClick={() => handleApproval(p.id, 'APPROVE')}
@@ -601,17 +621,17 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
                                     const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
                                     const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
-                                    const isCEOLevel = p.currentLevel === 3
+                                    const canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)
 
                                     return (
                                         <tr key={p.id}
                                             className="transition-all"
                                             style={{
                                                 borderBottom: '1px solid #2A4355',
-                                                background: isPending && isCEOLevel ? 'rgba(212,168,83,0.03)' : 'transparent',
+                                                background: canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent',
                                             }}
                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = isPending && isCEOLevel ? 'rgba(212,168,83,0.03)' : 'transparent'}
+                                            onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent'}
                                         >
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9', whiteSpace: 'nowrap' }}>
@@ -664,7 +684,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                         style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
                                                         <Eye size={12} className="inline mr-1" />Chi tiết
                                                     </button>
-                                                    {isPending && isCEOLevel && isCEO && (
+                                                    {canApproveThis && (
                                                         <>
                                                             <button
                                                                 onClick={() => handleApproval(p.id, 'APPROVE')}
@@ -717,6 +737,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     onClose={() => { setDetailId(null); setDetail(null) }}
                     userId={userId}
                     isCEO={isCEO}
+                    userRoles={userRoles}
                     onApproval={async (action, comment) => { await handleApproval(detailId, action, comment); }}
                     onRefresh={async () => { await refreshList(); await openDetail(detailId) }}
                     onPrint={handlePrint}
@@ -1438,12 +1459,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 }
 
 // ─── Detail Drawer ───────────────────────────────
-function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onRefresh, onPrint }: {
+function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onApproval, onRefresh, onPrint }: {
     detail: ProposalDetail | null
     loading: boolean
     onClose: () => void
     userId: string
     isCEO: boolean
+    userRoles: string[]
     onApproval: (action: 'APPROVE' | 'REJECT' | 'RETURN', comment?: string) => void
     onRefresh: () => void
     onPrint: () => void
@@ -1465,7 +1487,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
     }
 
     const isPending = detail && ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(detail.status)
-    const isCEOLevel = detail?.currentLevel === 3
+    const canApproveDetail = Boolean(isPending && detail && canApproveAtLevel(detail.currentLevel, userRoles))
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -1701,8 +1723,8 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, onApproval, onR
                             </div>
                         </div>
 
-                        {/* CEO Action Bar */}
-                        {isPending && isCEOLevel && isCEO && (
+                        {/* Action Bar */}
+                        {canApproveDetail && (
                             <div className="flex gap-3 p-4 rounded-md" style={{ background: 'rgba(212,168,83,0.05)', border: '2px solid rgba(212,168,83,0.2)' }}>
                                 <button
                                     onClick={() => onApproval('APPROVE')}

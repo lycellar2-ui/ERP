@@ -37,6 +37,8 @@
 28. [BUG-037: Diễn Giải / Ghi Chú Đơn Hàng Bị Ẩn Trên Chi Tiết & Trang In](#bug-037-diễn-giải--ghi-chú-đơn-hàng-bị-ẩn-trên-chi-tiết--trang-in)
 29. [BUG-038: Số Lượng Thẻ Trạng Thái (Tab Counts) Không Lọc Theo Bộ Lọc Ngày / Tìm Kiếm](#bug-038-số-lượng-thẻ-trạng-thái-tab-counts-không-lọc-theo-bộ-lọc-ngày--tìm-kiếm)
 30. [BUG-039: Thẻ Xuất Kho DO Không Hiển Thị Tên Khách Hàng và Mã SKU / Tên Sản Phẩm](#bug-039-thẻ-xuất-kho-do-không-hiển-thị-tên-khách-hàng-và-mã-sku--tên-sản-phẩm)
+31. [BUG-042: Thủ Kho Nhìn Thấy Nút Xuất Hóa Đơn & Nút Tạo Đơn Hàng](#bug-042-thủ-kho-nhìn-thấy-nút-xuất-hóa-đơn--nút-tạo-đơn-hàng-do-thiếu-kiểm-tra-rbac-trên-ui--server-action)
+32. [BUG-043: Kế Toán & Trưởng Phòng Không Hiển Thị Nút Duyệt Tờ Trình Cơ Chế Giá](#bug-043-kế-toán--trưởng-phòng-không-hiển-thị-nút-duyệt-tờ-trình-cơ-chế-giá-do-hardcode-điều-kiện-isceo)
 
 ---
 
@@ -1635,16 +1637,28 @@ Trên giao diện tab **Xuất Kho (DO)**, thẻ `SO-2608-0013`, `SO-2608-0012`.
 
 > ⚠️ **RULE 64: Mọi nút bấm tác động đến Dữ liệu / Tài chính / Hóa đơn (vd: Xuất Hóa Đơn, Tạo Đơn, Duyệt Đơn, Duyệt Kế Toán) PHẢI được bảo vệ bằng điều kiện phân quyền RBAC ở CẢ HAI LỚP: 1) Client UI (ẩn nút bấm nếu `!canPerformAction`), 2) Server Action (gọi `requirePermission` hoặc check role từ Session trước khi ghi DB).**
 
+---
 
+## BUG-043: Kế Toán & Trưởng Phòng Không Hiển Thị Nút Duyệt Tờ Trình Cơ Chế Giá Do Hardcode Điều Kiện isCEO
 
+**Ngày:** 2026-08-08  
+**Severity:** 🟡 Medium — Tài khoản Kế toán và Trưởng phòng kinh doanh vào trang Tờ trình Cơ chế giá không thấy nút Duyệt dù đã tới lượt duyệt của họ.
 
+### Triệu chứng
+1. Đăng nhập tài khoản vai trò Kế toán (`KE_TOAN`) hoặc Trưởng phòng (`SALES_MGR`), vào mục Duyệt Cơ Chế Giá (`/dashboard/proposals`).
+2. Tờ trình ở trạng thái chờ duyệt (ví dụ: `currentLevel === 2` - lượt Kế toán duyệt) nhưng danh sách thẻ, bảng danh sách và Drawer chi tiết đều không hiển thị nút Duyệt / Từ chối / Trả lại.
 
+### Nguyên nhân gốc rễ
+1. Trong `ProposalsClient.tsx`, điều kiện hiển thị nút Duyệt bị ràng buộc cứng: `{isPending && isCEOLevel && isCEO && (...)}`.
+2. Hệ thống kiểm tra vai trò người dùng bằng thuộc tính `isCEO = userRoles.includes('CEO')` và `isCEOLevel = p.currentLevel === 3`, dẫn tới chỉ có CEO duyệt ở Cấp 3 mới thấy nút Duyệt, còn Cấp 1 (Trưởng phòng) và Cấp 2 (Kế toán) hoàn toàn bị ẩn nút.
 
+### Cách fix
+1. Xây dựng hàm trợ giúp `canApproveAtLevel(level, userRoles)` trong `ProposalsClient.tsx` kiểm tra linh hoạt theo từng cấp:
+   - Level 1: `SALES_MGR`, `SALES_ADMIN`, `MANAGER`, `TP`, `TRUONG_PHONG`, `ADMIN`, `CEO`.
+   - Level 2: `KE_TOAN`, `CHIEF_ACCOUNTANT`, `ACCOUNTANT`, `ACCOUNTING`, `KT`, `KE_TOAN_TRUONG`, `ADMIN`, `CEO`.
+   - Level 3: `CEO`, `BOD`, `DIRECTOR`, `GIAM_DOC`, `ADMIN`.
+2. Thay thế toàn bộ điều kiện `isPending && isCEOLevel && isCEO` bằng `canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)` trên danh sách thẻ, bảng dữ liệu và Drawer chi tiết.
 
+### Bài học
 
-
-
-
-
-
-
+> ⚠️ **RULE 65: Đối với quy trình phê duyệt nhiều cấp (Multi-level Approval Workflow), điều kiện hiển thị nút Duyệt trên giao diện KHÔNG ĐƯỢC hardcode theo 1 role duy nhất (như CEO), mà PHẢI dựa theo bảng ánh xạ vai trò linh hoạt tương ứng với cấp duyệt hiện tại (`currentLevel`) của tài liệu.**
