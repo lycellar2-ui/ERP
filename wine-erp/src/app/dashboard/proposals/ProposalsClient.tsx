@@ -663,10 +663,25 @@ function SearchableCustomerCombobox({
 }) {
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
+    const containerRef = React.useRef<HTMLDivElement>(null)
+    const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 300 })
 
     const selectedCust = React.useMemo(() => {
         return customers.find((c: any) => c.id === selectedCustomerId)
     }, [customers, selectedCustomerId])
+
+    const handleOpen = () => {
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect()
+            setCoords({
+                top: rect.bottom + 4,
+                left: rect.left,
+                width: rect.width
+            })
+        }
+        setOpen(true)
+        setQuery('')
+    }
 
     const filtered = React.useMemo(() => {
         const q = query.trim().toLowerCase()
@@ -680,15 +695,15 @@ function SearchableCustomerCombobox({
     const displayValue = selectedCust ? `[${selectedCust.code}] ${selectedCust.name}` : query
 
     return (
-        <div className="relative w-full">
+        <div ref={containerRef} className="relative w-full">
             <div className="relative">
                 <input
                     type="text"
                     value={open ? query : displayValue}
-                    onFocus={() => { setOpen(true); setQuery(''); }}
+                    onFocus={handleOpen}
                     onChange={e => {
                         setQuery(e.target.value)
-                        if (!open) setOpen(true)
+                        if (!open) handleOpen()
                     }}
                     placeholder="Gõ mã (VD: HR10084) hoặc tên khách hàng để tìm..."
                     style={{ ...inputStyle, padding: '9px 36px 9px 32px', fontSize: '13px', background: '#142433' }}
@@ -716,8 +731,16 @@ function SearchableCustomerCombobox({
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div
+                        className="fixed z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl"
+                        style={{
+                            top: `${coords.top}px`,
+                            left: `${coords.left}px`,
+                            width: `${coords.width}px`,
+                            background: '#142433',
+                            border: '1px solid #2A4355',
+                        }}
+                    >
                         {filtered.length === 0 ? (
                             <div className="p-3 text-xs text-center text-gray-400">
                                 {query ? `Không tìm thấy khách hàng khớp với "${query}"` : 'Chưa có dữ liệu khách hàng'}
@@ -764,8 +787,23 @@ function SearchableProductCombobox({
 }) {
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
+    const containerRef = React.useRef<HTMLDivElement>(null)
+    const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 380 })
 
     const selectedProd = products.find(p => p.id === selectedProductId)
+
+    const handleOpen = () => {
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect()
+            setCoords({
+                top: rect.bottom + 4,
+                left: rect.left,
+                width: Math.max(rect.width, 360)
+            })
+        }
+        setOpen(true)
+        setQuery('')
+    }
 
     const filtered = React.useMemo(() => {
         const q = query.trim().toLowerCase()
@@ -779,14 +817,17 @@ function SearchableProductCombobox({
     const displayValue = selectedProd ? `[${selectedProd.skuCode}] ${selectedProd.productName}` : query
 
     return (
-        <div className="relative flex-1 min-w-0">
+        <div ref={containerRef} className="relative flex-1 min-w-0">
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: '#8AAEBB' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
             <div className="relative">
                 <input
                     type="text"
                     value={open ? query : displayValue}
-                    onFocus={() => { setOpen(true); setQuery(''); }}
-                    onChange={e => setQuery(e.target.value)}
+                    onFocus={handleOpen}
+                    onChange={e => {
+                        setQuery(e.target.value)
+                        if (!open) handleOpen()
+                    }}
                     placeholder="Gõ mã SKU hoặc tên sản phẩm..."
                     style={{ ...inputStyle, padding: '7px 32px 7px 10px', fontSize: '13px', background: '#1B2E3D' }}
                 />
@@ -796,8 +837,16 @@ function SearchableProductCombobox({
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl min-w-[380px]"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div
+                        className="fixed z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl"
+                        style={{
+                            top: `${coords.top}px`,
+                            left: `${coords.left}px`,
+                            width: `${coords.width}px`,
+                            background: '#142433',
+                            border: '1px solid #2A4355',
+                        }}
+                    >
                         {filtered.length === 0 ? (
                             <div className="p-3 text-xs text-center text-gray-500">Không tìm thấy sản phẩm khớp "{query}"</div>
                         ) : (
