@@ -1234,5 +1234,29 @@ Error: Command "npm run build" exited with 1
 > ⚠️ **RULE 48: Loại bỏ các thư mục scripts/scratch khỏi tsconfig.json của Next.js để tránh làm hỏng Build Pipeline trên Vercel.**
 > Các script hỗ trợ phát triển/bảo trì cục bộ không nằm trong ứng dụng Web chính cần được loại trừ khỏi `tsconfig.json` để tránh gây lỗi Build trên CI/CD khi refactor code chính.
 
+---
+
+## BUG-027: Dấu Chấm Ở Giữa Chữ Số 0 Do Fallback Font Monospace Hệ Thống (Consolas / JetBrains Mono)
+
+**Ngày:** 2026-08-08
+**Severity:** 🟡 Medium — Ảnh hưởng thẩm mỹ giao diện hiển thị mã SO, MST, Ngày tháng và Giá tiền
+
+### Triệu chứng
+- Các chữ số `0` hiển thị trên giao diện (như mã SO `SO-2608-0009`, MST `0102042513`, ngày `07/08/2026`, giá tiền `1.150.000 đ`) có dấu chấm nhỏ hoặc gạch chéo ở giữa ruột số 0.
+
+### Nguyên nhân gốc rễ
+1. Thuộc tính CSS `--font-mono` trong Tailwind v4 khi không được gắn trực tiếp đối tượng `next/font` trên thẻ `<html>` sẽ fallback về font monospace mặc định của hệ điều hành Windows (`Consolas` hoặc `Courier New`), các font này mặc định bật tính năng OpenType Dotted/Slashed Zero.
+2. Một số file component chứa khai báo inline `font-family: monospace` hoặc `fontFamily: 'var(--font-mono)'`.
+
+### Cách fix
+1. Gán trực tiếp biến font `Inter` cho `--font-mono` trong `src/app/layout.tsx`.
+2. Khai báo quy tắc CSS ép cứng toàn hệ thống trong `src/app/globals.css`: `font-feature-settings: "zero" 0 !important;` và đè toàn bộ selector `.font-mono`, `[class*="font-mono"]`, `.type-code` về `Inter` với `tabular-nums`.
+3. Quét toàn bộ codebase thay thế tất cả khai báo inline `monospace` / `var(--font-mono)` sang `var(--font-sans)` (`Inter`).
+
+### Bài học
+
+> ⚠️ **RULE 49: Luôn gắn đối tượng next/font cho cả --font-sans và --font-mono trên thẻ <html> và áp dụng font-feature-settings: "zero" 0 để loại bỏ hoàn toàn số 0 có chấm.**
+
+
 
 
