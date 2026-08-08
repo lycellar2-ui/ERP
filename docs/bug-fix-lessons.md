@@ -30,6 +30,8 @@
 21. [BUG-021: 504 MIDDLEWARE_INVOCATION_TIMEOUT Khi Đã Có Cookie và DB Đang Ngủ (Cold Start) — Promise.race Timeout](#bug-021-504-middleware_invocation_timeout-khi-đã-có-cookie-và-db-đang-ngủ-cold-start--promiserace-timeout)
 22. [BUG-022: Trễ tải dữ liệu khi mở Drawer Chỉnh sửa Sản phẩm](#bug-022-trễ-tải-dữ-liệu-khi-mở-drawer-chỉnh-sửa-sản-phẩm)
 23. [BUG-023: Build Fail — TypeScript Type Mismatch on Nested Prisma Connect](#bug-023-build-fail--typescript-type-mismatch-on-nested-prisma-connect)
+24. [BUG-033: Lỗi Trùng Mã Đơn Hàng (soNo Unique Constraint Failed) Khi Tạo Đơn Bán Hàng](#bug-033-lỗi-trùng-mã-đơn-hàng-sono-unique-constraint-failed-khi-tạo-đơn-bán-hàng)
+25. [BUG-034: Lỗi Chữ Tàng Hình / Trắng Trên Nền Trắng Thẻ Xuất Kho (DO Cards)](#bug-034-lỗi-chữ-tàng-hình--trắng-trên-nền-trắng-thẻ-xuất-kho-do-cards)
 
 ---
 
@@ -1382,6 +1384,54 @@ if ('salesRepId' in dataToUpdate) {
 ### Bài học
 
 > ⚠️ **RULE 54: Đơn Bán Hàng (SO) và Báo Giá (QTN) BẮT BUỘC phải duy nhất 1 loại thuế suất VAT trên toàn bộ các dòng để phục vụ xuất hóa đơn điện tử GTGT hợp lệ.**
+
+---
+
+## BUG-033: Lỗi Trùng Mã Đơn Hàng (soNo Unique Constraint Failed) Khi Tạo Đơn Bán Hàng
+
+**Ngày:** 2026-08-08
+**Severity:** 🔴 Critical — Người dùng không thể tạo đơn bán hàng mới.
+
+### Triệu chứng
+- Khi bấm "Tạo Đơn" ở màn hình Đơn Bán Hàng (`/dashboard/sales`), hệ thống báo lỗi toast:
+  `Lỗi: Invalid prisma.salesOrder.create() invocation... Unique constraint failed on the fields: ("soNo")`
+
+### Nguyên nhân gốc rễ
+1. Code cũ sinh mã đơn hàng bằng cách đếm số lượng đơn hàng hiện tại trong cơ sở dữ liệu `prisma.salesOrder.count() + 1` (cho ra ví dụ `SO-2608-0010`).
+2. Nếu trong DB từng có đơn hàng bị xóa hoặc đánh số không liên tục, phép tính `count() + 1` sẽ cho ra một mã đơn trùng lặp với đơn đã tồn tại sẵn trong DB.
+3. Vì cột `soNo` có thuộc tính `UNIQUE`, Prisma ném ra ngoại lệ `Unique constraint failed`.
+
+### Cách fix
+1. Tạo hàm `generateUniqueSoNo()` truy vấn mã đơn hàng mới nhất thực tế trong DB theo tiền tố tháng `SO-YYMM-`, lấy số thứ tự lớn nhất hiện tại + 1.
+2. Bổ sung vòng lặp kiểm tra tính duy nhất tuyệt đối (`while (existing)`) trong DB trước khi cấp mã, đảm bảo 100% không bao giờ bị trùng lặp mã đơn.
+3. Cập nhật ở cả 2 vị trí: Tạo đơn hàng mới (`createSalesOrder`) và Chuyển Báo Giá thành Đơn Hàng (`convertQuotationToSO`).
+
+### Bài học
+
+> ⚠️ **RULE 55: Tuyệt đối không bao giờ dùng `count() + 1` để sinh mã chứng từ UNIQUE (SO, PO, DO, INV). Phải luôn query mã lớn nhất thực tế (`findFirst` desc) + kiểm tra trùng lặp.**
+
+---
+
+## BUG-034: Lỗi Chữ Tàng Hình / Trắng Trên Nền Trắng Thẻ Xuất Kho (DO Cards)
+
+**Ngày:** 2026-08-08
+**Severity:** 🟡 High — Giao diện thẻ Xuất Kho (DO) trên WMS hiển thị khối trắng bị che mất chữ.
+
+### Triệu chứng
+- Khi truy cập tab **Xuất Kho (DO)** trên trang WMS (`/dashboard/warehouse`), các ô chứa thông tin sản phẩm bên trong thẻ đơn hàng biến thành khối màu trắng tinh, chữ bên trong tàng hình không đọc được.
+
+### Nguyên nhân gốc rễ
+1. Trang WMS chạy theo Light Theme (giao diện sáng nền `#FFFFFF`).
+2. Thẻ DO cũ khai báo màu nền tối `#0F1D2B` và `#142433`. `globals.css` tự động ánh xạ các mã màu tối này thành nền sáng `--color-lys-surface` (`#FFFFFF`).
+3. Tên sản phẩm bên trong ô dùng mã màu chữ `#C8D8E4` (màu xanh nhạt). Vì `#C8D8E4` chưa được ánh xạ trong `globals.css`, màu chữ vẫn giữ nguyên màu xanh nhạt trên nền trắng `#FFFFFF`, gây ra hiện tượng chữ tàng hình.
+
+### Cách fix
+1. Thiết kế lại toàn bộ thẻ DO trong `DeliveryOrderTab.tsx` theo chuẩn Light Theme: Thẻ nền `#FFFFFF`, ô sản phẩm nền `#F8FAFC`, chữ tên sản phẩm màu Slate Đậm `#0F172A` (rõ nét 100%), số lượng màu Amber `#D97706`.
+2. Bổ sung ánh xạ màu `#C8D8E4` ➔ `var(--color-lys-ivory)` (`#0F172A`) trong `globals.css` để ngăn ngừa lỗi tương tự ở các component khác.
+
+### Bài học
+
+> ⚠️ **RULE 56: Khi thiết kế component trong theme chuyển đổi, tất cả các ô container và màu chữ bên trong BẮT BUỘC phải đi cặp màu tương phản chuẩn (Dark Slate `#0F172A` trên nền sáng `#F8FAFC`).**
 
 
 
