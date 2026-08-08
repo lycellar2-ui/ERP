@@ -21,11 +21,13 @@ export type LocationItem = {
 type Props = {
     warehouseId: string
     warehouseName: string
-    locations: LocationItem[]
+    locations?: LocationItem[]
+    initialLocations?: LocationItem[]
     onLocationCreated?: () => void
 }
 
-export function LocationManager({ warehouseId, warehouseName, locations, onLocationCreated }: Props) {
+export function LocationManager({ warehouseId, warehouseName, locations, initialLocations, onLocationCreated }: Props) {
+    const locList = locations || initialLocations || []
     const [showCreate, setShowCreate] = useState(false)
     const [heatmap, setHeatmap] = useState<{ zone: string; totalLocations: number; usedLocations: number; occupancyPct: number; hasTempControl: boolean }[]>([])
     const [loading, setLoading] = useState(false)
@@ -78,7 +80,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, onLocat
         }
     }
 
-    const byZone = locations.reduce<Record<string, LocationItem[]>>((acc, loc) => {
+    const byZone = locList.reduce<Record<string, LocationItem[]>>((acc, loc) => {
         const z = loc.zone || 'KHÁC'
         if (!acc[z]) acc[z] = []
         acc[z].push(loc)
@@ -226,7 +228,7 @@ export function LocationManager({ warehouseId, warehouseName, locations, onLocat
                                             <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
                                                 {loc.code}
                                             </span>
-                                            {loc.tempControlled && <Thermometer size={12} className="inline ml-1 text-sky-600" title="Kho lạnh" />}
+                                            {loc.tempControlled && <span title="Kho lạnh"><Thermometer size={12} className="inline ml-1 text-sky-600" /></span>}
                                         </td>
                                         <td className="px-4 py-2.5 text-slate-700 font-medium font-mono">{loc.rack || '—'}</td>
                                         <td className="px-4 py-2.5 text-slate-700 font-medium font-mono">{loc.bin || '—'}</td>

@@ -1,21 +1,21 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
-    Wine, Plus, ArrowUpCircle, Search, Filter, RefreshCw,
-    ShieldCheck, AlertTriangle, Tag, History, CheckCircle2,
-    X, FileText, Layers, TrendingDown, Clock, UserCheck, ChevronDown
+    Wine, Plus, ArrowUpCircle, Search, RefreshCw,
+    ShieldCheck, AlertTriangle, Tag, History,
+    X, Layers, TrendingDown
 } from 'lucide-react'
 import {
-    SampleProductItem, SampleTxItem, SampleInventoryStats,
+    SampleProductItem, SampleTransactionItem, SampleInventoryStats,
     getSampleProducts, getSampleTransactions, getSampleInventoryStats,
     createSampleProduct, createSampleTransaction
 } from './actions-sample'
 import { formatVND, formatDate } from '@/lib/utils'
 
 const ORIGIN_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    CHINH_NGACH: { label: 'Chính Ngạch', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-    TIEU_NGACH: { label: 'Tiểu Ngạch / Xách Tay', color: '#D97706', bg: '#FEF3C7', border: '#FDE68A' },
+    FORMAL: { label: 'Chính Ngạch', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
+    INFORMAL: { label: 'Tiểu Ngạch / Xách Tay', color: '#D97706', bg: '#FEF3C7', border: '#FDE68A' },
 }
 
 const REASON_CFG: Record<string, string> = {
@@ -32,12 +32,12 @@ export function SampleInventoryTab() {
     const [loading, setLoading] = useState(true)
 
     const [products, setProducts] = useState<SampleProductItem[]>([])
-    const [transactions, setTransactions] = useState<SampleTxItem[]>([])
+    const [transactions, setTransactions] = useState<SampleTransactionItem[]>([])
     const [stats, setStats] = useState<SampleInventoryStats | null>(null)
 
     // Filter states
     const [search, setSearch] = useState('')
-    const [originFilter, setOriginFilter] = useState<'ALL' | 'CHINH_NGACH' | 'TIEU_NGACH'>('ALL')
+    const [originFilter, setOriginFilter] = useState<'ALL' | 'FORMAL' | 'INFORMAL'>('ALL')
     const [hasSkuFilter, setHasSkuFilter] = useState<'ALL' | 'WITH_SKU' | 'NO_SKU'>('ALL')
 
     // Modal states
@@ -48,7 +48,7 @@ export function SampleInventoryTab() {
     // Add Form states
     const [formName, setFormName] = useState('')
     const [formSku, setFormSku] = useState('')
-    const [formOrigin, setFormOrigin] = useState<'CHINH_NGACH' | 'TIEU_NGACH'>('CHINH_NGACH')
+    const [formOrigin, setFormOrigin] = useState<'FORMAL' | 'INFORMAL'>('FORMAL')
     const [formEstCost, setFormEstCost] = useState<number | string>('')
     const [formInitialQty, setFormInitialQty] = useState<number | string>(1)
     const [formNotes, setFormNotes] = useState('')
@@ -72,7 +72,9 @@ export function SampleInventoryTab() {
                     originType: originFilter !== 'ALL' ? originFilter : undefined,
                     hasSku: hasSkuFilter === 'WITH_SKU' ? true : hasSkuFilter === 'NO_SKU' ? false : undefined,
                 }),
-                getSampleTransactions({ limit: 100 }),
+                getSampleTransactions({
+                    search: search || undefined,
+                }),
                 getSampleInventoryStats(),
             ])
             setProducts(prods)
@@ -94,10 +96,10 @@ export function SampleInventoryTab() {
         setSubmittingAdd(true)
         try {
             await createSampleProduct({
-                name: formName.trim(),
+                productName: formName.trim(),
                 skuCode: formSku.trim() || undefined,
                 originType: formOrigin,
-                estimatedCost: formEstCost ? Number(formEstCost) : undefined,
+                estimatedValue: formEstCost ? Number(formEstCost) : undefined,
                 initialQty: Number(formInitialQty) || 0,
                 notes: formNotes.trim() || undefined,
             })
@@ -114,7 +116,7 @@ export function SampleInventoryTab() {
     const resetAddForm = () => {
         setFormName('')
         setFormSku('')
-        setFormOrigin('CHINH_NGACH')
+        setFormOrigin('FORMAL')
         setFormEstCost('')
         setFormInitialQty(1)
         setFormNotes('')
@@ -168,9 +170,7 @@ export function SampleInventoryTab() {
 
     return (
         <div className="space-y-5">
-            {/* ═════════════════════════════════════════════════════ */}
-            {/* TOP HEADER & ACTION BAR (Light Theme)                */}
-            {/* ═════════════════════════════════════════════════════ */}
+            {/* TOP HEADER & ACTION BAR */}
             <div className="p-4 sm:p-5 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2.5">
@@ -216,8 +216,8 @@ export function SampleInventoryTab() {
                                 <span>Chính Ngạch</span>
                                 <ShieldCheck size={14} className="text-emerald-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-emerald-600">{stats.chinhNgachQty.toLocaleString()} chai</p>
-                            <p className="text-[10px] text-slate-500 font-medium">{stats.chinhNgachCount} mặt hàng</p>
+                            <p className="text-xl font-extrabold font-mono text-emerald-600">{stats.totalFormalQty.toLocaleString()} chai</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Hàng mẫu chính ngạch</p>
                         </div>
 
                         <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
@@ -225,8 +225,8 @@ export function SampleInventoryTab() {
                                 <span>Tiểu Ngạch / Xách Tay</span>
                                 <AlertTriangle size={14} className="text-amber-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-amber-600">{stats.tieuNgachQty.toLocaleString()} chai</p>
-                            <p className="text-[10px] text-slate-500 font-medium">{stats.tieuNgachCount} mặt hàng</p>
+                            <p className="text-xl font-extrabold font-mono text-amber-600">{stats.totalInformalQty.toLocaleString()} chai</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Hàng mẫu tiểu ngạch</p>
                         </div>
 
                         <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
@@ -234,7 +234,7 @@ export function SampleInventoryTab() {
                                 <span>Giá Trị Ước Tính</span>
                                 <Tag size={14} className="text-teal-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-teal-600">{formatVND(stats.totalEstValue)}</p>
+                            <p className="text-xl font-extrabold font-mono text-teal-600">{formatVND(stats.totalEstimatedValue)}</p>
                             <p className="text-[10px] text-slate-500 font-medium">Tổng giá vốn ước tính</p>
                         </div>
 
@@ -243,7 +243,7 @@ export function SampleInventoryTab() {
                                 <span>Xuất Tháng Này</span>
                                 <TrendingDown size={14} className="text-rose-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-rose-600">-{stats.outboundThisMonth.toLocaleString()} chai</p>
+                            <p className="text-xl font-extrabold font-mono text-rose-600">-{stats.monthlyOutboundQty.toLocaleString()} chai</p>
                             <p className="text-[10px] text-slate-500 font-medium">Thử rượu & quà tặng</p>
                         </div>
                     </div>
@@ -283,8 +283,8 @@ export function SampleInventoryTab() {
 
                         <select value={originFilter} onChange={e => setOriginFilter(e.target.value as any)} className={`w-36 ${inputCls}`}>
                             <option value="ALL">Tất cả Nguồn</option>
-                            <option value="CHINH_NGACH">Chính Ngạch</option>
-                            <option value="TIEU_NGACH">Tiểu Ngạch</option>
+                            <option value="FORMAL">Chính Ngạch</option>
+                            <option value="INFORMAL">Tiểu Ngạch</option>
                         </select>
 
                         <select value={hasSkuFilter} onChange={e => setHasSkuFilter(e.target.value as any)} className={`w-36 ${inputCls}`}>
@@ -301,9 +301,7 @@ export function SampleInventoryTab() {
                 )}
             </div>
 
-            {/* ═════════════════════════════════════════════════════ */}
-            {/* TAB 1: DANH SÁCH HÀNG MẪU (ITEMS)                     */}
-            {/* ═════════════════════════════════════════════════════ */}
+            {/* TAB 1: DANH SÁCH HÀNG MẪU (ITEMS) */}
             {tab === 'ITEMS' && (
                 <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
                     {loading ? (
@@ -321,7 +319,7 @@ export function SampleInventoryTab() {
                             <table className="w-full text-left border-collapse min-w-[800px]">
                                 <thead>
                                     <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Mã SKU</th>
+                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Mã Mã Mẫu / SKU</th>
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Tên Sản Phẩm Mẫu</th>
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">Nguồn Ngạch</th>
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right">Tồn Kho Hiện Tại</th>
@@ -332,21 +330,17 @@ export function SampleInventoryTab() {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {products.map(p => {
-                                        const orig = ORIGIN_CFG[p.originType] || ORIGIN_CFG.CHINH_NGACH
+                                        const orig = ORIGIN_CFG[p.originType] || ORIGIN_CFG.FORMAL
                                         return (
                                             <tr key={p.id} className="transition-colors hover:bg-slate-50">
                                                 <td className="px-3.5 py-3">
-                                                    {p.skuCode ? (
-                                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                            {p.skuCode}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] italic text-slate-400 font-medium">Không có SKU</span>
-                                                    )}
+                                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        {p.sampleCode || p.skuCode || 'N/A'}
+                                                    </span>
                                                 </td>
                                                 <td className="px-3.5 py-3">
                                                     <div>
-                                                        <p className="text-xs font-bold text-slate-900">{p.name}</p>
+                                                        <p className="text-xs font-bold text-slate-900">{p.productName}</p>
                                                         {p.notes && <p className="text-[10px] text-slate-400">{p.notes}</p>}
                                                     </div>
                                                 </td>
@@ -357,19 +351,19 @@ export function SampleInventoryTab() {
                                                     </span>
                                                 </td>
                                                 <td className="px-3.5 py-3 text-right">
-                                                    <span className={`text-xs font-extrabold font-mono ${p.currentQty > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                        {p.currentQty.toLocaleString()} chai
+                                                    <span className={`text-xs font-extrabold font-mono ${p.qtyOnHand > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                        {p.qtyOnHand.toLocaleString()} chai
                                                     </span>
                                                 </td>
                                                 <td className="px-3.5 py-3 text-right text-xs font-mono text-slate-600 font-medium">
-                                                    {p.estimatedCost ? formatVND(p.estimatedCost) : '—'}
+                                                    {p.estimatedValue ? formatVND(p.estimatedValue) : '—'}
                                                 </td>
                                                 <td className="px-3.5 py-3 text-right text-xs font-bold font-mono text-teal-700">
-                                                    {p.estimatedCost ? formatVND(p.currentQty * p.estimatedCost) : '—'}
+                                                    {p.estimatedValue ? formatVND(p.qtyOnHand * p.estimatedValue) : '—'}
                                                 </td>
                                                 <td className="px-3.5 py-3 text-center">
                                                     <button onClick={() => openOutboundQuick(p)}
-                                                        disabled={p.currentQty <= 0}
+                                                        disabled={p.qtyOnHand <= 0}
                                                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold transition-all bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white cursor-pointer disabled:opacity-40">
                                                         <ArrowUpCircle size={12} /> Xuất Mẫu
                                                     </button>
@@ -384,9 +378,7 @@ export function SampleInventoryTab() {
                 </div>
             )}
 
-            {/* ═════════════════════════════════════════════════════ */}
-            {/* TAB 2: NHẬT KÝ GIAO DỊCH (TX_LOG)                    */}
-            {/* ═════════════════════════════════════════════════════ */}
+            {/* TAB 2: NHẬT KÝ GIAO DỊCH (TX_LOG) */}
             {tab === 'TX_LOG' && (
                 <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm">
                     {transactions.length === 0 ? (
@@ -400,6 +392,7 @@ export function SampleInventoryTab() {
                                 <thead>
                                     <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Ngày GD</th>
+                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Số CT</th>
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Loại GD</th>
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Sản Phẩm Mẫu</th>
                                         <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">Lý Do Xuất</th>
@@ -411,7 +404,8 @@ export function SampleInventoryTab() {
                                 <tbody className="divide-y divide-slate-100">
                                     {transactions.map(tx => (
                                         <tr key={tx.id} className="transition-colors hover:bg-slate-50">
-                                            <td className="px-3.5 py-3 text-xs text-slate-600 font-medium">{formatDate(tx.createdAt)}</td>
+                                            <td className="px-3.5 py-3 text-xs text-slate-600 font-medium">{formatDate(tx.performedAt)}</td>
+                                            <td className="px-3.5 py-3 text-xs font-mono font-bold text-emerald-700">{tx.docNo}</td>
                                             <td className="px-3.5 py-3">
                                                 {tx.type === 'INBOUND' ? (
                                                     <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -425,10 +419,8 @@ export function SampleInventoryTab() {
                                             </td>
                                             <td className="px-3.5 py-3">
                                                 <div>
-                                                    <p className="text-xs font-bold text-slate-900">{tx.sampleProduct.name}</p>
-                                                    {tx.sampleProduct.skuCode && (
-                                                        <span className="text-[10px] font-mono text-emerald-700 font-bold">{tx.sampleProduct.skuCode}</span>
-                                                    )}
+                                                    <p className="text-xs font-bold text-slate-900">{tx.sampleProductName}</p>
+                                                    <span className="text-[10px] font-mono text-emerald-700 font-bold">{tx.sampleProductCode}</span>
                                                 </div>
                                             </td>
                                             <td className="px-3.5 py-3 text-center text-xs text-slate-600 font-medium">
@@ -454,9 +446,7 @@ export function SampleInventoryTab() {
                 </div>
             )}
 
-            {/* ═════════════════════════════════════════════════════ */}
-            {/* MODAL 1: KHAI BÁO / NHẬP HÀNG MẪU NGUYÊN LÔ           */}
-            {/* ═════════════════════════════════════════════════════ */}
+            {/* MODAL 1: KHAI BÁO / NHẬP HÀNG MẪU NGUYÊN LÔ */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
                     <div className="w-full max-w-lg p-6 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-xl">
@@ -494,8 +484,8 @@ export function SampleInventoryTab() {
                                 <div>
                                     <label className="text-xs font-bold block mb-1 text-slate-700">Nguồn Ngạch *</label>
                                     <select value={formOrigin} onChange={e => setFormOrigin(e.target.value as any)} className={inputCls}>
-                                        <option value="CHINH_NGACH">Chính Ngạch</option>
-                                        <option value="TIEU_NGACH">Tiểu Ngạch / Xách Tay</option>
+                                        <option value="FORMAL">Chính Ngạch</option>
+                                        <option value="INFORMAL">Tiểu Ngạch / Xách Tay</option>
                                     </select>
                                 </div>
                             </div>
@@ -550,9 +540,7 @@ export function SampleInventoryTab() {
                 </div>
             )}
 
-            {/* ═════════════════════════════════════════════════════ */}
-            {/* MODAL 2: XUẤT SỬ DỤNG HÀNG MẪU                       */}
-            {/* ═════════════════════════════════════════════════════ */}
+            {/* MODAL 2: XUẤT SỬ DỤNG HÀNG MẪU */}
             {showOutboundModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
                     <div className="w-full max-w-lg p-6 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-xl">
@@ -571,8 +559,8 @@ export function SampleInventoryTab() {
                                 {selectedProductForOutbound ? (
                                     <div className="p-3 rounded-xl flex items-center justify-between bg-slate-50 border border-slate-200">
                                         <div>
-                                            <p className="text-xs font-bold text-slate-900">{selectedProductForOutbound.name}</p>
-                                            <p className="text-[10px] text-slate-500 font-medium">Tồn khả dụng: <span className="font-bold text-emerald-600">{selectedProductForOutbound.currentQty} chai</span></p>
+                                            <p className="text-xs font-bold text-slate-900">{selectedProductForOutbound.productName}</p>
+                                            <p className="text-[10px] text-slate-500 font-medium">Tồn khả dụng: <span className="font-bold text-emerald-600">{selectedProductForOutbound.qtyOnHand} chai</span></p>
                                         </div>
                                         <button type="button" onClick={() => setSelectedProductForOutbound(null)} className="text-xs text-rose-600 hover:underline">
                                             Chọn lại
@@ -586,8 +574,8 @@ export function SampleInventoryTab() {
                                         className={inputCls}>
                                         <option value="">-- Chọn mặt hàng mẫu --</option>
                                         {products.map(p => (
-                                            <option key={p.id} value={p.id} disabled={p.currentQty <= 0}>
-                                                {p.name} {p.skuCode ? `(${p.skuCode})` : ''} - Tồn: {p.currentQty} chai
+                                            <option key={p.id} value={p.id} disabled={p.qtyOnHand <= 0}>
+                                                {p.productName} {p.sampleCode ? `(${p.sampleCode})` : ''} - Tồn: {p.qtyOnHand} chai
                                             </option>
                                         ))}
                                     </select>
