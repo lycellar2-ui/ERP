@@ -1962,7 +1962,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                     </button>
                                                 </>
                                             )}
-                                            {row.status === 'DRAFT' && (
+                                            {row.status === 'DRAFT' && canCreateSO && (
                                                 <>
                                                     <button onClick={() => handleConfirm(row.id)} disabled={actionLoading === row.id}
                                                         className="px-1.5 py-1 text-[10px] font-bold"
