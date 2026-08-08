@@ -6,7 +6,7 @@ import { compressImage } from '@/lib/compress-image'
 import { uploadToImgBBDirect } from '@/lib/imgbb-client'
 import { toast } from 'sonner'
 import {
-    ProductInput, createProduct, updateProduct, getProducers, getRegions, getSuppliers,
+    ProductInput, createProduct, updateProduct, getProducers, getAppellations, getSuppliers,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
     saveProductMediaUrl,
     getProductAwards, addProductAward, deleteProductAward,
@@ -150,7 +150,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
     const [saving, setSaving] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [producers, setProducers] = useState<{ id: string; name: string }[]>([])
-    const [regions, setRegions] = useState<{ id: string; name: string; country: string }[]>([])
+    const [appellations, setAppellations] = useState<{ id: string; name: string; regionId: string; region?: { country: string; name: string } | null }[]>([])
     const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([])
 
     // Media state
@@ -228,14 +228,14 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
     useEffect(() => {
         if (!open) return
 
-        if (producers.length === 0 || regions.length === 0 || suppliers.length === 0) {
-            Promise.all([getProducers(), getRegions(), getSuppliers()]).then(([p, r, s]) => {
+        if (producers.length === 0 || appellations.length === 0 || suppliers.length === 0) {
+            Promise.all([getProducers(), getAppellations(), getSuppliers()]).then(([p, a, s]) => {
                 setProducers(p)
-                setRegions(r)
+                setAppellations(a as any)
                 setSuppliers(s)
             })
         }
-    }, [open, producers.length, regions.length, suppliers.length])
+    }, [open, producers.length, appellations.length, suppliers.length])
 
     // Fetch full product edit details in background
     useEffect(() => {
@@ -577,10 +577,10 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                         <Field label="Vùng / Appellation">
                             <Select value={form.regionId ?? ''} onChange={e => set('regionId', e.target.value || null)}>
-                                <option value="">— Chọn vùng —</option>
-                                {regions.map(r => (
-                                    <option key={r.id} value={r.id}>
-                                        {COUNTRY_FLAGS_MINI[r.country] ?? ''} {r.name}
+                                <option value="">— Chọn vùng / appellation —</option>
+                                {appellations.map(a => (
+                                    <option key={a.id} value={a.id}>
+                                        {COUNTRY_FLAGS_MINI[a.region?.country ?? ''] ?? ''} {a.name}{a.region?.name ? ` (${a.region.name})` : ''}
                                     </option>
                                 ))}
                             </Select>

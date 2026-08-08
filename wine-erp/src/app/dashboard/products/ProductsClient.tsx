@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { Search, Plus, Wine, Package, AlertCircle, TrendingUp, Upload, Download, Trash2, SlidersHorizontal } from 'lucide-react'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getRegions, getSuppliers } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getAppellations, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
 import dynamic from 'next/dynamic'
 const ProductDrawer = dynamic(() => import('./ProductDrawer').then(m => m.ProductDrawer), { loading: () => null, ssr: false })
@@ -116,7 +116,7 @@ export function ProductsClient({
 
     // Warm reference data cache for drawers
     useEffect(() => {
-        getRegions().catch(() => [])
+        getAppellations().catch(() => [])
         getSuppliers().catch(() => [])
     }, [])
 

@@ -32,6 +32,7 @@
 23. [BUG-023: Build Fail — TypeScript Type Mismatch on Nested Prisma Connect](#bug-023-build-fail--typescript-type-mismatch-on-nested-prisma-connect)
 24. [BUG-033: Lỗi Trùng Mã Đơn Hàng (soNo Unique Constraint Failed) Khi Tạo Đơn Bán Hàng](#bug-033-lỗi-trùng-mã-đơn-hàng-sono-unique-constraint-failed-khi-tạo-đơn-bán-hàng)
 25. [BUG-034: Lỗi Chữ Tàng Hình / Trắng Trên Nền Trắng Thẻ Xuất Kho (DO Cards)](#bug-034-lỗi-chữ-tàng-hình--trắng-trên-nền-trắng-thẻ-xuất-kho-do-cards)
+26. [BUG-035: Lỗi Foreign Key Constraint (products_appellationId_fkey) Khi Tạo Mới Sản Phẩm](#bug-035-lỗi-foreign-key-constraint-products_appellationid_fkey-khi-tạo-mới-sản-phẩm)
 
 ---
 
@@ -1432,6 +1433,35 @@ if ('salesRepId' in dataToUpdate) {
 ### Bài học
 
 > ⚠️ **RULE 56: Khi thiết kế component trong theme chuyển đổi, tất cả các ô container và màu chữ bên trong BẮT BUỘC phải đi cặp màu tương phản chuẩn (Dark Slate `#0F172A` trên nền sáng `#F8FAFC`).**
+
+---
+
+## BUG-035: Lỗi Foreign Key Constraint (`products_appellationId_fkey`) Khi Tạo Mới Sản Phẩm
+
+**Ngày:** 2026-08-08  
+**Severity:** 🔴 Critical — Không thể tạo sản phẩm mới khi chọn Vùng/Appellation trên giao diện web.
+
+### Triệu chứng
+- Khi tạo sản phẩm mới từ Drawer "Thêm Sản Phẩm Mới" (`/dashboard/products`), toast báo lỗi:  
+  `Lỗi: Invalid prisma.product.create() invocation: Foreign key constraint violated on the constraint: 'products_appellationId_fkey'`
+
+### Nguyên nhân gốc rễ
+1. Trong CSDL Prisma, `WineRegion` đại diện cho Vùng rượu (Bordeaux, Burgundy, Tuscany...), còn `Appellation` đại diện cho vùng chỉ dẫn địa lý (Pauillac AOC, Margaux AOC, Pomerol AOC...).
+2. Bảng `products` có khóa ngoại `appellationId` trỏ trực tiếp đến bảng `appellations.id`.
+3. Tuy nhiên, ở giao diện `ProductDrawer.tsx`, component lại gọi hàm `getRegions()` (`prisma.wineRegion.findMany`) để đổ dữ liệu vào ô chọn "Vùng / Appellation".
+4. Khi người dùng chọn một vùng (ví dụ "Bordeaux"), form gửi `form.regionId` (ví dụ `region-bordeaux` — ID của `WineRegion`) dưới dạng `appellationId`.
+5. PostgreSQL kiểm tra ràng buộc `products_appellationId_fkey` và từ chối vì `region-bordeaux` thuộc bảng `wine_regions`, không tồn tại trong bảng `appellations`.
+
+### Cách fix
+1. Cập nhật `getAppellations` trong `actions.ts` để include tên và quốc gia của `region` đi kèm (`region: { select: { country: true, name: true } }`).
+2. Sửa `ProductDrawer.tsx` và `ProductsClient.tsx` chuyển từ dùng `getRegions()` sang `getAppellations()`.
+3. Cập nhật thẻ `<Select>` ô chọn Vùng/Appellation hiển thị danh sách Appellation kèm tên Vùng (ví dụ: `Pauillac AOC (Bordeaux)`).
+4. Thêm xử lý mã lỗi `P2003` trong Server Action `createProduct` / `updateProduct` để trả về thông báo lỗi thân thiện nếu truyền sai ID tham chiếu.
+
+### Bài học
+
+> ⚠️ **RULE 57: Phải luôn kiểm tra kỹ định nghĩa quan hệ Schema (FK constraint). Nếu khóa ngoại trỏ vào `Appellation`, ô select bắt buộc phải nạp danh sách `Appellation` (chứa FK `Appellation.id`), không được nhầm lẫn với bảng cha `WineRegion`.**
+
 
 
 

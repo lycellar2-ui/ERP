@@ -447,6 +447,9 @@ export async function createProduct(input: ProductInput) {
         if (err?.code === 'P2002') {
             return { success: false, error: 'SKU đã tồn tại. Vui lòng chọn mã SKU khác.' }
         }
+        if (err?.code === 'P2003') {
+            return { success: false, error: 'Vùng / Appellation hoặc Nhà sản xuất không tồn tại trong hệ thống.' }
+        }
         return { success: false, error: err.message ?? 'Lỗi tạo sản phẩm không xác định' }
     }
 }
@@ -675,7 +678,12 @@ export async function getAppellations(regionId?: string) {
     return cached(`products:appellations:${regionId ?? 'all'}`, async () => {
         return prisma.appellation.findMany({
             where: regionId ? { regionId } : undefined,
-            select: { id: true, name: true, regionId: true },
+            select: {
+                id: true,
+                name: true,
+                regionId: true,
+                region: { select: { country: true, name: true } },
+            },
             orderBy: { name: 'asc' },
         })
     }, 120_000) // 120s — reference data
