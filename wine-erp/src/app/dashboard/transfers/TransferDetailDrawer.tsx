@@ -150,17 +150,17 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
             <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)', backdropFilter: 'blur(4px)' }}>
                 <div className="bg-white w-full max-w-3xl h-full flex flex-col shadow-2xl border-l border-slate-200 animate-in slide-in-from-right duration-200">
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                    <div className="px-4 sm:px-6 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
-                                <ArrowRightLeft size={20} />
+                            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
+                                <ArrowRightLeft size={18} />
                             </div>
                             <div>
-                                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
                                     PHIẾU CHUYỂN KHO: <span className="font-mono text-amber-700">{detail?.transferNo || '...'}</span>
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
+                                    <span className="text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
                                         style={{ color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>
                                         {st.label}
                                     </span>
@@ -188,7 +188,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-500">
                                 <Loader2 size={32} className="animate-spin text-amber-600" />
@@ -197,9 +197,9 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                         ) : detail ? (
                             <>
                                 {/* Status Timeline Bar */}
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                                <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                                     <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Tiến Trình Phiếu Chuyển Kho</h4>
-                                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                                         <div className={`p-2 rounded-xl border font-bold ${['PENDING_ACCOUNTING', 'CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                                             1. Lập Phiếu
                                         </div>
@@ -217,7 +217,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                 {/* Dynamic Action Box Based on Status & User Role */}
                                 {detail.status === 'DRAFT' && (
-                                    <div className="p-4 rounded-2xl bg-slate-100 border border-slate-300 flex items-center justify-between">
+                                    <div className="p-4 rounded-2xl bg-slate-100 border border-slate-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-extrabold text-slate-900">Phiếu đang ở trạng thái Nháp</p>
                                             <p className="text-[11px] text-slate-500">Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt</p>
@@ -225,7 +225,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleSubmitDraft}
-                                            className="px-4 py-2 rounded-xl bg-amber-500 text-white font-extrabold text-xs hover:bg-amber-600 transition-colors shadow-xs cursor-pointer"
+                                            className="px-4 py-2 rounded-xl bg-amber-500 text-white font-extrabold text-xs hover:bg-amber-600 transition-colors shadow-xs cursor-pointer active:scale-95"
                                         >
                                             Gửi Kế Toán Duyệt
                                         </button>
@@ -234,7 +234,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                 {detail.status === 'PENDING_ACCOUNTING' && (
                                     <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-300 space-y-3">
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                             <div>
                                                 <p className="text-xs font-extrabold text-amber-900 flex items-center gap-1.5">
                                                     <Clock size={16} className="text-amber-600" /> Cần Kế Toán Phê Duyệt Phiếu Chuyển Kho
@@ -244,10 +244,10 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 </p>
                                             </div>
                                             {isAccountingOrAdmin && !showRejectInput && (
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 justify-end">
                                                     <button
                                                         onClick={() => setShowRejectInput(true)}
-                                                        className="px-3 py-1.5 rounded-xl border border-rose-300 bg-white text-rose-700 font-bold text-xs hover:bg-rose-50 cursor-pointer"
+                                                        className="px-3 py-2 rounded-xl border border-rose-300 bg-white text-rose-700 font-bold text-xs hover:bg-rose-50 cursor-pointer"
                                                     >
                                                         Từ Chối
                                                     </button>
@@ -281,7 +281,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'CONFIRMED' && (
-                                    <div className="p-4 rounded-2xl bg-sky-50 border border-sky-300 flex items-center justify-between">
+                                    <div className="p-4 rounded-2xl bg-sky-50 border border-sky-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-extrabold text-sky-900 flex items-center gap-1.5">
                                                 <CheckCircle2 size={16} className="text-sky-600" /> Kế toán đã phê duyệt — Sẵn sàng xuất kho
@@ -293,7 +293,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleDispatch}
-                                            className="px-4 py-2 rounded-xl bg-sky-600 text-white font-extrabold text-xs hover:bg-sky-700 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                            className="px-4 py-2.5 rounded-xl bg-sky-600 text-white font-extrabold text-xs hover:bg-sky-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                         >
                                             <Truck size={15} /> Xuất Kho & Vận Chuyển
                                         </button>
@@ -301,7 +301,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'IN_TRANSIT' && (
-                                    <div className="p-4 rounded-2xl bg-blue-50 border border-blue-300 flex items-center justify-between">
+                                    <div className="p-4 rounded-2xl bg-blue-50 border border-blue-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-extrabold text-blue-900 flex items-center gap-1.5">
                                                 <Truck size={16} className="text-blue-600" /> Hàng đang vận chuyển trên đường
@@ -313,7 +313,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleReceive}
-                                            className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                         >
                                             <PackageCheck size={15} /> Xác Nhận Đã Nhận Hàng
                                         </button>
@@ -321,15 +321,15 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {/* Overview Metadata Table */}
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                     <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                                         <p className="text-[10px] font-bold text-slate-500 uppercase">🔴 Kho Xuất (Kho Đi)</p>
-                                        <p className="text-sm font-extrabold text-slate-900">{detail.fromWarehouse}</p>
+                                        <p className="text-xs sm:text-sm font-extrabold text-slate-900">{detail.fromWarehouse}</p>
                                     </div>
 
                                     <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                                         <p className="text-[10px] font-bold text-slate-500 uppercase">🟢 Kho Nhận (Kho Đến)</p>
-                                        <p className="text-sm font-extrabold text-slate-900">{detail.toWarehouse}</p>
+                                        <p className="text-xs sm:text-sm font-extrabold text-slate-900">{detail.toWarehouse}</p>
                                     </div>
 
                                     <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
@@ -355,16 +355,16 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                 {/* Products Table */}
                                 <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                         <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
                                             🍷 Chi Tiết Sản Phẩm Chuyển Kho ({detail.lines.length} sản phẩm)
                                         </h4>
-                                        <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                                        <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 inline-block w-fit">
                                             Tổng: {detail.totalQty} chai • {formatVND(detail.totalValue)}
                                         </span>
                                     </div>
 
-                                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                                    <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-2xs">
                                         <table className="w-full text-left text-xs border-collapse">
                                             <thead>
                                                 <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
@@ -413,16 +413,16 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <div className="px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
                         <button
                             onClick={() => setPrintModalOpen(true)}
-                            className="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                            className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                         >
                             <Printer size={15} /> In Phiếu Giấy A4
                         </button>
                         <button
                             onClick={onClose}
-                            className="px-5 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                            className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
                         >
                             Đóng
                         </button>
