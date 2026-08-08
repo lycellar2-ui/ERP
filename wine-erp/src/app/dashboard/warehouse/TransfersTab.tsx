@@ -1,36 +1,30 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowRightLeft, Plus, X, Save, ChevronRight, Eye, Ban, Loader2, RefreshCw } from 'lucide-react'
+import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Clock, CheckCircle2, Truck, PackageCheck, FileText, Ban } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-    type TransferOrderRow,
-    getTransferOrders, createTransferOrder, advanceTransferStatus, getTransferOptions,
-    cancelTransferOrder, getTransferDetail,
-} from '../transfers/actions'
+import { type TransferOrderRow, getTransferOrders, cancelTransferOrder } from '../transfers/actions'
+import { CreateTransferDrawer } from '../transfers/CreateTransferDrawer'
+import { TransferDetailDrawer } from '../transfers/TransferDetailDrawer'
 import { formatDate } from '@/lib/utils'
 
-type WarehouseOption = { id: string; code: string; name: string }
-type ProductOption = { id: string; skuCode: string; productName: string }
-type TODetail = Awaited<ReturnType<typeof getTransferDetail>>
-
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string; next?: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9', next: '→ Xác Nhận' },
-    CONFIRMED: { label: 'Đã XN', color: '#B47816', bg: 'rgba(212,168,83,0.15)', next: '→ Xuất Kho' },
-    IN_TRANSIT: { label: 'Đang Chuyển', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', next: '→ Nhận Kho' },
-    RECEIVED: { label: 'Đã Nhận', color: '#16A34A', bg: 'rgba(22,163,74,0.12)' },
-    CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)' },
+const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
+    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(212,168,83,0.15)', border: '#F59E0B' },
+    CONFIRMED: { label: 'Kế Toán Đã Duyệt', color: '#0284C7', bg: 'rgba(2,132,199,0.12)', border: '#38BDF8' },
+    IN_TRANSIT: { label: 'Đang Chuyển', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', border: '#60A5FA' },
+    RECEIVED: { label: 'Đã Nhận Hàng', color: '#16A34A', bg: 'rgba(22,163,74,0.12)', border: '#4ADE80' },
+    CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)', border: '#F87171' },
 }
 
 export function TransfersTab() {
     const [rows, setRows] = useState<TransferOrderRow[]>([])
     const [loading, setLoading] = useState(true)
     const [createOpen, setCreateOpen] = useState(false)
-    const [options, setOptions] = useState<{ warehouses: WarehouseOption[]; products: ProductOption[] }>({ warehouses: [], products: [] })
-    const [form, setForm] = useState({ fromWarehouseId: '', toWarehouseId: '', notes: '' })
-    const [lines, setLines] = useState<{ productId: string; qtyTransferred: number }[]>([])
-    const [detailData, setDetailData] = useState<TODetail>(null)
-    const [detailLoading, setDetailLoading] = useState(false)
+    const [selectedId, setSelectedId] = useState<string | null>(null)
+
+    const [statusTab, setStatusTab] = useState<string>('ALL')
+    const [search, setSearch] = useState('')
 
     const reload = async () => {
         setLoading(true)
@@ -38,7 +32,7 @@ export function TransfersTab() {
             const data = await getTransferOrders()
             setRows(data)
         } catch (err: any) {
-            toast.error('Lỗi tải danh sách chuyển kho: ' + err.message)
+            toast.error('Lỗi tải danh sách phiếu chuyển kho: ' + err.message)
         } finally {
             setLoading(false)
         }
@@ -46,330 +40,209 @@ export function TransfersTab() {
 
     useEffect(() => { reload() }, [])
 
-    const openCreate = async () => {
+    const handleCancel = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm('Bạn có chắc chắn muốn hủy Phiếu Chuyển Kho này?')) return
         try {
-            const opts = await getTransferOptions()
-            setOptions(opts)
-            setCreateOpen(true)
+            const res = await cancelTransferOrder(id)
+            if (!res.success) throw new Error(res.error)
+            toast.success('Đã hủy phiếu chuyển kho thành công')
+            reload()
         } catch (err: any) {
-            toast.error('Lỗi tải danh mục: ' + err.message)
+            toast.error('Lỗi hủy phiếu: ' + err.message)
         }
     }
 
-    const addLine = () => setLines(prev => [...prev, { productId: '', qtyTransferred: 0 }])
+    const filteredRows = rows.filter(r => {
+        const matchesStatus = statusTab === 'ALL' || r.status === statusTab
+        const matchesSearch = !search ||
+            r.transferNo.toLowerCase().includes(search.toLowerCase()) ||
+            r.fromWarehouse.toLowerCase().includes(search.toLowerCase()) ||
+            r.toWarehouse.toLowerCase().includes(search.toLowerCase()) ||
+            r.requesterName.toLowerCase().includes(search.toLowerCase())
+        return matchesStatus && matchesSearch
+    })
 
-    const handleCreate = async () => {
-        const validLines = lines.filter(l => l.productId && l.qtyTransferred > 0)
-        if (!form.fromWarehouseId || !form.toWarehouseId || validLines.length === 0) {
-            toast.error('Vui lòng chọn đủ Kho xuất, Kho nhận và ít nhất 1 sản phẩm')
-            return
-        }
-        toast.promise(
-            createTransferOrder({ ...form, lines: validLines }).then(async (res: { success: boolean; error?: string }) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi tạo lệnh chuyển kho')
-                setCreateOpen(false)
-                setForm({ fromWarehouseId: '', toWarehouseId: '', notes: '' })
-                setLines([])
-                reload()
-                return res
-            }),
-            { loading: 'Đang tạo lệnh chuyển kho...', success: '✅ Đã tạo lệnh chuyển kho thành công!', error: (err: Error) => `Lỗi: ${err.message}` }
-        )
+    const statusCounts = {
+        ALL: rows.length,
+        PENDING_ACCOUNTING: rows.filter(r => r.status === 'PENDING_ACCOUNTING').length,
+        CONFIRMED: rows.filter(r => r.status === 'CONFIRMED').length,
+        IN_TRANSIT: rows.filter(r => r.status === 'IN_TRANSIT').length,
+        RECEIVED: rows.filter(r => r.status === 'RECEIVED').length,
     }
-
-    const handleAdvance = async (id: string) => {
-        toast.promise(
-            advanceTransferStatus(id).then(async (res: { success: boolean; error?: string }) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi cập nhật')
-                reload()
-                return res
-            }),
-            { loading: 'Đang cập nhật trạng thái...', success: '✅ Đã chuyển trạng thái!', error: (err: Error) => `Lỗi: ${err.message}` }
-        )
-    }
-
-    const handleCancel = async (id: string) => {
-        if (!confirm('Hủy lệnh chuyển kho này?')) return
-        toast.promise(
-            cancelTransferOrder(id).then(async (res: { success: boolean; error?: string }) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi hủy')
-                reload()
-                return res
-            }),
-            { loading: 'Đang hủy...', success: 'Đã hủy lệnh chuyển kho', error: (err: Error) => `Lỗi: ${err.message}` }
-        )
-    }
-
-    const openDetail = async (id: string) => {
-        setDetailLoading(true)
-        try {
-            const data = await getTransferDetail(id)
-            setDetailData(data)
-        } catch (err: any) {
-            toast.error('Lỗi tải chi tiết: ' + err.message)
-        } finally {
-            setDetailLoading(false)
-        }
-    }
-
-    const inTransitCount = rows.filter(r => r.status === 'IN_TRANSIT').length
-    const completedCount = rows.filter(r => r.status === 'RECEIVED').length
 
     return (
         <div className="space-y-4">
-            {/* Top Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl shadow-sm"
-                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <div>
-                    <h3 className="text-base font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                        <ArrowRightLeft size={18} style={{ color: '#D4A853' }} /> Chuyển Kho Nội Bộ (Transfer Orders)
-                    </h3>
-                    <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
-                        Luân chuyển sản phẩm giữa các kho hàng & điểm lưu kho
-                    </p>
+            {/* Top Toolbar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
+                        <ArrowRightLeft size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                            Quản Lý Phiếu Chuyển Kho Nội Bộ
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                            Lập phiếu chuyển kho, duyệt Kế toán & in phiếu chứng từ A4 ký 4 bên
+                        </p>
+                    </div>
                 </div>
+
                 <div className="flex items-center gap-2">
-                    <button onClick={reload} className="p-2 rounded-lg hover:bg-slate-100 transition-colors" style={{ color: '#64748B' }} title="Làm mới">
+                    <button
+                        onClick={reload}
+                        className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                        title="Tải lại danh sách"
+                    >
                         <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                     </button>
-                    <button onClick={openCreate} className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg shadow-sm transition-all hover:brightness-105"
-                        style={{ background: '#D4A853', color: '#0A1926' }}>
-                        <Plus size={14} /> Tạo Lệnh Chuyển Kho
+
+                    <button
+                        onClick={() => setCreateOpen(true)}
+                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+                    >
+                        <Plus size={16} /> Lập Phiếu Chuyển Kho
                     </button>
                 </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                    { label: 'Tổng Số Lệnh', value: rows.length, accent: '#0F172A' },
-                    { label: 'Đang Vận Chuyển', value: inTransitCount, accent: '#2563EB' },
-                    { label: 'Đã Nhận Kho', value: completedCount, accent: '#16A34A' },
-                ].map(s => (
-                    <div key={s.label} className="p-3.5 rounded-xl shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
-                        <p className="text-lg font-bold font-mono mt-0.5" style={{ color: s.accent }}>{s.value}</p>
-                    </div>
-                ))}
+            {/* Filter Tabs & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                    {[
+                        { key: 'ALL', label: 'Tất Cả', count: statusCounts.ALL },
+                        { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING, badgeColor: 'bg-amber-500 text-white' },
+                        { key: 'CONFIRMED', label: 'Đã Duyệt', count: statusCounts.CONFIRMED },
+                        { key: 'IN_TRANSIT', label: 'Đang Chuyển', count: statusCounts.IN_TRANSIT },
+                        { key: 'RECEIVED', label: 'Hoàn Tất', count: statusCounts.RECEIVED },
+                    ].map(t => (
+                        <button
+                            key={t.key}
+                            onClick={() => setStatusTab(t.key)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                        >
+                            <span>{t.label}</span>
+                            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700')}`}>
+                                {t.count}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
+                    />
+                </div>
             </div>
 
-            {/* Table */}
-            <div className="rounded-xl overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            {/* List Table */}
+            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                {['Mã TO', 'Từ Kho', '→', 'Đến Kho', 'SP', 'Tổng SL', 'Trạng Thái', 'Ngày', ''].map(h => (
-                                    <th key={h} className="px-3.5 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                ))}
+                            <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
+                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">Mã Phiếu</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">🔴 Kho Xuất (Đi)</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">🟢 Kho Nhận (Đến)</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">Người Lập</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">Ngày Chuyển</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] text-center whitespace-nowrap">Số Mặt Hàng</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] text-center whitespace-nowrap">Tổng Chai</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] text-center whitespace-nowrap">Trạng Thái</th>
+                                <th className="p-3 font-extrabold uppercase text-[11px] text-right whitespace-nowrap">Thao Tác</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {loading ? (
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                            {filteredRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={9} className="text-center py-12">
-                                        <Loader2 size={20} className="animate-spin inline" style={{ color: '#D4A853' }} />
+                                    <td colSpan={9} className="p-12 text-center text-slate-400">
+                                        Không tìm thấy phiếu chuyển kho nào
                                     </td>
                                 </tr>
-                            ) : rows.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="text-center py-12 text-xs" style={{ color: '#64748B' }}>Chưa có lệnh chuyển kho nào</td>
-                                </tr>
-                            ) : rows.map((r: TransferOrderRow) => {
-                                const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
-                                return (
-                                    <tr key={r.id} className="transition-colors cursor-pointer hover:bg-slate-50"
-                                        style={{ borderBottom: '1px solid #F1F5F9' }}
-                                        onClick={() => openDetail(r.id)}>
-                                        <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#B47816' }}>{r.transferNo}</td>
-                                        <td className="px-3.5 py-3 text-xs font-bold" style={{ color: '#0F172A' }}>{r.fromWarehouse}</td>
-                                        <td className="px-3.5 py-3"><ArrowRightLeft size={12} className="text-[#94A3B8]" /></td>
-                                        <td className="px-3.5 py-3 text-xs font-bold" style={{ color: '#0F172A' }}>{r.toWarehouse}</td>
-                                        <td className="px-3.5 py-3 text-xs" style={{ color: '#475569' }}>{r.lineCount} loại</td>
-                                        <td className="px-3.5 py-3 text-xs font-bold font-mono" style={{ color: '#0F172A' }}>{r.totalQty.toLocaleString()}</td>
-                                        <td className="px-3.5 py-3">
-                                            <span className="text-[10px] px-2.5 py-0.5 rounded-md font-semibold" style={{ color: st.color, background: st.bg }}>{st.label}</span>
-                                        </td>
-                                        <td className="px-3.5 py-3 text-[11px]" style={{ color: '#64748B' }}>{formatDate(r.createdAt)}</td>
-                                        <td className="px-3.5 py-3" onClick={e => e.stopPropagation()}>
-                                            <div className="flex gap-1.5">
-                                                <button onClick={() => openDetail(r.id)} className="p-1.5 rounded-lg hover:bg-slate-100"
-                                                    style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }} title="Xem chi tiết">
-                                                    <Eye size={13} />
-                                                </button>
-                                                {st.next && (
-                                                    <button onClick={() => handleAdvance(r.id)} className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all hover:brightness-105"
-                                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
-                                                        {st.next} <ChevronRight size={12} />
+                            ) : (
+                                filteredRows.map(r => {
+                                    const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
+                                    return (
+                                        <tr
+                                            key={r.id}
+                                            onClick={() => setSelectedId(r.id)}
+                                            className="hover:bg-amber-50/40 transition-colors cursor-pointer"
+                                        >
+                                            <td className="p-3 font-mono font-extrabold text-amber-700 whitespace-nowrap">
+                                                {r.transferNo}
+                                            </td>
+                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
+                                                [{r.fromWarehouseCode}] {r.fromWarehouse}
+                                            </td>
+                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
+                                                [{r.toWarehouseCode}] {r.toWarehouse}
+                                            </td>
+                                            <td className="p-3 text-slate-800 font-medium whitespace-nowrap">
+                                                {r.requesterName}
+                                            </td>
+                                            <td className="p-3 font-mono text-slate-600 whitespace-nowrap">
+                                                {formatDate(r.transferDate)}
+                                            </td>
+                                            <td className="p-3 text-center font-mono font-bold text-slate-800 whitespace-nowrap">
+                                                {r.lineCount} mã
+                                            </td>
+                                            <td className="p-3 text-center font-mono font-extrabold text-emerald-700 whitespace-nowrap">
+                                                {r.totalQty.toLocaleString()} chai
+                                            </td>
+                                            <td className="p-3 text-center whitespace-nowrap">
+                                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap"
+                                                    style={{ color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>
+                                                    {st.label}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-right whitespace-nowrap">
+                                                <div className="flex items-center gap-1 justify-end">
+                                                    <button
+                                                        onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}
+                                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                                                    >
+                                                        <Eye size={12} /> Xem Phiếu
                                                     </button>
-                                                )}
-                                                {r.status === 'DRAFT' && (
-                                                    <button onClick={() => handleCancel(r.id)} className="p-1.5 rounded-lg hover:bg-red-50"
-                                                        style={{ color: '#DC2626' }} title="Hủy">
-                                                        <Ban size={13} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )
-                            })}
+                                                    {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
+                                                        <button
+                                                            onClick={e => handleCancel(r.id, e)}
+                                                            className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                                                            title="Hủy phiếu này"
+                                                        >
+                                                            <Ban size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Detail Drawer */}
-            {(detailData || detailLoading) && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15,23,42,0.4)' }}>
-                    <div className="w-full sm:w-[540px] max-w-full h-full overflow-y-auto shadow-2xl flex flex-col" style={{ background: '#FFFFFF' }}>
-                        <div className="flex items-center justify-between p-5 shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <div>
-                                <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                                    Chi Tiết Lệnh Chuyển {detailData?.transferNo ?? '...'}
-                                </h3>
-                                {detailData && (
-                                    <p className="text-xs mt-0.5 font-medium" style={{ color: '#64748B' }}>
-                                        {detailData.fromWarehouse} → {detailData.toWarehouse}
-                                    </p>
-                                )}
-                            </div>
-                            <button onClick={() => setDetailData(null)} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
-                        </div>
-                        {detailLoading ? (
-                            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin" style={{ color: '#D4A853' }} /></div>
-                        ) : detailData && (
-                            <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <InfoCard label="Trạng thái" value={(STATUS_CFG[detailData.status] ?? STATUS_CFG.DRAFT).label} />
-                                    <InfoCard label="Ngày tạo" value={formatDate(detailData.createdAt)} />
-                                    <InfoCard label="Ngày xác nhận" value={detailData.confirmedAt ? formatDate(detailData.confirmedAt) : '—'} />
-                                    <InfoCard label="Ngày nhận kho" value={detailData.receivedAt ? formatDate(detailData.receivedAt) : '—'} />
-                                </div>
-                                {detailData.notes && (
-                                    <div className="px-3 py-2.5 rounded-lg text-xs" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#475569' }}>
-                                        📝 Ghi chú: {detailData.notes}
-                                    </div>
-                                )}
-
-                                <div className="rounded-xl overflow-hidden shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
-                                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                                        <thead>
-                                            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                                {['SKU', 'Sản Phẩm', 'SL Chuyển', 'SL Nhận'].map(h => (
-                                                    <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {detailData.lines.map(l => (
-                                                <tr key={l.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                                    <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#B47816' }}>{l.skuCode}</td>
-                                                    <td className="px-3 py-2 text-xs" style={{ color: '#0F172A' }}>{l.productName}</td>
-                                                    <td className="px-3 py-2 text-xs font-bold font-mono" style={{ color: '#0F172A' }}>{l.qtyTransferred}</td>
-                                                    <td className="px-3 py-2 text-xs font-bold font-mono text-[#16A34A]">{l.qtyReceived}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
             {/* Create Drawer */}
-            {createOpen && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15,23,42,0.4)' }}>
-                    <div className="w-full sm:w-[500px] max-w-full h-full overflow-y-auto shadow-2xl flex flex-col" style={{ background: '#FFFFFF' }}>
-                        <div className="flex items-center justify-between p-5 shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-base font-bold" style={{ color: '#0F172A' }}>Tạo Lệnh Chuyển Kho Nội Bộ</h3>
-                            <button onClick={() => setCreateOpen(false)} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>
-                        </div>
-                        <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Kho Xuất *</label>
-                                    <select value={form.fromWarehouseId} onChange={e => setForm(prev => ({ ...prev, fromWarehouseId: e.target.value }))}
-                                        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}>
-                                        <option value="">— Chọn kho xuất —</option>
-                                        {options.warehouses.map((w: WarehouseOption) => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Kho Nhận *</label>
-                                    <select value={form.toWarehouseId} onChange={e => setForm(prev => ({ ...prev, toWarehouseId: e.target.value }))}
-                                        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}>
-                                        <option value="">— Chọn kho nhận —</option>
-                                        {options.warehouses.filter(w => w.id !== form.fromWarehouseId).map((w: WarehouseOption) =>
-                                            <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
-                                        )}
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Ghi Chú</label>
-                                <input type="text" value={form.notes} onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
-                                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
-                                    placeholder="VD: Bổ sung hàng showroom..." />
-                            </div>
+            <CreateTransferDrawer
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                onSuccess={reload}
+            />
 
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#B47816' }}>Sản Phẩm Chuyển</p>
-                                    <button onClick={addLine} className="text-xs px-2.5 py-1 rounded-lg font-bold" style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
-                                        <Plus size={12} className="inline" /> Thêm Dòng
-                                    </button>
-                                </div>
-                                <div className="space-y-2">
-                                    {lines.map((l, i) => (
-                                        <div key={i} className="grid grid-cols-12 gap-2 items-center p-2 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                            <div className="col-span-8">
-                                                <select value={l.productId} onChange={e => {
-                                                    const v = [...lines]; v[i] = { ...v[i], productId: e.target.value }; setLines(v)
-                                                }}
-                                                    className="w-full px-2.5 py-2 rounded-lg text-xs outline-none" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}>
-                                                    <option value="">— Chọn SP —</option>
-                                                    {options.products.map((p: ProductOption) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="col-span-3">
-                                                <input type="number" min={1} value={l.qtyTransferred || ''}
-                                                    onChange={e => { const v = [...lines]; v[i] = { ...v[i], qtyTransferred: Number(e.target.value) }; setLines(v) }}
-                                                    className="w-full px-2.5 py-2 rounded-lg text-xs text-center font-bold" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
-                                                    placeholder="SL" />
-                                            </div>
-                                            <div className="col-span-1 flex justify-center">
-                                                <button onClick={() => { const v = [...lines]; v.splice(i, 1); setLines(v) }} style={{ color: '#DC2626' }}>
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {lines.length === 0 && (
-                                        <p className="text-xs text-center py-4 italic" style={{ color: '#64748B' }}>Nhấn "Thêm Dòng" để chọn sản phẩm chuyển kho</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <button onClick={handleCreate} className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl shadow-md transition-all hover:brightness-105 mt-4"
-                                style={{ background: '#D4A853', color: '#0A1926', minHeight: '44px' }}>
-                                <Save size={14} /> Tạo Lệnh Chuyển Kho
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-}
-
-function InfoCard({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="px-3 py-2.5 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{label}</p>
-            <p className="text-sm font-bold mt-0.5" style={{ color: '#0F172A' }}>{value}</p>
+            {/* Detail & Print Drawer */}
+            <TransferDetailDrawer
+                transferId={selectedId}
+                onClose={() => setSelectedId(null)}
+                onRefresh={reload}
+            />
         </div>
     )
 }

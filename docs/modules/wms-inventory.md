@@ -102,23 +102,23 @@ Hệ thống hỗ trợ **nhiều kho** (Kho HCM, Kho HN, Kho Đà Nẵng, Showr
 - Cấp phát hàng từ kho nhập về → Showroom POS
 - Cấp phát cho sự kiện/tasting event ở địa điểm khác
 
-### 5.2 Luồng Nghiệp Vụ Transfer Order (TO)
+### 5.2 Luồng Nghiệp Vụ Phiếu Chuyển Kho Nội Bộ (Transfer Order Voucher)
 
 ```
-Yêu cầu Transfer
+Lập Phiếu Chuyển Kho (Form Đơn Hàng)
       ↓
-Tạo Transfer Order (TO) — Từ kho A → Đến kho B
+Trạng thái: PENDING_ACCOUNTING (Gửi Kế Toán Duyệt)
       ↓
-Phê duyệt (nếu số lượng lớn)
+Kế toán Phê Duyệt (Status: CONFIRMED — Sẵn sàng)
       ↓
-Kho A: PICK hàng → Đóng thùng → "Xuất điều chuyển"
+Thủ Kho Xuất (Kho Đi): Bấm "In Phiếu A4" & "Xuất Kho & Vận Chuyển" (Status: IN_TRANSIT, Trừ kho FIFO Kho Đi)
       ↓
-Trạng thái: Stock Lot chuyển sang IN_TRANSIT (Virtual Location)
-      ↓
-Kho B: Nhận hàng → Kiểm tra số lượng / tình trạng
-      ↓
-Confirm nhận → Stock Lot cập nhật location sang Kho B
+Thủ Kho Nhận (Kho Đến): Kiểm hàng thực nhận & bấm "Xác Nhận Nhận Hàng" (Status: RECEIVED, Khởi tạo Stock Lot Kho Đến)
 ```
+
+**Đặc tả Phiếu Chuyển Kho Nội Bộ:**
+- **Mẫu Chứng Từ Form Đơn Hàng (`TO-YYMM-xxxx`)**: Đầy đủ thông tin Kho Đi, Kho Đến, Người Lập Phiếu, Ngày Chuyển, Lý Do Chuyển & Giá Trị Chuyển Kho (Kiểm tra tồn kho Khả dụng Real-time ở Kho Đi).
+- **Mẫu In Giấy A4 Ký 4 Bên (`A4 Printable Voucher`)**: Tích hợp giao diện in ấn khổ A4 tiêu chuẩn chứng từ Kế toán Việt Nam, có 4 ô ký tên bằng tay ở chân phiếu dành cho: **Người Lập Phiếu**, **Kế Toán Phê Duyệt**, **Thủ Kho Xuất (Kho Đi)**, **Thủ Kho Nhận (Kho Đến)**.
 
 ### 5.3 Xử Lý Tồn Kho Trong Quá Trình Transfer
 

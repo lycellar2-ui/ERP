@@ -2669,6 +2669,7 @@ model CreditNote {
 // ═══════════════════════════════════════════════════
 enum TransferStatus {
   DRAFT
+  PENDING_ACCOUNTING
   CONFIRMED
   IN_TRANSIT
   RECEIVED
@@ -2676,19 +2677,24 @@ enum TransferStatus {
 }
 
 model TransferOrder {
-  id              String            @id @default(cuid())
-  transferNo      String            @unique
-  fromWarehouseId String
-  fromWarehouse   Warehouse         @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
-  toWarehouseId   String
-  toWarehouse     Warehouse         @relation("TransferTo", fields: [toWarehouseId], references: [id])
-  status          TransferStatus    @default(DRAFT)
-  notes           String?
-  confirmedAt     DateTime?
-  receivedAt      DateTime?
-  lines           TransferOrderLine[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                   String            @id @default(cuid())
+  transferNo           String            @unique
+  fromWarehouseId      String
+  fromWarehouse        Warehouse         @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouseId        String
+  toWarehouse          Warehouse         @relation("TransferTo", fields: [toWarehouseId], references: [id])
+  status               TransferStatus    @default(DRAFT)
+  notes                String?
+  requesterId          String?
+  transferDate         DateTime          @default(now())
+  accountingApprovedBy String?
+  accountingApprovedAt DateTime?
+  accountingNotes      String?
+  confirmedAt          DateTime?
+  receivedAt           DateTime?
+  lines                TransferOrderLine[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
   @@map("transfer_orders")
 }
