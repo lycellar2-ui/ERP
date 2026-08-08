@@ -207,9 +207,46 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
     const filteredGroups = useMemo(() => {
         return NAV_GROUPS.map(group => {
             const visibleItems = group.items.filter(item => {
-                if (!item.permission) return true
                 if (!currentUser) return false
-                if (currentUser.roles.includes('CEO') || currentUser.roles.includes('CEO Secondary')) return true
+
+                // CEO / System Admin see all menu items
+                if (currentUser.roles.includes('CEO') || currentUser.roles.includes('CEO Secondary') || currentUser.roles.includes('ADMIN') || currentUser.roles.includes('Admin')) {
+                    return true
+                }
+
+                // Explicit role-based menu filtering for Kế Toán (Accountant)
+                const isAccountant = currentUser.roles.includes('Kế Toán') || currentUser.roles.includes('KE_TOAN')
+                if (isAccountant) {
+                    const accountantAllowedHrefs = [
+                        '/dashboard',
+                        '/dashboard/proposals',
+                        '/dashboard/products',
+                        '/dashboard/suppliers',
+                        '/dashboard/customers',
+                        '/dashboard/contracts',
+                        '/dashboard/procurement',
+                        '/dashboard/shipments',
+                        '/dashboard/costing',
+                        '/dashboard/warehouse',
+                        '/dashboard/transfers',
+                        '/dashboard/stock-count',
+                        '/dashboard/sales',
+                        '/dashboard/quotations',
+                        '/dashboard/price-list',
+                        '/dashboard/margin',
+                        '/dashboard/consignment',
+                        '/dashboard/returns',
+                        '/dashboard/finance',
+                        '/dashboard/reports',
+                        '/dashboard/kpi',
+                    ]
+                    if (!accountantAllowedHrefs.includes(item.href)) {
+                        return false
+                    }
+                    return true
+                }
+
+                if (!item.permission) return true
                 return currentUser.permissions.includes(item.permission)
             })
             return { ...group, items: visibleItems }

@@ -55,6 +55,13 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
         'RPT:READ', 'RPT:EXPORT',
         'STM:READ', 'STM:CREATE', 'STM:UPDATE',
         'CST:READ', 'CST:CREATE', 'CST:UPDATE',
+        'SLS:READ', 'SLS:APPROVE',
+        'MDM:READ',
+        'CNT:READ',
+        'WMS:READ',
+        'TRS:READ',
+        'CSG:READ',
+        'KPI:READ',
     ],
     'CBO': [
         'DSH:READ',
