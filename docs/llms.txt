@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-08-08 12:23
-> Status: Production — 29 modules, 123 DB models, 77 enums, 35 dashboard routes, Dynamic Approval Matrix, Unique SO Generation & WMS Theme Harmony
+> Last updated: 2026-08-08 12:45
+> Status: Production — 29 modules, 123 DB models, 77 enums, 35 dashboard routes, Product Appellation FK Fix & Price List Channel Hierarchy Docs
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules

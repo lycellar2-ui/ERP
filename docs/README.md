@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-08 12:23 | Wine ERP v8.2 — 29 modules, 123 models, Dynamic Approval Matrix, Unique SO Generation & WMS Theme Harmony*
+*Last updated: 2026-08-08 12:45 | Wine ERP v8.3 — 29 modules, 123 models, Product Appellation FK Fix & Price List Channel Hierarchy Docs*
 
