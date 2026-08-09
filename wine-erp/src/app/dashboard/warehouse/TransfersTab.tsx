@@ -120,10 +120,10 @@ export function TransfersTab() {
                         <button
                             key={t.key}
                             onClick={() => setStatusTab(t.key)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#87CBB9] text-[#0A1926] font-extrabold shadow-2xs border border-[#76BAA8]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
                         >
                             <span>{t.label}</span>
-                            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700')}`}>
+                            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-[#0A1926]/15 text-[#0A1926]' : 'bg-slate-100 text-slate-700')}`}>
                                 {t.count}
                             </span>
                         </button>

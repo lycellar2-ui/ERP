@@ -672,7 +672,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                 <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
                     <button
                         onClick={() => setViewMode('ZONES')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-extrabold text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#0A1926] text-[#87CBB9] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Grid className="w-4 h-4" />
                         Vị Trí Kho
@@ -680,7 +680,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
 
                     <button
                         onClick={() => setViewMode('FOCUS')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-extrabold text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#0A1926] text-[#87CBB9] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Sparkles className="w-4 h-4" />
                         Đếm Tập Trung
@@ -688,7 +688,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
 
                     <button
                         onClick={() => setViewMode('LIST')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-extrabold text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#0A1926] text-[#87CBB9] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-black text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#87CBB9] text-[#0A1926] shadow-xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <ListFilter className="w-4 h-4" />
                         Danh Sách

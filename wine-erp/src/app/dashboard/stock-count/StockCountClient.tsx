@@ -313,7 +313,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key as any)}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${activeTab === tab.key ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+                            className={`px-4 py-2 rounded-xl text-xs whitespace-nowrap transition cursor-pointer ${activeTab === tab.key ? 'bg-[#87CBB9] text-[#0A1926] font-extrabold shadow-2xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 font-bold'}`}
                         >
                             {tab.label}
                         </button>
