@@ -333,7 +333,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onR
 
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow-xs cursor-pointer"
+                        className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black text-xs rounded-xl shadow-xs cursor-pointer"
                     >
                         Hoàn Tất & Đóng Bảng
                     </button>

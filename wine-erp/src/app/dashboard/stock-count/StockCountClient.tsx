@@ -244,6 +244,11 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     fetchData()
                 }}
                 onRefreshed={() => fetchData()}
+                onOpenTableModal={() => {
+                    const sid = mobileViewDetail.id
+                    setMobileViewDetail(null)
+                    setTableModalSessionId(sid)
+                }}
             />
         )
     }
