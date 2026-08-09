@@ -32,13 +32,31 @@ const CATEGORY_ROUTING: Record<string, number[]> = {
 async function generateProposalNo(): Promise<string> {
     const year = new Date().getFullYear()
     const prefix = `TT-${year}-`
-    const last = await prisma.proposal.findFirst({
+    const proposals = await prisma.proposal.findMany({
         where: { proposalNo: { startsWith: prefix } },
-        orderBy: { proposalNo: 'desc' },
         select: { proposalNo: true },
     })
-    const seq = last ? parseInt(last.proposalNo.split('-').pop() ?? '0', 10) + 1 : 1
-    return `${prefix}${String(seq).padStart(3, '0')}`
+
+    let maxSeq = 0
+    for (const p of proposals) {
+        const match = p.proposalNo.match(new RegExp(`^TT-${year}-(\\d+)$`))
+        if (match && match[1]) {
+            const num = parseInt(match[1], 10)
+            if (!isNaN(num) && num > maxSeq) {
+                maxSeq = num
+            }
+        }
+    }
+
+    let nextSeq = maxSeq + 1
+    let proposalNo = `${prefix}${String(nextSeq).padStart(3, '0')}`
+
+    while (await prisma.proposal.findUnique({ where: { proposalNo } })) {
+        nextSeq++
+        proposalNo = `${prefix}${String(nextSeq).padStart(3, '0')}`
+    }
+
+    return proposalNo
 }
 
 // ─── List proposals ──────────────────────────────
@@ -408,6 +426,11 @@ export async function processProposalApproval(input: {
                         resolvedAt: new Date(),
                     },
                 })
+                try {
+                    await syncProposalToCustomerPriceRules(input.proposalId)
+                } catch (syncErr) {
+                    console.error('[Proposal] Error auto-syncing price rules:', syncErr)
+                }
             } else {
                 // Move to next step level
                 newStatus = `APPROVED_L${currentLevel}`
@@ -588,6 +611,13 @@ export async function updateProposalStatus(
                 ...(status === 'CLOSED' && { resolvedAt: new Date() }),
             },
         })
+        if (status === 'CLOSED') {
+            try {
+                await syncProposalToCustomerPriceRules(id)
+            } catch (syncErr) {
+                console.error('[Proposal] Error auto-syncing price rules on close:', syncErr)
+            }
+        }
         await logAudit({
             userId,
             action: 'STATUS_CHANGE',
@@ -602,3 +632,134 @@ export async function updateProposalStatus(
         return { success: false, error: err.message }
     }
 }
+
+// ─── Auto Sync Proposal Price Items to CustomerPriceRules ────────
+export async function syncProposalToCustomerPriceRules(proposalId: string) {
+    const proposal = await prisma.proposal.findUnique({
+        where: { id: proposalId },
+        include: {
+            priceItems: true,
+            customer: true,
+        },
+    })
+
+    if (!proposal || !proposal.customerId) {
+        return { count: 0 }
+    }
+
+    const userId = proposal.createdBy ?? 'system'
+    const startDate = proposal.resolvedAt ?? proposal.submittedAt ?? new Date()
+    const endDate = new Date('2026-12-31T23:59:59.999Z')
+    let createdCount = 0
+
+    // 1. Specific product prices
+    for (const item of proposal.priceItems) {
+        const proposedPrice = Number(item.proposedPrice)
+        if (!proposedPrice || proposedPrice <= 0) continue
+
+        const existing = await prisma.customerPriceRule.findFirst({
+            where: {
+                customerId: proposal.customerId,
+                productId: item.productId,
+                status: 'APPROVED',
+            },
+        })
+
+        const noteText = `Áp dụng từ Tờ trình ${proposal.proposalNo}: ${proposal.title}`
+
+        if (existing) {
+            await prisma.customerPriceRule.update({
+                where: { id: existing.id },
+                data: {
+                    ruleType: 'SPECIAL_PRICE',
+                    value: proposedPrice,
+                    startDate,
+                    endDate,
+                    approvedBy: userId,
+                    approvedAt: new Date(),
+                    notes: noteText,
+                },
+            })
+        } else {
+            await prisma.customerPriceRule.create({
+                data: {
+                    customerId: proposal.customerId,
+                    productId: item.productId,
+                    ruleType: 'SPECIAL_PRICE',
+                    value: proposedPrice,
+                    startDate,
+                    endDate,
+                    status: 'APPROVED',
+                    requestedBy: userId,
+                    approvedBy: userId,
+                    approvedAt: new Date(),
+                    notes: noteText,
+                },
+            })
+        }
+        createdCount++
+    }
+
+    // 2. Portfolio discount percentage
+    if (proposal.discountPct && Number(proposal.discountPct) > 0) {
+        const discountVal = Number(proposal.discountPct)
+        const products = await prisma.product.findMany({
+            where: { status: 'ACTIVE', deletedAt: null },
+            select: { id: true },
+        })
+
+        const explicitProductIds = new Set(proposal.priceItems.map(i => i.productId))
+        const remainingProducts = products.filter(p => !explicitProductIds.has(p.id))
+
+        for (const prod of remainingProducts) {
+            const existing = await prisma.customerPriceRule.findFirst({
+                where: {
+                    customerId: proposal.customerId,
+                    productId: prod.id,
+                    status: 'APPROVED',
+                },
+            })
+
+            const noteText = `Áp dụng chiết khấu ${discountVal}% từ Tờ trình ${proposal.proposalNo}: ${proposal.title}`
+
+            if (existing) {
+                if (existing.ruleType === 'FIXED_DISCOUNT') {
+                    await prisma.customerPriceRule.update({
+                        where: { id: existing.id },
+                        data: {
+                            ruleType: 'FIXED_DISCOUNT',
+                            value: discountVal,
+                            startDate,
+                            endDate,
+                            approvedBy: userId,
+                            approvedAt: new Date(),
+                            notes: noteText,
+                        },
+                    })
+                }
+            } else {
+                await prisma.customerPriceRule.create({
+                    data: {
+                        customerId: proposal.customerId,
+                        productId: prod.id,
+                        ruleType: 'FIXED_DISCOUNT',
+                        value: discountVal,
+                        startDate,
+                        endDate,
+                        status: 'APPROVED',
+                        requestedBy: userId,
+                        approvedBy: userId,
+                        approvedAt: new Date(),
+                        notes: noteText,
+                    },
+                })
+                createdCount++
+            }
+        }
+    }
+
+    revalidatePath('/dashboard/price-list')
+    revalidateCache('pricing')
+    return { count: createdCount }
+}
+

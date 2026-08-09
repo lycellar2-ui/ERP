@@ -1690,3 +1690,56 @@ Trên giao diện tab **Xuất Kho (DO)**, thẻ `SO-2608-0013`, `SO-2608-0012`.
 
 > ⚠️ **RULE 66: Hàm `hasRole` và `hasPermission` PHẢI sử dụng cơ chế Bảng Ánh Xạ Đồng Bộ Alias (`ROLE_ALIASES`) và mặc định cho phép Kế toán (`KE_TOAN`) truy cập READ các module Danh mục (`MDM`), Đơn hàng (`SLS`), Tài chính (`FIN`), Hóa đơn (`TAX`) để tránh tình trạng lọc nhầm `salesRepId` hoặc ném ngoại lệ thiếu quyền khi người dùng đăng nhập bằng các vai trò kế toán khác nhau.**
 
+---
+
+## BUG-045: Tờ Trình Giá (`PRICE_ADJUSTMENT`) Đã Phê Duyệt Nhưng Không Tự Động Đẩy Dữ Liệu Vào Bảng Giá Khách Hàng (`CustomerPriceRule`)
+
+**Ngày:** 2026-08-09  
+**Severity:** 🟠 Medium — Tờ trình cơ chế giá (như TT-2026-006) đã duyệt/hoàn tất nhưng dữ liệu giá không được tự động đồng bộ sang bảng quy tắc giá khách hàng (`CustomerPriceRule`).
+
+### Triệu chứng
+1. Tờ trình `TT-2026-006` (Đề xuất cơ chế giá cho khách hàng Villa Des Fleurs) chuyển trạng thái `CLOSED` / `APPROVED`.
+2. Kiểm tra Bảng giá khách hàng (`/dashboard/price-list`, tab Customer Rules) cho Villa Des Fleurs vẫn trống (`0 rules`), làm cho báo giá và đơn hàng không áp dụng được giá ưu đãi đã duyệt.
+
+### Nguyên nhân gốc rễ
+Hàm phê duyệt tờ trình `processProposalApproval` và cập nhật trạng thái `updateProposalStatus` trong `src/app/dashboard/proposals/actions.ts` chỉ thay đổi trạng thái của bản ghi `Proposal` (`status = 'APPROVED'` / `'CLOSED'`) mà không có logic tự động ghi/cập nhật danh mục mặt hàng từ `ProposalPriceItem` và % chiết khấu `discountPct` sang bảng `CustomerPriceRule`.
+
+### Cách fix
+1. Tạo script `scripts/sync-tt-2026-006.ts` thực thi đồng bộ ngay 135 quy tắc giá (`SPECIAL_PRICE` và `FIXED_DISCOUNT`) cho khách hàng Villa Des Fleurs từ tờ trình `TT-2026-006`.
+2. Xây dựng hàm `syncProposalToCustomerPriceRules(proposalId)` trong `src/app/dashboard/proposals/actions.ts` tự động trích xuất `priceItems` và `discountPct` từ Tờ Trình để tạo/cập nhật `CustomerPriceRule`.
+3. Tích hợp gọi `syncProposalToCustomerPriceRules` trong `processProposalApproval` (khi `newStatus === 'APPROVED'`) và `updateProposalStatus` (khi `status === 'CLOSED'`).
+
+### Bài học
+
+> ⚠️ **RULE 67: Mọi luồng phê duyệt Tờ trình Đề xuất Giá (`PRICE_ADJUSTMENT` / `PRICE_POLICY`) khi được duyệt hoàn tất (chuyển sang `APPROVED` hoặc `CLOSED`) PHẢI tự động kích hoạt hàm đồng bộ `syncProposalToCustomerPriceRules` để chuyển hóa danh mục giá/chiết khấu đề xuất sang bảng Quy tắc Giá Khách hàng (`CustomerPriceRule`), đảm bảo giá ưu đãi có hiệu lực ngay lập tức khi tạo Đơn hàng/Báo giá.**
+
+---
+
+## BUG-046: Lỗi Lưu Tờ Trình Mới — Trùng Mã `proposalNo` (`Unique constraint failed on the fields: ('proposalNo')`)
+
+**Ngày:** 2026-08-09  
+**Severity:** 🔴 High — Người dùng bấm "Lưu Bản Nháp" hoặc "Tạo Tờ Trình" bị báo lỗi từ chối lưu do trùng mã `proposalNo`.
+
+### Triệu chứng
+Khi tạo tờ trình mới, hệ thống hiển thị thông báo lỗi browser alert:
+`Invalid prisma.proposal.create() invocation: Unique constraint failed on the fields: ('proposalNo')`
+
+### Nguyên nhân gốc rễ
+1. Hàm `generateProposalNo()` sử dụng truy vấn `findFirst({ where: { proposalNo: { startsWith: 'TT-2026-' } }, orderBy: { proposalNo: 'desc' } })`.
+2. Do việc sắp xếp chuỗi trong PostgreSQL (alphabetical order), mã tờ trình tùy chỉnh dạng chuỗi chữ như `TT-2026-LUKLAK-5PCT` bị xếp đứng trên các mã số chuẩn `TT-2026-006` (chữ 'L' > '0' theo thứ tự ASCII).
+3. Hàm lấy phần tử cuối cùng `proposalNo.split('-').pop()` thu được chuỗi `'5PCT'`.
+4. `parseInt('5PCT', 10)` trong JavaScript bóc tách phần số đứng đầu ra `5` -> `seq = 5 + 1 = 6` -> sinh ra mã `TT-2026-006`.
+5. Mã `TT-2026-006` đã tồn tại sẵn trong Cơ sở dữ liệu, dẫn tới câu lệnh `prisma.proposal.create()` bị lỗi vi phạm ràng buộc duy nhất (`Unique constraint failed`).
+
+### Cách fix
+1. Trong `src/app/dashboard/proposals/actions.ts`, sửa lại hàm `generateProposalNo()`:
+   - Truy vấn danh sách mã tờ trình trong năm.
+   - Dùng Regex `^TT-YYYY-(\d+)$` bóc tách và lọc chính xác các mã có phần đuôi là số thứ tự thuần túy để xác định `maxSeq` thực tế.
+   - Thêm vòng lặp kiểm tra va chạm `while (await prisma.proposal.findUnique({ where: { proposalNo } }))` để đảo bảo không bao giờ sinh ra mã đã tồn tại.
+
+### Bài học
+
+> ⚠️ **RULE 68: Hàm tự động sinh mã số chứng từ (`generateCode` / `generateProposalNo`) KHÔNG ĐƯỢC dùng `findFirst` sắp xếp chuỗi `orderBy: { code: 'desc' }` để cắt số cuối, vì các mã chứa hậu tố chữ (custom slug) sẽ làm sai lệch thứ tự alphabet và hàm `parseInt` sẽ sinh trùng mã cũ. PHẢI dùng Regex lọc các mã số chuẩn và thêm bước kiểm tra chống trùng lặp (`findUnique`).**
+
+
+
