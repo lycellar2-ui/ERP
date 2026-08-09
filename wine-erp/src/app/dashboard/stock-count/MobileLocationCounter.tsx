@@ -107,12 +107,17 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
 
     // Filter lines by selected zone & search
     const filteredLines = lines.filter(l => {
-        const matchZone = selectedZone === 'ALL' || l.zone === selectedZone || l.locationCode === selectedZone
-        const matchSearch = !searchTerm || l.skuCode.toLowerCase().includes(searchTerm.toLowerCase()) || l.productName.toLowerCase().includes(searchTerm.toLowerCase())
+        const s = searchTerm.trim().toLowerCase()
+        // When searching in FOCUS or LIST mode, search across all zones if user typed a search term
+        const matchZone = s ? true : (selectedZone === 'ALL' || l.zone === selectedZone || l.locationCode === selectedZone)
+        const matchSearch = !s ||
+            l.skuCode.toLowerCase().includes(s) ||
+            l.productName.toLowerCase().includes(s) ||
+            (l.locationCode && l.locationCode.toLowerCase().includes(s))
         return matchZone && matchSearch
     })
 
-    const currentItem = filteredLines[activeIdx] || filteredLines[0]
+    const currentItem = filteredLines[activeIdx] || filteredLines[0] || null
 
     // Reset active index if out of bounds
     useEffect(() => {
@@ -316,7 +321,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
             )}
 
             {/* MODE 2: SINGLE-ITEM FOCUS CARD VIEW (STREAMLINED & SPACIOUS) */}
-            {viewMode === 'FOCUS' && currentItem && (
+            {viewMode === 'FOCUS' && (
                 <div className="p-4 flex-1 flex flex-col space-y-3">
                     {/* Fast SKU / Barcode Quick Finder Bar */}
                     <div className="relative">
@@ -328,207 +333,237 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                 setSearchTerm(e.target.value)
                                 setActiveIdx(0)
                             }}
-                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-xl px-3 py-2 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 shadow-2xs"
+                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-xl pl-3 pr-10 py-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 shadow-2xs"
                         />
+                        {searchTerm && (
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('')
+                                    setActiveIdx(0)
+                                }}
+                                className="absolute right-2.5 top-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-slate-300 cursor-pointer"
+                            >
+                                ✕ Xóa
+                            </button>
+                        )}
                     </div>
 
-                    {/* Zone & Index Breadcrumb */}
-                    <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-2xs">
-                        <div className="flex items-center gap-1.5 font-extrabold text-slate-700">
-                            <MapPin className="w-4 h-4 text-emerald-600" />
-                            <span>Vị trí: <strong className="text-emerald-800 font-mono font-extrabold">{currentItem.zone}</strong></span>
+                    {!currentItem ? (
+                        <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center space-y-3 shadow-xs my-4">
+                            <AlertCircle className="w-8 h-8 text-amber-500 mx-auto animate-bounce" />
+                            <h4 className="text-sm font-extrabold text-slate-900">Không tìm thấy mã nào khớp với "{searchTerm}"</h4>
+                            <p className="text-xs text-slate-500">Vui lòng kiểm tra lại mã SKU hoặc mã vạch sản phẩm</p>
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('')
+                                    setActiveIdx(0)
+                                }}
+                                className="px-4 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
+                            >
+                                ↺ Xóa từ khóa để xem lại tất cả {lines.length} sản phẩm
+                            </button>
                         </div>
-
-                        <span className="text-[11px] font-mono text-slate-700 font-extrabold bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
-                            Mã {activeIdx + 1} / {filteredLines.length}
-                        </span>
-                    </div>
-
-                    {/* FOCUS HERO ITEM CARD */}
-                    <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
-                        {/* SKU + Vintage Badges */}
-                        <div className="flex items-center justify-between gap-2">
-                            <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl whitespace-nowrap shrink-0">
-                                {currentItem.skuCode}
-                            </span>
-                            
-                            <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl flex items-center gap-1 whitespace-nowrap shrink-0">
-                                🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
-                            </span>
-                        </div>
-
-                        {/* Wine Title & Packaging */}
-                        <div>
-                            <h3 className="text-base font-extrabold text-slate-900 leading-snug">{currentItem.productName}</h3>
-                            <p className="text-xs text-slate-500 font-semibold mt-1">
-                                Quy cách: <strong className="text-slate-900 font-extrabold">{currentItem.unitsPerCase || 6} chai / thùng</strong>
-                            </p>
-                        </div>
-
-                        {/* System Stock vs Actual Count Input */}
-                        {(() => {
-                            const upc = currentItem.unitsPerCase || 6
-                            const total = currentItem.qtyActual !== null ? currentItem.qtyActual : 0
-                            const currentCases = Math.floor(total / upc)
-                            const currentLoose = total % upc
-
-                            return (
-                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                                    <div className="flex items-center justify-between text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-2">
-                                        <span className="uppercase text-[10px] tracking-wider text-emerald-800">SỐ LƯỢNG ĐẾM THỰC TẾ</span>
-                                        {!isBlind && (
-                                            <span className="text-slate-500 text-[11px] font-mono">
-                                                Tồn sổ: <strong className="text-slate-900">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong>
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* 2-Column Quantity Controls (Thùng + Chai) */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {/* Cases Box */}
-                                        <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
-                                            <span className="text-[10px] font-extrabold uppercase text-slate-500 block">📦 SỐ THÙNG</span>
-                                            <div className="flex items-center justify-between gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc))}
-                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
-                                                >
-                                                    -
-                                                </button>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={currentItem.qtyActual !== null ? currentCases : ''}
-                                                    placeholder="0"
-                                                    onChange={e => {
-                                                        const newCases = parseInt(e.target.value, 10) || 0
-                                                        setExactQty(currentItem.id, newCases * upc + currentLoose)
-                                                    }}
-                                                    className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setExactQty(currentItem.id, total + upc)}
-                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                            <span className="text-[10px] text-slate-400 font-semibold block">({upc} chai/thùng)</span>
-                                        </div>
-
-                                        {/* Loose Bottles Box */}
-                                        <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
-                                            <span className="text-[10px] font-extrabold uppercase text-slate-500 block">🍾 CHAI LẺ</span>
-                                            <div className="flex items-center justify-between gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1))}
-                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
-                                                >
-                                                    -
-                                                </button>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={currentItem.qtyActual !== null ? currentLoose : ''}
-                                                    placeholder="0"
-                                                    onChange={e => {
-                                                        const newLoose = parseInt(e.target.value, 10) || 0
-                                                        setExactQty(currentItem.id, currentCases * upc + newLoose)
-                                                    }}
-                                                    className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setExactQty(currentItem.id, total + 1)}
-                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                            <span className="text-[10px] text-slate-400 font-semibold block">chai rời</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Total Count Pill & Immediate Variance Warning */}
-                                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-extrabold px-1">
-                                        <span className="text-emerald-800 font-mono">
-                                            Tổng thực tế: {formatCasesAndBottles(total, upc)}
-                                        </span>
-
-                                        {!isBlind && currentItem.qtyActual !== null && (
-                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold flex items-center gap-1 whitespace-nowrap shrink-0 inline-flex items-center ${
-                                                currentItem.variance === 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
-                                                currentItem.variance! > 0 ? 'bg-amber-50 text-amber-800 border border-amber-300 animate-pulse' :
-                                                'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
-                                            }`}>
-                                                {currentItem.variance === 0 ? '✓ Khớp 100%' :
-                                                 currentItem.variance! > 0 ? `⚠️ Thừa +${currentItem.variance} chai` :
-                                                 `🚨 Thiếu ${currentItem.variance} chai`}
-                                            </span>
-                                        )}
-                                    </div>
+                    ) : (
+                        <>
+                            {/* Zone & Index Breadcrumb */}
+                            <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-2xs">
+                                <div className="flex items-center gap-1.5 font-extrabold text-slate-700">
+                                    <MapPin className="w-4 h-4 text-emerald-600" />
+                                    <span>Vị trí: <strong className="text-emerald-800 font-mono font-extrabold">{currentItem.zone}</strong></span>
                                 </div>
-                            )
-                        })()}
 
-                        {/* SAVE & GO NEXT MAIN CTA BUTTON */}
-                        <button
-                            onClick={() => saveCurrentLineAndNext(currentItem)}
-                            disabled={savingLineId === currentItem.id}
-                            className="w-full py-4 bg-[#87CBB9] hover:bg-[#76BAA8] active:scale-98 text-[#0A1926] font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
-                        >
-                            {savingLineId === currentItem.id ? (
-                                <RefreshCw className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <>
-                                    <Save className="w-5 h-5" />
-                                    LƯU VÀ SANG CHAI TIẾP THEO ➔
-                                </>
-                            )}
-                        </button>
-                    </div>
+                                <span className="text-[11px] font-mono text-slate-700 font-extrabold bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                                    Mã {activeIdx + 1} / {filteredLines.length}
+                                </span>
+                            </div>
 
-                    {/* FINISH ZONE CTA BUTTON */}
-                    <div className="pt-1">
-                        <button
-                            onClick={() => handleFinishZone(selectedZone)}
-                            disabled={isCompletingZone}
-                            className="w-full py-3 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
-                        >
-                            {isCompletingZone ? (
-                                <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
-                            ) : (
-                                <>
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                    🏁 CHỐT KHU VỰC NÀY & XEM BÁO CÁO CHÊNH LỆCH
-                                </>
-                            )}
-                        </button>
-                    </div>
+                            {/* FOCUS HERO ITEM CARD */}
+                            <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
+                                {/* SKU + Vintage Badges */}
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl whitespace-nowrap shrink-0">
+                                        {currentItem.skuCode}
+                                    </span>
+                                    
+                                    <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl flex items-center gap-1 whitespace-nowrap shrink-0">
+                                        🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
+                                    </span>
+                                </div>
 
-                    {/* Prev / Next Slider Navigation */}
-                    <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-2xs">
-                        <button
-                            disabled={activeIdx === 0}
-                            onClick={() => setActiveIdx(prev => Math.max(0, prev - 1))}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-extrabold text-xs flex items-center gap-1 cursor-pointer"
-                        >
-                            ◄ Chai Trước
-                        </button>
-                        <span className="text-xs font-mono font-extrabold text-slate-600">
-                            {activeIdx + 1} / {filteredLines.length}
-                        </span>
-                        <button
-                            disabled={activeIdx >= filteredLines.length - 1}
-                            onClick={() => setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1 cursor-pointer"
-                        >
-                            Chai Sau ►
-                        </button>
-                    </div>
+                                {/* Wine Title & Packaging */}
+                                <div>
+                                    <h3 className="text-base font-extrabold text-slate-900 leading-snug">{currentItem.productName}</h3>
+                                    <p className="text-xs text-slate-500 font-semibold mt-1">
+                                        Quy cách: <strong className="text-slate-900 font-extrabold">{currentItem.unitsPerCase || 6} chai / thùng</strong>
+                                    </p>
+                                </div>
+
+                                {/* System Stock vs Actual Count Input */}
+                                {(() => {
+                                    const upc = currentItem.unitsPerCase || 6
+                                    const total = currentItem.qtyActual !== null ? currentItem.qtyActual : 0
+                                    const currentCases = Math.floor(total / upc)
+                                    const currentLoose = total % upc
+
+                                    return (
+                                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                                            <div className="flex items-center justify-between text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-2">
+                                                <span className="uppercase text-[10px] tracking-wider text-emerald-800">SỐ LƯỢNG ĐẾM THỰC TẾ</span>
+                                                {!isBlind && (
+                                                    <span className="text-slate-500 text-[11px] font-mono">
+                                                        Tồn sổ: <strong className="text-slate-900">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong>
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* 2-Column Quantity Controls (Thùng + Chai) */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {/* Cases Box */}
+                                                <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
+                                                    <span className="text-[10px] font-extrabold uppercase text-slate-500 block">📦 SỐ THÙNG</span>
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc))}
+                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={currentItem.qtyActual !== null ? currentCases : ''}
+                                                            placeholder="0"
+                                                            onChange={e => {
+                                                                const newCases = parseInt(e.target.value, 10) || 0
+                                                                setExactQty(currentItem.id, newCases * upc + currentLoose)
+                                                            }}
+                                                            className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, total + upc)}
+                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                    <span className="text-[10px] text-slate-400 font-semibold block">({upc} chai/thùng)</span>
+                                                </div>
+
+                                                {/* Loose Bottles Box */}
+                                                <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
+                                                    <span className="text-[10px] font-extrabold uppercase text-slate-500 block">🍾 CHAI LẺ</span>
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1))}
+                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={currentItem.qtyActual !== null ? currentLoose : ''}
+                                                            placeholder="0"
+                                                            onChange={e => {
+                                                                const newLoose = parseInt(e.target.value, 10) || 0
+                                                                setExactQty(currentItem.id, currentCases * upc + newLoose)
+                                                            }}
+                                                            className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExactQty(currentItem.id, total + 1)}
+                                                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                    <span className="text-[10px] text-slate-400 font-semibold block">chai rời</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Total Count Pill & Immediate Variance Warning */}
+                                            <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-extrabold px-1">
+                                                <span className="text-emerald-800 font-mono">
+                                                    Tổng thực tế: {formatCasesAndBottles(total, upc)}
+                                                </span>
+
+                                                {!isBlind && currentItem.qtyActual !== null && (
+                                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold flex items-center gap-1 whitespace-nowrap shrink-0 inline-flex items-center ${
+                                                        currentItem.variance === 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                                                        currentItem.variance! > 0 ? 'bg-amber-50 text-amber-800 border border-amber-300 animate-pulse' :
+                                                        'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
+                                                    }`}>
+                                                        {currentItem.variance === 0 ? '✓ Khớp 100%' :
+                                                         currentItem.variance! > 0 ? `⚠️ Thừa +${currentItem.variance} chai` :
+                                                         `🚨 Thiếu ${currentItem.variance} chai`}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })()}
+
+                                {/* SAVE & GO NEXT MAIN CTA BUTTON */}
+                                <button
+                                    onClick={() => saveCurrentLineAndNext(currentItem)}
+                                    disabled={savingLineId === currentItem.id}
+                                    className="w-full py-4 bg-[#87CBB9] hover:bg-[#76BAA8] active:scale-98 text-[#0A1926] font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                                >
+                                    {savingLineId === currentItem.id ? (
+                                        <RefreshCw className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Save className="w-5 h-5" />
+                                            LƯU VÀ SANG CHAI TIẾP THEO ➔
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* FINISH ZONE CTA BUTTON */}
+                            <div className="pt-1">
+                                <button
+                                    onClick={() => handleFinishZone(selectedZone)}
+                                    disabled={isCompletingZone}
+                                    className="w-full py-3 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
+                                >
+                                    {isCompletingZone ? (
+                                        <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                            🏁 CHỐT KHU VỰC NÀY & XEM BÁO CÁO CHÊNH LỆCH
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Prev / Next Slider Navigation */}
+                            <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-2xs">
+                                <button
+                                    disabled={activeIdx === 0}
+                                    onClick={() => setActiveIdx(prev => Math.max(0, prev - 1))}
+                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-extrabold text-xs flex items-center gap-1 cursor-pointer"
+                                >
+                                    ◄ Chai Trước
+                                </button>
+                                <span className="text-xs font-mono font-extrabold text-slate-600">
+                                    {activeIdx + 1} / {filteredLines.length}
+                                </span>
+                                <button
+                                    disabled={activeIdx >= filteredLines.length - 1}
+                                    onClick={() => setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))}
+                                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                >
+                                    Chai Sau ►
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
