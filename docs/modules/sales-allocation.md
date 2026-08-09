@@ -296,6 +296,194 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 
 | Tính năng | Ưu tiên |
 |---|---|
+- **Nâng cấp tính năng Clone Đơn Hàng (Chỉnh sửa trước khi tạo)**: Khi nhấn nút **Clone** trên bất kỳ đơn hàng nào, hệ thống bật popup xác nhận. Sau khi xác nhận, toàn bộ dữ liệu đơn cũ (Khách hàng, Kênh bán, Pháp nhân, Chiết khấu, Địa chỉ, Sản phẩm, Số lượng, Đơn giá) sẽ được nạp trực tiếp vào `CreateSODrawer` cho phép người dùng thoải mái chỉnh sửa, thêm/xóa mã hàng, thay đổi số lượng/đơn giá y như tạo đơn mới trước khi lưu.
+
+### E. Chiết Khấu 2 Cấp
+- **Chiết khấu dòng (Line Discount):** Áp dụng cho từng SKU riêng lẻ
+- **Chiết khấu tổng đơn (Order Discount):** Giảm thêm % trên tổng giá trị SO
+- **Tổng Chiết Khấu vượt ngưỡng cài sẵn** → Bắt buộc qua Approval Workflow
+
+---
+
+## 4. Return & Credit Note (Hàng Trả Về)
+
+Khi KH trả hàng hoặc phát sinh điều chỉnh:
+1. Tạo **Return Order** liên kết SO gốc
+2. WMS nhận hàng trả về → Nhập vào Quarantine Zone kiểm tra
+3. Nếu hàng còn tốt → Nhập lại kho thường (Stock restored)
+4. Kế toán tạo **Credit Note** → Trừ nợ AR của KH
+
+---
+
+## 5. Allocation Engine — Cốt Lõi Ngành Rượu Cao Cấp
+
+### A. Tại Sao Cần Allocation?
+Grand Cru, Premier Cru, En Primeur... là các loại rượu được sản xuất với số lượng rất giới hạn. Nhà nhập khẩu được NCC phân bổ số lượng nhất định. Doanh nghiệp phải kiểm soát chặt ai được mua bao nhiêu để:
+- Tránh 1 đại lý ôm hết hàng
+- Ưu tiên cho KH VIP, KH trung thành
+- Giữ hàng cho các kênh chiến lược (HORECA flagship)
+
+### B. Tạo Allocation Campaign
+Admin / Sales Manager tạo Campaign:
+| Trường | Mô tả |
+|---|---|
+| `campaign_name` | Tên chiến dịch (Rothschild Lafite 2019 Launch) |
+| `sku` | SKU cụ thể |
+| `total_qty` | Tổng số lượng được phân bổ trong Campaign |
+| `start_date / end_date` | Thời gian hiệu lực của Campaign |
+| `allocation_unit` | Thùng (Case) hay Chai (Bottle) |
+
+### C. Gán Quota (Allocation Quota)
+Từ Campaign, phân bổ quota chi tiết:
+- **Per Sales Rep:** Sales Rep A được bán tối đa 10 thùng
+- **Per Customer:** KH Park Hyatt được mua tối đa 5 thùng
+- **Per Channel:** Kênh HORECA tổng 50 thùng, kênh Đại lý tổng 30 thùng
+
+### D. Matrix View (Giao Diện Ma Trận)
+Bảng tổng quan dạng Spreadsheet:
+
+| SKU | Sales Rep A | Sales Rep B | Sales Rep C | TOTAL |
+|---|---|---|---|---|
+| Lafite 2019 | Allocated: 10 / Sold: 6 / **Remaining: 4** | 8 / 8 / **0** | 15 / 3 / **12** | 33/17/16 |
+
+Màu sắc: Xanh (Còn nhiều) → Vàng (Sắp hết) → Đỏ (Hết quota)
+
+### E. Kiểm Soát Khi Tạo SO
+- Khi SO chọn SKU thuộc Allocation Campaign → Tự động trừ vào Quota của Sales Rep đó
+- Vượt Quota → **Cảnh báo + Block** hoặc **Cho qua nhưng bắt buộc CEO Approve**
+- Sau khi SO Cancelled → Quota được hoàn lại
+
+### F. Lịch Sử Allocation
+- Xem toàn bộ các Campaign trước (Phân tích: KH nào hay mua Vintage nổi tiếng)
+- Export Excel để báo cáo NCC về tình hình phân phối
+
+---
+
+## 6. Price Management (Quản Lý Giá Bán)
+
+- **Tự động chọn bảng giá** dựa trên kênh của khách hàng
+- **Override giá thủ công** có Approval nếu giảm quá ngưỡng
+- **Giá theo thời gian:** Bảng giá có effective date — Từ ngày X áp dụng bảng giá mới
+- **Price History:** Lịch sử giá bán của từng SKU qua các thời kỳ
+
+---
+
+## 7. Database Design
+
+```
+SalesQuotation { quo_no, customer_id, expiry, status, total_amount, public_token, view_count, sent_at, sent_method, customer_email, vat_included, pdf_style, delivery_terms }
+SalesQuotationLine { quotation_id, product_id, qty, unit_price, discount }
+SalesOrder { so_no, customer_id, contract_id, status, payment_term, channel, sales_rep_id }
+SalesOrderLine { so_id, sku, qty, unit_price, discount, allocation_campaign_id }
+AllocationCampaign { camp_no, sku, total_qty, start_date, end_date, unit }
+AllocationQuota { campaign_id, type[rep/customer/channel], target_id, qty_allocated, qty_sold }
+AllocationLog { quota_id, so_id, qty_used, action[USE/RELEASE], timestamp }
+ReturnOrder { return_no, original_so_id, status, reason }
+ReturnOrderLine { return_id, sku, qty_returned, qty_restocked, condition }
+CreditNote { cn_no, return_id, customer_id, amount, status }
+```
+
+---
+
+## 8. Implementation Status (Trạng Thái Triển Khai)
+
+> Cập nhật 08/03/2026 21:40 — **Hoàn thiện 99%**
+
+### ✅ Đã triển khai
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| Sales Order CRUD | `sales/actions.ts`, `SalesClient.tsx` | Tạo, xem, xác nhận, hủy SO |
+| CreateSODrawer | `CreateSODrawer.tsx` | Full drawer: chọn KH, kênh, sản phẩm, check tồn kho |
+| **EditSODrawer** | `EditSODrawer.tsx` | Sửa DRAFT SO: KH, kênh, sản phẩm, discount |
+| **Sales Rep Auth** | `page.tsx` → `SalesClient` | Sales rep từ auth context (không còn hardcode) |
+| **Discount Approval** | `actions.ts:confirmSalesOrder` | CK > 15% → PENDING_APPROVAL + audit log |
+| **FIFO Pick Suggestion** | `actions.ts:suggestPickListForSO` | Gợi ý pick list FIFO cho SO confirmed |
+| Credit Limit Check | `createSalesOrder` | Check công nợ + SO mới vs credit limit |
+| Allocation Engine | `actions.ts` | Campaign + quota per rep/customer/channel |
+| Price List auto-load | `getProductPricesForChannel` | Load giá theo kênh KH |
+| **Quotation CRUD** | `quotations/actions.ts` | ✅ Tạo, sửa DRAFT, xóa, status transitions |
+| **Quotation UI** | `QuotationClient.tsx` | ✅ List + 5 stat cards + search/filter + detail drawer |
+| **Send Drawer** | `QuotationClient.tsx` | ✅ 3 kênh: Email, Copy Link Zalo, In PDF |
+| **PDF Export** | `api/export/quotation-pdf/route.ts` | ✅ 2 styles (Professional/Elegant), ảnh SP, wine info, VAT |
+| **Public Viewer** | `verify/quotation/[token]/` | ✅ KH xem online, accept/reject, view tracking |
+| **View Tracking** | `actions.ts`, `QuotationClient.tsx` | ✅ Badge 👁️, viewCount, firstViewedAt |
+| **Email Notification** | `lib/notifications.ts` | ✅ Branded HTML email via Resend + Telegram |
+| Convert to SO | `actions.ts:convertToSO` | ✅ 1-click tạo SO từ QT, copy lines |
+| Duplicate Quotation | `actions.ts:duplicateQuotation` | ✅ Clone + 30 ngày hạn mới |
+| Auto-expire | `actions.ts:autoExpireQuotations` | ✅ DRAFT/SENT quá hạn → EXPIRED |
+| Export Excel QT | `actions.ts:exportQuotationExcel` | ✅ File báo giá Excel |
+| **CEO Approve SO** | `approveSalesOrder` | ✅ Nút "✓ Duyệt" cho PENDING_APPROVAL |
+| **CEO Reject SO** | `rejectSalesOrder` | ✅ Nút "✗ Từ Chối" cho PENDING_APPROVAL |
+
+#### 🆕 Session 8 — Refactor & Enhancement (08/03/2026)
+
+**Segregation of Duties (SoD) — Event-Driven Status:**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Xoá nút advance status thủ công** | `SalesClient.tsx` | Sale admin KHÔNG tự nhấn "→ Đã Giao", "→ Thu Tiền" |
+| **Event-driven SO status: DO → SO** | `warehouse/actions-do.ts` | `confirmDeliveryOrder` → auto set `PARTIALLY_DELIVERED` / `DELIVERED` |
+| **Event-driven SO status: Payment → SO** | `finance/actions.ts` | `recordARPayment` → auto set `PAID` khi invoice fully paid |
+| **Audit logging cho status changes** | `sales/actions.ts` | Mọi thay đổi status đều ghi AuditLog |
+
+**Enhanced SO UI:**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Quick Filter Tabs** | `SalesClient.tsx` | Tabs ngang: Tất cả / Nháp / Chờ Duyệt / Đã XN / Đã Giao... với badge count |
+| **Sortable Columns** | `SalesClient.tsx` + `actions.ts` | Click header Số SO / Doanh Số / Ngày Tạo để sort ↑↓ |
+| **Date Range Filter** | `SalesClient.tsx` + `actions.ts` | DatePicker "Từ ngày → Đến ngày" |
+| **SO Detail Drawer 4 Tabs** | `SalesClient.tsx` | Tổng Quan / Sản Phẩm / Giao Hàng & Tài Chính / Lịch Sử |
+| **Status Progress Stepper** | `SalesClient.tsx` | Thanh tiến trình Draft → Confirm → Deliver → Invoice → Paid |
+| **Audit Timeline** | `actions.ts:getSOTimeline` | Tab Lịch Sử — query AuditLog, hiển thị timeline |
+| **Clone / Duplicate SO** | `actions.ts:cloneSalesOrder` | Nút Clone trong drawer → DRAFT mới với cùng lines |
+| **Export CSV** | `actions.ts:exportSalesOrdersCSV` | Nút "Excel" → download CSV với filter hiện tại |
+| **Status Counts API** | `actions.ts:getSOStatusCounts` | `groupBy status` cho quick filter tabs |
+
+**Role-Based Margin Visibility:**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Phân quyền xem Margin** | `SalesClient.tsx`, `page.tsx` | Chỉ `CEO`, `KE_TOAN`, `SALES_MGR` xem Giá Vốn, Lãi Gộp, Biên % |
+| **Sale Admin/Rep: ẩn margin** | `SalesClient.tsx` | Hiển thị "🔒 Chỉ Ban Giám Đốc" thay cho cột COGS/Margin |
+| **Negative Margin Warning** | `SalesClient.tsx` | Chỉ CEO/Finance thấy cảnh báo biên âm |
+
+#### 🆕 Session 9 — Quotation Upgrades (30/05/2026)
+
+**Advanced Quotation (Quotation Upgrades):**
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Quick Product Picker Modal** | `QuotationClient.tsx` | Chọn nhanh nhiều sản phẩm bằng modal, lọc theo quốc gia/loại vang, hiển thị tồn kho và giá bán wholesale |
+| **Pricing & Margin Control** | `QuotationClient.tsx` | Tính toán lãi gộp và biên lợi nhuận thời gian thực dựa trên giá wholesale, cảnh báo đỏ nếu giá báo thấp hơn giá vốn |
+| **Landscape Horizontal Images** | `QuotationClient.tsx`, `QuotationPublicView.tsx`, `route.ts` (PDF) | Ảnh sản phẩm được bo viền và thiết kế ngang (`contain` fit), tránh việc méo mó nhãn chai rượu vang |
+| **Supplier & Country Grouping** | `actions.ts`, `QuotationPublicView.tsx`, `route.ts` (PDF) | Gộp nhóm tự động theo Nhà Cung Cấp + Quốc gia trước khi hiển thị chi tiết sản phẩm trên Link HTML, PDF A4, và Excel |
+| **Show/Hide Quantity Option** | `QuotationClient.tsx`, `QuotationPublicView.tsx`, `route.ts` (PDF), `actions.ts` (Excel) | Báo giá mặc định ẩn số lượng (ẩn cột SL), có tùy chọn hộp kiểm hiển thị số lượng theo nhu cầu |
+
+#### 🆕 Session 10 — Multi-Entity Selection & Order Approvals (15/07/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Multi-Legal Entity Setup** | `CreateSODrawer.tsx` | Chọn pháp nhân (Thắng Ân / Ly's Cellar) và gán tài khoản ngân hàng tương ứng khi tạo đơn |
+| **Warehouse-to-Entity Filter** | `SalesClient.tsx` | Phê duyệt đơn hàng chỉ hiển thị kho xuất trực thuộc pháp nhân của đơn hàng đó |
+| **Asynchronous detail fetch** | `SalesClient.tsx` | Mở xem chi tiết đơn hàng tức thì nhờ tải song song Margin và Lịch sử sau |
+| **Print Invoice dynamic info** | `print/page.tsx` | Tự động điền tài khoản ngân hàng và thông tin pháp nhân động từ DB khi in hóa đơn |
+
+#### 🆕 Session 11 — High Performance & Caching (16/07/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **TanStack Caching & Hydration** | `SalesClient.tsx`, `QuotationClient.tsx` | Chuyển đổi list sang React Query kết hợp hydrate dữ liệu từ Server Component |
+| **LocalStorage Cache Persist** | `query-client.tsx` | Tự động đồng bộ cache xuống localStorage (24h) để render ngay lập tức lúc mở app |
+| **Sidebar Hover Prefetching** | `Sidebar.tsx` | Di chuột qua menu tự động prefetch dữ liệu ngầm trước khi click |
+| **Optimistic UI Status Changes** | `SalesClient.tsx` | Xác nhận/Hủy đơn cập nhật giao diện ngay lập tức mà không chặn người dùng |
+| **Supabase Realtime Sync** | `SalesClient.tsx` | Tự động lắng nghe thay đổi DB của bảng `sales_orders` để invalidate cache ngầm |
+
+### ❌ Chưa triển khai
+
+| Tính năng | Ưu tiên |
+|---|---|
 | Return Order + Credit Note | 🟡 P2 |
 | Dynamic SO threshold từ ApprovalConfig DB | 🟢 P3 |
 | Shipment → PO status hook (IN_TRANSIT) | 🟡 P2 |
@@ -308,4 +496,10 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Stepper Nhãn Bước & Thời gian** | `SalesClient.tsx` | Thiết kế lại thanh tiến trình gồm 6 bước rõ ràng kèm nhãn mô tả: Tạo đơn, Duyệt đơn, Xác nhận, Giao hàng, Xuất HĐ, Thu tiền |
 | **Ghi nhận Mốc thời gian** | `SalesClient.tsx` + `actions.ts:getSOTimeline` | Tự động phân tích mốc thời gian hoàn thành từng bước từ nhật ký hoạt động gộp (SO, DO, Invoice) |
 
-*Last updated: 2026-07-16 22:38 | Wine ERP v7.6*
+#### 🆕 Session 13 — MISA SME Offline Excel Export (09/08/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Xuất File MISA SME Offline (Hàng Loạt / Đơn Lẻ)** | `SalesClient.tsx`, `actions.ts:exportMisaSmeExcel` | Xuất file Excel chuẩn 100% định dạng MISA SME.NET Offline (Ngày CT, Số CT, Mã KH, Mã Kho, Mã SKU, Đơn giá, Chiết khấu, VAT, TK 5111/6321/1561) để Kế toán Import trực tiếp vào MISA SME |
+
+*Last updated: 2026-08-09 21:48 | Wine ERP v8.2*
