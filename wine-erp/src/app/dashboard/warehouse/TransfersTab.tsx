@@ -245,27 +245,27 @@ export function TransfersTab() {
                                 onClick={() => setSelectedId(r.id)}
                                 className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-900 space-y-3 shadow-2xs active:scale-98 transition cursor-pointer"
                             >
-                                <div className="flex items-center justify-between">
-                                    <span className="font-mono text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="font-mono text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200 whitespace-nowrap shrink-0">
                                         {r.transferNo}
                                     </span>
-                                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
+                                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap inline-flex items-center shrink-0"
                                         style={{ color: st.color, background: st.bg, borderColor: st.border }}>
                                         {st.label}
                                     </span>
                                 </div>
 
                                 {/* Route indicator */}
-                                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs font-semibold">
-                                    <span className="text-rose-300 font-bold truncate">🔴 {r.fromWarehouse}</span>
-                                    <span className="text-slate-500 px-1 font-bold">➔</span>
-                                    <span className="text-emerald-300 font-bold truncate">🟢 {r.toWarehouse}</span>
+                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold gap-1">
+                                    <span className="text-rose-700 font-bold truncate min-w-0 flex-1">🔴 {r.fromWarehouse}</span>
+                                    <span className="text-slate-400 px-1 font-bold shrink-0">➔</span>
+                                    <span className="text-emerald-700 font-bold truncate min-w-0 flex-1 text-right">🟢 {r.toWarehouse}</span>
                                 </div>
 
-                                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
+                                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
                                     <div>
-                                        <span className="text-slate-400 text-[10px] uppercase block font-bold">Tổng số chai:</span>
-                                        <span className="font-mono font-black text-emerald-400 text-sm">{r.totalQty.toLocaleString()} chai</span>
+                                        <span className="text-slate-500 text-[10px] uppercase block font-bold">Tổng số chai:</span>
+                                        <span className="font-mono font-black text-emerald-700 text-sm">{r.totalQty.toLocaleString()} chai</span>
                                     </div>
                                     <button
                                         onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}

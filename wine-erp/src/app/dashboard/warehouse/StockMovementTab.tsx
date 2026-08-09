@@ -764,7 +764,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                                         <tr key={m.id} className="transition-colors hover:bg-slate-50">
                                                             <td className="px-3.5 py-2.5 text-xs text-slate-600 font-medium">{formatDate(m.date)}</td>
                                                             <td className="px-3.5 py-2.5">
-                                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full"
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                                                     style={{ color: cfg.color, background: cfg.bg }}>
                                                                     <Icon size={10} /> {cfg.label}
                                                                 </span>

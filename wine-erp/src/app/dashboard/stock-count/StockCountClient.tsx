@@ -461,11 +461,11 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 ) : (
                     filteredList.map(row => (
                         <div key={row.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="font-mono text-xs font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="font-mono text-xs font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
                                     {row.sessionNo}
                                 </span>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase whitespace-nowrap inline-flex items-center shrink-0 ${
                                     row.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
                                     row.status === 'COMPLETED' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' :
                                     row.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-800 border border-amber-200' :

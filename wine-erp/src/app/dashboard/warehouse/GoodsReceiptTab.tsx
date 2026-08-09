@@ -143,11 +143,11 @@ export function GoodsReceiptTab({ warehouses }: {
                     return (
                         <div key={gr.id} onClick={() => openDetail(gr.id)}
                             className="p-3.5 rounded-2xl space-y-2 cursor-pointer transition-all active:scale-[0.99] bg-white border border-slate-200 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                     GR: {gr.grNo}
                                 </span>
-                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border" style={{ color: st.color, background: st.bg, borderColor: st.border }}>
+                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border whitespace-nowrap inline-flex items-center shrink-0" style={{ color: st.color, background: st.bg, borderColor: st.border }}>
                                     {st.label}
                                 </span>
                             </div>

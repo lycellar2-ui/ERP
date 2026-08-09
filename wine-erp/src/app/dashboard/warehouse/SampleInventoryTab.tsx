@@ -408,11 +408,11 @@ export function SampleInventoryTab() {
                                             <td className="px-3.5 py-3 text-xs font-mono font-bold text-emerald-700">{tx.docNo}</td>
                                             <td className="px-3.5 py-3">
                                                 {tx.type === 'INBOUND' ? (
-                                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap inline-flex items-center shrink-0">
                                                         Nhập Mẫu
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap inline-flex items-center shrink-0">
                                                         Xuất Mẫu
                                                     </span>
                                                 )}

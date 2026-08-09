@@ -283,7 +283,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="font-bold px-2.5 py-1 rounded-full text-[10px] uppercase border"
+                                    <span className="font-bold px-2.5 py-1 rounded-full text-[10px] uppercase border whitespace-nowrap inline-flex items-center shrink-0"
                                         style={{ color: statusCfg.color, background: `${statusCfg.color}20`, borderColor: `${statusCfg.color}40` }}>
                                         {statusCfg.label}
                                     </span>

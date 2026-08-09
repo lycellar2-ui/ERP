@@ -348,11 +348,11 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                     <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
                         {/* SKU + Vintage Badges */}
                         <div className="flex items-center justify-between gap-2">
-                            <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl">
+                            <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl whitespace-nowrap shrink-0">
                                 {currentItem.skuCode}
                             </span>
                             
-                            <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl flex items-center gap-1">
+                            <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl flex items-center gap-1 whitespace-nowrap shrink-0">
                                 🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
                             </span>
                         </div>
@@ -459,7 +459,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                         </span>
 
                                         {!isBlind && currentItem.qtyActual !== null && (
-                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold flex items-center gap-1 ${
+                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold flex items-center gap-1 whitespace-nowrap shrink-0 inline-flex items-center ${
                                                 currentItem.variance === 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
                                                 currentItem.variance! > 0 ? 'bg-amber-50 text-amber-800 border border-amber-300 animate-pulse' :
                                                 'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
