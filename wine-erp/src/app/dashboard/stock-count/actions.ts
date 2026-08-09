@@ -25,6 +25,8 @@ export type StockCountRow = {
     status: string
     assignedToId: string | null
     assignedToName: string | null
+    createdById: string | null
+    createdByName: string
     lineCount: number
     startedAt: Date | null
     completedAt: Date | null
@@ -45,6 +47,7 @@ export async function getStockCountList(): Promise<StockCountRow[]> {
                     select: { qtySystem: true, qtyActual: true, variance: true },
                 },
                 assignedTo: { select: { id: true, name: true } },
+                createdBy: { select: { id: true, name: true } },
                 warehouse: { select: { id: true, name: true } }
             },
         })
@@ -69,6 +72,8 @@ export async function getStockCountList(): Promise<StockCountRow[]> {
                 status: s.status,
                 assignedToId: s.assignedToId,
                 assignedToName: s.assignedTo?.name ?? null,
+                createdById: s.createdById ?? null,
+                createdByName: s.createdBy?.name ?? 'Hệ thống',
                 lineCount: s.lines.length,
                 startedAt: s.startedAt,
                 completedAt: s.completedAt,
@@ -765,11 +770,22 @@ export async function assignStaffToZones(
     zoneAssignments: { zone: string; assignedToId: string | null }[]
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const currentUser = await getCurrentUser()
         const session = await prisma.stockCountSession.findUnique({
             where: { id: sessionId },
             include: { lines: { include: { location: true } } }
         })
         if (!session) return { success: false, error: 'Không tìm thấy phiên kiểm kê' }
+
+        const isCreator = Boolean(currentUser?.id && session.createdById === currentUser.id)
+        const userRoles: any = (currentUser as any)?.roles || (currentUser as any)?.role || []
+        const isManager = Array.isArray(userRoles) 
+            ? userRoles.includes('ADMIN') || userRoles.includes('WAREHOUSE_MANAGER')
+            : userRoles === 'ADMIN' || userRoles === 'WAREHOUSE_MANAGER'
+
+        if (!isCreator && !isManager) {
+            return { success: false, error: 'Chỉ người tạo phiếu kiểm kê hoặc Quản lý kho mới có quyền phân công nhân sự!' }
+        }
 
         for (const assign of zoneAssignments) {
             const lineIds = session.lines

@@ -30,6 +30,8 @@ type SessionRow = {
     status: string
     assignedToId: string | null
     assignedToName: string | null
+    createdById?: string | null
+    createdByName?: string
     lineCount: number
     startedAt: Date | null
     completedAt: Date | null
@@ -420,51 +422,55 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <td className="p-4">
                                                 <div className="font-mono font-bold text-emerald-700 text-xs">{row.sessionNo}</div>
                                                 <div className="font-bold text-slate-900 mt-0.5">{row.title}</div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5">
-                                                    Tạo ngày: {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+                                                <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                    <span>Tạo ngày: {new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>
+                                                    <span>•</span>
+                                                    <span className="font-semibold text-slate-700">👤 Tạo bởi: {row.createdByName}</span>
                                                 </div>
                                             </td>
 
                                             <td className="p-4 font-bold text-slate-900">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Warehouse className="w-3.5 h-3.5 text-slate-500" />
+                                                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                                    <Warehouse className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                                                     {row.warehouseName}
                                                 </div>
                                             </td>
 
                                             <td className="p-4">
-                                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                                    {row.scopeType === 'FULL_WAREHOUSE' ? '📦 Full Kho' :
-                                                     row.scopeType === 'CYCLE_COUNT' ? '🔄 Cycle Count' :
-                                                     row.scopeType === 'TRANSACTED_ITEMS' ? '⚡ Mã Giao Dịch' : '🚨 Đột Xuất'}
-                                                </span>
-                                                {row.isBlindCount && (
-                                                    <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                        Mù
+                                                <div className="flex items-center gap-1 flex-wrap">
+                                                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap inline-flex items-center shrink-0">
+                                                        {row.scopeType === 'FULL_WAREHOUSE' ? '📦 Full Kho' :
+                                                         row.scopeType === 'CYCLE_COUNT' ? '🔄 Cycle Count' :
+                                                         row.scopeType === 'TRANSACTED_ITEMS' ? '⚡ Mã Giao Dịch' : '🚨 Đột Xuất'}
                                                     </span>
-                                                )}
+                                                    {row.isBlindCount && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap inline-flex items-center shrink-0">
+                                                            Mù
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             <td className="p-4">
                                                 {row.assignedToName ? (
-                                                    <span className="text-xs font-bold text-cyan-700 flex items-center gap-1">
-                                                        <UserCheck className="w-3.5 h-3.5" /> {row.assignedToName}
+                                                    <span className="text-xs font-bold text-cyan-700 flex items-center gap-1 whitespace-nowrap">
+                                                        <UserCheck className="w-3.5 h-3.5 shrink-0" /> {row.assignedToName}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-slate-400 italic text-[11px]">Chưa phân công</span>
+                                                    <span className="text-slate-400 italic text-[11px] whitespace-nowrap">Chưa phân công</span>
                                                 )}
                                             </td>
 
-                                            <td className="p-4 text-center font-mono font-bold text-slate-800">{row.lineCount} mã</td>
+                                            <td className="p-4 text-center font-mono font-bold text-slate-800 whitespace-nowrap">{row.lineCount} mã</td>
 
-                                            <td className="p-4 text-right font-mono font-bold">
+                                            <td className="p-4 text-right font-mono font-bold whitespace-nowrap">
                                                 <span className={row.totalVariance === 0 ? 'text-slate-500' : row.totalVariance > 0 ? 'text-amber-700' : 'text-rose-600'}>
                                                     {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} chai
                                                 </span>
                                             </td>
 
                                             <td className="p-4 text-center">
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase whitespace-nowrap inline-flex items-center shrink-0 ${
                                                     row.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
                                                     row.status === 'COMPLETED' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' :
                                                     row.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
@@ -553,9 +559,12 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                             <div>
                                 <h4 className="text-sm font-extrabold text-slate-900">{row.title}</h4>
-                                <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                    <Warehouse className="w-3.5 h-3.5 text-slate-400" /> {row.warehouseName}
-                                </p>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-0.5">
+                                    <span className="flex items-center gap-1">
+                                        <Warehouse className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {row.warehouseName}
+                                    </span>
+                                    <span className="font-semibold text-slate-700">👤 Tạo bởi: {row.createdByName}</span>
+                                </div>
                             </div>
 
                             <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 font-mono">
