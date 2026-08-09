@@ -395,17 +395,17 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {/* Sessions Table — Desktop View (>= 768px) */}
             <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
+                    <table className="w-full min-w-[1100px] text-left border-collapse text-xs">
                         <thead>
                             <tr className="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                                <th className="p-4">Mã Phiếu / Tiêu Đề</th>
-                                <th className="p-4">Kho Hàng</th>
-                                <th className="p-4">Phạm Vi / Chế Độ</th>
-                                <th className="p-4">Người Kiểm Kê</th>
-                                <th className="p-4 text-center">Số Dòng</th>
-                                <th className="p-4 text-right">Chênh Lệch</th>
-                                <th className="p-4 text-center">Trạng Thái</th>
-                                <th className="p-4 text-right">Thao Tác</th>
+                                <th className="p-4 min-w-[280px]">Mã Phiếu / Tiêu Đề</th>
+                                <th className="p-4 whitespace-nowrap min-w-[160px]">Kho Hàng</th>
+                                <th className="p-4 whitespace-nowrap min-w-[150px]">Phạm Vi / Chế Độ</th>
+                                <th className="p-4 whitespace-nowrap min-w-[140px]">Người Kiểm Kê</th>
+                                <th className="p-4 text-center whitespace-nowrap">Số Dòng</th>
+                                <th className="p-4 text-right whitespace-nowrap">Chênh Lệch</th>
+                                <th className="p-4 text-center whitespace-nowrap">Trạng Thái</th>
+                                <th className="p-4 text-right whitespace-nowrap min-w-[240px]">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-800">
@@ -419,10 +419,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 filteredList.map(row => {
                                     return (
                                         <tr key={row.id} className="hover:bg-amber-50/40 transition">
-                                            <td className="p-4">
-                                                <div className="font-mono font-bold text-emerald-700 text-xs">{row.sessionNo}</div>
-                                                <div className="font-bold text-slate-900 mt-0.5">{row.title}</div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                            <td className="p-4 min-w-[280px]">
+                                                <div className="font-mono font-extrabold text-emerald-800 text-xs whitespace-nowrap tracking-tight">{row.sessionNo}</div>
+                                                <div className="font-bold text-slate-900 mt-0.5 text-xs leading-snug line-clamp-2">{row.title}</div>
+                                                <div className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5 whitespace-nowrap">
                                                     <span>Tạo ngày: {new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>
                                                     <span>•</span>
                                                     <span className="font-semibold text-slate-700">👤 Tạo bởi: {row.createdByName}</span>
