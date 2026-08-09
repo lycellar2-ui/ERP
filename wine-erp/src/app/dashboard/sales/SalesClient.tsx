@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO } from './actions'
-import { formatVND, formatDate } from '@/lib/utils'
+import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
 const CreateSODrawer = dynamic(() => import('./CreateSODrawer').then(m => m.CreateSODrawer), {
@@ -1069,7 +1069,7 @@ function SalesOrderMobileCard({
                     {row.soNo}
                 </span>
                 <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
-                    {formatDate(row.createdAt)}
+                    {formatDateTime(row.createdAt)}
                 </span>
             </div>
 
@@ -1927,7 +1927,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     </td>
                                     <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
                                     <td className="px-4 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
-                                    <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>{formatDate(row.createdAt)}</td>
+                                    <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>{formatDateTime(row.createdAt)}</td>
                                     <td className="px-4 py-1.5">
                                         <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                                             <button onClick={() => setDetailId(row.id)} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
@@ -2138,7 +2138,28 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 />
             )}
 
-            {createOpen && <CreateSODrawer open={createOpen} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); reload() }} userId={userId} userRoles={userRoles} />}
+            {createOpen && (
+                <CreateSODrawer
+                    open={createOpen}
+                    onClose={() => setCreateOpen(false)}
+                    onSaved={(newSoId) => {
+                        setCreateOpen(false)
+                        queryClient.invalidateQueries({ queryKey: ['sales'] })
+                        setSearchInput('')
+                        setSearch('')
+                        setStatusFilter('')
+                        setSortBy('createdAt')
+                        setSortDir('desc')
+                        setPage(1)
+                        reload({ search: '', status: '', page: 1, sortBy: 'createdAt', sortDir: 'desc' }, true)
+                        if (newSoId) {
+                            setDetailId(newSoId)
+                        }
+                    }}
+                    userId={userId}
+                    userRoles={userRoles}
+                />
+            )}
             {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} userId={userId} />}
             {approvalModalId && (
                 <ApproveSOModal

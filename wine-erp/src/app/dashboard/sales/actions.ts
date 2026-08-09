@@ -169,7 +169,7 @@ export async function getSalesOrders(filters: {
             JOIN users u ON u.id = so."salesRepId"
             JOIN legal_entities le ON le.id = so."legalEntityId"
             ${whereClause}
-            ORDER BY ${sortCol} ${validatedSortDir}
+            ORDER BY ${sortCol} ${validatedSortDir}, so."createdAt" DESC, so."id" DESC
             LIMIT $${limitIndex} OFFSET $${offsetIndex}
         `
 

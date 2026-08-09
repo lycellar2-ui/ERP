@@ -99,7 +99,7 @@ const inputStyle = {
 
 const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Kế Toán', 'KE_TOAN']
 
-export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] }: { open: boolean; onClose: () => void; onSaved: () => void; userId: string; userRoles?: string[] }) {
+export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] }: { open: boolean; onClose: () => void; onSaved: (soId?: string) => void; userId: string; userRoles?: string[] }) {
     // TanStack Query to fetch and cache reference data for Sales Order Creation
     const { data: refData } = useQuery({
         queryKey: ['so_reference_data'],
@@ -456,7 +456,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
         toast.promise(promise, {
             loading: 'Đang tạo đơn hàng...',
             success: (result) => {
-                setTimeout(() => { onSaved(); resetForm() }, 500)
+                setTimeout(() => { onSaved(result.soId); resetForm() }, 500)
                 return `Tạo thành công ${result.soNo}`
             },
             error: (err: any) => `Lỗi: ${err.message}`,
