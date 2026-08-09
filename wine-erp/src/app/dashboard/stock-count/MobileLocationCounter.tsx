@@ -6,6 +6,7 @@ import {
     Plus, Minus, Save, Eye, EyeOff, Camera, AlertTriangle, RefreshCw,
     ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle
 } from 'lucide-react'
+import { AddUnlistedModal } from './AddUnlistedModal'
 import { recordMobileCountLine, completeZoneCount } from './actions'
 import { formatCasesAndBottles } from '@/lib/utils'
 
@@ -38,6 +39,7 @@ type Props = {
     }
     onBack: () => void
     onRefreshed?: () => void
+    onOpenTableModal?: () => void
 }
 
 const REASONS = [
@@ -75,7 +77,7 @@ function triggerHaptic() {
     }
 }
 
-export default function MobileLocationCounter({ detail, onBack, onRefreshed }: Props) {
+export default function MobileLocationCounter({ detail, onBack, onRefreshed, onOpenTableModal }: Props) {
     const [lines, setLines] = useState<LineItem[]>(detail.lines)
     const [viewMode, setViewMode] = useState<'FOCUS' | 'ZONES' | 'LIST'>('ZONES')
     const [selectedZone, setSelectedZone] = useState<string>('ALL')
@@ -85,7 +87,8 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuccessToast, setShowSuccessToast] = useState(false)
 
-    // Zone completion states
+    // Unlisted modal & zone completion states
+    const [showAddUnlistedModal, setShowAddUnlistedModal] = useState(false)
     const [showZoneReportModal, setShowZoneReportModal] = useState(false)
     const [zoneReport, setZoneReport] = useState<any>(null)
     const [isCompletingZone, setIsCompletingZone] = useState(false)
@@ -217,13 +220,31 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => setIsBlind(!isBlind)}
-                        className={`p-2 rounded-xl text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
-                        title="Tắt/Bật giấu tồn sổ sách"
-                    >
-                        {isBlind ? <EyeOff className="w-4 h-4 text-amber-700" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                        {onOpenTableModal && (
+                            <button
+                                onClick={onOpenTableModal}
+                                className="px-2 py-1.5 bg-[#87CBB9] text-[#0A1926] font-black rounded-xl text-[10px] flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 whitespace-nowrap"
+                                title="Mở Bảng Điền Trực Tiếp"
+                            >
+                                📊 Bảng Điền
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowAddUnlistedModal(true)}
+                            className="px-2 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl text-[10px] flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 whitespace-nowrap"
+                            title="Chèn mã ngoài danh sách"
+                        >
+                            + Chèn Mã
+                        </button>
+                        <button
+                            onClick={() => setIsBlind(!isBlind)}
+                            className={`p-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
+                            title="Tắt/Bật giấu tồn sổ sách"
+                        >
+                            {isBlind ? <EyeOff className="w-3.5 h-3.5 text-amber-700" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Progress Bar Header */}
@@ -700,6 +721,19 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* MODAL CHÈN MÃ / VINTAGE NGOÀI DANH SÁCH */}
+            {showAddUnlistedModal && (
+                <AddUnlistedModal
+                    sessionId={detail.id}
+                    sessionNo={detail.sessionNo}
+                    zones={zones}
+                    onClose={() => setShowAddUnlistedModal(false)}
+                    onSuccess={() => {
+                        if (onRefreshed) onRefreshed()
+                    }}
+                />
             )}
 
             {/* FLOATING BOTTOM NAVIGATION BAR */}

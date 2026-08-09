@@ -837,3 +837,67 @@ export async function completeZoneCount(
         return { success: false, error: err.message || 'Lỗi chốt kiểm kê khu vực' }
     }
 }
+
+export async function searchProductsForAddition(query?: string) {
+    const products = await prisma.product.findMany({
+        where: query ? {
+            OR: [
+                { skuCode: { contains: query, mode: 'insensitive' } },
+                { productName: { contains: query, mode: 'insensitive' } },
+            ]
+        } : {},
+        take: 50,
+        select: {
+            id: true,
+            skuCode: true,
+            productName: true,
+            unitsPerCase: true,
+        },
+        orderBy: { productName: 'asc' }
+    })
+    return serialize(products)
+}
+
+export async function addUnlistedProductToStockCountSession(input: {
+    sessionId: string
+    productId: string
+    locationId?: string
+    locationCode?: string
+    vintage?: number
+    qtyActual: number
+    varianceReason?: string
+    notes?: string
+}): Promise<{ success: boolean; lineId?: string; error?: string }> {
+    try {
+        const session = await prisma.stockCountSession.findUnique({
+            where: { id: input.sessionId }
+        })
+        if (!session) return { success: false, error: 'Phiên kiểm kê không tồn tại' }
+
+        const qtySystem = 0
+        const variance = input.qtyActual - qtySystem
+        const locCode = input.locationCode || 'CHÈN_THÊM'
+
+        const line = await prisma.stockCountLine.create({
+            data: {
+                sessionId: input.sessionId,
+                productId: input.productId,
+                locationId: input.locationId || null,
+                locationCode: locCode,
+                qtySystem,
+                qtyActual: input.qtyActual,
+                variance,
+                varianceReason: input.varianceReason || 'UNRECORDED_GR',
+                countedAt: new Date(),
+                notes: input.notes || 'Thêm ngoài danh sách kiểm kê'
+            }
+        })
+
+        revalidateCache('stock-count')
+        revalidatePath('/dashboard/stock-count')
+
+        return { success: true, lineId: line.id }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi thêm sản phẩm ngoài danh sách' }
+    }
+}

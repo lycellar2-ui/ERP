@@ -188,6 +188,9 @@ Hệ thống kiểm kê kho bãi đa chế độ, hỗ trợ đếm bằng đi�
 4. 🚨 **Kiểm kê Đột xuất (`SPOT_COUNT`):** Cho phép Ban Quản Lý / Kiểm toán chọn cụ thể **Danh sách Mã SKU bất kỳ** HOẶC **Khu vực/Kệ cụ thể** để phát lệnh kiểm kê tức thì không báo trước.
 
 ### 6.2 Bộ Tính Năng Kiểm Kê Nâng Cao
+- **Linh hoạt Giao diện Đếm Điện Thoại & Bảng Điền Trực Tiếp (Mobile Counter ↔ Interactive Grid Table):** Cho phép người dùng chuyển đổi linh hoạt 2 chiều giữa chế độ đếm tập trung di động (`MobileLocationCounter`) và chế độ Bảng Điền trực tiếp kiểu Bảng tính Spreadsheet (`StockCountTableModal`).
+- **Bộ Lọc Vị Trí / Kệ Kho (Location/Zone Dropdown Filter):** Cho phép chọn lọc nhanh vị trí kệ kho (`Khu A - Kệ 01`, `Khu B - Kệ 02`...) ngay trên Bảng Điền để kho tập trung kiểm kê và chốt chênh lệch theo từng khu vực cụ thể.
+- **Chèn thêm Mã SKU / Vintage ngoài danh sách (`+ Chèn Mã Bổ Sung`):** Cho phép nhân viên kiểm kê ghi nhận trực tiếp các mã sản phẩm hoặc niên vụ (Vintage) phát sinh thực tế trên kệ nhưng chưa được tạo sẵn trong danh sách kiểm kê ban đầu.
 - **Kiểm kê theo Niên Vụ (Vintage Tracking):** Đơn vị sản phẩm kiểm kê hiển thị rõ ràng Niên vụ (`vintage`: 2018, 2019, NV...), đảm bảo việc kiểm đếm chính xác từng lô rượu theo niên vụ xuất xứ.
 - **Quy đổi Thùng + Chai Lẻ Tự Động (Case & Loose Bottle Conversion):** Tự động quy đổi số lượng tổng chai sang `X thùng + Y chai lẻ` dựa theo quy cách đóng thùng (`unitsPerCase`, mặc định 6 chai/thùng). Ví dụ: `62 chai` quy cách 6 chai/thùng $\rightarrow$ hiển thị `10 thùng 2 chai lẻ`.
 - **Giao diện Đếm Di Động 2 Ô Nhập Thùng + Chai (Mobile Location Counter):** Loại bỏ giao diện quét barcode rườm rà; thay bằng 2 ô nhập trực tiếp `📦 Số Thùng` và `🍾 Chai Lẻ` cảm ứng nhanh, tự động cộng tổng chai thời gian thực.

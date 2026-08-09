@@ -15,6 +15,7 @@ import {
 import MobileLocationCounter from './MobileLocationCounter'
 import PrintableAuditReport from './PrintableAuditReport'
 import { BarcodeLookupModal } from './BarcodeLookupModal'
+import { StockCountTableModal } from './StockCountTableModal'
 
 type SessionRow = {
     id: string
@@ -61,6 +62,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const [mobileViewDetail, setMobileViewDetail] = useState<any>(null)
     const [printViewDetail, setPrintViewDetail] = useState<any>(null)
     const [showBarcodeLookup, setShowBarcodeLookup] = useState(false)
+    const [tableModalSessionId, setTableModalSessionId] = useState<string | null>(null)
 
     // Zone Assignment Modal State
     const [showAssignModal, setShowAssignModal] = useState(false)
@@ -419,6 +421,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <td className="p-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
+                                                        onClick={() => setTableModalSessionId(row.id)}
+                                                        className="px-2.5 py-1.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] rounded-lg text-xs font-black flex items-center gap-1 transition cursor-pointer shadow-2xs"
+                                                        title="Mở Bảng điền trực tiếp & Lọc vị trí"
+                                                    >
+                                                        <FileText className="w-3.5 h-3.5" /> Bảng Điền
+                                                    </button>
+
+                                                    <button
                                                         onClick={() => handleOpenAssignModal(row.id)}
                                                         className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold border border-slate-200 flex items-center gap-1 transition cursor-pointer"
                                                         title="Phân công vị trí kiểm kê"
@@ -489,22 +499,28 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-1.5 pt-1">
+                            <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <button
-                                    onClick={() => handleOpenAssignModal(row.id)}
-                                    className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                    onClick={() => setTableModalSessionId(row.id)}
+                                    className="py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
                                 >
-                                    <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> Phân công
+                                    <FileText className="w-3.5 h-3.5" /> Bảng Điền
                                 </button>
                                 <button
                                     onClick={() => handleOpenMobileView(row.id)}
-                                    className="py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                                    className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer active:scale-95"
                                 >
                                     <Smartphone className="w-3.5 h-3.5" /> Đếm ĐT
                                 </button>
                                 <button
+                                    onClick={() => handleOpenAssignModal(row.id)}
+                                    className="py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                >
+                                    <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> Phân công
+                                </button>
+                                <button
                                     onClick={() => handleOpenPrintView(row.id)}
-                                    className="py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                    className="py-2 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
                                 >
                                     <Printer className="w-3.5 h-3.5 text-amber-600" /> In Biên Bản
                                 </button>
@@ -779,6 +795,16 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* MODAL BẢNG ĐIỀN TRỰC TIẾP & LỌC VỊ TRÍ */}
+            {tableModalSessionId && (
+                <StockCountTableModal
+                    sessionId={tableModalSessionId}
+                    onClose={() => setTableModalSessionId(null)}
+                    onOpenMobileView={id => handleOpenMobileView(id)}
+                    onRefreshSession={fetchData}
+                />
             )}
         </div>
     )

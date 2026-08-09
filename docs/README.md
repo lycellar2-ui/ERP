@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-09 12:25 | Wine ERP v9.9.4 — Stock Count Location Assignment, Real-World Scanning & Zone Variance Summary Report*
+*Last updated: 2026-08-09 14:42 | Wine ERP v9.9.5 — Flexible Mobile vs Interactive Grid Table Stock Count, Location Filtering & Unlisted Item Insert*
 
