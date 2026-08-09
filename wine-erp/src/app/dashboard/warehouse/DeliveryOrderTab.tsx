@@ -38,6 +38,24 @@ export type WarehouseOption = {
     isDefault?: boolean
 }
 
+export function resolveWarehouseForSO(targetSO: SOOption, warehouses: WarehouseOption[]): string {
+    if (targetSO.warehouseId) return targetSO.warehouseId
+    const targetLegalEntityId = (targetSO as any).legalEntityId
+
+    // Strictly filter warehouses belonging to the SO's legal entity
+    const entityWhs = warehouses.filter((w: any) => {
+        if (!targetLegalEntityId) return true
+        return w.legalEntityId === targetLegalEntityId
+    })
+
+    const pool = entityWhs.length > 0 ? entityWhs : warehouses
+    const defaultWh = pool.find((w: any) => w.isDefault && w.allowSales !== false)
+        ?? pool.find((w: any) => w.allowSales !== false)
+        ?? pool[0]
+
+    return defaultWh ? defaultWh.id : (warehouses[0]?.id ?? '')
+}
+
 export function DeliveryOrderTab({ warehouses }: {
     warehouses: WarehouseOption[]
 }) {
@@ -198,6 +216,8 @@ export function DeliveryOrderTab({ warehouses }: {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                             {filteredPendingSOs.map(so => {
                                 const totalItems = so.lines.reduce((sum, l) => sum + l.qtyOrdered, 0)
+                                const targetWhId = resolveWarehouseForSO(so, warehouses)
+                                const targetWh = warehouses.find(w => w.id === targetWhId)
                                 return (
                                     <div
                                         key={so.id}
@@ -223,9 +243,17 @@ export function DeliveryOrderTab({ warehouses }: {
                                             </div>
 
                                             {/* Customer Name */}
-                                            <h4 className="text-[13px] font-bold truncate mb-2.5" style={{ color: '#0F172A' }}>
+                                            <h4 className="text-[13px] font-bold truncate mb-1.5" style={{ color: '#0F172A' }}>
                                                 {so.customerName || (so as any).customer?.name || 'Khách hàng'}
                                             </h4>
+
+                                            {/* Default Warehouse Badge */}
+                                            <div className="mb-2.5">
+                                                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded flex items-center gap-1 inline-flex"
+                                                    style={{ background: '#F1F5F9', color: '#334155', border: '1px solid #E2E8F0' }}>
+                                                    🏢 Kho xuất: <strong style={{ color: '#0F172A' }}>{targetWh?.name || 'Kho Mặc Định'}</strong>
+                                                </span>
+                                            </div>
 
                                             {/* Product Lines */}
                                             <div className="space-y-1.5 max-h-32 overflow-y-auto pr-0.5">
