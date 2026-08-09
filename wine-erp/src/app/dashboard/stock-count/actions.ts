@@ -118,7 +118,23 @@ export async function getStockCountDetail(sessionId: string) {
                     }
                 }
             },
-            warehouse: { select: { id: true, name: true, code: true } },
+            warehouse: {
+                select: {
+                    id: true,
+                    name: true,
+                    code: true,
+                    address: true,
+                    legalEntity: {
+                        select: {
+                            id: true,
+                            name: true,
+                            taxId: true,
+                            address: true,
+                            phone: true
+                        }
+                    }
+                }
+            },
             assignedTo: { select: { id: true, name: true, email: true } },
             createdBy: { select: { id: true, name: true } }
         },
@@ -186,6 +202,9 @@ export async function getStockCountDetail(sessionId: string) {
         title: titleStr,
         warehouseName: session.warehouse?.name ?? '?',
         warehouseCode: session.warehouse?.code ?? 'WH',
+        legalEntityName: session.warehouse?.legalEntity?.name || 'CÔNG TY TNHH LY CELLARS',
+        legalEntityAddress: session.warehouse?.legalEntity?.address || session.warehouse?.address || null,
+        legalEntityTaxId: session.warehouse?.legalEntity?.taxId || null,
         lines: formattedLines,
     })
 }

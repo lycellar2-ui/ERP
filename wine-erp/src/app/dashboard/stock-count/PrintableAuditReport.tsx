@@ -29,6 +29,9 @@ type AuditDetail = {
     title: string
     warehouseName: string
     warehouseCode: string
+    legalEntityName?: string | null
+    legalEntityAddress?: string | null
+    legalEntityTaxId?: string | null
     scopeType: string
     status: string
     assignedToName?: string | null
@@ -77,6 +80,8 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
     const monthStr = (createdDateObj.getMonth() + 1).toString().padStart(2, '0')
     const yearStr = createdDateObj.getFullYear().toString()
 
+    const legalName = detail.legalEntityName || 'CÔNG TY TNHH LY CELLARS'
+
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible print:inset-auto print:static">
             {/* Top Toolbar (Hidden on Print) */}
@@ -87,7 +92,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                     </button>
                     <div>
                         <h2 className="text-base font-extrabold text-slate-900">BIÊN BẢN KIỂM KÊ KHO HÀNG HÓA A4</h2>
-                        <p className="text-xs text-slate-500">Phiếu: {detail.sessionNo} | Kho: {detail.warehouseName}</p>
+                        <p className="text-xs text-slate-500">Đơn vị: {legalName} | Kho: {detail.warehouseName}</p>
                     </div>
                 </div>
 
@@ -118,8 +123,14 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                 {/* Header: Company & Quốc Hiệu */}
                 <div className="flex justify-between items-start border-b border-black pb-4 mb-6">
                     <div>
-                        <div className="font-extrabold uppercase text-sm tracking-wide">CÔNG TY TNHH LY CELLARS</div>
+                        <div className="font-extrabold uppercase text-sm tracking-wide">{legalName.toUpperCase()}</div>
+                        {detail.legalEntityTaxId && (
+                            <div className="text-xs font-semibold mt-0.5">MST: {detail.legalEntityTaxId}</div>
+                        )}
                         <div className="text-xs font-bold mt-0.5">KHO HÀNG: {detail.warehouseName.toUpperCase()}</div>
+                        {detail.legalEntityAddress && (
+                            <div className="text-[11px] text-slate-700 italic mt-0.5">ĐC: {detail.legalEntityAddress}</div>
+                        )}
                         <div className="text-xs italic mt-0.5">Mã phiếu: {detail.sessionNo}</div>
                     </div>
                     <div className="text-center">
