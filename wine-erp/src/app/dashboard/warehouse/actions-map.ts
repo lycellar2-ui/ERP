@@ -115,8 +115,8 @@ export async function getWarehouseMapData(warehouseId: string): Promise<MapWareh
                     tempControlled: loc.tempControlled,
                     posX: loc.posX ?? 0,
                     posY: loc.posY ?? 0,
-                    width: loc.width ?? 80,
-                    height: loc.height ?? 60,
+                    width: Math.max(loc.width ?? 120, 90),
+                    height: Math.max(loc.height ?? 75, 55),
                     stockCount: locLots.length,
                     totalQty,
                     occupancyPct,
@@ -240,12 +240,12 @@ export async function autoLayoutWarehouse(
         }
 
         const PADDING = 20
-        const LOC_W = 90
-        const LOC_H = 65
-        const GAP = 12
+        const LOC_W = 120
+        const LOC_H = 75
+        const GAP = 14
         const ZONE_GAP = 40
         const ZONE_HEADER = 35
-        const COLS_PER_ZONE = 6
+        const COLS_PER_ZONE = 5
 
         let zoneY = PADDING
         const updates: { id: string; posX: number; posY: number; width: number; height: number }[] = []

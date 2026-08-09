@@ -342,7 +342,7 @@ export function WarehouseMapTab({
             const dx = (e.clientX - resizeLoc.startX) / zoom
             const dy = (e.clientY - resizeLoc.startY) / zoom
             setLocations(prev => prev.map(l => l.id === resizeLoc.id
-                ? { ...l, width: Math.max(40, snap(resizeLoc.origW + dx)), height: Math.max(30, snap(resizeLoc.origH + dy)) }
+                ? { ...l, width: Math.max(90, snap(resizeLoc.origW + dx)), height: Math.max(50, snap(resizeLoc.origH + dy)) }
                 : l
             ))
             setHasChanges(true)
@@ -714,7 +714,7 @@ export function WarehouseMapTab({
                                                 if (!editMode) setShowLocModal(true) // Open Popup Modal in View mode!
                                             }
                                         }}
-                                        className="absolute transition-all duration-150 group"
+                                        className="absolute transition-all duration-150 group overflow-hidden"
                                         style={{
                                             left: loc.posX, top: loc.posY,
                                             width: loc.width, height: loc.height,
@@ -727,32 +727,43 @@ export function WarehouseMapTab({
                                             boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.25), 0 4px 12px rgba(0,0,0,0.1)' :
                                                 isHighlighted ? '0 0 0 4px rgba(245,158,11,0.3), 0 0 16px rgba(245,158,11,0.2)' :
                                                     '0 2px 4px rgba(0,0,0,0.04)',
-                                            padding: '6px 8px',
+                                            padding: loc.width < 100 || loc.height < 60 ? '4px 6px' : '6px 8px',
                                             display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                                             userSelect: 'none',
                                         }}
                                     >
                                         {/* Top: Location Code & Temp badge */}
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-extrabold font-mono text-slate-900" style={{ letterSpacing: 0.3 }}>
+                                        <div className="flex items-center justify-between gap-1 overflow-hidden min-w-0">
+                                            <span
+                                                className="font-extrabold font-mono text-slate-900 whitespace-nowrap truncate min-w-0"
+                                                style={{ fontSize: loc.width < 100 ? 9 : 11, letterSpacing: 0.2 }}
+                                                title={loc.locationCode}
+                                            >
                                                 {loc.locationCode}
                                             </span>
                                             {loc.tempControlled && (
-                                                <span className="text-[10px]" title="Kho lạnh bảo quản rượu">❄️</span>
+                                                <span className="text-[10px] shrink-0" title="Kho lạnh bảo quản rượu">❄️</span>
                                             )}
                                         </div>
 
                                         {/* Occupancy Progress Bar */}
-                                        <div className="w-full rounded-full overflow-hidden bg-slate-200 my-1" style={{ height: 5 }}>
+                                        <div className="w-full rounded-full overflow-hidden bg-slate-200/80 my-0.5 shrink-0" style={{ height: loc.height < 60 ? 3 : 5 }}>
                                             <div style={{ width: `${loc.occupancyPct}%`, height: '100%', background: oc.dot, borderRadius: 99, transition: 'width 0.3s' }} />
                                         </div>
 
                                         {/* Bottom: Qty & Occupancy % */}
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold font-mono" style={{ color: oc.text }}>
+                                        <div className="flex items-center justify-between gap-1 overflow-hidden min-w-0">
+                                            <span
+                                                className="font-bold font-mono whitespace-nowrap truncate min-w-0"
+                                                style={{ color: oc.text, fontSize: loc.width < 100 ? 9 : 10 }}
+                                                title={loc.totalQty > 0 ? `${formatNumber(loc.totalQty)} chai` : 'Trống'}
+                                            >
                                                 {loc.totalQty > 0 ? `${formatNumber(loc.totalQty)} chai` : 'Trống'}
                                             </span>
-                                            <span className="text-[10px] font-extrabold" style={{ color: oc.text }}>
+                                            <span
+                                                className="font-extrabold whitespace-nowrap shrink-0"
+                                                style={{ color: oc.text, fontSize: loc.width < 100 ? 9 : 10 }}
+                                            >
                                                 {loc.occupancyPct}%
                                             </span>
                                         </div>
