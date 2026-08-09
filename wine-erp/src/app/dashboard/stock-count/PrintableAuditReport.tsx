@@ -155,16 +155,16 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible">
             {/* Top Toolbar (Hidden on Print) */}
-            <div className="max-w-5xl mx-auto mb-4 bg-slate-800 text-white rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
+            <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
                 <div className="flex items-center gap-3">
-                    <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg text-slate-300">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-900 transition-colors cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                     <div>
-                        <h2 className="text-base font-bold text-emerald-400">BIÊN BẢN KIỂM KÊ KHO</h2>
-                        <p className="text-xs text-slate-400">Mã phiếu: {detail.sessionNo} | Kho: {detail.warehouseName}</p>
+                        <h2 className="text-base font-extrabold text-slate-900">BIÊN BẢN KIỂM KÊ KHO</h2>
+                        <p className="text-xs text-slate-500">Mã phiếu: {detail.sessionNo} | Kho: {detail.warehouseName}</p>
                     </div>
                 </div>
 
@@ -172,9 +172,9 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                     <button
                         onClick={handleSaveAllSignatures}
                         disabled={isSavingSig}
-                        className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition text-slate-200"
+                        className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
                     >
-                        <PenTool className="w-4 h-4 text-emerald-400" />
+                        <PenTool className="w-4 h-4 text-emerald-600" />
                         {isSavingSig ? 'Đang lưu...' : 'Lưu chữ ký'}
                     </button>
 
@@ -182,7 +182,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                         <button
                             onClick={handleApprove}
                             disabled={isApproving}
-                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition shadow"
+                            className="px-3.5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] text-xs font-extrabold rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                         >
                             <ShieldCheck className="w-4 h-4" />
                             {isApproving ? 'Đang duyệt...' : 'Duyệt & Tạo Bút Toán ADJ'}
@@ -191,7 +191,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
 
                     <button
                         onClick={handlePrint}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 transition shadow"
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                     >
                         <Printer className="w-4 h-4" />
                         In Biên Bản (A4)
@@ -200,7 +200,7 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
             </div>
 
             {sigSuccessMsg && (
-                <div className="max-w-5xl mx-auto mb-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs p-3 rounded-lg print:hidden">
+                <div className="max-w-5xl mx-auto mb-3 bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs p-3 rounded-xl print:hidden">
                     {sigSuccessMsg}
                 </div>
             )}

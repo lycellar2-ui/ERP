@@ -206,15 +206,15 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     return (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200 p-6 rounded-2xl shadow-xs">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <span className="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+                    <div className="flex items-center gap-3">
+                        <span className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl">
                             <ClipboardList className="w-6 h-6" />
                         </span>
                         <div>
-                            <h1 className="text-xl font-black text-white tracking-wide">HỆ THỐNG KIỂM KÊ KHO ERP</h1>
-                            <p className="text-xs text-slate-400">Kiểm kê Full kho, Cycle Count, Mã giao dịch & Đột xuất</p>
+                            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">HỆ THỐNG KIỂM KÊ KHO ERP</h1>
+                            <p className="text-xs text-slate-500">Kiểm kê Full kho, Cycle Count, Mã giao dịch & Đột xuất</p>
                         </div>
                     </div>
                 </div>
@@ -222,15 +222,15 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowBarcodeLookup(true)}
-                        className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center gap-2 border border-slate-700 transition"
+                        className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-2 border border-slate-200 shadow-2xs transition cursor-pointer"
                     >
-                        <QrCode className="w-4 h-4 text-emerald-400" />
+                        <QrCode className="w-4 h-4 text-emerald-600" />
                         Tra cứu Barcode
                     </button>
 
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition active:scale-95"
+                        className="px-5 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold text-xs rounded-xl flex items-center gap-2 shadow-xs transition cursor-pointer active:scale-95"
                     >
                         <Plus className="w-4 h-4" />
                         Tạo Phiếu Kiểm Kê
@@ -240,27 +240,27 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* Metric KPI Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                    <span className="text-xs font-semibold text-slate-400 block">Tổng Phiếu Kiểm Kê</span>
-                    <strong className="text-2xl font-black text-white mt-1 block">{stats.total}</strong>
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">Tổng Phiếu Kiểm Kê</span>
+                    <strong className="text-2xl font-black text-slate-900 mt-1 block">{stats.total}</strong>
                 </div>
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                    <span className="text-xs font-semibold text-amber-400 block">Đang Kiểm Kê</span>
-                    <strong className="text-2xl font-black text-amber-400 mt-1 block">{stats.inProgress}</strong>
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
+                    <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wide block">Đang Kiểm Kê</span>
+                    <strong className="text-2xl font-black text-amber-600 mt-1 block">{stats.inProgress}</strong>
                 </div>
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                    <span className="text-xs font-semibold text-emerald-400 block">Đã Hoàn Thành / Duyệt</span>
-                    <strong className="text-2xl font-black text-emerald-400 mt-1 block">{stats.completed}</strong>
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
+                    <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wide block">Đã Hoàn Thành / Duyệt</span>
+                    <strong className="text-2xl font-black text-emerald-600 mt-1 block">{stats.completed}</strong>
                 </div>
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                    <span className="text-xs font-semibold text-cyan-400 block">Phân Công Cho Tôi</span>
-                    <strong className="text-2xl font-black text-cyan-400 mt-1 block">{stats.assignedToMe}</strong>
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
+                    <span className="text-[11px] font-bold text-cyan-700 uppercase tracking-wide block">Phân Công Cho Tôi</span>
+                    <strong className="text-2xl font-black text-cyan-700 mt-1 block">{stats.assignedToMe}</strong>
                 </div>
             </div>
 
             {/* Filter Tabs & Search */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-1 bg-slate-900 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto">
+                <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-xl border border-slate-200 w-full sm:w-auto overflow-x-auto">
                     {[
                         { key: 'ALL', label: 'Tất cả phiếu' },
                         { key: 'ASSIGNED', label: 'Được phân công' },
@@ -270,7 +270,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key as any)}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition ${activeTab === tab.key ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${activeTab === tab.key ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
                         >
                             {tab.label}
                         </button>
@@ -284,17 +284,17 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         placeholder="Tìm mã phiếu, kho, nhân viên..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
+                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl pl-9 pr-3 py-2 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 shadow-2xs"
                     />
                 </div>
             </div>
 
             {/* Sessions Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                            <tr className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-800">
+                            <tr className="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
                                 <th className="p-4">Mã Phiếu / Tiêu Đề</th>
                                 <th className="p-4">Kho Hàng</th>
                                 <th className="p-4">Phạm Vi / Chế Độ</th>
@@ -305,41 +305,40 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <th className="p-4 text-right">Thao Tác</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800 text-slate-300">
+                        <tbody className="divide-y divide-slate-100 text-slate-800">
                             {filteredList.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="p-8 text-center text-slate-500">
+                                    <td colSpan={8} className="p-8 text-center text-slate-400">
                                         Không tìm thấy phiên kiểm kê nào.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredList.map(row => {
-                                    const isDiff = row.totalVariance !== 0
                                     return (
-                                        <tr key={row.id} className="hover:bg-slate-800/50 transition">
+                                        <tr key={row.id} className="hover:bg-amber-50/40 transition">
                                             <td className="p-4">
-                                                <div className="font-mono font-bold text-emerald-400 text-xs">{row.sessionNo}</div>
-                                                <div className="font-semibold text-white mt-0.5">{row.title}</div>
+                                                <div className="font-mono font-bold text-emerald-700 text-xs">{row.sessionNo}</div>
+                                                <div className="font-bold text-slate-900 mt-0.5">{row.title}</div>
                                                 <div className="text-[10px] text-slate-500 mt-0.5">
                                                     Tạo ngày: {new Date(row.createdAt).toLocaleDateString('vi-VN')}
                                                 </div>
                                             </td>
 
-                                            <td className="p-4 font-semibold text-slate-200">
+                                            <td className="p-4 font-bold text-slate-900">
                                                 <div className="flex items-center gap-1.5">
-                                                    <Warehouse className="w-3.5 h-3.5 text-slate-400" />
+                                                    <Warehouse className="w-3.5 h-3.5 text-slate-500" />
                                                     {row.warehouseName}
                                                 </div>
                                             </td>
 
                                             <td className="p-4">
-                                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                     {row.scopeType === 'FULL_WAREHOUSE' ? '📦 Full Kho' :
                                                      row.scopeType === 'CYCLE_COUNT' ? '🔄 Cycle Count' :
                                                      row.scopeType === 'TRANSACTED_ITEMS' ? '⚡ Mã Giao Dịch' : '🚨 Đột Xuất'}
                                                 </span>
                                                 {row.isBlindCount && (
-                                                    <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                    <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                                                         Mù
                                                     </span>
                                                 )}
@@ -347,28 +346,28 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                                             <td className="p-4">
                                                 {row.assignedToName ? (
-                                                    <span className="text-xs font-semibold text-cyan-300 flex items-center gap-1">
+                                                    <span className="text-xs font-bold text-cyan-700 flex items-center gap-1">
                                                         <UserCheck className="w-3.5 h-3.5" /> {row.assignedToName}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-slate-500 italic text-[11px]">Chưa phân công</span>
+                                                    <span className="text-slate-400 italic text-[11px]">Chưa phân công</span>
                                                 )}
                                             </td>
 
-                                            <td className="p-4 text-center font-mono font-bold">{row.lineCount} mã</td>
+                                            <td className="p-4 text-center font-mono font-bold text-slate-800">{row.lineCount} mã</td>
 
                                             <td className="p-4 text-right font-mono font-bold">
-                                                <span className={row.totalVariance === 0 ? 'text-slate-400' : row.totalVariance > 0 ? 'text-amber-400' : 'text-rose-400'}>
+                                                <span className={row.totalVariance === 0 ? 'text-slate-500' : row.totalVariance > 0 ? 'text-amber-700' : 'text-rose-600'}>
                                                     {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} chai
                                                 </span>
                                             </td>
 
                                             <td className="p-4 text-center">
                                                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                                    row.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                                                    row.status === 'COMPLETED' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
-                                                    row.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-                                                    'bg-slate-800 text-slate-400'
+                                                    row.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                                                    row.status === 'COMPLETED' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' :
+                                                    row.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                                                    'bg-slate-100 text-slate-600 border border-slate-200'
                                                 }`}>
                                                     {row.status === 'APPROVED' ? 'Đã duyệt' : row.status === 'COMPLETED' ? 'Đã đếm xong' : row.status === 'IN_PROGRESS' ? 'Đang kiểm' : 'Nháp'}
                                                 </span>
@@ -378,7 +377,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
                                                         onClick={() => handleOpenMobileView(row.id)}
-                                                        className="px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded-lg text-xs font-bold border border-emerald-500/30 flex items-center gap-1 transition"
+                                                        className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1 transition cursor-pointer"
                                                         title="Đếm bằng Điện thoại"
                                                     >
                                                         <Smartphone className="w-3.5 h-3.5" /> Đếm ĐT
@@ -386,10 +385,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                                                     <button
                                                         onClick={() => handleOpenPrintView(row.id)}
-                                                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition border border-slate-700"
+                                                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1 transition border border-slate-200 cursor-pointer"
                                                         title="In Biên bản kiểm kê"
                                                     >
-                                                        <Printer className="w-3.5 h-3.5 text-amber-400" /> In
+                                                        <Printer className="w-3.5 h-3.5 text-amber-600" /> In
                                                     </button>
                                                 </div>
                                             </td>
@@ -404,19 +403,19 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* Create Extended Session Modal */}
             {showCreateModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 text-white shadow-2xl overflow-y-auto max-h-[90vh]">
-                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+                    <div className="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 text-slate-900 shadow-2xl overflow-y-auto max-h-[90vh]">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
                             <div>
-                                <h2 className="text-base font-black text-white">Khởi Tạo Phiếu Kiểm Kê Mới</h2>
-                                <p className="text-xs text-slate-400">Chọn 1 trong 4 chế độ kiểm kê nâng cao</p>
+                                <h2 className="text-base font-extrabold text-slate-900">Khởi Tạo Phiếu Kiểm Kê Mới</h2>
+                                <p className="text-xs text-slate-500">Chọn 1 trong 4 chế độ kiểm kê nâng cao</p>
                             </div>
-                            <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                            <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100">✕</button>
                         </div>
 
                         {createError && (
-                            <div className="mb-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-xs flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                            <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl text-xs flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                                 {createError}
                             </div>
                         )}
@@ -424,7 +423,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                         <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
                             {/* Scope Selector Grid */}
                             <div>
-                                <label className="text-slate-400 font-bold block mb-2">CHỌN CHẾ ĐỘ KIỂM KÊ:</label>
+                                <label className="text-slate-700 font-bold block mb-2">CHỌN CHẾ ĐỘ KIỂM KÊ:</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {[
                                         { key: 'FULL_WAREHOUSE', title: '📦 Full Kho', desc: 'Toàn bộ mã & vị trí' },
@@ -436,7 +435,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             type="button"
                                             key={mode.key}
                                             onClick={() => setFormScopeType(mode.key as any)}
-                                            className={`p-3 rounded-xl text-left border transition ${formScopeType === mode.key ? 'bg-emerald-500/10 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'}`}
+                                            className={`p-3 rounded-xl text-left border transition cursor-pointer ${formScopeType === mode.key ? 'bg-teal-50 border-2 border-teal-500 text-teal-900 font-bold shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}
                                         >
                                             <div className="font-bold text-xs">{mode.title}</div>
                                             <div className="text-[10px] text-slate-500 mt-0.5">{mode.desc}</div>
@@ -447,14 +446,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                             {/* Warehouse Selector */}
                             <div>
-                                <label className="text-slate-400 font-bold block mb-1">Kho Hàng Kiểm Kê:*</label>
+                                <label className="text-slate-700 font-bold block mb-1">Kho Hàng Kiểm Kê:*</label>
                                 <select
                                     value={formWarehouseId}
                                     onChange={e => {
                                         setFormWarehouseId(e.target.value)
                                         fetchLocationOptions(e.target.value)
                                     }}
-                                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20"
                                     required
                                 >
                                     {warehouses.map(w => (
@@ -465,25 +464,25 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                             {/* Title */}
                             <div>
-                                <label className="text-slate-400 font-bold block mb-1">Tên / Mục Đích Phiếu Kiểm Kê:</label>
+                                <label className="text-slate-700 font-bold block mb-1">Tên / Mục Đích Phiếu Kiểm Kê:</label>
                                 <input
                                     type="text"
                                     placeholder="vd: Kiểm kê định kỳ tháng 8, Kiểm kê đột xuất hầm rượu..."
                                     value={formTitle}
                                     onChange={e => setFormTitle(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20"
                                 />
                             </div>
 
                             {/* Scope-specific Options */}
                             {formScopeType === 'CYCLE_COUNT' && (
-                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-3">
+                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-3">
                                     <div>
-                                        <label className="text-slate-400 font-bold block mb-1">Lọc theo Vị trí (Zone):</label>
+                                        <label className="text-slate-700 font-bold block mb-1">Lọc theo Vị trí (Zone):</label>
                                         <select
                                             value={formSelectedZone}
                                             onChange={e => setFormSelectedZone(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 focus:outline-none"
+                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 text-xs focus:outline-none"
                                         >
                                             <option value="">-- Tất cả vị trí --</option>
                                             {Array.from(new Set(locationOptions.map(l => l.zone))).map(z => (
@@ -495,27 +494,27 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             )}
 
                             {formScopeType === 'TRANSACTED_ITEMS' && (
-                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                                    <label className="text-slate-400 font-bold block mb-1">Phát sinh giao dịch trong (Ngày):</label>
+                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                    <label className="text-slate-700 font-bold block mb-1">Phát sinh giao dịch trong (Ngày):</label>
                                     <input
                                         type="number"
                                         value={formTransactedDays}
                                         onChange={e => setFormTransactedDays(parseInt(e.target.value, 10) || 30)}
-                                        className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 focus:outline-none font-mono"
+                                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 font-mono text-xs focus:outline-none"
                                     />
                                 </div>
                             )}
 
                             {formScopeType === 'SPOT_COUNT' && (
-                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-3">
+                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-3">
                                     <div>
-                                        <label className="text-slate-400 font-bold block mb-1">Nhập danh sách mã SKU cần đột xuất (cách nhau bởi dấu phẩy/xuống dòng):</label>
+                                        <label className="text-slate-700 font-bold block mb-1">Nhập danh sách mã SKU cần đột xuất (cách nhau bởi dấu phẩy/xuống dòng):</label>
                                         <textarea
                                             rows={3}
                                             placeholder="vd: L10001, L10007, L20015..."
                                             value={formSpotSkus}
                                             onChange={e => setFormSpotSkus(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 font-mono focus:outline-none"
+                                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 font-mono text-xs focus:outline-none"
                                         />
                                     </div>
                                 </div>
@@ -523,11 +522,11 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                             {/* Staff Assignee */}
                             <div>
-                                <label className="text-slate-400 font-bold block mb-1">Phân Công Cho Nhân Viên:</label>
+                                <label className="text-slate-700 font-bold block mb-1">Phân Công Cho Nhân Viên:</label>
                                 <select
                                     value={formAssignedToId}
                                     onChange={e => setFormAssignedToId(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none"
+                                    className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl p-2.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20"
                                 >
                                     <option value="">-- Chưa phân công (Để tự do) --</option>
                                     {staffList.map(u => (
@@ -537,33 +536,33 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             </div>
 
                             {/* Blind Count Option Toggle */}
-                            <div className="flex items-center gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                                 <input
                                     type="checkbox"
                                     id="blindToggle"
                                     checked={formIsBlind}
                                     onChange={e => setFormIsBlind(e.target.checked)}
-                                    className="w-4 h-4 rounded text-emerald-500 focus:ring-0 bg-slate-900 border-slate-700"
+                                    className="w-4 h-4 rounded text-teal-600 focus:ring-0 bg-white border-slate-300"
                                 />
                                 <label htmlFor="blindToggle" className="cursor-pointer">
-                                    <span className="font-bold text-white block">Kiểm Kê Mù (Giấu Tồn Sổ Sách)</span>
-                                    <span className="text-[10px] text-slate-400 block">Ẩn số liệu tồn sổ sách trên điện thoại nhân viên để đảm bảo đếm thực tế 100%</span>
+                                    <span className="font-bold text-slate-900 block">Kiểm Kê Mù (Giấu Tồn Sổ Sách)</span>
+                                    <span className="text-[10px] text-slate-500 block">Ẩn số liệu tồn sổ sách trên điện thoại nhân viên để đảm bảo đếm thực tế 100%</span>
                                 </label>
                             </div>
 
                             {/* Submit Buttons */}
-                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl"
+                                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 rounded-xl cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/20"
+                                    className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold rounded-xl shadow-xs cursor-pointer"
                                 >
                                     {isSubmitting ? 'Đang khởi tạo...' : 'Tạo Phiếu Kiểm Kê'}
                                 </button>
