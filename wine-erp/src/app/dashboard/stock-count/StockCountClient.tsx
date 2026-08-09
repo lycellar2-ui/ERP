@@ -476,6 +476,16 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
                                             <td className="p-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
+                                                    {row.status === 'DRAFT' && (
+                                                        <button
+                                                            onClick={() => handleStartSession(row.id)}
+                                                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-black flex items-center gap-1 transition cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
+                                                            title="Kích hoạt bắt đầu kiểm kê"
+                                                        >
+                                                            <Zap className="w-3.5 h-3.5" /> Bắt Đầu Kiểm Kê
+                                                        </button>
+                                                    )}
+
                                                     <button
                                                         onClick={() => setTableModalSessionId(row.id)}
                                                         className="px-2.5 py-1.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] rounded-lg text-xs font-black flex items-center gap-1 transition cursor-pointer shadow-2xs"
@@ -521,7 +531,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {/* Sessions Cards — Mobile View (< 768px) */}
             <div className="block md:hidden space-y-3">
                 {filteredList.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl text-xs">
+                    <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl text-xs font-bold">
                         Không tìm thấy phiên kiểm kê nào.
                     </div>
                 ) : (
@@ -554,6 +564,15 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     Lệch: {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} chai
                                 </span>
                             </div>
+
+                            {row.status === 'DRAFT' && (
+                                <button
+                                    onClick={() => handleStartSession(row.id)}
+                                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                                >
+                                    <Zap className="w-4 h-4" /> ⚡ Bắt Đầu Kiểm Kê Ngay
+                                </button>
+                            )}
 
                             <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <button

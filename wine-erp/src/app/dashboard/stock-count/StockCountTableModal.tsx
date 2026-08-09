@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react'
 import {
     Table, Smartphone, Plus, Search, MapPin, CheckCircle2,
     Save, RefreshCw, X, AlertCircle, FileSpreadsheet, Filter,
-    UserCheck, Users, Activity, ChevronDown, ChevronUp, Clock, AlertTriangle, ShieldCheck
+    UserCheck, Users, Activity, ChevronDown, ChevronUp, Clock, AlertTriangle, ShieldCheck, Zap
 } from 'lucide-react'
-import { recordCountLine, completeZoneCount, getStockCountDetail } from './actions'
+import { recordCountLine, completeZoneCount, getStockCountDetail, startStockCount } from './actions'
 import { AddUnlistedModal } from './AddUnlistedModal'
 
 type Props = {
@@ -62,6 +62,18 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onR
         setDetail(d)
         setLastSyncTime(new Date())
         if (showSpinner) setIsLoading(false)
+    }
+
+    const handleStartSession = async () => {
+        setIsLoading(true)
+        const res = await startStockCount(sessionId)
+        if (res.success) {
+            await loadDetail()
+            if (onRefreshSession) onRefreshSession()
+        } else {
+            alert(res.error || 'Lỗi khi bắt đầu kiểm kê')
+            setIsLoading(false)
+        }
     }
 
     if (isLoading || !detail) {
@@ -204,6 +216,15 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onR
 
                     {/* Mode & Action Controls */}
                     <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+                        {detail.status === 'DRAFT' && (
+                            <button
+                                onClick={handleStartSession}
+                                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-2xs transition cursor-pointer active:scale-95 whitespace-nowrap animate-bounce"
+                            >
+                                <Zap className="w-4 h-4" /> ⚡ Bắt Đầu Kiểm Kê Ngay
+                            </button>
+                        )}
+
                         <button
                             onClick={() => loadDetail(false)}
                             className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 whitespace-nowrap"
@@ -233,6 +254,21 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onR
                         </button>
                     </div>
                 </div>
+
+                {detail.status === 'DRAFT' && (
+                    <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between gap-3 text-xs text-amber-900 font-extrabold shrink-0">
+                        <span className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                            PHIẾU ĐANG Ở TRẠNG THÁI NHÁP — Bạn cần bấm "Bắt Đầu Kiểm Kê" để kích hoạt cho phép nhập số lượng!
+                        </span>
+                        <button
+                            onClick={handleStartSession}
+                            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-black shrink-0 cursor-pointer"
+                        >
+                            ⚡ Bắt Đầu Kiểm Kê
+                        </button>
+                    </div>
+                )}
 
                 {/* LEAD MONITORING DASHBOARD WIDGET (BẢNG THEO DÕI NHÂN VIÊN & KỆ) */}
                 <div className="bg-slate-100 border-b border-slate-200 p-3 sm:p-4 space-y-3 shrink-0">

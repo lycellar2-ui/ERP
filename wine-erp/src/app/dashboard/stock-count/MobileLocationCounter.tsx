@@ -7,7 +7,7 @@ import {
     ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle
 } from 'lucide-react'
 import { AddUnlistedModal } from './AddUnlistedModal'
-import { recordMobileCountLine, completeZoneCount } from './actions'
+import { recordMobileCountLine, completeZoneCount, startStockCount } from './actions'
 import { formatCasesAndBottles } from '@/lib/utils'
 
 type LineItem = {
@@ -35,6 +35,7 @@ type Props = {
         warehouseName: string
         scopeType: string
         isBlindCount: boolean
+        status?: string
         lines: LineItem[]
     }
     onBack: () => void
@@ -258,6 +259,24 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         <div className="bg-[#87CBB9] h-full rounded-full transition-all duration-300" style={{ width: `${overallPercent}%` }} />
                     </div>
                 </div>
+
+                {detail.status === 'DRAFT' && (
+                    <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs font-bold text-amber-900 shadow-2xs">
+                        <span className="flex items-center gap-1.5 truncate">
+                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                            Phiếu đang ở trạng thái Nháp
+                        </span>
+                        <button
+                            onClick={async () => {
+                                const res = await startStockCount(detail.id)
+                                if (res.success && onRefreshed) onRefreshed()
+                            }}
+                            className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-lg text-[11px] shrink-0 active:scale-95 shadow-2xs"
+                        >
+                            ⚡ Bắt Đầu Kiểm Kê
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Success Toast Notification */}

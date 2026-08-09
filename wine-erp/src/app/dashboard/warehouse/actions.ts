@@ -1170,14 +1170,28 @@ export async function recordCountLine(
     qtyActual: number
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const line = await prisma.stockCountLine.findUnique({ where: { id: lineId } })
+        const line = await prisma.stockCountLine.findUnique({
+            where: { id: lineId },
+            include: { session: { select: { status: true } } }
+        })
         if (!line) return { success: false, error: 'Dòng kiểm kê không tồn tại' }
+
+        const sessStatus = (line.session?.status as string) || ''
+        if (sessStatus === 'DRAFT') {
+            return { success: false, error: 'Phiên kiểm kê đang ở trạng thái Nháp (DRAFT). Vui lòng bấm "Bắt Đầu Kiểm Kê" để kích hoạt đếm số lượng.' }
+        }
+        if (sessStatus === 'APPROVED') {
+            return { success: false, error: 'Phiên kiểm kê này đã được duyệt. Không thể chỉnh sửa số lượng nữa.' }
+        }
+        if (sessStatus === 'CANCELLED') {
+            return { success: false, error: 'Phiên kiểm kê đã bị hủy.' }
+        }
 
         const variance = qtyActual - Number(line.qtySystem)
 
         await prisma.stockCountLine.update({
             where: { id: lineId },
-            data: { qtyActual, variance },
+            data: { qtyActual, variance, countedAt: new Date() },
         })
 
         return { success: true }

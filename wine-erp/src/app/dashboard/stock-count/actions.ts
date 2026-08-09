@@ -384,9 +384,20 @@ export async function recordMobileCountLine(input: {
     try {
         const line = await prisma.stockCountLine.findUnique({
             where: { id: input.lineId },
-            select: { qtySystem: true, sessionId: true }
+            include: { session: { select: { status: true } } }
         })
         if (!line) return { success: false, error: 'Không tìm thấy dòng kiểm kê' }
+
+        const sessStatus = (line.session?.status as string) || ''
+        if (sessStatus === 'DRAFT') {
+            return { success: false, error: 'Phiên kiểm kê đang ở trạng thái Nháp (DRAFT). Vui lòng bấm "Bắt Đầu Kiểm Kê" để kích hoạt đếm số lượng.' }
+        }
+        if (sessStatus === 'APPROVED') {
+            return { success: false, error: 'Phiên kiểm kê này đã được duyệt. Không thể chỉnh sửa số lượng nữa.' }
+        }
+        if (sessStatus === 'CANCELLED') {
+            return { success: false, error: 'Phiên kiểm kê đã bị hủy.' }
+        }
 
         const qtySys = Number(line.qtySystem)
         const variance = input.qtyActual - qtySys
