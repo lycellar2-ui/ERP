@@ -564,6 +564,15 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         }
     }, [selectedSO, warehouseId])
 
+    const resolveWarehouseForSO = (targetSO: SOOption) => {
+        if (targetSO.warehouseId) return targetSO.warehouseId
+        const entityWhs = warehouses.filter((w: any) => !w.legalEntityId || w.legalEntityId === (targetSO as any).legalEntityId)
+        const defaultWh = entityWhs.find((w: any) => w.isDefault && w.allowSales !== false)
+            ?? entityWhs.find((w: any) => w.allowSales !== false)
+            ?? entityWhs[0]
+        return defaultWh ? defaultWh.id : (warehouses[0]?.id ?? '')
+    }
+
     useEffect(() => {
         getSOsForDelivery().then(data => {
             setSOs(data as any)
@@ -571,15 +580,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 const targetSO = (data as any[]).find(s => s.id === initialSOId)
                 if (targetSO) {
                     setSelectedSO(targetSO)
-                    if (targetSO.warehouseId) {
-                        setWarehouseId(targetSO.warehouseId)
-                    } else if (warehouses.length > 0) {
-                        const entityWhs = warehouses.filter((w: any) => !w.legalEntityId || w.legalEntityId === (targetSO as any).legalEntityId)
-                        const defaultWh = entityWhs.find((w: any) => w.isDefault && w.allowSales !== false)
-                            ?? entityWhs.find((w: any) => w.allowSales !== false)
-                            ?? entityWhs[0]
-                        if (defaultWh) setWarehouseId(defaultWh.id)
-                    }
+                    setWarehouseId(resolveWarehouseForSO(targetSO))
                     setMobileStep(2)
                 }
             }
@@ -587,8 +588,12 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     }, [initialSOId, warehouses])
 
     const selectSO = (soId: string) => {
-        const so = sos.find(s => s.id === soId) || null
-        setSelectedSO(so)
+        const targetSO = sos.find(s => s.id === soId) || null
+        setSelectedSO(targetSO)
+        if (targetSO) {
+            setWarehouseId(resolveWarehouseForSO(targetSO))
+            setMobileStep(2)
+        }
     }
 
     const handleSave = async (autoConfirm = false) => {
@@ -875,10 +880,28 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 <div className="flex-1 overflow-y-auto">
                     {/* ═══ DESKTOP: Single page ═══ */}
                     <div className="hidden sm:block p-5 space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
-                            {renderSOSelect()}
-                            {renderWarehouseSelect()}
-                        </div>
+                        {selectedSO ? (
+                            <div className="p-3.5 rounded-xl flex items-center justify-between" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Đơn Hàng Bán (Mặc Định)</span>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-sm font-bold font-mono" style={{ color: '#B47816' }}>{selectedSO.soNo}</span>
+                                        <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>· {selectedSO.customerName}</span>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Kho Xuất Bán (Tự Động Mặc Định)</span>
+                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A' }}>
+                                        🏢 {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-3">
+                                {renderSOSelect()}
+                                {renderWarehouseSelect()}
+                            </div>
+                        )}
                         {selectedSO && lines.length > 0 && renderProductLines()}
                         {renderSaveButtons()}
                     </div>

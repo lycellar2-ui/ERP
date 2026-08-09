@@ -99,7 +99,28 @@ const inputStyle = {
 
 const OVERRIDE_ROLES = ['CEO', 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Kế Toán', 'KE_TOAN']
 
-export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] }: { open: boolean; onClose: () => void; onSaved: (soId?: string) => void; userId: string; userRoles?: string[] }) {
+export interface CloneSOData {
+    customerId: string
+    channel: SalesChannel
+    paymentTerm: string
+    orderDiscount: number
+    legalEntityId: string
+    shippingAddressId?: string
+    notes?: string
+    lines: {
+        productId: string
+        productName: string
+        skuCode: string
+        qtyOrdered: number
+        unitPrice: number
+        lineDiscountPct: number
+        vatRate?: number
+        priceSource?: string | null
+        stock?: number
+    }[]
+}
+
+export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [], cloneData }: { open: boolean; onClose: () => void; onSaved: (soId?: string) => void; userId: string; userRoles?: string[]; cloneData?: CloneSOData | null }) {
     // TanStack Query to fetch and cache reference data for Sales Order Creation
     const { data: refData } = useQuery({
         queryKey: ['so_reference_data'],
@@ -218,6 +239,41 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [] 
             c.code.toLowerCase().includes(q)
         ).slice(0, 500)
     }, [customerSearchInput, sortedCustomersForSelect])
+
+    // Hydrate form data if opening with cloned SO data
+    useEffect(() => {
+        if (open && cloneData) {
+            setCustomerId(cloneData.customerId)
+            setChannel(cloneData.channel)
+            setPaymentTerm(cloneData.paymentTerm)
+            setOrderDiscount(cloneData.orderDiscount)
+            if (cloneData.legalEntityId) setLegalEntityId(cloneData.legalEntityId)
+            if (cloneData.shippingAddressId) setShippingAddressId(cloneData.shippingAddressId)
+            if (cloneData.notes) setNotes(cloneData.notes)
+
+            setLines(cloneData.lines.map(l => ({
+                productId: l.productId,
+                productName: l.productName,
+                skuCode: l.skuCode,
+                qtyOrdered: l.qtyOrdered,
+                unitPrice: l.unitPrice,
+                lineDiscountPct: l.lineDiscountPct,
+                vatRate: l.vatRate ?? 10,
+                priceSource: l.priceSource || undefined,
+                stock: l.stock ?? 100,
+            })))
+        }
+    }, [open, cloneData])
+
+    useEffect(() => {
+        if (open && cloneData && sortedCustomersForSelect.length > 0) {
+            const found = sortedCustomersForSelect.find(c => c.id === cloneData.customerId)
+            if (found) {
+                setSelectedCustomer(found)
+                setCustomerSearchInput(`[${found.code}] ${found.name.replace(/^\u00A0\u00A0\u00A0↳\s*/, '')}`)
+            }
+        }
+    }, [open, cloneData, sortedCustomersForSelect])
 
     useEffect(() => {
         if (selectedCustomer) {

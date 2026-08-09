@@ -105,9 +105,10 @@ PAID / CLOSED
 - **Bộ lọc Kỳ Thời Gian MISA (Date Period Filter)**: Cho phép lọc nhanh đơn hàng theo các preset thời gian tiêu chuẩn: *Tất cả thời gian, Hôm nay, Hôm qua, Tuần này, Tuần trước, Tháng này, Tháng trước, Quý này (Q1-Q4), Quý trước, Năm nay, Năm trước, Tùy chỉnh*.
 - **Bộ lọc đa chiều (Advanced Filters)**: Tìm kiếm số SO / tên KH / mã KH, Lọc theo Trạng thái (Tabs), Sales phụ trách, Kênh phân phối, Pháp nhân, Kho xuất, Điều khoản công nợ và Cảnh báo cần xử lý.
 
-### F. Sắp Xếp Theo Thời Gian Tạo & Hiển Thị Đơn Mới Tức Thì
+### F. Sắp Xếp Theo Thời Gian Tạo & Hiển Thị Đơn Mới Tức Thì & Nâng Cấp Clone Đơn Hàng
 - **Sắp xếp chuẩn thời gian (`createdAt desc`)**: Màn hình quản lý đơn hàng hiển thị mặc định các đơn hàng theo thời gian tạo mới nhất lên đầu tiên (truy vấn SQL với `ORDER BY so."createdAt" DESC, so.id DESC`).
 - **Hiển thị ngay đơn vừa tạo ở đầu danh sách**: Sau khi tạo đơn từ `CreateSODrawer`, hệ thống tự động xóa bộ lọc tìm kiếm, đưa về trang 1 với sắp xếp thời gian tạo mới nhất, invalidate query cache và mở ngay drawer chi tiết của đơn vừa tạo ở dòng đầu tiên của bảng.
+- **Nâng cấp tính năng Clone Đơn Hàng (Chỉnh sửa trước khi tạo)**: Khi nhấn nút **Clone** trên bất kỳ đơn hàng nào, hệ thống bật popup xác nhận. Sau khi xác nhận, toàn bộ dữ liệu đơn cũ (Khách hàng, Kênh bán, Pháp nhân, Chiết khấu, Địa chỉ, Sản phẩm, Số lượng, Đơn giá) sẽ được nạp trực tiếp vào `CreateSODrawer` cho phép người dùng thoải mái chỉnh sửa, thêm/xóa mã hàng, thay đổi số lượng/đơn giá y như tạo đơn mới trước khi lưu.
 
 ### E. Chiết Khấu 2 Cấp
 - **Chiết khấu dòng (Line Discount):** Áp dụng cho từng SKU riêng lẻ

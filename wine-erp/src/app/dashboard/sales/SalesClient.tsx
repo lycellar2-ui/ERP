@@ -4,10 +4,11 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, SalesChannel } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
+import type { CloneSOData } from './CreateSODrawer'
 const CreateSODrawer = dynamic(() => import('./CreateSODrawer').then(m => m.CreateSODrawer), {
     loading: () => null,
     ssr: false,
@@ -1038,6 +1039,7 @@ function SalesOrderMobileCard({
     onAcctApprove,
     onAcctReject,
     onCancel,
+    onClone,
     canApprove,
     canAcctApprove,
     actionLoading
@@ -1052,6 +1054,7 @@ function SalesOrderMobileCard({
     onAcctApprove: () => void
     onAcctReject: () => void
     onCancel: () => void
+    onClone: () => void
     canApprove: boolean
     canAcctApprove: boolean
     actionLoading: string | null
@@ -1138,6 +1141,14 @@ function SalesOrderMobileCard({
                     style={{ background: 'rgba(135,203,185,0.06)', color: '#87CBB9', borderColor: 'rgba(135,203,185,0.2)' }}
                     title="Chi tiết">
                     <Eye size={12} />
+                </button>
+
+                {/* Clone button */}
+                <button onClick={onClone} disabled={actionLoading === row.id}
+                    className="p-1.5 rounded transition-all flex items-center justify-center border"
+                    style={{ background: 'rgba(138,174,187,0.12)', color: '#8AAEBB', borderColor: 'rgba(138,174,187,0.25)' }}
+                    title="Nhân bản đơn hàng">
+                    <Copy size={12} />
                 </button>
 
                 {/* Approval Actions */}
@@ -1271,6 +1282,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     }
 
     const [createOpen, setCreateOpen] = useState(false)
+    const [cloneData, setCloneData] = useState<CloneSOData | null>(null)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [detailId, setDetailId] = useState<string | null>(null)
     const [showStats, setShowStats] = useState(false)
@@ -1584,9 +1596,40 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     }
 
     const handleClone = async (id: string) => {
-        toast.promise(cloneSalesOrder(id).then(r => { if (!r.success) throw new Error(r.error); reload(); return r }), {
-            loading: 'Đang tạo bản sao...', success: (r) => `Clone thành công: ${r.soNo}`, error: (e: any) => `Lỗi: ${e.message}`,
-        })
+        if (!confirm('Bạn có chắc chắn muốn nhân bản đơn hàng này không?')) return
+        setActionLoading(id)
+        try {
+            const detail = await getSalesOrderDetail(id)
+            if (!detail) {
+                toast.error('Không tìm thấy thông tin đơn hàng để clone')
+                return
+            }
+            setCloneData({
+                customerId: detail.customerId,
+                channel: detail.channel as SalesChannel,
+                paymentTerm: detail.paymentTerm,
+                orderDiscount: Number(detail.orderDiscount),
+                legalEntityId: detail.legalEntityId,
+                shippingAddressId: detail.shippingAddressId || '',
+                notes: detail.notes ? `[Bản sao từ ${detail.soNo}] ${detail.notes}` : `Bản sao từ ${detail.soNo}`,
+                lines: detail.lines.map(l => ({
+                    productId: l.productId,
+                    productName: l.product.productName,
+                    skuCode: l.product.skuCode,
+                    qtyOrdered: Number(l.qtyOrdered),
+                    unitPrice: Number(l.unitPrice),
+                    lineDiscountPct: Number(l.lineDiscountPct),
+                    vatRate: Number(l.vatRate || 10),
+                    priceSource: l.priceSource,
+                    stock: (l.product as any).stock ?? 100,
+                })),
+            })
+            setCreateOpen(true)
+        } catch (err: any) {
+            toast.error('Lỗi khi tải thông tin đơn hàng: ' + err.message)
+        } finally {
+            setActionLoading(null)
+        }
     }
 
     const handleExport = async () => {
@@ -1659,7 +1702,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                         <Download size={14} /> Excel
                     </button>
                     {canCreateSO && (
-                        <button onClick={() => setCreateOpen(true)}
+                        <button onClick={() => { setCloneData(null); setCreateOpen(true) }}
                             className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
                             style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
                             onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
@@ -2076,6 +2119,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 })
                             }}
                             onCancel={() => handleCancel(row.id)}
+                            onClone={() => handleClone(row.id)}
                             canApprove={((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))}
                             canAcctApprove={canAcctApprove}
                             actionLoading={actionLoading}
@@ -2141,9 +2185,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {createOpen && (
                 <CreateSODrawer
                     open={createOpen}
-                    onClose={() => setCreateOpen(false)}
+                    onClose={() => { setCreateOpen(false); setCloneData(null) }}
+                    cloneData={cloneData}
                     onSaved={(newSoId) => {
                         setCreateOpen(false)
+                        setCloneData(null)
                         queryClient.invalidateQueries({ queryKey: ['sales'] })
                         setSearchInput('')
                         setSearch('')
