@@ -501,5 +501,6 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | Tính năng | File code | Ghi chú |
 |---|---|---|
 | **Xuất File MISA SME Offline (Hàng Loạt / Đơn Lẻ)** | `SalesClient.tsx`, `actions.ts:exportMisaSmeExcel` | Xuất file Excel chuẩn 100% định dạng MISA SME.NET Offline (Ngày CT, Số CT, Mã KH, Mã Kho, Mã SKU, Đơn giá, Chiết khấu, VAT, TK 5111/6321/1561) để Kế toán Import trực tiếp vào MISA SME |
+| **Xuất File VNPT HĐĐT 1 Loại Thuế (Hàng Loạt / Đơn Lẻ)** | `SalesClient.tsx`, `actions.ts:exportVnptInvoiceExcel` | Xuất file Excel chuẩn định dạng VNPT Invoice 1 loại thuế (`STT_HD`, `Mã_Cửa_Hàng`, `Mã_Khách_Hàng`, `Tên_Người_Mua`, `Tên_Đơn_Vị_Mua`, `Mã_Số_Thuế`, `Địa_Chỉ`, `Email_Nhận_HD`, `STT_Hang`, `Mã_Hàng_Hóa`, `Tên_Hàng_Hóa`, `ĐVT`, `Số_Lượng`, `Đơn_Giá`, `Thành_Tiền`, `Thuế_Suất`, `Tiền_Thuế_GTGT`, `Tổng_Cộng`). Bỏ trống Tên người mua cho KH Doanh nghiệp theo đúng quy định Luật Thuế |
 
-*Last updated: 2026-08-09 21:48 | Wine ERP v8.2*
+*Last updated: 2026-08-09 22:01 | Wine ERP v8.3*
