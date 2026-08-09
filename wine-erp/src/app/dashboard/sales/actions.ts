@@ -2606,6 +2606,181 @@ export async function exportMisaSmeExcel(filters: {
     }
 }
 
+export async function exportVnptInvoiceExcel(filters: {
+    orderIds?: string[]
+    status?: SOStatus
+    dateFrom?: string
+    dateTo?: string
+    salesRepId?: string
+    channel?: SalesChannel
+    legalEntityId?: string
+    warehouseId?: string
+    paymentTerm?: string
+    pendingAction?: boolean
+} = {}): Promise<{ base64: string; filename: string }> {
+    const user = await requireAuth()
+    const { orderIds, status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction } = filters
+    const where: any = {}
+
+    if (orderIds && orderIds.length > 0) {
+        where.id = { in: orderIds }
+    } else {
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            where.salesRepId = user.id
+        } else if (salesRepId) {
+            where.salesRepId = salesRepId
+        }
+
+        if (status) where.status = status
+        if (channel) where.channel = channel
+        if (legalEntityId) where.legalEntityId = legalEntityId
+        if (warehouseId) where.warehouseId = warehouseId
+        if (paymentTerm) where.paymentTerm = paymentTerm
+        
+        if (pendingAction) {
+            where.status = { in: ['PENDING_APPROVAL', 'PENDING_ACCOUNTING'] }
+        }
+
+        if (dateFrom || dateTo) {
+            where.createdAt = {}
+            if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+            if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+        }
+    }
+
+    const orders = await prisma.salesOrder.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 5000,
+        include: {
+            customer: {
+                select: {
+                    name: true,
+                    code: true,
+                    taxId: true,
+                    vatCompanyName: true,
+                    vatAddress: true,
+                    vatEmail: true,
+                    parent: {
+                        select: {
+                            taxId: true,
+                            vatCompanyName: true,
+                            vatAddress: true,
+                            vatEmail: true,
+                        },
+                    },
+                },
+            },
+            salesRep: { select: { name: true } },
+            legalEntity: { select: { name: true, code: true } },
+            warehouse: { select: { name: true, code: true } },
+            lines: {
+                include: {
+                    product: { select: { skuCode: true, productName: true, country: true } },
+                },
+            },
+        },
+    })
+
+    const vnptRows: any[] = []
+    let orderIndex = 1
+
+    for (const o of orders) {
+        const orderVatRate = Number(o.vatRate ?? 10)
+        const taxId = o.customer.taxId || o.customer.parent?.taxId || ''
+        const isCorporate = Boolean(taxId)
+        
+        // For corporate customers, buyerName (Tên người mua hàng) is optional per Tax Law
+        const buyerName = isCorporate ? '' : o.customer.name
+        const companyName = o.customer.vatCompanyName || o.customer.parent?.vatCompanyName || o.customer.name
+        const vatAddress = o.customer.vatAddress || o.customer.parent?.vatAddress || ''
+        const vatEmail = o.customer.vatEmail || o.customer.parent?.vatEmail || ''
+        const whCode = o.warehouse?.code || 'KHO_TONG'
+
+        const fallbackNet = Number(o.totalAmount) - Number(o.vatAmount || 0)
+        let lineSeq = 1
+        if (o.lines.length === 0) {
+            vnptRows.push({
+                'STT_HD': orderIndex,
+                'Mã_Cửa_Hàng': o.legalEntity?.code || whCode,
+                'Mã_Khách_Hàng': o.customer.code,
+                'Tên_Người_Mua': buyerName,
+                'Tên_Đơn_Vị_Mua': companyName,
+                'Mã_Số_Thuế': taxId,
+                'Địa_Chỉ': vatAddress,
+                'Email_Nhận_HD': vatEmail,
+                'Hình_Thức_Thanh_Toán': o.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK',
+                'Diễn_Giải': `Xuất hóa đơn GTGT đơn hàng số ${o.soNo}`,
+                'STT_Hang': lineSeq++,
+                'Mã_Hàng_Hóa': '',
+                'Tên_Hàng_Hóa': `Hóa đơn bán hàng ${o.soNo}`,
+                'Đơn_Vị_Tính': 'Lô',
+                'Số_Lượng': 1,
+                'Đơn_Giá': Math.round(fallbackNet),
+                'Thành_Tiền': Math.round(fallbackNet),
+                'Tỷ_Lệ_Chiết_Khấu': Number(o.orderDiscount || 0),
+                'Tiền_Chiết_Khấu': 0,
+                'Thuế_Suất': `${orderVatRate}%`,
+                'Tiền_Thuế_GTGT': Number(o.vatAmount || 0),
+                'Tổng_Cộng': Number(o.totalAmount),
+            })
+        } else {
+            for (const line of o.lines) {
+                const qty = Number(line.qtyOrdered)
+                const price = Number(line.unitPrice)
+                const lineDiscPct = Number(line.lineDiscountPct || 0)
+                const totalBeforeDisc = qty * price
+                const discAmount = totalBeforeDisc * (lineDiscPct / 100)
+                const netBeforeVat = totalBeforeDisc - discAmount
+                const vatRate = Number(line.vatRate ?? orderVatRate)
+                const vatAmount = netBeforeVat * (vatRate / 100)
+                const grandTotal = netBeforeVat + vatAmount
+
+                const productNameWithVintage = line.vintage 
+                    ? `${line.product.productName} (Vintage ${line.vintage})` 
+                    : line.product.productName
+
+                vnptRows.push({
+                    'STT_HD': orderIndex,
+                    'Mã_Cửa_Hàng': o.legalEntity?.code || whCode,
+                    'Mã_Khách_Hàng': o.customer.code,
+                    'Tên_Người_Mua': buyerName,
+                    'Tên_Đơn_Vị_Mua': companyName,
+                    'Mã_Số_Thuế': taxId,
+                    'Địa_Chỉ': vatAddress,
+                    'Email_Nhận_HD': vatEmail,
+                    'Hình_Thức_Thanh_Toán': o.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK',
+                    'Diễn_Giải': `Xuất hóa đơn bán hàng theo đơn số ${o.soNo}`,
+                    'STT_Hang': lineSeq++,
+                    'Mã_Hàng_Hóa': line.product.skuCode,
+                    'Tên_Hàng_Hóa': productNameWithVintage,
+                    'Đơn_Vị_Tính': 'Chai',
+                    'Số_Lượng': qty,
+                    'Đơn_Giá': price,
+                    'Thành_Tiền': Math.round(totalBeforeDisc),
+                    'Tỷ_Lệ_Chiết_Khấu': lineDiscPct,
+                    'Tiền_Chiết_Khấu': Math.round(discAmount),
+                    'Thuế_Suất': `${vatRate}%`,
+                    'Tiền_Thuế_GTGT': Math.round(vatAmount),
+                    'Tổng_Cộng': Math.round(grandTotal),
+                })
+            }
+        }
+        orderIndex++
+    }
+
+    const workbook = XLSX.utils.book_new()
+    const wsVnpt = XLSX.utils.json_to_sheet(vnptRows)
+    XLSX.utils.book_append_sheet(workbook, wsVnpt, "HDDT_VNPT_1Thue")
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+    const today = new Date().toISOString().split('T')[0]
+    return {
+        base64: buffer.toString('base64'),
+        filename: `VNPT_Einvoice_1Tax_${today}.xlsx`
+    }
+}
+
 // ── Status counts for quick filter tabs ───────────
 export async function getSOStatusCounts(filters: {
     search?: string
