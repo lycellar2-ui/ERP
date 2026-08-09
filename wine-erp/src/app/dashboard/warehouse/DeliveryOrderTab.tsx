@@ -28,8 +28,18 @@ const DO_STATUS: Record<string, { label: string; color: string; bg: string }> = 
 
 type DODetail = Awaited<ReturnType<typeof getDODetail>>
 
+export type WarehouseOption = {
+    id: string
+    code: string
+    name: string
+    legalEntityId?: string | null
+    allowSales?: boolean
+    allowTransfer?: boolean
+    isDefault?: boolean
+}
+
 export function DeliveryOrderTab({ warehouses }: {
-    warehouses: { id: string; code: string; name: string }[]
+    warehouses: WarehouseOption[]
 }) {
     const [rows, setRows] = useState<DeliveryOrderRow[]>([])
     const [pendingSOs, setPendingSOs] = useState<SOOption[]>([])
@@ -479,7 +489,7 @@ function InfoCard({ label, value }: { label: string; value: string }) {
 
 // ── Create DO Drawer ──────────────────────────────
 function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
-    warehouses: { id: string; code: string; name: string }[]
+    warehouses: WarehouseOption[]
     initialSOId?: string | null
     onClose: () => void; onCreated: () => void
 }) {
@@ -566,10 +576,19 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
     const resolveWarehouseForSO = (targetSO: SOOption) => {
         if (targetSO.warehouseId) return targetSO.warehouseId
-        const entityWhs = warehouses.filter((w: any) => !w.legalEntityId || w.legalEntityId === (targetSO as any).legalEntityId)
-        const defaultWh = entityWhs.find((w: any) => w.isDefault && w.allowSales !== false)
-            ?? entityWhs.find((w: any) => w.allowSales !== false)
-            ?? entityWhs[0]
+        const targetLegalEntityId = (targetSO as any).legalEntityId
+
+        // Strictly filter warehouses belonging to the SO's legal entity
+        const entityWhs = warehouses.filter((w: any) => {
+            if (!targetLegalEntityId) return true
+            return w.legalEntityId === targetLegalEntityId
+        })
+
+        const pool = entityWhs.length > 0 ? entityWhs : warehouses
+        const defaultWh = pool.find((w: any) => w.isDefault && w.allowSales !== false)
+            ?? pool.find((w: any) => w.allowSales !== false)
+            ?? pool[0]
+
         return defaultWh ? defaultWh.id : (warehouses[0]?.id ?? '')
     }
 
