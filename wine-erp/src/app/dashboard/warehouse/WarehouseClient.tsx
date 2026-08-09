@@ -419,6 +419,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     const [viewMode, setViewMode] = useState<'grid' | 'workspace'>('grid')
     const [activeTab, setActiveTab] = useState<WMSTab>('inventory')
     const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'receivedDate', dir: 'desc' })
+    const [showMobileStats, setShowMobileStats] = useState(false)
 
     // Auto pre-select Kho Thắng Ân Giang Văn Minh (WH-TA-GVM) by default
     useEffect(() => {
@@ -622,11 +623,104 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
     return (
         <div className="space-y-4 max-w-screen-2xl">
-            {/* ═══ TOP HEADER (SHARED BETWEEN DESKTOP & MOBILE WORKSPACE) ═══ */}
-            <div className="p-3.5 rounded-2xl shadow-sm bg-white border border-slate-200">
-                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* ═══ 📱 MOBILE TOP HEADER (< 768px) - CLEAN, UNCLUTTERED 1-ROW BAR ═══ */}
+            <div className="block md:hidden bg-white border border-slate-200 rounded-2xl p-3 shadow-2xs space-y-2.5">
+                {/* Row 1: Title / Navigation & Compact Warehouse Selector */}
+                <div className="flex items-center justify-between gap-2">
+                    {viewMode === 'grid' ? (
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                                <Warehouse size={18} className="text-amber-600" />
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 leading-none">
+                                    Kho Hàng
+                                    <span className="text-[10px] bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                                        {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : 'Tất cả kho'}
+                                    </span>
+                                </h2>
+                                <p className="text-[10px] text-slate-500 mt-0.5">Bảng làm việc thủ kho mobile</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer"
+                            >
+                                <ArrowLeft size={14} /> Menu Kho
+                            </button>
+                            <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-1 rounded-xl truncate">
+                                {activeModule?.title}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Right side controls: Compact Warehouse Select & Stats Toggle */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="relative">
+                            <select
+                                value={selectedWH ?? ''}
+                                onChange={e => {
+                                    const val = e.target.value
+                                    if (!val) {
+                                        setSelectedWH(null)
+                                        setLots([])
+                                        setSelectedLocations([])
+                                    } else {
+                                        selectWarehouse(val)
+                                    }
+                                }}
+                                className="appearance-none pl-2 pr-6 py-1.5 rounded-xl text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 max-w-[130px] truncate"
+                            >
+                                <option value="">🏢 Tất cả ({stats.warehouses})</option>
+                                {warehouses.map(w => (
+                                    <option key={w.id} value={w.id}>
+                                        🏢 {w.name} ({w.totalStock.toLocaleString()} chai)
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
+                        </div>
+
+                        {/* Stat Drawer Toggle */}
+                        <button
+                            onClick={() => setShowMobileStats(!showMobileStats)}
+                            className={`p-1.5 rounded-xl border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
+                                showMobileStats
+                                    ? 'bg-amber-50 border-amber-300 text-amber-700'
+                                    : 'bg-slate-50 border-slate-200 text-slate-600'
+                            }`}
+                            title="Bật/tắt chỉ số thống kê kho"
+                        >
+                            <BarChart3 size={15} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Collapsible Mobile Stats Drawer */}
+                {showMobileStats && (
+                    <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                        {statCards.map(s => (
+                            <div key={s.label} className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center text-center">
+                                <div className="flex items-center gap-1 text-[9px] uppercase font-bold text-slate-500">
+                                    <s.icon size={10} style={{ color: s.accent }} />
+                                    <span className="truncate">{s.label}</span>
+                                </div>
+                                <span className="text-[11px] font-bold font-mono mt-0.5" style={{ color: s.accent }}>
+                                    {s.value}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* ═══ 💻 DESKTOP TOP HEADER (>= 768px) ═══ */}
+            <div className="hidden md:block p-3.5 rounded-2xl shadow-2xs bg-white border border-slate-200">
+                <div className="flex flex-row items-center justify-between gap-3">
                     {/* Left: Title & Active Breadcrumb */}
-                    <div className="flex items-center gap-2 shrink-0 justify-between sm:justify-start">
+                    <div className="flex items-center gap-2 shrink-0">
                         <button
                             onClick={() => setViewMode('grid')}
                             className="text-base font-bold flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer text-slate-900"
@@ -663,8 +757,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                     </div>
 
                     {/* Right Action Group: Warehouse Selector + Create WH Button */}
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-                        <div className="relative shrink-0 flex-1 sm:flex-none">
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="relative shrink-0">
                             <select
                                 value={selectedWH ?? ''}
                                 onChange={e => {
@@ -677,7 +771,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-extrabold outline-none cursor-pointer shadow-2xs bg-white border border-slate-300 text-slate-900"
+                                className="appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-extrabold outline-none cursor-pointer shadow-2xs bg-white border border-slate-300 text-slate-900"
                             >
                                 <option value="">🏢 Tất cả kho ({stats.warehouses})</option>
                                 {warehouses.map(w => (
