@@ -175,46 +175,50 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
     const overallPercent = lines.length > 0 ? Math.round((overallCounted / lines.length) * 100) : 0
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans pb-28 select-none">
+        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans pb-24 select-none max-w-md mx-auto">
             {/* Top Fixed Header */}
-            <div className="bg-white/90 backdrop-blur-md border-b border-slate-200 p-3.5 sticky top-0 z-30 shadow-xs">
+            <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 p-3 sticky top-0 z-30 shadow-2xs space-y-2">
                 <div className="flex items-center justify-between gap-2">
                     <button
                         onClick={onBack}
-                        className="p-2 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 rounded-xl flex items-center gap-1 text-xs font-bold border border-slate-200 shadow-2xs cursor-pointer"
+                        className="p-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-xl flex items-center gap-1 text-xs font-extrabold transition cursor-pointer"
                     >
                         <ChevronLeft className="w-4 h-4" /> Thoát
                     </button>
 
-                    <div className="text-center flex-1 min-w-0">
-                        <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-bold border border-emerald-200">
-                            {detail.sessionNo}
-                        </span>
-                        <h2 className="text-xs font-extrabold text-slate-900 truncate mt-0.5">{detail.warehouseName}</h2>
+                    <div className="text-center flex-1 min-w-0 px-2">
+                        <div className="flex items-center justify-center gap-1.5 truncate">
+                            <span className="text-[10px] font-mono font-extrabold uppercase bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                                {detail.sessionNo}
+                            </span>
+                            <span className="text-xs font-extrabold text-slate-900 truncate">{detail.warehouseName}</span>
+                        </div>
                     </div>
 
                     <button
                         onClick={() => setIsBlind(!isBlind)}
-                        className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1 border transition cursor-pointer ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-white text-slate-600 border-slate-200'}`}
+                        className={`p-2 rounded-xl text-xs font-extrabold flex items-center gap-1 border transition cursor-pointer ${isBlind ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}
                         title="Tắt/Bật giấu tồn sổ sách"
                     >
                         {isBlind ? <EyeOff className="w-4 h-4 text-amber-700" /> : <Eye className="w-4 h-4" />}
                     </button>
                 </div>
 
-                {/* Top Overall Progress */}
-                <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 font-semibold px-0.5">
-                    <span>Đã đếm: <strong className="text-slate-900 font-mono font-bold">{overallCounted}/{lines.length}</strong> mã</span>
-                    <span className="text-emerald-700 font-extrabold">{overallPercent}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-slate-200">
-                    <div className="bg-emerald-500 h-full rounded-full transition-all duration-300 shadow-xs" style={{ width: `${overallPercent}%` }}></div>
+                {/* Progress Bar Header */}
+                <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 px-0.5">
+                        <span>Tiến độ đếm: <strong className="text-slate-900 font-mono">{overallCounted}/{lines.length}</strong> mã</span>
+                        <span className="text-emerald-700 font-extrabold">{overallPercent}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200 p-0.5">
+                        <div className="bg-[#87CBB9] h-full rounded-full transition-all duration-300" style={{ width: `${overallPercent}%` }} />
+                    </div>
                 </div>
             </div>
 
             {/* Success Toast Notification */}
             {showSuccessToast && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-[#87CBB9] text-[#0A1926] font-black text-xs px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-1.5 animate-bounce">
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-[#87CBB9] text-[#0A1926] font-extrabold text-xs px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-1.5 animate-bounce">
                     <CheckCircle2 className="w-4 h-4" /> Đã lưu số lượng thành công!
                 </div>
             )}
@@ -222,11 +226,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
             {/* MODE 1: VISUAL LOCATION ZONES GRID */}
             {viewMode === 'ZONES' && (
                 <div className="p-4 space-y-4 flex-1">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">CHỌN VỊ TRÍ KHO ĐỂ ĐẾM</h3>
-                            <p className="text-xs text-slate-500">Bấm chọn vị trí bạn đang đứng để bắt đầu đếm</p>
-                        </div>
+                    <div>
+                        <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">VỊ TRÍ KHO HÀNG</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Chọn vị trí bạn đang đứng để bắt đầu đếm tập trung</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -237,19 +239,21 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                 setActiveIdx(0)
                                 setViewMode('FOCUS')
                             }}
-                            className="p-4 bg-white rounded-2xl border-2 border-emerald-400 hover:border-emerald-500 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer"
+                            className="p-4 bg-white rounded-2xl border-2 border-emerald-400 hover:border-emerald-500 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2"
                         >
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                            <div className="flex justify-between items-center">
+                                <span className="p-2 bg-emerald-50 text-emerald-700 rounded-xl">
                                     <MapPin className="w-5 h-5" />
                                 </span>
-                                <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                <span className="text-[10px] font-mono font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                                     TẤT CẢ
                                 </span>
                             </div>
-                            <h4 className="text-sm font-extrabold text-slate-900 mt-1">Toàn Bộ Kho</h4>
-                            <p className="text-[11px] text-slate-500 mt-0.5">{lines.length} sản phẩm</p>
-                            <div className="mt-3 text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                            <div>
+                                <h4 className="text-sm font-extrabold text-slate-900">Toàn Bộ Kho</h4>
+                                <p className="text-xs text-slate-500 mt-0.5">{lines.length} sản phẩm</p>
+                            </div>
+                            <div className="text-[10px] font-extrabold text-emerald-700 flex items-center gap-1 pt-1">
                                 Đếm liên tục ➔
                             </div>
                         </button>
@@ -267,24 +271,25 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                         setActiveIdx(0)
                                         setViewMode('FOCUS')
                                     }}
-                                    className={`p-4 rounded-2xl border-2 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer ${
-                                        isDone ? 'bg-emerald-50/50 border-emerald-300' :
-                                        zStats.hasDiff ? 'bg-amber-50/50 border-amber-300' : 'bg-white border-slate-200'
+                                    className={`p-4 rounded-2xl border-2 text-left relative overflow-hidden shadow-2xs active:scale-95 transition cursor-pointer space-y-2 ${
+                                        isDone ? 'bg-emerald-50/60 border-emerald-400' :
+                                        zStats.hasDiff ? 'bg-amber-50/60 border-amber-300' : 'bg-white border-slate-200'
                                     }`}
                                 >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className={`p-2 rounded-xl ${isDone ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                    <div className="flex justify-between items-center">
+                                        <span className={`p-2 rounded-xl ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
                                             <Grid className="w-4 h-4" />
                                         </span>
-                                        {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                                        {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-700" />}
                                     </div>
 
-                                    <h4 className="text-xs font-bold text-slate-900 truncate">{zName}</h4>
-                                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{zStats.counted}/{zStats.total} mã đã đếm</p>
+                                    <div>
+                                        <h4 className="text-xs font-extrabold text-slate-900 truncate">{zName}</h4>
+                                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">{zStats.counted}/{zStats.total} mã đã đếm</p>
+                                    </div>
 
-                                    {/* Mini Progress */}
-                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2 border border-slate-200">
-                                        <div className={`h-full ${isDone ? 'bg-emerald-600' : 'bg-emerald-500'}`} style={{ width: `${zStats.percent}%` }}></div>
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200">
+                                        <div className={`h-full ${isDone ? 'bg-emerald-600' : 'bg-emerald-500'}`} style={{ width: `${zStats.percent}%` }} />
                                     </div>
                                 </button>
                             )
@@ -293,67 +298,43 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                 </div>
             )}
 
-            {/* MODE 2: SINGLE-ITEM FOCUS CARD VIEW (NATIVE APP FEEL) */}
+            {/* MODE 2: SINGLE-ITEM FOCUS CARD VIEW (STREAMLINED & SPACIOUS) */}
             {viewMode === 'FOCUS' && currentItem && (
-                <div className="p-4 flex-1 flex flex-col space-y-4">
-                    {/* Active Zone Breadcrumb & Switcher */}
-                    <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-2xs">
-                        <div className="flex items-center gap-1.5 font-bold text-slate-700">
+                <div className="p-4 flex-1 flex flex-col space-y-3">
+                    {/* Zone & Index Breadcrumb */}
+                    <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-2xs">
+                        <div className="flex items-center gap-1.5 font-extrabold text-slate-700">
                             <MapPin className="w-4 h-4 text-emerald-600" />
-                            <span>Vị trí: <strong className="text-emerald-700 font-mono">{currentItem.zone}</strong></span>
+                            <span>Vị trí: <strong className="text-emerald-800 font-mono font-extrabold">{currentItem.zone}</strong></span>
                         </div>
 
-                        <span className="text-[11px] font-mono text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                            Chai {activeIdx + 1}/{filteredLines.length}
+                        <span className="text-[11px] font-mono text-slate-700 font-extrabold bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                            Mã {activeIdx + 1} / {filteredLines.length}
                         </span>
                     </div>
 
-                    {/* HERO FOCUS ITEM CARD */}
-                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs relative space-y-4">
-                        {/* Top Badges */}
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <span className="font-mono text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl">
-                                    {currentItem.skuCode}
-                                </span>
-                                <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl flex items-center gap-1">
-                                    🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
-                                </span>
-                            </div>
-
-                            {!isBlind && (
-                                <div className="text-right">
-                                    <span className="text-[10px] uppercase text-slate-500 font-bold block">Tồn Sổ Sách</span>
-                                    <span className="text-xs font-bold text-slate-900 font-mono">
-                                        {formatCasesAndBottles(currentItem.qtySystem, currentItem.unitsPerCase || 6)}
-                                    </span>
-                                </div>
-                            )}
+                    {/* FOCUS HERO ITEM CARD */}
+                    <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
+                        {/* SKU + Vintage Badges */}
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-sm font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl">
+                                {currentItem.skuCode}
+                            </span>
+                            
+                            <span className="text-xs font-bold font-mono text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl flex items-center gap-1">
+                                🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
+                            </span>
                         </div>
 
-                        {/* Product Title */}
+                        {/* Wine Title & Packaging */}
                         <div>
-                            <h3 className="text-base font-extrabold text-slate-900 leading-tight">{currentItem.productName}</h3>
-                            <p className="text-xs text-slate-500 font-semibold mt-1">Quy cách đóng gói: <strong className="text-amber-800 font-bold">{currentItem.unitsPerCase || 6} chai / thùng</strong></p>
+                            <h3 className="text-base font-extrabold text-slate-900 leading-snug">{currentItem.productName}</h3>
+                            <p className="text-xs text-slate-500 font-semibold mt-1">
+                                Quy cách: <strong className="text-slate-900 font-extrabold">{currentItem.unitsPerCase || 6} chai / thùng</strong>
+                            </p>
                         </div>
 
-                        {/* DUPLICATE COUNT WARNING BANNER (If already counted before) */}
-                        {currentItem.countedAt && (
-                            <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs animate-fade-in">
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-cyan-600 shrink-0" />
-                                    <div>
-                                        <span className="font-bold text-cyan-900 block text-[11px]">⚠️ Đã có kết quả đếm trước đó</span>
-                                        <span className="text-[10px] text-slate-500">Lưu lúc: {new Date(currentItem.countedAt).toLocaleTimeString('vi-VN')}</span>
-                                    </div>
-                                </div>
-                                <span className="px-2 py-0.5 rounded bg-cyan-100 text-cyan-900 font-mono text-[10px] font-bold border border-cyan-300">
-                                    {formatCasesAndBottles(currentItem.qtyActual, currentItem.unitsPerCase || 6)}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* DUAL INPUT QUANTITY DISPLAY (THÙNG + CHAI LẺ) */}
+                        {/* System Stock vs Actual Count Input */}
                         {(() => {
                             const upc = currentItem.unitsPerCase || 6
                             const total = currentItem.qtyActual !== null ? currentItem.qtyActual : 0
@@ -362,58 +343,93 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
 
                             return (
                                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                                    <span className="text-[10px] uppercase tracking-widest text-emerald-800 font-extrabold block text-center">
-                                        SỐ LƯỢNG ĐẾM THỰC TẾ (NHẬP THÙNG & CHAI LẺ)
-                                    </span>
+                                    <div className="flex items-center justify-between text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-2">
+                                        <span className="uppercase text-[10px] tracking-wider text-emerald-800">SỐ LƯỢNG ĐẾM THỰC TẾ</span>
+                                        {!isBlind && (
+                                            <span className="text-slate-500 text-[11px] font-mono">
+                                                Tồn sổ: <strong className="text-slate-900">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong>
+                                            </span>
+                                        )}
+                                    </div>
 
-                                    {/* 2-Column Touch Input: Thùng & Chai Lẻ */}
+                                    {/* 2-Column Quantity Controls (Thùng + Chai) */}
                                     <div className="grid grid-cols-2 gap-3">
-                                        {/* Input 1: Số Thùng */}
-                                        <div className="bg-white border border-slate-300 rounded-xl p-2.5 text-center focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 shadow-2xs">
-                                            <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">📦 SỐ THÙNG</span>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={currentItem.qtyActual !== null ? currentCases : ''}
-                                                placeholder="0"
-                                                onChange={e => {
-                                                    const newCases = parseInt(e.target.value, 10) || 0
-                                                    const newTotal = newCases * upc + currentLoose
-                                                    setExactQty(currentItem.id, newTotal)
-                                                }}
-                                                className="w-full text-center text-3xl font-black font-mono text-emerald-700 bg-transparent focus:outline-none"
-                                            />
-                                            <span className="text-[10px] text-slate-500 font-semibold">x {upc} chai/thùng</span>
+                                        {/* Cases Box */}
+                                        <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
+                                            <span className="text-[10px] font-extrabold uppercase text-slate-500 block">📦 SỐ THÙNG</span>
+                                            <div className="flex items-center justify-between gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc))}
+                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                >
+                                                    -
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={currentItem.qtyActual !== null ? currentCases : ''}
+                                                    placeholder="0"
+                                                    onChange={e => {
+                                                        const newCases = parseInt(e.target.value, 10) || 0
+                                                        setExactQty(currentItem.id, newCases * upc + currentLoose)
+                                                    }}
+                                                    className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExactQty(currentItem.id, total + upc)}
+                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400 font-semibold block">({upc} chai/thùng)</span>
                                         </div>
 
-                                        {/* Input 2: Chai Lẻ */}
-                                        <div className="bg-white border border-slate-300 rounded-xl p-2.5 text-center focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 shadow-2xs">
-                                            <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">🍾 CHAI LẺ</span>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={currentItem.qtyActual !== null ? currentLoose : ''}
-                                                placeholder="0"
-                                                onChange={e => {
-                                                    const newLoose = parseInt(e.target.value, 10) || 0
-                                                    const newTotal = currentCases * upc + newLoose
-                                                    setExactQty(currentItem.id, newTotal)
-                                                }}
-                                                className="w-full text-center text-3xl font-black font-mono text-emerald-700 bg-transparent focus:outline-none"
-                                            />
-                                            <span className="text-[10px] text-slate-500 font-semibold">chai lẻ rời</span>
+                                        {/* Loose Bottles Box */}
+                                        <div className="bg-white border border-slate-300 rounded-xl p-3 text-center space-y-1 shadow-2xs">
+                                            <span className="text-[10px] font-extrabold uppercase text-slate-500 block">🍾 CHAI LẺ</span>
+                                            <div className="flex items-center justify-between gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1))}
+                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                >
+                                                    -
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={currentItem.qtyActual !== null ? currentLoose : ''}
+                                                    placeholder="0"
+                                                    onChange={e => {
+                                                        const newLoose = parseInt(e.target.value, 10) || 0
+                                                        setExactQty(currentItem.id, currentCases * upc + newLoose)
+                                                    }}
+                                                    className="w-full text-center text-2xl font-black font-mono text-emerald-800 bg-transparent outline-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExactQty(currentItem.id, total + 1)}
+                                                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base flex items-center justify-center active:scale-95 cursor-pointer"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400 font-semibold block">chai rời</span>
                                         </div>
                                     </div>
 
-                                    {/* Total Summary & Variance Pill */}
-                                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-bold px-1">
-                                        <span className="text-emerald-700 font-mono">
-                                            Quy đổi: {formatCasesAndBottles(total, upc)}
+                                    {/* Total Count Pill & Variance Summary */}
+                                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-extrabold px-1">
+                                        <span className="text-emerald-800 font-mono">
+                                            Tổng thực tế: {formatCasesAndBottles(total, upc)}
                                         </span>
 
                                         {!isBlind && currentItem.qtyActual !== null && (
                                             <span className={currentItem.variance === 0 ? 'text-emerald-700' : currentItem.variance! > 0 ? 'text-amber-700' : 'text-rose-600'}>
-                                                Chênh lệch: {currentItem.variance! > 0 ? `+${currentItem.variance}` : currentItem.variance} chai ({formatCasesAndBottles(currentItem.variance, upc)})
+                                                Lệch: {currentItem.variance! > 0 ? `+${currentItem.variance}` : currentItem.variance} chai
                                             </span>
                                         )}
                                     </div>
@@ -421,72 +437,11 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                             )
                         })()}
 
-                        {/* HIGH VARIANCE CAUSE SELECTOR (Shown when variance != 0) */}
-                        {!isBlind && currentItem.variance !== null && currentItem.variance !== 0 && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2">
-                                <div className="flex items-center justify-between text-xs font-bold text-amber-900">
-                                    <span className="flex items-center gap-1.5">
-                                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                                        Gợi ý chọn Nguyên nhân Chênh lệch (Tùy chọn):
-                                    </span>
-                                    <span className="text-[10px] text-amber-900 font-mono font-bold bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
-                                        {currentItem.variance > 0 ? `Thừa +${currentItem.variance}` : `Thiếu ${currentItem.variance}`} chai
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-1.5 pt-1">
-                                    {REASONS.map(r => (
-                                        <button
-                                            key={r.code}
-                                            type="button"
-                                            onClick={() => {
-                                                setLines(prev => prev.map(l => l.id === currentItem.id ? { ...l, varianceReason: r.code } : l))
-                                            }}
-                                            className={`p-2 rounded-xl text-[11px] font-bold text-left border transition cursor-pointer ${
-                                                currentItem.varianceReason === r.code
-                                                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-xs scale-[1.02]'
-                                                    : 'bg-white text-slate-700 border-slate-200 hover:border-amber-300'
-                                            }`}
-                                        >
-                                            {r.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* BIG TOUCHPAD CONTROLS (ONE-HANDED ERGONOMICS) */}
-                        <div className="grid grid-cols-4 gap-2 pt-1">
-                            <button
-                                onClick={() => updateQty(currentItem.id, -1)}
-                                className="h-12 bg-white hover:bg-slate-100 active:scale-90 text-slate-800 text-sm font-bold rounded-2xl flex items-center justify-center border border-slate-300 shadow-2xs transition cursor-pointer"
-                            >
-                                -1 Chai
-                            </button>
-                            <button
-                                onClick={() => updateQty(currentItem.id, 1)}
-                                className="h-12 bg-[#87CBB9] hover:bg-[#76BAA8] active:scale-90 text-[#0A1926] text-sm font-extrabold rounded-2xl flex items-center justify-center shadow-xs transition cursor-pointer"
-                            >
-                                +1 Chai
-                            </button>
-                            <button
-                                onClick={() => updateQty(currentItem.id, currentItem.unitsPerCase || 6)}
-                                className="h-12 bg-white hover:bg-slate-100 active:scale-90 text-emerald-700 text-xs font-bold rounded-2xl flex items-center justify-center border border-slate-300 shadow-2xs transition cursor-pointer"
-                            >
-                                +1 Thùng
-                            </button>
-                            <button
-                                onClick={() => updateQty(currentItem.id, (currentItem.unitsPerCase || 6) * 2)}
-                                className="h-12 bg-white hover:bg-slate-100 active:scale-90 text-emerald-700 text-xs font-bold rounded-2xl flex items-center justify-center border border-slate-300 shadow-2xs transition cursor-pointer"
-                            >
-                                +2 Thùng
-                            </button>
-                        </div>
-
-                        {/* SAVE & AUTO ADVANCE BUTTON */}
+                        {/* SAVE & GO NEXT MAIN CTA BUTTON */}
                         <button
                             onClick={() => saveCurrentLineAndNext(currentItem)}
                             disabled={savingLineId === currentItem.id}
-                            className="w-full py-4 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md active:scale-98 transition mt-2 cursor-pointer"
+                            className="w-full py-4 bg-[#87CBB9] hover:bg-[#76BAA8] active:scale-98 text-[#0A1926] font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
                         >
                             {savingLineId === currentItem.id ? (
                                 <RefreshCw className="w-5 h-5 animate-spin" />
@@ -499,22 +454,22 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         </button>
                     </div>
 
-                    {/* Bottom Item Navigator Slider */}
+                    {/* Prev / Next Slider Navigation */}
                     <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-2xs">
                         <button
                             disabled={activeIdx === 0}
                             onClick={() => setActiveIdx(prev => Math.max(0, prev - 1))}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1 cursor-pointer"
+                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-extrabold text-xs flex items-center gap-1 cursor-pointer"
                         >
                             ◄ Chai Trước
                         </button>
-                        <span className="text-xs font-mono font-bold text-slate-600">
+                        <span className="text-xs font-mono font-extrabold text-slate-600">
                             {activeIdx + 1} / {filteredLines.length}
                         </span>
                         <button
                             disabled={activeIdx >= filteredLines.length - 1}
                             onClick={() => setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1 cursor-pointer"
+                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-extrabold text-xs flex items-center gap-1 cursor-pointer"
                         >
                             Chai Sau ►
                         </button>
@@ -547,7 +502,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                     <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                                         {line.skuCode}
                                     </span>
-                                    <h4 className="text-xs font-bold text-slate-900 mt-1">{line.productName}</h4>
+                                    <h4 className="text-xs font-extrabold text-slate-900 mt-1">{line.productName}</h4>
                                 </div>
 
                                 <div className="text-right">
@@ -562,12 +517,12 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                 </div>
             )}
 
-            {/* FLOATING BOTTOM NAVIGATION BAR (TOUCH ERGONOMICS) */}
+            {/* FLOATING BOTTOM NAVIGATION BAR */}
             <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 p-2 z-40 shadow-lg">
                 <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
                     <button
                         onClick={() => setViewMode('ZONES')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-extrabold text-[10px] transition cursor-pointer ${viewMode === 'ZONES' ? 'bg-[#0A1926] text-[#87CBB9] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Grid className="w-4 h-4" />
                         Vị Trí Kho
@@ -575,7 +530,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
 
                     <button
                         onClick={() => setViewMode('FOCUS')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-extrabold text-[10px] transition cursor-pointer ${viewMode === 'FOCUS' ? 'bg-[#0A1926] text-[#87CBB9] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Sparkles className="w-4 h-4" />
                         Đếm Tập Trung
@@ -583,7 +538,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
 
                     <button
                         onClick={() => setViewMode('LIST')}
-                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-bold text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`py-2 rounded-xl flex flex-col items-center gap-1 font-extrabold text-[10px] transition cursor-pointer ${viewMode === 'LIST' ? 'bg-[#0A1926] text-[#87CBB9] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <ListFilter className="w-4 h-4" />
                         Danh Sách
