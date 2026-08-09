@@ -1775,15 +1775,19 @@ Khi tạo tờ trình mới, hệ thống hiển thị thông báo lỗi browser
 Khi mở drawer **Nhặt Hàng & Tạo DO** cho một Đơn Bán Hàng (`SO-2608-0021` thuộc Pháp nhân Thắng Ân - TA), mục **Kho Xuất Bán (Tự Động Mặc Định)** tự động nạp **Kho Showroom (Lys)** (thuộc Pháp nhân Ly's Cellar - LC) thay vì Kho Thắng Ân (GVM).
 
 ### Nguyên nhân gốc rễ
-Type interface của mảng `warehouses` trong `DeliveryOrderTab.tsx` và `CreateDODrawer` chỉ khai báo 3 thuộc tính cơ bản `{ id, code, name }`. Các thuộc tính `legalEntityId`, `allowSales`, `isDefault` truyền từ `WarehouseClient.tsx` bị đứt gãy kiểu dữ liệu (lost type properties). Dẫn tới hàm `resolveWarehouseForSO()` không lọc được `legalEntityId` tương ứng và tự động rơi về kho mặc định đầu tiên của danh sách là `Kho Showroom (Lys)`.
+1. Type interface của mảng `warehouses` trong `DeliveryOrderTab.tsx` và `CreateDODrawer` ban đầu bị đứt gãy kiểu dữ liệu (thiếu `legalEntityId`, `legalEntityCode`).
+2. Bên trong `CreateDODrawer` tồn tại một hàm trùng tên `resolveWarehouseForSO()` nội bộ (inner closure override), hàm này sử dụng logic lọc cũ và ghi đè lên hàm xuất chung.
+3. Query `getSOsForDelivery()` và `getWarehouses()` thiếu include thông tin `legalEntity` (code & name).
 
 ### Cách fix
-1. Cập nhật kiểu `WarehouseOption` trong `DeliveryOrderTab.tsx` bao gồm đầy đủ `legalEntityId`, `allowSales`, `isDefault`.
-2. Sửa lại logic `resolveWarehouseForSO()` lọc chính xác và bắt buộc kho xuất phải thuộc đúng `legalEntityId` của Đơn Bán Hàng (`targetSO.legalEntityId`).
+1. Thêm `legalEntity: { select: { code: true, name: true } }` vào cả 2 query `getSOsForDelivery()` và `getWarehouses()`.
+2. Loại bỏ hàm trùng tên trùng tên nội bộ bên trong `CreateDODrawer`, bắt buộc 100% giao diện dùng chung hàm `resolveWarehouseForSO(targetSO, warehouses)`.
+3. Bổ sung cơ chế khớp nối đa tầng chống lỗi (Bulletproof matching): Khớp theo `legalEntityId` UUID $\rightarrow$ Khớp theo `legalEntityCode` (`TA`/`LC`) $\rightarrow$ Khớp theo tên Kho (`Thắng Ân`/`Lys`).
 
 ### Bài học
 
-> ⚠️ **RULE 70: Khi truyền danh sách Kho hàng (`warehouses`) giữa các Component hoặc Modal xử lý chứng từ (Xuất kho, Nhập kho, Chuyển kho), BẮT BỤC interface phải giữ nguyên `legalEntityId` và lọc kho xuất phù hợp với Pháp Nhân của chứng từ, tuyệt đối không được cắt gọt bớt thuộc tính gây sai lệch khớp nối Pháp nhân.**
+> ⚠️ **RULE 70: Khi viết các helper function xử lý logic khớp nối (như `resolveWarehouseForSO`), BẮT BỤC phải khai báo exported function ở cấp module và KHÔNG ĐƯỢC khai báo hàm trùng tên bên trong Component con (`CreateDODrawer`), tránh hiện tượng Inner Closure Shadowing ghi đè làm sai lệch logic toàn cục.**
+
 
 
 
