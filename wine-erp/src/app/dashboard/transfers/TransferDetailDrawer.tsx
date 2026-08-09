@@ -147,20 +147,21 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
     return (
         <>
-            <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.7)', backdropFilter: 'blur(4px)' }}>
-                <div className="bg-white w-full max-w-3xl h-full flex flex-col shadow-2xl border-l border-slate-200 animate-in slide-in-from-right duration-200">
+            <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.8)' }}>
+                <div className="w-full max-w-3xl h-full flex flex-col shadow-2xl border-l border-[#2A4355] animate-in slide-in-from-right duration-200"
+                    style={{ background: '#1B2E3D' }}>
                     {/* Header */}
-                    <div className="px-4 sm:px-6 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
+                    <div className="px-6 py-4 border-b border-[#2A4355] flex items-center justify-between shrink-0" style={{ background: '#1B2E3D' }}>
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-[#D4A853] border border-amber-500/20 flex items-center justify-center font-bold">
                                 <ArrowRightLeft size={18} />
                             </div>
                             <div>
-                                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
-                                    PHIẾU CHUYỂN KHO: <span className="font-mono text-amber-700">{detail?.transferNo || '...'}</span>
+                                <h3 className="text-base font-bold text-[#E8F1F2] flex items-center gap-2">
+                                    PHIẾU CHUYỂN KHO: <span className="font-mono text-[#D4A853]">{detail?.transferNo || '...'}</span>
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
+                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
                                         style={{ color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>
                                         {st.label}
                                     </span>
@@ -172,7 +173,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             {detail && (
                                 <button
                                     onClick={() => setPrintModalOpen(true)}
-                                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                    className="px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-[#E8F1F2] font-bold text-xs border border-[#2A4355] transition-colors flex items-center gap-1.5 cursor-pointer"
                                     title="In phiếu chuyển kho ra giấy A4 để ký tên 4 bên"
                                 >
                                     <Printer size={15} /> In Phiếu (A4)
@@ -180,7 +181,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             )}
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                                className="p-2 rounded-xl text-[#4A6A7A] hover:text-[#E8F1F2] transition-colors cursor-pointer"
                             >
                                 <X size={20} />
                             </button>
@@ -188,28 +189,28 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-5">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-500">
-                                <Loader2 size={32} className="animate-spin text-amber-600" />
+                            <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#8AAEBB]">
+                                <Loader2 size={32} className="animate-spin text-[#D4A853]" />
                                 <span className="text-xs font-bold">Đang tải thông tin chi tiết phiếu...</span>
                             </div>
                         ) : detail ? (
                             <>
                                 {/* Status Timeline Bar */}
-                                <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Tiến Trình Phiếu Chuyển Kho</h4>
+                                <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] space-y-2">
+                                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#4A6A7A]">Tiến Trình Phiếu Chuyển Kho</h4>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                                        <div className={`p-2 rounded-xl border font-bold ${['PENDING_ACCOUNTING', 'CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${['PENDING_ACCOUNTING', 'CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-500/10 text-[#87CBB9] border-emerald-500/30' : 'bg-[#0F172A] text-[#8AAEBB] border-[#2A4355]'}`}>
                                             1. Lập Phiếu
                                         </div>
-                                        <div className={`p-2 rounded-xl border font-bold ${['CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : detail.status === 'PENDING_ACCOUNTING' ? 'bg-amber-50 text-amber-800 border-amber-300 animate-pulse' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${['CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-500/10 text-[#87CBB9] border-emerald-500/30' : detail.status === 'PENDING_ACCOUNTING' ? 'bg-amber-500/15 text-[#D4A853] border-amber-500/30 animate-pulse' : 'bg-[#0F172A] text-[#8AAEBB] border-[#2A4355]'}`}>
                                             2. Kế Toán Duyệt
                                         </div>
-                                        <div className={`p-2 rounded-xl border font-bold ${['IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : detail.status === 'CONFIRMED' ? 'bg-sky-50 text-sky-800 border-sky-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${['IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-500/10 text-[#87CBB9] border-emerald-500/30' : detail.status === 'CONFIRMED' ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : 'bg-[#0F172A] text-[#8AAEBB] border-[#2A4355]'}`}>
                                             3. Xuất Kho (Đi)
                                         </div>
-                                        <div className={`p-2 rounded-xl border font-bold ${detail.status === 'RECEIVED' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${detail.status === 'RECEIVED' ? 'bg-emerald-500/10 text-[#87CBB9] border-emerald-500/30' : 'bg-[#0F172A] text-[#8AAEBB] border-[#2A4355]'}`}>
                                             4. Nhận Kho (Đến)
                                         </div>
                                     </div>
@@ -217,15 +218,15 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                 {/* Dynamic Action Box Based on Status & User Role */}
                                 {detail.status === 'DRAFT' && (
-                                    <div className="p-4 rounded-2xl bg-slate-100 border border-slate-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                    <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-extrabold text-slate-900">Phiếu đang ở trạng thái Nháp</p>
-                                            <p className="text-[11px] text-slate-500">Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt</p>
+                                            <p className="text-xs font-bold text-[#E8F1F2]">Phiếu đang ở trạng thái Nháp</p>
+                                            <p className="text-[11px] text-[#8AAEBB]">Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt</p>
                                         </div>
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleSubmitDraft}
-                                            className="px-4 py-2 rounded-xl bg-amber-500 text-white font-extrabold text-xs hover:bg-amber-600 transition-colors shadow-xs cursor-pointer active:scale-95"
+                                            className="px-4 py-2.5 rounded-lg bg-[#D4A853] text-[#0A1926] font-extrabold text-xs hover:bg-[#E5B964] transition-colors cursor-pointer"
                                         >
                                             Gửi Kế Toán Duyệt
                                         </button>
@@ -233,13 +234,13 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'PENDING_ACCOUNTING' && (
-                                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-300 space-y-3">
+                                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3">
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                             <div>
-                                                <p className="text-xs font-extrabold text-amber-900 flex items-center gap-1.5">
-                                                    <Clock size={16} className="text-amber-600" /> Cần Kế Toán Phê Duyệt Phiếu Chuyển Kho
+                                                <p className="text-xs font-bold text-[#D4A853] flex items-center gap-1.5">
+                                                    <Clock size={16} className="text-[#D4A853]" /> Cần Kế Toán Phê Duyệt Phiếu Chuyển Kho
                                                 </p>
-                                                <p className="text-[11px] text-amber-800 mt-0.5">
+                                                <p className="text-[11px] text-[#8AAEBB] mt-0.5">
                                                     Kế toán kiểm tra danh mục hàng hóa, số lượng & tính hợp lệ để xác nhận duyệt phiếu
                                                 </p>
                                             </div>
@@ -247,14 +248,14 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 <div className="flex items-center gap-2 justify-end">
                                                     <button
                                                         onClick={() => setShowRejectInput(true)}
-                                                        className="px-3 py-2 rounded-xl border border-rose-300 bg-white text-rose-700 font-bold text-xs hover:bg-rose-50 cursor-pointer"
+                                                        className="px-3.5 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 font-bold text-xs hover:bg-rose-500/20 cursor-pointer"
                                                     >
                                                         Từ Chối
                                                     </button>
                                                     <button
                                                         disabled={actionLoading}
                                                         onClick={handleApprove}
-                                                        className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1 cursor-pointer"
+                                                        className="px-4 py-2 rounded-lg bg-[#87CBB9] text-[#0A1926] font-extrabold text-xs hover:bg-[#A5DED0] transition-colors flex items-center gap-1 cursor-pointer"
                                                     >
                                                         <Check size={15} /> Duyệt Phiếu Chuyển Kho
                                                     </button>
@@ -263,17 +264,17 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         </div>
 
                                         {showRejectInput && (
-                                            <div className="p-3 bg-white rounded-xl border border-rose-200 space-y-2">
+                                            <div className="p-3 bg-[#0F172A] rounded-lg border border-rose-500/30 space-y-2">
                                                 <input
                                                     type="text"
                                                     value={rejectReason}
                                                     onChange={e => setRejectReason(e.target.value)}
                                                     placeholder="Nhập lý do từ chối phiếu chuyển kho này..."
-                                                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs outline-none focus:border-rose-500"
+                                                    className="w-full px-3 py-2 rounded-lg bg-[#142433] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none focus:border-rose-500"
                                                 />
                                                 <div className="flex justify-end gap-2">
-                                                    <button onClick={() => setShowRejectInput(false)} className="px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
-                                                    <button onClick={handleReject} disabled={actionLoading} className="px-3 py-1 text-xs font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700">Xác Nhận Từ Chối</button>
+                                                    <button onClick={() => setShowRejectInput(false)} className="px-3 py-1.5 text-xs font-bold text-[#8AAEBB] hover:bg-white/5 rounded-lg">Hủy</button>
+                                                    <button onClick={handleReject} disabled={actionLoading} className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700">Xác Nhận Từ Chối</button>
                                                 </div>
                                             </div>
                                         )}
@@ -281,19 +282,19 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'CONFIRMED' && (
-                                    <div className="p-4 rounded-2xl bg-sky-50 border border-sky-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                    <div className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-extrabold text-sky-900 flex items-center gap-1.5">
-                                                <CheckCircle2 size={16} className="text-sky-600" /> Kế toán đã phê duyệt — Sẵn sàng xuất kho
+                                            <p className="text-xs font-bold text-sky-400 flex items-center gap-1.5">
+                                                <CheckCircle2 size={16} className="text-sky-400" /> Kế toán đã phê duyệt — Sẵn sàng xuất kho
                                             </p>
-                                            <p className="text-[11px] text-sky-700 mt-0.5">
+                                            <p className="text-[11px] text-[#8AAEBB] mt-0.5">
                                                 Thủ kho xuất hàng bấm "In Phiếu A4" để ký nhận giấy & nhấp "Xuất Kho & Vận Chuyển"
                                             </p>
                                         </div>
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleDispatch}
-                                            className="px-4 py-2.5 rounded-xl bg-sky-600 text-white font-extrabold text-xs hover:bg-sky-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                            className="px-4 py-2.5 rounded-lg bg-sky-600 text-white font-extrabold text-xs hover:bg-sky-500 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                         >
                                             <Truck size={15} /> Xuất Kho & Vận Chuyển
                                         </button>
@@ -301,19 +302,19 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'IN_TRANSIT' && (
-                                    <div className="p-4 rounded-2xl bg-blue-50 border border-blue-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-extrabold text-blue-900 flex items-center gap-1.5">
-                                                <Truck size={16} className="text-blue-600" /> Hàng đang vận chuyển trên đường
+                                            <p className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                                                <Truck size={16} className="text-blue-400" /> Hàng đang vận chuyển trên đường
                                             </p>
-                                            <p className="text-[11px] text-blue-700 mt-0.5">
+                                            <p className="text-[11px] text-[#8AAEBB] mt-0.5">
                                                 Khi hàng đến Kho Nhận, Thủ kho đến kiểm đếm và bấm "Xác Nhận Nhận Hàng"
                                             </p>
                                         </div>
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleReceive}
-                                            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                            className="px-4 py-2.5 rounded-lg bg-[#87CBB9] text-[#0A1926] font-extrabold text-xs hover:bg-[#A5DED0] transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                         >
                                             <PackageCheck size={15} /> Xác Nhận Đã Nhận Hàng
                                         </button>
@@ -321,85 +322,64 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {/* Overview Metadata Table */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase">🔴 Kho Xuất (Kho Đi)</p>
-                                        <p className="text-xs sm:text-sm font-extrabold text-slate-900">{detail.fromWarehouse}</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] space-y-1">
+                                        <p className="text-[10px] font-bold text-[#4A6A7A] uppercase">🔴 Kho Xuất (Kho Đi)</p>
+                                        <p className="text-sm font-bold text-[#E8F1F2]">{detail.fromWarehouse}</p>
                                     </div>
 
-                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase">🟢 Kho Nhận (Kho Đến)</p>
-                                        <p className="text-xs sm:text-sm font-extrabold text-slate-900">{detail.toWarehouse}</p>
+                                    <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] space-y-1">
+                                        <p className="text-[10px] font-bold text-[#4A6A7A] uppercase">🟢 Kho Nhận (Kho Đến)</p>
+                                        <p className="text-sm font-bold text-[#E8F1F2]">{detail.toWarehouse}</p>
                                     </div>
 
-                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase">👤 Người Yêu Cầu / Chuyển Kho</p>
-                                        <p className="text-xs font-extrabold text-slate-900">{detail.requesterName}</p>
-                                        <p className="text-[11px] text-slate-500 font-mono">{formatDate(detail.transferDate)}</p>
+                                    <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] space-y-1">
+                                        <p className="text-[10px] font-bold text-[#4A6A7A] uppercase">👤 Người Yêu Cầu / Chuyển Kho</p>
+                                        <p className="text-xs font-bold text-[#E8F1F2]">{detail.requesterName}</p>
+                                        <p className="text-[11px] text-[#8AAEBB] font-mono">{formatDate(detail.transferDate)}</p>
                                     </div>
 
-                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase">💼 Kế Toán Phê Duyệt</p>
-                                        <p className="text-xs font-extrabold text-slate-900">{detail.accountingApprovedBy || 'Chưa duyệt'}</p>
+                                    <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] space-y-1">
+                                        <p className="text-[10px] font-bold text-[#4A6A7A] uppercase">💼 Kế Toán Phê Duyệt</p>
+                                        <p className="text-xs font-bold text-[#E8F1F2]">{detail.accountingApprovedBy || 'Chưa duyệt'}</p>
                                         {detail.accountingApprovedAt && (
-                                            <p className="text-[11px] text-emerald-600 font-mono">Duyệt lúc {formatDate(detail.accountingApprovedAt)}</p>
+                                            <p className="text-[11px] text-[#87CBB9] font-mono">Duyệt lúc {formatDate(detail.accountingApprovedAt)}</p>
                                         )}
                                     </div>
                                 </div>
 
                                 {detail.notes && (
-                                    <div className="p-3 rounded-xl bg-amber-50/50 border border-amber-200 text-xs">
-                                        <span className="font-bold text-amber-900">📝 Lý do / Ghi chú:</span> <span className="text-slate-800">{detail.notes}</span>
+                                    <div className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] space-y-1">
+                                        <p className="text-[10px] font-bold text-[#4A6A7A] uppercase">📝 Ghi Chú</p>
+                                        <p className="text-xs text-[#E8F1F2]">{detail.notes}</p>
                                     </div>
                                 )}
 
-                                {/* Products Table */}
-                                <div className="space-y-2">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                        <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-                                            🍷 Chi Tiết Sản Phẩm Chuyển Kho ({detail.lines.length} sản phẩm)
-                                        </h4>
-                                        <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 inline-block w-fit">
-                                            Tổng: {detail.totalQty} chai • {formatVND(detail.totalValue)}
-                                        </span>
-                                    </div>
-
-                                    <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-2xs">
+                                {/* Line Items Table */}
+                                <div className="border border-[#2A4355] rounded-xl bg-[#142433] overflow-hidden">
+                                    <div className="overflow-x-auto">
                                         <table className="w-full text-left text-xs border-collapse">
                                             <thead>
-                                                <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                                                    <th className="p-3 font-extrabold uppercase text-[11px] w-10 text-center">STT</th>
-                                                    <th className="p-3 font-extrabold uppercase text-[11px]">Mã SKU</th>
-                                                    <th className="p-3 font-extrabold uppercase text-[11px]">Sản Phẩm & Rượu Vang</th>
-                                                    <th className="p-3 font-extrabold uppercase text-[11px] text-center">Tồn Kho Đi</th>
-                                                    <th className="p-3 font-extrabold uppercase text-[11px] text-center">SL Chuyển</th>
-                                                    <th className="p-3 font-extrabold uppercase text-[11px] text-right">Đơn Giá Vốn</th>
-                                                    <th className="p-3 font-extrabold uppercase text-[11px] text-right">Thành Tiền</th>
+                                                <tr className="bg-[#0F172A] border-b border-[#2A4355] text-[#4A6A7A]">
+                                                    <th className="p-3 font-bold uppercase text-[11px] w-10 text-center">STT</th>
+                                                    <th className="p-3 font-bold uppercase text-[11px]">Mã SKU</th>
+                                                    <th className="p-3 font-bold uppercase text-[11px]">Sản Phẩm</th>
+                                                    <th className="p-3 font-bold uppercase text-[11px] text-center">VTG</th>
+                                                    <th className="p-3 font-bold uppercase text-[11px] text-center">Số Lượng</th>
+                                                    <th className="p-3 font-bold uppercase text-[11px] text-right">Đơn Giá Vốn</th>
+                                                    <th className="p-3 font-bold uppercase text-[11px] text-right">Thành Tiền</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-200 bg-white">
-                                                {detail.lines.map((l, i) => (
-                                                    <tr key={l.id} className="hover:bg-slate-50">
-                                                        <td className="p-3 text-center font-bold text-slate-500">{i + 1}</td>
-                                                        <td className="p-3 font-mono font-extrabold text-slate-900 whitespace-nowrap">{l.skuCode}</td>
-                                                        <td className="p-3">
-                                                            <p className="font-bold text-slate-900 text-xs">{l.productName}</p>
-                                                            <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                                                                {l.vintage ? `Vintage ${l.vintage}` : 'NV'} {l.country ? `• ${l.country}` : ''}
-                                                            </p>
-                                                        </td>
-                                                        <td className="p-3 text-center font-mono font-bold text-slate-700 whitespace-nowrap">
-                                                            {l.qtyAvailableFromWH} chai
-                                                        </td>
-                                                        <td className="p-3 text-center font-mono font-extrabold text-amber-700 text-sm whitespace-nowrap">
-                                                            {l.qtyTransferred} chai
-                                                        </td>
-                                                        <td className="p-3 text-right font-mono text-slate-600 whitespace-nowrap">
-                                                            {formatVND(l.unitCost)}
-                                                        </td>
-                                                        <td className="p-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
-                                                            {formatVND(l.totalValue)}
-                                                        </td>
+                                            <tbody className="divide-y divide-[#2A4355]/50 text-[#E8F1F2]">
+                                                {detail.lines.map((l, idx) => (
+                                                    <tr key={l.id} className="hover:bg-[#1A2D3D]">
+                                                        <td className="p-3 text-center font-bold text-[#8AAEBB]">{idx + 1}</td>
+                                                        <td className="p-3 font-mono font-bold text-[#D4A853]">{l.skuCode}</td>
+                                                        <td className="p-3 font-bold text-[#E8F1F2]">{l.productName}</td>
+                                                        <td className="p-3 text-center font-mono text-[#87CBB9]">{l.vintage || 'NV'}</td>
+                                                        <td className="p-3 text-center font-mono font-bold text-[#D4A853]">{l.qtyTransferred} chai</td>
+                                                        <td className="p-3 text-right font-mono text-[#8AAEBB]">{formatVND(l.unitCost)}</td>
+                                                        <td className="p-3 text-right font-mono font-bold text-[#E8F1F2]">{formatVND(l.totalValue)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -408,21 +388,21 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 </div>
                             </>
                         ) : (
-                            <div className="p-12 text-center text-slate-400">Không tìm thấy dữ liệu phiếu</div>
+                            <div className="p-12 text-center text-[#4A6A7A]">Không tìm thấy dữ liệu phiếu</div>
                         )}
                     </div>
 
                     {/* Footer */}
-                    <div className="px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+                    <div className="px-6 py-4 border-t border-[#2A4355] bg-[#142433] flex items-center justify-between shrink-0">
                         <button
                             onClick={() => setPrintModalOpen(true)}
-                            className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                            className="px-4 py-2.5 rounded-lg text-xs font-extrabold bg-[#D4A853] text-[#0A1926] hover:bg-[#E5B964] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                         >
                             <Printer size={15} /> In Phiếu Giấy A4
                         </button>
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                            className="px-4 py-2.5 rounded-lg text-xs font-bold border border-[#2A4355] text-[#8AAEBB] hover:bg-white/5 transition-colors cursor-pointer"
                         >
                             Đóng
                         </button>
