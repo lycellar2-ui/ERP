@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, SalesChannel } from './actions'
+import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, SalesChannel } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
@@ -1663,6 +1663,42 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         )
     }
 
+    const handleExportMisaSme = async (orderIds?: string[]) => {
+        toast.promise(
+            exportMisaSmeExcel({
+                orderIds,
+                status: statusFilter || undefined,
+                dateFrom: dateFrom || undefined,
+                dateTo: dateTo || undefined,
+                salesRepId: salesRepFilter || undefined,
+                channel: channelFilter as any || undefined,
+                legalEntityId: legalEntityFilter || undefined,
+                warehouseId: warehouseFilter || undefined,
+                paymentTerm: paymentTermFilter || undefined,
+                pendingAction: pendingActionFilter || undefined,
+            }).then(({ base64, filename }) => {
+                const byteCharacters = atob(base64)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = filename || `MISA_SME_SalesOrders_${new Date().toISOString().split('T')[0]}.xlsx`
+                a.click()
+                URL.revokeObjectURL(url)
+            }),
+            {
+                loading: 'Đang khởi tạo file Excel MISA SME...',
+                success: 'Đã xuất file MISA SME thành công! Bạn có thể Nhập khẩu trực tiếp vào MISA SME Offline.',
+                error: 'Lỗi xuất file MISA SME',
+            }
+        )
+    }
+
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
@@ -1700,6 +1736,14 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.2)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.1)')}>
                         <Download size={14} /> Excel
+                    </button>
+                    <button onClick={() => handleExportMisaSme()}
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-black transition-all rounded-md cursor-pointer shadow-2xs active:scale-95"
+                        style={{ background: '#F59E0B', color: '#FFFFFF', border: '1px solid #D97706' }}
+                        title="Xuất file Excel chuẩn MISA SME.NET Offline để Kế toán Import nhanh"
+                        onMouseEnter={e => (e.currentTarget.style.background = '#D97706')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#F59E0B')}>
+                        <Download size={14} /> ⚡ Xuất MISA SME
                     </button>
                     {canCreateSO && (
                         <button onClick={() => { setCloneData(null); setCreateOpen(true) }}
@@ -1984,6 +2028,13 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.25)')}
                                                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.15)')}>
                                                 <Printer size={11} /> In
+                                            </button>
+                                            <button onClick={() => handleExportMisaSme([row.id])} className="flex items-center gap-1 px-2 py-1 text-[11px] font-extrabold rounded transition-all cursor-pointer"
+                                                style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.35)' }}
+                                                title="Xuất đơn này ra Excel MISA SME.NET Offline"
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.25)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.15)')}>
+                                                <Download size={11} /> MISA
                                             </button>
                                             {row.status === 'PENDING_APPROVAL' && (
                                                 ((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))

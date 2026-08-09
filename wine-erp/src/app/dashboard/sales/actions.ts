@@ -2432,6 +2432,180 @@ export async function exportSalesOrdersExcel(filters: {
     return { base64: buffer.toString('base64') }
 }
 
+export async function exportMisaSmeExcel(filters: {
+    orderIds?: string[]
+    status?: SOStatus
+    dateFrom?: string
+    dateTo?: string
+    salesRepId?: string
+    channel?: SalesChannel
+    legalEntityId?: string
+    warehouseId?: string
+    paymentTerm?: string
+    pendingAction?: boolean
+} = {}): Promise<{ base64: string; filename: string }> {
+    const user = await requireAuth()
+    const { orderIds, status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction } = filters
+    const where: any = {}
+
+    if (orderIds && orderIds.length > 0) {
+        where.id = { in: orderIds }
+    } else {
+        if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+            where.salesRepId = user.id
+        } else if (salesRepId) {
+            where.salesRepId = salesRepId
+        }
+
+        if (status) where.status = status
+        if (channel) where.channel = channel
+        if (legalEntityId) where.legalEntityId = legalEntityId
+        if (warehouseId) where.warehouseId = warehouseId
+        if (paymentTerm) where.paymentTerm = paymentTerm
+        
+        if (pendingAction) {
+            where.status = { in: ['PENDING_APPROVAL', 'PENDING_ACCOUNTING'] }
+        }
+
+        if (dateFrom || dateTo) {
+            where.createdAt = {}
+            if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+            if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+        }
+    }
+
+    const orders = await prisma.salesOrder.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 5000,
+        include: {
+            customer: {
+                select: {
+                    name: true,
+                    code: true,
+                    taxId: true,
+                    vatCompanyName: true,
+                    vatAddress: true,
+                    vatEmail: true,
+                    parent: {
+                        select: {
+                            taxId: true,
+                            vatCompanyName: true,
+                            vatAddress: true,
+                            vatEmail: true,
+                        },
+                    },
+                },
+            },
+            salesRep: { select: { name: true } },
+            legalEntity: { select: { name: true, code: true } },
+            warehouse: { select: { name: true, code: true } },
+            lines: {
+                include: {
+                    product: { select: { skuCode: true, productName: true, country: true } },
+                },
+            },
+        },
+    })
+
+    const misaRows: any[] = []
+
+    for (const o of orders) {
+        const orderVatRate = Number(o.vatRate ?? 10)
+        const dateObj = new Date(o.createdAt)
+        const dateStr = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`
+        const vatCompanyName = o.customer.vatCompanyName || o.customer.parent?.vatCompanyName || o.customer.name
+        const taxId = o.customer.taxId || o.customer.parent?.taxId || ''
+        const vatAddress = o.customer.vatAddress || o.customer.parent?.vatAddress || ''
+        const whCode = o.warehouse?.code || 'KHO_TONG'
+
+        if (o.lines.length === 0) {
+            misaRows.push({
+                'Ngày chứng từ': dateStr,
+                'Ngày hạch toán': dateStr,
+                'Số chứng từ': o.soNo,
+                'Mã đối tượng': o.customer.code,
+                'Tên đối tượng': vatCompanyName,
+                'Địa chỉ': vatAddress,
+                'Mã số thuế': taxId,
+                'Diễn giải': `Đơn bán hàng ${o.soNo} - ${o.customer.name}`,
+                'Mã nhân viên bán hàng': o.salesRep.name,
+                'Mã kho': whCode,
+                'Mã hàng': '',
+                'Tên hàng': '',
+                'Vintage / Niên vụ': '',
+                'Đơn vị tính': 'Chai',
+                'Số lượng': 0,
+                'Đơn giá': 0,
+                'Thành tiền': 0,
+                '% Chiết khấu': 0,
+                'Tiền chiết khấu': 0,
+                '% Thuế GTGT': orderVatRate,
+                'Tiền thuế GTGT': Number(o.vatAmount || 0),
+                'Tổng tiền thanh toán': Number(o.totalAmount),
+                'TK Doanh thu': '5111',
+                'TK Giá vốn': '6321',
+                'TK Kho': '1561',
+                'Điều khoản thanh toán': o.paymentTerm || 'Chưa thanh toán',
+                'Ghi chú': o.notes || '',
+            })
+        } else {
+            for (const line of o.lines) {
+                const qty = Number(line.qtyOrdered)
+                const price = Number(line.unitPrice)
+                const lineDiscPct = Number(line.lineDiscountPct || 0)
+                const totalBeforeDisc = qty * price
+                const discAmount = totalBeforeDisc * (lineDiscPct / 100)
+                const netBeforeVat = totalBeforeDisc - discAmount
+                const vatRate = Number(line.vatRate ?? orderVatRate)
+                const vatAmount = netBeforeVat * (vatRate / 100)
+                const grandTotal = netBeforeVat + vatAmount
+
+                misaRows.push({
+                    'Ngày chứng từ': dateStr,
+                    'Ngày hạch toán': dateStr,
+                    'Số chứng từ': o.soNo,
+                    'Mã đối tượng': o.customer.code,
+                    'Tên đối tượng': vatCompanyName,
+                    'Địa chỉ': vatAddress,
+                    'Mã số thuế': taxId,
+                    'Diễn giải': `Bán hàng rượu vang theo SO ${o.soNo} - ${o.customer.name}`,
+                    'Mã nhân viên bán hàng': o.salesRep.name,
+                    'Mã kho': whCode,
+                    'Mã hàng': line.product.skuCode,
+                    'Tên hàng': line.product.productName,
+                    'Vintage / Niên vụ': line.vintage ? String(line.vintage) : 'NV',
+                    'Đơn vị tính': 'Chai',
+                    'Số lượng': qty,
+                    'Đơn giá': price,
+                    'Thành tiền': Math.round(totalBeforeDisc),
+                    '% Chiết khấu': lineDiscPct,
+                    'Tiền chiết khấu': Math.round(discAmount),
+                    '% Thuế GTGT': vatRate,
+                    'Tiền thuế GTGT': Math.round(vatAmount),
+                    'Tổng tiền thanh toán': Math.round(grandTotal),
+                    'TK Doanh thu': '5111',
+                    'TK Giá vốn': '6321',
+                    'TK Kho': '1561',
+                    'Điều khoản thanh toán': o.paymentTerm || 'Chưa thanh toán',
+                    'Ghi chú': o.notes || '',
+                })
+            }
+        }
+    }
+
+    const workbook = XLSX.utils.book_new()
+    const wsMisa = XLSX.utils.json_to_sheet(misaRows)
+    XLSX.utils.book_append_sheet(workbook, wsMisa, "Import_MISA_SME")
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+    const today = new Date().toISOString().split('T')[0]
+    return {
+        base64: buffer.toString('base64'),
+        filename: `MISA_SME_SalesOrders_${today}.xlsx`
+    }
+}
+
 // ── Status counts for quick filter tabs ───────────
 export async function getSOStatusCounts(filters: {
     search?: string
