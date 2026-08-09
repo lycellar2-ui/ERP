@@ -2073,20 +2073,6 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.15)')}>
                                                 <Printer size={11} /> In
                                             </button>
-                                            <button onClick={() => handleExportMisaSme([row.id])} className="flex items-center gap-1 px-2 py-1 text-[11px] font-extrabold rounded transition-all cursor-pointer"
-                                                style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.35)' }}
-                                                title="Xuất đơn này ra Excel MISA SME.NET Offline"
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.25)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.15)')}>
-                                                <Download size={11} /> MISA
-                                            </button>
-                                            <button onClick={() => handleExportVnptInvoice([row.id])} className="flex items-center gap-1 px-2 py-1 text-[11px] font-extrabold rounded transition-all cursor-pointer"
-                                                style={{ background: 'rgba(37,99,235,0.15)', color: '#3B82F6', border: '1px solid rgba(37,99,235,0.35)' }}
-                                                title="Xuất đơn này ra Excel Hóa Đơn Điện Tử VNPT (Mẫu 1 loại thuế)"
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,99,235,0.25)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(37,99,235,0.15)')}>
-                                                <Download size={11} /> VNPT
-                                            </button>
                                             {row.status === 'PENDING_APPROVAL' && (
                                                 ((isSaleAdminOrMgr && row.approvalStep === 1) || (isCEO && row.approvalStep === 2) || (!row.approvalStep && (isCEO || isSaleAdminOrMgr)))
                                             ) && (
