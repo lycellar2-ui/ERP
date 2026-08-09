@@ -1741,5 +1741,28 @@ Khi tạo tờ trình mới, hệ thống hiển thị thông báo lỗi browser
 
 > ⚠️ **RULE 68: Hàm tự động sinh mã số chứng từ (`generateCode` / `generateProposalNo`) KHÔNG ĐƯỢC dùng `findFirst` sắp xếp chuỗi `orderBy: { code: 'desc' }` để cắt số cuối, vì các mã chứa hậu tố chữ (custom slug) sẽ làm sai lệch thứ tự alphabet và hàm `parseInt` sẽ sinh trùng mã cũ. PHẢI dùng Regex lọc các mã số chuẩn và thêm bước kiểm tra chống trùng lặp (`findUnique`).**
 
+---
+
+## BUG-039: Stock Count Printable Audit Report Hardcoded Company Name & DRAFT Editing
+
+**Ngày:** 2026-08-09  
+**Severity:** 🟡 Medium — Biên bản kiểm kê A4 hiển thị cứng tên công ty cũ thay vì tên Pháp Nhân của Kho, và phiếu Nháp vẫn cho phép nhập đếm.
+
+### Triệu chứng
+1. Mẫu in Biên bản kiểm kê A4 hiển thị cứng tên "CÔNG TY TNHH LY CELLARS" cho tất cả các kho, không lấy theo Pháp Nhân đã gán cho Kho đó trong cài đặt.
+2. Phiếu kiểm kê ở trạng thái Nháp (`DRAFT`) vẫn nhận số lượng nhập đếm.
+
+### Nguyên nhân gốc rễ
+1. Hàm `getStockCountDetail()` trong `actions.ts` chưa include relation `warehouse.legalEntity`.
+2. Hàm `recordCountLine` và `recordMobileCountLine` chưa đặt chốt chặn kiểm tra `session.status === 'DRAFT'`.
+
+### Cách fix
+1. Thêm `legalEntity` vào query select `warehouse` trong `getStockCountDetail()` và truyền `legalEntityName`, `legalEntityTaxId`, `legalEntityAddress` ra `PrintableAuditReport.tsx`.
+2. Thêm validation chặn lưu khi `session.status === 'DRAFT'` hoặc `APPROVED`/`CANCELLED`.
+
+### Bài học
+
+> ⚠️ **RULE 69: Mẫu in chứng từ hành chính A4 (Phiếu kiểm kê, Phiếu xuất kho, Hóa đơn) BẮT BỤC phải lấy tên Đơn vị / Pháp nhân (`legalEntity`) động từ cài đặt Kho / Chi nhánh tương ứng, không được ghi nhận giá trị cứng (hardcoded string) trong giao diện.**
+
 
 

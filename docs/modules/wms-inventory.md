@@ -199,7 +199,7 @@ Hệ thống kiểm kê kho bãi đa chế độ, hỗ trợ đếm bằng đi�
 - **Phân công Nhân sự (Staff Assignment):** Gán nhân viên chịu trách nhiệm kiểm kê (`assignedTo`). Nhân viên mở điện thoại thấy ngay phiếu cần làm tại tab "Phân công cho tôi".
 - **Phân loại & Chụp ảnh Bằng chứng:** Ghi nhận nguyên nhân chênh lệch (`VỠ_HỎNG`, `NHẦM_MÃ`, `XUẤT_CHƯA_GHI_SỔ`, `THẤT_THOÁT`...) và chụp ảnh bằng chứng bằng Camera.
 - **Tự động Khởi tạo Phiếu Điều Chỉnh Kế Toán (Auto Stock Adjustment Voucher):** Khi duyệt phiếu kiểm kê (`APPROVED`), hệ thống tự động tính giá trị chênh lệch (VND) và sinh Bút toán kế toán điều chỉnh tồn kho (Nợ 632 / Có 156 hoặc Nợ 1388 / Có 156).
-- **In Biên bản kiểm kê chuẩn Kế toán có Chữ ký 3 bên (Printable Audit Report):** Mẫu Biên bản kiểm kê A4 với cột Vintage, định dạng số lượng `X thùng Y lẻ (Z chai)` và 3 khung chữ ký điện tử trực tiếp (*Người kiểm kê*, *Thủ kho / BQL Kho*, *Kế toán kho / Kế toán trưởng*).
+- **In Biên bản kiểm kê chuẩn A4 Kế toán theo Tên Pháp Nhân Kho (Printable Audit Report):** Mẫu Biên bản kiểm kê A4 tiêu chuẩn Kế toán Việt Nam, tự động truy xuất Tên Pháp Nhân (`legalEntityName`), Mã số thuế (`legalEntityTaxId`) và Địa chỉ từ cấu hình Kho Hàng. Đơn giản hóa bỏ toàn bộ chữ ký điện tử rườm rà, thay bằng 4 khung chữ ký đóng dấu bằng tay mực thực tế (*Người lập phiếu*, *Người kiểm kê*, *Thủ kho / BQL Kho*, *Kế toán kho / Giám đốc*).
 
 ---
 
