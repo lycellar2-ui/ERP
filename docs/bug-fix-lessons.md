@@ -1764,5 +1764,27 @@ Khi tạo tờ trình mới, hệ thống hiển thị thông báo lỗi browser
 
 > ⚠️ **RULE 69: Mẫu in chứng từ hành chính A4 (Phiếu kiểm kê, Phiếu xuất kho, Hóa đơn) BẮT BỤC phải lấy tên Đơn vị / Pháp nhân (`legalEntity`) động từ cài đặt Kho / Chi nhánh tương ứng, không được ghi nhận giá trị cứng (hardcoded string) trong giao diện.**
 
+---
+
+## BUG-040: WMS Delivery Order Default Warehouse Resolved Wrong Legal Entity
+
+**Ngày:** 2026-08-09  
+**Severity:** 🔴 High — Nguy cơ xuất nhầm hàng từ kho của Pháp nhân khác (VD: Đơn hàng thuộc Thắng Ân nhưng hệ thống tự động chọn Kho Showroom Lys).
+
+### Triệu chứng
+Khi mở drawer **Nhặt Hàng & Tạo DO** cho một Đơn Bán Hàng (`SO-2608-0021` thuộc Pháp nhân Thắng Ân - TA), mục **Kho Xuất Bán (Tự Động Mặc Định)** tự động nạp **Kho Showroom (Lys)** (thuộc Pháp nhân Ly's Cellar - LC) thay vì Kho Thắng Ân (GVM).
+
+### Nguyên nhân gốc rễ
+Type interface của mảng `warehouses` trong `DeliveryOrderTab.tsx` và `CreateDODrawer` chỉ khai báo 3 thuộc tính cơ bản `{ id, code, name }`. Các thuộc tính `legalEntityId`, `allowSales`, `isDefault` truyền từ `WarehouseClient.tsx` bị đứt gãy kiểu dữ liệu (lost type properties). Dẫn tới hàm `resolveWarehouseForSO()` không lọc được `legalEntityId` tương ứng và tự động rơi về kho mặc định đầu tiên của danh sách là `Kho Showroom (Lys)`.
+
+### Cách fix
+1. Cập nhật kiểu `WarehouseOption` trong `DeliveryOrderTab.tsx` bao gồm đầy đủ `legalEntityId`, `allowSales`, `isDefault`.
+2. Sửa lại logic `resolveWarehouseForSO()` lọc chính xác và bắt buộc kho xuất phải thuộc đúng `legalEntityId` của Đơn Bán Hàng (`targetSO.legalEntityId`).
+
+### Bài học
+
+> ⚠️ **RULE 70: Khi truyền danh sách Kho hàng (`warehouses`) giữa các Component hoặc Modal xử lý chứng từ (Xuất kho, Nhập kho, Chuyển kho), BẮT BỤC interface phải giữ nguyên `legalEntityId` và lọc kho xuất phù hợp với Pháp Nhân của chứng từ, tuyệt đối không được cắt gọt bớt thuộc tính gây sai lệch khớp nối Pháp nhân.**
+
+
 
 
