@@ -434,6 +434,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
         code: w.code,
         name: w.name,
         legalEntityId: w.legalEntityId,
+        legalEntityCode: (w as any).legalEntityCode ?? null,
         allowSales: w.allowSales,
         allowTransfer: w.allowTransfer,
         isDefault: w.isDefault

@@ -72,6 +72,7 @@ export async function getSOsForDelivery() {
         where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED'] } },
         select: {
             id: true, soNo: true, warehouseId: true, legalEntityId: true, createdAt: true,
+            legalEntity: { select: { code: true, name: true } },
             customer: { select: { name: true } },
             lines: {
                 select: {
@@ -90,6 +91,8 @@ export async function getSOsForDelivery() {
         soNo: so.soNo,
         warehouseId: so.warehouseId,
         legalEntityId: so.legalEntityId,
+        legalEntityCode: so.legalEntity?.code ?? null,
+        legalEntityName: so.legalEntity?.name ?? null,
         createdAt: so.createdAt,
         customerName: so.customer?.name ?? '',
         lines: so.lines.map(l => ({

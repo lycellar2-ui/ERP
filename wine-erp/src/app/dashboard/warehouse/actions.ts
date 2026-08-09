@@ -64,6 +64,7 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
         // Simple query — avoid nested stockLots include (Prisma column mapping issue)
         const warehouses = await prisma.warehouse.findMany({
             include: {
+                legalEntity: { select: { id: true, code: true, name: true } },
                 _count: { select: { locations: true } },
             },
             orderBy: { name: 'asc' },
@@ -112,6 +113,8 @@ export async function getWarehouses(): Promise<WarehouseRow[]> {
             name: w.name,
             address: w.address,
             legalEntityId: w.legalEntityId,
+            legalEntityCode: w.legalEntity?.code ?? null,
+            legalEntityName: w.legalEntity?.name ?? null,
             allowSales: w.allowSales ?? true,
             allowTransfer: w.allowTransfer ?? true,
             isDefault: w.isDefault ?? false,

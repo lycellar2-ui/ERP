@@ -6,12 +6,12 @@ import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
     getDeliveryOrders, getSOsForDelivery, createDeliveryOrder, confirmDeliveryOrder, markDODelivered,
-    getDODetail, getAvailableLotsForProduct,
+    getDODetail, getAvailableLotsForProduct, getWarehouses,
 } from './actions'
 import { formatDate } from '@/lib/utils'
 
 type SOOption = {
-    id: string; soNo: string; customerName: string; createdAt?: Date | string; warehouseId?: string; legalEntityId?: string | null
+    id: string; soNo: string; customerName: string; createdAt?: Date | string; warehouseId?: string; legalEntityId?: string | null; legalEntityCode?: string | null
     lines: { productId: string; productName: string; skuCode: string; qtyOrdered: number; vintage: number | null }[]
 }
 
@@ -33,6 +33,7 @@ export type WarehouseOption = {
     code: string
     name: string
     legalEntityId?: string | null
+    legalEntityCode?: string | null
     allowSales?: boolean
     allowTransfer?: boolean
     isDefault?: boolean
@@ -41,11 +42,16 @@ export type WarehouseOption = {
 export function resolveWarehouseForSO(targetSO: SOOption, warehouses: WarehouseOption[]): string {
     if (targetSO.warehouseId) return targetSO.warehouseId
     const targetLegalEntityId = (targetSO as any).legalEntityId
+    const targetLegalEntityCode = (targetSO as any).legalEntityCode
 
-    // Strictly filter warehouses belonging to the SO's legal entity
+    // Strictly filter warehouses belonging to the SO's legal entity by ID, Code, or Name match
     const entityWhs = warehouses.filter((w: any) => {
-        if (!targetLegalEntityId) return true
-        return w.legalEntityId === targetLegalEntityId
+        if (!targetLegalEntityId && !targetLegalEntityCode) return true
+        if (targetLegalEntityId && w.legalEntityId === targetLegalEntityId) return true
+        if (targetLegalEntityCode && w.legalEntityCode === targetLegalEntityCode) return true
+        if (targetLegalEntityCode === 'TA' && (w.code?.includes('TA') || w.name?.includes('Thắng Ân'))) return true
+        if (targetLegalEntityCode === 'LC' && (w.code?.includes('LYS') || w.name?.includes('Lys'))) return true
+        return false
     })
 
     const pool = entityWhs.length > 0 ? entityWhs : warehouses
@@ -69,14 +75,20 @@ export function DeliveryOrderTab({ warehouses }: {
     const [activeSubTab, setActiveSubTab] = useState<'pending' | 'history'>('pending')
     const [searchQuery, setSearchQuery] = useState('')
 
+    const [activeWarehouses, setActiveWarehouses] = useState<WarehouseOption[]>(warehouses)
+
     const reload = async () => { 
         setLoading(true)
-        const [d, sosData] = await Promise.all([
+        const [d, sosData, whsData] = await Promise.all([
             getDeliveryOrders(),
-            getSOsForDelivery()
+            getSOsForDelivery(),
+            getWarehouses()
         ])
         setRows(d)
         setPendingSOs(sosData as any)
+        if (whsData && whsData.length > 0) {
+            setActiveWarehouses(whsData as any)
+        }
         setLoading(false) 
     }
 
@@ -216,8 +228,8 @@ export function DeliveryOrderTab({ warehouses }: {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                             {filteredPendingSOs.map(so => {
                                 const totalItems = so.lines.reduce((sum, l) => sum + l.qtyOrdered, 0)
-                                const targetWhId = resolveWarehouseForSO(so, warehouses)
-                                const targetWh = warehouses.find(w => w.id === targetWhId)
+                                const targetWhId = resolveWarehouseForSO(so, activeWarehouses)
+                                const targetWh = activeWarehouses.find(w => w.id === targetWhId)
                                 return (
                                     <div
                                         key={so.id}
@@ -602,24 +614,6 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         }
     }, [selectedSO, warehouseId])
 
-    const resolveWarehouseForSO = (targetSO: SOOption) => {
-        if (targetSO.warehouseId) return targetSO.warehouseId
-        const targetLegalEntityId = (targetSO as any).legalEntityId
-
-        // Strictly filter warehouses belonging to the SO's legal entity
-        const entityWhs = warehouses.filter((w: any) => {
-            if (!targetLegalEntityId) return true
-            return w.legalEntityId === targetLegalEntityId
-        })
-
-        const pool = entityWhs.length > 0 ? entityWhs : warehouses
-        const defaultWh = pool.find((w: any) => w.isDefault && w.allowSales !== false)
-            ?? pool.find((w: any) => w.allowSales !== false)
-            ?? pool[0]
-
-        return defaultWh ? defaultWh.id : (warehouses[0]?.id ?? '')
-    }
-
     useEffect(() => {
         getSOsForDelivery().then(data => {
             setSOs(data as any)
@@ -627,7 +621,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 const targetSO = (data as any[]).find(s => s.id === initialSOId)
                 if (targetSO) {
                     setSelectedSO(targetSO)
-                    setWarehouseId(resolveWarehouseForSO(targetSO))
+                    setWarehouseId(resolveWarehouseForSO(targetSO, warehouses))
                     setMobileStep(2)
                 }
             }
@@ -638,7 +632,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         const targetSO = sos.find(s => s.id === soId) || null
         setSelectedSO(targetSO)
         if (targetSO) {
-            setWarehouseId(resolveWarehouseForSO(targetSO))
+            setWarehouseId(resolveWarehouseForSO(targetSO, warehouses))
             setMobileStep(2)
         }
     }
