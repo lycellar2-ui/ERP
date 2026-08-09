@@ -683,23 +683,25 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                             <ChevronDown size={12} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
                         </div>
 
-                        {/* Stat Drawer Toggle */}
-                        <button
-                            onClick={() => setShowMobileStats(!showMobileStats)}
-                            className={`p-1.5 rounded-xl border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
-                                showMobileStats
-                                    ? 'bg-amber-50 border-amber-300 text-amber-700'
-                                    : 'bg-slate-50 border-slate-200 text-slate-600'
-                            }`}
-                            title="Bật/tắt chỉ số thống kê kho"
-                        >
-                            <BarChart3 size={15} />
-                        </button>
+                        {/* Stat Drawer Toggle — ONLY ON MAIN GRID SCREEN */}
+                        {viewMode === 'grid' && (
+                            <button
+                                onClick={() => setShowMobileStats(!showMobileStats)}
+                                className={`p-1.5 rounded-xl border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
+                                    showMobileStats
+                                        ? 'bg-amber-50 border-amber-300 text-amber-700'
+                                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                                }`}
+                                title="Bật/tắt chỉ số thống kê kho"
+                            >
+                                <BarChart3 size={15} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* Collapsible Mobile Stats Drawer */}
-                {showMobileStats && (
+                {/* Collapsible Mobile Stats Drawer — ONLY ON MAIN GRID SCREEN */}
+                {viewMode === 'grid' && showMobileStats && (
                     <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
                         {statCards.map(s => (
                             <div key={s.label} className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center text-center">
@@ -737,7 +739,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                 </span>
                                 <button
                                     onClick={() => setViewMode('grid')}
-                                    className="ml-2 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                                    className="ml-2 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold transition shadow-2xs cursor-pointer active:scale-95"
                                 >
                                     ← Về Menu Kho
                                 </button>
@@ -745,20 +747,22 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         )}
                     </div>
 
-                    {/* Middle: Stat Badges */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
-                        {statCards.map(s => (
-                            <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-2xs bg-slate-50 border border-slate-200">
-                                <s.icon size={13} style={{ color: s.accent }} />
-                                <span className="uppercase font-semibold text-slate-500">{s.label}:</span>
-                                <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
-                            </div>
-                        ))}
-                    </div>
+                    {/* Middle: Stat Badges — ONLY SHOW ON MAIN KHO HÀNG SCREEN (viewMode === 'grid') */}
+                    {viewMode === 'grid' && (
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                            {statCards.map(s => (
+                                <div key={s.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] whitespace-nowrap shrink-0 shadow-2xs bg-slate-50 border border-slate-200">
+                                    <s.icon size={13} style={{ color: s.accent }} />
+                                    <span className="uppercase font-semibold text-slate-500">{s.label}:</span>
+                                    <span className="font-bold font-mono" style={{ color: s.accent }}>{s.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                    {/* Right Action Group: Warehouse Selector + Create WH Button */}
+                    {/* Right Action Group: Warehouse Selector Dropdown */}
                     <div className="flex items-center gap-2 shrink-0">
-                        <div className="relative shrink-0">
+                        <div className="relative">
                             <select
                                 value={selectedWH ?? ''}
                                 onChange={e => {
@@ -771,9 +775,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         selectWarehouse(val)
                                     }
                                 }}
-                                className="appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-extrabold outline-none cursor-pointer shadow-2xs bg-white border border-slate-300 text-slate-900"
+                                className="appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-amber-500 min-w-[200px]"
                             >
-                                <option value="">🏢 Tất cả kho ({stats.warehouses})</option>
+                                <option value="">🏢 Tất cả các kho ({stats.warehouses})</option>
                                 {warehouses.map(w => (
                                     <option key={w.id} value={w.id}>
                                         🏢 {w.name} {w.allowSales === false ? '⛔ [Chỉ Điều Chuyển]' : w.isDefault ? '⭐ [Kho Mặc Định]' : ''} ({w.totalStock.toLocaleString()} chai)

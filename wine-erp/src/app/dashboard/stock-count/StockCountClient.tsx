@@ -288,23 +288,35 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 </div>
             </div>
 
-            {/* Metric KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">Tổng Phiếu Kiểm Kê</span>
-                    <strong className="text-2xl font-black text-slate-900 mt-1 block">{stats.total}</strong>
+            {/* Compact Micro Metric KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide block">TỔNG PHIẾU</span>
+                        <strong className="text-lg font-black text-slate-900 leading-tight mt-0.5 block">{stats.total}</strong>
+                    </div>
+                    <ClipboardList className="w-5 h-5 text-slate-400 shrink-0" />
                 </div>
-                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
-                    <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wide block">Đang Kiểm Kê</span>
-                    <strong className="text-2xl font-black text-amber-600 mt-1 block">{stats.inProgress}</strong>
+                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wide block">ĐANG KIỂM KÊ</span>
+                        <strong className="text-lg font-black text-amber-600 leading-tight mt-0.5 block">{stats.inProgress}</strong>
+                    </div>
+                    <RefreshCw className="w-5 h-5 text-amber-500 shrink-0" />
                 </div>
-                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
-                    <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wide block">Đã Hoàn Thành / Duyệt</span>
-                    <strong className="text-2xl font-black text-emerald-600 mt-1 block">{stats.completed}</strong>
+                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wide block">ĐÃ DUYỆT / XONG</span>
+                        <strong className="text-lg font-black text-emerald-600 leading-tight mt-0.5 block">{stats.completed}</strong>
+                    </div>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
                 </div>
-                <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">
-                    <span className="text-[11px] font-bold text-cyan-700 uppercase tracking-wide block">Phân Công Cho Tôi</span>
-                    <strong className="text-2xl font-black text-cyan-700 mt-1 block">{stats.assignedToMe}</strong>
+                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] font-extrabold text-cyan-700 uppercase tracking-wide block">PHÂN CÔNG CHO TÔI</span>
+                        <strong className="text-lg font-black text-cyan-700 leading-tight mt-0.5 block">{stats.assignedToMe}</strong>
+                    </div>
+                    <UserCheck className="w-5 h-5 text-cyan-600 shrink-0" />
                 </div>
             </div>
 
