@@ -147,10 +147,6 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
     return (
         <>
-    const st = detail ? (STATUS_MAP[detail.status] ?? STATUS_MAP.DRAFT) : STATUS_MAP.DRAFT
-
-    return (
-        <>
             <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15, 23, 42, 0.4)' }}>
                 <div className="w-full max-w-3xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200"
                     style={{ background: '#FFFFFF', borderLeft: '1px solid #E2E8F0' }}>
