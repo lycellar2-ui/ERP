@@ -427,7 +427,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                 <div className="flex items-center justify-between text-xs font-bold text-amber-300">
                                     <span className="flex items-center gap-1.5">
                                         <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                                        Bắt buộc chọn Nguyên Nhân Chênh Lệch:
+                                        Gợi ý chọn Nguyên nhân Chênh lệch (Tùy chọn):
                                     </span>
                                     <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-900/60 px-2 py-0.5 rounded border border-amber-500/30">
                                         {currentItem.variance > 0 ? `Thừa +${currentItem.variance}` : `Thiếu ${currentItem.variance}`} chai
