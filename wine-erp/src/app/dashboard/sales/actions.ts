@@ -2683,6 +2683,7 @@ export async function exportVnptInvoiceExcel(filters: {
     })
 
     const vnptRows: any[] = []
+    const vnptSystemRows: any[] = []
     let orderIndex = 1
 
     for (const o of orders) {
@@ -2696,6 +2697,7 @@ export async function exportVnptInvoiceExcel(filters: {
         const vatAddress = o.customer.vatAddress || o.customer.parent?.vatAddress || ''
         const vatEmail = o.customer.vatEmail || o.customer.parent?.vatEmail || ''
         const whCode = o.warehouse?.code || 'KHO_TONG'
+        const payMethod = o.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK'
 
         const fallbackNet = Number(o.totalAmount) - Number(o.vatAmount || 0)
         let lineSeq = 1
@@ -2709,9 +2711,9 @@ export async function exportVnptInvoiceExcel(filters: {
                 'Mã_Số_Thuế': taxId,
                 'Địa_Chỉ': vatAddress,
                 'Email_Nhận_HD': vatEmail,
-                'Hình_Thức_Thanh_Toán': o.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK',
+                'Hình_Thức_Thanh_Toán': payMethod,
                 'Diễn_Giải': `Xuất hóa đơn GTGT đơn hàng số ${o.soNo}`,
-                'STT_Hang': lineSeq++,
+                'STT_Hang': lineSeq,
                 'Mã_Hàng_Hóa': '',
                 'Tên_Hàng_Hóa': `Hóa đơn bán hàng ${o.soNo}`,
                 'Đơn_Vị_Tính': 'Lô',
@@ -2724,6 +2726,31 @@ export async function exportVnptInvoiceExcel(filters: {
                 'Tiền_Thuế_GTGT': Number(o.vatAmount || 0),
                 'Tổng_Cộng': Number(o.totalAmount),
             })
+
+            vnptSystemRows.push({
+                'STTHD': orderIndex,
+                'CusCode': o.customer.code,
+                'Buyer': buyerName,
+                'CusName': companyName,
+                'CusTaxCode': taxId,
+                'CusAddress': vatAddress,
+                'CusEmail': vatEmail,
+                'PaymentMethod': payMethod,
+                'Note': `Xuất hóa đơn GTGT đơn hàng số ${o.soNo}`,
+                'LineNo': lineSeq,
+                'ProductCode': '',
+                'ProductName': `Hóa đơn bán hàng ${o.soNo}`,
+                'Unit': 'Lô',
+                'Quantity': 1,
+                'Price': Math.round(fallbackNet),
+                'Amount': Math.round(fallbackNet),
+                'DiscountRate': Number(o.orderDiscount || 0),
+                'DiscountAmount': 0,
+                'VatRate': `${orderVatRate}%`,
+                'VatAmount': Number(o.vatAmount || 0),
+                'TotalAmount': Number(o.totalAmount),
+            })
+            lineSeq++
         } else {
             for (const line of o.lines) {
                 const qty = Number(line.qtyOrdered)
@@ -2749,9 +2776,9 @@ export async function exportVnptInvoiceExcel(filters: {
                     'Mã_Số_Thuế': taxId,
                     'Địa_Chỉ': vatAddress,
                     'Email_Nhận_HD': vatEmail,
-                    'Hình_Thức_Thanh_Toán': o.paymentTerm?.includes('TM') ? 'TM/CK' : 'CK',
+                    'Hình_Thức_Thanh_Toán': payMethod,
                     'Diễn_Giải': `Xuất hóa đơn bán hàng theo đơn số ${o.soNo}`,
-                    'STT_Hang': lineSeq++,
+                    'STT_Hang': lineSeq,
                     'Mã_Hàng_Hóa': line.product.skuCode,
                     'Tên_Hàng_Hóa': productNameWithVintage,
                     'Đơn_Vị_Tính': 'Chai',
@@ -2764,14 +2791,42 @@ export async function exportVnptInvoiceExcel(filters: {
                     'Tiền_Thuế_GTGT': Math.round(vatAmount),
                     'Tổng_Cộng': Math.round(grandTotal),
                 })
+
+                vnptSystemRows.push({
+                    'STTHD': orderIndex,
+                    'CusCode': o.customer.code,
+                    'Buyer': buyerName,
+                    'CusName': companyName,
+                    'CusTaxCode': taxId,
+                    'CusAddress': vatAddress,
+                    'CusEmail': vatEmail,
+                    'PaymentMethod': payMethod,
+                    'Note': `Xuất hóa đơn bán hàng theo đơn số ${o.soNo}`,
+                    'LineNo': lineSeq,
+                    'ProductCode': line.product.skuCode,
+                    'ProductName': productNameWithVintage,
+                    'Unit': 'Chai',
+                    'Quantity': qty,
+                    'Price': price,
+                    'Amount': Math.round(totalBeforeDisc),
+                    'DiscountRate': lineDiscPct,
+                    'DiscountAmount': Math.round(discAmount),
+                    'VatRate': `${vatRate}%`,
+                    'VatAmount': Math.round(vatAmount),
+                    'TotalAmount': Math.round(grandTotal),
+                })
+                lineSeq++
             }
         }
         orderIndex++
     }
 
     const workbook = XLSX.utils.book_new()
-    const wsVnpt = XLSX.utils.json_to_sheet(vnptRows)
-    XLSX.utils.book_append_sheet(workbook, wsVnpt, "HDDT_VNPT_1Thue")
+    const wsVnptVi = XLSX.utils.json_to_sheet(vnptRows)
+    const wsVnptSys = XLSX.utils.json_to_sheet(vnptSystemRows)
+
+    XLSX.utils.book_append_sheet(workbook, wsVnptVi, "VNPT_TiengViet")
+    XLSX.utils.book_append_sheet(workbook, wsVnptSys, "VNPT_SystemTags")
 
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
     const today = new Date().toISOString().split('T')[0]
