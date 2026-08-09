@@ -233,7 +233,7 @@ export function TransfersTab() {
             {/* Mobile Card List View (< 768px) */}
             <div className="block md:hidden space-y-3">
                 {filteredRows.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-2xl">
+                    <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-2xl">
                         Không tìm thấy phiếu chuyển kho nào
                     </div>
                 ) : (
@@ -243,10 +243,10 @@ export function TransfersTab() {
                             <div
                                 key={r.id}
                                 onClick={() => setSelectedId(r.id)}
-                                className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-3 shadow-xl active:scale-98 transition cursor-pointer"
+                                className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-900 space-y-3 shadow-2xs active:scale-98 transition cursor-pointer"
                             >
                                 <div className="flex items-center justify-between">
-                                    <span className="font-mono text-xs font-black text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-lg border border-amber-500/30">
+                                    <span className="font-mono text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
                                         {r.transferNo}
                                     </span>
                                     <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"

@@ -589,11 +589,11 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                     {/* Summary Data Cards — Mobile View (< 768px) */}
                     <div className="block md:hidden space-y-3">
                         {loadingSummary ? (
-                            <div className="p-8 text-center text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-2xl">
-                                <Loader2 size={20} className="animate-spin inline text-emerald-400 mr-2" /> Đang tải báo cáo NXT...
+                            <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-2xl">
+                                <Loader2 size={20} className="animate-spin inline text-emerald-600 mr-2" /> Đang tải báo cáo NXT...
                             </div>
                         ) : sortedSummaryItems.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-2xl">
+                            <div className="p-8 text-center text-slate-500 text-xs bg-white border border-slate-200 rounded-2xl">
                                 Không tìm thấy dữ liệu NXT phù hợp
                             </div>
                         ) : (
@@ -601,11 +601,11 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                                 <div
                                     key={item.productId}
                                     onClick={() => handleDrillDown(item)}
-                                    className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white space-y-3 shadow-xl active:scale-98 transition cursor-pointer"
+                                    className="p-4 bg-white border border-slate-200 rounded-2xl text-slate-900 space-y-3 shadow-2xs active:scale-98 transition cursor-pointer"
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <span className="font-mono text-xs font-black text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
+                                            <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
                                                 {item.skuCode}
                                             </span>
                                             <h4 className="text-xs font-black text-white mt-1">{item.productName}</h4>

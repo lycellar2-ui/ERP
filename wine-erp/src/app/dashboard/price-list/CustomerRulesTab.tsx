@@ -21,7 +21,7 @@ import { formatVND } from '@/lib/utils'
 const RULE_TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
     FIXED_DISCOUNT: { label: 'Chiết Khấu Cố Định %', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     FIXED_PRICE: { label: 'Giá Cố Định', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)' },
-    SPECIAL_PRICE: { label: 'Giá Đặc Biệt', color: '#A78BFA', bg: 'rgba(167,139,250,0.15)' },
+    SPECIAL_PRICE: { label: 'Giá Đặc Biệt', color: '#0891B2', bg: 'rgba(8,145,178,0.15)' },
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {

@@ -18,7 +18,7 @@ const STAGES: { key: OppStage; label: string; color: string; bg: string; probabi
     { key: 'LEAD', label: 'Lead', color: '#8AAEBB', bg: 'rgba(138,174,187,0.08)', probability: 10 },
     { key: 'QUALIFIED', label: 'Qualified', color: '#D4A853', bg: 'rgba(212,168,83,0.08)', probability: 30 },
     { key: 'PROPOSAL', label: 'Proposal', color: '#87CBB9', bg: 'rgba(135,203,185,0.08)', probability: 50 },
-    { key: 'NEGOTIATION', label: 'Negotiation', color: '#A78BFA', bg: 'rgba(167,139,250,0.08)', probability: 70 },
+    { key: 'NEGOTIATION', label: 'Negotiation', color: '#D97706', bg: 'rgba(217,119,6,0.08)', probability: 70 },
     { key: 'WON', label: 'Won ✓', color: '#5BA88A', bg: 'rgba(91,168,138,0.1)', probability: 100 },
     { key: 'LOST', label: 'Lost ✗', color: '#8B1A2E', bg: 'rgba(139,26,46,0.08)', probability: 0 },
 ]

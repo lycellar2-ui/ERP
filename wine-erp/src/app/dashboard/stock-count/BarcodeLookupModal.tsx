@@ -144,7 +144,7 @@ export function BarcodeLookupModal({ isOpen, onClose }: BarcodeLookupModalProps)
                                                     <Package className="w-3 h-3" /> Quy cách: {result.product.unitsPerCase} chai/thùng
                                                 </span>
                                                 {result.parsedVintage && (
-                                                    <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 text-xs font-semibold flex items-center gap-1">
+                                                    <span className="px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 text-xs font-semibold flex items-center gap-1">
                                                         <Calendar className="w-3 h-3" /> Vintage {result.parsedVintage}
                                                     </span>
                                                 )}
@@ -174,13 +174,13 @@ export function BarcodeLookupModal({ isOpen, onClose }: BarcodeLookupModalProps)
 
                                     {/* Multi-Vintage Overview Section */}
                                     {result.vintagesSummary && result.vintagesSummary.length > 0 && (
-                                        <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 space-y-2">
+                                        <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <h5 className="text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <Calendar className="w-3.5 h-3.5 text-purple-600" />
+                                                <h5 className="text-xs font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5 text-teal-600" />
                                                     Tồn Kho Theo Các Niên Vụ (Vintage) Khác
                                                 </h5>
-                                                <span className="text-[11px] text-purple-700">
+                                                <span className="text-[11px] text-teal-700">
                                                     Tổng {result.vintagesSummary.length} niên vụ
                                                 </span>
                                             </div>
@@ -248,7 +248,7 @@ export function BarcodeLookupModal({ isOpen, onClose }: BarcodeLookupModalProps)
                                                                 <td className="px-4 py-3 text-amber-700 font-bold">
                                                                     {lot.locationCode}
                                                                 </td>
-                                                                <td className="px-4 py-3 text-center text-purple-700 font-bold">
+                                                                <td className="px-4 py-3 text-center text-teal-700 font-bold">
                                                                     {lot.vintage ?? 'NV'}
                                                                 </td>
                                                                 <td className="px-4 py-3 text-right text-slate-700">

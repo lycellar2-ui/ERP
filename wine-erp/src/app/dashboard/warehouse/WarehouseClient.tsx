@@ -259,12 +259,12 @@ function StockTable({ lots, sortConfig, onSort }: {
                     const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
                     const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
                     return (
-                        <div key={lot.id} className="p-4 rounded-2xl space-y-2.5 shadow-xl bg-slate-900 border border-slate-800 text-slate-100">
+                        <div key={lot.id} className="p-4 rounded-2xl space-y-2.5 shadow-2xs bg-white border border-slate-200 text-slate-900">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-black font-mono px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
                                     {lot.lotNo}
                                 </span>
-                                <span className="text-xs font-black font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 border border-slate-700">
+                                <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200">
                                     📍 {lot.locationCode}
                                 </span>
                             </div>
@@ -496,8 +496,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             title: '📋 Kiểm Kê Kho',
             subtitle: 'Stock Audit & Barcode',
             icon: ClipboardList,
-            color: '#7C3AED',
-            bg: 'rgba(124,58,237,0.1)',
+            color: '#0891B2',
+            bg: 'rgba(8,145,178,0.1)',
             description: 'Tạo đợt kiểm kê, quét Barcode di động, đối soát chênh lệch & tự động chỉnh tồn',
             actionLabel: 'Kiểm Kê Kho'
         },

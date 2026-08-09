@@ -19,7 +19,7 @@ const ACTION_CONFIG: Record<string, { icon: typeof Plus; color: string; bgColor:
     DELETE: { icon: Trash2, color: '#EF4444', bgColor: 'rgba(239,68,68,0.12)', label: 'Xóa' },
     APPROVE: { icon: CheckCircle2, color: '#22C55E', bgColor: 'rgba(34,197,94,0.12)', label: 'Duyệt' },
     REJECT: { icon: XCircle, color: '#EF4444', bgColor: 'rgba(239,68,68,0.12)', label: 'Từ chối' },
-    STATUS_CHANGE: { icon: RefreshCw, color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.12)', label: 'Đổi trạng thái' },
+    STATUS_CHANGE: { icon: RefreshCw, color: '#0891B2', bgColor: 'rgba(8,145,178,0.12)', label: 'Đổi trạng thái' },
     CONFIRM: { icon: CheckCircle2, color: '#06B6D4', bgColor: 'rgba(6,182,212,0.12)', label: 'Xác nhận' },
     LOGIN: { icon: User, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: 'Đăng nhập' },
     EXPORT: { icon: ArrowRight, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: 'Xuất dữ liệu' },
@@ -279,7 +279,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <StatCard label="Hôm nay" value={stats.today} icon={Calendar} color="#22C55E" />
                 <StatCard label="7 ngày qua" value={stats.thisWeek} icon={Activity} color="#06B6D4" />
-                <StatCard label="Users hoạt động" value={stats.uniqueUsers} icon={User} color="#8B5CF6" />
+                <StatCard label="Users hoạt động" value={stats.uniqueUsers} icon={User} color="#0891B2" />
                 <StatCard label="Tổng sự kiện" value={stats.total} icon={Shield} color="#87CBB9" />
             </div>
 

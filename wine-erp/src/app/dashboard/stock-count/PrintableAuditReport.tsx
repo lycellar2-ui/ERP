@@ -277,17 +277,17 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                 <div className="overflow-x-auto mb-8">
                     <table className="w-full text-left border-collapse text-[11px]">
                         <thead>
-                            <tr className="bg-slate-900 text-white uppercase text-[10px] tracking-wider">
-                                <th className="p-2 border border-slate-700 w-8 text-center">STT</th>
-                                <th className="p-2 border border-slate-700">Mã SKU</th>
-                                <th className="p-2 border border-slate-700">Tên Sản Phẩm</th>
-                                <th className="p-2 border border-slate-700 text-center">Vintage</th>
-                                <th className="p-2 border border-slate-700">Vị Trí Kho</th>
-                                <th className="p-2 border border-slate-700 text-right">Sổ Sách</th>
-                                <th className="p-2 border border-slate-700 text-right">Thực Tế (Thùng + Lẻ)</th>
-                                <th className="p-2 border border-slate-700 text-right">Chênh Lệch</th>
-                                <th className="p-2 border border-slate-700 text-right">Giá Trị (VND)</th>
-                                <th className="p-2 border border-slate-700">Giải Trình / Lý Do</th>
+                            <tr className="bg-slate-100 text-slate-900 uppercase text-[10px] tracking-wider font-extrabold">
+                                <th className="p-2 border border-slate-300 w-8 text-center">STT</th>
+                                <th className="p-2 border border-slate-300">Mã SKU</th>
+                                <th className="p-2 border border-slate-300">Tên Sản Phẩm</th>
+                                <th className="p-2 border border-slate-300 text-center">Vintage</th>
+                                <th className="p-2 border border-slate-300">Vị Trí Kho</th>
+                                <th className="p-2 border border-slate-300 text-right">Sổ Sách</th>
+                                <th className="p-2 border border-slate-300 text-right">Thực Tế (Thùng + Lẻ)</th>
+                                <th className="p-2 border border-slate-300 text-right">Chênh Lệch</th>
+                                <th className="p-2 border border-slate-300 text-right">Giá Trị (VND)</th>
+                                <th className="p-2 border border-slate-300">Giải Trình / Lý Do</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 border border-slate-300">

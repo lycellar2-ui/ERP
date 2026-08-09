@@ -267,12 +267,12 @@ export function LocationManager({ warehouseId, warehouseName, locations, initial
                     {/* Mobile Cards */}
                     <div className="block md:hidden p-3 space-y-3">
                         {locs.map(loc => (
-                            <div key={loc.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-2 shadow-xl">
+                            <div key={loc.id} className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-900 space-y-2 shadow-2xs">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-black font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 border border-slate-700">
+                                    <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200">
                                         📍 {loc.code}
                                     </span>
-                                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${loc.active ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}`}>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${loc.active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600'}`}>
                                         {loc.active ? 'Hoạt động' : 'Tắt'}
                                     </span>
                                 </div>

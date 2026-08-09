@@ -8,7 +8,7 @@ import { formatVND } from '@/lib/utils'
 const CHANNEL_CFG: Record<string, { label: string; color: string; bg: string }> = {
     HORECA: { label: 'HORECA', color: '#D4A853', bg: 'rgba(212,168,83,0.15)' },
     WHOLESALE_DISTRIBUTOR: { label: 'Đại Lý', color: '#87CBB9', bg: 'rgba(135,203,185,0.12)' },
-    VIP_RETAIL: { label: 'VIP Retail', color: '#A78BFA', bg: 'rgba(167,139,250,0.15)' },
+    VIP_RETAIL: { label: 'VIP Retail', color: '#0891B2', bg: 'rgba(8,145,178,0.15)' },
     DIRECT_INDIVIDUAL: { label: 'Trực Tiếp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)' },
 }
 

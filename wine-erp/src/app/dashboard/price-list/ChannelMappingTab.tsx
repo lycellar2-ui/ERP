@@ -126,7 +126,7 @@ export function ChannelMappingTab({ currentUser }: Props) {
 
                     {/* VIP Retail */}
                     <div className="p-4 rounded-md space-y-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                        <label className="text-xs font-semibold uppercase tracking-wider block" style={{ color: '#A78BFA' }}>
+                        <label className="text-xs font-semibold uppercase tracking-wider block" style={{ color: '#0891B2' }}>
                             3. Kênh VIP Retail (Khách VIP Lẻ)
                         </label>
                         <p className="text-[11px] style={{ color: '#4A6A7A' }}">Bảng giá áp dụng cho khách hàng cá nhân thân thiết VIP</p>
