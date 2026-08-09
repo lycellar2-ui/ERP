@@ -337,6 +337,22 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                             <p className="text-xs text-slate-400 font-semibold mt-1">Quy cách đóng gói: <strong className="text-amber-400 font-bold">{currentItem.unitsPerCase || 6} chai / thùng</strong></p>
                         </div>
 
+                        {/* DUPLICATE COUNT WARNING BANNER (If already counted before) */}
+                        {currentItem.countedAt && (
+                            <div className="bg-cyan-950/60 border border-cyan-500/50 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs animate-fade-in">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                                    <div>
+                                        <span className="font-bold text-cyan-200 block text-[11px]">⚠️ Đã có kết quả đếm trước đó</span>
+                                        <span className="text-[10px] text-slate-400">Lưu lúc: {new Date(currentItem.countedAt).toLocaleTimeString('vi-VN')}</span>
+                                    </div>
+                                </div>
+                                <span className="px-2 py-0.5 rounded bg-cyan-900/80 text-cyan-300 font-mono text-[10px] font-bold border border-cyan-500/30">
+                                    {formatCasesAndBottles(currentItem.qtyActual, currentItem.unitsPerCase || 6)}
+                                </span>
+                            </div>
+                        )}
+
                         {/* DUAL INPUT QUANTITY DISPLAY (THÙNG + CHAI LẺ) */}
                         {(() => {
                             const upc = currentItem.unitsPerCase || 6
@@ -404,6 +420,39 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                 </div>
                             )
                         })()}
+
+                        {/* HIGH VARIANCE CAUSE SELECTOR (Shown when variance != 0) */}
+                        {!isBlind && currentItem.variance !== null && currentItem.variance !== 0 && (
+                            <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-3.5 space-y-2">
+                                <div className="flex items-center justify-between text-xs font-bold text-amber-300">
+                                    <span className="flex items-center gap-1.5">
+                                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                                        Bắt buộc chọn Nguyên Nhân Chênh Lệch:
+                                    </span>
+                                    <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-900/60 px-2 py-0.5 rounded border border-amber-500/30">
+                                        {currentItem.variance > 0 ? `Thừa +${currentItem.variance}` : `Thiếu ${currentItem.variance}`} chai
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                                    {REASONS.map(r => (
+                                        <button
+                                            key={r.code}
+                                            type="button"
+                                            onClick={() => {
+                                                setLines(prev => prev.map(l => l.id === currentItem.id ? { ...l, varianceReason: r.code } : l))
+                                            }}
+                                            className={`p-2 rounded-xl text-[11px] font-bold text-left border transition cursor-pointer ${
+                                                currentItem.varianceReason === r.code
+                                                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-md scale-[1.02]'
+                                                    : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-amber-500/50'
+                                            }`}
+                                        >
+                                            {r.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* BIG TOUCHPAD CONTROLS (ONE-HANDED ERGONOMICS) */}
                         <div className="grid grid-cols-4 gap-2 pt-1">
