@@ -82,7 +82,6 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
     const [isBlind, setIsBlind] = useState<boolean>(detail.isBlindCount)
     const [activeIdx, setActiveIdx] = useState<number>(0)
     const [savingLineId, setSavingLineId] = useState<string | null>(null)
-    const [showBarcodeModal, setShowBarcodeModal] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuccessToast, setShowSuccessToast] = useState(false)
 
@@ -540,22 +539,8 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         <ListFilter className="w-4 h-4" />
                         Danh Sách
                     </button>
-
-                    <button
-                        onClick={() => setShowBarcodeModal(true)}
-                        className="py-2 rounded-xl bg-amber-500 text-slate-950 flex flex-col items-center gap-1 font-black text-[10px] shadow-lg shadow-amber-500/20 active:scale-95 transition"
-                    >
-                        <QrCode className="w-4 h-4" />
-                        Quét Mã
-                    </button>
                 </div>
             </div>
-
-            {/* Barcode Camera Modal */}
-            <BarcodeLookupModal
-                isOpen={showBarcodeModal}
-                onClose={() => setShowBarcodeModal(false)}
-            />
         </div>
     )
 }
