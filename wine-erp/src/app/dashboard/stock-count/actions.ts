@@ -104,6 +104,12 @@ export async function getStockCountDetail(sessionId: string) {
                             locationCode: true,
                             zone: true
                         }
+                    },
+                    assignedTo: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
                     }
                 }
             },
@@ -115,8 +121,9 @@ export async function getStockCountDetail(sessionId: string) {
 
     if (!session) return null
 
+    const s = session as any
     // Compute unit costs and vintages from StockLot
-    const productIds = Array.from(new Set(session.lines.map(l => l.productId)))
+    const productIds: string[] = Array.from(new Set(s.lines.map((l: any) => l.productId)))
     const lots = await prisma.stockLot.findMany({
         where: { productId: { in: productIds } },
         select: { productId: true, unitLandedCost: true, vintage: true }
@@ -132,10 +139,10 @@ export async function getStockCountDetail(sessionId: string) {
         }
     }
 
-    const sessionNoStr = session.sessionNo || `SC-${session.id.slice(-6).toUpperCase()}`
-    const titleStr = session.title || `Kiểm kê kho ${session.warehouse?.name ?? ''}`
+    const sessionNoStr = s.sessionNo || `SC-${s.id.slice(-6).toUpperCase()}`
+    const titleStr = s.title || `Kiểm kê kho ${s.warehouse?.name ?? ''}`
 
-    const formattedLines = session.lines.map(l => {
+    const formattedLines = s.lines.map((l: any) => {
         const sysQty = Number(l.qtySystem)
         const actQty = l.qtyActual !== null ? Number(l.qtyActual) : null
         const varQty = l.variance !== null ? Number(l.variance) : null
@@ -163,6 +170,8 @@ export async function getStockCountDetail(sessionId: string) {
             varianceValueVND,
             countedAt: l.countedAt || null,
             notes: l.notes || null,
+            assignedToId: l.assignedToId || null,
+            assignedToName: l.assignedTo?.name || null,
         }
     })
 
@@ -737,5 +746,94 @@ export async function recordCountByBarcode(
         }
     } catch (err: any) {
         return { success: false, error: err.message || 'Lỗi ghi nhận kiểm kê qua barcode' }
+    }
+}
+
+export async function assignStaffToZones(
+    sessionId: string,
+    zoneAssignments: { zone: string; assignedToId: string | null }[]
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const session = await prisma.stockCountSession.findUnique({
+            where: { id: sessionId },
+            include: { lines: { include: { location: true } } }
+        })
+        if (!session) return { success: false, error: 'Không tìm thấy phiên kiểm kê' }
+
+        for (const assign of zoneAssignments) {
+            const lineIds = session.lines
+                .filter(l => (l.location?.zone || l.locationCode || 'Khu vực chung') === assign.zone)
+                .map(l => l.id)
+
+            if (lineIds.length > 0) {
+                await (prisma.stockCountLine as any).updateMany({
+                    where: { id: { in: lineIds } },
+                    data: { assignedToId: assign.assignedToId }
+                })
+            }
+        }
+
+        revalidateCache('stock-count')
+        revalidatePath('/dashboard/stock-count')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi phân công nhân sự kiểm kê' }
+    }
+}
+
+export async function completeZoneCount(
+    sessionId: string,
+    zoneName: string
+): Promise<{ success: boolean; summary?: any; error?: string }> {
+    try {
+        const session = await prisma.stockCountSession.findUnique({
+            where: { id: sessionId },
+            include: {
+                lines: {
+                    include: {
+                        product: { select: { skuCode: true, productName: true, unitsPerCase: true } },
+                        location: true
+                    }
+                }
+            }
+        })
+        if (!session) return { success: false, error: 'Không tìm thấy phiên kiểm kê' }
+
+        const zoneLines = session.lines.filter(l => (l.location?.zone || l.locationCode || 'Khu vực chung') === zoneName)
+        const totalItems = zoneLines.length
+        const countedItems = zoneLines.filter(l => l.qtyActual !== null)
+        const matchedItems = zoneLines.filter(l => l.qtyActual !== null && Number(l.variance) === 0)
+        const overItems = zoneLines.filter(l => l.variance !== null && Number(l.variance) > 0)
+        const underItems = zoneLines.filter(l => l.variance !== null && Number(l.variance) < 0)
+        const uncountedItems = zoneLines.filter(l => l.qtyActual === null)
+
+        const varianceLines = zoneLines
+            .filter(l => l.variance !== null && Number(l.variance) !== 0)
+            .map(l => ({
+                id: l.id,
+                skuCode: l.product?.skuCode ?? '',
+                productName: l.product?.productName ?? '',
+                qtySystem: Number(l.qtySystem),
+                qtyActual: Number(l.qtyActual ?? 0),
+                variance: Number(l.variance),
+                varianceReason: l.varianceReason,
+                unitsPerCase: l.product?.unitsPerCase ?? 6
+            }))
+
+        return serialize({
+            success: true,
+            summary: {
+                zoneName,
+                totalItems,
+                countedCount: countedItems.length,
+                matchedCount: matchedItems.length,
+                overCount: overItems.length,
+                underCount: underItems.length,
+                uncountedCount: uncountedItems.length,
+                varianceLines
+            }
+        })
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi chốt kiểm kê khu vực' }
     }
 }

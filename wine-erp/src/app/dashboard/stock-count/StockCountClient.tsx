@@ -9,7 +9,8 @@ import {
 import {
     getStockCountList, getStockCountDetail, getCountStats,
     getWarehouseOptions, getWarehouseLocationOptions, getStaffUserOptions,
-    createStockCountSessionExtended, startStockCount, approveAndCreateAdjustment
+    createStockCountSessionExtended, startStockCount, approveAndCreateAdjustment,
+    assignStaffToZones
 } from './actions'
 import MobileLocationCounter from './MobileLocationCounter'
 import PrintableAuditReport from './PrintableAuditReport'
@@ -60,6 +61,48 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const [mobileViewDetail, setMobileViewDetail] = useState<any>(null)
     const [printViewDetail, setPrintViewDetail] = useState<any>(null)
     const [showBarcodeLookup, setShowBarcodeLookup] = useState(false)
+
+    // Zone Assignment Modal State
+    const [showAssignModal, setShowAssignModal] = useState(false)
+    const [assignSessionDetail, setAssignSessionDetail] = useState<any>(null)
+    const [zoneAssignments, setZoneAssignments] = useState<Record<string, string>>({})
+    const [isSavingAssignments, setIsSavingAssignments] = useState(false)
+
+    const handleOpenAssignModal = async (sessionId: string) => {
+        setIsLoading(true)
+        const detail = await getStockCountDetail(sessionId)
+        setIsLoading(false)
+        if (!detail) return alert('Không thể lấy chi tiết phiên kiểm kê')
+
+        setAssignSessionDetail(detail)
+        const initialMap: Record<string, string> = {}
+        for (const line of detail.lines) {
+            const zName = line.zone || line.locationCode || 'Khu vực chung'
+            if (!initialMap[zName]) {
+                initialMap[zName] = line.assignedToId || ''
+            }
+        }
+        setZoneAssignments(initialMap)
+        setShowAssignModal(true)
+    }
+
+    const handleSaveZoneAssignments = async () => {
+        if (!assignSessionDetail) return
+        setIsSavingAssignments(true)
+        const arr = Object.entries(zoneAssignments).map(([zone, userId]) => ({
+            zone,
+            assignedToId: userId || null
+        }))
+        const res = await assignStaffToZones(assignSessionDetail.id, arr)
+        setIsSavingAssignments(false)
+
+        if (res.success) {
+            setShowAssignModal(false)
+            fetchData()
+        } else {
+            alert(res.error || 'Không thể lưu phân công vị trí')
+        }
+    }
 
     // Form inputs for creation
     const [warehouses, setWarehouses] = useState<Array<{ id: string; code: string; name: string }>>([])
@@ -376,6 +419,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <td className="p-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
+                                                        onClick={() => handleOpenAssignModal(row.id)}
+                                                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold border border-slate-200 flex items-center gap-1 transition cursor-pointer"
+                                                        title="Phân công vị trí kiểm kê"
+                                                    >
+                                                        <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> Phân công
+                                                    </button>
+
+                                                    <button
                                                         onClick={() => handleOpenMobileView(row.id)}
                                                         className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1 transition cursor-pointer"
                                                         title="Đếm bằng Điện thoại"
@@ -438,18 +489,24 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 pt-1">
+                            <div className="grid grid-cols-3 gap-1.5 pt-1">
+                                <button
+                                    onClick={() => handleOpenAssignModal(row.id)}
+                                    className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                >
+                                    <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> Phân công
+                                </button>
                                 <button
                                     onClick={() => handleOpenMobileView(row.id)}
-                                    className="py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                                    className="py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95"
                                 >
-                                    <Smartphone className="w-4 h-4" /> Đếm Điện Thoại
+                                    <Smartphone className="w-3.5 h-3.5" /> Đếm ĐT
                                 </button>
                                 <button
                                     onClick={() => handleOpenPrintView(row.id)}
-                                    className="py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-200 shadow-2xs cursor-pointer"
+                                    className="py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-extrabold rounded-xl text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
                                 >
-                                    <Printer className="w-4 h-4 text-amber-600" /> In Biên Bản
+                                    <Printer className="w-3.5 h-3.5 text-amber-600" /> In Biên Bản
                                 </button>
                             </div>
                         </div>
@@ -642,6 +699,87 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 isOpen={showBarcodeLookup}
                 onClose={() => setShowBarcodeLookup(false)}
             />
+
+            {/* Modal Phân Công Vị Trí / Khu Vực Cho Nhân Sự */}
+            {showAssignModal && assignSessionDetail && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+                    <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-200">
+                            <div>
+                                <span className="text-[10px] font-mono font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                    {assignSessionDetail.sessionNo}
+                                </span>
+                                <h3 className="text-base font-extrabold text-slate-900 mt-1">Phân Công Nhân Sự Theo Vị Trí Kệ</h3>
+                                <p className="text-xs text-slate-500">Giao trách nhiệm phụ trách khu vực kiểm kê cho từng nhân viên</p>
+                            </div>
+                            <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100">✕</button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {Object.keys(zoneAssignments).length === 0 ? (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
+                                    Phiếu này không chia theo khu vực cụ thể.
+                                </div>
+                            ) : (
+                                Object.keys(zoneAssignments).map(zoneName => {
+                                    const totalInZone = assignSessionDetail.lines.filter((l: any) => (l.zone || l.locationCode || 'Khu vực chung') === zoneName).length
+
+                                    return (
+                                        <div key={zoneName} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                                            <div className="flex justify-between items-center font-bold">
+                                                <span className="text-slate-900 flex items-center gap-1.5">
+                                                    <MapPin className="w-4 h-4 text-emerald-600" />
+                                                    {zoneName}
+                                                </span>
+                                                <span className="text-[11px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                                    {totalInZone} sản phẩm
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <label className="text-[11px] text-slate-500 font-bold block mb-1">Nhân sự phụ trách:</label>
+                                                <select
+                                                    value={zoneAssignments[zoneName] || ''}
+                                                    onChange={e => {
+                                                        const val = e.target.value
+                                                        setZoneAssignments(prev => ({ ...prev, [zoneName]: val }))
+                                                    }}
+                                                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl p-2 text-xs outline-none focus:border-cyan-500 font-semibold cursor-pointer"
+                                                >
+                                                    <option value="">-- Chưa phân công --</option>
+                                                    {staffList.map(st => (
+                                                        <option key={st.id} value={st.id}>
+                                                            {st.name} ({st.email})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            )}
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-200 flex justify-end gap-2 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setShowAssignModal(false)}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-200 cursor-pointer"
+                            >
+                                Hủy Bỏ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveZoneAssignments}
+                                disabled={isSavingAssignments}
+                                className="px-5 py-2 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold rounded-xl shadow-xs cursor-pointer"
+                            >
+                                {isSavingAssignments ? 'Đang lưu...' : 'Lưu Phân Công Vị Trí'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

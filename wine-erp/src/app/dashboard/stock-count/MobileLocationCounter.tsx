@@ -6,7 +6,7 @@ import {
     Plus, Minus, Save, Eye, EyeOff, Camera, AlertTriangle, RefreshCw,
     ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle
 } from 'lucide-react'
-import { recordMobileCountLine } from './actions'
+import { recordMobileCountLine, completeZoneCount } from './actions'
 import { formatCasesAndBottles } from '@/lib/utils'
 
 type LineItem = {
@@ -84,6 +84,23 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
     const [savingLineId, setSavingLineId] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuccessToast, setShowSuccessToast] = useState(false)
+
+    // Zone completion states
+    const [showZoneReportModal, setShowZoneReportModal] = useState(false)
+    const [zoneReport, setZoneReport] = useState<any>(null)
+    const [isCompletingZone, setIsCompletingZone] = useState(false)
+
+    const handleFinishZone = async (zoneName: string) => {
+        setIsCompletingZone(true)
+        const res = await completeZoneCount(detail.id, zoneName)
+        setIsCompletingZone(false)
+        if (res.success && res.summary) {
+            setZoneReport(res.summary)
+            setShowZoneReportModal(true)
+        } else {
+            alert(res.error || 'Không thể tạo báo cáo chốt khu vực')
+        }
+    }
 
     // Extract unique zones
     const zones = Array.from(new Set(lines.map(l => l.zone || l.locationCode)))
@@ -301,6 +318,20 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
             {/* MODE 2: SINGLE-ITEM FOCUS CARD VIEW (STREAMLINED & SPACIOUS) */}
             {viewMode === 'FOCUS' && currentItem && (
                 <div className="p-4 flex-1 flex flex-col space-y-3">
+                    {/* Fast SKU / Barcode Quick Finder Bar */}
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="🔍 Gõ SKU / Barcode để nhảy nhanh tới mã..."
+                            value={searchTerm}
+                            onChange={e => {
+                                setSearchTerm(e.target.value)
+                                setActiveIdx(0)
+                            }}
+                            className="w-full bg-white border border-slate-300 text-slate-900 font-bold rounded-xl px-3 py-2 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 shadow-2xs"
+                        />
+                    </div>
+
                     {/* Zone & Index Breadcrumb */}
                     <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-2xs">
                         <div className="flex items-center gap-1.5 font-extrabold text-slate-700">
@@ -421,15 +452,21 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                                         </div>
                                     </div>
 
-                                    {/* Total Count Pill & Variance Summary */}
+                                    {/* Total Count Pill & Immediate Variance Warning */}
                                     <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-extrabold px-1">
                                         <span className="text-emerald-800 font-mono">
                                             Tổng thực tế: {formatCasesAndBottles(total, upc)}
                                         </span>
 
                                         {!isBlind && currentItem.qtyActual !== null && (
-                                            <span className={currentItem.variance === 0 ? 'text-emerald-700' : currentItem.variance! > 0 ? 'text-amber-700' : 'text-rose-600'}>
-                                                Lệch: {currentItem.variance! > 0 ? `+${currentItem.variance}` : currentItem.variance} chai
+                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold flex items-center gap-1 ${
+                                                currentItem.variance === 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                                                currentItem.variance! > 0 ? 'bg-amber-50 text-amber-800 border border-amber-300 animate-pulse' :
+                                                'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
+                                            }`}>
+                                                {currentItem.variance === 0 ? '✓ Khớp 100%' :
+                                                 currentItem.variance! > 0 ? `⚠️ Thừa +${currentItem.variance} chai` :
+                                                 `🚨 Thiếu ${currentItem.variance} chai`}
                                             </span>
                                         )}
                                     </div>
@@ -454,6 +491,24 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         </button>
                     </div>
 
+                    {/* FINISH ZONE CTA BUTTON */}
+                    <div className="pt-1">
+                        <button
+                            onClick={() => handleFinishZone(selectedZone)}
+                            disabled={isCompletingZone}
+                            className="w-full py-3 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 border border-slate-300 shadow-2xs cursor-pointer active:scale-98 transition"
+                        >
+                            {isCompletingZone ? (
+                                <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                    🏁 CHỐT KHU VỰC NÀY & XEM BÁO CÁO CHÊNH LỆCH
+                                </>
+                            )}
+                        </button>
+                    </div>
+
                     {/* Prev / Next Slider Navigation */}
                     <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-2xs">
                         <button
@@ -469,7 +524,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         <button
                             disabled={activeIdx >= filteredLines.length - 1}
                             onClick={() => setActiveIdx(prev => Math.min(filteredLines.length - 1, prev + 1))}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-extrabold text-xs flex items-center gap-1 cursor-pointer"
+                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-30 text-slate-800 rounded-xl font-bold text-xs flex items-center gap-1 cursor-pointer"
                         >
                             Chai Sau ►
                         </button>
@@ -514,6 +569,101 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* ZONE VARIANCE REPORT MODAL (CHỐT KHU VỰC & ĐỐI SOÁT TẠI CHỖ) */}
+            {showZoneReportModal && zoneReport && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+                    <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-200">
+                            <div>
+                                <span className="text-[10px] font-mono uppercase font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    BÁO CÁO CHỐT KHU VỰC
+                                </span>
+                                <h3 className="text-base font-extrabold text-slate-900 mt-1">{zoneReport.zoneName}</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowZoneReportModal(false)}
+                                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold hover:bg-slate-200 flex items-center justify-center cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* KPI Summary Grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-center">
+                                <span className="text-[10px] font-bold text-emerald-800 uppercase block">Khớp 100%</span>
+                                <strong className="text-lg font-black text-emerald-700 font-mono">{zoneReport.matchedCount}</strong>
+                            </div>
+                            <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-center">
+                                <span className="text-[10px] font-bold text-amber-800 uppercase block">Thừa (+)</span>
+                                <strong className="text-lg font-black text-amber-700 font-mono">{zoneReport.overCount}</strong>
+                            </div>
+                            <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-xl text-center">
+                                <span className="text-[10px] font-bold text-rose-800 uppercase block">Thiếu (-)</span>
+                                <strong className="text-lg font-black text-rose-700 font-mono">{zoneReport.underCount}</strong>
+                            </div>
+                        </div>
+
+                        {/* Variance Line Items Table */}
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                Danh Sách Mã Chênh Lệch Cần Xem Lại:
+                            </h4>
+
+                            {zoneReport.varianceLines.length === 0 ? (
+                                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center text-xs font-bold text-emerald-800">
+                                    🎉 Tuyệt vời! Khu vực này đếm khớp 100%, không phát hiện chênh lệch.
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {zoneReport.varianceLines.map((vl: any) => (
+                                        <div key={vl.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <span className="font-mono text-xs font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">
+                                                        {vl.skuCode}
+                                                    </span>
+                                                    <h5 className="font-extrabold text-slate-900 mt-1">{vl.productName}</h5>
+                                                </div>
+
+                                                <span className={`px-2 py-0.5 rounded font-mono text-xs font-extrabold ${vl.variance > 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300'}`}>
+                                                    {vl.variance > 0 ? `+${vl.variance}` : vl.variance} chai
+                                                </span>
+                                            </div>
+
+                                            <div className="flex justify-between items-center text-[11px] text-slate-600 font-mono pt-1 border-t border-slate-200">
+                                                <span>Tồn sổ: {vl.qtySystem} · Thực tế: {vl.qtyActual}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        const targetIdx = filteredLines.findIndex(l => l.id === vl.id)
+                                                        if (targetIdx !== -1) {
+                                                            setActiveIdx(targetIdx)
+                                                            setViewMode('FOCUS')
+                                                            setShowZoneReportModal(false)
+                                                        }
+                                                    }}
+                                                    className="px-2 py-1 bg-white hover:bg-slate-100 text-emerald-700 font-extrabold rounded border border-slate-300 shadow-2xs cursor-pointer"
+                                                >
+                                                    🔍 Đếm lại mã này
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => setShowZoneReportModal(false)}
+                            className="w-full py-3 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black text-xs rounded-2xl shadow-sm cursor-pointer"
+                        >
+                            HOÀN TẤT VÀ TIẾP TỤC
+                        </button>
+                    </div>
                 </div>
             )}
 

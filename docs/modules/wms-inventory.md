@@ -316,7 +316,7 @@ DeliveryOrderLine { do_id, sku, lot_id, location_id, qty_picked, qty_shipped }
 PickList { do_id, assigned_to, status }
 PickListLine { pick_id, sku, lot_id, bin_location, qty }
 StockCountSession { zone_id, type, status, started_at, completed_at }
-StockCountLine { session_id, sku, loc_id, qty_system, qty_actual, variance }
+StockCountLine { session_id, sku, loc_id, qty_system, qty_actual, variance, assigned_to_id }
 TransferOrder { from_wh_id, to_wh_id, status, shipped_at, received_at }
 TransferOrderLine { to_id, product_id, lot_id, qty_requested, qty_shipped }
 StockMove { reference_type, reference_id, product_id, lot_id, from_loc, to_loc, qty }

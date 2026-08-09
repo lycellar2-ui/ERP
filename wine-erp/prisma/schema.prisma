@@ -107,6 +107,7 @@ model User {
   visitPlans             WeeklyVisitPlan[]  @relation("SalesRepVisitPlans")
   assignedStockCounts    StockCountSession[] @relation("AssignedStockCounts")
   createdStockCounts     StockCountSession[] @relation("CreatedStockCounts")
+  assignedCountLines     StockCountLine[]   @relation("AssignedCountLines")
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -1475,6 +1476,8 @@ model StockCountLine {
   photoUrl       String?           @db.Text // Ảnh bằng chứng chênh lệch / hỏng vỡ
   countedAt      DateTime?
   notes          String?
+  assignedToId   String?
+  assignedTo     User?             @relation("AssignedCountLines", fields: [assignedToId], references: [id])
 
   @@map("stock_count_lines")
 }

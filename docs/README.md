@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-09 11:47 | Wine ERP v9.9.3 — Sales Order Creation Time Sorting & Immediate Display Upgrade*
+*Last updated: 2026-08-09 12:25 | Wine ERP v9.9.4 — Stock Count Location Assignment, Real-World Scanning & Zone Variance Summary Report*
 
