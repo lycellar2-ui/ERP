@@ -383,5 +383,17 @@ module.exports = {
 | `#6B5A4E` wine-dim | `#4A6A7A` lys-dim | Nâu rất nhạt → Deep Muted |
 
 ---
-*Design System v2.0 — LY's Cellars "Oceanic Cellar" Aesthetic | 2026-03-04*
+
+## 14. Nhật Ký Kiểm Tra & Chuẩn Hóa Giao Diện (System Design Audit Log)
+
+- **Ngày thực hiện:** 2026-08-09
+- **Phạm vi kiểm tra:** 189 tệp giao diện TSX/JSX thuộc 35 phân hệ ứng dụng.
+- **kết quả:**
+  - ✅ Loại bỏ 100% các mã màu Tím (`#8B5CF6`, `#A78BFA`, `#7C3AED`, `purple-`) vi phạm quy tắc Anti-Purple Rule tại Audit Log, CRM Pipeline, Bảng giá và Modal Barcode.
+  - ✅ Chuyển đổi 100% các thẻ danh sách tối màu cũ (`bg-slate-900`, `bg-slate-950`) tại Kho Hàng Mobile (Thẻ kho N-X-T, Quản lý kệ, Phiếu chuyển kho, Lô hàng cách ly) sang Light ERP Design System Cards (`bg-white border-slate-200 text-slate-900 shadow-2xs`).
+  - ✅ Tối ưu bảng in Biên bản A4 (`PrintableAuditReport.tsx`) sang header sáng tiết kiệm mực in.
+  - ✅ Kiểm tra build `npx tsc --noEmit` đạt 0 lỗi và đẩy mã nguồn đã chuẩn hóa lên `main`.
+
+---
+*Design System v2.1 — LY's Cellars "Oceanic Cellar" & Light ERP Aesthetic | Updated 2026-08-09*
 *Inspired by the Mediterranean Navy door of LY's Cellars showroom, số 12.*
