@@ -188,6 +188,7 @@ Hệ thống kiểm kê kho bãi đa chế độ, hỗ trợ đếm bằng đi�
 4. 🚨 **Kiểm kê Đột xuất (`SPOT_COUNT`):** Cho phép Ban Quản Lý / Kiểm toán chọn cụ thể **Danh sách Mã SKU bất kỳ** HOẶC **Khu vực/Kệ cụ thể** để phát lệnh kiểm kê tức thì không báo trước.
 
 ### 6.2 Bộ Tính Năng Kiểm Kê Nâng Cao
+- **Trung Tâm Điều Hành Kiểm Kê Dành Cho Lead / Trưởng Kho (Live Lead Command Center Dashboard):** Tích hợp chế độ `🔴 LIVE SYNC (5s)` tự động tải dữ liệu thời gian thực. Bảng điền đóng vai trò Bảng chỉ huy giúp Trưởng kho / Lead theo dõi tiến độ đếm thực tế của từng nhân viên trên điện thoại (tỷ lệ %, số chai khớp, số chai lệch), lọc đa tiêu chí theo **Vị trí kệ / Nhân viên phụ trách / Trạng thái chênh lệch**, và ghi nhận vết thời gian thực đếm (`countedAt` timestamp audit trail).
 - **Linh hoạt Giao diện Đếm Điện Thoại & Bảng Điền Trực Tiếp (Mobile Counter ↔ Interactive Grid Table):** Cho phép người dùng chuyển đổi linh hoạt 2 chiều giữa chế độ đếm tập trung di động (`MobileLocationCounter`) và chế độ Bảng Điền trực tiếp kiểu Bảng tính Spreadsheet (`StockCountTableModal`).
 - **Bộ Lọc Vị Trí / Kệ Kho (Location/Zone Dropdown Filter):** Cho phép chọn lọc nhanh vị trí kệ kho (`Khu A - Kệ 01`, `Khu B - Kệ 02`...) ngay trên Bảng Điền để kho tập trung kiểm kê và chốt chênh lệch theo từng khu vực cụ thể.
 - **Chèn thêm Mã SKU / Vintage ngoài danh sách (`+ Chèn Mã Bổ Sung`):** Cho phép nhân viên kiểm kê ghi nhận trực tiếp các mã sản phẩm hoặc niên vụ (Vintage) phát sinh thực tế trên kệ nhưng chưa được tạo sẵn trong danh sách kiểm kê ban đầu.

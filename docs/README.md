@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-09 14:42 | Wine ERP v9.9.5 — Flexible Mobile vs Interactive Grid Table Stock Count, Location Filtering & Unlisted Item Insert*
+*Last updated: 2026-08-09 14:53 | Wine ERP v9.9.6 — Live Lead Command Center Dashboard for Stock Count, Real-Time Syncing & Staff Monitoring Leaderboard*
 
