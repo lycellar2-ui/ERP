@@ -663,26 +663,17 @@ export function WarehouseMapTab({
                                 ))}
                             </svg>
 
-                            {/* Zone Boundary Cards */}
+                            {/* Zone Badges */}
                             {zones.map(zone => {
                                 const zoneLocs = locations.filter(l => l.zone === zone)
                                 if (zoneLocs.length === 0) return null
                                 const minX = Math.min(...zoneLocs.map(l => l.posX))
                                 const minY = Math.min(...zoneLocs.map(l => l.posY))
-                                const maxX = Math.max(...zoneLocs.map(l => l.posX + l.width))
                                 const zColor = ZONE_COLORS[zone] ?? '#64748B'
                                 return (
                                     <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX - 10, top: minY - 36, zIndex: 2, pointerEvents: isDrawingTool ? 'none' : 'auto' }}>
-                                        {/* Zone Tinted Container */}
-                                        <div style={{
-                                            position: 'absolute', left: 0, top: 32,
-                                            width: (maxX - minX) + 20,
-                                            height: Math.max(...zoneLocs.map(l => l.posY + l.height)) - minY + 20,
-                                            background: `${zColor}10`, border: `2px dashed ${zColor}60`,
-                                            borderRadius: 14, pointerEvents: 'none',
-                                        }} />
                                         {/* Zone Badge */}
-                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-extrabold shadow-xs"
+                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-extrabold shadow-2xs"
                                             style={{ background: zColor, color: '#FFFFFF', width: 'fit-content', letterSpacing: 0.5 }}>
                                             <Layers size={12} />
                                             ZONE {zone}
@@ -725,8 +716,7 @@ export function WarehouseMapTab({
                                             cursor: editMode && isDrawingTool ? 'inherit' : editMode && tool === 'select' ? 'move' : 'pointer',
                                             pointerEvents: editMode && isDrawingTool ? 'none' : 'auto',
                                             boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.25), 0 4px 12px rgba(0,0,0,0.1)' :
-                                                isHighlighted ? '0 0 0 4px rgba(245,158,11,0.3), 0 0 16px rgba(245,158,11,0.2)' :
-                                                    '0 2px 4px rgba(0,0,0,0.04)',
+                                                isHighlighted ? '0 0 0 4px rgba(245,158,11,0.3), 0 0 16px rgba(245,158,11,0.2)' : 'none',
                                             padding: loc.width < 100 || loc.height < 60 ? '4px 6px' : '6px 8px',
                                             display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                                             userSelect: 'none',
