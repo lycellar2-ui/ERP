@@ -115,17 +115,20 @@ export async function getStockCountDetail(sessionId: string) {
 
     if (!session) return null
 
-    // Compute unit costs for variance value in VND
+    // Compute unit costs and vintages from StockLot
     const productIds = Array.from(new Set(session.lines.map(l => l.productId)))
     const lots = await prisma.stockLot.findMany({
         where: { productId: { in: productIds } },
-        select: { productId: true, unitLandedCost: true }
+        select: { productId: true, unitLandedCost: true, vintage: true }
     })
 
-    const costMap = new Map<string, number>()
+    const lotInfoMap = new Map<string, { unitCost: number; vintage: number | null }>()
     for (const lot of lots) {
-        if (!costMap.has(lot.productId)) {
-            costMap.set(lot.productId, Number(lot.unitLandedCost) || 0)
+        if (!lotInfoMap.has(lot.productId)) {
+            lotInfoMap.set(lot.productId, {
+                unitCost: Number(lot.unitLandedCost) || 0,
+                vintage: lot.vintage ?? null,
+            })
         }
     }
 
@@ -136,7 +139,9 @@ export async function getStockCountDetail(sessionId: string) {
         const sysQty = Number(l.qtySystem)
         const actQty = l.qtyActual !== null ? Number(l.qtyActual) : null
         const varQty = l.variance !== null ? Number(l.variance) : null
-        const unitCost = costMap.get(l.productId) || 0
+        const info = lotInfoMap.get(l.productId)
+        const unitCost = info?.unitCost || 0
+        const vintage = (l as any).vintage ?? info?.vintage ?? null
         const varianceValueVND = varQty !== null ? varQty * unitCost : 0
 
         return {
@@ -145,6 +150,7 @@ export async function getStockCountDetail(sessionId: string) {
             skuCode: l.product?.skuCode ?? '',
             productName: l.product?.productName ?? '',
             unitsPerCase: l.product?.unitsPerCase ?? 6,
+            vintage,
             locationId: l.locationId,
             locationCode: l.locationCode || l.location?.locationCode || 'N/A',
             zone: l.location?.zone || l.locationCode || 'Khu vực chung',

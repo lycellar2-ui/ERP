@@ -188,12 +188,14 @@ Hệ thống kiểm kê kho bãi đa chế độ, hỗ trợ đếm bằng đi�
 4. 🚨 **Kiểm kê Đột xuất (`SPOT_COUNT`):** Cho phép Ban Quản Lý / Kiểm toán chọn cụ thể **Danh sách Mã SKU bất kỳ** HOẶC **Khu vực/Kệ cụ thể** để phát lệnh kiểm kê tức thì không báo trước.
 
 ### 6.2 Bộ Tính Năng Kiểm Kê Nâng Cao
+- **Kiểm kê theo Niên Vụ (Vintage Tracking):** Đơn vị sản phẩm kiểm kê hiển thị rõ ràng Niên vụ (`vintage`: 2018, 2019, NV...), đảm bảo việc kiểm đếm chính xác từng lô rượu theo niên vụ xuất xứ.
+- **Quy đổi Thùng + Chai Lẻ Tự Động (Case & Loose Bottle Conversion):** Tự động quy đổi số lượng tổng chai sang `X thùng + Y chai lẻ` dựa theo quy cách đóng thùng (`unitsPerCase`, mặc định 6 chai/thùng). Ví dụ: `62 chai` quy cách 6 chai/thùng $\rightarrow$ hiển thị `10 thùng 2 chai lẻ`.
+- **Giao diện Đếm Di Động 2 Ô Nhập Thùng + Chai (Mobile Location Counter):** Loại bỏ giao diện quét barcode rườm rà; thay bằng 2 ô nhập trực tiếp `📦 Số Thùng` và `🍾 Chai Lẻ` cảm ứng nhanh, tự động cộng tổng chai thời gian thực.
 - **Chế độ Kiểm kê Mù (Blind Count Option):** Admin bật tùy chọn "Giấu tồn sổ sách" khi giao việc. Nhân viên cầm điện thoại đếm sẽ KHÔNG nhìn thấy tồn sổ sách (`qtySystem`), bắt buộc đếm thực tế 100% để chống chép lại số liệu.
 - **Phân công Nhân sự (Staff Assignment):** Gán nhân viên chịu trách nhiệm kiểm kê (`assignedTo`). Nhân viên mở điện thoại thấy ngay phiếu cần làm tại tab "Phân công cho tôi".
-- **Đếm Kho Điện Thoại theo Vị Trí (Mobile Location Counter):** Đếm theo từng vị trí (*Kệ trong T1, Kệ ngoài T1, Tủ lạnh...*), nút đếm nhanh cảm ứng `+1`, `-1`, `+6` (1 thùng), `+12`, quét mã QR/Barcode bằng Camera điện thoại, lưu LocalStorage đếm offline khi mất mạng trong hầm.
 - **Phân loại & Chụp ảnh Bằng chứng:** Ghi nhận nguyên nhân chênh lệch (`VỠ_HỎNG`, `NHẦM_MÃ`, `XUẤT_CHƯA_GHI_SỔ`, `THẤT_THOÁT`...) và chụp ảnh bằng chứng bằng Camera.
 - **Tự động Khởi tạo Phiếu Điều Chỉnh Kế Toán (Auto Stock Adjustment Voucher):** Khi duyệt phiếu kiểm kê (`APPROVED`), hệ thống tự động tính giá trị chênh lệch (VND) và sinh Bút toán kế toán điều chỉnh tồn kho (Nợ 632 / Có 156 hoặc Nợ 1388 / Có 156).
-- **In Biên bản kiểm kê chuẩn Kế toán có Chữ ký 3 bên (Printable Audit Report):** Mẫu Biên bản kiểm kê A4 với 3 khung chữ ký điện tử trực tiếp (*Người kiểm kê*, *Thủ kho / BQL Kho*, *Kế toán kho / Kế toán trưởng*).
+- **In Biên bản kiểm kê chuẩn Kế toán có Chữ ký 3 bên (Printable Audit Report):** Mẫu Biên bản kiểm kê A4 với cột Vintage, định dạng số lượng `X thùng Y lẻ (Z chai)` và 3 khung chữ ký điện tử trực tiếp (*Người kiểm kê*, *Thủ kho / BQL Kho*, *Kế toán kho / Kế toán trưởng*).
 
 ---
 

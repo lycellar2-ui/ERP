@@ -59,6 +59,26 @@ export function generateSoNo(sequence: number): string {
     return `SO-${year}${month}-${String(sequence).padStart(4, '0')}`
 }
 
+// ─── Wine Case & Loose Bottle Conversion ─────────────
+export function formatCasesAndBottles(totalBottles: number | null | undefined, unitsPerCase: number = 6): string {
+    if (totalBottles === null || totalBottles === undefined || isNaN(totalBottles)) {
+        return '—'
+    }
+    const upc = unitsPerCase > 0 ? unitsPerCase : 6
+    const absVal = Math.abs(totalBottles)
+    const cases = Math.floor(absVal / upc)
+    const loose = absVal % upc
+    const sign = totalBottles < 0 ? '-' : ''
+
+    if (cases > 0 && loose > 0) {
+        return `${sign}${cases} thùng ${loose} lẻ (${totalBottles} chai)`
+    } else if (cases > 0) {
+        return `${sign}${cases} thùng (${totalBottles} chai)`
+    } else {
+        return `${sign}${loose} chai`
+    }
+}
+
 // ─── API key masking (display only) ────────────────
 export function maskApiKey(key: string): string {
     if (key.length <= 8) return '***'

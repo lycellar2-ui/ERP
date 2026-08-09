@@ -7,7 +7,7 @@ import {
     ChevronRight, ArrowRight, Grid, Layers, ListFilter, Check, Volume2, Sparkles, AlertCircle
 } from 'lucide-react'
 import { recordMobileCountLine } from './actions'
-import { BarcodeLookupModal } from './BarcodeLookupModal'
+import { formatCasesAndBottles } from '@/lib/utils'
 
 type LineItem = {
     id: string
@@ -313,14 +313,21 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                     <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-slate-800 rounded-3xl p-5 shadow-2xl relative space-y-4">
                         {/* Top Badges */}
                         <div className="flex justify-between items-center">
-                            <span className="font-mono text-sm font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl">
-                                {currentItem.skuCode}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl">
+                                    {currentItem.skuCode}
+                                </span>
+                                <span className="text-xs font-bold font-mono text-amber-300 bg-amber-950/80 border border-amber-500/40 px-2.5 py-1 rounded-xl flex items-center gap-1">
+                                    🍇 Vintage: {(currentItem as any).vintage ?? 'NV'}
+                                </span>
+                            </div>
 
                             {!isBlind && (
                                 <div className="text-right">
                                     <span className="text-[10px] uppercase text-slate-400 font-bold block">Tồn Sổ Sách</span>
-                                    <span className="text-sm font-black text-slate-200 font-mono">{currentItem.qtySystem} chai</span>
+                                    <span className="text-xs font-black text-slate-200 font-mono">
+                                        {formatCasesAndBottles(currentItem.qtySystem, currentItem.unitsPerCase || 6)}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -328,58 +335,102 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         {/* Product Title */}
                         <div>
                             <h3 className="text-base font-black text-white leading-tight">{currentItem.productName}</h3>
-                            <p className="text-xs text-slate-400 font-semibold mt-1">Quy cách: {currentItem.unitsPerCase || 6} chai / thùng</p>
+                            <p className="text-xs text-slate-400 font-semibold mt-1">Quy cách đóng gói: <strong className="text-amber-400 font-bold">{currentItem.unitsPerCase || 6} chai / thùng</strong></p>
                         </div>
 
-                        {/* GIANT QUANTITY DISPLAY */}
-                        <div className="bg-slate-950 border-2 border-emerald-500/40 rounded-2xl p-4 text-center shadow-inner relative">
-                            <span className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold block mb-1">SỐ LƯỢNG ĐẾM THỰC TẾ</span>
-                            <div className="flex items-center justify-center gap-2">
-                                <input
-                                    type="number"
-                                    value={currentItem.qtyActual !== null ? currentItem.qtyActual : ''}
-                                    placeholder="0"
-                                    onChange={e => setExactQty(currentItem.id, parseInt(e.target.value, 10) || 0)}
-                                    className="w-32 text-center text-4xl font-black font-mono text-emerald-400 bg-transparent focus:outline-none focus:border-b-2 focus:border-emerald-400"
-                                />
-                                <span className="text-sm font-bold text-slate-400">chai</span>
-                            </div>
+                        {/* DUAL INPUT QUANTITY DISPLAY (THÙNG + CHAI LẺ) */}
+                        {(() => {
+                            const upc = currentItem.unitsPerCase || 6
+                            const total = currentItem.qtyActual !== null ? currentItem.qtyActual : 0
+                            const currentCases = Math.floor(total / upc)
+                            const currentLoose = total % upc
 
-                            {!isBlind && currentItem.qtyActual !== null && (
-                                <div className="mt-2 text-xs font-bold">
-                                    <span className="text-slate-400">Chênh lệch: </span>
-                                    <span className={currentItem.variance === 0 ? 'text-emerald-400' : currentItem.variance! > 0 ? 'text-amber-400' : 'text-rose-400'}>
-                                        {currentItem.variance! > 0 ? `+${currentItem.variance}` : currentItem.variance} chai
+                            return (
+                                <div className="bg-slate-950 border-2 border-emerald-500/40 rounded-2xl p-4 shadow-inner space-y-3">
+                                    <span className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold block text-center">
+                                        SỐ LƯỢNG ĐẾM THỰC TẾ (NHẬP THÙNG & CHAI LẺ)
                                     </span>
+
+                                    {/* 2-Column Touch Input: Thùng & Chai Lẻ */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {/* Input 1: Số Thùng */}
+                                        <div className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-center focus-within:border-emerald-400">
+                                            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">📦 SỐ THÙNG</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={currentItem.qtyActual !== null ? currentCases : ''}
+                                                placeholder="0"
+                                                onChange={e => {
+                                                    const newCases = parseInt(e.target.value, 10) || 0
+                                                    const newTotal = newCases * upc + currentLoose
+                                                    setExactQty(currentItem.id, newTotal)
+                                                }}
+                                                className="w-full text-center text-3xl font-black font-mono text-emerald-400 bg-transparent focus:outline-none"
+                                            />
+                                            <span className="text-[10px] text-slate-500 font-semibold">x {upc} chai/thùng</span>
+                                        </div>
+
+                                        {/* Input 2: Chai Lẻ */}
+                                        <div className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-center focus-within:border-emerald-400">
+                                            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">🍾 CHAI LẺ</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={currentItem.qtyActual !== null ? currentLoose : ''}
+                                                placeholder="0"
+                                                onChange={e => {
+                                                    const newLoose = parseInt(e.target.value, 10) || 0
+                                                    const newTotal = currentCases * upc + newLoose
+                                                    setExactQty(currentItem.id, newTotal)
+                                                }}
+                                                className="w-full text-center text-3xl font-black font-mono text-emerald-400 bg-transparent focus:outline-none"
+                                            />
+                                            <span className="text-[10px] text-slate-500 font-semibold">chai lẻ rời</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Total Summary & Variance Pill */}
+                                    <div className="pt-2 border-t border-slate-900 flex items-center justify-between text-xs font-bold px-1">
+                                        <span className="text-emerald-400 font-mono">
+                                            Quy đổi: {formatCasesAndBottles(total, upc)}
+                                        </span>
+
+                                        {!isBlind && currentItem.qtyActual !== null && (
+                                            <span className={currentItem.variance === 0 ? 'text-emerald-400' : currentItem.variance! > 0 ? 'text-amber-400' : 'text-rose-400'}>
+                                                Chênh lệch: {currentItem.variance! > 0 ? `+${currentItem.variance}` : currentItem.variance} chai ({formatCasesAndBottles(currentItem.variance, upc)})
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                            )
+                        })()}
 
                         {/* BIG TOUCHPAD CONTROLS (ONE-HANDED ERGONOMICS) */}
-                        <div className="grid grid-cols-4 gap-2 pt-2">
+                        <div className="grid grid-cols-4 gap-2 pt-1">
                             <button
                                 onClick={() => updateQty(currentItem.id, -1)}
-                                className="h-14 bg-slate-800 hover:bg-slate-700 active:scale-90 text-slate-200 text-lg font-black rounded-2xl flex items-center justify-center border border-slate-700 transition"
+                                className="h-12 bg-slate-800 hover:bg-slate-700 active:scale-90 text-slate-200 text-sm font-black rounded-2xl flex items-center justify-center border border-slate-700 transition cursor-pointer"
                             >
-                                -1
+                                -1 Chai
                             </button>
                             <button
                                 onClick={() => updateQty(currentItem.id, 1)}
-                                className="h-14 bg-emerald-500 hover:bg-emerald-400 active:scale-90 text-slate-950 text-xl font-black rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 transition"
+                                className="h-12 bg-emerald-500 hover:bg-emerald-400 active:scale-90 text-slate-950 text-sm font-black rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 transition cursor-pointer"
                             >
-                                +1
+                                +1 Chai
                             </button>
                             <button
                                 onClick={() => updateQty(currentItem.id, currentItem.unitsPerCase || 6)}
-                                className="h-14 bg-slate-800 hover:bg-slate-700 active:scale-90 text-emerald-400 text-xs font-black rounded-2xl flex items-center justify-center border border-slate-700 transition"
+                                className="h-12 bg-slate-800 hover:bg-slate-700 active:scale-90 text-emerald-400 text-xs font-black rounded-2xl flex items-center justify-center border border-slate-700 transition cursor-pointer"
                             >
-                                +{currentItem.unitsPerCase || 6} Thùng
+                                +1 Thùng
                             </button>
                             <button
                                 onClick={() => updateQty(currentItem.id, (currentItem.unitsPerCase || 6) * 2)}
-                                className="h-14 bg-slate-800 hover:bg-slate-700 active:scale-90 text-emerald-400 text-xs font-black rounded-2xl flex items-center justify-center border border-slate-700 transition"
+                                className="h-12 bg-slate-800 hover:bg-slate-700 active:scale-90 text-emerald-400 text-xs font-black rounded-2xl flex items-center justify-center border border-slate-700 transition cursor-pointer"
                             >
-                                +{(currentItem.unitsPerCase || 6) * 2} (2Th)
+                                +2 Thùng
                             </button>
                         </div>
 
@@ -387,7 +438,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed }: P
                         <button
                             onClick={() => saveCurrentLineAndNext(currentItem)}
                             disabled={savingLineId === currentItem.id}
-                            className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25 active:scale-98 transition mt-2"
+                            className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25 active:scale-98 transition mt-2 cursor-pointer"
                         >
                             {savingLineId === currentItem.id ? (
                                 <RefreshCw className="w-5 h-5 animate-spin" />

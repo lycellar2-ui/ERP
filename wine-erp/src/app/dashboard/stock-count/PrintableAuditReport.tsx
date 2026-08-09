@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react'
 import { Printer, CheckCircle2, ShieldCheck, FileSpreadsheet, X, PenTool, RotateCcw } from 'lucide-react'
 import { saveStockCountSignatures, approveAndCreateAdjustment } from './actions'
+import { formatCasesAndBottles } from '@/lib/utils'
 
 type AuditLine = {
     id: string
@@ -280,9 +281,10 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                                 <th className="p-2 border border-slate-700 w-8 text-center">STT</th>
                                 <th className="p-2 border border-slate-700">Mã SKU</th>
                                 <th className="p-2 border border-slate-700">Tên Sản Phẩm</th>
+                                <th className="p-2 border border-slate-700 text-center">Vintage</th>
                                 <th className="p-2 border border-slate-700">Vị Trí Kho</th>
                                 <th className="p-2 border border-slate-700 text-right">Sổ Sách</th>
-                                <th className="p-2 border border-slate-700 text-right">Thực Tế</th>
+                                <th className="p-2 border border-slate-700 text-right">Thực Tế (Thùng + Lẻ)</th>
                                 <th className="p-2 border border-slate-700 text-right">Chênh Lệch</th>
                                 <th className="p-2 border border-slate-700 text-right">Giá Trị (VND)</th>
                                 <th className="p-2 border border-slate-700">Giải Trình / Lý Do</th>
@@ -291,16 +293,24 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                         <tbody className="divide-y divide-slate-200 border border-slate-300">
                             {detail.lines.map((line, index) => {
                                 const isDiff = line.variance !== null && line.variance !== 0
+                                const upc = line.unitsPerCase || 6
+                                const sysCases = formatCasesAndBottles(line.qtySystem, upc)
+                                const actCases = line.qtyActual !== null ? formatCasesAndBottles(line.qtyActual, upc) : '-'
+                                const varCases = line.variance !== null ? formatCasesAndBottles(line.variance, upc) : '-'
+
                                 return (
                                     <tr key={line.id} className={isDiff ? (line.variance! < 0 ? 'bg-rose-50/70' : 'bg-amber-50/70') : 'hover:bg-slate-50'}>
                                         <td className="p-2 border border-slate-300 text-center font-medium">{index + 1}</td>
                                         <td className="p-2 border border-slate-300 font-mono font-bold">{line.skuCode}</td>
                                         <td className="p-2 border border-slate-300 font-semibold">{line.productName}</td>
+                                        <td className="p-2 border border-slate-300 text-center font-mono font-bold text-amber-900 bg-amber-50/50">
+                                            {(line as any).vintage ?? 'NV'}
+                                        </td>
                                         <td className="p-2 border border-slate-300 font-mono text-slate-700">{line.zone}</td>
-                                        <td className="p-2 border border-slate-300 text-right font-medium">{line.qtySystem}</td>
-                                        <td className="p-2 border border-slate-300 text-right font-bold">{line.qtyActual !== null ? line.qtyActual : '-'}</td>
+                                        <td className="p-2 border border-slate-300 text-right font-medium" title={`${line.qtySystem} chai`}>{sysCases}</td>
+                                        <td className="p-2 border border-slate-300 text-right font-bold" title={line.qtyActual !== null ? `${line.qtyActual} chai` : ''}>{actCases}</td>
                                         <td className={`p-2 border border-slate-300 text-right font-bold ${isDiff ? (line.variance! < 0 ? 'text-rose-600' : 'text-amber-600') : 'text-slate-700'}`}>
-                                            {line.variance !== null ? (line.variance > 0 ? `+${line.variance}` : line.variance) : '-'}
+                                            {varCases}
                                         </td>
                                         <td className="p-2 border border-slate-300 text-right font-mono text-slate-800">
                                             {line.varianceValueVND !== 0 ? line.varianceValueVND.toLocaleString('vi-VN') : '0'} ₫
@@ -317,10 +327,10 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                         </tbody>
                         <tfoot>
                             <tr className="bg-slate-100 font-bold border-t-2 border-slate-800 text-slate-900">
-                                <td colSpan={4} className="p-2 text-right uppercase">Tổng Cộng:</td>
-                                <td className="p-2 text-right font-mono">{totalSystemQty.toLocaleString('vi-VN')}</td>
-                                <td className="p-2 text-right font-mono">{totalActualQty.toLocaleString('vi-VN')}</td>
-                                <td className="p-2 text-right font-mono">{totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}</td>
+                                <td colSpan={5} className="p-2 text-right uppercase">Tổng Cộng:</td>
+                                <td className="p-2 text-right font-mono">{totalSystemQty.toLocaleString('vi-VN')} chai</td>
+                                <td className="p-2 text-right font-mono">{totalActualQty.toLocaleString('vi-VN')} chai</td>
+                                <td className="p-2 text-right font-mono">{totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty} chai</td>
                                 <td className="p-2 text-right font-mono text-emerald-700">{totalVarianceValue.toLocaleString('vi-VN')} ₫</td>
                                 <td></td>
                             </tr>

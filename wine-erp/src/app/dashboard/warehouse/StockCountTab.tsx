@@ -9,7 +9,7 @@ import {
     startStockCount, getStockCountDetail, recordCountLine, completeStockCount, adjustStockFromCount,
     recordCountByBarcode,
 } from '../stock-count/actions'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatCasesAndBottles } from '@/lib/utils'
 import { BarcodeLookupModal } from '../stock-count/BarcodeLookupModal'
 
 type WarehouseOption = {
@@ -336,7 +336,7 @@ export function StockCountTab() {
                                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                                    {['SKU', 'Sản Phẩm', 'Vị Trí', 'SL Sổ', 'SL Thực Tế', 'Chênh Lệch'].map(h => (
+                                                    {['SKU', 'Sản Phẩm', 'Vintage', 'Vị Trí', 'SL Sổ', 'SL Thực Tế (Thùng + Lẻ)', 'Chênh Lệch'].map(h => (
                                                         <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                                     ))}
                                                 </tr>
@@ -344,25 +344,36 @@ export function StockCountTab() {
                                             <tbody>
                                                 {detailData.lines.map(l => {
                                                     const isMismatch = l.variance !== null && l.variance !== 0
+                                                    const upc = (l as any).unitsPerCase || 6
+                                                    const sysCases = formatCasesAndBottles(l.qtySystem, upc)
+                                                    const actCases = l.qtyActual !== null ? formatCasesAndBottles(l.qtyActual, upc) : '—'
+                                                    const varCases = l.variance !== null ? formatCasesAndBottles(l.variance, upc) : '—'
+
                                                     return (
                                                         <tr key={l.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                                             <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#B47816' }}>{l.skuCode}</td>
                                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>{l.productName}</td>
+                                                            <td className="px-3 py-2.5 text-xs font-mono font-bold text-amber-800 bg-amber-50 rounded px-1.5 py-0.5">
+                                                                {(l as any).vintage ?? 'NV'}
+                                                            </td>
                                                             <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#475569' }}>{l.locationCode}</td>
-                                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#0F172A' }}>{l.qtySystem}</td>
+                                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#0F172A' }} title={`${l.qtySystem} chai`}>{sysCases}</td>
                                                             <td className="px-3 py-2.5">
                                                                 {detailData.status === 'IN_PROGRESS' ? (
-                                                                    <input
-                                                                        type="number"
-                                                                        min={0}
-                                                                        value={l.qtyActual ?? ''}
-                                                                        onChange={e => handleLineQtyChange(l.id, Number(e.target.value))}
-                                                                        className="w-16 px-2 py-1 rounded text-xs font-mono font-bold text-center outline-none"
-                                                                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
-                                                                    />
+                                                                    <div className="flex items-center gap-1">
+                                                                        <input
+                                                                            type="number"
+                                                                            min={0}
+                                                                            value={l.qtyActual ?? ''}
+                                                                            onChange={e => handleLineQtyChange(l.id, Number(e.target.value))}
+                                                                            className="w-16 px-2 py-1 rounded text-xs font-mono font-bold text-center outline-none"
+                                                                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
+                                                                        />
+                                                                        <span className="text-[10px] text-slate-500 font-mono">({actCases})</span>
+                                                                    </div>
                                                                 ) : (
-                                                                    <span className="text-xs font-mono font-bold" style={{ color: '#0F172A' }}>
-                                                                        {l.qtyActual ?? '—'}
+                                                                    <span className="text-xs font-mono font-bold" style={{ color: '#0F172A' }} title={l.qtyActual !== null ? `${l.qtyActual} chai` : ''}>
+                                                                        {actCases}
                                                                     </span>
                                                                 )}
                                                             </td>
@@ -373,7 +384,7 @@ export function StockCountTab() {
                                                                     <span style={{ color: '#16A34A' }}>✓ 0</span>
                                                                 ) : (
                                                                     <span style={{ color: l.variance > 0 ? '#16A34A' : '#DC2626' }}>
-                                                                        {l.variance > 0 ? `+${l.variance}` : l.variance}
+                                                                        {varCases}
                                                                     </span>
                                                                 )}
                                                             </td>
