@@ -86,7 +86,7 @@ function ProductCombobox({
                         if (!isOpen) setIsOpen(true)
                     }}
                     placeholder="🔍 Gõ SKU (ví dụ: FRA-BOR...), tên rượu..."
-                    className="w-full pl-3 pr-8 py-2 rounded-xl bg-[#0F172A] border border-[#2A4355] font-bold text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9] transition-all min-h-[42px] touch-manipulation placeholder-[#4A6A7A]"
+                    className="w-full pl-3 pr-8 py-2 rounded-lg bg-white border border-[#CBD5E1] font-semibold text-xs text-[#0F172A] outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 transition-all min-h-[40px] touch-manipulation placeholder-[#94A3B8]"
                 />
                 {search ? (
                     <button
@@ -97,20 +97,20 @@ function ProductCombobox({
                             setSearch('')
                             setIsOpen(true)
                         }}
-                        className="absolute right-2.5 p-1 text-[#4A6A7A] hover:text-[#E8F1F2] rounded-md cursor-pointer"
+                        className="absolute right-2.5 p-1 text-[#64748B] hover:text-[#0F172A] rounded-md cursor-pointer"
                     >
                         <X size={14} />
                     </button>
                 ) : (
-                    <ChevronDown size={14} className="absolute right-3 pointer-events-none text-[#4A6A7A]" />
+                    <ChevronDown size={14} className="absolute right-3 pointer-events-none text-[#94A3B8]" />
                 )}
             </div>
 
             {/* Dropdown Options Popup */}
             {isOpen && (
-                <div className="absolute z-[300] left-0 top-full mt-1 bg-[#142433] border border-[#2A4355] rounded-xl shadow-2xl max-h-64 overflow-y-auto divide-y divide-[#2A4355]/40 w-full sm:w-[480px]">
+                <div className="absolute z-[300] left-0 top-full mt-1 bg-white border border-[#CBD5E1] rounded-xl shadow-xl max-h-64 overflow-y-auto divide-y divide-[#F1F5F9] w-full sm:w-[480px]">
                     {filtered.length === 0 ? (
-                        <div className="p-3.5 text-center text-xs text-[#8AAEBB]">
+                        <div className="p-3.5 text-center text-xs text-[#94A3B8]">
                             Không tìm thấy sản phẩm nào phù hợp với từ khóa "{search}"
                         </div>
                     ) : (
@@ -120,32 +120,32 @@ function ProductCombobox({
                                 <div
                                     key={p.id}
                                     onMouseDown={(e) => {
-                                        e.preventDefault() // Prevents blur race condition
+                                        e.preventDefault()
                                         onChange(p.id)
                                         setSearch(`[${p.skuCode}] ${p.productName}`)
                                         setIsOpen(false)
                                     }}
-                                    className={`p-3 cursor-pointer transition-colors flex items-center justify-between gap-2 ${isSelected ? 'bg-[#1B364A] text-[#87CBB9] font-extrabold' : 'hover:bg-[#1A2D3D] text-[#E8F1F2]'}`}
+                                    className={`p-3 cursor-pointer transition-colors flex items-center justify-between gap-2 ${isSelected ? 'bg-teal-50 text-teal-900 font-bold' : 'hover:bg-[#F8FAFC] text-[#0F172A]'}`}
                                 >
                                     <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-mono font-black text-[#D4A853] text-xs px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                                            <span className="font-mono font-bold text-[#B47816] text-xs px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200">
                                                 {p.skuCode}
                                             </span>
                                             {p.vintage && (
-                                                <span className="text-[10px] font-mono bg-teal-500/10 text-[#87CBB9] px-1.5 py-0.2 rounded font-bold border border-teal-500/20">
+                                                <span className="text-[10px] font-mono bg-teal-50 text-teal-800 px-1.5 py-0.2 rounded font-bold border border-teal-200">
                                                     {p.vintage}
                                                 </span>
                                             )}
                                             {p.country && (
-                                                <span className="text-[10px] text-[#8AAEBB] font-medium">
+                                                <span className="text-[10px] text-[#64748B] font-medium">
                                                     • {p.country}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs font-bold text-[#E8F1F2] truncate mt-0.5">{p.productName}</p>
+                                        <p className="text-xs font-semibold text-[#0F172A] truncate mt-0.5">{p.productName}</p>
                                     </div>
-                                    {isSelected && <Check size={16} className="text-[#87CBB9] shrink-0 ml-2" />}
+                                    {isSelected && <Check size={16} className="text-[#16A34A] shrink-0 ml-2" />}
                                 </div>
                             )
                         })
@@ -253,55 +253,57 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,25,38,0.8)' }}>
-            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
-                style={{ background: '#1B2E3D', borderLeft: '1px solid #2A4355' }}>
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15, 23, 42, 0.4)' }}>
+            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200"
+                style={{ background: '#FFFFFF', borderLeft: '1px solid #E2E8F0' }}>
                 
-                {/* Drawer Header (Standardized ERP Dark Luxury Tone) */}
-                <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ borderBottom: '1px solid #2A4355' }}>
+                {/* Header */}
+                <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ borderBottom: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-[#D4A853] border border-amber-500/20 flex items-center justify-center font-bold">
-                            <ArrowRightLeft size={20} />
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: 'rgba(135, 203, 185, 0.15)', color: '#0A1926', border: '1px solid rgba(135, 203, 185, 0.3)' }}>
+                            <ArrowRightLeft size={20} style={{ color: '#0A1926' }} />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-[#E8F1F2] flex items-center gap-2">
+                            <h3 className="text-base font-bold" style={{ color: '#0F172A' }}>
                                 Lập Phiếu Chuyển Kho Nội Bộ
                             </h3>
-                            <p className="text-xs text-[#8AAEBB]">
+                            <p className="text-xs" style={{ color: '#64748B' }}>
                                 Tạo phiếu điều chuyển rượu giữa các kho & gửi Kế toán phê duyệt
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-xl text-[#4A6A7A] hover:text-[#E8F1F2] transition-colors cursor-pointer"
+                        className="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                        style={{ color: '#64748B' }}
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Drawer Content */}
+                {/* Body Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-5">
                     {/* Warehouse Route Card */}
-                    <div className="p-4 rounded-xl bg-[#142433] border border-[#2A4355] space-y-3">
-                        <h4 className="text-xs font-bold text-[#D4A853] uppercase tracking-wider flex items-center gap-2">
-                            <Building2 size={15} className="text-[#D4A853]" /> Tuyến Đường Chuyển Kho
+                    <div className="p-4 rounded-xl space-y-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                        <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#B47816' }}>
+                            <Building2 size={15} style={{ color: '#B47816' }} /> Tuyến Đường Chuyển Kho
                         </h4>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Source WH */}
                             <div>
-                                <label className="text-[11px] font-bold text-[#4A6A7A] uppercase tracking-wide block mb-1.5">
-                                    🔴 Kho Xuất (Kho Đi) <span className="text-rose-400">*</span>
+                                <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                    🔴 Kho Xuất (Kho Đi) <span className="text-rose-500">*</span>
                                 </label>
                                 <select
                                     value={fromWarehouseId}
                                     onChange={e => setFromWarehouseId(e.target.value)}
-                                    className="w-full px-3 py-2.5 rounded-xl bg-[#0F172A] border border-[#2A4355] font-bold text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9] cursor-pointer min-h-[42px] touch-manipulation"
+                                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold outline-none transition-all cursor-pointer min-h-[40px]"
+                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                                 >
-                                    <option value="" style={{ background: '#0F172A', color: '#E8F1F2' }}>-- Chọn Kho Xuất --</option>
+                                    <option value="">-- Chọn Kho Xuất --</option>
                                     {warehouses.map(w => (
-                                        <option key={`from-${w.id}`} value={w.id} style={{ background: '#0F172A', color: '#E8F1F2' }}>
+                                        <option key={`from-${w.id}`} value={w.id}>
                                             [{w.code}] {w.name}
                                         </option>
                                     ))}
@@ -310,17 +312,18 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
 
                             {/* Destination WH */}
                             <div>
-                                <label className="text-[11px] font-bold text-[#4A6A7A] uppercase tracking-wide block mb-1.5">
-                                    🟢 Kho Nhận (Kho Đến) <span className="text-rose-400">*</span>
+                                <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                    🟢 Kho Nhận (Kho Đến) <span className="text-rose-500">*</span>
                                 </label>
                                 <select
                                     value={toWarehouseId}
                                     onChange={e => setToWarehouseId(e.target.value)}
-                                    className="w-full px-3 py-2.5 rounded-xl bg-[#0F172A] border border-[#2A4355] font-bold text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9] cursor-pointer min-h-[42px] touch-manipulation"
+                                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold outline-none transition-all cursor-pointer min-h-[40px]"
+                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                                 >
-                                    <option value="" style={{ background: '#0F172A', color: '#E8F1F2' }}>-- Chọn Kho Nhận --</option>
+                                    <option value="">-- Chọn Kho Nhận --</option>
                                     {warehouses.map(w => (
-                                        <option key={`to-${w.id}`} value={w.id} disabled={w.id === fromWarehouseId} style={{ background: '#0F172A', color: w.id === fromWarehouseId ? '#4A6A7A' : '#E8F1F2' }}>
+                                        <option key={`to-${w.id}`} value={w.id} disabled={w.id === fromWarehouseId}>
                                             [{w.code}] {w.name} {w.id === fromWarehouseId ? '(Trùng kho xuất)' : ''}
                                         </option>
                                     ))}
@@ -332,97 +335,102 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                     {/* Metadata Card */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-[11px] font-bold text-[#4A6A7A] uppercase tracking-wide block mb-1 flex items-center gap-1.5">
-                                <Calendar size={14} className="text-[#4A6A7A]" /> Ngày Chuyển Dự Kiến
+                            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#475569' }}>
+                                <Calendar size={14} style={{ color: '#64748B' }} /> Ngày Chuyển Dự Kiến
                             </label>
                             <input
                                 type="date"
                                 value={transferDate}
                                 onChange={e => setTransferDate(e.target.value)}
-                                className="w-full px-3 py-2.5 rounded-xl bg-[#0F172A] border border-[#2A4355] font-mono font-bold text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9] min-h-[42px]"
+                                className="w-full px-3 py-2 rounded-lg font-mono font-semibold text-xs outline-none transition-all min-h-[40px]"
+                                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                             />
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-bold text-[#4A6A7A] uppercase tracking-wide block mb-1 flex items-center gap-1.5">
-                                <FileText size={14} className="text-[#4A6A7A]" /> Lý Do Chuyển Kho
+                            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#475569' }}>
+                                <FileText size={14} style={{ color: '#64748B' }} /> Lý Do Chuyển Kho
                             </label>
                             <select
                                 value={reasonSelect}
                                 onChange={e => setReasonSelect(e.target.value)}
-                                className="w-full px-3 py-2.5 rounded-xl bg-[#0F172A] border border-[#2A4355] font-bold text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9] cursor-pointer min-h-[42px] touch-manipulation"
+                                className="w-full px-3 py-2 rounded-lg text-xs font-semibold outline-none transition-all cursor-pointer min-h-[40px]"
+                                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                             >
                                 {TRANSFER_REASONS.map(r => (
-                                    <option key={r} value={r} style={{ background: '#0F172A', color: '#E8F1F2' }}>{r}</option>
+                                    <option key={r} value={r}>{r}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-bold text-[#4A6A7A] uppercase tracking-wide block mb-1">Ghi Chú Bổ Sung</label>
+                        <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#475569' }}>Ghi Chú Bổ Sung</label>
                         <input
                             type="text"
                             value={customNotes}
                             onChange={e => setCustomNotes(e.target.value)}
                             placeholder="Ví dụ: Chuyển 24 chai Chateau Margaux theo đề xuất SO-2608-0015..."
-                            className="w-full px-3 py-2.5 rounded-xl bg-[#0F172A] border border-[#2A4355] text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9] placeholder-[#4A6A7A] min-h-[42px]"
+                            className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-all min-h-[40px]"
+                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                         />
                     </div>
 
-                    {/* Line Items Container */}
+                    {/* Line Items Section */}
                     <div className="space-y-3 pt-2 overflow-visible">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-bold text-[#E8F1F2] uppercase tracking-wider flex items-center gap-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#0F172A' }}>
                                 🍷 Danh Mục Rượu Chuyển ({lines.length} dòng)
                             </h4>
                             <button
                                 type="button"
                                 onClick={handleAddLine}
-                                className="px-3.5 py-2 rounded-xl bg-[#87CBB9] text-[#0A1926] font-bold text-xs hover:bg-[#A5DED0] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 touch-manipulation"
+                                className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                                style={{ background: '#87CBB9', color: '#0A1926' }}
                             >
                                 <Plus size={15} /> Thêm Rượu
                             </button>
                         </div>
 
                         {lines.length === 0 ? (
-                            <div className="p-8 border border-dashed border-[#2A4355] rounded-xl flex flex-col items-center justify-center text-center bg-[#142433]">
-                                <AlertCircle size={32} className="mb-2 text-[#4A6A7A]" />
-                                <p className="text-xs font-bold text-[#E8F1F2]">Chưa có sản phẩm nào trong phiếu</p>
-                                <p className="text-[11px] text-[#8AAEBB] mt-0.5">Nhấp "Thêm Rượu" ở trên để gõ tìm SKU & chọn số lượng</p>
+                            <div className="p-8 border border-dashed rounded-xl flex flex-col items-center justify-center text-center"
+                                style={{ background: '#F8FAFC', border: '1px border-dashed #CBD5E1' }}>
+                                <AlertCircle size={32} className="mb-2" style={{ color: '#94A3B8' }} />
+                                <p className="text-xs font-bold" style={{ color: '#0F172A' }}>Chưa có sản phẩm nào trong phiếu</p>
+                                <p className="text-[11px] mt-0.5" style={{ color: '#64748B' }}>Nhấp "Thêm Rượu" ở trên để gõ tìm SKU & chọn số lượng</p>
                             </div>
                         ) : (
                             <>
                                 {/* 📱 MOBILE VIEW (< sm) */}
                                 <div className="space-y-3 sm:hidden overflow-visible">
                                     {lines.map((line, idx) => (
-                                        <div key={idx} className="p-3.5 rounded-xl bg-[#142433] border border-[#2A4355] space-y-3 overflow-visible">
+                                        <div key={idx} className="p-3.5 rounded-xl space-y-3 overflow-visible shadow-2xs"
+                                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-bold text-[#8AAEBB] uppercase">Sản phẩm #{idx + 1}</span>
+                                                <span className="text-[11px] font-bold uppercase" style={{ color: '#64748B' }}>Sản phẩm #{idx + 1}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleRemoveLine(idx)}
-                                                    className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
 
-                                            {/* Searchable Combobox */}
                                             <ProductCombobox
                                                 products={products}
                                                 selectedProductId={line.productId}
                                                 onChange={id => handleLineProductChange(idx, id)}
                                             />
 
-                                            {/* Stepper Quantity Controls */}
-                                            <div className="flex items-center justify-between pt-1 border-t border-[#2A4355]">
-                                                <span className="text-xs font-bold text-[#8AAEBB]">Số lượng (chai):</span>
+                                            <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid #F1F5F9' }}>
+                                                <span className="text-xs font-bold" style={{ color: '#475569' }}>Số lượng (chai):</span>
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         type="button"
                                                         onClick={() => handleLineQtyChange(idx, line.qtyTransferred - 1)}
-                                                        className="w-9 h-9 rounded-xl bg-[#1A2D3D] text-[#E8F1F2] border border-[#2A4355] font-black text-sm flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        className="w-9 h-9 rounded-lg font-black text-sm flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        style={{ background: '#F1F5F9', color: '#0F172A', border: '1px solid #CBD5E1' }}
                                                     >
                                                         -
                                                     </button>
@@ -431,12 +439,14 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                                                         min={1}
                                                         value={line.qtyTransferred}
                                                         onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
-                                                        className="w-16 h-9 rounded-xl bg-[#0F172A] border border-[#2A4355] text-center font-mono font-bold text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
+                                                        className="w-16 h-9 rounded-lg text-center font-mono font-bold text-xs outline-none"
+                                                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                                                     />
                                                     <button
                                                         type="button"
                                                         onClick={() => handleLineQtyChange(idx, line.qtyTransferred + 1)}
-                                                        className="w-9 h-9 rounded-xl bg-[#1A2D3D] text-[#E8F1F2] border border-[#2A4355] font-black text-sm flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        className="w-9 h-9 rounded-lg font-black text-sm flex items-center justify-center active:scale-95 cursor-pointer"
+                                                        style={{ background: '#F1F5F9', color: '#0F172A', border: '1px solid #CBD5E1' }}
                                                     >
                                                         +
                                                     </button>
@@ -447,20 +457,21 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                                 </div>
 
                                 {/* 💻 DESKTOP VIEW (>= sm) */}
-                                <div className="hidden sm:block border border-[#2A4355] rounded-xl bg-[#142433] overflow-visible">
+                                <div className="hidden sm:block rounded-xl overflow-visible shadow-2xs"
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <table className="w-full text-left text-xs border-collapse overflow-visible">
                                         <thead>
-                                            <tr className="bg-[#0F172A] border-b border-[#2A4355] text-[#4A6A7A]">
-                                                <th className="p-3 font-bold uppercase text-[11px] w-12 text-center">STT</th>
-                                                <th className="p-3 font-bold uppercase text-[11px]">Gõ Tìm SKU / Tên Rượu Vang</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-center w-36">Số Lượng (Chai)</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-center w-12">#</th>
+                                            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
+                                                <th className="p-3 font-semibold uppercase text-[10px] w-12 text-center">STT</th>
+                                                <th className="p-3 font-semibold uppercase text-[10px]">Gõ Tìm SKU / Tên Rượu Vang</th>
+                                                <th className="p-3 font-semibold uppercase text-[10px] text-center w-36">Số Lượng (Chai)</th>
+                                                <th className="p-3 font-semibold uppercase text-[10px] text-center w-12">#</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-[#2A4355]/50 bg-[#142433] overflow-visible">
+                                        <tbody className="divide-y overflow-visible" style={{ borderColor: '#F1F5F9' }}>
                                             {lines.map((line, idx) => (
-                                                <tr key={idx} className="hover:bg-[#1A2D3D] overflow-visible">
-                                                    <td className="p-3 text-center font-bold text-[#8AAEBB]">{idx + 1}</td>
+                                                <tr key={idx} className="hover:bg-slate-50 overflow-visible">
+                                                    <td className="p-3 text-center font-bold" style={{ color: '#64748B' }}>{idx + 1}</td>
                                                     <td className="p-3 overflow-visible">
                                                         <ProductCombobox
                                                             products={products}
@@ -474,14 +485,15 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                                                             min={1}
                                                             value={line.qtyTransferred}
                                                             onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
-                                                            className="w-full px-2 py-2 rounded-xl bg-[#0F172A] border border-[#2A4355] text-center font-mono font-bold text-xs text-[#E8F1F2] outline-none focus:border-[#87CBB9]"
+                                                            className="w-full px-2 py-2 rounded-lg text-center font-mono font-bold text-xs outline-none"
+                                                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
                                                         />
                                                     </td>
                                                     <td className="p-3 text-center">
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveLine(idx)}
-                                                            className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                                                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -496,12 +508,13 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                     </div>
                 </div>
 
-                {/* Drawer Footer */}
-                <div className="px-6 py-4 border-t border-[#2A4355] bg-[#142433] flex items-center justify-between shrink-0">
+                {/* Footer Bar (Matching CreateSODrawer button styling) */}
+                <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2.5 rounded-lg text-xs font-bold border border-[#2A4355] text-[#8AAEBB] hover:bg-white/5 transition-colors cursor-pointer"
+                        className="px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#64748B' }}
                     >
                         Hủy Bỏ
                     </button>
@@ -511,7 +524,8 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                             type="button"
                             disabled={submitting}
                             onClick={() => handleSubmit(false)}
-                            className="px-4 py-2.5 rounded-lg text-xs font-bold border border-[#2A4355] bg-white/5 text-[#E8F1F2] hover:bg-white/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+                            className="px-4 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                            style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155' }}
                         >
                             <Save size={15} /> Lưu Nháp
                         </button>
@@ -520,7 +534,8 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                             type="button"
                             disabled={submitting}
                             onClick={() => handleSubmit(true)}
-                            className="px-5 py-2.5 rounded-lg text-xs font-extrabold bg-[#D4A853] text-[#0A1926] hover:bg-[#E5B964] transition-colors flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95"
+                            className="px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95"
+                            style={{ background: '#87CBB9', color: '#0A1926' }}
                         >
                             <Send size={15} /> Tạo & Gửi Duyệt
                         </button>
