@@ -1777,16 +1777,18 @@ Khi mở drawer **Nhặt Hàng & Tạo DO** cho một Đơn Bán Hàng (`SO-2608
 ### Nguyên nhân gốc rễ
 1. Type interface của mảng `warehouses` trong `DeliveryOrderTab.tsx` và `CreateDODrawer` ban đầu bị đứt gãy kiểu dữ liệu (thiếu `legalEntityId`, `legalEntityCode`).
 2. Bên trong `CreateDODrawer` tồn tại một hàm trùng tên `resolveWarehouseForSO()` nội bộ (inner closure override), hàm này sử dụng logic lọc cũ và ghi đè lên hàm xuất chung.
-3. Query `getSOsForDelivery()` và `getWarehouses()` thiếu include thông tin `legalEntity` (code & name).
+3. Component `CreateDODrawer` nhận prop `warehouses` tĩnh từ cha mà không tự động fetch lại danh sách kho mới nhất từ Server Action `getWarehouses()`, đồng thời dropdown `renderWarehouseSelect()` thiếu logic lọc đa tầng Pháp Nhân.
 
 ### Cách fix
 1. Thêm `legalEntity: { select: { code: true, name: true } }` vào cả 2 query `getSOsForDelivery()` và `getWarehouses()`.
-2. Loại bỏ hàm trùng tên trùng tên nội bộ bên trong `CreateDODrawer`, bắt buộc 100% giao diện dùng chung hàm `resolveWarehouseForSO(targetSO, warehouses)`.
-3. Bổ sung cơ chế khớp nối đa tầng chống lỗi (Bulletproof matching): Khớp theo `legalEntityId` UUID $\rightarrow$ Khớp theo `legalEntityCode` (`TA`/`LC`) $\rightarrow$ Khớp theo tên Kho (`Thắng Ân`/`Lys`).
+2. Loại bỏ hàm trùng tên nội bộ bên trong `CreateDODrawer`, bắt buộc 100% giao diện dùng chung hàm `resolveWarehouseForSO(targetSO, warehouses)`.
+3. Trong `CreateDODrawer`, khởi tạo state `currentWhs` và tự động gọi `getWarehouses()` trong `useEffect` khi mở modal để đảm bảo danh sách kho luôn tươi mới 100% từ Database.
+4. Cập nhật `renderWarehouseSelect()` áp dụng bộ lọc đa tầng Pháp Nhân (ID $\rightarrow$ Code $\rightarrow$ Name) cho danh sách kho xuất bán.
 
 ### Bài học
 
-> ⚠️ **RULE 70: Khi viết các helper function xử lý logic khớp nối (như `resolveWarehouseForSO`), BẮT BỤC phải khai báo exported function ở cấp module và KHÔNG ĐƯỢC khai báo hàm trùng tên bên trong Component con (`CreateDODrawer`), tránh hiện tượng Inner Closure Shadowing ghi đè làm sai lệch logic toàn cục.**
+> ⚠️ **RULE 70: Khi viết các helper function xử lý logic khớp nối (như `resolveWarehouseForSO`), BẮT BỤC phải khai báo exported function ở cấp module và KHÔNG ĐƯỢC khai báo hàm trùng tên bên trong Component con (`CreateDODrawer`). Các Modal/Drawer độc lập BẮT BỤC phải có cơ chế tự động re-fetch danh sách danh mục (Kho, Pháp Nhân) để đảm bảo không bị dính dữ liệu đứt gãy từ prop cha.**
+
 
 
 
