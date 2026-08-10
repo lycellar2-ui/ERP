@@ -578,9 +578,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     {!loadingData && (
                         <>
                             {/* Order Type Selector: Commercial vs Tasting */}
-                            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-[#2A4355] bg-[#142433]">
+                            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-[#8AAEBB]">Loại Đơn Hàng:</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">LOẠI ĐƠN HÀNG:</span>
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
@@ -589,8 +589,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             }}
                                             className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
                                                 orderType === 'STANDARD'
-                                                    ? 'bg-[#5BA88A] text-white shadow-md'
-                                                    : 'bg-[#1B2E3D] text-[#8AAEBB] hover:bg-[#22394B]'
+                                                    ? 'bg-emerald-700 text-white shadow border border-emerald-800'
+                                                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-300'
                                             }`}
                                         >
                                             📦 Đơn Thương Mại
@@ -604,8 +604,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             }}
                                             className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
                                                 orderType === 'TASTING'
-                                                    ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40'
-                                                    : 'bg-[#1B2E3D] text-amber-400/80 hover:bg-[#22394B] border border-amber-500/30'
+                                                    ? 'bg-amber-600 text-white shadow border border-amber-700 ring-2 ring-amber-500/30'
+                                                    : 'bg-white text-amber-900 hover:bg-amber-50 border border-amber-400'
                                             }`}
                                         >
                                             🍷 Đơn Tasting (Ko thu tiền)
@@ -614,7 +614,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 </div>
 
                                 {orderType === 'TASTING' && (
-                                    <span className="text-[11px] text-amber-300 bg-amber-950/60 border border-amber-800/60 px-2.5 py-1 rounded flex items-center gap-1 font-medium">
+                                    <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-md flex items-center gap-1 font-semibold shadow-xs">
                                         ✨ Đơn Tasting theo Sale — Đơn giá xuất kho 0 VNĐ & đính kèm Tờ trình Tasting
                                     </span>
                                 )}
@@ -622,13 +622,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                             {/* Proposal Selector for Tasting Orders */}
                             {orderType === 'TASTING' && (
-                                <div className="p-3 rounded-lg border border-amber-500/40 bg-amber-950/20 space-y-2">
+                                <div className="p-3.5 rounded-lg border-2 border-amber-400/80 bg-amber-50/90 shadow-sm space-y-2.5">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1.5">
-                                            <FileText size={14} className="text-amber-400" />
-                                            Tờ Trình Tasting Liên Kết *
+                                        <label className="text-xs font-extrabold text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
+                                            <FileText size={15} className="text-amber-800" />
+                                            TỜ TRÌNH TASTING LIÊN KẾT *
                                         </label>
-                                        <span className="text-[10px] text-amber-400/80">Chọn Tờ trình đã được phê duyệt làm căn cứ duyệt đơn</span>
+                                        <span className="text-[11px] font-semibold text-amber-900">Chọn Tờ trình đã được phê duyệt làm căn cứ duyệt đơn</span>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
@@ -642,11 +642,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         setNotes(`Đơn Tasting kèm Tờ trình ${found.proposalNo}: ${found.title}`)
                                                     }
                                                 }}
-                                                className="w-full px-3 py-2 text-xs font-semibold rounded border bg-[#142433] text-amber-200 border-amber-500/40 focus:outline-none"
+                                                className="w-full px-3 py-2 text-xs font-bold rounded-md border border-amber-400 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             >
-                                                <option value="">-- Chọn Tờ trình Tasting --</option>
+                                                <option value="" className="text-slate-500 font-normal">-- Chọn Tờ trình Tasting --</option>
                                                 {proposals.map(p => (
-                                                    <option key={p.id} value={p.id}>
+                                                    <option key={p.id} value={p.id} className="text-slate-900 font-medium">
                                                         [{p.proposalNo}] {p.title} ({p.customer ? p.customer.name : 'Chung'})
                                                     </option>
                                                 ))}
@@ -658,7 +658,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 placeholder="Ghi chú thêm về Tờ trình (Ví dụ: TT-2026-008 thử vang cho tiệc)"
                                                 value={notes}
                                                 onChange={e => setNotes(e.target.value)}
-                                                className="w-full px-3 py-2 text-xs rounded border bg-[#142433] text-amber-200 border-amber-500/40 placeholder:text-amber-500/50 focus:outline-none"
+                                                className="w-full px-3 py-2 text-xs font-medium rounded-md border border-amber-400 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             />
                                         </div>
                                     </div>
