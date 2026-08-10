@@ -64,6 +64,7 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 
 | Loại Tờ Trình | Code | Cấp Duyệt Mặc Định | Role Tạo Mặc Định |
 |---|---|---|---|
+| **Tờ Trình Tasting (Thử Rượu)** | `TASTING` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
 | **Cơ Chế Giá** | `PRICE_ADJUSTMENT` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
 | **Xin Ngân Sách** | `BUDGET_REQUEST` | Cấp 1 (TP) ➔ Cấp 2 (KT) ➔ Cấp 3 (CEO) | Tất cả |
 | **Mua Sắm TSCĐ** | `CAPITAL_EXPENDITURE` | Cấp 1 (TP) ➔ Cấp 2 (KT) ➔ Cấp 3 (CEO) | Tất cả |
@@ -72,7 +73,12 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | **Thay Đổi Chính Sách** | `POLICY_CHANGE` | Cấp 1 (CEO) | CEO, Admin |
 | **Lịch Thanh Toán** | `PAYMENT_SCHEDULE` | Cấp 1 (KT) ➔ Cấp 2 (CEO) | Kế Toán, Admin |
 
-> **Lưu ý:** Admin / CEO có thể thay đổi số cấp và Role duyệt bất kỳ lúc nào tại giao diện Admin Settings mà không cần can thiệp code.
+> **Quy trình Liên Kết Tờ Trình Tasting & Đơn Hàng Tasting (0 VNĐ)**:
+> 1. Sales lập **Tờ Trình Tasting (`category: TASTING`)** chọn Khách hàng cần nếm thử vang.
+> 2. Tờ trình được duyệt qua 3 cấp (TP ➔ KT ➔ CEO).
+> 3. Sau khi Tờ trình được duyệt (`APPROVED`), nút **`🍷 + Lên Đơn Tasting Ngay`** xuất hiện trên Drawer chi tiết Tờ trình.
+> 4. Nhấp nút sẽ mở ngay Drawer Tạo Đơn Bán Hàng (`CreateSODrawer`) ở chế độ `orderType: TASTING`, tự động chọn Khách hàng và mã Tờ trình liên kết `[TT-YYYY-NNN]`, gán đơn giá xuất kho 0 VNĐ và điều khoản thanh toán *"TASTING - Không thu tiền"*.
+> 5. Tờ trình lưu lịch sử danh sách các Đơn Bán Hàng Tasting đã phát sinh (`salesOrders`) kèm link truy cập nhanh.
 
 ---
 
