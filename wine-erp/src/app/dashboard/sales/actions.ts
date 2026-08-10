@@ -14,6 +14,7 @@ import * as XLSX from 'xlsx'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
+export type SOType = 'STANDARD' | 'TASTING' | 'SAMPLE'
 
 export interface SalesOrderRow {
     id: string
@@ -22,6 +23,10 @@ export interface SalesOrderRow {
     customerCode: string
     channel: SalesChannel
     status: SOStatus
+    orderType?: SOType
+    proposalId?: string | null
+    proposalNo?: string | null
+    proposalTitle?: string | null
     totalAmount: number
     orderDiscount: number
     paymentTerm: string
@@ -53,6 +58,8 @@ export interface SOCreateInput {
     orderDiscount?: number
     notes?: string
     legalEntityId: string
+    orderType?: SOType
+    proposalId?: string
     lines: SOLineCreate[]
 }
 
@@ -72,15 +79,16 @@ export async function getSalesOrders(filters: {
     warehouseId?: string
     paymentTerm?: string
     pendingAction?: boolean
+    orderType?: SOType | 'ALL'
 } = {}): Promise<{ rows: SalesOrderRow[]; total: number }> {
     const { 
         status, search, page = 1, pageSize = 20, sortBy = 'createdAt', sortDir = 'desc', 
-        dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction 
+        dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType
     } = filters
 
     const user = await getCurrentUser()
     const userId = user?.id ?? 'anonymous'
-    const cacheKey = `sales:orders:list:${userId}:${status || 'all'}:${search || 'none'}:${page}:${pageSize}:${sortBy}:${sortDir}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}`
+    const cacheKey = `sales:orders:list:${userId}:${status || 'all'}:${search || 'none'}:${page}:${pageSize}:${sortBy}:${sortDir}:${dateFrom || 'none'}:${dateTo || 'none'}:${salesRepId || 'all'}:${channel || 'all'}:${legalEntityId || 'all'}:${warehouseId || 'all'}:${paymentTerm || 'all'}:${pendingAction ? 'true' : 'false'}:${orderType || 'all'}`
 
     const fetchData = async () => {
         const skip = (page - 1) * pageSize
@@ -105,6 +113,11 @@ export async function getSalesOrders(filters: {
         if (channel) {
             conditions.push(`so.channel = $${paramIndex++}`)
             params.push(channel)
+        }
+
+        if (orderType && orderType !== 'ALL') {
+            conditions.push(`so."orderType" = $${paramIndex++}`)
+            params.push(orderType)
         }
 
         if (legalEntityId) {
@@ -160,6 +173,7 @@ export async function getSalesOrders(filters: {
 
         const query = `
             SELECT so.id, so."soNo", so."totalAmount", so.channel, so.status, so."paymentTerm", so."orderDiscount", NULL as notes, so."createdAt", 
+                   so."orderType", so."proposalId", p."proposalNo" as proposal_no, p.title as proposal_title,
                    c.name as customer_name, c.code as customer_code,
                    u.name as sales_rep_name,
                    le.name as legal_entity_name, le.code as legal_entity_code,
@@ -168,6 +182,7 @@ export async function getSalesOrders(filters: {
             JOIN customers c ON c.id = so."customerId"
             JOIN users u ON u.id = so."salesRepId"
             JOIN legal_entities le ON le.id = so."legalEntityId"
+            LEFT JOIN proposals p ON p.id = so."proposalId"
             ${whereClause}
             ORDER BY ${sortCol} ${validatedSortDir}, so."createdAt" DESC, so."id" DESC
             LIMIT $${limitIndex} OFFSET $${offsetIndex}
@@ -211,6 +226,10 @@ export async function getSalesOrders(filters: {
                 customerCode: o.customer_code,
                 channel: o.channel as SalesChannel,
                 status: o.status as SOStatus,
+                orderType: (o.orderType as SOType) || 'STANDARD',
+                proposalId: o.proposalId || null,
+                proposalNo: o.proposal_no || null,
+                proposalTitle: o.proposal_title || null,
                 totalAmount: Number(o.totalAmount),
                 orderDiscount: Number(o.orderDiscount),
                 paymentTerm: o.paymentTerm,
@@ -237,6 +256,7 @@ export async function getSalesOrderDetail(id: string) {
         include: {
             legalEntity: true,
             warehouse: true,
+            proposal: { select: { id: true, proposalNo: true, title: true, status: true, estimatedAmount: true } },
             customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
@@ -289,6 +309,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
         include: {
             legalEntity: true,
             warehouse: true,
+            proposal: { select: { id: true, proposalNo: true, title: true, status: true, estimatedAmount: true } },
             customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
@@ -819,6 +840,8 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 customerId: input.customerId,
                 salesRepId: salesRepId,
                 channel: input.channel,
+                orderType: input.orderType ?? 'STANDARD',
+                proposalId: input.proposalId ?? null,
                 paymentTerm: input.paymentTerm,
                 shippingAddressId: input.shippingAddressId ?? null,
                 orderDiscount: input.orderDiscount ?? 0,
@@ -2261,9 +2284,10 @@ export async function exportSalesOrdersExcel(filters: {
     warehouseId?: string
     paymentTerm?: string
     pendingAction?: boolean
+    orderType?: SOType | 'ALL'
 } = {}): Promise<{ base64: string }> {
     const user = await requireAuth()
-    const { status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction } = filters
+    const { status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType } = filters
     const where: any = {}
 
     if (user && hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
@@ -2274,6 +2298,7 @@ export async function exportSalesOrdersExcel(filters: {
 
     if (status) where.status = status
     if (channel) where.channel = channel
+    if (orderType && orderType !== 'ALL') where.orderType = orderType
     if (legalEntityId) where.legalEntityId = legalEntityId
     if (warehouseId) where.warehouseId = warehouseId
     if (paymentTerm) where.paymentTerm = paymentTerm
@@ -2443,9 +2468,10 @@ export async function exportMisaSmeExcel(filters: {
     warehouseId?: string
     paymentTerm?: string
     pendingAction?: boolean
+    orderType?: SOType | 'ALL'
 } = {}): Promise<{ base64: string; filename: string }> {
     const user = await requireAuth()
-    const { orderIds, status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction } = filters
+    const { orderIds, status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType } = filters
     const where: any = {}
 
     if (orderIds && orderIds.length > 0) {
@@ -2459,6 +2485,7 @@ export async function exportMisaSmeExcel(filters: {
 
         if (status) where.status = status
         if (channel) where.channel = channel
+        if (orderType && orderType !== 'ALL') where.orderType = orderType
         if (legalEntityId) where.legalEntityId = legalEntityId
         if (warehouseId) where.warehouseId = warehouseId
         if (paymentTerm) where.paymentTerm = paymentTerm
@@ -2617,9 +2644,10 @@ export async function exportVnptInvoiceExcel(filters: {
     warehouseId?: string
     paymentTerm?: string
     pendingAction?: boolean
+    orderType?: SOType | 'ALL'
 } = {}): Promise<{ base64: string; filename: string }> {
     const user = await requireAuth()
-    const { orderIds, status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction } = filters
+    const { orderIds, status, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType } = filters
     const where: any = {}
 
     if (orderIds && orderIds.length > 0) {
@@ -2633,6 +2661,7 @@ export async function exportVnptInvoiceExcel(filters: {
 
         if (status) where.status = status
         if (channel) where.channel = channel
+        if (orderType && orderType !== 'ALL') where.orderType = orderType
         if (legalEntityId) where.legalEntityId = legalEntityId
         if (warehouseId) where.warehouseId = warehouseId
         if (paymentTerm) where.paymentTerm = paymentTerm
@@ -2847,9 +2876,10 @@ export async function getSOStatusCounts(filters: {
     warehouseId?: string
     paymentTerm?: string
     pendingAction?: boolean
+    orderType?: SOType | 'ALL'
 } = {}): Promise<Record<string, number>> {
     const { 
-        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction 
+        search, dateFrom, dateTo, salesRepId, channel, legalEntityId, warehouseId, paymentTerm, pendingAction, orderType
     } = filters
 
     const user = await getCurrentUser()
@@ -2868,6 +2898,7 @@ export async function getSOStatusCounts(filters: {
         }
 
         if (channel) where.channel = channel
+        if (orderType && orderType !== 'ALL') where.orderType = orderType
         if (legalEntityId) where.legalEntityId = legalEntityId
         if (warehouseId) where.warehouseId = warehouseId
         if (paymentTerm) where.paymentTerm = paymentTerm
@@ -2921,6 +2952,7 @@ export async function getSalesPageData(filters: {
     warehouseId?: string
     paymentTerm?: string
     pendingAction?: boolean
+    orderType?: SOType | 'ALL'
 } = {}, onlyRows = false) {
     if (onlyRows) {
         const [ordersResult, statusCounts] = await Promise.all([
@@ -3130,6 +3162,41 @@ export async function createARInvoiceForSO(
         return { success: false, error: err.message }
     }
 }
+
+// ── Get approved/active proposals for SO ────────
+export async function getApprovedProposalsForSO(customerId?: string) {
+    const user = await getCurrentUser()
+    const where: any = {
+        status: { in: ['APPROVED', 'APPROVED_L1', 'APPROVED_L2', 'IN_PROGRESS', 'SUBMITTED'] },
+    }
+    if (customerId) {
+        where.OR = [
+            { customerId: customerId },
+            { customerId: null }
+        ]
+    }
+    const proposals = await prisma.proposal.findMany({
+        where,
+        select: {
+            id: true,
+            proposalNo: true,
+            title: true,
+            category: true,
+            status: true,
+            estimatedAmount: true,
+            createdAt: true,
+            customer: { select: { id: true, name: true } },
+            creator: { select: { name: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50
+    })
+    return proposals.map(p => ({
+        ...p,
+        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0
+    }))
+}
+
 
 
 

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, SalesChannel } from './actions'
+import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, SalesChannel } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
@@ -687,6 +687,18 @@ function SODetailDrawer({
                                         <span style={{ color: '#4A6A7A' }}>Khách hàng:</span>
                                         <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.name}</span>
                                     </div>
+                                    {detail.orderType === 'TASTING' && (
+                                        <div className="flex justify-between py-1.5 px-2 rounded border border-amber-500/40 bg-amber-950/30 border-b border-[#2A4355]/20">
+                                            <span className="font-bold text-amber-400">Loại Đơn Hàng:</span>
+                                            <span className="font-bold text-amber-300">🍷 Đơn Tasting (Ko thu tiền)</span>
+                                        </div>
+                                    )}
+                                    {detail.proposal && (
+                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                            <span style={{ color: '#4A6A7A' }}>Tờ Trình Tasting:</span>
+                                            <span className="font-bold text-amber-300 font-mono">[{detail.proposal.proposalNo}] {detail.proposal.title}</span>
+                                        </div>
+                                    )}
                                     {detail.customer.parent && (
                                         <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
                                             <span style={{ color: '#4A6A7A' }}>Khách hàng cha:</span>
@@ -1068,9 +1080,16 @@ function SalesOrderMobileCard({
             
             {/* Header: SO code & Date */}
             <div className="flex items-center justify-between">
-                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
-                    {row.soNo}
-                </span>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9' }}>
+                        {row.soNo}
+                    </span>
+                    {row.orderType === 'TASTING' && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                            🍷 Tasting
+                        </span>
+                    )}
+                </div>
                 <span className="text-[10px]" style={{ color: '#4A6A7A' }}>
                     {formatDateTime(row.createdAt)}
                 </span>
@@ -1300,6 +1319,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const [warehouseFilter, setWarehouseFilter] = useState<string>('')
     const [paymentTermFilter, setPaymentTermFilter] = useState<string>('')
     const [pendingActionFilter, setPendingActionFilter] = useState<boolean>(false)
+    const [orderTypeFilter, setOrderTypeFilter] = useState<string>('ALL')
 
     // TanStack Query — cache sales data, survive tab switches
     const queryKey = [
@@ -1317,7 +1337,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             legalEntityId: legalEntityFilter || undefined,
             warehouseId: warehouseFilter || undefined,
             paymentTerm: paymentTermFilter || undefined,
-            pendingAction: pendingActionFilter || undefined
+            pendingAction: pendingActionFilter || undefined,
+            orderType: orderTypeFilter !== 'ALL' ? orderTypeFilter : undefined
         }
     ]
     const { data: queryData, isLoading: loading, refetch } = useQuery({
@@ -1336,9 +1357,10 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             legalEntityId: legalEntityFilter || undefined,
             warehouseId: warehouseFilter || undefined,
             paymentTerm: paymentTermFilter || undefined,
-            pendingAction: pendingActionFilter || undefined
+            pendingAction: pendingActionFilter || undefined,
+            orderType: (orderTypeFilter as any) || 'ALL'
         }),
-        initialData: !search && !statusFilter && page === 1 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter
+        initialData: !search && !statusFilter && page === 1 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter && orderTypeFilter === 'ALL'
             ? initialData
             : undefined,
         staleTime: 0,
@@ -1354,7 +1376,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const pageWarehouses = (queryData as any)?.warehouses ?? (initialData as any)?.warehouses ?? []
     const paymentTerms = (queryData as any)?.paymentTerms ?? (initialData as any)?.paymentTerms ?? []
 
-    const hasActiveFilters = !!(search || statusFilter || dateFrom || dateTo || salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter)
+    const hasActiveFilters = !!(search || statusFilter || dateFrom || dateTo || salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL'))
 
     const handleClearFilters = () => {
         setSearchInput('')
@@ -1368,10 +1390,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         setWarehouseFilter('')
         setPaymentTermFilter('')
         setPendingActionFilter(false)
+        setOrderTypeFilter('ALL')
         setPage(1)
         reload({
             search: '', status: '', page: 1, dateFrom: '', dateTo: '',
-            salesRepId: '', channel: '', legalEntityId: '', warehouseId: '', paymentTerm: '', pendingAction: false
+            salesRepId: '', channel: '', legalEntityId: '', warehouseId: '', paymentTerm: '', pendingAction: false, orderType: 'ALL'
         }, true)
     }
 
@@ -1408,7 +1431,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const reload = useCallback(async (
         overrides?: Partial<{ 
             search: string; status: string; page: number; sortBy: string; sortDir: string; dateFrom: string; dateTo: string;
-            salesRepId: string; channel: string; legalEntityId: string; warehouseId: string; paymentTerm: string; pendingAction: boolean
+            salesRepId: string; channel: string; legalEntityId: string; warehouseId: string; paymentTerm: string; pendingAction: boolean; orderType: string
         }>,
         _onlyRows = false
     ) => {
@@ -1426,6 +1449,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         if (overrides?.warehouseId !== undefined) setWarehouseFilter(overrides.warehouseId)
         if (overrides?.paymentTerm !== undefined) setPaymentTermFilter(overrides.paymentTerm)
         if (overrides?.pendingAction !== undefined) setPendingActionFilter(overrides.pendingAction)
+        if (overrides?.orderType !== undefined) setOrderTypeFilter(overrides.orderType)
         // If no overrides, just refetch current query
         if (!overrides || Object.keys(overrides).length === 0) {
             refetch()
@@ -1644,6 +1668,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 warehouseId: warehouseFilter || undefined,
                 paymentTerm: paymentTermFilter || undefined,
                 pendingAction: pendingActionFilter || undefined,
+                orderType: orderTypeFilter !== 'ALL' ? (orderTypeFilter as SOType) : undefined
             }).then(({ base64 }) => {
                 const byteCharacters = atob(base64)
                 const byteNumbers = new Array(byteCharacters.length)
@@ -1676,6 +1701,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 warehouseId: warehouseFilter || undefined,
                 paymentTerm: paymentTermFilter || undefined,
                 pendingAction: pendingActionFilter || undefined,
+                orderType: orderTypeFilter !== 'ALL' ? (orderTypeFilter as SOType) : undefined
             }).then(({ base64, filename }) => {
                 const byteCharacters = atob(base64)
                 const byteNumbers = new Array(byteCharacters.length)
@@ -1712,6 +1738,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 warehouseId: warehouseFilter || undefined,
                 paymentTerm: paymentTermFilter || undefined,
                 pendingAction: pendingActionFilter || undefined,
+                orderType: orderTypeFilter !== 'ALL' ? (orderTypeFilter as SOType) : undefined
             }).then(({ base64, filename }) => {
                 const byteCharacters = atob(base64)
                 const byteNumbers = new Array(byteCharacters.length)
@@ -1889,7 +1916,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
                     {/* Filter Toggle Button */}
                     {(() => {
-                        const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter);
+                        const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL'));
                         return (
                             <button onClick={() => setShowFilters(!showFilters)}
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
@@ -1913,6 +1940,19 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {/* Collapsible Advanced Filters */}
             {showFilters && (
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Loại Đơn Hàng</label>
+                        <select value={orderTypeFilter} 
+                            onChange={e => { setOrderTypeFilter(e.target.value); setPage(1); reload({ orderType: e.target.value as any, page: 1 }, true) }}
+                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: orderTypeFilter === 'TASTING' ? '#F59E0B' : '#8AAEBB', borderRadius: '4px' }}>
+                            <option value="ALL">Tất cả loại đơn</option>
+                            <option value="STANDARD">📦 Thương Mại</option>
+                            <option value="TASTING">🍷 Tasting (Nếm thử)</option>
+                            <option value="SAMPLE">🍾 Hàng Mẫu</option>
+                        </select>
+                    </div>
+
                     <div>
                         <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Nhân viên Sales</label>
                         <select value={salesRepFilter} 

@@ -1641,6 +1641,9 @@ model SalesOrder {
   tastingConversions TastingEventGuest[] @relation("TastingConversion")
   shiftId           String?
   shift             POSShift?           @relation(fields: [shiftId], references: [id])
+  orderType         SOType              @default(STANDARD)
+  proposalId        String?
+  proposal          Proposal?           @relation(fields: [proposalId], references: [id])
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
@@ -1648,6 +1651,8 @@ model SalesOrder {
   @@index([salesRepId])
   @@index([contractId])
   @@index([status])
+  @@index([orderType])
+  @@index([proposalId])
   @@index([createdAt])
   @@index([status, createdAt])
   @@map("sales_orders")
@@ -2510,6 +2515,12 @@ enum SOStatus {
   CANCELLED
 }
 
+enum SOType {
+  STANDARD
+  TASTING
+  SAMPLE
+}
+
 enum QuotationStatus {
   DRAFT
   SENT
@@ -2958,6 +2969,8 @@ model Proposal {
   discountPct     Decimal?              @db.Decimal(5, 2)
   priceItems      ProposalPriceItem[]
 
+  salesOrders     SalesOrder[]
+
   // ── Sub-models ──
   attachments     ProposalAttachment[]
   comments        ProposalComment[]
@@ -3027,6 +3040,7 @@ enum ProposalCategory {
   LICENSE_RENEWAL
   CONTRACT_SIGNING
   DEBT_WRITE_OFF
+  TASTING
   OTHER
 }
 

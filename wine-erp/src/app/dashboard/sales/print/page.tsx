@@ -183,11 +183,16 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                     </div>
                     <div className="text-right">
                         <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
-                            ĐƠN BÁN HÀNG
+                            {(order as any).orderType === 'TASTING' ? 'ĐƠN HÀNG TASTING (KHÔNG THU TIỀN)' : 'ĐƠN BÁN HÀNG'}
                         </h1>
                         <p className="text-xs font-bold font-mono text-slate-900">
                             {['DRAFT', 'PENDING_APPROVAL'].includes(order.status) ? 'DỰ THẢO - ' : ''}{order.soNo}
                         </p>
+                        {(order as any).proposal && (
+                            <p className="text-[10px] font-bold text-amber-900 mt-0.5">
+                                Căn cứ Tờ trình: [{(order as any).proposal.proposalNo}] {(order as any).proposal.title}
+                            </p>
+                        )}
                         <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {formatDateTime(order.createdAt)}</p>
                     </div>
                 </div>

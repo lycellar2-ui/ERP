@@ -125,7 +125,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | Metric | Giá trị | Nơi ghi nhận |
 |---|---|---|
 | Prisma models | **123** | README.md, llms.txt, tech-stack.md |
-| Prisma enums | **77** | README.md, llms.txt |
+| Prisma enums | **78** | README.md, llms.txt |
 | Dashboard routes | **35** | README.md, wine-erp-plan.md |
 | Server Action files | **42** | README.md |
 | Module spec files | **27** | README.md |

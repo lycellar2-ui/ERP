@@ -53,7 +53,7 @@
 | Metric | Giá trị |
 |---|---|
 | **Prisma models** | 123 |
-| **Prisma enums** | 77 |
+| **Prisma enums** | 78 |
 | **Dashboard routes** | 35 folders |
 | **Server Action files** | 42 files |
 | **Module spec files** | 27 files |
@@ -135,7 +135,7 @@
 
 | Chủ đề | Quyết định |
 |---|---|
-| **Database** | Supabase PostgreSQL — 123 models, 77 enums |
+| **Database** | Supabase PostgreSQL — 123 models, 78 enums |
 | **Auth** | Supabase Auth — JWT, `@supabase/ssr` cho App Router |
 | **File Storage** | **ImgBB** (ảnh sản phẩm, public) + **Supabase Storage** (hợp đồng/chứng từ, private) |
 | **Deployment** | Vercel — Auto-deploy khi merge `main`, Preview URLs per PR |
@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-09 14:53 | Wine ERP v9.9.6 — Live Lead Command Center Dashboard for Stock Count, Real-Time Syncing & Staff Monitoring Leaderboard*
+*Last updated: 2026-08-10 15:55 | Wine ERP v9.9.7 — Tasting Sales Order with Proposal Linkage & Free Sample Clearance*
 

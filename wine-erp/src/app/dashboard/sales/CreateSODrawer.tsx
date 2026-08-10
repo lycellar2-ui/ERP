@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
-    createSalesOrder, SOCreateInput, SalesChannel,
+    createSalesOrder, SOCreateInput, SalesChannel, SOType,
     getProductPricesForChannel, getActiveAllocationsForProducts,
-    getLegalEntities, LegalEntityRow,
+    getLegalEntities, LegalEntityRow, getApprovedProposalsForSO,
 } from './actions'
 import { formatVND } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
@@ -182,6 +182,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     const [orderDiscount, setOrderDiscount] = useState(0)
     const [lines, setLines] = useState<SOLine[]>([])
     const [notes, setNotes] = useState('')
+    const [orderType, setOrderType] = useState<SOType>('STANDARD')
+    const [proposalId, setProposalId] = useState('')
+    const [proposals, setProposals] = useState<{ id: string; proposalNo: string; title: string; estimatedAmount: number; customer?: { id: string; name: string } | null }[]>([])
 
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
     const [arBalance, setArBalance] = useState(0)
@@ -282,6 +285,14 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             setCustomerSearchInput('')
         }
     }, [selectedCustomer])
+
+    useEffect(() => {
+        if (open) {
+            getApprovedProposalsForSO(customerId || undefined).then(res => {
+                setProposals(res || [])
+            }).catch(() => {})
+        }
+    }, [open, customerId])
 
     useEffect(() => {
         if (entities.length > 0 && !legalEntityId) {
@@ -491,16 +502,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             customerId,
             salesRepId: userId || 'SYSTEM',
             channel,
-            paymentTerm,
-            orderDiscount,
+            orderType,
+            proposalId: proposalId || undefined,
+            paymentTerm: orderType === 'TASTING' ? (paymentTerm || 'TASTING - Không thu tiền') : paymentTerm,
+            orderDiscount: orderType === 'TASTING' ? 0 : orderDiscount,
             notes,
             lines: lines.map(l => ({
                 productId: l.productId,
                 qtyOrdered: l.qtyOrdered,
-                unitPrice: l.unitPrice,
+                unitPrice: orderType === 'TASTING' ? 0 : l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
                 vatRate: l.vatRate ?? 10,
-                priceSource: l.priceSource || undefined
+                priceSource: orderType === 'TASTING' ? 'TASTING_FREE' : (l.priceSource || undefined)
             })),
             legalEntityId,
             shippingAddressId: shippingAddressId || undefined,
@@ -524,6 +537,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         setOrderDate(new Date().toISOString().split('T')[0])
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
+        setOrderType('STANDARD'); setProposalId('')
         setArBalance(0); setPriceMap({}); setLegalEntityId(''); setSearchQueries({})
         setNotes(''); setOverrideMode(false)
         setShippingAddressId('')
@@ -563,6 +577,94 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                     {!loadingData && (
                         <>
+                            {/* Order Type Selector: Commercial vs Tasting */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-[#2A4355] bg-[#142433]">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-[#8AAEBB]">Loại Đơn Hàng:</span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setOrderType('STANDARD')
+                                            }}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                                orderType === 'STANDARD'
+                                                    ? 'bg-[#5BA88A] text-white shadow-md'
+                                                    : 'bg-[#1B2E3D] text-[#8AAEBB] hover:bg-[#22394B]'
+                                            }`}
+                                        >
+                                            📦 Đơn Thương Mại
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setOrderType('TASTING')
+                                                setPaymentTerm('TASTING - Không thu tiền')
+                                                setLines(prev => prev.map(l => ({ ...l, unitPrice: 0 })))
+                                            }}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                                orderType === 'TASTING'
+                                                    ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40'
+                                                    : 'bg-[#1B2E3D] text-amber-400/80 hover:bg-[#22394B] border border-amber-500/30'
+                                            }`}
+                                        >
+                                            🍷 Đơn Tasting (Ko thu tiền)
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {orderType === 'TASTING' && (
+                                    <span className="text-[11px] text-amber-300 bg-amber-950/60 border border-amber-800/60 px-2.5 py-1 rounded flex items-center gap-1 font-medium">
+                                        ✨ Đơn Tasting theo Sale — Đơn giá xuất kho 0 VNĐ & đính kèm Tờ trình Tasting
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Proposal Selector for Tasting Orders */}
+                            {orderType === 'TASTING' && (
+                                <div className="p-3 rounded-lg border border-amber-500/40 bg-amber-950/20 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1.5">
+                                            <FileText size={14} className="text-amber-400" />
+                                            Tờ Trình Tasting Liên Kết *
+                                        </label>
+                                        <span className="text-[10px] text-amber-400/80">Chọn Tờ trình đã được phê duyệt làm căn cứ duyệt đơn</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <select
+                                                value={proposalId}
+                                                onChange={e => {
+                                                    const selectedId = e.target.value
+                                                    setProposalId(selectedId)
+                                                    const found = proposals.find(p => p.id === selectedId)
+                                                    if (found) {
+                                                        setNotes(`Đơn Tasting kèm Tờ trình ${found.proposalNo}: ${found.title}`)
+                                                    }
+                                                }}
+                                                className="w-full px-3 py-2 text-xs font-semibold rounded border bg-[#142433] text-amber-200 border-amber-500/40 focus:outline-none"
+                                            >
+                                                <option value="">-- Chọn Tờ trình Tasting --</option>
+                                                {proposals.map(p => (
+                                                    <option key={p.id} value={p.id}>
+                                                        [{p.proposalNo}] {p.title} ({p.customer ? p.customer.name : 'Chung'})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="text"
+                                                placeholder="Ghi chú thêm về Tờ trình (Ví dụ: TT-2026-008 thử vang cho tiệc)"
+                                                value={notes}
+                                                onChange={e => setNotes(e.target.value)}
+                                                className="w-full px-3 py-2 text-xs rounded border bg-[#142433] text-amber-200 border-amber-500/40 placeholder:text-amber-500/50 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Row 1: Customer, Address & Order Date */}
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                                 {/* Customer Autocomplete Search */}

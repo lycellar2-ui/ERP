@@ -88,6 +88,96 @@ PAID / CLOSED
 | Trường | Mô tả |
 |---|---|
 | `sku` | Sản phẩm |
+# SLS — Sales & Allocation (Bán Hàng & Phân Bổ Hạn Mức)
+
+Phân hệ Sales quản lý toàn bộ chu trình bán hàng từ Báo giá → Đặt hàng → Xuất kho → Giao hàng → Thu tiền. Nổi bật nhất là **Allocation Engine** — cơ chế kiểm soát phân bổ quota cho rượu vang khan hiếm, tính năng mà không phần mềm ERP thông thường nào có sẵn.
+
+---
+
+## 1. Chu Trình Bán Hàng (Sales Order Lifecycle)
+
+```
+QUOTATION (Báo giá)
+     ↓  [KH đồng ý]
+SALES ORDER — DRAFT
+     ↓  [Tạo xong, gửi duyệt]
+SALES ORDER — PENDING APPROVAL  ←──── Approval Workflow (nếu vượt ngưỡng)
+     ↓  [Duyệt xong]
+SALES ORDER — CONFIRMED
+     ↓  [Kho nhặt hàng]
+DELIVERY ORDER (DO)
+     ↓  [Shipper giao, E-POD]
+DELIVERED
+     ↓  [Kế toán bấm "Xuất / Gắn Hóa Đơn VAT" trên Drawer chi tiết SO]
+INVOICED
+     ↓  [KH thanh toán]
+PAID / CLOSED
+```
+
+> **Hóa Đơn Công Nợ (AR)**: Trên Drawer chi tiết đơn hàng (`SalesClient.tsx`), Kế toán/Admin có thể nhấp trực tiếp nút **`+ Xuất / Gắn Hóa Đơn VAT`** để tự động sinh mã hóa đơn hệ thống (`VAT-SO-xxxxxx`) hoặc điền mã Hóa đơn điện tử VAT (từ MISA/VNPT/Viettel). Đơn hàng sẽ tự động chuyển trạng thái sang **`INVOICED`** và ghi nhận vào sổ công nợ AR.
+
+---
+
+## 2. Báo Giá (Quotation) — Professional System
+
+### Tạo & Quản lý
+- Tạo Quotation gửi cho KH trước khi chốt đơn
+- Chọn KH → Hệ thống tự load bảng giá đúng kênh (HORECA / Đại lý / VIP)
+- Thêm dòng sản phẩm → Sử dụng **Quick Product Picker Modal** hỗ trợ tìm kiếm, lọc theo nước & loại vang, hiển thị tồn kho thực tế và giá wholesale.
+- Tính toán **Biên lợi nhuận gộp (Profit Margin %)** và phần trăm chênh lệch với giá wholesale thời gian thực, có cảnh báo đỏ nếu giá bán thấp hơn giá vốn.
+- Quotation có Ngày hết hạn (Expiry Date) — sau ngày này giá không còn hiệu lực
+- Chuyển Quotation → SO chỉ 1 click
+- Duplicate quotation — clone + 30 ngày hạn mới
+- Auto-expire: DRAFT/SENT quá validUntil → EXPIRED
+
+### Gửi Báo Giá (Multi-channel Delivery)
+- **📧 Email**: Gửi HTML email chuyên nghiệp qua Resend + Telegram notification
+- **🔗 Copy Link Zalo/WhatsApp**: Copy public URL → paste vào tin nhắn
+- **🖨️ In/Tải PDF**: Mở tab dạng web → browser Print/Save PDF
+
+### PDF Export (3 Styles)
+- **Professional** (nền trắng) — tối ưu cho in giấy
+- **Elegant** (dark theme) — gửi digital, KH cao cấp
+- Nội dung: Logo + header công ty, MST, ảnh sản phẩm (hiển thị dạng **nằm ngang - landscape** với tỷ lệ `contain` hoàn hảo không móp méo), thông tin wine (vintage, appellation, awards, tasting notes), VAT tách riêng 10%, chiết khấu, điều khoản.
+- Định dạng xuất bản: Hỗ trợ tự động gom nhóm sản phẩm theo **Nhà Cung Cấp + Quốc Gia** trước khi hiển thị trên các tài liệu PDF chuyên nghiệp.
+
+### Public Quotation Viewer
+- **URL**: `/verify/quotation/[publicToken]` — KH xem trực tuyến không cần login
+- **View Tracking**: viewCount, firstViewedAt, lastViewedAt → Sale thấy badge 👁️ trên list
+- **Accept/Reject online**: KH bấm chấp nhận/từ chối + nhập lý do
+
+### Schema Additions
+- `publicToken` (UUID) — unique public URL
+- `customerEmail`, `customerPhone` — contact info for delivery
+- `companyName`, `contactPerson` — display on PDF
+- `sentAt`, `sentMethod` — tracking khi gửi (EMAIL/LINK/PRINT)
+- `viewCount`, `firstViewedAt`, `lastViewedAt` — view tracking
+- `rejectedReason` — lý do KH từ chối
+- `deliveryTerms`, `vatIncluded`, `pdfStyle` — PDF customization
+
+---
+
+## 3. Sales Order (Đơn Hàng Bán)
+
+### A. Tạo Sales Order
+| Trường | Mô tả |
+|---|---|
+| `so_number` | Số đơn tự sinh |
+| `customer_id` | Khách hàng (Bắt buộc — liên kết CRM) |
+| `linked_contract` | Hợp đồng khung (nếu có — từ CNT module) |
+| `order_date` | Ngày đặt hàng |
+| `requested_delivery_date` | Ngày KH yêu cầu giao |
+| `shipping_address` | Địa chỉ giao (chọn từ danh sách multi-address của KH) |
+| `payment_term` | Kế thừa từ KH, có thể override |
+| `currency` | VND (mặc định) |
+| `sales_rep` | Nhân viên Sales tạo đơn |
+| `channel` | HORECA / WHOLESALE / VIP_RETAIL |
+| `notes` | Ghi chú đặc biệt (Giao vào buổi sáng, cần xe lạnh...) |
+
+### B. Dòng Sản Phẩm (SO Lines)
+| Trường | Mô tả |
+|---|---|
+| `sku` | Sản phẩm |
 | `qty_ordered` | Số lượng (Tính theo thùng/OWC hoặc chai) |
 | `unit_price` | Đơn giá (Từ bảng giá phù hợp) |
 | `line_discount_%` | Chiết khấu dòng (%) |
@@ -95,9 +185,17 @@ PAID / CLOSED
 | `available_stock` | Tồn kho khả dụng real-time |
 
 ### C. Kiểm Soát Tự Động Khi Tạo SO
-1. **Credit Check:** `Công nợ hiện tại + Giá trị SO này > Credit Limit` → Cảnh báo / Block
+1. **Credit Check:** `Công nợ hiện tại + Giá trị SO này > Credit Limit` → Cảnh báo / Block (miễn trừ đối với đơn Tasting 0 VNĐ)
 2. **Stock Check:** Tồn kho Available < Số đặt → Cảnh báo lấy thiếu
 3. **Allocation Check:** SKU có Allocation Campaign → Kiểm tra Quota (xem mục 5)
+
+### D. Nghiệp Vụ Đơn Hàng Tasting (Thử Rượu / Ko Thu Tiền)
+- **Loại đơn hàng (`orderType`)**: `STANDARD` (Đơn thương mại), `TASTING` (Đơn nếm thử/Tasting), `SAMPLE` (Đơn hàng mẫu).
+- **Cơ chế không thu tiền (0 VNĐ)**: Tự động điều chỉnh đơn giá dòng sản phẩm = 0 VNĐ, tổng tiền đơn hàng = 0 VNĐ, điều khoản thanh toán tự động gán `TASTING - Không thu tiền`.
+- **Phụ trách theo Sales Rep**: Đơn do Sales Rep trực tiếp lập và theo dõi cấp phát hàng mẫu cho khách hàng.
+- **Liên kết Tờ Trình Tasting (Proposal)**: Gắn kết nối trực tiếp với Tờ trình Tasting đã được duyệt (`proposalId`), tự động kiểm tra trích yếu và trích dẫn số Tờ trình trên chứng từ xuất kho.
+- **Nhận diện & Bản in**: Hiển thị Badge `🍷 Tasting` trên danh sách, bộ lọc loại đơn hàng, chi tiết SO và phiếu in tiêu đề **"ĐƠN HÀNG TASTING / PHIẾU XUẤT HÀNG MẪU (KHÔNG THU TIỀN)"**.
+
 4. **Single VAT Enforcement:** Mỗi Đơn hàng Bán (SO) và Báo Giá (QTN) bắt buộc áp dụng **duy nhất 1 mức thuế suất VAT** trên toàn bộ các dòng sản phẩm để đảm bảo tính hợp lệ của Hóa đơn điện tử GTGT. Khi đổi VAT dòng bất kỳ, hệ thống tự động đồng bộ tất cả các dòng còn lại.
 5. **Approval Trigger:** SO > Ngưỡng giá trị hoặc Chiết khấu > X% → Tự động send Approval Workflow
 
