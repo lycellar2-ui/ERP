@@ -1,6 +1,7 @@
 // ─── Proposal Constants (shared between server & client) ──────
 
 export const CATEGORY_LABELS: Record<string, string> = {
+    TASTING: '🍷 Tờ Trình Tasting (Thử Rượu / Hàng Mẫu)',
     BUDGET_REQUEST: 'Xin Ngân Sách',
     CAPITAL_EXPENDITURE: 'Mua Sắm TSCĐ',
     PRICE_ADJUSTMENT: 'Tờ trình cơ chế giá',

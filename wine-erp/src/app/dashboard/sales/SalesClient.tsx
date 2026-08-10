@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, SalesChannel } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { CloneSOData } from './CreateSODrawer'
 const CreateSODrawer = dynamic(() => import('./CreateSODrawer').then(m => m.CreateSODrawer), {
@@ -1278,6 +1279,27 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const [statusFilter, setStatusFilter] = useState<SOStatus | ''>('')
     
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
+
+    const searchParams = useSearchParams()
+
+    useEffect(() => {
+        if (searchParams?.get('action') === 'createTasting') {
+            const pId = searchParams.get('proposalId') || ''
+            const cId = searchParams.get('customerId') || ''
+            setCloneData({
+                customerId: cId,
+                channel: 'HORECA',
+                paymentTerm: 'TASTING - Không thu tiền',
+                orderDiscount: 0,
+                legalEntityId: '',
+                orderType: 'TASTING',
+                proposalId: pId,
+                notes: pId ? `Đơn Tasting theo Tờ trình` : 'Đơn Tasting',
+                lines: []
+            })
+            setCreateOpen(true)
+        }
+    }, [searchParams])
 
     useEffect(() => {
         return () => {

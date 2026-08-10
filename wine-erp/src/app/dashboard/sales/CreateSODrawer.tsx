@@ -107,6 +107,8 @@ export interface CloneSOData {
     legalEntityId: string
     shippingAddressId?: string
     notes?: string
+    orderType?: SOType
+    proposalId?: string
     lines: {
         productId: string
         productName: string
@@ -253,6 +255,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             if (cloneData.legalEntityId) setLegalEntityId(cloneData.legalEntityId)
             if (cloneData.shippingAddressId) setShippingAddressId(cloneData.shippingAddressId)
             if (cloneData.notes) setNotes(cloneData.notes)
+            if (cloneData.orderType) setOrderType(cloneData.orderType)
+            if (cloneData.proposalId) setProposalId(cloneData.proposalId)
 
             setLines(cloneData.lines.map(l => ({
                 productId: l.productId,

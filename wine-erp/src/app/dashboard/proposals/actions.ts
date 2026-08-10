@@ -12,6 +12,7 @@ import { createNotification, triggerNotificationForRole } from '@/lib/notificati
 
 // Category → Required approval levels
 const CATEGORY_ROUTING: Record<string, number[]> = {
+    TASTING: [1, 2, 3],               // TP Sales → Kế toán → CEO
     BUDGET_REQUEST: [1, 2, 3],        // TP → KT Trưởng → CEO
     CAPITAL_EXPENDITURE: [1, 2, 3],
     PRICE_ADJUSTMENT: [1, 2, 3],
@@ -132,6 +133,17 @@ export async function getProposalDetail(id: string) {
             approvalLogs: {
                 orderBy: { createdAt: 'asc' },
                 include: { approver: { select: { name: true, email: true } } },
+            },
+            salesOrders: {
+                select: {
+                    id: true,
+                    soNo: true,
+                    orderType: true,
+                    status: true,
+                    totalAmount: true,
+                    createdAt: true,
+                },
+                orderBy: { createdAt: 'desc' },
             },
         },
     })

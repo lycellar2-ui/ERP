@@ -1640,6 +1640,58 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
 
                         {/* Content sections */}
                         <div className="space-y-3">
+                            {/* Tasting Proposal Quick Action & Linked SOs */}
+                            {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT') && (
+                                <div className="p-4 rounded-md space-y-3 bg-amber-950/20 border border-amber-500/40">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs font-bold uppercase text-amber-300 flex items-center gap-1.5">
+                                            🍷 Tờ Trình Tasting & Thử Vang
+                                        </p>
+                                        {['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status) && (
+                                            <a
+                                                href={`/dashboard/sales?action=createTasting&proposalId=${detail.id}&customerId=${detail.customerId || ''}`}
+                                                className="px-3 py-1.5 text-xs font-bold rounded bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center gap-1.5 shadow transition-all"
+                                            >
+                                                🍷 + Lên Đơn Tasting Ngay
+                                            </a>
+                                        )}
+                                    </div>
+                                    {detail.customer && (
+                                        <p className="text-xs text-amber-200">
+                                            Khách hàng áp dụng: <strong>{detail.customer.name}</strong> ({detail.customer.code})
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Linked Sales Orders List */}
+                            {(detail as any).salesOrders && (detail as any).salesOrders.length > 0 && (
+                                <div className="p-4 rounded-md space-y-2.5 bg-[#1B2E3D] border border-[#2A4355]">
+                                    <p className="text-xs font-bold uppercase text-[#87CBB9] flex items-center justify-between">
+                                        <span>📦 Các Đơn Hàng Đã Lên Theo Tờ Trình Này ({(detail as any).salesOrders.length})</span>
+                                    </p>
+                                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                                        {(detail as any).salesOrders.map((so: any) => (
+                                            <div key={so.id} className="flex justify-between items-center p-2 rounded bg-[#142433] text-xs border border-[#2A4355]/40">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono font-bold text-[#87CBB9]">{so.soNo}</span>
+                                                    {so.orderType === 'TASTING' && (
+                                                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-300 border border-amber-500/40">🍷 Tasting</span>
+                                                    )}
+                                                    <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString('vi-VN')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="font-semibold text-slate-200">{formatVND(Number(so.totalAmount))}</span>
+                                                    <a href={`/dashboard/sales?search=${so.soNo}`} className="text-[11px] text-[#87CBB9] hover:underline font-semibold">
+                                                        Xem SO →
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                                 <p className="text-xs font-semibold uppercase mb-2" style={{ color: '#87CBB9' }}>Nội dung</p>
                                 <p className="text-sm whitespace-pre-wrap" style={{ color: '#E8F1F2', lineHeight: 1.6 }}>{detail.content}</p>
