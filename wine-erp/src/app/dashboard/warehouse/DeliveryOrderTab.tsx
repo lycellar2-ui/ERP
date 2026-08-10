@@ -541,6 +541,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     const [lotsMap, setLotsMap] = useState<Record<string, any[]>>({})
     const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1)
 
+    const [currentWhs, setCurrentWhs] = useState<WarehouseOption[]>(warehouses)
+
     useEffect(() => {
         if (!selectedSO || !warehouseId) {
             setLotsMap({})
@@ -615,24 +617,30 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     }, [selectedSO, warehouseId])
 
     useEffect(() => {
-        getSOsForDelivery().then(data => {
+        Promise.all([
+            getSOsForDelivery(),
+            getWarehouses()
+        ]).then(([data, whsData]) => {
             setSOs(data as any)
+            const activeWhsList = (whsData && whsData.length > 0) ? (whsData as any) : warehouses
+            setCurrentWhs(activeWhsList)
+
             if (initialSOId) {
                 const targetSO = (data as any[]).find(s => s.id === initialSOId)
                 if (targetSO) {
                     setSelectedSO(targetSO)
-                    setWarehouseId(resolveWarehouseForSO(targetSO, warehouses))
+                    setWarehouseId(resolveWarehouseForSO(targetSO, activeWhsList))
                     setMobileStep(2)
                 }
             }
         })
-    }, [initialSOId, warehouses])
+    }, [initialSOId])
 
     const selectSO = (soId: string) => {
         const targetSO = sos.find(s => s.id === soId) || null
         setSelectedSO(targetSO)
         if (targetSO) {
-            setWarehouseId(resolveWarehouseForSO(targetSO, warehouses))
+            setWarehouseId(resolveWarehouseForSO(targetSO, currentWhs))
             setMobileStep(2)
         }
     }
@@ -685,8 +693,17 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors font-medium"
                 style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}>
                 <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn kho xuất bán —</option>
-                {warehouses
-                    .filter((w: any) => !selectedSO?.legalEntityId || w.legalEntityId === (selectedSO as any).legalEntityId)
+                {currentWhs
+                    .filter((w: any) => {
+                        const targetLegalEntityId = selectedSO?.legalEntityId
+                        const targetLegalEntityCode = (selectedSO as any)?.legalEntityCode
+                        if (!targetLegalEntityId && !targetLegalEntityCode) return true
+                        if (targetLegalEntityId && w.legalEntityId === targetLegalEntityId) return true
+                        if (targetLegalEntityCode && w.legalEntityCode === targetLegalEntityCode) return true
+                        if (targetLegalEntityCode === 'TA' && (w.code?.includes('TA') || w.name?.includes('Thắng Ân'))) return true
+                        if (targetLegalEntityCode === 'LC' && (w.code?.includes('LYS') || w.name?.includes('Lys'))) return true
+                        return false
+                    })
                     .sort((a: any, b: any) => {
                         if (a.allowSales !== b.allowSales) return a.allowSales ? -1 : 1
                         if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1
