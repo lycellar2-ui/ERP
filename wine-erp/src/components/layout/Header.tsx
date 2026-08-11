@@ -177,6 +177,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/pos', title: 'POS Showroom' },
             { path: '/dashboard/qr-codes', title: 'QR Truy Xuất' },
             { path: '/dashboard/finance', title: 'Công Nợ & Kế Toán' },
+            { path: '/dashboard/tax', title: 'Quản Lý & Hóa Đơn Thuế' },
             { path: '/dashboard/declarations', title: 'Tờ Khai Thuế' },
             { path: '/dashboard/stamps', title: 'Quản Lý Tem' },
             { path: '/dashboard/reports', title: 'Báo Cáo' },

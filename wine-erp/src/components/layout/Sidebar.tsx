@@ -77,6 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
         label: 'Tài Chính',
         items: [
             { href: '/dashboard/finance', icon: DollarSign, label: 'Công Nợ & Kế Toán', permission: 'FIN:READ' },
+            { href: '/dashboard/tax', icon: Layers, label: 'Quản Lý & Hóa Đơn Thuế', permission: 'FIN:READ' },
             // { href: '/dashboard/declarations', icon: FileText, label: 'Tờ Khai Thuế', permission: 'TAX:READ' },
             // { href: '/dashboard/stamps', icon: Stamp, label: 'Quản Lý Tem', permission: 'STM:READ' },
             { href: '/dashboard/reports', icon: BarChart3, label: 'Báo Cáo', permission: 'RPT:READ' },
