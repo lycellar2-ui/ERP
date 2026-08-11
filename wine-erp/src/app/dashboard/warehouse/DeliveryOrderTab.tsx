@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer } from 'lucide-react'
+import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
     getDeliveryOrders, getSOsForDelivery, createDeliveryOrder, confirmDeliveryOrder, markDODelivered,
-    getDODetail, getAvailableLotsForProduct, getWarehouses,
+    reverseDeliveryOrder, getDODetail, getAvailableLotsForProduct, getWarehouses,
 } from './actions'
 import { formatDate } from '@/lib/utils'
 
@@ -24,6 +24,8 @@ const DO_STATUS: Record<string, { label: string; color: string; bg: string }> = 
     DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9' },
     CONFIRMED: { label: 'Đã XN', color: '#B47816', bg: 'rgba(212,168,83,0.15)' },
     SHIPPED: { label: 'Đã Giao', color: '#16A34A', bg: 'rgba(22,163,74,0.12)' },
+    REVERSED: { label: 'Đã Reverse', color: '#DC2626', bg: 'rgba(220,38,38,0.12)' },
+    CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)' },
 }
 
 type DODetail = Awaited<ReturnType<typeof getDODetail>>
@@ -153,6 +155,19 @@ export function DeliveryOrderTab({ warehouses }: {
         )
     }
 
+    const handleReverse = async (id: string, doNo?: string) => {
+        if (!confirm(`⚠️ XÁC NHẬN REVERSE (HOÀN TÁC) PHIẾU ${doNo ?? id}?\n\n- Tồn kho sẽ được hoàn trả lại về các Lô tương ứng.\n- Đơn bán hàng (SO) sẽ được khôi phục về trạng thái Chờ xuất kho.`)) return
+        toast.promise(
+            reverseDeliveryOrder(id).then(async (res) => {
+                if (!res.success) throw new Error(res.error || 'Lỗi hoàn tác xuất kho')
+                reload()
+                setDetailData(null)
+                return res
+            }),
+            { loading: 'Đang xử lý Reverse phiếu...', success: `↺ Phiếu ${doNo ?? ''} đã Reverse & khôi phục tồn kho thành công!`, error: (err: Error) => `Lỗi: ${err.message}` }
+        )
+    }
+
     return (
         <div className="space-y-3 sm:space-y-5">
             {/* Header & Sub-tab Navigation */}
@@ -261,7 +276,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                     </span>
                                                 </div>
                                                 <span className="text-[10px] font-semibold" style={{ color: '#64748B' }}>
-                                                    {so.lines.length} SP ({totalItems} chai)
+                                                    {so.lines.length} SP ({totalItems} chai đặt)
                                                 </span>
                                             </div>
 
@@ -325,49 +340,68 @@ export function DeliveryOrderTab({ warehouses }: {
             {activeSubTab === 'history' && (
                 <div className="rounded-xl overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     {/* Desktop Table (>= 768px) */}
-                    <div className="hidden md:block">
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['Số DO', 'Số SO', 'Kho', 'SP', 'SL', 'Trạng Thái', 'Ngày', ''].map(h => (
-                                        <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
+                                    {['Số DO', 'Số SO', 'Khách Hàng', 'Kho', 'SP', 'SL Đặt', 'SL Giao', 'Trạng Thái', 'Ngày', 'Thao Tác'].map(h => (
+                                        <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold whitespace-nowrap" style={{ color: '#64748B' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan={8} className="text-center py-10">
+                                    <tr><td colSpan={10} className="text-center py-10">
                                         <Loader2 size={18} className="animate-spin inline" style={{ color: '#D4A853' }} />
                                     </td></tr>
                                 ) : rows.length === 0 ? (
-                                    <tr><td colSpan={8} className="text-center py-10 text-xs" style={{ color: '#64748B' }}>Chưa có DO nào</td></tr>
+                                    <tr><td colSpan={10} className="text-center py-10 text-xs" style={{ color: '#64748B' }}>Chưa có DO nào</td></tr>
                                 ) : rows.map(d => {
                                     const st = DO_STATUS[d.status] ?? DO_STATUS.DRAFT
+                                    const canReverse = d.status !== 'REVERSED' && d.status !== 'CANCELLED'
                                     return (
                                         <tr key={d.id} className="transition-colors cursor-pointer hover:bg-slate-50"
                                             style={{ borderBottom: '1px solid #F1F5F9' }}
                                             onClick={() => openDetail(d.id)}>
-                                            <td className="px-3 py-2.5 text-[11px] font-bold font-mono" style={{ color: '#B47816' }}>{d.doNo}</td>
-                                            <td className="px-3 py-2.5 text-[11px] font-mono" style={{ color: '#475569' }}>{d.soNo}</td>
+                                            <td className="px-3 py-2.5 text-[11px] font-bold font-mono whitespace-nowrap" style={{ color: '#B47816' }}>{d.doNo}</td>
+                                            <td className="px-3 py-2.5 text-[11px] font-mono whitespace-nowrap" style={{ color: '#475569' }}>{d.soNo}</td>
+                                            <td className="px-3 py-2.5 text-[11px]">
+                                                <span className="font-bold text-[#0F172A] block truncate max-w-[170px]" title={d.customerName}>
+                                                    {d.customerName}
+                                                </span>
+                                            </td>
                                             <td className="px-3 py-2.5 text-[11px]" style={{ color: '#475569' }}>{d.warehouseName}</td>
                                             <td className="px-3 py-2.5 text-[11px]" style={{ color: '#475569' }}>{d.lineCount}</td>
+                                            <td className="px-3 py-2.5 text-[11px] font-mono" style={{ color: '#475569' }}>
+                                                {d.totalQtyOrdered.toLocaleString()}
+                                            </td>
                                             <td className="px-3 py-2.5 text-[11px] font-bold font-mono" style={{ color: '#0F172A' }}>
                                                 {d.totalQtyShipped.toLocaleString()}
                                             </td>
-                                            <td className="px-3 py-2.5">
+                                            <td className="px-3 py-2.5 whitespace-nowrap">
                                                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-[10px]" style={{ color: '#64748B' }}>{formatDate(d.createdAt)}</td>
-                                            <td className="px-3 py-2.5">
-                                                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                                            <td className="px-3 py-2.5 text-[10px] whitespace-nowrap" style={{ color: '#64748B' }}>{formatDate(d.createdAt)}</td>
+                                            <td className="px-3 py-2.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                                                     <button onClick={() => openDetail(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100"
+                                                        title="Xem chi tiết"
                                                         style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB' }}>
                                                         <Eye size={13} />
                                                     </button>
                                                     {d.status === 'DRAFT' && (
                                                         <button onClick={() => handleConfirm(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100"
+                                                            title="Xác nhận"
                                                             style={{ background: 'rgba(91,168,138,0.1)', color: '#5BA88A' }}>
                                                             <CheckCircle2 size={13} />
+                                                        </button>
+                                                    )}
+                                                    {canReverse && (
+                                                        <button onClick={() => handleReverse(d.id, d.doNo)}
+                                                            title="Reverse (Hoàn Tác Xuất Kho — Chỉ Admin)"
+                                                            className="px-2 py-1 text-[10px] font-bold rounded-md flex items-center gap-1 transition-all hover:brightness-105"
+                                                            style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)' }}>
+                                                            <RotateCcw size={11} /> Reverse
                                                         </button>
                                                     )}
                                                 </div>
@@ -387,9 +421,10 @@ export function DeliveryOrderTab({ warehouses }: {
                             <div className="text-center py-10 text-xs" style={{ color: '#64748B' }}>Chưa có DO nào</div>
                         ) : rows.map(d => {
                             const st = DO_STATUS[d.status] ?? DO_STATUS.DRAFT
+                            const canReverse = d.status !== 'REVERSED' && d.status !== 'CANCELLED'
                             return (
                                 <div key={d.id} onClick={() => openDetail(d.id)}
-                                    className="p-3 rounded-xl space-y-1.5 cursor-pointer transition-all active:scale-[0.99] shadow-sm"
+                                    className="p-3 rounded-xl space-y-2 cursor-pointer transition-all active:scale-[0.99] shadow-sm"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="flex items-center justify-between">
                                         <span className="text-[11px] font-bold font-mono" style={{ color: '#B47816' }}>
@@ -399,10 +434,24 @@ export function DeliveryOrderTab({ warehouses }: {
                                             {st.label}
                                         </span>
                                     </div>
+                                    <div className="text-xs font-bold text-[#0F172A] truncate">
+                                        {d.customerName}
+                                    </div>
                                     <div className="flex items-center justify-between text-[11px]">
                                         <span style={{ color: '#64748B' }}>SO: <strong className="font-mono text-[#334155]">{d.soNo}</strong></span>
-                                        <span className="font-mono font-bold" style={{ color: '#0F172A' }}>{d.totalQtyShipped} chai</span>
+                                        <span className="font-mono font-bold" style={{ color: '#0F172A' }}>
+                                            Giao {d.totalQtyShipped} / Đặt {d.totalQtyOrdered} chai
+                                        </span>
                                     </div>
+                                    {canReverse && (
+                                        <div className="pt-1.5 flex justify-end" onClick={e => e.stopPropagation()}>
+                                            <button onClick={() => handleReverse(d.id, d.doNo)}
+                                                className="px-2.5 py-1 text-[10px] font-bold rounded-md flex items-center gap-1"
+                                                style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)' }}>
+                                                <RotateCcw size={11} /> Reverse (Admin)
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )
                         })}
@@ -461,6 +510,15 @@ export function DeliveryOrderTab({ warehouses }: {
                                             style={{ background: 'rgba(74,143,171,0.15)', color: '#2563EB', border: '1px solid rgba(74,143,171,0.3)' }}
                                         >
                                             <Truck size={14} /> Đã Giao Hàng
+                                        </button>
+                                    )}
+                                    {detailData.status !== 'REVERSED' && detailData.status !== 'CANCELLED' && (
+                                        <button
+                                            onClick={() => handleReverse(detailData.id, detailData.doNo)}
+                                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-105"
+                                            style={{ background: 'rgba(220,38,38,0.15)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.3)' }}
+                                        >
+                                            <RotateCcw size={14} /> Reverse Phiếu (Admin)
                                         </button>
                                     )}
                                 </div>
