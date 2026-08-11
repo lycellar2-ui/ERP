@@ -498,16 +498,16 @@ function GdtInvoiceSyncPanel() {
     const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
     const [invoices, setInvoices] = useState<any[]>([])
 
-    const loadCaptcha = useCallback(async () => {
+    const loadCaptcha = useCallback(async (keepStatusMsg = false) => {
         setLoadingCaptcha(true)
-        setStatusMsg(null)
+        if (!keepStatusMsg) setStatusMsg(null)
         const res = await fetchGdtCaptchaAction()
         setLoadingCaptcha(false)
         if (res.success && res.key && res.content) {
             setCaptchaKey(res.key)
             setCaptchaSvg(res.content)
             setCaptchaInput('')
-        } else {
+        } else if (!keepStatusMsg) {
             setStatusMsg({ type: 'error', text: res.error || 'Không tải được Captcha từ Cổng Thuế' })
         }
     }, [])
@@ -542,8 +542,12 @@ function GdtInvoiceSyncPanel() {
                 text: `✅ Đã kết nối Cổng Thuế thành công! Tải về ${res.invoices.length} Hóa đơn ${invoiceType === 'sold' ? 'Đầu ra (Bán ra)' : 'Đầu vào (Mua vào)'}.`,
             })
         } else {
-            setStatusMsg({ type: 'error', text: res.error || 'Thất bại khi lôi Hóa đơn từ Thuế. Mã Captcha có thể sai.' })
-            loadCaptcha()
+            const errorMsg = res.error || 'Thất bại khi lôi Hóa đơn từ Thuế.'
+            setStatusMsg({
+                type: 'error',
+                text: `❌ ${errorMsg} Đã tự động tạo mã Captcha mới bên dưới, vui lòng nhập mã Captcha mới và thử lại.`,
+            })
+            await loadCaptcha(true) // keep error message displayed!
         }
     }
 
@@ -599,7 +603,7 @@ function GdtInvoiceSyncPanel() {
                         <div className="flex items-center gap-2">
                             <div className="p-1 rounded bg-white min-h-[42px] min-w-[150px] flex items-center justify-center border"
                                 dangerouslySetInnerHTML={{ __html: captchaSvg }} />
-                            <button onClick={loadCaptcha} disabled={loadingCaptcha} title="Đổi mã Captcha"
+                            <button onClick={() => loadCaptcha(false)} disabled={loadingCaptcha} title="Đổi mã Captcha"
                                 className="p-2 rounded hover:bg-[#2A4355] text-[#8AAEBB] transition-all">
                                 <RefreshCw size={16} className={loadingCaptcha ? 'animate-spin' : ''} />
                             </button>
@@ -608,9 +612,10 @@ function GdtInvoiceSyncPanel() {
 
                     {/* Captcha input */}
                     <div>
-                        <label className="text-xs block mb-1 font-semibold" style={{ color: '#8AAEBB' }}>Nhập Mã Captcha Trên</label>
+                        <label className="text-xs block mb-1 font-semibold" style={{ color: '#8AAEBB' }}>Nhập Mã Captcha Trên (Ấn Enter để gửi)</label>
                         <input type="text" value={captchaInput} onChange={e => setCaptchaInput(e.target.value.toUpperCase())}
-                            placeholder="Nhập mã chữ/số..." maxLength={6}
+                            onKeyDown={e => e.key === 'Enter' && handleSync()}
+                            placeholder="Nhập mã chữ/số..." maxLength={6} autoFocus
                             className="w-full px-3 py-2 text-sm font-mono tracking-widest uppercase font-bold"
                             style={inputStyle} {...focusHandler} />
                     </div>
