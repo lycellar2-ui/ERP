@@ -689,15 +689,15 @@ function SODetailDrawer({
                                         <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.name}</span>
                                     </div>
                                     {detail.orderType === 'TASTING' && (
-                                        <div className="flex justify-between py-1.5 px-2 rounded border border-amber-500/40 bg-amber-950/30 border-b border-[#2A4355]/20">
+                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-500/50 bg-amber-950/40 text-xs">
                                             <span className="font-bold text-amber-400">Loại Đơn Hàng:</span>
-                                            <span className="font-bold text-amber-300">🍷 Đơn Tasting (Ko thu tiền)</span>
+                                            <span className="font-extrabold text-amber-300">🍷 Đơn Hàng Tasting</span>
                                         </div>
                                     )}
                                     {detail.proposal && (
-                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>Tờ Trình Tasting:</span>
-                                            <span className="font-bold text-amber-300 font-mono">[{detail.proposal.proposalNo}] {detail.proposal.title}</span>
+                                        <div className="flex justify-between py-1.5 px-2.5 rounded-lg border border-amber-500/30 bg-amber-950/20 text-xs mt-1">
+                                            <span className="font-bold text-amber-400">Số Tờ Trình:</span>
+                                            <span className="font-extrabold text-amber-300 font-mono">[{detail.proposal.proposalNo}] {detail.proposal.title}</span>
                                         </div>
                                     )}
                                     {detail.customer.parent && (

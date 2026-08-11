@@ -588,7 +588,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     style={{ borderBottom: '1px solid #2A4355' }}>
                     <div>
                         <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
-                            Tạo Đơn Bán Hàng
+                            {orderType === 'TASTING' ? '🍷 Tạo Đơn Hàng Tasting' : '🛒 Tạo Đơn Bán Hàng'}
                         </h3>
                     </div>
                     <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={20} /></button>
@@ -649,16 +649,23 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                             {/* Proposal Selector for Tasting Orders */}
                             {orderType === 'TASTING' && (
-                                <div className="p-3.5 rounded-lg border-2 border-amber-400/80 bg-amber-50/90 shadow-sm space-y-2.5">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-xs font-extrabold text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
-                                            <FileText size={15} className="text-amber-800" />
+                                <div className="p-4 rounded-xl border-2 border-amber-400/90 bg-amber-50/95 shadow-md space-y-3">
+                                    <div className="flex items-center justify-between flex-wrap gap-1">
+                                        <label className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                                            <FileText size={16} className="text-amber-800" />
                                             TỜ TRÌNH TASTING LIÊN KẾT *
                                         </label>
-                                        <span className="text-[11px] font-semibold text-amber-900">Chọn Tờ trình đã được phê duyệt làm căn cứ duyệt đơn</span>
+                                        <span className="text-[11px] font-bold text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-full border border-amber-300">
+                                            Căn cứ phê duyệt đơn xuất kho Tasting 0đ
+                                        </span>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                                        {/* Field 1: Choose Proposal */}
+                                        <div className="md:col-span-6">
+                                            <label className="block text-[11px] font-black uppercase text-amber-950 mb-1">
+                                                CHỌN TỜ TRÌNH TASTING ĐÃ DUYỆT *
+                                            </label>
                                             <select
                                                 value={proposalId}
                                                 onChange={async e => {
@@ -694,9 +701,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         console.error(err)
                                                     }
                                                 }}
-                                                className="w-full px-3 py-2 text-xs font-bold rounded-md border border-amber-400 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                className="w-full px-3 py-2 text-xs font-bold rounded-lg border-2 border-amber-400 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             >
-                                                <option value="" className="text-slate-500 font-normal">-- Chọn Tờ trình Tasting --</option>
+                                                <option value="" className="text-slate-500 font-normal">-- Chọn Tờ trình Tasting đã duyệt --</option>
                                                 {proposals.map(p => (
                                                     <option key={p.id} value={p.id} className="text-slate-900 font-medium">
                                                         [{p.proposalNo}] {p.title} ({p.customer ? p.customer.name : 'Chung'})
@@ -704,13 +711,36 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 ))}
                                             </select>
                                         </div>
-                                        <div>
+
+                                        {/* Field 2: SỐ TỜ TRÌNH (Explicit dedicated field) */}
+                                        <div className="md:col-span-6">
+                                            <label className="block text-[11px] font-black uppercase text-amber-950 mb-1">
+                                                SỐ TỜ TRÌNH (VD: TT-2026-008) *
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    readOnly
+                                                    placeholder="Số Tờ trình (Tự động điền khi chọn Tờ trình)"
+                                                    value={proposals.find(p => p.id === proposalId)?.proposalNo || (proposalId ? proposalId : '')}
+                                                    className="w-full px-3 py-2 text-xs font-extrabold font-mono rounded-lg border-2 border-amber-400 bg-amber-100/90 text-amber-950 placeholder:text-amber-700/60 shadow-xs focus:outline-none"
+                                                />
+                                                {proposalId && (
+                                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-emerald-800 bg-emerald-200 px-2 py-0.5 rounded border border-emerald-400">
+                                                        ✓ ĐÃ LIÊN KẾT
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Field 3: Notes / Note Details */}
+                                        <div className="md:col-span-12">
                                             <input
                                                 type="text"
-                                                placeholder="Ghi chú thêm về Tờ trình (Ví dụ: TT-2026-008 thử vang cho tiệc)"
+                                                placeholder="Ghi chú thêm về Đơn Tasting / Lý do cấp rượu mẫu..."
                                                 value={notes}
                                                 onChange={e => setNotes(e.target.value)}
-                                                className="w-full px-3 py-2 text-xs font-medium rounded-md border border-amber-400 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-amber-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             />
                                         </div>
                                     </div>
@@ -1323,7 +1353,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             className="flex items-center gap-2 px-5 py-2 text-sm font-semibold transition-all"
                             style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                            {saving ? 'Đang lưu...' : 'Tạo Đơn'}
+                            {saving ? 'Đang lưu...' : (orderType === 'TASTING' ? '🍷 Tạo Đơn Hàng Tasting' : 'Tạo Đơn')}
                         </button>
                     </div>
                 </div>
@@ -1337,7 +1367,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                         <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F3547] bg-[#142433] print:hidden">
                             <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
                                 <Printer size={18} />
-                                <span>XEM TRƯỚC PHIẾU ĐƠN BÁN HÀNG (PRINT PREVIEW)</span>
+                                <span>{orderType === 'TASTING' ? 'XEM TRƯỚC PHIẾU ĐƠN HÀNG TASTING (PRINT PREVIEW)' : 'XEM TRƯỚC PHIẾU ĐƠN BÁN HÀNG (PRINT PREVIEW)'}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <button
@@ -1372,7 +1402,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">ĐƠN BÁN HÀNG</h1>
+                                        <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
+                                            {orderType === 'TASTING' ? 'ĐƠN HÀNG TASTING' : 'ĐƠN BÁN HÀNG'}
+                                        </h1>
                                         <p className="text-xs font-bold font-mono text-slate-900">DỰ THẢO</p>
                                         <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {new Date().toLocaleDateString('vi-VN')}</p>
                                     </div>
