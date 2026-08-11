@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Layers, Calculator, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X, Loader2, Zap, CalendarRange, ArrowRight, Upload } from 'lucide-react'
-import { TaxRateRow, TaxRateInput, getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate, calculateTaxEngine, TaxEngineResult, importTaxRatesFromExcel, parseTaxExcelTemplate } from './actions'
+import { useState, useCallback, useEffect } from 'react'
+import { Layers, Calculator, CheckCircle2, AlertCircle, Plus, Pencil, Trash2, X, Loader2, Zap, CalendarRange, ArrowRight, Upload, FileText, RefreshCw, ShieldCheck } from 'lucide-react'
+import { TaxRateRow, TaxRateInput, getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate, calculateTaxEngine, TaxEngineResult, importTaxRatesFromExcel, parseTaxExcelTemplate, fetchGdtCaptchaAction, fetchGdtInvoicesAction } from './actions'
 import type { BulkTaxRow } from './actions'
 import { calculateLandedCost, LandedCostResult } from './taxUtils'
 import { formatVND } from '@/lib/utils'
@@ -487,6 +487,218 @@ function EVFTARoadmapPanel() {
     )
 }
 
+// ── GDT Tax E-Invoice Panel ─────────────────────────
+function GdtInvoiceSyncPanel() {
+    const [captchaKey, setCaptchaKey] = useState('')
+    const [captchaSvg, setCaptchaSvg] = useState('')
+    const [captchaInput, setCaptchaInput] = useState('')
+    const [loadingCaptcha, setLoadingCaptcha] = useState(false)
+    const [syncing, setSyncing] = useState(false)
+    const [invoiceType, setInvoiceType] = useState<'sold' | 'purchase'>('sold')
+    const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+    const [invoices, setInvoices] = useState<any[]>([])
+
+    const loadCaptcha = useCallback(async () => {
+        setLoadingCaptcha(true)
+        setStatusMsg(null)
+        const res = await fetchGdtCaptchaAction()
+        setLoadingCaptcha(false)
+        if (res.success && res.key && res.content) {
+            setCaptchaKey(res.key)
+            setCaptchaSvg(res.content)
+            setCaptchaInput('')
+        } else {
+            setStatusMsg({ type: 'error', text: res.error || 'Không tải được Captcha từ Cổng Thuế' })
+        }
+    }, [])
+
+    useEffect(() => {
+        loadCaptcha()
+    }, [loadCaptcha])
+
+    const handleSync = async () => {
+        if (!captchaInput.trim()) {
+            setStatusMsg({ type: 'error', text: 'Vui lòng nhập 4 ký tự Mã Captcha Thuế!' })
+            return
+        }
+
+        setSyncing(true)
+        setStatusMsg(null)
+
+        const res = await fetchGdtInvoicesAction({
+            ckey: captchaKey,
+            cvalue: captchaInput.trim(),
+            invoiceType,
+            page: 0,
+            size: 50,
+        })
+
+        setSyncing(false)
+
+        if (res.success && res.invoices) {
+            setInvoices(res.invoices)
+            setStatusMsg({
+                type: 'success',
+                text: `✅ Đã kết nối Cổng Thuế thành công! Tải về ${res.invoices.length} Hóa đơn ${invoiceType === 'sold' ? 'Đầu ra (Bán ra)' : 'Đầu vào (Mua vào)'}.`,
+            })
+        } else {
+            setStatusMsg({ type: 'error', text: res.error || 'Thất bại khi lôi Hóa đơn từ Thuế. Mã Captcha có thể sai.' })
+            loadCaptcha()
+        }
+    }
+
+    const totalAmountSum = invoices.reduce((sum, inv) => sum + (Number(inv.tgtcthue) || Number(inv.totalAmount) || 0), 0)
+
+    return (
+        <div className="space-y-6">
+            {/* Top connection card */}
+            <div className="p-5 rounded-lg border flex flex-col md:flex-row md:items-center justify-between gap-4"
+                style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full" style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9' }}>
+                        <ShieldCheck size={24} />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>
+                                Kết Nối Cổng Hóa Đơn Điện Tử — Tổng Cục Thuế
+                            </h3>
+                            <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(91,168,138,0.2)', color: '#5BA88A' }}>
+                                hoadondientu.gdt.gov.vn
+                            </span>
+                        </div>
+                        <p className="text-xs mt-1" style={{ color: '#8AAEBB' }}>
+                            Mã Số Thuế Công Ty: <strong style={{ color: '#E8F1F2' }}>0109579480</strong> • Tài khoản: CÔNG TY TNHH THE TASTEVERSE
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setInvoiceType('sold')}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded transition-all ${invoiceType === 'sold' ? 'bg-[#87CBB9] text-[#0A1926]' : 'bg-[#142433] text-[#8AAEBB]'}`}>
+                        📄 Hóa Đơn Bán Ra (Đầu Ra)
+                    </button>
+                    <button onClick={() => setInvoiceType('purchase')}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded transition-all ${invoiceType === 'purchase' ? 'bg-[#D4A853] text-[#0A1926]' : 'bg-[#142433] text-[#8AAEBB]'}`}>
+                        📥 Hóa Đơn Mua Vào (Đầu Vào)
+                    </button>
+                </div>
+            </div>
+
+            {/* Captcha & Auth Form */}
+            <div className="p-5 rounded-lg border space-y-4" style={{ background: '#142433', borderColor: '#2A4355' }}>
+                <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                    <Zap size={16} style={{ color: '#D4A853' }} />
+                    Xác Thực Đăng Nhập & Kéo Hóa Đơn Từ Thuế
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    {/* Captcha Image display */}
+                    <div>
+                        <label className="text-xs block mb-1 font-semibold" style={{ color: '#8AAEBB' }}>Mã Captcha Từ Thuế</label>
+                        <div className="flex items-center gap-2">
+                            <div className="p-1 rounded bg-white min-h-[42px] min-w-[150px] flex items-center justify-center border"
+                                dangerouslySetInnerHTML={{ __html: captchaSvg }} />
+                            <button onClick={loadCaptcha} disabled={loadingCaptcha} title="Đổi mã Captcha"
+                                className="p-2 rounded hover:bg-[#2A4355] text-[#8AAEBB] transition-all">
+                                <RefreshCw size={16} className={loadingCaptcha ? 'animate-spin' : ''} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Captcha input */}
+                    <div>
+                        <label className="text-xs block mb-1 font-semibold" style={{ color: '#8AAEBB' }}>Nhập Mã Captcha Trên</label>
+                        <input type="text" value={captchaInput} onChange={e => setCaptchaInput(e.target.value.toUpperCase())}
+                            placeholder="Nhập mã chữ/số..." maxLength={6}
+                            className="w-full px-3 py-2 text-sm font-mono tracking-widest uppercase font-bold"
+                            style={inputStyle} {...focusHandler} />
+                    </div>
+
+                    {/* Submit action */}
+                    <div className="flex items-end h-full">
+                        <button onClick={handleSync} disabled={syncing || !captchaInput.trim()}
+                            className="w-full py-2.5 px-4 text-sm font-bold flex items-center justify-center gap-2 transition-all rounded"
+                            style={{ background: '#87CBB9', color: '#0A1926', opacity: syncing ? 0.7 : 1 }}>
+                            {syncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                            {syncing ? 'Đang Đăng Nhập & Kéo HĐ...' : '⚡ Đăng Nhập & Đồng Bộ Hóa Đơn'}
+                        </button>
+                    </div>
+                </div>
+
+                {statusMsg && (
+                    <div className={`p-3 rounded text-xs border ${statusMsg.type === 'success' ? 'bg-[rgba(91,168,138,0.15)] text-[#5BA88A] border-[#5BA88A]' : 'bg-[rgba(232,93,93,0.15)] text-[#E85D5D] border-[#E85D5D]'}`}>
+                        {statusMsg.text}
+                    </div>
+                )}
+            </div>
+
+            {/* Invoices Table */}
+            <div className="p-5 rounded-lg border space-y-4" style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h4 className="text-base font-bold" style={{ color: '#E8F1F2' }}>
+                            Danh Sách Hóa Đơn Điện Tử {invoiceType === 'sold' ? 'Đầu Ra (Bán Ra)' : 'Đầu Vào (Mua Vào)'}
+                        </h4>
+                        <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>
+                            Dữ liệu trực tiếp từ Tổng cục Thuế (`hoadondientu.gdt.gov.vn`)
+                        </p>
+                    </div>
+                    {invoices.length > 0 && (
+                        <div className="flex gap-3 text-xs font-bold">
+                            <span className="px-3 py-1 rounded bg-[#142433] text-[#87CBB9]">Số lượng: {invoices.length} HĐ</span>
+                            <span className="px-3 py-1 rounded bg-[#142433] text-[#D4A853]">Tổng Doanh Số: {formatVND(totalAmountSum)}</span>
+                        </div>
+                    )}
+                </div>
+
+                {invoices.length === 0 ? (
+                    <div className="py-12 text-center text-sm" style={{ color: '#8AAEBB' }}>
+                        Chưa có dữ liệu hóa đơn nào. Vui lòng nhập mã Captcha ở trên và bấm <strong>⚡ Đăng Nhập & Đồng Bộ Hóa Đơn</strong> để lôi danh sách hóa đơn mới nhất từ Cổng Thuế về!
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto rounded border" style={{ borderColor: '#2A4355' }}>
+                        <table className="w-full text-left text-xs">
+                            <thead style={{ background: '#142433', color: '#8AAEBB' }}>
+                                <tr>
+                                    <th className="px-3 py-2.5 font-bold">Số Hóa Đơn</th>
+                                    <th className="px-3 py-2.5 font-bold">Mẫu / Ký Hiệu</th>
+                                    <th className="px-3 py-2.5 font-bold">Ngày Lập</th>
+                                    <th className="px-3 py-2.5 font-bold">{invoiceType === 'sold' ? 'Khách Hàng (Người Mua)' : 'Nhà Cung Cấp (Người Bán)'}</th>
+                                    <th className="px-3 py-2.5 font-bold">Mã Số Thuế</th>
+                                    <th className="px-3 py-2.5 font-bold text-right">Tiền Hàng (VND)</th>
+                                    <th className="px-3 py-2.5 font-bold text-right">Thuế VAT (VND)</th>
+                                    <th className="px-3 py-2.5 font-bold text-right">Tổng Thanh Toán</th>
+                                    <th className="px-3 py-2.5 font-bold text-center">Trạng Thái Mapping</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y" style={{ borderColor: '#2A4355' }}>
+                                {invoices.map((inv, idx) => (
+                                    <tr key={idx} className="hover:bg-[#142433] transition-colors">
+                                        <td className="px-3 py-2.5 font-bold" style={{ color: '#87CBB9' }}>{inv.shdon || inv.invoiceNo || `HD-${idx + 1}`}</td>
+                                        <td className="px-3 py-2.5 font-mono" style={{ color: '#E8F1F2' }}>{inv.khhdon || inv.khmshdon || 'C26TTA'}</td>
+                                        <td className="px-3 py-2.5" style={{ color: '#8AAEBB' }}>{inv.tdlap || inv.createdDate || '-'}</td>
+                                        <td className="px-3 py-2.5 font-semibold" style={{ color: '#E8F1F2' }}>{inv.tnm || inv.buyerName || inv.tnban || 'Khách Hàng'}</td>
+                                        <td className="px-3 py-2.5 font-mono" style={{ color: '#D4A853' }}>{inv.mstnm || inv.buyerTaxCode || inv.mstnban || '-'}</td>
+                                        <td className="px-3 py-2.5 text-right font-semibold" style={{ color: '#E8F1F2' }}>{formatVND(Number(inv.tgtcthue || inv.amount || 0))}</td>
+                                        <td className="px-3 py-2.5 text-right" style={{ color: '#A5DED0' }}>{formatVND(Number(inv.tgtthue || inv.vatAmount || 0))}</td>
+                                        <td className="px-3 py-2.5 text-right font-bold" style={{ color: '#87CBB9' }}>{formatVND(Number(inv.tgtttbso || inv.totalAmount || 0))}</td>
+                                        <td className="px-3 py-2.5 text-center">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[rgba(91,168,138,0.15)] text-[#5BA88A]">
+                                                🟢 Khớp Thuế GDT
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
 // ── Main Client ──────────────────────────────────
 export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateRow[]; initialTotal: number }) {
     const [rows, setRows] = useState(initialRows)
@@ -501,7 +713,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
     const [editRow, setEditRow] = useState<TaxRateRow | null>(null)
 
     // Tab state
-    const [tab, setTab] = useState<'lookup' | 'engine' | 'evfta' | 'upload'>('lookup')
+    const [tab, setTab] = useState<'lookup' | 'engine' | 'evfta' | 'upload' | 'gdt'>('gdt')
 
     // Calculator state (manual)
     const [cifUsd, setCifUsd] = useState(10000)
@@ -565,6 +777,7 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
             {/* Tabs */}
             <div className="flex gap-1 p-1 rounded-md" style={{ background: '#142433', display: 'inline-flex' }}>
                 {[
+                    { key: 'gdt' as const, label: 'Đồng Bộ Hóa Đơn Thuế (GDT)', icon: FileText },
                     { key: 'lookup' as const, label: 'Tra Cứu & Bảng Thuế', icon: Layers },
                     { key: 'engine' as const, label: 'Tax Engine (Tự Động)', icon: Zap },
                     { key: 'evfta' as const, label: 'EVFTA Roadmap', icon: CalendarRange },
@@ -584,6 +797,8 @@ export function TaxClient({ initialRows, initialTotal }: { initialRows: TaxRateR
                     )
                 })}
             </div>
+
+            {tab === 'gdt' && <GdtInvoiceSyncPanel />}
 
             {tab === 'lookup' ? (
                 <div className="grid grid-cols-12 gap-5">

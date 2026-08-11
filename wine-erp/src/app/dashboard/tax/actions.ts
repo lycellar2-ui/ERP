@@ -569,3 +569,102 @@ export async function parseTaxExcelTemplate(): Promise<{
         },
     }
 }
+
+// ─── GDT Tax E-Invoice Integration ────────────────────────────
+export async function fetchGdtCaptchaAction(): Promise<{ success: boolean; key?: string; content?: string; error?: string }> {
+    try {
+        const res = await fetch('https://hoadondientu.gdt.gov.vn/api/captcha', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json, text/plain, */*',
+            },
+            cache: 'no-store',
+        })
+
+        if (!res.ok) {
+            return { success: false, error: 'Không thể kết nối Cổng Hóa đơn điện tử Thuế.' }
+        }
+
+        const data = await res.json()
+        return { success: true, key: data.key, content: data.content }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi mạng khi tải Captcha Thuế' }
+    }
+}
+
+export async function fetchGdtInvoicesAction(params: {
+    ckey: string
+    cvalue: string
+    invoiceType?: 'sold' | 'purchase'
+    page?: number
+    size?: number
+}): Promise<{
+    success: boolean
+    total?: number
+    invoices?: any[]
+    error?: string
+}> {
+    const { ckey, cvalue, invoiceType = 'sold', page = 0, size = 50 } = params
+
+    try {
+        // 1. Authenticate with GDT
+        const authRes = await fetch('https://hoadondientu.gdt.gov.vn/api/security-taxpayer/authenticate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Origin': 'https://hoadondientu.gdt.gov.vn',
+                'Referer': 'https://hoadondientu.gdt.gov.vn/',
+            },
+            body: JSON.stringify({
+                username: '0109579480',
+                password: 'Lyscellars@2026',
+                ckey,
+                cvalue,
+            }),
+            cache: 'no-store',
+        })
+
+        const authBody = await authRes.json()
+
+        if (!authRes.ok || !authBody.token) {
+            return {
+                success: false,
+                error: authBody.message || authBody.error || 'Sai mã Captcha hoặc Mật khẩu Thuế không chính xác.',
+            }
+        }
+
+        const token = authBody.token
+
+        // 2. Fetch Invoices (sold = đầu ra, purchase = đầu vào)
+        const endpoint = invoiceType === 'sold'
+            ? `https://hoadondientu.gdt.gov.vn/api/query/invoices/sold?sort=tdlap:desc&size=${size}&page=${page}`
+            : `https://hoadondientu.gdt.gov.vn/api/query/invoices/purchase?sort=tdlap:desc&size=${size}&page=${page}`
+
+        const invRes = await fetch(endpoint, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json, text/plain, */*',
+            },
+            cache: 'no-store',
+        })
+
+        if (!invRes.ok) {
+            return { success: false, error: 'Không thể tải danh sách hóa đơn từ Thuế.' }
+        }
+
+        const invData = await invRes.json()
+        const invoicesList = invData.datas || invData.items || invData.content || (Array.isArray(invData) ? invData : [])
+
+        return {
+            success: true,
+            total: invData.total || invoicesList.length,
+            invoices: serialize(invoicesList),
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi xử lý kết nối Cổng Thuế' }
+    }
+}
+
