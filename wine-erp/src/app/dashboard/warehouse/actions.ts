@@ -714,7 +714,11 @@ export async function getDeliveryOrders(filters: {
     })
 
     return orders.map(d => {
-        const totalQtyShipped = d.lines.reduce((s, l) => s + Number(l.qtyShipped > 0 ? l.qtyShipped : l.qtyPicked || 0), 0)
+        const totalQtyShipped = d.lines.reduce((s, l) => {
+            const shipped = Number(l.qtyShipped)
+            const picked = Number(l.qtyPicked)
+            return s + (shipped > 0 ? shipped : picked || 0)
+        }, 0)
         const totalQtyOrdered = d.so?.lines?.reduce((s, l) => s + Number(l.qtyOrdered || 0), 0) ?? 0
         return {
             id: d.id,
@@ -820,9 +824,11 @@ export async function createDeliveryOrder(input: {
     soId: string
     warehouseId: string
     lines: DOLineInput[]
+    issuedDate?: string | Date
 }): Promise<{ success: boolean; doId?: string; doNo?: string; error?: string }> {
     try {
-        const { soId, warehouseId, lines } = input
+        const { soId, warehouseId, lines, issuedDate } = input
+        const doDate = issuedDate ? new Date(issuedDate) : new Date()
 
         if (lines.length === 0) {
             return { success: false, error: 'Cần ít nhất 1 dòng xuất kho' }
@@ -875,6 +881,7 @@ export async function createDeliveryOrder(input: {
                     soId,
                     warehouseId,
                     status: 'DRAFT',
+                    createdAt: doDate,
                 },
             })
 
@@ -1063,7 +1070,7 @@ export async function reverseDeliveryOrder(
     try {
         const user = await getCurrentUser()
         const userRoles = user?.roles ?? []
-        const isAdmin = userRoles.includes('ADMIN') || user?.role === 'ADMIN'
+        const isAdmin = userRoles.includes('ADMIN')
 
         if (!isAdmin) {
             return { success: false, error: 'Chỉ Admin hệ thống mới có quyền Reverse (hoàn tác) phiếu xuất kho DO.' }
@@ -1078,14 +1085,17 @@ export async function reverseDeliveryOrder(
         })
 
         if (!deliveryOrder) return { success: false, error: 'Phiếu xuất kho DO không tồn tại' }
-        if (deliveryOrder.status === 'REVERSED' || deliveryOrder.status === 'CANCELLED') {
-            return { success: false, error: `Phiếu DO ${deliveryOrder.doNo} đã ở trạng thái ${deliveryOrder.status}, không thể hoàn tác lại.` }
+        if (deliveryOrder.status === 'CANCELLED') {
+            return { success: false, error: `Phiếu DO ${deliveryOrder.doNo} đã ở trạng thái ĐÃ HỦY/REVERSE, không thể hoàn tác lại.` }
         }
 
         await prisma.$transaction(async (tx) => {
             // 1. Restore quantities back to StockLots
             for (const line of deliveryOrder.lines) {
-                const qtyToReturn = Number(line.qtyShipped > 0 ? line.qtyShipped : line.qtyPicked)
+                const qtyShippedNum = Number(line.qtyShipped)
+                const qtyPickedNum = Number(line.qtyPicked)
+                const qtyToReturn = qtyShippedNum > 0 ? qtyShippedNum : qtyPickedNum
+
                 if (qtyToReturn > 0 && line.lotId) {
                     await tx.stockLot.update({
                         where: { id: line.lotId },
@@ -1094,27 +1104,13 @@ export async function reverseDeliveryOrder(
                             status: 'AVAILABLE',
                         },
                     })
-
-                    // Log movement
-                    await tx.stockMovement.create({
-                        data: {
-                            productId: line.productId,
-                            locationId: line.locationId,
-                            lotId: line.lotId,
-                            movementType: 'REVERSE_OUT',
-                            qty: qtyToReturn,
-                            referenceNo: deliveryOrder.doNo,
-                            note: `Hoàn tác xuất kho (Reverse DO) bởi Admin ${user?.name ?? ''}`,
-                            createdById: user?.id ?? 'system',
-                        },
-                    })
                 }
             }
 
-            // 2. Mark DO as REVERSED
+            // 2. Mark DO as CANCELLED
             await tx.deliveryOrder.update({
                 where: { id: doId },
-                data: { status: 'REVERSED' },
+                data: { status: 'CANCELLED' },
             })
 
             // 3. Revert Sales Order status back to CONFIRMED
@@ -1127,10 +1123,10 @@ export async function reverseDeliveryOrder(
         if (user?.id) {
             logAudit({
                 userId: user.id,
-                action: 'REVERSE',
+                action: 'UPDATE',
                 entityType: 'DeliveryOrder',
                 entityId: doId,
-                description: `Hoàn tác phiếu xuất kho ${deliveryOrder.doNo}`,
+                description: `Hoàn tác / Reverse phiếu xuất kho ${deliveryOrder.doNo}`,
             })
         }
 
@@ -1138,6 +1134,46 @@ export async function reverseDeliveryOrder(
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/sales')
         revalidatePath('/dashboard/finance')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Update DO Date — Custom backdate / edit ──────────────
+export async function updateDeliveryOrderDate(
+    doId: string,
+    customDate: string | Date
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const d = new Date(customDate)
+        if (isNaN(d.getTime())) return { success: false, error: 'Ngày xuất hàng không hợp lệ' }
+
+        const deliveryOrder = await prisma.deliveryOrder.findUnique({
+            where: { id: doId },
+            select: { id: true, doNo: true },
+        })
+
+        if (!deliveryOrder) return { success: false, error: 'Phiếu DO không tồn tại' }
+
+        await prisma.$transaction(async (tx) => {
+            // Update DO createdAt
+            await tx.deliveryOrder.update({
+                where: { id: doId },
+                data: { createdAt: d },
+            })
+
+            // Update associated stock movements if any
+            await tx.stockMovement.updateMany({
+                where: { referenceNo: deliveryOrder.doNo },
+                data: { createdAt: d },
+            })
+        })
+
+        revalidateCache('wms')
+        revalidatePath('/dashboard/warehouse')
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/reports')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }

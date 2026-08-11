@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
     getDeliveryOrders, getSOsForDelivery, createDeliveryOrder, confirmDeliveryOrder, markDODelivered,
-    reverseDeliveryOrder, getDODetail, getAvailableLotsForProduct, getWarehouses,
+    reverseDeliveryOrder, updateDeliveryOrderDate, getDODetail, getAvailableLotsForProduct, getWarehouses,
 } from './actions'
 import { formatDate } from '@/lib/utils'
 
@@ -117,11 +117,34 @@ export function DeliveryOrderTab({ warehouses }: {
         )
     }, [pendingSOs, searchQuery])
 
+    const [editDoDate, setEditDoDate] = useState('')
+    const [savingDate, setSavingDate] = useState(false)
+
     const openDetail = async (id: string) => {
         setDetailLoading(true)
         const data = await getDODetail(id)
         setDetailData(data)
+        if (data?.createdAt) {
+            setEditDoDate(new Date(data.createdAt).toISOString().slice(0, 10))
+        }
         setDetailLoading(false)
+    }
+
+    const handleSaveDate = async () => {
+        if (!detailData || !editDoDate) return
+        setSavingDate(true)
+        try {
+            const res = await updateDeliveryOrderDate(detailData.id, editDoDate)
+            if (!res.success) throw new Error(res.error || 'Lỗi cập nhật ngày')
+            toast.success(`Đã cập nhật Ngày Xuất Hàng thành ${editDoDate}!`)
+            reload()
+            const updatedData = await getDODetail(detailData.id)
+            setDetailData(updatedData)
+        } catch (err: any) {
+            toast.error(`Lỗi: ${err.message}`)
+        } finally {
+            setSavingDate(false)
+        }
     }
 
     const handleStartPicking = (soId: string) => {
@@ -482,7 +505,32 @@ export function DeliveryOrderTab({ warehouses }: {
                             <div className="p-5 space-y-4 flex-1 overflow-y-auto">
                                 <div className="grid grid-cols-2 gap-3">
                                     <InfoCard label="Trạng thái" value={(DO_STATUS[detailData.status] ?? DO_STATUS.DRAFT).label} />
-                                    <InfoCard label="Ngày tạo" value={formatDate(detailData.createdAt)} />
+                                    <InfoCard label="Ngày xuất ban đầu" value={formatDate(detailData.createdAt)} />
+                                </div>
+
+                                {/* Custom Date Editor for backdating/editing data */}
+                                <div className="px-3.5 py-2.5 rounded-xl flex flex-wrap items-center justify-between gap-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>📅 Ngày Xuất Hàng (Chỉnh sửa dữ liệu)</p>
+                                        <p className="text-xs font-bold mt-0.5" style={{ color: '#0F172A' }}>{formatDate(detailData.createdAt)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <input
+                                            type="date"
+                                            value={editDoDate}
+                                            onChange={e => setEditDoDate(e.target.value)}
+                                            className="px-2 py-1 text-xs rounded border border-slate-300 font-mono outline-none shadow-xs"
+                                            style={{ background: '#FFFFFF', color: '#0F172A' }}
+                                        />
+                                        <button
+                                            onClick={handleSaveDate}
+                                            disabled={savingDate}
+                                            className="px-2.5 py-1 text-xs font-bold rounded text-white bg-amber-600 hover:bg-amber-700 transition-all flex items-center gap-1 shadow-xs"
+                                        >
+                                            {savingDate ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                            Lưu Ngày
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Action Buttons */}
@@ -512,7 +560,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                             <Truck size={14} /> Đã Giao Hàng
                                         </button>
                                     )}
-                                    {detailData.status !== 'REVERSED' && detailData.status !== 'CANCELLED' && (
+                                    {detailData.status !== 'CANCELLED' && (
                                         <button
                                             onClick={() => handleReverse(detailData.id, detailData.doNo)}
                                             className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all hover:brightness-105"
@@ -605,6 +653,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     const [sos, setSOs] = useState<SOOption[]>([])
     const [selectedSO, setSelectedSO] = useState<SOOption | null>(null)
     const [warehouseId, setWarehouseId] = useState('')
+    const [issuedDate, setIssuedDate] = useState(() => new Date().toISOString().slice(0, 10))
     const [lines, setLines] = useState<{ productId: string; lotId: string; locationId: string; qtyPicked: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [lotsMap, setLotsMap] = useState<Record<string, any[]>>({})
@@ -720,7 +769,12 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         if (validLines.length === 0) return toast.error('Chưa có vị trí nhặt hàng nào được chọn.')
         setSaving(true)
         try {
-            const res = await createDeliveryOrder({ soId: selectedSO.id, warehouseId, lines: validLines })
+            const res = await createDeliveryOrder({
+                soId: selectedSO.id,
+                warehouseId,
+                lines: validLines,
+                issuedDate: issuedDate ? new Date(issuedDate) : undefined,
+            })
             if (!res.success || !res.doId) throw new Error(res.error || 'Lỗi tạo DO')
 
             if (autoConfirm) {
@@ -752,6 +806,19 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn SO —</option>
                 {sos.map(s => <option key={s.id} value={s.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>{s.soNo} — {s.customerName}</option>)}
             </select>
+        </div>
+    )
+
+    const renderDateSelect = () => (
+        <div>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#475569' }}>📅 Ngày Xuất Hàng *</label>
+            <input
+                type="date"
+                value={issuedDate}
+                onChange={e => setIssuedDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none font-medium"
+                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
+            />
         </div>
     )
 
@@ -1008,25 +1075,31 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     {/* ═══ DESKTOP: Single page ═══ */}
                     <div className="hidden sm:block p-5 space-y-4">
                         {selectedSO ? (
-                            <div className="p-3.5 rounded-xl flex items-center justify-between" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                <div>
-                                    <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Đơn Hàng Bán (Mặc Định)</span>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="text-sm font-bold font-mono" style={{ color: '#B47816' }}>{selectedSO.soNo}</span>
-                                        <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>· {selectedSO.customerName}</span>
+                            <div className="space-y-3">
+                                <div className="p-3.5 rounded-xl flex items-center justify-between" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                    <div>
+                                        <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Đơn Hàng Bán (Mặc Định)</span>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-sm font-bold font-mono" style={{ color: '#B47816' }}>{selectedSO.soNo}</span>
+                                            <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>· {selectedSO.customerName}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Kho Xuất Bán (Tự Động Mặc Định)</span>
+                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A' }}>
+                                            🏢 {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Kho Xuất Bán (Tự Động Mặc Định)</span>
-                                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A' }}>
-                                        🏢 {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
-                                    </span>
+                                <div className="max-w-xs">
+                                    {renderDateSelect()}
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-3 gap-3">
                                 {renderSOSelect()}
                                 {renderWarehouseSelect()}
+                                {renderDateSelect()}
                             </div>
                         )}
                         {selectedSO && lines.length > 0 && renderProductLines()}
@@ -1040,11 +1113,12 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                             <div className="space-y-4">
                                 <div className="p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                     <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#B47816' }}>
-                                        Bước 1: Chọn Đơn Hàng & Kho
+                                        Bước 1: Chọn Đơn Hàng, Kho & Ngày Xuất
                                     </p>
                                     <div className="space-y-3">
                                         {renderSOSelect()}
                                         {renderWarehouseSelect()}
+                                        {renderDateSelect()}
                                     </div>
                                 </div>
                                 {selectedSO && (
