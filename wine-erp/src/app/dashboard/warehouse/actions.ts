@@ -1156,18 +1156,9 @@ export async function updateDeliveryOrderDate(
 
         if (!deliveryOrder) return { success: false, error: 'Phiếu DO không tồn tại' }
 
-        await prisma.$transaction(async (tx) => {
-            // Update DO createdAt
-            await tx.deliveryOrder.update({
-                where: { id: doId },
-                data: { createdAt: d },
-            })
-
-            // Update associated stock movements if any
-            await tx.stockMovement.updateMany({
-                where: { referenceNo: deliveryOrder.doNo },
-                data: { createdAt: d },
-            })
+        await prisma.deliveryOrder.update({
+            where: { id: doId },
+            data: { createdAt: d },
         })
 
         revalidateCache('wms')
