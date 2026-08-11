@@ -895,19 +895,19 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
             {/* Desktop Table View */}
             <div className="hidden md:block rounded-md overflow-hidden w-full" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                <div className="overflow-x-auto w-full">
-                    <table style={{ width: '100%', minWidth: '1550px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                <div className="w-full">
+                    <table className="w-full" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
                         <colgroup>
-                            <col style={{ width: '150px' }} />
-                            <col style={{ width: '280px' }} />
-                            <col style={{ width: '185px' }} />
-                            <col style={{ width: '100px' }} />
-                            <col style={{ width: '120px' }} />
-                            <col style={{ width: '135px' }} />
-                            <col style={{ width: '130px' }} />
+                            <col style={{ width: '110px' }} />
+                            <col style={{ minWidth: '150px' }} />
                             <col style={{ width: '140px' }} />
-                            <col style={{ width: '140px' }} />
-                            <col style={{ width: '260px' }} />
+                            <col style={{ width: '75px' }} />
+                            <col style={{ width: '80px' }} />
+                            <col style={{ width: '110px' }} />
+                            <col style={{ width: '95px' }} />
+                            <col style={{ width: '110px' }} />
+                            <col style={{ width: '110px' }} />
+                            <col style={{ width: '145px' }} />
                         </colgroup>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #2A4355' }}>
@@ -959,58 +959,58 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
                                             onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent'}
                                         >
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs font-bold font-mono text-[#87CBB9] whitespace-nowrap block truncate" title={p.proposalNo}>
                                                     {p.proposalNo}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
                                                 <p className="text-sm font-medium truncate text-[#E8F1F2]" title={p.title}>{p.title}</p>
                                                 {p.attachmentCount > 0 && (
-                                                    <span className="text-xs text-[#4A6A7A]">
+                                                    <span className="text-[11px] text-[#4A6A7A]">
                                                         <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] px-2.5 py-1 rounded-md font-semibold inline-block truncate max-w-full"
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-[11px] px-2 py-0.5 rounded-md font-semibold inline-block truncate max-w-full"
                                                     style={{ background: catBadge.bg, color: catBadge.color, border: `1px solid ${catBadge.border}` }}
                                                     title={CATEGORY_LABELS[p.category] || p.category}>
                                                     {catBadge.label}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs px-2 py-0.5 rounded-full font-bold inline-block whitespace-nowrap"
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-[11px] px-1.5 py-0.5 rounded-full font-bold inline-block whitespace-nowrap"
                                                     style={{ background: prioCfg.bg, color: prioCfg.color }}>
                                                     {prioCfg.label}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3 text-right" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-sm font-bold block truncate text-[#E8F1F2]">
+                                            <td className="px-2 py-2.5 text-right" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-xs font-bold block truncate text-[#E8F1F2]">
                                                     {p.estimatedAmount ? formatCompactVND(p.estimatedAmount) : '—'}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs truncate block text-[#8AAEBB]" title={p.creatorName}>{p.creatorName}</span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap"
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium inline-block whitespace-nowrap"
                                                     style={{ background: statusCfg.bg, color: statusCfg.color }}>
                                                     {statusCfg.label}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs whitespace-nowrap text-[#8AAEBB]">
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-[11px] whitespace-nowrap text-[#8AAEBB]">
                                                     {formatDateTime(p.submittedAt || p.createdAt)}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
                                                 {(p.status === 'APPROVED' || p.status === 'IN_PROGRESS' || p.status === 'CLOSED') ? (
-                                                    <span className="text-xs font-bold whitespace-nowrap text-[#5BA88A]" title="Thời gian CEO phê duyệt hoàn tất">
+                                                    <span className="text-[11px] font-bold whitespace-nowrap text-[#5BA88A]" title="Thời gian CEO phê duyệt hoàn tất">
                                                         {formatDateTime(p.resolvedAt)}
                                                     </span>
                                                 ) : p.status === 'REJECTED' ? (
-                                                    <span className="text-xs font-medium whitespace-nowrap text-[#8B1A2E]" title="Thời gian từ chối">
+                                                    <span className="text-[11px] font-medium whitespace-nowrap text-[#8B1A2E]" title="Thời gian từ chối">
                                                         {formatDateTime(p.resolvedAt)}
                                                     </span>
                                                 ) : (
@@ -1019,7 +1019,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
                                                 <div className="flex justify-end gap-1.5 flex-nowrap">
                                                     <button onClick={() => openDetail(p.id)}
                                                         className="px-2 py-1.5 text-xs font-medium rounded transition-all whitespace-nowrap"
