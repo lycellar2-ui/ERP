@@ -46,7 +46,16 @@ export async function getDashboardStats(range: DateRange = 'month') {
             }),
             prisma.stockLot.findMany({
                 where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-                select: { qtyAvailable: true, unitLandedCost: true },
+                select: {
+                    qtyAvailable: true,
+                    unitLandedCost: true,
+                    product: {
+                        select: {
+                            marginPrice: { select: { wholesalePrice: true, importPrice: true } },
+                            priceLines: { select: { price: true }, take: 1 },
+                        }
+                    }
+                },
             }),
             prisma.approvalRequest.count({ where: { status: 'PENDING' } }),
             prisma.shipment.findMany({
@@ -77,9 +86,19 @@ export async function getDashboardStats(range: DateRange = 'month') {
         const prevRev = Number(prevRevenue._sum.totalAmount ?? 0)
         const revenueGrowth = prevRev > 0 ? ((revenue - prevRev) / prevRev) * 100 : 0
 
-        const stockTotalValue = stockAgg.reduce(
-            (sum, lot) => sum + Number(lot.qtyAvailable) * Number(lot.unitLandedCost), 0
-        )
+        const stockTotalValue = stockAgg.reduce((sum, lot) => {
+            const qty = Number(lot.qtyAvailable)
+            let unitCost = Number(lot.unitLandedCost)
+            if (!unitCost || unitCost <= 0) {
+                unitCost = Number(
+                    lot.product?.marginPrice?.importPrice ??
+                    lot.product?.marginPrice?.wholesalePrice ??
+                    lot.product?.priceLines?.[0]?.price ??
+                    350000
+                )
+            }
+            return sum + qty * unitCost
+        }, 0)
         const stockQty = stockAgg.reduce((sum, lot) => sum + Number(lot.qtyAvailable), 0)
 
         return {
@@ -106,7 +125,7 @@ export async function getDashboardStats(range: DateRange = 'month') {
                 status: so.status,
             })),
         }
-    }, 30_000) // Cache 30s
+    }, 5_000) // Cache 5s
 }
 
 // ─── Monthly revenue chart (last 6 months) ───────────────
@@ -301,18 +320,27 @@ export async function getPLSummary() {
         const from = startOfMonth(now)
         const to = endOfMonth(now)
 
-        // Group journal lines by account on the DB side for performance
-        const groups = await prisma.journalLine.groupBy({
-            by: ['account'],
-            where: {
-                entry: {
-                    postedAt: { gte: from, lte: to },
+        // Group journal lines by account on the DB side for performance, and get month SO total
+        const [groups, monthSalesOrders] = await Promise.all([
+            prisma.journalLine.groupBy({
+                by: ['account'],
+                where: {
+                    entry: {
+                        postedAt: { gte: from, lte: to },
+                    },
                 },
-            },
-            _sum: { debit: true, credit: true },
-        })
+                _sum: { debit: true, credit: true },
+            }),
+            prisma.salesOrder.aggregate({
+                where: {
+                    status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                    createdAt: { gte: from, lte: to },
+                },
+                _sum: { totalAmount: true },
+            }),
+        ])
 
-        let revenue = 0    // TK 511 = Revenue
+        let revenueFromJournal = 0    // TK 511 = Revenue
         let cogs = 0       // TK 632 = COGS
         let expenses = 0   // TK 641, 642, 635, 811
 
@@ -322,7 +350,7 @@ export async function getPLSummary() {
             const credit = Number(g._sum.credit ?? 0)
 
             if (acc.startsWith('511')) {
-                revenue += credit - debit // Revenue is Credit-side
+                revenueFromJournal += credit - debit // Revenue is Credit-side
             } else if (acc.startsWith('632')) {
                 cogs += debit - credit    // COGS is Debit-side
             } else if (acc.startsWith('641') || acc.startsWith('642') || acc.startsWith('635') || acc.startsWith('811')) {
@@ -330,12 +358,15 @@ export async function getPLSummary() {
             }
         }
 
+        const monthSORevenue = Number(monthSalesOrders._sum.totalAmount ?? 0)
+        const revenue = revenueFromJournal > 0 ? revenueFromJournal : monthSORevenue
+
         const grossProfit = revenue - cogs
         const netProfit = grossProfit - expenses
         const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0
 
         return { revenue, cogs, grossProfit, netProfit, expenses, grossMargin }
-    }, 60_000) // 60s
+    }, 5_000) // 5s
 }
 
 // ─── Cash Position for Dashboard ─────────────────────────

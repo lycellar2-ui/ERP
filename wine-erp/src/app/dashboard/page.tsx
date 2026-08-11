@@ -178,9 +178,9 @@ export default async function DashboardPage() {
                         badge={<span className="text-[10px] px-2 py-0.5 rounded-full font-bold ml-1" style={{ background: pl.grossMargin >= 25 ? 'rgba(91,168,138,0.15)' : 'rgba(212,168,83,0.15)', color: pl.grossMargin >= 25 ? '#5BA88A' : '#D4A853' }}>Biên {pl.grossMargin.toFixed(1)}%</span>} />
                     <div className="space-y-2.5">
                         {[
-                            { label: '(+) Doanh thu thuần', value: pl.revenue, color: '#87CBB9' },
+                            { label: '(+) Doanh thu thuần', value: primaryRevenue, color: '#87CBB9' },
                             { label: '(−) Giá vốn hàng bán', value: -pl.cogs, color: '#E05252', neg: true },
-                            { label: '(=) LỢI NHUẬN GỘP', value: pl.grossProfit, color: '#D4A853', bold: true, line: true },
+                            { label: '(=) LỢI NHUẬN GỘP', value: pl.grossProfit, color: pl.grossProfit >= 0 ? '#D4A853' : '#E05252', bold: true, line: true },
                             { label: '(−) Chi phí hoạt động', value: -pl.expenses, color: '#8AAEBB', neg: true },
                             { label: '(=) LỢI NHUẬN RÒNG', value: pl.netProfit, color: pl.netProfit >= 0 ? '#5BA88A' : '#8B1A2E', bold: true, line: true },
                         ].map(r => (
@@ -189,7 +189,7 @@ export default async function DashboardPage() {
                                 <div className="flex justify-between items-center">
                                     <span className={`text-xs ${r.bold ? 'font-bold' : ''}`} style={{ color: r.bold ? r.color : '#8AAEBB' }}>{r.label}</span>
                                     <span className={`text-sm ${r.bold ? 'font-bold' : 'font-medium'}`} style={{ color: r.color }}>
-                                        {r.neg ? '−' : ''}{formatVND(Math.abs(r.value))}
+                                        {r.value < 0 ? `− ${formatVND(Math.abs(r.value))}` : formatVND(r.value)}
                                     </span>
                                 </div>
                             </div>
