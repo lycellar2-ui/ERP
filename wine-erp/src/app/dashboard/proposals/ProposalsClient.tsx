@@ -97,8 +97,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     const getCategoryBadge = useCallback((cat: string) => {
         switch (cat) {
             case 'TASTING':
-            case 'SPECIAL_EVENT':
                 return { label: '🍷 Tasting (Thử Rượu)', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
+            case 'SPECIAL_EVENT':
+                return { label: '🎪 Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'PRICE_ADJUSTMENT':
                 return { label: '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
             case 'BUDGET_REQUEST':
@@ -717,6 +718,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     >
                         <option value="ALL">All Categories (Tất cả loại)</option>
                         <option value="TASTING">🍷 Tờ Trình Tasting (Thử Rượu)</option>
+                        <option value="SPECIAL_EVENT">🎪 Sự Kiện / Event</option>
                         <option value="PRICE_ADJUSTMENT">🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt</option>
                         <option value="BUDGET_REQUEST">💰 Xin Ngân Sách</option>
                         <option value="CAPITAL_EXPENDITURE">🏢 Mua Sắm TSCĐ</option>

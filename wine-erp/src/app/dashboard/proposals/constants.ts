@@ -2,7 +2,7 @@
 
 export const CATEGORY_LABELS: Record<string, string> = {
     TASTING: '🍷 Tờ Trình Tasting (Thử Rượu / Hàng Mẫu)',
-    SPECIAL_EVENT: '🍷 Sự Kiện / Tasting (Thử Rượu)',
+    SPECIAL_EVENT: '🎪 Tờ Trình Tổ Chức Sự Kiện / Event',
     PRICE_ADJUSTMENT: '🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt',
     BUDGET_REQUEST: 'Xin Ngân Sách',
     CAPITAL_EXPENDITURE: 'Mua Sắm TSCĐ',
