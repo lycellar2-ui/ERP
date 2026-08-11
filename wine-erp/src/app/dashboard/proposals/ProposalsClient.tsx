@@ -65,6 +65,7 @@ function canApproveAtLevel(level: number, roles: string[] = []): boolean {
 export default function ProposalsClient({ initialProposals, stats, userId, userName, userRoles }: Props) {
     const [proposals, setProposals] = useState(initialProposals)
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'DRAFT' | 'APPROVED' | 'REJECTED'>('ALL')
+    const [categoryFilter, setCategoryFilter] = useState<string>('ALL')
     const [search, setSearch] = useState('')
     const [showCreate, setShowCreate] = useState(false)
     const [detailId, setDetailId] = useState<string | null>(null)
@@ -81,11 +82,58 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         }
     }, [searchParams])
 
+    const formatDateTime = useCallback((d: Date | string | null | undefined) => {
+        if (!d) return '—'
+        const dt = new Date(d)
+        if (isNaN(dt.getTime())) return '—'
+        const hours = String(dt.getHours()).padStart(2, '0')
+        const minutes = String(dt.getMinutes()).padStart(2, '0')
+        const day = String(dt.getDate()).padStart(2, '0')
+        const month = String(dt.getMonth() + 1).padStart(2, '0')
+        const year = dt.getFullYear()
+        return `${hours}:${minutes} · ${day}/${month}/${year}`
+    }, [])
+
+    const getCategoryBadge = useCallback((cat: string) => {
+        switch (cat) {
+            case 'TASTING':
+            case 'SPECIAL_EVENT':
+                return { label: '🍷 Tasting (Thử Rượu)', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
+            case 'PRICE_ADJUSTMENT':
+                return { label: '🏷️ Cơ Chế Giá', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
+            case 'BUDGET_REQUEST':
+                return { label: '💰 Xin Ngân Sách', bg: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: 'rgba(135,203,185,0.3)' }
+            case 'CAPITAL_EXPENDITURE':
+                return { label: '🏢 Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
+            case 'NEW_SUPPLIER':
+                return { label: '🤝 NCC Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
+            case 'NEW_PRODUCT':
+                return { label: '📦 Sản Phẩm Mới', bg: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: 'rgba(91,168,138,0.3)' }
+            case 'POLICY_CHANGE':
+                return { label: '📋 Đổi Quy Trình', bg: 'rgba(224,140,80,0.15)', color: '#E08C50', border: 'rgba(224,140,80,0.3)' }
+            case 'PAYMENT_SCHEDULE':
+                return { label: '📅 Lịch Thanh Toán', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
+            case 'PROMOTION_CAMPAIGN':
+                return { label: '🎁 Khuyến Mãi', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
+            default:
+                return { label: CATEGORY_LABELS[cat] || cat, bg: 'rgba(74,106,122,0.15)', color: '#8AAEBB', border: 'rgba(74,106,122,0.3)' }
+        }
+    }, [])
+
     const filtered = proposals.filter(p => {
         if (filter === 'PENDING' && !['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)) return false
         if (filter === 'DRAFT' && p.status !== 'DRAFT') return false
         if (filter === 'APPROVED' && !['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(p.status)) return false
         if (filter === 'REJECTED' && p.status !== 'REJECTED') return false
+        
+        if (categoryFilter !== 'ALL') {
+            if (categoryFilter === 'TASTING') {
+                if (p.category !== 'TASTING' && p.category !== 'SPECIAL_EVENT') return false
+            } else if (p.category !== categoryFilter) {
+                return false
+            }
+        }
+
         if (search) {
             const s = search.toLowerCase()
             return p.proposalNo.toLowerCase().includes(s) ||
@@ -654,14 +702,41 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         </button>
                     ))}
                 </div>
-                <div className="flex-1 relative min-w-[280px]">
+
+                {/* Category Dropdown Filter */}
+                <div className="flex-shrink-0">
+                    <select
+                        value={categoryFilter}
+                        onChange={e => setCategoryFilter(e.target.value)}
+                        className="px-3 py-2 text-xs font-semibold rounded-md outline-none cursor-pointer"
+                        style={{
+                            background: categoryFilter === 'ALL' ? '#1B2E3D' : 'rgba(135,203,185,0.15)',
+                            border: '1px solid #2A4355',
+                            color: categoryFilter === 'ALL' ? '#8AAEBB' : '#87CBB9',
+                        }}
+                    >
+                        <option value="ALL">All Categories (Tất cả loại)</option>
+                        <option value="TASTING">🍷 Tờ Trình Tasting (Thử Rượu)</option>
+                        <option value="PRICE_ADJUSTMENT">🏷️ Tờ Trình Cơ Chế Giá</option>
+                        <option value="BUDGET_REQUEST">💰 Xin Ngân Sách</option>
+                        <option value="CAPITAL_EXPENDITURE">🏢 Mua Sắm TSCĐ</option>
+                        <option value="NEW_SUPPLIER">🤝 Nhà Cung Cấp Mới</option>
+                        <option value="NEW_PRODUCT">📦 Sản Phẩm Mới</option>
+                        <option value="POLICY_CHANGE">📋 Thay Đổi Quy Trình</option>
+                        <option value="PAYMENT_SCHEDULE">📅 Lịch Thanh Toán</option>
+                        <option value="PROMOTION_CAMPAIGN">🎁 Chương Trình KM</option>
+                        <option value="OTHER"> Khác</option>
+                    </select>
+                </div>
+
+                <div className="flex-1 relative min-w-[240px]">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                     <input
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Tìm theo mã, tiêu đề, người trình..."
-                        className="w-full pl-9 pr-3 py-2 text-sm rounded-md"
+                        className="w-full pl-9 pr-3 py-2 text-xs rounded-md"
                         style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', outline: 'none' }}
                     />
                 </div>
@@ -786,33 +861,35 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             {/* Desktop Table View */}
             <div className="hidden md:block rounded-md overflow-hidden" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
                 <div className="overflow-x-auto">
-                    <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                    <table style={{ width: '100%', minWidth: '1380px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                         <colgroup>
-                            <col style={{ width: '115px' }} />
-                            <col />
-                            <col style={{ width: '130px' }} />
-                            <col style={{ width: '100px' }} />
-                            <col style={{ width: '150px' }} />
-                            <col style={{ width: '130px' }} />
-                            <col style={{ width: '125px' }} />
+                            <col style={{ width: '145px' }} />
+                            <col style={{ width: '220px' }} />
+                            <col style={{ width: '155px' }} />
                             <col style={{ width: '95px' }} />
-                            <col style={{ width: '260px' }} />
+                            <col style={{ width: '110px' }} />
+                            <col style={{ width: '125px' }} />
+                            <col style={{ width: '115px' }} />
+                            <col style={{ width: '135px' }} />
+                            <col style={{ width: '135px' }} />
+                            <col style={{ width: '220px' }} />
                         </colgroup>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #2A4355' }}>
                                 {[
-                                    { label: 'Mã', align: 'left' as const },
-                                    { label: 'Tiêu đề', align: 'left' as const },
-                                    { label: 'Loại', align: 'left' as const },
-                                    { label: 'Ưu tiên', align: 'left' as const },
-                                    { label: 'Giá trị', align: 'right' as const },
-                                    { label: 'Người trình', align: 'left' as const },
-                                    { label: 'Trạng thái', align: 'left' as const },
-                                    { label: 'Ngày trình', align: 'left' as const },
-                                    { label: 'Thao tác', align: 'right' as const },
+                                    { label: 'Mã Tờ Trình', align: 'left' as const },
+                                    { label: 'Tiêu Đề', align: 'left' as const },
+                                    { label: 'Loại Tờ Trình', align: 'left' as const },
+                                    { label: 'Ưu Tiên', align: 'left' as const },
+                                    { label: 'Giá Trị', align: 'right' as const },
+                                    { label: 'Người Trình', align: 'left' as const },
+                                    { label: 'Trạng Thái', align: 'left' as const },
+                                    { label: 'Ngày Giờ Trình', align: 'left' as const },
+                                    { label: 'Duyệt Final', align: 'left' as const },
+                                    { label: 'Thao Tác', align: 'right' as const },
                                 ].map(col => (
                                     <th key={col.label}
-                                        className="px-3 py-3 text-xs font-semibold uppercase tracking-wider"
+                                        className="px-3 py-3 text-xs font-bold uppercase tracking-wider"
                                         style={{ color: '#4A6A7A', textAlign: col.align, whiteSpace: 'nowrap' }}>
                                         {col.label}
                                     </th>
@@ -822,10 +899,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={9}>
+                                    <td colSpan={10}>
                                         <div className="flex flex-col items-center py-12 gap-2">
                                             <FileText size={32} style={{ color: '#2A4355' }} />
-                                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tờ trình nào</p>
+                                            <p className="text-sm" style={{ color: '#4A6A7A' }}>Chưa có tờ trình nào khớp với bộ lọc</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -833,6 +910,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 filtered.map(p => {
                                     const statusCfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.DRAFT
                                     const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                                    const catBadge = getCategoryBadge(p.category)
                                     const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
                                     const canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)
 
@@ -847,22 +925,23 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                             onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent'}
                                         >
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs font-bold font-mono" style={{ color: '#87CBB9', whiteSpace: 'nowrap' }}>
+                                                <span className="text-xs font-bold font-mono text-[#87CBB9] whitespace-nowrap block truncate" title={p.proposalNo}>
                                                     {p.proposalNo}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle', maxWidth: '280px' }}>
-                                                <p className="text-sm font-medium truncate" style={{ color: '#E8F1F2' }}>{p.title}</p>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <p className="text-sm font-medium truncate text-[#E8F1F2]" title={p.title}>{p.title}</p>
                                                 {p.attachmentCount > 0 && (
-                                                    <span className="text-xs" style={{ color: '#4A6A7A' }}>
+                                                    <span className="text-xs text-[#4A6A7A]">
                                                         <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
                                                     </span>
                                                 )}
                                             </td>
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs px-2 py-0.5 rounded-full inline-block truncate"
-                                                    style={{ background: 'rgba(74,143,171,0.1)', color: '#4A8FAB', maxWidth: '100%', display: 'block' }}>
-                                                    {CATEGORY_LABELS[p.category] ?? p.category}
+                                                <span className="text-[11px] px-2.5 py-1 rounded-md font-semibold inline-block truncate max-w-full"
+                                                    style={{ background: catBadge.bg, color: catBadge.color, border: `1px solid ${catBadge.border}` }}
+                                                    title={CATEGORY_LABELS[p.category] || p.category}>
+                                                    {catBadge.label}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
@@ -871,13 +950,13 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                     {prioCfg.label}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3 text-right" style={{ verticalAlign: 'middle', overflow: 'hidden' }}>
-                                                <span className="text-sm font-bold block truncate" style={{ color: '#E8F1F2' }}>
+                                            <td className="px-3 py-3 text-right" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-sm font-bold block truncate text-[#E8F1F2]">
                                                     {p.estimatedAmount ? formatCompactVND(p.estimatedAmount) : '—'}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle', overflow: 'hidden' }}>
-                                                <span className="text-xs truncate block" style={{ color: '#8AAEBB' }}>{p.creatorName}</span>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-xs truncate block text-[#8AAEBB]" title={p.creatorName}>{p.creatorName}</span>
                                             </td>
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap"
@@ -886,9 +965,24 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                 </span>
                                             </td>
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>
-                                                    {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString('vi-VN') : '—'}
+                                                <span className="text-xs whitespace-nowrap text-[#8AAEBB]">
+                                                    {formatDateTime(p.submittedAt || p.createdAt)}
                                                 </span>
+                                            </td>
+                                            <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
+                                                {(p.status === 'APPROVED' || p.status === 'IN_PROGRESS' || p.status === 'CLOSED') ? (
+                                                    <span className="text-xs font-bold whitespace-nowrap text-[#5BA88A]" title="Thời gian CEO phê duyệt hoàn tất">
+                                                        {formatDateTime(p.resolvedAt)}
+                                                    </span>
+                                                ) : p.status === 'REJECTED' ? (
+                                                    <span className="text-xs font-medium whitespace-nowrap text-[#8B1A2E]" title="Thời gian từ chối">
+                                                        {formatDateTime(p.resolvedAt)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs whitespace-nowrap text-[#4A6A7A]" title="Đang chờ duyệt">
+                                                        —
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-3 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <div className="flex justify-end gap-1.5 flex-nowrap">
