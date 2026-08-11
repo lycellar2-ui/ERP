@@ -567,7 +567,7 @@ export async function getPendingProposalsForCEO() {
     return cached('proposals:pendingCEO', async () => {
         const proposals = await prisma.proposal.findMany({
             where: {
-                status: { in: ['SUBMITTED', 'REVIEWING', 'PENDING_APPROVAL', 'APPROVED_L1', 'APPROVED_L2'] },
+                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
             },
             include: {
                 creator: { select: { name: true, email: true } },

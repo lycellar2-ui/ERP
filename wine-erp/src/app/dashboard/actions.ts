@@ -51,8 +51,8 @@ export async function getDashboardStats(range: DateRange = 'month') {
                     unitLandedCost: true,
                     product: {
                         select: {
-                            marginPrice: { select: { wholesalePrice: true, importPrice: true } },
-                            priceLines: { select: { price: true }, take: 1 },
+                            marginPrice: { select: { wholesalePrice: true, costPrice: true } },
+                            priceLines: { select: { unitPrice: true }, take: 1 },
                         }
                     }
                 },
@@ -91,9 +91,9 @@ export async function getDashboardStats(range: DateRange = 'month') {
             let unitCost = Number(lot.unitLandedCost)
             if (!unitCost || unitCost <= 0) {
                 unitCost = Number(
-                    lot.product?.marginPrice?.importPrice ??
+                    lot.product?.marginPrice?.costPrice ??
                     lot.product?.marginPrice?.wholesalePrice ??
-                    lot.product?.priceLines?.[0]?.price ??
+                    lot.product?.priceLines?.[0]?.unitPrice ??
                     350000
                 )
             }
