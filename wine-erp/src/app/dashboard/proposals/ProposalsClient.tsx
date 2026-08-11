@@ -579,53 +579,86 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <table class="signatures-table">
                     <tr>
                         <td>
-                            <div class="sign-title">Người trình duyệt</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Ký, ghi rõ họ tên)</div>
+                            <div class="sign-title">NGƯỜI LẬP TỜ TRÌNH</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Ký, ghi rõ họ tên)</div>
                             <div style="font-weight: bold; font-size: 13px;">${detail.creator?.name || ''}</div>
-                            <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã lập & trình</div>
-                            <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${creatorSignedAt}</div>
                         </td>
                         <td>
-                            <div class="sign-title">Trưởng bộ phận</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Ý kiến & Ký tên)</div>
-                            ${l1Log ? `
-                                <div style="font-weight: bold; font-size: 13px;">${l1Log.approver?.name || ''}</div>
-                                <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã duyệt</div>
-                                <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${l1SignedAt}</div>
-                                ${l1Log.comment ? `<div style="font-size: 10px; color: #333; font-style: italic; margin-top: 2px;">"${l1Log.comment}"</div>` : ''}
-                            ` : `
-                                <div style="color: #999; margin-top: 15px;">...........................</div>
-                                <div style="font-size: 11px; color: #888; margin-top: 4px;">(Chưa duyệt)</div>
-                            `}
+                            <div class="sign-title">TRƯỞNG BỘ PHẬN</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Xác nhận & Ký tên)</div>
+                            <div style="font-weight: bold; font-size: 13px; min-height: 18px;">${l1Log?.approver?.name || ''}</div>
                         </td>
                         <td>
-                            <div class="sign-title">Kế toán trưởng</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Ý kiến & Ký tên)</div>
-                            ${l2Log ? `
-                                <div style="font-weight: bold; font-size: 13px;">${l2Log.approver?.name || ''}</div>
-                                <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã duyệt</div>
-                                <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${l2SignedAt}</div>
-                                ${l2Log.comment ? `<div style="font-size: 10px; color: #333; font-style: italic; margin-top: 2px;">"${l2Log.comment}"</div>` : ''}
-                            ` : `
-                                <div style="color: #999; margin-top: 15px;">...........................</div>
-                                <div style="font-size: 11px; color: #888; margin-top: 4px;">(Chưa duyệt)</div>
-                            `}
+                            <div class="sign-title">KẾ TOÁN TRƯỞNG</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Kểm tra & Ký tên)</div>
+                            <div style="font-weight: bold; font-size: 13px; min-height: 18px;">${l2Log?.approver?.name || ''}</div>
                         </td>
                         <td>
-                            <div class="sign-title">Tổng giám đốc</div>
-                            <div style="font-size: 11px; color: #555; font-style: italic; margin-bottom: 25px;">(Phê duyệt & Ký tên)</div>
-                            ${l3Log ? `
-                                <div style="font-weight: bold; font-size: 13px;">${l3Log.approver?.name || ''}</div>
-                                <div style="font-size: 11px; color: #1b5e20; font-weight: bold; margin-top: 3px;">✓ Đã duyệt</div>
-                                <div style="font-size: 11px; color: #555; margin-top: 2px;">🕒 ${l3SignedAt}</div>
-                                ${l3Log.comment ? `<div style="font-size: 10px; color: #333; font-style: italic; margin-top: 2px;">"${l3Log.comment}"</div>` : ''}
-                            ` : `
-                                <div style="color: #999; margin-top: 15px;">...........................</div>
-                                <div style="font-size: 11px; color: #888; margin-top: 4px;">(Chưa duyệt)</div>
-                            `}
+                            <div class="sign-title">TỔNG GIÁM ĐỐC</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Phê duyệt & Đóng dấu)</div>
+                            <div style="font-weight: bold; font-size: 13px; min-height: 18px;">${l3Log?.approver?.name || ''}</div>
                         </td>
                     </tr>
                 </table>
+
+                {/* Digital Approval Audit Trail Table Below */}
+                <div style="margin-top: 30px; page-break-inside: avoid;">
+                    <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
+                        V. Bảng Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 40px;">STT</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 140px;">Cấp Duyệt / Vai Trò</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Người Thực Hiện</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 110px;">Trạng Thái</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 140px;">Thời Gian</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Ghi Chú / Ý Kiến</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">1</td>
+                                <td style="border: 1px solid #000; padding: 6px;">Người lập tờ trình</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${detail.creator?.name || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: #1b5e20;">✓ Đã lập & trình</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${creatorSignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-style: italic;">Khởi tạo tờ trình</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">2</td>
+                                <td style="border: 1px solid #000; padding: 6px;">Cấp 1: Trưởng Bộ Phận</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l1Log?.approver?.name || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l1Log ? (l1Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
+                                    ${l1Log ? (l1Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                </td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l1SignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l1Log?.comment || '—'}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">3</td>
+                                <td style="border: 1px solid #000; padding: 6px;">Cấp 2: Kế Toán Trưởng</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l2Log?.approver?.name || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l2Log ? (l2Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
+                                    ${l2Log ? (l2Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                </td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l2SignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l2Log?.comment || '—'}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">4</td>
+                                <td style="border: 1px solid #000; padding: 6px;">Cấp 3: Tổng Giám Đốc (CEO)</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l3Log?.approver?.name || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l3Log ? (l3Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
+                                    ${l3Log ? (l3Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                </td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l3SignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l3Log?.comment || '—'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <script>
                     window.onload = function() {
@@ -649,7 +682,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     }, [proposals])
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto">
+        <div className="space-y-6 w-full max-w-none px-2 sm:px-4">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -861,20 +894,20 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block rounded-md overflow-hidden" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                <div className="overflow-x-auto">
-                    <table style={{ width: '100%', minWidth: '1380px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+            <div className="hidden md:block rounded-md overflow-hidden w-full" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="overflow-x-auto w-full">
+                    <table style={{ width: '100%', minWidth: '1550px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                         <colgroup>
-                            <col style={{ width: '145px' }} />
-                            <col style={{ width: '220px' }} />
-                            <col style={{ width: '155px' }} />
-                            <col style={{ width: '95px' }} />
-                            <col style={{ width: '110px' }} />
-                            <col style={{ width: '125px' }} />
-                            <col style={{ width: '115px' }} />
+                            <col style={{ width: '150px' }} />
+                            <col style={{ width: '280px' }} />
+                            <col style={{ width: '185px' }} />
+                            <col style={{ width: '100px' }} />
+                            <col style={{ width: '120px' }} />
                             <col style={{ width: '135px' }} />
-                            <col style={{ width: '135px' }} />
-                            <col style={{ width: '220px' }} />
+                            <col style={{ width: '130px' }} />
+                            <col style={{ width: '140px' }} />
+                            <col style={{ width: '140px' }} />
+                            <col style={{ width: '260px' }} />
                         </colgroup>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #2A4355' }}>
@@ -2183,34 +2216,84 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                             )}
                         </div>
 
-                        {/* Approval Logs */}
-                        {detail.approvalLogs.length > 0 && (
-                            <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-semibold uppercase mb-3" style={{ color: '#4A6A7A' }}>Lịch Sử Phê Duyệt</p>
-                                <div className="space-y-2">
-                                    {detail.approvalLogs.map(log => (
-                                        <div key={log.id} className="flex items-start gap-3 p-2 rounded" style={{ background: '#142433' }}>
-                                            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                                                style={{
-                                                    background: log.action === 'APPROVE' ? 'rgba(91,168,138,0.2)' : 'rgba(139,26,46,0.2)',
-                                                    color: log.action === 'APPROVE' ? '#5BA88A' : '#8B1A2E',
-                                                }}>
-                                                {log.action === 'APPROVE' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-xs">
-                                                    <span className="font-semibold" style={{ color: '#E8F1F2' }}>{log.approver.name}</span>
-                                                    <span style={{ color: log.action === 'APPROVE' ? '#5BA88A' : '#8B1A2E' }}> đã {log.action === 'APPROVE' ? 'duyệt' : 'từ chối'}</span>
-                                                    <span style={{ color: '#4A6A7A' }}> · Cấp {log.level === 1 ? 'TP' : log.level === 2 ? 'KT' : 'CEO'}</span>
-                                                </p>
-                                                {log.comment && <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>"{log.comment}"</p>}
-                                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{new Date(log.createdAt).toLocaleString('vi-VN')}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                        {/* Approval Audit Trail Table */}
+                        <div className="p-4 rounded-xl border border-[#2A4355] bg-[#1B2E3D] space-y-3">
+                            <p className="text-xs font-bold uppercase tracking-wider text-[#87CBB9] flex items-center justify-between">
+                                <span>📋 Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)</span>
+                                <span className="text-[10px] font-mono text-[#8AAEBB] bg-[#142433] px-2 py-0.5 rounded border border-[#2A4355]">3 Cấp Phê Duyệt</span>
+                            </p>
+                            
+                            <div className="overflow-x-auto rounded-lg border border-[#2A4355]">
+                                <table className="w-full text-xs text-left">
+                                    <thead className="bg-[#142433] text-[#8AAEBB] uppercase text-[10px] font-bold border-b border-[#2A4355]">
+                                        <tr>
+                                            <th className="p-2.5 text-center w-10">STT</th>
+                                            <th className="p-2.5">Cấp Duyệt / Vai Trò</th>
+                                            <th className="p-2.5">Người Thực Hiện</th>
+                                            <th className="p-2.5 text-center">Trạng Thái</th>
+                                            <th className="p-2.5 text-center">Thời Gian</th>
+                                            <th className="p-2.5">Ghi Chú / Ý Kiến</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#2A4355]/60 text-[#E8F1F2]">
+                                        {/* Step 0: Creator */}
+                                        <tr className="hover:bg-[#142433]/50">
+                                            <td className="p-2.5 text-center font-mono text-gray-400">1</td>
+                                            <td className="p-2.5 font-medium text-[#8AAEBB]">Người Lập Tờ Trình</td>
+                                            <td className="p-2.5 font-bold text-[#E8F1F2]">{detail.creator?.name || '—'}</td>
+                                            <td className="p-2.5 text-center">
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                    ✓ Đã lập & trình
+                                                </span>
+                                            </td>
+                                            <td className="p-2.5 text-center text-gray-400 font-mono text-[11px]">
+                                                {detail.submittedAt ? new Date(detail.submittedAt).toLocaleString('vi-VN') : (detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '—')}
+                                            </td>
+                                            <td className="p-2.5 italic text-gray-400 text-[11px]">Khởi tạo tờ trình</td>
+                                        </tr>
+
+                                        {/* Steps 1-3 */}
+                                        {[
+                                            { level: 1, label: 'Cấp 1: Trưởng Bộ Phận' },
+                                            { level: 2, label: 'Cấp 2: Kế Toán Trưởng' },
+                                            { level: 3, label: 'Cấp 3: Tổng Giám Đốc (CEO)' },
+                                        ].map((step, idx) => {
+                                            const log = detail.approvalLogs.find(l => l.level === step.level)
+                                            return (
+                                                <tr key={step.level} className="hover:bg-[#142433]/50">
+                                                    <td className="p-2.5 text-center font-mono text-gray-400">{idx + 2}</td>
+                                                    <td className="p-2.5 font-medium text-[#8AAEBB]">{step.label}</td>
+                                                    <td className="p-2.5 font-bold text-[#E8F1F2]">{log?.approver?.name || '—'}</td>
+                                                    <td className="p-2.5 text-center">
+                                                        {log ? (
+                                                            log.action === 'APPROVE' ? (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                                    ✓ Đã duyệt
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                                                    ✗ Từ chối
+                                                                </span>
+                                                            )
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-700/40 text-gray-400 border border-gray-600/30">
+                                                                ⏳ Chưa duyệt
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2.5 text-center text-gray-400 font-mono text-[11px]">
+                                                        {log ? new Date(log.createdAt).toLocaleString('vi-VN') : '—'}
+                                                    </td>
+                                                    <td className="p-2.5 italic text-gray-300 text-[11px]">
+                                                        {log?.comment ? `"${log.comment}"` : '—'}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
-                        )}
+                        </div>
 
                         {/* Comments */}
                         <div className="p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
