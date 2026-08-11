@@ -158,6 +158,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const printWindow = window.open('', '_blank')
         if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
 
+        const isTasting = detail.category === 'TASTING'
+
         const scopeText = 
             detail.scope === 'ENTIRE_PORTFOLIO' ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
             detail.scope === 'SPECIFIC_PRODUCTS' ? 'Áp dụng cho một số sản phẩm cụ thể' :
@@ -183,21 +185,47 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const l2SignedAt = l2Log ? formatPrintDateTime(l2Log.createdAt) : null
         const l3SignedAt = l3Log ? formatPrintDateTime(l3Log.createdAt) : null
 
-        const dateStr = `Hà Nội, ngày ${new Date(detail.createdAt).getDate()} tháng ${new Date(detail.createdAt).getMonth() + 1} năm ${new Date(detail.createdAt).getFullYear()}`
+        const dateObj = new Date(detail.submittedAt || detail.createdAt || Date.now())
+        const dateStr = `Hà Nội, ngày ${dateObj.getDate()} tháng ${dateObj.getMonth() + 1} năm ${dateObj.getFullYear()}`
+        const exportDateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
 
         let tableRows = ''
+        let totalRefValue = 0
+
         if (detail.priceItems && detail.priceItems.length > 0) {
             tableRows = detail.priceItems.map((item: any, i: number) => {
-                const originalPrice = item.product?.wholesalePrice || 0
-                const diff = originalPrice > 0 
-                    ? ((item.proposedPrice - originalPrice) / originalPrice) * 100 
+                const wholesale = item.product?.wholesalePrice || 0
+                const qty = item.quantity ? Number(item.quantity) : 1
+                const lineTotal = wholesale * qty
+                totalRefValue += lineTotal
+
+                if (isTasting) {
+                    return `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${i + 1}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${exportDateStr}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px;">${detail.customer?.name || 'Khách hàng'}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; font-family: monospace; font-weight: bold; text-align: center;">${item.product?.skuCode || ''}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">${item.product?.productName || ''}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">Chai</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${qty}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: right;">${formatVND(wholesale)}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: right; font-weight: bold;">${formatVND(lineTotal)}</td>
+                            <td style="border: 1px solid #000; padding: 6px 8px; font-size: 11px;">Xuất hàng dùng thử cho khách hàng</td>
+                        </tr>
+                    `
+                }
+
+                const diff = wholesale > 0 
+                    ? ((item.proposedPrice - wholesale) / wholesale) * 100 
                     : 0
                 return `
                     <tr>
                         <td style="border: 1px solid #000; padding: 8px; text-align: center;">${i + 1}</td>
-                        <td style="border: 1px solid #000; padding: 8px; font-family: Arial, sans-serif;">${item.product?.skuCode || ''}</td>
+                        <td style="border: 1px solid #000; padding: 8px; font-family: monospace;">${item.product?.skuCode || ''}</td>
                         <td style="border: 1px solid #000; padding: 8px;">${item.product?.productName || ''}</td>
-                        <td style="border: 1px solid #000; padding: 8px; text-align: right;">${formatVND(originalPrice)}</td>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${qty}</td>
+                        <td style="border: 1px solid #000; padding: 8px; text-align: right;">${formatVND(wholesale)}</td>
                         <td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">${formatVND(item.proposedPrice)}</td>
                         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">
                             ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%
@@ -207,7 +235,155 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             }).join('')
         }
 
-        const htmlContent = `
+        const htmlContent = isTasting ? `
+            <html>
+            <head>
+                <title>To_Trinh_Hang_Mau_Tasting_${detail.proposalNo}</title>
+                <style>
+                    body { font-family: Arial, "Helvetica Neue", sans-serif; color: #000; margin: 30px 35px; font-size: 12.5px; line-height: 1.45; }
+                    .company-header { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+                    .company-header td { vertical-align: top; border: none; padding: 0; }
+                    .doc-title { font-size: 16px; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 10px; margin-bottom: 3px; }
+                    .doc-subtitle { font-size: 11.5px; font-weight: bold; text-align: center; margin-bottom: 15px; font-style: italic; }
+                    .recipients { margin-bottom: 10px; font-size: 12.5px; }
+                    .basis-list { margin-bottom: 10px; font-size: 12px; line-height: 1.5; }
+                    .basis-list p { margin: 2px 0; }
+                    .intro-text { margin: 8px 0 6px 0; }
+                    .note-box { font-size: 11px; font-style: italic; background: #fafafa; border: 1px solid #ccc; padding: 6px 10px; margin-bottom: 12px; border-left: 3px solid #D4A853; }
+                    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 12px; font-size: 11.5px; }
+                    .data-table th { border: 1px solid #000; padding: 6px 4px; background-color: #f2f2f2; text-align: center; font-weight: bold; }
+                    .summary-box { font-size: 12px; margin-top: 10px; margin-bottom: 12px; }
+                    .legal-note { font-size: 10px; color: #222; margin-top: 8px; margin-bottom: 15px; line-height: 1.4; text-align: justify; border-top: 1px solid #ddd; padding-top: 6px; }
+                    .sign-date { text-align: right; font-style: italic; margin-bottom: 10px; font-size: 11.5px; }
+                    .signatures-table { width: 100%; margin-top: 10px; border-collapse: collapse; page-break-inside: avoid; }
+                    .signatures-table td { text-align: center; width: 25%; vertical-align: top; border: none; padding: 4px; }
+                    .sign-role { font-weight: bold; text-transform: uppercase; font-size: 11px; }
+                    .sign-sub { font-size: 10px; color: #555; font-style: italic; margin-bottom: 30px; }
+                    @media print {
+                        body { margin: 15px 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <table class="company-header">
+                    <tr>
+                        <td style="width: 60%;">
+                            <p style="margin: 0; font-weight: bold; font-size: 12.5px; text-transform: uppercase;">CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN</p>
+                            <p style="margin: 2px 0; font-size: 11px;">10/52 Giang Văn Minh - P.Ba Đình - TP.Hà Nội</p>
+                            <p style="margin: 0; font-size: 11px;">Tel: 0813239933</p>
+                        </td>
+                        <td style="width: 40%; text-align: right;">
+                            <p style="margin: 0; font-weight: bold; font-size: 12px;">Số/No.: ${detail.proposalNo} /TT-KD-TA</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="doc-title">TỜ TRÌNH</div>
+                <div class="doc-subtitle">(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa /<br/>Approval for issuing free wine-tasting samples to HoReCa customer)</div>
+
+                <div class="recipients">
+                    <p style="margin: 0;"><strong>Kính gửi:</strong> Ban Lãnh Đạo / Board of Directors</p>
+                </div>
+
+                <div class="basis-list">
+                    <p>- Căn cứ: Quyền hạn và trách nhiệm của Phòng Kinh doanh / Based on: the authority and responsibility of the Sales Department</p>
+                    <p>- Căn cứ nhu cầu giới thiệu, cho khách hàng dùng thử sản phẩm / Based on the need to introduce products</p>
+                    <p>- Căn cứ Ngân sách hàng mẫu đã được phê duyệt theo kỳ của Công ty (nếu có) / Based on the Company's approved sample budget for the period (if any)</p>
+                </div>
+
+                <div class="intro-text">
+                    <p style="margin: 0;">Phòng Kinh doanh kính trình Ban Lãnh đạo phê duyệt xuất hàng mẫu không thu tiền cho khách hàng, cụ thể như sau:</p>
+                    <p style="margin: 2px 0 6px 0; font-style: italic; color: #444;">The Sales Department respectfully submits to the Board of Directors for approval of free wine-tasting samples for the customer, as follows:</p>
+                </div>
+
+                <div class="note-box">
+                    <strong>Ghi chú:</strong> Giá bán cho khách hàng = 0 đồng (hàng mẫu không thu tiền). "Đơn giá tham khảo" dưới đây lấy theo <strong>giá niêm yết (Wholesale price)</strong> chỉ phục vụ mục đích quản lý nội bộ (theo dõi giá vốn/ngân sách hàng mẫu), không phải giá tính thuế GTGT.
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 32px;">STT<br/>No.</th>
+                            <th style="width: 75px;">Ngày xuất<br/>Date</th>
+                            <th style="width: 100px;">Khách hàng<br/>Customer</th>
+                            <th style="width: 75px;">Mã hàng<br/>Item Code</th>
+                            <th>Tên hàng<br/>Product Name</th>
+                            <th style="width: 40px;">ĐVT<br/>Unit</th>
+                            <th style="width: 35px;">SL<br/>Qty</th>
+                            <th style="width: 95px;">Đơn giá tham khảo<br/>Ref. unit cost</th>
+                            <th style="width: 105px;">Thành tiền tham khảo<br/>Ref. total value</th>
+                            <th style="width: 110px;">Mục đích / Lý do<br/>Purpose / Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+
+                <div class="summary-box">
+                    <p style="margin: 3px 0;"><strong>Tổng giá trị tham khảo hàng mẫu (kỳ này) / Total reference value (this period):</strong> <span style="font-size: 13.5px; font-weight: bold; color: #000;">${formatVND(totalRefValue)}</span></p>
+                    <p style="margin: 3px 0; font-size: 11px; color: #444;">- Ngân sách hàng mẫu đã duyệt cho kỳ này / Approved sample budget for this period: Theo hạn mức phòng KD</p>
+                    <p style="margin: 3px 0; font-size: 11px; color: #444;">- Ngân sách còn lại sau đề nghị này / Remaining budget after this request: Trong định mức</p>
+                </div>
+
+                <div class="legal-note">
+                    <p style="margin: 2px 0;"><strong>Thẩm quyền phê duyệt / Approval authority:</strong> Đề nghị điền theo Quy chế phân cấp phê duyệt nội bộ hiện hành. Giá trị tham khảo ≤ hạn mức do Quản lý Kinh doanh (CBO - Sales Manager) phê duyệt. Vượt mức trên hoặc vượt ngân sách hàng mẫu đã duyệt trình Ban Lãnh đạo phê duyệt.</p>
+                    <p style="margin: 2px 0;"><strong>Lưu ý pháp lý / Legal note:</strong> (1) Hàng mẫu để khách hàng dùng thử không thu tiền có giá tính thuế GTGT = 0 theo Khoản 2 Điều 6 Nghị định 181/2025/NĐ-CP, nhưng vẫn bắt buộc phải lập hóa đơn điện tử ghi rõ dòng chữ "Hàng mẫu không thu tiền" theo Khoản 1 Điều 4 (được sửa đổi bởi Nghị định 70/2025/NĐ-CP) và Điều 10 Nghị định 123/2020/NĐ-CP; không xuất hóa đơn có thể bị xử phạt theo Nghị định 125/2020/NĐ-CP. (2) "Đơn giá tham khảo" trong bảng trên chỉ phục vụ quản lý nội bộ (giá vốn/ngân sách), không phải giá tính thuế. (3) Để chi phí hàng mẫu được ghi nhận là chi phí hợp lý, hợp lệ khi xác định thu nhập chịu thuế TNDN, cần lưu đầy đủ: tờ trình đã duyệt, hóa đơn xuất hàng mẫu, và xác nhận đã giao hàng cho khách hàng.</p>
+                </div>
+
+                <div class="sign-date">${dateStr}</div>
+
+                <table class="signatures-table">
+                    <tr>
+                        <td>
+                            <div class="sign-role">Vận hành</div>
+                            <div style="font-size: 9.5px; color: #333;">Operation</div>
+                            <div class="sign-sub">(Ký & ghi rõ họ tên)</div>
+                            <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">Trần Hữu Chiến</div>
+                            <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã xác nhận</div>
+                        </td>
+                        <td>
+                            <div class="sign-role">Quản lý Kinh doanh</div>
+                            <div style="font-size: 9.5px; color: #333;">CBO - Sales Manager</div>
+                            <div class="sign-sub">(Ý kiến & Ký tên)</div>
+                            ${l1Log ? `
+                                <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">${l1Log.approver?.name || 'Jeremie Courivault'}</div>
+                                <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã duyệt (${l1SignedAt})</div>
+                            ` : `
+                                <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">Jeremie Courivault</div>
+                                <div style="font-size: 10px; color: #888; margin-top: 2px;">(Chưa duyệt)</div>
+                            `}
+                        </td>
+                        <td>
+                            <div class="sign-role">Nhân Viên Kinh doanh</div>
+                            <div style="font-size: 9.5px; color: #333;">Sales Executive</div>
+                            <div class="sign-sub">(Họ và tên / Full name)</div>
+                            <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">${detail.creator?.name || ''}</div>
+                            <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã trình (${creatorSignedAt})</div>
+                        </td>
+                        <td>
+                            <div class="sign-role">Ban Lãnh đạo</div>
+                            <div style="font-size: 9.5px; color: #333;">Board of Directors</div>
+                            <div class="sign-sub">(Phê duyệt & Ký tên)</div>
+                            ${l3Log ? `
+                                <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">${l3Log.approver?.name || ''}</div>
+                                <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã phê duyệt (${l3SignedAt})</div>
+                            ` : `
+                                <div style="color: #999; margin-top: 25px;">...........................</div>
+                                <div style="font-size: 10px; color: #888; margin-top: 2px;">(Chưa phê duyệt)</div>
+                            `}
+                        </td>
+                    </tr>
+                </table>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </body>
+            </html>
+        ` : `
             <html>
             <head>
                 <title>To_trinh_${detail.proposalNo || 'Co_che_gia'}</title>
@@ -282,6 +458,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                         <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 40px;">STT</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: left;">Mã sản phẩm</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: left;">Tên sản phẩm</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 60px;">Số lượng</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: right;">Giá gốc (Wholesale)</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: right;">Giá đề xuất đặc biệt</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Chênh lệch (%)</th>
@@ -1642,7 +1819,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                         Chi Tiết Tờ Trình
                     </h3>
                     <div className="flex items-center gap-3">
-                        {detail && detail.category === 'PRICE_ADJUSTMENT' && (
+                        {detail && (detail.category === 'PRICE_ADJUSTMENT' || detail.category === 'TASTING' || (detail.priceItems && detail.priceItems.length > 0)) && (
                             <button 
                                 onClick={onPrint}
                                 className="px-2.5 py-1.5 text-xs font-semibold rounded flex items-center gap-1 transition-all"
