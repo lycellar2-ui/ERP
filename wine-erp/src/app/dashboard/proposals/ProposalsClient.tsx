@@ -894,20 +894,20 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block rounded-md overflow-hidden w-full" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                <div className="w-full">
-                    <table className="w-full" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
+            <div className="hidden md:block rounded-xl overflow-x-auto w-full shadow-lg" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                <div className="w-full min-w-[1100px]">
+                    <table className="w-full min-w-[1100px]" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
                         <colgroup>
-                            <col style={{ width: '110px' }} />
-                            <col style={{ minWidth: '150px' }} />
+                            <col style={{ width: '120px' }} />
+                            <col style={{ minWidth: '180px' }} />
                             <col style={{ width: '140px' }} />
-                            <col style={{ width: '75px' }} />
-                            <col style={{ width: '80px' }} />
-                            <col style={{ width: '110px' }} />
-                            <col style={{ width: '95px' }} />
-                            <col style={{ width: '110px' }} />
-                            <col style={{ width: '110px' }} />
-                            <col style={{ width: '145px' }} />
+                            <col style={{ width: '85px' }} />
+                            <col style={{ width: '90px' }} />
+                            <col style={{ width: '120px' }} />
+                            <col style={{ width: '100px' }} />
+                            <col style={{ width: '120px' }} />
+                            <col style={{ width: '120px' }} />
+                            <col style={{ width: '160px' }} />
                         </colgroup>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #2A4355' }}>
@@ -951,60 +951,61 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
                                     return (
                                         <tr key={p.id}
-                                            className="transition-all"
+                                            onClick={() => openDetail(p.id)}
+                                            className="transition-all cursor-pointer hover:brightness-110"
                                             style={{
                                                 borderBottom: '1px solid #2A4355',
                                                 background: canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent',
                                             }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.04)'}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(135,203,185,0.06)'}
                                             onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(212,168,83,0.03)' : 'transparent'}
                                         >
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs font-bold font-mono text-[#87CBB9] whitespace-nowrap block truncate" title={p.proposalNo}>
                                                     {p.proposalNo}
                                                 </span>
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
-                                                <p className="text-sm font-medium truncate text-[#E8F1F2]" title={p.title}>{p.title}</p>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <p className="text-sm font-medium text-[#E8F1F2] line-clamp-2" title={p.title}>{p.title}</p>
                                                 {p.attachmentCount > 0 && (
                                                     <span className="text-[11px] text-[#4A6A7A]">
                                                         <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-[11px] px-2 py-0.5 rounded-md font-semibold inline-block truncate max-w-full"
                                                     style={{ background: catBadge.bg, color: catBadge.color, border: `1px solid ${catBadge.border}` }}
                                                     title={CATEGORY_LABELS[p.category] || p.category}>
                                                     {catBadge.label}
                                                 </span>
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-[11px] px-1.5 py-0.5 rounded-full font-bold inline-block whitespace-nowrap"
                                                     style={{ background: prioCfg.bg, color: prioCfg.color }}>
                                                     {prioCfg.label}
                                                 </span>
                                             </td>
-                                            <td className="px-2 py-2.5 text-right" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3 text-right" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs font-bold block truncate text-[#E8F1F2]">
                                                     {p.estimatedAmount ? formatCompactVND(p.estimatedAmount) : '—'}
                                                 </span>
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs truncate block text-[#8AAEBB]" title={p.creatorName}>{p.creatorName}</span>
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium inline-block whitespace-nowrap"
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
+                                                <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold inline-block whitespace-nowrap"
                                                     style={{ background: statusCfg.bg, color: statusCfg.color }}>
                                                     {statusCfg.label}
                                                 </span>
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-[11px] whitespace-nowrap text-[#8AAEBB]">
                                                     {formatDateTime(p.submittedAt || p.createdAt)}
                                                 </span>
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 {(p.status === 'APPROVED' || p.status === 'IN_PROGRESS' || p.status === 'CLOSED') ? (
                                                     <span className="text-[11px] font-bold whitespace-nowrap text-[#5BA88A]" title="Thời gian CEO phê duyệt hoàn tất">
                                                         {formatDateTime(p.resolvedAt)}
@@ -1019,40 +1020,41 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-2 py-2.5" style={{ verticalAlign: 'middle' }}>
+                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }} onClick={e => e.stopPropagation()}>
                                                 <div className="flex justify-end gap-1.5 flex-nowrap">
                                                     <button onClick={() => openDetail(p.id)}
-                                                        className="px-2 py-1.5 text-xs font-medium rounded transition-all whitespace-nowrap"
-                                                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}>
+                                                        className="px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap"
+                                                        style={{ background: 'rgba(135,203,185,0.12)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
                                                         <Eye size={12} className="inline mr-1" />Chi tiết
                                                     </button>
                                                     {canApproveThis && (
                                                         <>
                                                             <button
-                                                                onClick={() => handleApproval(p.id, 'APPROVE')}
+                                                                onClick={(e) => { e.stopPropagation(); handleApproval(p.id, 'APPROVE') }}
                                                                 disabled={actionLoading === p.id}
-                                                                className="px-2 py-1.5 text-xs font-semibold rounded transition-all whitespace-nowrap"
-                                                                style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                                                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:scale-105"
+                                                                style={{ background: '#5BA88A', color: '#0A1926' }}>
                                                                 {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
                                                                 Duyệt
                                                             </button>
                                                             <button
-                                                                onClick={() => {
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
                                                                     const reason = prompt('Lý do từ chối:')
                                                                     if (reason) handleApproval(p.id, 'REJECT', reason)
                                                                 }}
-                                                                className="px-2 py-1.5 text-xs font-semibold rounded transition-all whitespace-nowrap"
-                                                                style={{ background: 'rgba(139,26,46,0.1)', color: '#8B1A2E', border: '1px solid rgba(139,26,46,0.2)' }}>
+                                                                className="px-2 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:bg-rose-900/30"
+                                                                style={{ background: 'rgba(139,26,46,0.15)', color: '#FF6B6B', border: '1px solid rgba(139,26,46,0.4)' }}>
                                                                 <XCircle size={12} className="inline mr-1" />Từ chối
                                                             </button>
                                                         </>
                                                     )}
                                                     {(p.status === 'DRAFT' || p.status === 'RETURNED') && (
                                                         <button
-                                                            onClick={() => handleSubmitProposal(p.id)}
+                                                            onClick={(e) => { e.stopPropagation(); handleSubmitProposal(p.id) }}
                                                             disabled={actionLoading === p.id}
-                                                            className="px-2 py-1.5 text-xs font-semibold rounded transition-all whitespace-nowrap"
-                                                            style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                                                            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap"
+                                                            style={{ background: 'rgba(74,143,171,0.2)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.4)' }}>
                                                             {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
                                                             Trình
                                                         </button>
