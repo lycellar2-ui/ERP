@@ -2,16 +2,16 @@
 
 export const CATEGORY_LABELS: Record<string, string> = {
     TASTING: '🍷 Tờ Trình Tasting (Thử Rượu / Hàng Mẫu)',
+    SPECIAL_EVENT: '🍷 Sự Kiện / Tasting (Thử Rượu)',
+    PRICE_ADJUSTMENT: '🏷️ Tờ Trình Cơ Chế Giá',
     BUDGET_REQUEST: 'Xin Ngân Sách',
     CAPITAL_EXPENDITURE: 'Mua Sắm TSCĐ',
-    PRICE_ADJUSTMENT: 'Tờ trình cơ chế giá',
     NEW_SUPPLIER: 'NCC Mới',
     NEW_PRODUCT: 'Sản Phẩm Mới',
     POLICY_CHANGE: 'Thay Đổi Quy Trình',
     STAFF_REQUISITION: 'Tuyển Dụng',
     PAYMENT_SCHEDULE: 'Lịch Thanh Toán',
     PROMOTION_CAMPAIGN: 'Chương Trình KM',
-    SPECIAL_EVENT: 'Sự Kiện / Tasting',
     LICENSE_RENEWAL: 'Gia Hạn Giấy Phép',
     CONTRACT_SIGNING: 'Ký Hợp Đồng',
     DEBT_WRITE_OFF: 'Xoá Nợ Khó Đòi',

@@ -158,7 +158,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const printWindow = window.open('', '_blank')
         if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
 
-        const isTasting = detail.category === 'TASTING'
+        const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT'
 
         const scopeText = 
             detail.scope === 'ENTIRE_PORTFOLIO' ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
@@ -1411,7 +1411,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                 return alert('Vui lòng chọn đầy đủ sản phẩm cho các dòng đề xuất')
             }
         }
-        if (form.category === 'TASTING') {
+        const isTastingCategory = form.category === 'TASTING' || form.category === 'SPECIAL_EVENT'
+        if (isTastingCategory) {
             if (priceLines.length === 0) {
                 return alert('Vui lòng chọn ít nhất 1 mã sản phẩm nếm thử (Tasting)')
             }
@@ -1425,7 +1426,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
             ...form,
             estimatedAmount: form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined,
             discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
-            priceItems: (form.category === 'TASTING' || form.category === 'PRICE_ADJUSTMENT') && priceLines.length > 0
+            priceItems: (isTastingCategory || form.category === 'PRICE_ADJUSTMENT') && priceLines.length > 0
                 ? priceLines 
                 : undefined,
             createdBy: userId,
@@ -1459,7 +1460,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                     </div>
 
                     {/* Tasting Custom Fields */}
-                    {form.category === 'TASTING' && (
+                    {(form.category === 'TASTING' || form.category === 'SPECIAL_EVENT') && (
                         <div className="space-y-4 p-4 rounded-md border border-amber-500/40 bg-amber-950/20">
                             <div>
                                 <label className="text-xs font-bold uppercase mb-1.5 block text-amber-300">Khách hàng áp dụng Tasting (tùy chọn)</label>
