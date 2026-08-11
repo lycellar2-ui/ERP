@@ -240,79 +240,102 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             <head>
                 <title>To_Trinh_Hang_Mau_Tasting_${detail.proposalNo}</title>
                 <style>
-                    body { font-family: Arial, "Helvetica Neue", sans-serif; color: #000; margin: 30px 35px; font-size: 12.5px; line-height: 1.45; }
-                    .company-header { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-                    .company-header td { vertical-align: top; border: none; padding: 0; }
-                    .doc-title { font-size: 16px; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 10px; margin-bottom: 3px; }
-                    .doc-subtitle { font-size: 11.5px; font-weight: bold; text-align: center; margin-bottom: 15px; font-style: italic; }
-                    .recipients { margin-bottom: 10px; font-size: 12.5px; }
-                    .basis-list { margin-bottom: 10px; font-size: 12px; line-height: 1.5; }
-                    .basis-list p { margin: 2px 0; }
-                    .intro-text { margin: 8px 0 6px 0; }
-                    .note-box { font-size: 11px; font-style: italic; background: #fafafa; border: 1px solid #ccc; padding: 6px 10px; margin-bottom: 12px; border-left: 3px solid #D4A853; }
-                    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 12px; font-size: 11.5px; }
-                    .data-table th { border: 1px solid #000; padding: 6px 4px; background-color: #f2f2f2; text-align: center; font-weight: bold; }
-                    .summary-box { font-size: 12px; margin-top: 10px; margin-bottom: 12px; }
-                    .legal-note { font-size: 10px; color: #222; margin-top: 8px; margin-bottom: 15px; line-height: 1.4; text-align: justify; border-top: 1px solid #ddd; padding-top: 6px; }
-                    .sign-date { text-align: right; font-style: italic; margin-bottom: 10px; font-size: 11.5px; }
-                    .signatures-table { width: 100%; margin-top: 10px; border-collapse: collapse; page-break-inside: avoid; }
-                    .signatures-table td { text-align: center; width: 25%; vertical-align: top; border: none; padding: 4px; }
-                    .sign-role { font-weight: bold; text-transform: uppercase; font-size: 11px; }
-                    .sign-sub { font-size: 10px; color: #555; font-style: italic; margin-bottom: 30px; }
+                    @page { size: A4 portrait; margin: 15mm 12mm 15mm 12mm; }
+                    body { font-family: Calibri, Arial, sans-serif; color: #000; margin: 0; padding: 0; font-size: 11pt; line-height: 1.35; }
+                    .header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+                    .header-table td { vertical-align: top; border: none; padding: 0; }
+                    .doc-title { font-size: 17pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 15px; margin-bottom: 2px; }
+                    .doc-subtitle { font-size: 11pt; font-weight: normal; text-align: center; margin-bottom: 18px; line-height: 1.3; }
+                    .kinh-gui { font-size: 11pt; margin-bottom: 6px; }
+                    .can-cu { font-size: 11pt; margin-bottom: 10px; line-height: 1.4; }
+                    .can-cu p { margin: 2px 0; }
+                    .trinh-bay { font-size: 11pt; margin-bottom: 8px; line-height: 1.4; }
+                    .ghi-chu { font-size: 11pt; font-style: italic; margin-bottom: 12px; line-height: 1.4; }
+                    
+                    /* Exact Excel Table Layout */
+                    .excel-table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px; font-size: 10pt; table-layout: fixed; }
+                    .excel-table th { border: 1px solid #000; padding: 5px 3px; background-color: #ffffff; text-align: center; font-weight: bold; vertical-align: middle; }
+                    .excel-table td { border: 1px solid #000; padding: 5px 4px; vertical-align: middle; word-wrap: break-word; }
+                    
+                    .summary-section { font-size: 10pt; margin-top: 8px; margin-bottom: 12px; line-height: 1.5; }
+                    .summary-row-bold { font-weight: bold; }
+                    
+                    .legal-box { font-size: 9pt; font-style: italic; margin-top: 10px; margin-bottom: 15px; line-height: 1.35; text-align: justify; }
+                    .legal-box p { margin: 4px 0; }
+                    
+                    .date-line { text-align: right; font-size: 10pt; margin-bottom: 15px; }
+                    
+                    .signatures-table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; table-layout: fixed; }
+                    .signatures-table td { text-align: center; vertical-align: top; border: none; padding: 2px; }
+                    .sign-title { font-weight: bold; font-size: 10pt; }
+                    .sign-sub { font-size: 9pt; font-style: italic; color: #333; margin-bottom: 45px; }
+                    .sign-name { font-size: 9pt; font-style: italic; }
+                    .sign-status { font-size: 8.5pt; color: #1b5e20; font-weight: bold; margin-top: 2px; }
+
                     @media print {
-                        body { margin: 15px 20px; }
+                        body { margin: 0; }
+                        .no-print { display: none; }
                     }
                 </style>
             </head>
             <body>
-                <table class="company-header">
+                <!-- Header: Company & Proposal Number -->
+                <table class="header-table">
                     <tr>
-                        <td style="width: 60%;">
-                            <p style="margin: 0; font-weight: bold; font-size: 12.5px; text-transform: uppercase;">CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN</p>
-                            <p style="margin: 2px 0; font-size: 11px;">10/52 Giang Văn Minh - P.Ba Đình - TP.Hà Nội</p>
-                            <p style="margin: 0; font-size: 11px;">Tel: 0813239933</p>
+                        <td style="width: 55%;">
+                            <p style="margin: 0; font-weight: bold; font-size: 10pt;">Công ty Cổ phần Thương mại Thắng Ân</p>
+                            <p style="margin: 2px 0 0 0; font-size: 10pt;">10/52 Giang Văn Minh - P.Ba Đình - TP.Hà Nội</p>
+                            <p style="margin: 2px 0 0 0; font-size: 10pt;">Tel: 0813239933</p>
                         </td>
-                        <td style="width: 40%; text-align: right;">
-                            <p style="margin: 0; font-weight: bold; font-size: 12px;">Số/No.: ${detail.proposalNo} /TT-KD-TA</p>
+                        <td style="width: 45%; text-align: right; vertical-align: top;">
+                            <p style="margin: 0; font-size: 10pt; font-style: italic;">Số/No.: ${detail.proposalNo} /TT-KD-TA</p>
                         </td>
                     </tr>
                 </table>
 
+                <!-- Main Title -->
                 <div class="doc-title">TỜ TRÌNH</div>
-                <div class="doc-subtitle">(V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa /<br/>Approval for issuing free wine-tasting samples to HoReCa customer)</div>
-
-                <div class="recipients">
-                    <p style="margin: 0;"><strong>Kính gửi:</strong> Ban Lãnh Đạo / Board of Directors</p>
+                <div class="doc-subtitle">
+                    (V/v: Phê duyệt xuất hàng mẫu rượu không thu tiền cho khách hàng HoReCa /<br/>
+                    Approval for issuing free wine-tasting samples to HoReCa customer)
                 </div>
 
-                <div class="basis-list">
-                    <p>- Căn cứ: Quyền hạn và trách nhiệm của Phòng Kinh doanh / Based on: the authority and responsibility of the Sales Department</p>
-                    <p>- Căn cứ nhu cầu giới thiệu, cho khách hàng dùng thử sản phẩm / Based on the need to introduce products</p>
-                    <p>- Căn cứ Ngân sách hàng mẫu đã được phê duyệt theo kỳ của Công ty (nếu có) / Based on the Company's approved sample budget for the period (if any)</p>
+                <!-- Recipient & Basis -->
+                <div class="kinh-gui">
+                    <strong>Kính gửi: </strong><strong>Ban Lãnh Đạo / Board of Directors</strong>
                 </div>
 
-                <div class="intro-text">
+                <div class="can-cu">
+                    <p>- Căn cứ: Quyền hạn và trách nhiệm của Phòng Kinh doanh/ Based on: the authority and responsibility of the Sales Department</p>
+                    <p>- Căn cứ nhu cầu giới thiệu, cho khách hàng dùng thử sản phẩm /Based on the need to introduce products</p>
+                    <p>- Căn cứ Ngân sách hàng mẫu đã được phê duyệt theo kỳ của Công ty (nếu có)/ Based on the Company's approved sample budget for the period (if any)</p>
+                </div>
+
+                <!-- Statement -->
+                <div class="trinh-bay">
                     <p style="margin: 0;">Phòng Kinh doanh kính trình Ban Lãnh đạo phê duyệt xuất hàng mẫu không thu tiền cho khách hàng, cụ thể như sau:</p>
-                    <p style="margin: 2px 0 6px 0; font-style: italic; color: #444;">The Sales Department respectfully submits to the Board of Directors for approval of free wine-tasting samples for the customer, as follows:</p>
+                    <p style="margin: 2px 0 0 0;">The Sales Department respectfully submits to the Board of Directors for approval of free wine-tasting samples for the customer, as follows:</p>
                 </div>
 
-                <div class="note-box">
-                    <strong>Ghi chú:</strong> Giá bán cho khách hàng = 0 đồng (hàng mẫu không thu tiền). "Đơn giá tham khảo" dưới đây lấy theo <strong>giá niêm yết (Wholesale price)</strong> chỉ phục vụ mục đích quản lý nội bộ (theo dõi giá vốn/ngân sách hàng mẫu), không phải giá tính thuế GTGT.
+                <!-- Note -->
+                <div class="ghi-chu">
+                    Ghi chú: Giá bán cho khách hàng = 0 đồng (hàng mẫu không thu tiền). "Đơn giá tham khảo" dưới đây chỉ phục vụ mục đích quản lý nội bộ (theo dõi giá vốn/ngân sách hàng mẫu), không phải giá tính thuế GTGT.
                 </div>
 
-                <table class="data-table">
+                <!-- Product Table with Exact Excel Widths -->
+                <table class="excel-table">
                     <thead>
                         <tr>
-                            <th style="width: 32px;">STT<br/>No.</th>
-                            <th style="width: 75px;">Ngày xuất<br/>Date</th>
-                            <th style="width: 100px;">Khách hàng<br/>Customer</th>
-                            <th style="width: 75px;">Mã hàng<br/>Item Code</th>
-                            <th>Tên hàng<br/>Product Name</th>
-                            <th style="width: 40px;">ĐVT<br/>Unit</th>
-                            <th style="width: 35px;">SL<br/>Qty</th>
-                            <th style="width: 95px;">Đơn giá tham khảo<br/>Ref. unit cost</th>
-                            <th style="width: 105px;">Thành tiền tham khảo<br/>Ref. total value</th>
-                            <th style="width: 110px;">Mục đích / Lý do<br/>Purpose / Reason</th>
+                            <th style="width: 5%;">STT<br/>No.</th>
+                            <th style="width: 11%;">Ngày xuất<br/>Date</th>
+                            <th style="width: 14%;">Khách hàng<br/>Customer</th>
+                            <th style="width: 10%;">Mã hàng<br/>Item Code</th>
+                            <th style="width: 21%;">Tên hàng<br/>Product Name</th>
+                            <th style="width: 6%;">ĐVT<br/>Unit</th>
+                            <th style="width: 5%;">SL<br/>Qty</th>
+                            <th style="width: 11%;">Đơn giá tham khảo<br/>Ref. unit cost</th>
+                            <th style="width: 11%;">Thành tiền tham khảo<br/>Ref. total value</th>
+                            <th style="width: 21%;">Mục đích / Lý do<br/>Purpose / Reason</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -320,57 +343,70 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     </tbody>
                 </table>
 
-                <div class="summary-box">
-                    <p style="margin: 3px 0;"><strong>Tổng giá trị tham khảo hàng mẫu (kỳ này) / Total reference value (this period):</strong> <span style="font-size: 13.5px; font-weight: bold; color: #000;">${formatVND(totalRefValue)}</span></p>
-                    <p style="margin: 3px 0; font-size: 11px; color: #444;">- Ngân sách hàng mẫu đã duyệt cho kỳ này / Approved sample budget for this period: Theo hạn mức phòng KD</p>
-                    <p style="margin: 3px 0; font-size: 11px; color: #444;">- Ngân sách còn lại sau đề nghị này / Remaining budget after this request: Trong định mức</p>
+                <!-- Summary Section -->
+                <div class="summary-section">
+                    <p class="summary-row-bold" style="margin: 3px 0;">
+                        Tổng giá trị tham khảo hàng mẫu (kỳ này) / Total reference value (this period): 
+                        <span style="float: right; margin-right: 15%;">${formatVND(totalRefValue)}</span>
+                    </p>
+                    <p style="margin: 3px 0;">Ngân sách hàng mẫu đã duyệt cho kỳ này / Approved sample budget for this period:</p>
+                    <p class="summary-row-bold" style="margin: 3px 0;">Ngân sách còn lại sau đề nghị này / Remaining budget after this request:</p>
                 </div>
 
-                <div class="legal-note">
-                    <p style="margin: 2px 0;"><strong>Thẩm quyền phê duyệt / Approval authority:</strong> Đề nghị điền theo Quy chế phân cấp phê duyệt nội bộ hiện hành. Giá trị tham khảo ≤ hạn mức do Quản lý Kinh doanh (CBO - Sales Manager) phê duyệt. Vượt mức trên hoặc vượt ngân sách hàng mẫu đã duyệt trình Ban Lãnh đạo phê duyệt.</p>
-                    <p style="margin: 2px 0;"><strong>Lưu ý pháp lý / Legal note:</strong> (1) Hàng mẫu để khách hàng dùng thử không thu tiền có giá tính thuế GTGT = 0 theo Khoản 2 Điều 6 Nghị định 181/2025/NĐ-CP, nhưng vẫn bắt buộc phải lập hóa đơn điện tử ghi rõ dòng chữ "Hàng mẫu không thu tiền" theo Khoản 1 Điều 4 (được sửa đổi bởi Nghị định 70/2025/NĐ-CP) và Điều 10 Nghị định 123/2020/NĐ-CP; không xuất hóa đơn có thể bị xử phạt theo Nghị định 125/2020/NĐ-CP. (2) "Đơn giá tham khảo" trong bảng trên chỉ phục vụ quản lý nội bộ (giá vốn/ngân sách), không phải giá tính thuế. (3) Để chi phí hàng mẫu được ghi nhận là chi phí hợp lý, hợp lệ khi xác định thu nhập chịu thuế TNDN, cần lưu đầy đủ: tờ trình đã duyệt, hóa đơn xuất hàng mẫu, và xác nhận đã giao hàng cho khách hàng.</p>
+                <!-- Legal Box -->
+                <div class="legal-box">
+                    <p><strong>Thẩm quyền phê duyệt / Approval authority</strong> (đề nghị điền theo Quy chế phân cấp phê duyệt nội bộ hiện hành):<br/>
+                    - Giá trị tham khảo ≤ ____ VNĐ/lần hoặc ≤ ____ VNĐ/tháng cho một khách hàng: Quản lý Kinh doanh (CBO - Sales Manager) phê duyệt.<br/>
+                    - Vượt mức trên, hoặc vượt ngân sách hàng mẫu đã duyệt: trình Ban Lãnh đạo phê duyệt.</p>
+                    
+                    <p><strong>Lưu ý pháp lý / Legal note:</strong> (1) Hàng mẫu để khách hàng dùng thử không thu tiền có giá tính thuế GTGT = 0 theo Khoản 2 Điều 6 Nghị định 181/2025/NĐ-CP, nhưng vẫn bắt buộc phải lập hóa đơn điện tử ghi rõ dòng chữ "Hàng mẫu không thu tiền" theo Khoản 1 Điều 4 (được sửa đổi bởi Nghị định 70/2025/NĐ-CP) và Điều 10 Nghị định 123/2020/NĐ-CP; không xuất hóa đơn có thể bị xử phạt theo Nghị định 125/2020/NĐ-CP. (2) "Đơn giá tham khảo" trong bảng trên chỉ phục vụ quản lý nội bộ (giá vốn/ngân sách), không phải giá tính thuế. (3) Để chi phí hàng mẫu được ghi nhận là chi phí hợp lý, hợp lệ khi xác định thu nhập chịu thuế TNDN, cần lưu đầy đủ: tờ trình đã duyệt, hóa đơn xuất hàng mẫu, và xác nhận đã giao hàng cho khách hàng (mục ký nhận bên dưới).</p>
                 </div>
 
-                <div class="sign-date">${dateStr}</div>
+                <!-- Date Line -->
+                <div class="date-line">
+                    Hà Nội, ngày ${dateObj.getDate()} tháng ${dateObj.getMonth() + 1} năm ${dateObj.getFullYear()}
+                </div>
 
+                <!-- Signatures Grid -->
                 <table class="signatures-table">
                     <tr>
-                        <td>
-                            <div class="sign-role">Vận hành</div>
-                            <div style="font-size: 9.5px; color: #333;">Operation</div>
-                            <div class="sign-sub">(Ký & ghi rõ họ tên)</div>
-                            <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">Trần Hữu Chiến</div>
-                            <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã xác nhận</div>
+                        <td style="width: 30%;">
+                            <div class="sign-title">Vận hành</div>
+                            <div style="font-size: 9.5pt;">Operation</div>
+                            <div style="margin-bottom: 35px;"></div>
+                            <div class="sign-name">Trần Hữu Chiến</div>
+                            <div class="sign-status">✓ Đã xác nhận</div>
                         </td>
-                        <td>
-                            <div class="sign-role">Quản lý Kinh doanh</div>
-                            <div style="font-size: 9.5px; color: #333;">CBO - Sales Manager</div>
-                            <div class="sign-sub">(Ý kiến & Ký tên)</div>
+                        <td style="width: 35%;">
+                            <div class="sign-title">Quản lý Kinh doanh</div>
+                            <div style="font-size: 9.5pt;">CBO - Sales Manager</div>
+                            <div style="margin-bottom: 35px;"></div>
                             ${l1Log ? `
-                                <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">${l1Log.approver?.name || 'Jeremie Courivault'}</div>
-                                <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã duyệt (${l1SignedAt})</div>
+                                <div class="sign-name">${l1Log.approver?.name || 'Jeremie Courivault'}</div>
+                                <div class="sign-status">✓ Đã duyệt (${l1SignedAt})</div>
                             ` : `
-                                <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">Jeremie Courivault</div>
-                                <div style="font-size: 10px; color: #888; margin-top: 2px;">(Chưa duyệt)</div>
+                                <div class="sign-name">Jeremie Courivault</div>
+                                <div style="font-size: 8.5pt; color: #888;">(Chưa duyệt)</div>
                             `}
                         </td>
-                        <td>
-                            <div class="sign-role">Nhân Viên Kinh doanh</div>
-                            <div style="font-size: 9.5px; color: #333;">Sales Executive</div>
+                        <td style="width: 35%;">
+                            <div class="sign-title">Nhân Viên Kinh doanh</div>
+                            <div style="font-size: 9.5pt;">Sales Executive</div>
                             <div class="sign-sub">(Họ và tên / Full name)</div>
-                            <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">${detail.creator?.name || ''}</div>
-                            <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã trình (${creatorSignedAt})</div>
+                            <div class="sign-name" style="font-style: normal; font-weight: bold;">${detail.creator?.name || ''}</div>
+                            <div class="sign-status">✓ Đã trình (${creatorSignedAt})</div>
                         </td>
-                        <td>
-                            <div class="sign-role">Ban Lãnh đạo</div>
-                            <div style="font-size: 9.5px; color: #333;">Board of Directors</div>
-                            <div class="sign-sub">(Phê duyệt & Ký tên)</div>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="padding-top: 25px;">
+                            <div class="sign-title">Ban Lãnh đạo / Board of Directors</div>
+                            <div style="font-size: 9pt; font-style: italic;">(Trường hợp vượt thẩm quyền Quản lý Kinh doanh hoặc vượt ngân sách / In case beyond the Sales Manager's authority or budget)</div>
                             ${l3Log ? `
-                                <div style="font-weight: bold; font-size: 11.5px; margin-top: 25px;">${l3Log.approver?.name || ''}</div>
-                                <div style="font-size: 10px; color: #1b5e20; font-weight: bold; margin-top: 2px;">✓ Đã phê duyệt (${l3SignedAt})</div>
+                                <div class="sign-name" style="margin-top: 30px; font-weight: bold;">${l3Log.approver?.name || ''}</div>
+                                <div class="sign-status">✓ Đã phê duyệt (${l3SignedAt})</div>
                             ` : `
-                                <div style="color: #999; margin-top: 25px;">...........................</div>
-                                <div style="font-size: 10px; color: #888; margin-top: 2px;">(Chưa phê duyệt)</div>
+                                <div style="color: #999; margin-top: 25px;">............................................................</div>
+                                <div style="font-size: 8.5pt; color: #888;">(Chưa phê duyệt)</div>
                             `}
                         </td>
                     </tr>
