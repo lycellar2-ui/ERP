@@ -100,7 +100,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             case 'SPECIAL_EVENT':
                 return { label: '🍷 Tasting (Thử Rượu)', bg: 'rgba(212,168,83,0.15)', color: '#D4A853', border: 'rgba(212,168,83,0.3)' }
             case 'PRICE_ADJUSTMENT':
-                return { label: '🏷️ Cơ Chế Giá', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
+                return { label: '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: 'rgba(74,143,171,0.3)' }
             case 'BUDGET_REQUEST':
                 return { label: '💰 Xin Ngân Sách', bg: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: 'rgba(135,203,185,0.3)' }
             case 'CAPITAL_EXPENDITURE':
@@ -510,7 +510,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     ${dateStr}
                 </div>
 
-                <div class="title">TỜ TRÌNH CƠ CHẾ GIÁ</div>
+                <div class="title">TỜ TRÌNH CƠ CHẾ GIÁ & GIÁ ĐẶC BIỆT</div>
                 <div class="subtitle">(V/v: ${detail.title})</div>
 
                 <div class="info-section">
@@ -717,7 +717,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     >
                         <option value="ALL">All Categories (Tất cả loại)</option>
                         <option value="TASTING">🍷 Tờ Trình Tasting (Thử Rượu)</option>
-                        <option value="PRICE_ADJUSTMENT">🏷️ Tờ Trình Cơ Chế Giá</option>
+                        <option value="PRICE_ADJUSTMENT">🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt</option>
                         <option value="BUDGET_REQUEST">💰 Xin Ngân Sách</option>
                         <option value="CAPITAL_EXPENDITURE">🏢 Mua Sắm TSCĐ</option>
                         <option value="NEW_SUPPLIER">🤝 Nhà Cung Cấp Mới</option>
@@ -1663,7 +1663,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         setForm(f => ({
                                             ...f,
                                             customerId: cust.id,
-                                            title: !f.title && cust.name ? `Đề xuất cơ chế giá cho khách hàng ${cust.name}` : f.title
+                                            title: !f.title && cust.name ? `Đề xuất cơ chế giá & giá đặc biệt cho khách hàng ${cust.name}` : f.title
                                         }))
                                     }}
                                 />
@@ -2033,7 +2033,7 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                         {/* Special pricing details */}
                         {detail.category === 'PRICE_ADJUSTMENT' && (
                             <div className="p-4 rounded-md space-y-3" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                <p className="text-xs font-semibold uppercase" style={{ color: '#87CBB9' }}>Thông Tin Áp Dụng Cơ Chế Giá</p>
+                                <p className="text-xs font-semibold uppercase" style={{ color: '#87CBB9' }}>Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt</p>
                                 <div className="grid grid-cols-2 gap-3 text-xs">
                                     <div className="p-2.5 rounded" style={{ background: '#142433' }}>
                                         <p style={{ color: '#4A6A7A' }}>Khách hàng áp dụng</p>
