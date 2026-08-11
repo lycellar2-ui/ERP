@@ -156,6 +156,7 @@ export async function getProposalDetail(id: string) {
         priceItems: p.priceItems?.map((item: any) => ({
             ...item,
             proposedPrice: Number(item.proposedPrice),
+            quantity: item.quantity ? Number(item.quantity) : 1,
             product: {
                 ...item.product,
                 wholesalePrice: item.product.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0
@@ -181,7 +182,7 @@ export async function createProposal(input: {
     customerId?: string
     scope?: string
     discountPct?: number
-    priceItems?: { productId: string; proposedPrice: number }[]
+    priceItems?: { productId: string; proposedPrice: number; quantity?: number }[]
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
         const proposalNo = await generateProposalNo()
@@ -208,7 +209,8 @@ export async function createProposal(input: {
                     createMany: {
                         data: input.priceItems.map(item => ({
                             productId: item.productId,
-                            proposedPrice: item.proposedPrice
+                            proposedPrice: item.proposedPrice,
+                            quantity: item.quantity ?? 1
                         }))
                     }
                 } : undefined
@@ -237,7 +239,7 @@ export async function updateProposal(id: string, input: {
     customerId?: string
     scope?: string
     discountPct?: number
-    priceItems?: { productId: string; proposedPrice: number }[]
+    priceItems?: { productId: string; proposedPrice: number; quantity?: number }[]
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const existing = await prisma.proposal.findUnique({ where: { id }, select: { status: true } })
@@ -275,7 +277,8 @@ export async function updateProposal(id: string, input: {
                         data: input.priceItems.map(item => ({
                             proposalId: id,
                             productId: item.productId,
-                            proposedPrice: item.proposedPrice
+                            proposedPrice: item.proposedPrice,
+                            quantity: item.quantity ?? 1
                         }))
                     })
                 }

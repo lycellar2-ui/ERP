@@ -3193,6 +3193,7 @@ model ProposalPriceItem {
   productId     String
   product       Product  @relation(fields: [productId], references: [id])
   proposedPrice Decimal  @db.Decimal(18, 2)
+  quantity      Decimal  @default(1) @db.Decimal(12, 2)
 
   @@map("proposal_price_items")
 }

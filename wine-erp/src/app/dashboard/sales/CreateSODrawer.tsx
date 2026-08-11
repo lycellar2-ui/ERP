@@ -7,7 +7,7 @@ import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
     createSalesOrder, SOCreateInput, SalesChannel, SOType,
     getProductPricesForChannel, getActiveAllocationsForProducts,
-    getLegalEntities, LegalEntityRow, getApprovedProposalsForSO,
+    getLegalEntities, LegalEntityRow, getApprovedProposalsForSO, getProposalWithItemsForSO,
 } from './actions'
 import { formatVND } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
@@ -269,6 +269,29 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                 priceSource: l.priceSource || undefined,
                 stock: l.stock ?? 100,
             })))
+
+            if (cloneData.proposalId && cloneData.lines.length === 0) {
+                getProposalWithItemsForSO(cloneData.proposalId).then(prop => {
+                    if (prop) {
+                        setNotes(`Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`)
+                        if (prop.priceItems && prop.priceItems.length > 0) {
+                            const loadedLines = prop.priceItems.map(item => ({
+                                productId: item.productId,
+                                productName: item.productName,
+                                skuCode: item.skuCode,
+                                qtyOrdered: item.quantity || 1,
+                                unitPrice: 0,
+                                lineDiscountPct: 0,
+                                vatRate: 10,
+                                priceSource: 'TASTING_FREE',
+                                stock: 100,
+                            }))
+                            setLines(loadedLines)
+                            toast.success(`✨ Tự động nạp ${loadedLines.length} sản phẩm theo Tờ trình ${prop.proposalNo}`)
+                        }
+                    }
+                }).catch(() => {})
+            }
         }
     }, [open, cloneData])
 
@@ -638,12 +661,37 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         <div>
                                             <select
                                                 value={proposalId}
-                                                onChange={e => {
+                                                onChange={async e => {
                                                     const selectedId = e.target.value
                                                     setProposalId(selectedId)
-                                                    const found = proposals.find(p => p.id === selectedId)
-                                                    if (found) {
-                                                        setNotes(`Đơn Tasting kèm Tờ trình ${found.proposalNo}: ${found.title}`)
+                                                    if (!selectedId) return
+                                                    try {
+                                                        const fullProp = await getProposalWithItemsForSO(selectedId)
+                                                        if (fullProp) {
+                                                            setNotes(`Đơn Tasting kèm Tờ trình ${fullProp.proposalNo}: ${fullProp.title}`)
+                                                            if (fullProp.customerId && !customerId) {
+                                                                setCustomerId(fullProp.customerId)
+                                                                const foundCust = sortedCustomersForSelect.find(c => c.id === fullProp.customerId)
+                                                                if (foundCust) setSelectedCustomer(foundCust)
+                                                            }
+                                                            if (fullProp.priceItems && fullProp.priceItems.length > 0) {
+                                                                const loadedLines = fullProp.priceItems.map(item => ({
+                                                                    productId: item.productId,
+                                                                    productName: item.productName,
+                                                                    skuCode: item.skuCode,
+                                                                    qtyOrdered: item.quantity || 1,
+                                                                    unitPrice: orderType === 'TASTING' ? 0 : item.proposedPrice,
+                                                                    lineDiscountPct: 0,
+                                                                    vatRate: 10,
+                                                                    priceSource: orderType === 'TASTING' ? 'TASTING_FREE' : 'PROPOSAL',
+                                                                    stock: 100,
+                                                                }))
+                                                                setLines(loadedLines)
+                                                                toast.success(`✨ Tự động nạp ${loadedLines.length} sản phẩm và số lượng chuẩn từ Tờ trình ${fullProp.proposalNo}`)
+                                                            }
+                                                        }
+                                                    } catch (err) {
+                                                        console.error(err)
                                                     }
                                                 }}
                                                 className="w-full px-3 py-2 text-xs font-bold rounded-md border border-amber-400 bg-white text-slate-900 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"

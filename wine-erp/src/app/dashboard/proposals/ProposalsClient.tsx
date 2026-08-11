@@ -980,11 +980,11 @@ function BatchProductPickerModal({
     onClose,
 }: {
     products: any[]
-    onAddItems: (items: { productId: string; proposedPrice: number }[]) => void
+    onAddItems: (items: { productId: string; proposedPrice: number; quantity: number }[]) => void
     onClose: () => void
 }) {
     const [search, setSearch] = useState('')
-    const [selected, setSelected] = useState<Record<string, { proposedPrice: number }>>({})
+    const [selected, setSelected] = useState<Record<string, { proposedPrice: number; quantity: number }>>({})
 
     const filtered = React.useMemo(() => {
         const q = search.trim().toLowerCase()
@@ -996,7 +996,7 @@ function BatchProductPickerModal({
     }, [products, search])
 
     const handleApplyDiscountAll = (pct: number) => {
-        const next: Record<string, { proposedPrice: number }> = { ...selected }
+        const next = { ...selected }
         filtered.forEach(p => {
             if (next[p.id]) {
                 const discounted = p.wholesalePrice * (1 - pct / 100)
@@ -1011,7 +1011,7 @@ function BatchProductPickerModal({
         if (next[p.id]) {
             delete next[p.id]
         } else {
-            next[p.id] = { proposedPrice: p.wholesalePrice }
+            next[p.id] = { proposedPrice: p.wholesalePrice, quantity: 1 }
         }
         setSelected(next)
     }
@@ -1019,7 +1019,8 @@ function BatchProductPickerModal({
     const handleConfirm = () => {
         const items = Object.entries(selected).map(([productId, val]) => ({
             productId,
-            proposedPrice: val.proposedPrice
+            proposedPrice: val.proposedPrice,
+            quantity: val.quantity || 1
         }))
         if (items.length > 0) {
             onAddItems(items)
@@ -1084,13 +1085,34 @@ function BatchProductPickerModal({
                                     {isChecked && (
                                         <div className="flex items-center gap-2 pl-3">
                                             <div className="text-right">
+                                                <label className="text-[9px] block text-amber-400 font-bold">Số lượng (chai)</label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={selected[p.id]?.quantity ?? 1}
+                                                    onChange={e => {
+                                                        const qty = Math.max(1, parseInt(e.target.value) || 1)
+                                                        setSelected(prev => ({
+                                                            ...prev,
+                                                            [p.id]: { ...(prev[p.id] || { proposedPrice: p.wholesalePrice }), quantity: qty }
+                                                        }))
+                                                    }}
+                                                    className="w-16 px-2 py-1 text-xs font-bold font-mono outline-none rounded text-center"
+                                                    style={{ background: '#142433', border: '1px solid #D4A853', color: '#D4A853' }}
+                                                />
+                                            </div>
+
+                                            <div className="text-right">
                                                 <label className="text-[9px] block text-gray-400">Giá đề xuất</label>
                                                 <input
                                                     type="number"
                                                     value={currentPrice}
                                                     onChange={e => {
                                                         const val = parseFloat(e.target.value) || 0
-                                                        setSelected(prev => ({ ...prev, [p.id]: { proposedPrice: val } }))
+                                                        setSelected(prev => ({
+                                                            ...prev,
+                                                            [p.id]: { ...(prev[p.id] || { quantity: 1 }), proposedPrice: val }
+                                                        }))
                                                     }}
                                                     className="w-24 px-2 py-1 text-xs font-bold font-mono outline-none rounded"
                                                     style={{ background: '#142433', border: '1px solid #87CBB9', color: '#87CBB9' }}
@@ -1158,7 +1180,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         scope: 'ENTIRE_PORTFOLIO',
         discountPct: '',
     })
-    const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number }[]>([])
+    const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number; quantity: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [batchPickerOpen, setBatchPickerOpen] = useState(false)
 
@@ -1176,13 +1198,21 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                 return alert('Vui lòng chọn đầy đủ sản phẩm cho các dòng đề xuất')
             }
         }
+        if (form.category === 'TASTING') {
+            if (priceLines.length === 0) {
+                return alert('Vui lòng chọn ít nhất 1 mã sản phẩm nếm thử (Tasting)')
+            }
+            if (priceLines.some(line => !line.productId)) {
+                return alert('Vui lòng chọn đầy đủ mã sản phẩm cho các dòng tasting')
+            }
+        }
 
         setSaving(true)
         const result = await createProposal({
             ...form,
             estimatedAmount: form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined,
             discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
-            priceItems: form.category === 'PRICE_ADJUSTMENT' && (form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') 
+            priceItems: (form.category === 'TASTING' || form.category === 'PRICE_ADJUSTMENT') && priceLines.length > 0
                 ? priceLines 
                 : undefined,
             createdBy: userId,
@@ -1214,6 +1244,104 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             ))}
                         </select>
                     </div>
+
+                    {/* Tasting Custom Fields */}
+                    {form.category === 'TASTING' && (
+                        <div className="space-y-4 p-4 rounded-md border border-amber-500/40 bg-amber-950/20">
+                            <div>
+                                <label className="text-xs font-bold uppercase mb-1.5 block text-amber-300">Khách hàng áp dụng Tasting (tùy chọn)</label>
+                                <SearchableCustomerCombobox
+                                    customers={customers}
+                                    selectedCustomerId={form.customerId}
+                                    onSelect={(cust: any) => {
+                                        setForm(f => ({
+                                            ...f,
+                                            customerId: cust.id,
+                                            title: !f.title && cust.name ? `Tờ trình Tasting thử rượu cho khách hàng ${cust.name}` : f.title
+                                        }))
+                                    }}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold uppercase block text-amber-300">Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *</label>
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setBatchPickerOpen(true)}
+                                            className="text-xs flex items-center gap-1 text-[#D4A853] font-semibold hover:underline"
+                                        >
+                                            <Search size={12} /> Chọn nhanh hàng loạt
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0, quantity: 1 }])}
+                                            className="text-xs flex items-center gap-1 text-[#87CBB9] font-semibold hover:underline"
+                                        >
+                                            <Plus size={12} /> Thêm dòng
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                    {priceLines.map((line, idx) => {
+                                        const selectedProd = products.find(p => p.id === line.productId)
+                                        const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
+                                        
+                                        return (
+                                            <div key={idx} className="flex gap-2 items-end p-2.5 rounded-md bg-[#142433] border border-[#2A4355]">
+                                                <SearchableProductCombobox
+                                                    products={products}
+                                                    selectedProductId={line.productId}
+                                                    onSelect={p => {
+                                                        const copy = [...priceLines]
+                                                        copy[idx].productId = p.id
+                                                        copy[idx].proposedPrice = 0
+                                                        setPriceLines(copy)
+                                                    }}
+                                                />
+                                                
+                                                <div className="w-24">
+                                                    <label className="text-[9px] block text-amber-400 font-bold">Số lượng (chai)</label>
+                                                    <input 
+                                                        type="number"
+                                                        min={1}
+                                                        value={line.quantity || 1}
+                                                        onChange={e => {
+                                                            const copy = [...priceLines]
+                                                            copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
+                                                            setPriceLines(copy)
+                                                        }}
+                                                        style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
+                                                    />
+                                                </div>
+
+                                                <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[85px]">
+                                                    <span className="text-[9px] block text-gray-500">Giá niêm yết</span>
+                                                    <span className="text-[11px] block font-mono font-semibold text-slate-300">{formatVND(wholesale)}</span>
+                                                </div>
+
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
+                                                    className="p-1 rounded text-red-400 hover:bg-red-500/10 mb-0.5"
+                                                    title="Xóa dòng"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        )
+                                    })}
+                                    {priceLines.length === 0 && (
+                                        <p className="text-center text-xs py-4 text-amber-200/70 border border-dashed border-amber-500/30 rounded-md">
+                                            Bấm nút <strong className="text-[#87CBB9]">"Thêm dòng"</strong> hoặc <strong className="text-[#D4A853]">"Chọn nhanh hàng loạt"</strong> để chọn mã hàng tasting.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Price adjustment custom fields */}
                     {form.category === 'PRICE_ADJUSTMENT' && (
@@ -1273,7 +1401,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             </button>
                                             <button 
                                                 type="button" 
-                                                onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0 }])}
+                                                onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0, quantity: 1 }])}
                                                 className="text-xs flex items-center gap-1 text-[#87CBB9] font-semibold hover:underline"
                                             >
                                                 <Plus size={12} /> Thêm dòng
@@ -1300,6 +1428,21 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                         }}
                                                     />
                                                     
+                                                    <div className="w-20">
+                                                        <label className="text-[9px] block text-[#8AAEBB]">Số lượng</label>
+                                                        <input 
+                                                            type="number"
+                                                            min={1}
+                                                            value={line.quantity || 1}
+                                                            onChange={e => {
+                                                                const copy = [...priceLines]
+                                                                copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
+                                                                setPriceLines(copy)
+                                                            }}
+                                                            style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
+                                                        />
+                                                    </div>
+
                                                     <div className="w-28">
                                                         <div className="flex items-center justify-between mb-0.5">
                                                             <label className="text-[9px]" style={{ color: '#4A6A7A' }}>Giá đề xuất</label>

@@ -3185,16 +3185,70 @@ export async function getApprovedProposalsForSO(customerId?: string) {
             status: true,
             estimatedAmount: true,
             createdAt: true,
-            customer: { select: { id: true, name: true } },
-            creator: { select: { name: true } }
+            customerId: true,
+            customer: { select: { id: true, name: true, code: true } },
+            creator: { select: { name: true } },
+            priceItems: {
+                select: {
+                    id: true,
+                    productId: true,
+                    proposedPrice: true,
+                    quantity: true,
+                    product: {
+                        select: {
+                            id: true,
+                            skuCode: true,
+                            productName: true,
+                            wholesalePrice: true,
+                        }
+                    }
+                }
+            }
         },
         orderBy: { createdAt: 'desc' },
         take: 50
     })
     return proposals.map(p => ({
         ...p,
-        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0
+        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
+        priceItems: p.priceItems.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.product.productName,
+            skuCode: item.product.skuCode,
+            proposedPrice: Number(item.proposedPrice),
+            quantity: item.quantity ? Number(item.quantity) : 1,
+            wholesalePrice: item.product.wholesalePrice ? Number(item.product.wholesalePrice) : 0,
+        }))
     }))
+}
+
+export async function getProposalWithItemsForSO(proposalId: string) {
+    const p = await prisma.proposal.findUnique({
+        where: { id: proposalId },
+        include: {
+            customer: { select: { id: true, name: true, code: true, channel: true, paymentTerm: true } },
+            priceItems: {
+                include: {
+                    product: { select: { id: true, skuCode: true, productName: true, wholesalePrice: true } }
+                }
+            }
+        }
+    })
+    if (!p) return null
+    return {
+        ...p,
+        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
+        priceItems: p.priceItems.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.product.productName,
+            skuCode: item.product.skuCode,
+            proposedPrice: Number(item.proposedPrice),
+            quantity: item.quantity ? Number(item.quantity) : 1,
+            wholesalePrice: item.product.wholesalePrice ? Number(item.product.wholesalePrice) : 0,
+        }))
+    }
 }
 
 

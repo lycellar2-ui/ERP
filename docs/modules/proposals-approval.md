@@ -74,10 +74,10 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | **Lịch Thanh Toán** | `PAYMENT_SCHEDULE` | Cấp 1 (KT) ➔ Cấp 2 (CEO) | Kế Toán, Admin |
 
 > **Quy trình Liên Kết Tờ Trình Tasting & Đơn Hàng Tasting (0 VNĐ)**:
-> 1. Sales lập **Tờ Trình Tasting (`category: TASTING`)** chọn Khách hàng cần nếm thử vang.
+> 1. Sales lập **Tờ Trình Tasting (`category: TASTING`)** chọn Khách hàng và **chọn chi tiết các mã sản phẩm (SKUs) kèm Số Lượng (chai)** cần nếm thử (thủ công hoặc chọn nhanh hàng loạt).
 > 2. Tờ trình được duyệt qua 3 cấp (TP ➔ KT ➔ CEO).
 > 3. Sau khi Tờ trình được duyệt (`APPROVED`), nút **`🍷 + Lên Đơn Tasting Ngay`** xuất hiện trên Drawer chi tiết Tờ trình.
-> 4. Nhấp nút sẽ mở ngay Drawer Tạo Đơn Bán Hàng (`CreateSODrawer`) ở chế độ `orderType: TASTING`, tự động chọn Khách hàng và mã Tờ trình liên kết `[TT-YYYY-NNN]`, gán đơn giá xuất kho 0 VNĐ và điều khoản thanh toán *"TASTING - Không thu tiền"*.
+> 4. Nhấp nút (hoặc chọn Tờ trình Tasting trong dropdown của `CreateSODrawer`) sẽ **TỰ ĐỘNG NẠP CHÍNH XÁC DANH SÁCH MÃ SẢN PHẨM & SỐ LƯỢNG (QTY)** từ Tờ trình sang bảng sản phẩm đơn hàng, gán đơn giá 0 VNĐ và điều khoản thanh toán *"TASTING - Không thu tiền"*.
 > 5. Tờ trình lưu lịch sử danh sách các Đơn Bán Hàng Tasting đã phát sinh (`salesOrders`) kèm link truy cập nhanh.
 
 ---
