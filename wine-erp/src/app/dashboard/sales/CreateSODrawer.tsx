@@ -275,7 +275,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     if (prop) {
                         setNotes(`Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`)
                         if (prop.priceItems && prop.priceItems.length > 0) {
-                            const loadedLines = prop.priceItems.map(item => ({
+                            const loadedLines = prop.priceItems.map((item: any) => ({
                                 productId: item.productId,
                                 productName: item.productName,
                                 skuCode: item.skuCode,
@@ -675,7 +675,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                 if (foundCust) setSelectedCustomer(foundCust)
                                                             }
                                                             if (fullProp.priceItems && fullProp.priceItems.length > 0) {
-                                                                const loadedLines = fullProp.priceItems.map(item => ({
+                                                                const loadedLines = fullProp.priceItems.map((item: any) => ({
                                                                     productId: item.productId,
                                                                     productName: item.productName,
                                                                     skuCode: item.skuCode,

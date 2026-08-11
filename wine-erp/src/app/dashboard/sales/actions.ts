@@ -3199,7 +3199,7 @@ export async function getApprovedProposalsForSO(customerId?: string) {
                             id: true,
                             skuCode: true,
                             productName: true,
-                            wholesalePrice: true,
+                            marginPrice: { select: { wholesalePrice: true } }
                         }
                     }
                 }
@@ -3211,14 +3211,14 @@ export async function getApprovedProposalsForSO(customerId?: string) {
     return proposals.map(p => ({
         ...p,
         estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
-        priceItems: p.priceItems.map(item => ({
+        priceItems: (p.priceItems || []).map((item: any) => ({
             id: item.id,
             productId: item.productId,
-            productName: item.product.productName,
-            skuCode: item.product.skuCode,
-            proposedPrice: Number(item.proposedPrice),
+            productName: item.product?.productName || '',
+            skuCode: item.product?.skuCode || '',
+            proposedPrice: Number(item.proposedPrice || 0),
             quantity: item.quantity ? Number(item.quantity) : 1,
-            wholesalePrice: item.product.wholesalePrice ? Number(item.product.wholesalePrice) : 0,
+            wholesalePrice: item.product?.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0,
         }))
     }))
 }
@@ -3230,7 +3230,14 @@ export async function getProposalWithItemsForSO(proposalId: string) {
             customer: { select: { id: true, name: true, code: true, channel: true, paymentTerm: true } },
             priceItems: {
                 include: {
-                    product: { select: { id: true, skuCode: true, productName: true, wholesalePrice: true } }
+                    product: {
+                        select: {
+                            id: true,
+                            skuCode: true,
+                            productName: true,
+                            marginPrice: { select: { wholesalePrice: true } }
+                        }
+                    }
                 }
             }
         }
@@ -3239,14 +3246,14 @@ export async function getProposalWithItemsForSO(proposalId: string) {
     return {
         ...p,
         estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
-        priceItems: p.priceItems.map(item => ({
+        priceItems: (p.priceItems || []).map((item: any) => ({
             id: item.id,
             productId: item.productId,
-            productName: item.product.productName,
-            skuCode: item.product.skuCode,
-            proposedPrice: Number(item.proposedPrice),
+            productName: item.product?.productName || '',
+            skuCode: item.product?.skuCode || '',
+            proposedPrice: Number(item.proposedPrice || 0),
             quantity: item.quantity ? Number(item.quantity) : 1,
-            wholesalePrice: item.product.wholesalePrice ? Number(item.product.wholesalePrice) : 0,
+            wholesalePrice: item.product?.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0,
         }))
     }
 }
