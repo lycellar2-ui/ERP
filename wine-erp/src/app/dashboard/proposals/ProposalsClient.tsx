@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react'
 import {
     FileText, Plus, X, Search, Send, CheckCircle2, XCircle, RotateCcw,
     Clock, AlertCircle, Loader2, MessageSquare, Paperclip, ChevronDown,
-    Filter, Eye, ArrowRight, ClipboardCheck, Printer,
+    Filter, Eye, ArrowRight, ClipboardCheck, Printer, Trash2,
 } from 'lucide-react'
 import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
