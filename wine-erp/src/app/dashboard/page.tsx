@@ -23,6 +23,24 @@ import Link from 'next/link'
 import { AICeoSummary } from './AICeoSummary'
 
 /* ─── Reusable KPI Card ──────────────────────────── */
+function formatFriendlyVND(amount: number | null | undefined): string {
+    if (!amount || amount === 0) return '0 đ'
+    const abs = Math.abs(amount)
+    const sign = amount < 0 ? '−' : ''
+    
+    if (abs >= 1_000_000_000) {
+        const billions = abs / 1_000_000_000
+        const formatted = billions >= 10 ? billions.toFixed(1) : billions.toFixed(2)
+        return `${sign}${formatted.replace('.', ',')} Tỷ`
+    } else if (abs >= 1_000_000) {
+        const millions = abs / 1_000_000
+        const formatted = millions >= 10 ? millions.toFixed(0) : millions.toFixed(1)
+        return `${sign}${formatted.replace('.', ',')} Triệu`
+    } else {
+        return `${sign}${abs.toLocaleString('vi-VN')} đ`
+    }
+}
+
 function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#87CBB9' }: {
     label: string; value: string; sub?: string
     trend?: string; trendUp?: boolean; accentColor?: string
@@ -147,20 +165,20 @@ export default async function DashboardPage() {
 
             {/* ═══ LAYER 1 — 6 KPI CARDS ═══ */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <KpiCard label="DOANH THU THÁNG" value={`${(primaryRevenue / 1e9).toFixed(2)}T`}
+                <KpiCard label="DOANH THU THÁNG" value={formatFriendlyVND(primaryRevenue)}
                     sub={revenueSource}
                     trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% vs T.trước` : undefined}
                     trendUp={stats.revenueGrowth >= 0} accentColor="#87CBB9" />
-                <KpiCard label="LÃI GỘP" value={`${(pl.grossProfit / 1e6).toFixed(0)}M`}
+                <KpiCard label="LÃI GỘP" value={formatFriendlyVND(pl.grossProfit)}
                     sub={`Biên: ${pl.grossMargin.toFixed(1)}%`}
                     trend={pl.grossMargin >= 25 ? '🟢 Tốt' : '🟡 Cận'} trendUp={pl.grossMargin >= 25} accentColor="#D4A853" />
-                <KpiCard label="DÒNG TIỀN RÒNG" value={`${cash.netCashFlow >= 0 ? '+' : ''}${(cash.netCashFlow / 1e6).toFixed(0)}M`}
-                    sub={`Thu: ${(cash.cashIn / 1e6).toFixed(0)}M · Chi: ${((cash.cashOutAP + cash.cashOutExpenses) / 1e6).toFixed(0)}M`}
+                <KpiCard label="DÒNG TIỀN RÒNG" value={`${cash.netCashFlow >= 0 ? '+' : ''}${formatFriendlyVND(cash.netCashFlow)}`}
+                    sub={`Thu: ${formatFriendlyVND(cash.cashIn)} · Chi: ${formatFriendlyVND(cash.cashOutAP + cash.cashOutExpenses)}`}
                     accentColor={cash.netCashFlow >= 0 ? '#5BA88A' : '#8B1A2E'} />
-                <KpiCard label="GIÁ TRỊ TỒN KHO" value={`${(stats.stockTotalValue / 1e9).toFixed(2)}T`}
+                <KpiCard label="GIÁ TRỊ TỒN KHO" value={formatFriendlyVND(stats.stockTotalValue)}
                     sub={`${stats.stockQty.toLocaleString()} chai`} accentColor="#4A8FAB" />
-                <KpiCard label="CÔNG NỢ PHẢI THU" value={`${(ar.totalOutstanding / 1e6).toFixed(0)}M`}
-                    sub={arOverdue > 0 ? `${(arOverdue / 1e6).toFixed(0)}M quá hạn` : 'Chưa quá hạn'}
+                <KpiCard label="CÔNG NỢ PHẢI THU" value={formatFriendlyVND(ar.totalOutstanding)}
+                    sub={arOverdue > 0 ? `${formatFriendlyVND(arOverdue)} quá hạn` : 'Chưa quá hạn'}
                     accentColor={arOverdue > 0 ? '#E05252' : '#5BA88A'} />
                 <KpiCard label="CHỜ CEO DUYỆT" value={String(totalPending)}
                     sub={`${pendingProposals.length} tờ trình · ${stats.pendingSOs.length} SO`}
@@ -301,7 +319,7 @@ export default async function DashboardPage() {
                                         <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#D4A853' : '#4A6A7A' }}>{i + 1}.</span>
                                         <span className="text-xs truncate" style={{ color: '#E8F1F2' }}>{c.name}</span>
                                     </div>
-                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>{(c.revenue / 1e6).toFixed(0)}M</span>
+                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color: '#87CBB9' }}>{formatFriendlyVND(c.revenue)}</span>
                                 </div>
                             ))}
                         </div>
@@ -320,7 +338,7 @@ export default async function DashboardPage() {
                                         <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#D4A853' : '#4A6A7A' }}>{i + 1}.</span>
                                         <span className="text-xs truncate" style={{ color: '#E8F1F2' }}>{p.name}</span>
                                     </div>
-                                    <span className="text-[10px] flex-shrink-0" style={{ color: '#8AAEBB' }}>{p.qty} chai · {(p.revenue / 1e6).toFixed(0)}M</span>
+                                    <span className="text-[10px] flex-shrink-0" style={{ color: '#8AAEBB' }}>{p.qty} chai · {formatFriendlyVND(p.revenue)}</span>
                                 </div>
                             ))}
                         </div>
@@ -433,9 +451,9 @@ export default async function DashboardPage() {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-[10px] font-bold" style={{ color: '#E8F1F2' }}>
-                                                {kpi.unit === 'VND' ? `${(kpi.actual / 1e6).toFixed(0)}M` : kpi.actual}
+                                                {kpi.unit === 'VND' ? formatFriendlyVND(kpi.actual) : kpi.actual}
                                             </span>
-                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>/ {kpi.unit === 'VND' ? `${(kpi.target / 1e6).toFixed(0)}M` : kpi.target}</span>
+                                            <span className="text-xs" style={{ color: '#4A6A7A' }}>/ {kpi.unit === 'VND' ? formatFriendlyVND(kpi.target) : kpi.target}</span>
                                         </div>
                                     </div>
                                 )
@@ -455,7 +473,7 @@ export default async function DashboardPage() {
                                         <div className="flex justify-between mb-0.5">
                                             <span className="text-xs" style={{ color: '#8AAEBB' }}>{ch.label}</span>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-bold" style={{ color: ch.color }}>{(ch.revenue / 1e6).toFixed(0)}M</span>
+                                                <span className="text-[10px] font-bold" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue)}</span>
                                                 <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
                                             </div>
                                         </div>
@@ -526,7 +544,7 @@ export default async function DashboardPage() {
                                 return (
                                     <div key={bar.label} className="flex-1 flex flex-col items-center gap-0.5">
                                         <span className="text-xs font-bold" style={{ color: bar.color }}>
-                                            {bar.value !== 0 ? `${(Math.abs(bar.value) / 1e6).toFixed(0)}M` : '0'}
+                                            {bar.value !== 0 ? formatFriendlyVND(Math.abs(bar.value)) : '0 đ'}
                                         </span>
                                         <div className="w-full relative" style={{ height: 120 }}>
                                             <div className="absolute bottom-0 w-full rounded-t-sm" style={{ height: barH, background: `${bar.color}${bar.type === 'negative' ? '35' : '60'}`, borderLeft: `2px solid ${bar.color}`, borderTop: `2px solid ${bar.color}`, borderRight: `2px solid ${bar.color}` }} />
