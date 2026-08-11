@@ -1516,7 +1516,6 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                 return alert('Vui lòng chọn đầy đủ mã sản phẩm cho các dòng tasting')
             }
         }
-
         setSaving(true)
         const result = await createProposal({
             ...form,
@@ -1557,9 +1556,11 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Tasting Custom Fields */}
                     {(form.category === 'TASTING' || form.category === 'SPECIAL_EVENT') && (
-                        <div className="space-y-4 p-4 rounded-md border border-amber-500/40 bg-amber-950/20">
+                        <div className="space-y-4 p-4 rounded-xl border-2 border-[#D4A853]/60 bg-[#1B2B3A] shadow-lg">
                             <div>
-                                <label className="text-xs font-bold uppercase mb-1.5 block text-amber-300">Khách hàng áp dụng Tasting (tùy chọn)</label>
+                                <label className="text-xs font-extrabold uppercase mb-1.5 block tracking-wider text-[#D4A853]">
+                                    👤 Khách Hàng Áp Dụng Tasting (Tùy Chọn)
+                                </label>
                                 <SearchableCustomerCombobox
                                     customers={customers}
                                     selectedCustomerId={form.customerId}
@@ -1573,82 +1574,101 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold uppercase block text-amber-300">Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *</label>
-                                    <div className="flex items-center gap-3">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <label className="text-xs font-extrabold uppercase tracking-wider text-[#D4A853]">
+                                        🍷 Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *
+                                    </label>
+                                    <div className="flex items-center gap-2">
                                         <button 
                                             type="button" 
                                             onClick={() => setBatchPickerOpen(true)}
-                                            className="text-xs flex items-center gap-1 text-[#D4A853] font-semibold hover:underline"
+                                            className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer hover:opacity-90"
+                                            style={{ background: 'rgba(212,168,83,0.2)', color: '#FCD34D', border: '1px solid rgba(212,168,83,0.6)' }}
                                         >
-                                            <Search size={12} /> Chọn nhanh hàng loạt
+                                            <Search size={13} /> Chọn nhanh hàng loạt
                                         </button>
                                         <button 
                                             type="button" 
                                             onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0, quantity: 1 }])}
-                                            className="text-xs flex items-center gap-1 text-[#87CBB9] font-semibold hover:underline"
+                                            className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer hover:opacity-90"
+                                            style={{ background: 'rgba(135,203,185,0.2)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.6)' }}
                                         >
-                                            <Plus size={12} /> Thêm dòng
+                                            <Plus size={13} /> Thêm dòng
                                         </button>
                                     </div>
                                 </div>
-                                
-                                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                                    {priceLines.map((line, idx) => {
-                                        const selectedProd = products.find(p => p.id === line.productId)
-                                        const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
-                                        
-                                        return (
-                                            <div key={idx} className="flex gap-2 items-end p-2.5 rounded-md bg-[#142433] border border-[#2A4355]">
-                                                <SearchableProductCombobox
-                                                    products={products}
-                                                    selectedProductId={line.productId}
-                                                    onSelect={p => {
-                                                        const copy = [...priceLines]
-                                                        copy[idx].productId = p.id
-                                                        copy[idx].proposedPrice = 0
-                                                        setPriceLines(copy)
-                                                    }}
-                                                />
-                                                
-                                                <div className="w-24">
-                                                    <label className="text-[9px] block text-amber-400 font-bold">Số lượng (chai)</label>
-                                                    <input 
-                                                        type="number"
-                                                        min={1}
-                                                        value={line.quantity || 1}
-                                                        onChange={e => {
-                                                            const copy = [...priceLines]
-                                                            copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
-                                                            setPriceLines(copy)
-                                                        }}
-                                                        style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#1B2E3D', fontWeight: 'bold', color: '#D4A853', textAlign: 'center' }}
-                                                    />
-                                                </div>
-
-                                                <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[85px]">
-                                                    <span className="text-[9px] block text-gray-500">Giá niêm yết</span>
-                                                    <span className="text-[11px] block font-mono font-semibold text-slate-300">{formatVND(wholesale)}</span>
-                                                </div>
-
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
-                                                    className="p-1 rounded text-red-400 hover:bg-red-500/10 mb-0.5"
-                                                    title="Xóa dòng"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        )
-                                    })}
-                                    {priceLines.length === 0 && (
-                                        <p className="text-center text-xs py-4 text-amber-200/70 border border-dashed border-amber-500/30 rounded-md">
-                                            Bấm nút <strong className="text-[#87CBB9]">"Thêm dòng"</strong> hoặc <strong className="text-[#D4A853]">"Chọn nhanh hàng loạt"</strong> để chọn mã hàng tasting.
+                                {priceLines.length === 0 ? (
+                                    <div className="p-4 text-center rounded-lg border-2 border-dashed border-[#D4A853]/40 bg-[#142230]">
+                                        <p className="text-xs font-medium text-[#E8F1F2]">
+                                            Chưa chọn mã hàng tasting nào. Bấm nút <strong className="text-[#87CBB9]">"Thêm dòng"</strong> hoặc <strong className="text-[#FCD34D]">"Chọn nhanh hàng loạt"</strong> ở trên để thêm sản phẩm.
                                         </p>
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                                        {priceLines.map((line, idx) => {
+                                            const selectedProd = products.find(p => p.id === line.productId)
+                                            const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
+                                            
+                                            return (
+                                                <div key={idx} className="flex gap-2.5 items-center p-3 rounded-lg bg-[#111F2C] border border-[#2A4355] shadow-sm">
+                                                    <div className="flex-1 min-w-0">
+                                                        <SearchableProductCombobox
+                                                            products={products}
+                                                            selectedProductId={line.productId}
+                                                            onSelect={p => {
+                                                                const copy = [...priceLines]
+                                                                copy[idx].productId = p.id
+                                                                copy[idx].proposedPrice = 0
+                                                                setPriceLines(copy)
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="w-28 text-center flex-shrink-0">
+                                                        <label className="text-[10px] block text-[#D4A853] font-bold mb-1">Số lượng (chai)</label>
+                                                        <input 
+                                                            type="number"
+                                                            min={1}
+                                                            value={line.quantity || 1}
+                                                            onChange={e => {
+                                                                const copy = [...priceLines]
+                                                                copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
+                                                                setPriceLines(copy)
+                                                            }}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '6px 8px',
+                                                                fontSize: '13px',
+                                                                background: '#1B2E3D',
+                                                                border: '1px solid #D4A853',
+                                                                fontWeight: 'bold',
+                                                                color: '#FCD34D',
+                                                                textAlign: 'center',
+                                                                borderRadius: '6px',
+                                                                outline: 'none',
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    <div className="text-right flex flex-col justify-center px-2 min-w-[95px] flex-shrink-0">
+                                                        <span className="text-[10px] block text-[#4A6A7A] font-medium">Giá niêm yết</span>
+                                                        <span className="text-xs block font-mono font-bold text-[#E8F1F2]">{formatVND(wholesale)}</span>
+                                                    </div>
+
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
+                                                        className="p-1.5 rounded text-rose-400 hover:bg-rose-500/20 transition-all flex-shrink-0"
+                                                        title="Xóa dòng"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
