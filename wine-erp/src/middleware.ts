@@ -12,7 +12,7 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/delivery': 'TRS:READ',
     '/dashboard/finance': 'FIN:READ',
     '/dashboard/declarations': 'FIN:READ',
-    '/dashboard/tax': 'TAX:READ',
+    '/dashboard/tax': 'FIN:READ',
     '/dashboard/costing': 'FIN:READ',
     '/dashboard/reports': 'RPT:READ',
     '/dashboard/crm': 'CRM:READ',

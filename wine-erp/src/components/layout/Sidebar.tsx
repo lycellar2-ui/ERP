@@ -235,6 +235,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate }: Sideba
                         '/dashboard/consignment',
                         '/dashboard/returns',
                         '/dashboard/finance',
+                        '/dashboard/tax',
                         '/dashboard/reports',
                         '/dashboard/kpi',
                     ]
