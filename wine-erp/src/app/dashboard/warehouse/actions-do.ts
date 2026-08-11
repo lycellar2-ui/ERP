@@ -116,10 +116,29 @@ export async function createDeliveryOrder(input: {
         const { soId, warehouseId, lines } = input
         if (lines.length === 0) return { success: false, error: 'Cần ít nhất 1 dòng xuất kho' }
 
-        const so = await prisma.salesOrder.findUnique({ where: { id: soId } })
+        const [so, wh] = await Promise.all([
+            prisma.salesOrder.findUnique({
+                where: { id: soId },
+                include: { legalEntity: { select: { id: true, code: true, name: true } } },
+            }),
+            prisma.warehouse.findUnique({
+                where: { id: warehouseId },
+                include: { legalEntity: { select: { id: true, code: true, name: true } } },
+            }),
+        ])
+
         if (!so) return { success: false, error: 'SO không tồn tại' }
+        if (!wh) return { success: false, error: 'Kho xuất hàng không tồn tại' }
+
         if (!['CONFIRMED', 'PARTIALLY_DELIVERED'].includes(so.status)) {
             return { success: false, error: `SO status ${so.status} không cho phép xuất kho` }
+        }
+
+        if (so.legalEntityId && wh.legalEntityId && so.legalEntityId !== wh.legalEntityId) {
+            return {
+                success: false,
+                error: `Kho xuất hàng [${wh.code} - ${wh.name}] thuộc Pháp Nhân [${wh.legalEntity?.name}], không khớp với Pháp Nhân Đơn Hàng [${so.soNo}] ([${so.legalEntity?.name}]). Vui lòng chọn đúng kho thuộc cùng Pháp Nhân!`,
+            }
         }
 
         // Generate DO number (atomic — collision-safe)

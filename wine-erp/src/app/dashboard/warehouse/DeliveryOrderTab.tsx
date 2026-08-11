@@ -40,20 +40,31 @@ export type WarehouseOption = {
 }
 
 export function resolveWarehouseForSO(targetSO: SOOption, warehouses: WarehouseOption[]): string {
-    if (targetSO.warehouseId) return targetSO.warehouseId
     const targetLegalEntityId = (targetSO as any).legalEntityId
     const targetLegalEntityCode = (targetSO as any).legalEntityCode
+    const targetLegalEntityName = (targetSO as any).legalEntityName
 
     // Strictly filter warehouses belonging to the SO's legal entity by ID, Code, or Name match
     const entityWhs = warehouses.filter((w: any) => {
-        if (!targetLegalEntityId && !targetLegalEntityCode) return true
+        if (!targetLegalEntityId && !targetLegalEntityCode && !targetLegalEntityName) return true
         if (targetLegalEntityId && w.legalEntityId === targetLegalEntityId) return true
         if (targetLegalEntityCode && w.legalEntityCode === targetLegalEntityCode) return true
         if (targetLegalEntityCode === 'TA' && (w.code?.includes('TA') || w.name?.includes('Thắng Ân'))) return true
         if (targetLegalEntityCode === 'LC' && (w.code?.includes('LYS') || w.name?.includes('Lys'))) return true
+        if (targetLegalEntityName && w.legalEntityName && w.legalEntityName === targetLegalEntityName) return true
         return false
     })
 
+    // If SO already had a warehouseId specified, check if that warehouse matches the SO's legal entity
+    if (targetSO.warehouseId) {
+        const preSelectedWh = warehouses.find(w => w.id === targetSO.warehouseId)
+        if (preSelectedWh) {
+            const matchesEntity = entityWhs.length === 0 || entityWhs.some(w => w.id === preSelectedWh.id)
+            if (matchesEntity) return preSelectedWh.id
+        }
+    }
+
+    // Pick the default warehouse belonging to THIS specific Legal Entity
     const pool = entityWhs.length > 0 ? entityWhs : warehouses
     const defaultWh = pool.find((w: any) => w.isDefault && w.allowSales !== false)
         ?? pool.find((w: any) => w.allowSales !== false)

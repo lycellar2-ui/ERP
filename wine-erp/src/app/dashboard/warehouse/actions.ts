@@ -727,6 +727,8 @@ export async function getSOsForDelivery() {
             id: true,
             soNo: true,
             warehouseId: true,
+            legalEntityId: true,
+            legalEntity: { select: { id: true, code: true, name: true } },
             createdAt: true,
             customer: { select: { name: true } },
             lines: {
@@ -745,6 +747,9 @@ export async function getSOsForDelivery() {
         id: so.id,
         soNo: so.soNo,
         warehouseId: so.warehouseId,
+        legalEntityId: so.legalEntityId,
+        legalEntityCode: so.legalEntity?.code ?? null,
+        legalEntityName: so.legalEntity?.name ?? null,
         createdAt: so.createdAt,
         customerName: so.customer?.name ?? '',
         lines: so.lines.map(l => ({
@@ -809,11 +814,31 @@ export async function createDeliveryOrder(input: {
             return { success: false, error: 'Cần ít nhất 1 dòng xuất kho' }
         }
 
-        // Validate SO
-        const so = await prisma.salesOrder.findUnique({ where: { id: soId } })
+        // Validate SO and Warehouse with Legal Entity match
+        const [so, wh] = await Promise.all([
+            prisma.salesOrder.findUnique({
+                where: { id: soId },
+                include: { legalEntity: { select: { id: true, code: true, name: true } } },
+            }),
+            prisma.warehouse.findUnique({
+                where: { id: warehouseId },
+                include: { legalEntity: { select: { id: true, code: true, name: true } } },
+            }),
+        ])
+
         if (!so) return { success: false, error: 'SO không tồn tại' }
+        if (!wh) return { success: false, error: 'Kho xuất hàng không tồn tại' }
+
         if (!['CONFIRMED', 'PARTIALLY_DELIVERED'].includes(so.status)) {
             return { success: false, error: `SO status ${so.status} không cho phép xuất kho` }
+        }
+
+        // Strictly enforce Legal Entity match between SO and Warehouse
+        if (so.legalEntityId && wh.legalEntityId && so.legalEntityId !== wh.legalEntityId) {
+            return {
+                success: false,
+                error: `Kho xuất hàng [${wh.code} - ${wh.name}] thuộc Pháp Nhân [${wh.legalEntity?.name}], không khớp với Pháp Nhân Đơn Hàng [${so.soNo}] ([${so.legalEntity?.name}]). Vui lòng chọn đúng kho thuộc cùng Pháp Nhân!`,
+            }
         }
 
         // Generate DO number (atomic — collision-safe)
