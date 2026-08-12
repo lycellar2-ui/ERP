@@ -637,6 +637,9 @@ export async function fetchGdtInvoicesAction(params: {
 
         const token = authBody.token
 
+        // Small pause after auth to prevent GDT rate limiter (429 Too Many Requests)
+        await new Promise(resolve => setTimeout(resolve, 600))
+
         // 2. Fetch Invoices (sold = đầu ra, purchase = đầu vào)
         const baseUrl = invoiceType === 'sold'
             ? 'https://hoadondientu.gdt.gov.vn/api/query/invoices/sold'
@@ -669,7 +672,7 @@ export async function fetchGdtInvoicesAction(params: {
             const formattedState = candidateState.replace(/ /g, '%20')
             const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&searchState=${formattedState}`
 
-            const res = await fetch(endpoint, {
+            let res = await fetch(endpoint, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -680,6 +683,21 @@ export async function fetchGdtInvoicesAction(params: {
                 cache: 'no-store',
             })
 
+            // If GDT returned 429 (Too Many Requests), pause 1.2s and retry with existing token
+            if (res.status === 429) {
+                await new Promise(resolve => setTimeout(resolve, 1200))
+                res = await fetch(endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept': 'application/json, text/plain, */*',
+                        'Origin': 'https://hoadondientu.gdt.gov.vn',
+                        'Referer': 'https://hoadondientu.gdt.gov.vn/',
+                    },
+                    cache: 'no-store',
+                })
+            }
+
             if (res.ok) {
                 invRes = res
                 break
@@ -689,6 +707,11 @@ export async function fetchGdtInvoicesAction(params: {
                     lastErrorDetail = errJson.message || errJson.error || JSON.stringify(errJson)
                 } catch {
                     lastErrorDetail = await res.text()
+                }
+
+                // If 429 still persists after retry, pause a bit more before trying next candidate
+                if (res.status === 429) {
+                    await new Promise(resolve => setTimeout(resolve, 1500))
                 }
 
                 // If not 500 Search params error, keep this response
