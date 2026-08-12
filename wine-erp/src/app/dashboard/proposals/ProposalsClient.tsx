@@ -422,44 +422,89 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         <td style="width: 30%;">
                             <div class="sign-title">Vận hành</div>
                             <div style="font-size: 9.5pt;">Operation</div>
-                            <div style="margin-bottom: 35px;"></div>
-                            <div class="sign-name">Trần Hữu Chiến</div>
-                            <div class="sign-status">✓ Đã xác nhận</div>
+                            <div style="margin-bottom: 45px;"></div>
+                            <div class="sign-name" style="font-weight: bold;">Trần Hữu Chiến</div>
                         </td>
                         <td style="width: 35%;">
                             <div class="sign-title">Quản lý Kinh doanh</div>
                             <div style="font-size: 9.5pt;">CBO - Sales Manager</div>
-                            <div style="margin-bottom: 35px;"></div>
-                            ${l1Log ? `
-                                <div class="sign-name">${l1Log.approver?.name || 'Jeremie Courivault'}</div>
-                                <div class="sign-status">✓ Đã duyệt (${l1SignedAt})</div>
-                            ` : `
-                                <div class="sign-name">Jeremie Courivault</div>
-                                <div style="font-size: 8.5pt; color: #888;">(Chưa duyệt)</div>
-                            `}
+                            <div style="margin-bottom: 45px;"></div>
+                            <div class="sign-name" style="font-weight: bold;">${l1Log?.approver?.name || 'Jeremie Courivault'}</div>
                         </td>
                         <td style="width: 35%;">
                             <div class="sign-title">Nhân Viên Kinh doanh</div>
                             <div style="font-size: 9.5pt;">Sales Executive</div>
                             <div class="sign-sub">(Họ và tên / Full name)</div>
+                            <div style="margin-bottom: 35px;"></div>
                             <div class="sign-name" style="font-style: normal; font-weight: bold;">${detail.creator?.name || ''}</div>
-                            <div class="sign-status">✓ Đã trình (${creatorSignedAt})</div>
                         </td>
                     </tr>
                     <tr>
                         <td colspan="3" style="padding-top: 25px;">
                             <div class="sign-title">Ban Lãnh đạo / Board of Directors</div>
                             <div style="font-size: 9pt; font-style: italic;">(Trường hợp vượt thẩm quyền Quản lý Kinh doanh hoặc vượt ngân sách / In case beyond the Sales Manager's authority or budget)</div>
-                            ${l3Log ? `
-                                <div class="sign-name" style="margin-top: 30px; font-weight: bold;">${l3Log.approver?.name || ''}</div>
-                                <div class="sign-status">✓ Đã phê duyệt (${l3SignedAt})</div>
-                            ` : `
-                                <div style="color: #999; margin-top: 25px;">............................................................</div>
-                                <div style="font-size: 8.5pt; color: #888;">(Chưa phê duyệt)</div>
-                            `}
+                            <div style="color: #999; margin-top: 35px;">............................................................</div>
+                            <div class="sign-name" style="margin-top: 5px; font-weight: bold;">${l3Log?.approver?.name || ''}</div>
                         </td>
                     </tr>
                 </table>
+
+                <!-- Digital Approval Audit Trail Table Below -->
+                <div style="margin-top: 25px; page-break-inside: avoid;">
+                    <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 8px;">
+                        Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt;">
+                        <thead>
+                            <tr style="background-color: #f8f9fa;">
+                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 40px;">STT</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 140px;">Cấp Duyệt / Vai Trò</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: left;">Người Thực Hiện</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 120px;">Trạng Thái</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 140px;">Thời Gian</th>
+                                <th style="border: 1px solid #000; padding: 5px; text-align: left;">Ghi Chú / Ý Kiến</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">1</td>
+                                <td style="border: 1px solid #000; padding: 5px;">Người lập tờ trình</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${detail.creator?.name || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">✓ Đã lập & trình</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${creatorSignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">Khởi tạo tờ trình</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">2</td>
+                                <td style="border: 1px solid #000; padding: 5px;">Quản lý Kinh doanh</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${l1Log?.approver?.name || 'Jeremie Courivault'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: ${l1Log ? (l1Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
+                                    ${l1Log ? (l1Log.action === 'APPROVE' ? '✓ Đã duyệt' : '✗ Từ chối') : '⏳ Chưa duyệt'}
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${l1SignedAt || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${l1Log?.comment || '—'}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">3</td>
+                                <td style="border: 1px solid #000; padding: 5px;">Vận hành</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">Trần Hữu Chiến</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">✓ Đã xác nhận</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${creatorSignedAt}</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">Xác nhận vận hành</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">4</td>
+                                <td style="border: 1px solid #000; padding: 5px;">Ban Lãnh đạo</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${l3Log?.approver?.name || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: ${l3Log ? (l3Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
+                                    ${l3Log ? (l3Log.action === 'APPROVE' ? '✓ Đã phê duyệt' : '✗ Từ chối') : '⏳ Chưa phê duyệt'}
+                                </td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${l3SignedAt || '—'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${l3Log?.comment || '—'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <script>
                     window.onload = function() {
