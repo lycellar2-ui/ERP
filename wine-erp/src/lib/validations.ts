@@ -20,7 +20,7 @@ export const SalesChannelSchema = z.enum(['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VI
 export const SOLineCreateSchema = z.object({
     productId: idSchema,
     qtyOrdered: z.number().int().positive('Số lượng phải > 0'),
-    unitPrice: positiveNumber,
+    unitPrice: nonNegativeNumber,
     lineDiscountPct: percentSchema.optional(),
     priceSource: z.string().optional(),
     vatRate: percentSchema.optional().default(10),
@@ -35,6 +35,8 @@ export const SOCreateSchema = z.object({
     orderDiscount: percentSchema.optional(),
     notes: z.string().max(1000).optional(),
     legalEntityId: idSchema,
+    orderType: z.string().optional(),
+    proposalId: z.string().optional(),
     lines: z.array(SOLineCreateSchema).min(1, 'Đơn hàng phải có ít nhất 1 dòng'),
 })
 
