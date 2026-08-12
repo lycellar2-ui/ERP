@@ -51,7 +51,8 @@ export async function authenticateGdt(mst: string, pass: string, ckey: string, c
 }
 
 export async function getSoldInvoices(token: string, page = 0, size = 50) {
-    const res = await fetch(`https://hoadondientu.gdt.gov.vn/api/query/invoices/sold?sort=tdlap:desc&size=${size}&page=${page}&searchState=selectType:1`, {
+    const searchState = 'khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:01/01/2026,gttden:12/08/2026,tthai:null,ttxly:null,lhdon:null,tdlap:null'
+    const res = await fetch(`https://hoadondientu.gdt.gov.vn/api/query/invoices/sold?sort=tdlap:desc&size=${size}&page=${page}&searchState=${searchState}`, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -69,7 +70,8 @@ export async function getSoldInvoices(token: string, page = 0, size = 50) {
 }
 
 export async function getPurchaseInvoices(token: string, page = 0, size = 50) {
-    const res = await fetch(`https://hoadondientu.gdt.gov.vn/api/query/invoices/purchase?sort=tdlap:desc&size=${size}&page=${page}&searchState=selectType:1`, {
+    const searchState = 'khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:01/01/2026,gttden:12/08/2026,tthai:null,ttxly:null,lhdon:null,tdlap:null'
+    const res = await fetch(`https://hoadondientu.gdt.gov.vn/api/query/invoices/purchase?sort=tdlap:desc&size=${size}&page=${page}&searchState=${searchState}`, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

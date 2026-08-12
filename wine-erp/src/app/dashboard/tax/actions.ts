@@ -642,11 +642,22 @@ export async function fetchGdtInvoicesAction(params: {
             ? 'https://hoadondientu.gdt.gov.vn/api/query/invoices/sold'
             : 'https://hoadondientu.gdt.gov.vn/api/query/invoices/purchase'
 
+        const now = new Date()
+        const currentYear = now.getFullYear()
+        const pad = (n: number) => String(n).padStart(2, '0')
+        const todayStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${currentYear}`
+        const startOfYearStr = `01/01/${currentYear}`
+
+        const fullGdtStateWithDates = `khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:${startOfYearStr},gttden:${todayStr},tthai:null,ttxly:null,lhdon:null,tdlap:null`
+        const fullGdtStateWithDateTime = `khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:${startOfYearStr} 00:00:00,gttden:${todayStr} 23:59:59,tthai:null,ttxly:null,lhdon:null,tdlap:null`
+        const fullGdtStateNull = 'khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:null,gttden:null,tthai:null,ttxly:null,lhdon:null,tdlap:null'
+
         const searchStateCandidates = [
+            fullGdtStateWithDates,
+            fullGdtStateWithDateTime,
+            fullGdtStateNull,
             'selectType:1',
             'state:1',
-            'khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:null,gttden:null,tthai:null,ttxly:null,lhdon:null,tdlap:null',
-            'searchType:1',
             'invoices',
         ]
 
@@ -654,7 +665,9 @@ export async function fetchGdtInvoicesAction(params: {
         let lastErrorDetail = ''
 
         for (const candidateState of searchStateCandidates) {
-            const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&searchState=${encodeURIComponent(candidateState)}`
+            // Do NOT encode colons or commas using encodeURIComponent, GDT Java controller expects raw : and ,
+            const formattedState = candidateState.replace(/ /g, '%20')
+            const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&searchState=${formattedState}`
 
             const res = await fetch(endpoint, {
                 headers: {
