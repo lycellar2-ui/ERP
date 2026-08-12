@@ -241,6 +241,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         let tableRows = ''
         let totalRefValue = 0
 
+        const formatVNDPrint = (amount: number) => {
+            return new Intl.NumberFormat('vi-VN').format(amount) + ' đ'
+        }
+
         if (detail.priceItems && detail.priceItems.length > 0) {
             tableRows = detail.priceItems.map((item: any, i: number) => {
                 const wholesale = item.product?.wholesalePrice || 0
@@ -249,17 +253,23 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 totalRefValue += lineTotal
 
                 if (isTasting) {
+                    const customerAndDateTd = i === 0 ? `
+                        <td rowspan="${detail.priceItems.length}" style="border: 1px solid #000; padding: 6px 8px; text-align: center; vertical-align: middle; background-color: #ffffff;">
+                            <div style="font-weight: bold; font-size: 10pt; color: #000;">${detail.customer?.name || 'Khách hàng'}</div>
+                            <div style="font-size: 9pt; color: #333; margin-top: 4px; white-space: nowrap;">Ngày xuất: ${exportDateStr}</div>
+                        </td>
+                    ` : ''
+
                     return `
                         <tr>
                             <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">${i + 1}</td>
-                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">${exportDateStr}</td>
-                            <td style="border: 1px solid #000; padding: 5px 4px; word-break: normal; overflow-wrap: break-word;">${detail.customer?.name || 'Khách hàng'}</td>
+                            ${customerAndDateTd}
                             <td style="border: 1px solid #000; padding: 5px 3px; font-family: monospace; font-weight: bold; text-align: center; white-space: nowrap;">${item.product?.skuCode || ''}</td>
                             <td style="border: 1px solid #000; padding: 5px 4px; font-weight: bold; word-break: normal; overflow-wrap: break-word;">${item.product?.productName || ''}</td>
                             <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">Chai</td>
                             <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; font-weight: bold; white-space: nowrap;">${qty}</td>
-                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; white-space: nowrap;">${formatVND(wholesale)}</td>
-                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVND(lineTotal)}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; white-space: nowrap;">${formatVNDPrint(wholesale)}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVNDPrint(lineTotal)}</td>
                             <td style="border: 1px solid #000; padding: 5px 4px; font-size: 9.5pt; word-break: normal; overflow-wrap: break-word;">Xuất hàng dùng thử cho khách hàng</td>
                         </tr>
                     `
@@ -274,8 +284,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         <td style="border: 1px solid #000; padding: 6px 4px; font-family: monospace; text-align: center; white-space: nowrap;">${item.product?.skuCode || ''}</td>
                         <td style="border: 1px solid #000; padding: 6px 4px; word-break: normal; overflow-wrap: break-word;">${item.product?.productName || ''}</td>
                         <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; white-space: nowrap;">${qty}</td>
-                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; white-space: nowrap;">${formatVND(wholesale)}</td>
-                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVND(item.proposedPrice)}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; white-space: nowrap;">${formatVNDPrint(wholesale)}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVNDPrint(item.proposedPrice)}</td>
                         <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; white-space: nowrap;">
                             ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%
                         </td>
@@ -376,10 +386,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     <thead>
                         <tr>
                             <th style="width: 4%; white-space: nowrap;">STT<br/>No.</th>
-                            <th style="width: 10%; white-space: nowrap;">Ngày xuất<br/>Date</th>
-                            <th style="width: 15%;">Khách hàng<br/>Customer</th>
+                            <th style="width: 22%;">Khách hàng & Ngày xuất<br/>Customer & Date</th>
                             <th style="width: 9%; white-space: nowrap;">Mã hàng<br/>Item Code</th>
-                            <th style="width: 20%;">Tên hàng<br/>Product Name</th>
+                            <th style="width: 23%;">Tên hàng<br/>Product Name</th>
                             <th style="width: 5%; white-space: nowrap;">ĐVT<br/>Unit</th>
                             <th style="width: 4%; white-space: nowrap;">SL<br/>Qty</th>
                             <th style="width: 11%; white-space: nowrap;">Đơn giá tham khảo<br/>Ref. unit cost</th>
@@ -396,7 +405,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <div class="summary-section">
                     <p class="summary-row-bold" style="margin: 3px 0;">
                         Tổng giá trị tham khảo hàng mẫu (kỳ này) / Total reference value (this period): 
-                        <span style="float: right; margin-right: 2%; white-space: nowrap;">${formatVND(totalRefValue)}</span>
+                        <span style="float: right; margin-right: 2%; white-space: nowrap;">${formatVNDPrint(totalRefValue)}</span>
                     </p>
                     <p style="margin: 3px 0;">Ngân sách hàng mẫu đã duyệt cho kỳ này / Approved sample budget for this period:</p>
                     <p class="summary-row-bold" style="margin: 3px 0;">Ngân sách còn lại sau đề nghị này / Remaining budget after this request:</p>
