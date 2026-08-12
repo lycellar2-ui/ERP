@@ -391,8 +391,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             <th style="width: 23%;">Tên hàng<br/>Product Name</th>
                             <th style="width: 5%; white-space: nowrap;">ĐVT<br/>Unit</th>
                             <th style="width: 4%; white-space: nowrap;">SL<br/>Qty</th>
-                            <th style="width: 11%; white-space: nowrap;">Đơn giá tham khảo<br/>Ref. unit cost</th>
-                            <th style="width: 11%; white-space: nowrap;">Thành tiền tham khảo<br/>Ref. total value</th>
+                            <th style="width: 11%;">Đơn giá<br/>tham khảo<br/><span style="font-size: 8pt; font-weight: normal;">Ref. unit cost</span></th>
+                            <th style="width: 11%;">Thành tiền<br/>tham khảo<br/><span style="font-size: 8pt; font-weight: normal;">Ref. total value</span></th>
                             <th style="width: 11%;">Mục đích / Lý do<br/>Purpose / Reason</th>
                         </tr>
                     </thead>
@@ -460,8 +460,13 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
                 <!-- Digital Approval Audit Trail Table Below -->
                 <div style="margin-top: 25px; page-break-inside: avoid;">
-                    <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 8px;">
-                        Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)
+                    <div style="font-size: 11pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <span style="text-transform: uppercase;">V. Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)</span>
+                        <span style="font-size: 9pt; font-weight: normal; color: #222;">
+                            <strong>Số Tờ Trình:</strong> <span style="font-family: monospace; font-weight: bold;">${detail.proposalNo}</span>
+                            &nbsp;|&nbsp;
+                            <strong>Loại:</strong> ${CATEGORY_LABELS[detail.category] || detail.category}
+                        </span>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt;">
                         <thead>
@@ -510,6 +515,30 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${l3SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${l3Log?.comment || '—'}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">5</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 1</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">6</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 2</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">7</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 3</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
                             </tr>
                         </tbody>
                     </table>
