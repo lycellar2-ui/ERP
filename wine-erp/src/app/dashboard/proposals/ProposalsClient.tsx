@@ -2204,23 +2204,26 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                         <div className="space-y-3">
                             {/* Tasting Proposal Quick Action & Linked SOs */}
                             {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT') && (
-                                <div className="p-4 rounded-md space-y-3 bg-amber-950/20 border border-amber-500/40">
+                                <div className="p-4 rounded-xl space-y-2.5 shadow-sm transition-all" style={{
+                                    background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+                                    border: '1.5px solid #F59E0B',
+                                }}>
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs font-bold uppercase text-amber-300 flex items-center gap-1.5">
-                                            🍷 Tờ Trình Tasting & Thử Vang
+                                        <p className="text-xs font-extrabold uppercase flex items-center gap-1.5 tracking-wide" style={{ color: '#92400E' }}>
+                                            🍷 TỜ TRÌNH TASTING & THỬ VANG
                                         </p>
                                         {['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status) && (
                                             <a
                                                 href={`/dashboard/sales?action=createTasting&proposalId=${detail.id}&customerId=${detail.customerId || ''}`}
-                                                className="px-3 py-1.5 text-xs font-bold rounded bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center gap-1.5 shadow transition-all"
+                                                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
                                             >
                                                 🍷 + Lên Đơn Tasting Ngay
                                             </a>
                                         )}
                                     </div>
                                     {detail.customer && (
-                                        <p className="text-xs text-amber-200">
-                                            Khách hàng áp dụng: <strong>{detail.customer.name}</strong> ({detail.customer.code})
+                                        <p className="text-xs font-medium" style={{ color: '#78350F' }}>
+                                            Khách hàng áp dụng: <strong style={{ color: '#451A03', fontWeight: 700 }}>{detail.customer.name}</strong> ({detail.customer.code})
                                         </p>
                                     )}
                                 </div>
