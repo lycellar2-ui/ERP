@@ -431,29 +431,25 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         <td style="width: 30%;">
                             <div class="sign-title">Vận hành</div>
                             <div style="font-size: 9.5pt;">Operation</div>
-                            <div style="margin-bottom: 45px;"></div>
-                            <div class="sign-name" style="font-weight: bold;">Trần Hữu Chiến</div>
+                            <div style="margin-bottom: 50px;"></div>
                         </td>
                         <td style="width: 35%;">
                             <div class="sign-title">Quản lý Kinh doanh</div>
                             <div style="font-size: 9.5pt;">CBO - Sales Manager</div>
-                            <div style="margin-bottom: 45px;"></div>
-                            <div class="sign-name" style="font-weight: bold;">${l1Log?.approver?.name || 'Jeremie Courivault'}</div>
+                            <div style="margin-bottom: 50px;"></div>
                         </td>
                         <td style="width: 35%;">
                             <div class="sign-title">Nhân Viên Kinh doanh</div>
                             <div style="font-size: 9.5pt;">Sales Executive</div>
                             <div class="sign-sub">(Họ và tên / Full name)</div>
-                            <div style="margin-bottom: 35px;"></div>
-                            <div class="sign-name" style="font-style: normal; font-weight: bold;">${detail.creator?.name || ''}</div>
+                            <div style="margin-bottom: 40px;"></div>
                         </td>
                     </tr>
                     <tr>
                         <td colspan="3" style="padding-top: 25px;">
                             <div class="sign-title">Ban Lãnh đạo / Board of Directors</div>
                             <div style="font-size: 9pt; font-style: italic;">(Trường hợp vượt thẩm quyền Quản lý Kinh doanh hoặc vượt ngân sách / In case beyond the Sales Manager's authority or budget)</div>
-                            <div style="color: #999; margin-top: 35px;">............................................................</div>
-                            <div class="sign-name" style="margin-top: 5px; font-weight: bold;">${l3Log?.approver?.name || ''}</div>
+                            <div style="margin-bottom: 45px;"></div>
                         </td>
                     </tr>
                 </table>
@@ -663,31 +659,32 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     <tr>
                         <td>
                             <div class="sign-title">NGƯỜI LẬP TỜ TRÌNH</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Ký, ghi rõ họ tên)</div>
-                            <div style="font-weight: bold; font-size: 13px;">${detail.creator?.name || ''}</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Ký, ghi rõ họ tên)</div>
                         </td>
                         <td>
                             <div class="sign-title">TRƯỞNG BỘ PHẬN</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Xác nhận & Ký tên)</div>
-                            <div style="font-weight: bold; font-size: 13px; min-height: 18px;">${l1Log?.approver?.name || ''}</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Xác nhận & Ký tên)</div>
                         </td>
                         <td>
                             <div class="sign-title">KẾ TOÁN TRƯỞNG</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Kểm tra & Ký tên)</div>
-                            <div style="font-weight: bold; font-size: 13px; min-height: 18px;">${l2Log?.approver?.name || ''}</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Kểm tra & Ký tên)</div>
                         </td>
                         <td>
                             <div class="sign-title">TỔNG GIÁM ĐỐC</div>
-                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 45px;">(Phê duyệt & Đóng dấu)</div>
-                            <div style="font-weight: bold; font-size: 13px; min-height: 18px;">${l3Log?.approver?.name || ''}</div>
+                            <div style="font-size: 10px; color: #555; font-style: italic; margin-bottom: 50px;">(Phê duyệt & Đóng dấu)</div>
                         </td>
                     </tr>
                 </table>
 
-                {/* Digital Approval Audit Trail Table Below */}
+                <!-- Digital Approval Audit Trail Table Below -->
                 <div style="margin-top: 30px; page-break-inside: avoid;">
-                    <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
-                        V. Bảng Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)
+                    <div style="font-size: 11pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <span style="text-transform: uppercase;">V. Bảng Tiến Trình Phê Duyệt Hệ Thống (Digital Audit Trail)</span>
+                        <span style="font-size: 9pt; font-weight: normal; color: #222;">
+                            <strong>Số Tờ Trình:</strong> <span style="font-family: monospace; font-weight: bold;">${detail.proposalNo}</span>
+                            &nbsp;|&nbsp;
+                            <strong>Loại:</strong> ${CATEGORY_LABELS[detail.category] || detail.category}
+                        </span>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt;">
                         <thead>
@@ -738,6 +735,30 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 </td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l3SignedAt}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l3Log?.comment || '—'}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">5</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 1</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">6</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 2</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center;">7</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; color: #555;">Ý kiến bổ sung 3</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">..................</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px; text-align: center; color: #999;">___/___/2026</td>
+                                <td style="border: 1px solid #000; padding: 8px 5px;"></td>
                             </tr>
                         </tbody>
                     </table>
