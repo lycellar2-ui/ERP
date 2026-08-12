@@ -638,32 +638,59 @@ export async function fetchGdtInvoicesAction(params: {
         const token = authBody.token
 
         // 2. Fetch Invoices (sold = đầu ra, purchase = đầu vào)
-        const endpoint = invoiceType === 'sold'
-            ? `https://hoadondientu.gdt.gov.vn/api/query/invoices/sold?sort=tdlap:desc&size=${size}&page=${page}`
-            : `https://hoadondientu.gdt.gov.vn/api/query/invoices/purchase?sort=tdlap:desc&size=${size}&page=${page}`
+        const baseUrl = invoiceType === 'sold'
+            ? 'https://hoadondientu.gdt.gov.vn/api/query/invoices/sold'
+            : 'https://hoadondientu.gdt.gov.vn/api/query/invoices/purchase'
 
-        const invRes = await fetch(endpoint, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json, text/plain, */*',
-                'Origin': 'https://hoadondientu.gdt.gov.vn',
-                'Referer': 'https://hoadondientu.gdt.gov.vn/',
-            },
-            cache: 'no-store',
-        })
+        const searchStateCandidates = [
+            'selectType:1',
+            'state:1',
+            'khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:null,gttden:null,tthai:null,ttxly:null,lhdon:null,tdlap:null',
+            'searchType:1',
+            'invoices',
+        ]
 
-        if (!invRes.ok) {
-            let detail = ''
-            try {
-                const errJson = await invRes.json()
-                detail = errJson.message || errJson.error || JSON.stringify(errJson)
-            } catch {
-                detail = await invRes.text()
+        let invRes: Response | null = null
+        let lastErrorDetail = ''
+
+        for (const candidateState of searchStateCandidates) {
+            const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&searchState=${encodeURIComponent(candidateState)}`
+
+            const res = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'application/json, text/plain, */*',
+                    'Origin': 'https://hoadondientu.gdt.gov.vn',
+                    'Referer': 'https://hoadondientu.gdt.gov.vn/',
+                },
+                cache: 'no-store',
+            })
+
+            if (res.ok) {
+                invRes = res
+                break
+            } else {
+                try {
+                    const errJson = await res.clone().json()
+                    lastErrorDetail = errJson.message || errJson.error || JSON.stringify(errJson)
+                } catch {
+                    lastErrorDetail = await res.text()
+                }
+
+                // If not 500 Search params error, keep this response
+                if (res.status !== 500 || !lastErrorDetail.includes('Search params')) {
+                    invRes = res
+                    break
+                }
             }
+        }
+
+        if (!invRes || !invRes.ok) {
+            const status = invRes ? invRes.status : 500
             return {
                 success: false,
-                error: `Đăng nhập thành công nhưng không thể tải danh sách hóa đơn từ Cổng Thuế (Mã lỗi HTTP ${invRes.status}${detail ? ': ' + detail : ''}).`,
+                error: `Đăng nhập thành công nhưng không thể tải danh sách hóa đơn từ Cổng Thuế (Mã lỗi HTTP ${status}${lastErrorDetail ? ': ' + lastErrorDetail : ''}).`,
             }
         }
 
