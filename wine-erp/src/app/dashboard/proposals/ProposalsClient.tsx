@@ -251,16 +251,16 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 if (isTasting) {
                     return `
                         <tr>
-                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${i + 1}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${exportDateStr}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px;">${detail.customer?.name || 'Khách hàng'}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; font-family: monospace; font-weight: bold; text-align: center;">${item.product?.skuCode || ''}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">${item.product?.productName || ''}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">Chai</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${qty}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: right;">${formatVND(wholesale)}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; text-align: right; font-weight: bold;">${formatVND(lineTotal)}</td>
-                            <td style="border: 1px solid #000; padding: 6px 8px; font-size: 11px;">Xuất hàng dùng thử cho khách hàng</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">${i + 1}</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">${exportDateStr}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; word-break: normal; overflow-wrap: break-word;">${detail.customer?.name || 'Khách hàng'}</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; font-family: monospace; font-weight: bold; text-align: center; white-space: nowrap;">${item.product?.skuCode || ''}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; font-weight: bold; word-break: normal; overflow-wrap: break-word;">${item.product?.productName || ''}</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">Chai</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; font-weight: bold; white-space: nowrap;">${qty}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; white-space: nowrap;">${formatVND(wholesale)}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVND(lineTotal)}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; font-size: 9.5pt; word-break: normal; overflow-wrap: break-word;">Xuất hàng dùng thử cho khách hàng</td>
                         </tr>
                     `
                 }
@@ -270,13 +270,13 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     : 0
                 return `
                     <tr>
-                        <td style="border: 1px solid #000; padding: 8px; text-align: center;">${i + 1}</td>
-                        <td style="border: 1px solid #000; padding: 8px; font-family: monospace;">${item.product?.skuCode || ''}</td>
-                        <td style="border: 1px solid #000; padding: 8px;">${item.product?.productName || ''}</td>
-                        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">${qty}</td>
-                        <td style="border: 1px solid #000; padding: 8px; text-align: right;">${formatVND(wholesale)}</td>
-                        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">${formatVND(item.proposedPrice)}</td>
-                        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; white-space: nowrap;">${i + 1}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; font-family: monospace; text-align: center; white-space: nowrap;">${item.product?.skuCode || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; word-break: normal; overflow-wrap: break-word;">${item.product?.productName || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; white-space: nowrap;">${qty}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; white-space: nowrap;">${formatVND(wholesale)}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVND(item.proposedPrice)}</td>
+                        <td style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; white-space: nowrap;">
                             ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%
                         </td>
                     </tr>
@@ -289,7 +289,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             <head>
                 <title>To_Trinh_Hang_Mau_Tasting_${detail.proposalNo}</title>
                 <style>
-                    @page { size: A4 portrait; margin: 15mm 12mm 15mm 12mm; }
+                    @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
                     body { font-family: Calibri, Arial, sans-serif; color: #000; margin: 0; padding: 0; font-size: 11pt; line-height: 1.35; }
                     .header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
                     .header-table td { vertical-align: top; border: none; padding: 0; }
@@ -302,9 +302,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     .ghi-chu { font-size: 11pt; font-style: italic; margin-bottom: 12px; line-height: 1.4; }
                     
                     /* Exact Excel Table Layout */
-                    .excel-table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px; font-size: 10pt; table-layout: fixed; }
-                    .excel-table th { border: 1px solid #000; padding: 5px 3px; background-color: #ffffff; text-align: center; font-weight: bold; vertical-align: middle; }
-                    .excel-table td { border: 1px solid #000; padding: 5px 4px; vertical-align: middle; word-wrap: break-word; }
+                    .excel-table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px; font-size: 9.5pt; table-layout: fixed; }
+                    .excel-table th { border: 1px solid #000; padding: 5px 2px; background-color: #ffffff; text-align: center; font-weight: bold; vertical-align: middle; word-break: keep-all; }
+                    .excel-table td { border: 1px solid #000; padding: 5px 3px; vertical-align: middle; word-break: normal; overflow-wrap: break-word; }
                     
                     .summary-section { font-size: 10pt; margin-top: 8px; margin-bottom: 12px; line-height: 1.5; }
                     .summary-row-bold { font-weight: bold; }
@@ -375,16 +375,16 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <table class="excel-table">
                     <thead>
                         <tr>
-                            <th style="width: 5%;">STT<br/>No.</th>
-                            <th style="width: 11%;">Ngày xuất<br/>Date</th>
-                            <th style="width: 14%;">Khách hàng<br/>Customer</th>
-                            <th style="width: 10%;">Mã hàng<br/>Item Code</th>
-                            <th style="width: 21%;">Tên hàng<br/>Product Name</th>
-                            <th style="width: 6%;">ĐVT<br/>Unit</th>
-                            <th style="width: 5%;">SL<br/>Qty</th>
-                            <th style="width: 11%;">Đơn giá tham khảo<br/>Ref. unit cost</th>
-                            <th style="width: 11%;">Thành tiền tham khảo<br/>Ref. total value</th>
-                            <th style="width: 21%;">Mục đích / Lý do<br/>Purpose / Reason</th>
+                            <th style="width: 4%; white-space: nowrap;">STT<br/>No.</th>
+                            <th style="width: 10%; white-space: nowrap;">Ngày xuất<br/>Date</th>
+                            <th style="width: 15%;">Khách hàng<br/>Customer</th>
+                            <th style="width: 9%; white-space: nowrap;">Mã hàng<br/>Item Code</th>
+                            <th style="width: 20%;">Tên hàng<br/>Product Name</th>
+                            <th style="width: 5%; white-space: nowrap;">ĐVT<br/>Unit</th>
+                            <th style="width: 4%; white-space: nowrap;">SL<br/>Qty</th>
+                            <th style="width: 11%; white-space: nowrap;">Đơn giá tham khảo<br/>Ref. unit cost</th>
+                            <th style="width: 11%; white-space: nowrap;">Thành tiền tham khảo<br/>Ref. total value</th>
+                            <th style="width: 11%;">Mục đích / Lý do<br/>Purpose / Reason</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -396,7 +396,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <div class="summary-section">
                     <p class="summary-row-bold" style="margin: 3px 0;">
                         Tổng giá trị tham khảo hàng mẫu (kỳ này) / Total reference value (this period): 
-                        <span style="float: right; margin-right: 15%;">${formatVND(totalRefValue)}</span>
+                        <span style="float: right; margin-right: 2%; white-space: nowrap;">${formatVND(totalRefValue)}</span>
                     </p>
                     <p style="margin: 3px 0;">Ngân sách hàng mẫu đã duyệt cho kỳ này / Approved sample budget for this period:</p>
                     <p class="summary-row-bold" style="margin: 3px 0;">Ngân sách còn lại sau đề nghị này / Remaining budget after this request:</p>
@@ -2241,14 +2241,14 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                                         {/* Step 0: Creator */}
                                         <tr className="hover:bg-[#142433]/50">
                                             <td className="p-2.5 text-center font-mono text-gray-400">1</td>
-                                            <td className="p-2.5 font-medium text-[#8AAEBB]">Người Lập Tờ Trình</td>
-                                            <td className="p-2.5 font-bold text-[#E8F1F2]">{detail.creator?.name || '—'}</td>
-                                            <td className="p-2.5 text-center">
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                            <td className="p-2.5 font-medium text-[#8AAEBB] whitespace-nowrap">Người Lập Tờ Trình</td>
+                                            <td className="p-2.5 font-bold text-[#E8F1F2] whitespace-nowrap">{detail.creator?.name || '—'}</td>
+                                            <td className="p-2.5 text-center whitespace-nowrap">
+                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                                                     ✓ Đã lập & trình
                                                 </span>
                                             </td>
-                                            <td className="p-2.5 text-center text-gray-400 font-mono text-[11px]">
+                                            <td className="p-2.5 text-center text-gray-400 font-mono text-[11px] whitespace-nowrap">
                                                 {detail.submittedAt ? new Date(detail.submittedAt).toLocaleString('vi-VN') : (detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '—')}
                                             </td>
                                             <td className="p-2.5 italic text-gray-400 text-[11px]">Khởi tạo tờ trình</td>
@@ -2264,26 +2264,26 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                                             return (
                                                 <tr key={step.level} className="hover:bg-[#142433]/50">
                                                     <td className="p-2.5 text-center font-mono text-gray-400">{idx + 2}</td>
-                                                    <td className="p-2.5 font-medium text-[#8AAEBB]">{step.label}</td>
-                                                    <td className="p-2.5 font-bold text-[#E8F1F2]">{log?.approver?.name || '—'}</td>
-                                                    <td className="p-2.5 text-center">
+                                                    <td className="p-2.5 font-medium text-[#8AAEBB] whitespace-nowrap">{step.label}</td>
+                                                    <td className="p-2.5 font-bold text-[#E8F1F2] whitespace-nowrap">{log?.approver?.name || '—'}</td>
+                                                    <td className="p-2.5 text-center whitespace-nowrap">
                                                         {log ? (
                                                             log.action === 'APPROVE' ? (
-                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                                                                     ✓ Đã duyệt
                                                                 </span>
                                                             ) : (
-                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 whitespace-nowrap">
                                                                     ✗ Từ chối
                                                                 </span>
                                                             )
                                                         ) : (
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-700/40 text-gray-400 border border-gray-600/30">
+                                                            <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-700/40 text-gray-400 border border-gray-600/30 whitespace-nowrap">
                                                                 ⏳ Chưa duyệt
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="p-2.5 text-center text-gray-400 font-mono text-[11px]">
+                                                    <td className="p-2.5 text-center text-gray-400 font-mono text-[11px] whitespace-nowrap">
                                                         {log ? new Date(log.createdAt).toLocaleString('vi-VN') : '—'}
                                                     </td>
                                                     <td className="p-2.5 italic text-gray-300 text-[11px]">
