@@ -764,7 +764,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             return { success: false, error: 'Không thể tạo đơn hàng trực tiếp cho công ty tính công nợ. Vui lòng chọn một nhà hàng con.' }
         }
 
-        // Auto credit limit enforcement
+        // Auto credit limit enforcement (Warning only, non-blocking)
         if (customer) {
             let checkCustomerId = input.customerId
             let creditLimit = Number(customer.creditLimit)
@@ -788,15 +788,10 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 const projectedBalance = arBalance + newOrderAmount
 
                 if (projectedBalance > creditLimit) {
-                    return {
-                        success: false,
-                        error: `⚠️ Vượt hạn mức tín dụng (${customer.parent ? 'Nhóm Khách Hàng Cha: ' + targetCustomerName : 'Khách Hàng: ' + targetCustomerName})!\n` +
-                            `• Hạn mức: ${creditLimit.toLocaleString('vi-VN')} ₫\n` +
-                            `• Công nợ gộp hiện tại: ${arBalance.toLocaleString('vi-VN')} ₫\n` +
-                            `• Đơn mới: ${Math.round(newOrderAmount).toLocaleString('vi-VN')} ₫\n` +
-                            `• Tổng dự kiến: ${Math.round(projectedBalance).toLocaleString('vi-VN')} ₫\n` +
-                            `Cần thu nợ thêm ${Math.round(projectedBalance - creditLimit).toLocaleString('vi-VN')} ₫ trước khi tạo đơn.`,
-                    }
+                    console.warn(
+                        `[SO Credit Warning] Customer ${targetCustomerName} exceeded credit limit: ` +
+                        `Limit=${creditLimit}, AR=${arBalance}, NewOrder=${newOrderAmount}`
+                    )
                 }
             }
         }
@@ -934,11 +929,12 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
             select: { 
+                name: true,
                 creditLimit: true, 
                 parentId: true, 
                 entityType: true,
                 allowDirectSO: true,
-                parent: { select: { id: true, creditLimit: true } } 
+                parent: { select: { id: true, creditLimit: true, name: true } } 
             },
         })
         if (!customer) return { success: false, error: 'Khách hàng không tồn tại' }
@@ -956,7 +952,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             if (creditLimit > 0) {
                 const arBalance = await getCustomerARBalance(checkCustomerId)
                 if (arBalance + finalAmount > creditLimit) {
-                    return { success: false, error: `Vượt hạn mức tín dụng! AR: ${arBalance.toLocaleString('vi-VN')}₫ + Đơn: ${Math.round(finalAmount).toLocaleString('vi-VN')}₫ > Limit: ${creditLimit.toLocaleString('vi-VN')}₫` }
+                    console.warn(`[SO Edit Credit Warning] Customer ${customer.name} exceeded credit limit: AR=${arBalance}, Order=${finalAmount}, Limit=${creditLimit}`)
                 }
             }
         }

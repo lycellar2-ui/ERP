@@ -645,14 +645,26 @@ export async function fetchGdtInvoicesAction(params: {
         const invRes = await fetch(endpoint, {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'application/json, text/plain, */*',
+                'Origin': 'https://hoadondientu.gdt.gov.vn',
+                'Referer': 'https://hoadondientu.gdt.gov.vn/',
             },
             cache: 'no-store',
         })
 
         if (!invRes.ok) {
-            return { success: false, error: 'Không thể tải danh sách hóa đơn từ Thuế.' }
+            let detail = ''
+            try {
+                const errJson = await invRes.json()
+                detail = errJson.message || errJson.error || JSON.stringify(errJson)
+            } catch {
+                detail = await invRes.text()
+            }
+            return {
+                success: false,
+                error: `Đăng nhập thành công nhưng không thể tải danh sách hóa đơn từ Cổng Thuế (Mã lỗi HTTP ${invRes.status}${detail ? ': ' + detail : ''}).`,
+            }
         }
 
         const invData = await invRes.json()
