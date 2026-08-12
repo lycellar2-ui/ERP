@@ -51,6 +51,15 @@ const SYSTEM_ROLES: SystemRoleInfo[] = [
 
 // Default routing (fallback when no DB config exists)
 const DEFAULT_ROUTING_FULL: Record<string, ProposalRouteConfig> = {
+    TASTING: {
+        category: 'TASTING',
+        creatorRoles: ['SALES_REP', 'SALES_ADMIN', 'SALES_MGR', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Quản Lý Kinh Doanh' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng / Vận Hành' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
     PRICE_ADJUSTMENT: {
         category: 'PRICE_ADJUSTMENT',
         creatorRoles: ['SALES_REP', 'SALES_ADMIN', 'SALES_MGR', 'ADMIN'],
