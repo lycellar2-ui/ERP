@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import {
     Table, Smartphone, Plus, Search, MapPin, CheckCircle2,
     Save, RefreshCw, X, AlertCircle, FileSpreadsheet, Filter,
-    UserCheck, Users, Activity, ChevronDown, ChevronUp, Clock, AlertTriangle, ShieldCheck, Zap
+    UserCheck, Users, Activity, ChevronDown, ChevronUp, Clock, AlertTriangle, ShieldCheck, Zap, Printer
 } from 'lucide-react'
 import { recordCountLine, completeZoneCount, getStockCountDetail, startStockCount } from './actions'
 import { AddUnlistedModal } from './AddUnlistedModal'
@@ -13,10 +13,12 @@ type Props = {
     sessionId: string
     onClose: () => void
     onOpenMobileView: (sessionId: string) => void
+    onOpenAssignModal?: (sessionId: string) => void
+    onOpenPrintView?: (sessionId: string) => void
     onRefreshSession?: () => void
 }
 
-export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onRefreshSession }: Props) {
+export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onOpenAssignModal, onOpenPrintView, onRefreshSession }: Props) {
     const [detail, setDetail] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
 
@@ -241,6 +243,32 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onR
                         >
                             <Smartphone className="w-4 h-4" /> 📱 Chuyển Đếm ĐT
                         </button>
+
+                        {onOpenAssignModal && (
+                            <button
+                                onClick={() => {
+                                    onClose()
+                                    onOpenAssignModal(sessionId)
+                                }}
+                                className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                title="Phân công nhân viên phụ trách khu vực"
+                            >
+                                <UserCheck className="w-3.5 h-3.5 text-cyan-700" /> 👤 Phân Công
+                            </button>
+                        )}
+
+                        {onOpenPrintView && (
+                            <button
+                                onClick={() => {
+                                    onClose()
+                                    onOpenPrintView(sessionId)
+                                }}
+                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                title="In Biên bản kiểm kê"
+                            >
+                                <Printer className="w-3.5 h-3.5 text-amber-600" /> 🖨️ In Phiếu
+                            </button>
+                        )}
 
                         <button
                             onClick={() => setShowAddUnlistedModal(true)}
