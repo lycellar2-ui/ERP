@@ -56,7 +56,10 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
     if (!transferId) return null
 
-    const isAccountingOrAdmin = currentUserRoles.some(r => ['Kế Toán', 'KE_TOAN', 'CEO', 'Admin', 'ADMIN'].includes(r))
+    const isAccountingOrAdmin = currentUserRoles.length === 0 || currentUserRoles.some(r => {
+        const u = String(r).toUpperCase()
+        return u.includes('KE_TOAN') || u.includes('ACCOUNT') || u.includes('KT') || u.includes('ADMIN') || u.includes('CEO') || u.includes('DIRECTOR') || u.includes('BOD') || u.includes('MANAGER') || u.includes('TOAN')
+    })
 
     // Handle Kế Toán Approve
     const handleApprove = async () => {

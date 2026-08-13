@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Ban } from 'lucide-react'
 import { toast } from 'sonner'
-import { type TransferOrderRow, getTransferOrders, cancelTransferOrder } from './actions'
+import { type TransferOrderRow, getTransferOrders, cancelTransferOrder, accountingApproveTransfer } from './actions'
 import { CreateTransferDrawer } from './CreateTransferDrawer'
 import { TransferDetailDrawer } from './TransferDetailDrawer'
 import { formatDate } from '@/lib/utils'
@@ -17,9 +17,10 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string; bor
     CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)', border: '#F87171' },
 }
 
-export function TransfersClient({ initialRows }: {
+export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     initialRows: TransferOrderRow[]
     stats?: { total: number; inTransit: number; completed: number }
+    currentUserRoles?: string[]
 }) {
     const [rows, setRows] = useState<TransferOrderRow[]>(initialRows)
     const [loading, setLoading] = useState(false)
@@ -37,6 +38,19 @@ export function TransfersClient({ initialRows }: {
             toast.error('Lỗi tải danh sách phiếu chuyển kho: ' + err.message)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleQuickApprove = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm('Bạn có chắc chắn muốn phê duyệt Phiếu Chuyển Kho này?')) return
+        try {
+            const res = await accountingApproveTransfer(id)
+            if (!res.success) throw new Error(res.error)
+            toast.success('✅ Đã phê duyệt phiếu chuyển kho thành công!')
+            reload()
+        } catch (err: any) {
+            toast.error('Lỗi duyệt phiếu: ' + err.message)
         }
     }
 
@@ -204,6 +218,16 @@ export function TransfersClient({ initialRows }: {
                                             </td>
                                             <td className="p-3 text-right whitespace-nowrap">
                                                 <div className="flex items-center gap-1 justify-end">
+                                                    {r.status === 'PENDING_ACCOUNTING' && (
+                                                        <button
+                                                            onClick={e => handleQuickApprove(r.id, e)}
+                                                            className="px-2.5 py-1 rounded-lg text-emerald-950 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                                                            style={{ background: '#87CBB9' }}
+                                                            title="Kế toán duyệt ngay phiếu chuyển kho này"
+                                                        >
+                                                            ✓ Duyệt
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}
                                                         className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
@@ -242,6 +266,7 @@ export function TransfersClient({ initialRows }: {
                 transferId={selectedId}
                 onClose={() => setSelectedId(null)}
                 onRefresh={reload}
+                currentUserRoles={currentUserRoles}
             />
         </div>
     )
