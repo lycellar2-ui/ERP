@@ -659,27 +659,67 @@ export async function fetchGdtInvoicesAction(params: {
             'Referer': 'https://hoadondientu.gdt.gov.vn/',
         }
 
-        // Candidates for GDT FIQL search query syntax
-        const candidates = [
-            // FIQL 1: Standard GDT FIQL date range with time
-            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00;tdlap=le=${todayStr}T23:59:59`,
-            // FIQL 2: FIQL date range without time
-            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr};tdlap=le=${todayStr}`,
-            // FIQL 3: FIQL start of year
-            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00`,
-            // FIQL 4: FIQL with state
-            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00;tdlap=le=${todayStr}T23:59:59&state=gtttu:${startOfYearStr},gttden:${todayStr}`,
-            // FIQL 5: All invoices from 2020
-            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=01/01/2020T00:00:00`,
-            // FIQL 6: All invoices from 1970
-            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=01/01/1970T00:00:00`,
+        // Candidates for GDT search query syntax with proper URLSearchParams encoding
+        const candidateParams: Record<string, string>[] = [
+            // Candidate 1: Standard GDT FIQL with state
+            {
+                sort: 'tdlap:desc',
+                size: String(size),
+                page: String(page),
+                search: `tdlap=ge=${startOfYearStr}T00:00:00;tdlap=le=${todayStr}T23:59:59`,
+                state: `gtttu:${startOfYearStr},gttden:${todayStr}`,
+            },
+            // Candidate 2: FIQL date range with time
+            {
+                sort: 'tdlap:desc',
+                size: String(size),
+                page: String(page),
+                search: `tdlap=ge=${startOfYearStr}T00:00:00;tdlap=le=${todayStr}T23:59:59`,
+            },
+            // Candidate 3: FIQL date range without time
+            {
+                sort: 'tdlap:desc',
+                size: String(size),
+                page: String(page),
+                search: `tdlap=ge=${startOfYearStr};tdlap=le=${todayStr}`,
+            },
+            // Candidate 4: FIQL from start of year
+            {
+                sort: 'tdlap:desc',
+                size: String(size),
+                page: String(page),
+                search: `tdlap=ge=${startOfYearStr}T00:00:00`,
+            },
+            // Candidate 5: All invoices from 2020
+            {
+                sort: 'tdlap:desc',
+                size: String(size),
+                page: String(page),
+                search: `tdlap=ge=01/01/2020T00:00:00`,
+            },
+            // Candidate 6: searchState param format
+            {
+                sort: 'tdlap:desc',
+                size: String(size),
+                page: String(page),
+                searchState: `gtttu:${startOfYearStr},gttden:${todayStr}`,
+            },
+            // Candidate 7: Direct gtttu / gttden query params
+            {
+                sort: 'tdlap:desc',
+                size: String(size),
+                page: String(page),
+                gtttu: startOfYearStr,
+                gttden: todayStr,
+            },
         ]
 
         let invRes: Response | null = null
         let lastErrorDetail = ''
 
-        for (const queryStr of candidates) {
-            const url = `${baseUrl}?${queryStr}`
+        for (const paramsObj of candidateParams) {
+            const queryString = new URLSearchParams(paramsObj).toString()
+            const url = `${baseUrl}?${queryString}`
             try {
                 let res = await fetch(url, {
                     headers: commonHeaders,
