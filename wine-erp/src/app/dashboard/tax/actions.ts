@@ -651,17 +651,15 @@ export async function fetchGdtInvoicesAction(params: {
         const todayStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${currentYear}`
         const startOfYearStr = `01/01/${currentYear}`
 
-        const fullGdtStateWithDates = `khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:${startOfYearStr},gttden:${todayStr},tthai:null,ttxly:null,lhdon:null,tdlap:null`
-        const fullGdtStateWithDateTime = `khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:${startOfYearStr} 00:00:00,gttden:${todayStr} 23:59:59,tthai:null,ttxly:null,lhdon:null,tdlap:null`
-        const fullGdtStateNull = 'khmshdon:null,hthuc:null,khhdon:null,shdon:null,cqt:null,mst:null,gtttu:null,gttden:null,tthai:null,ttxly:null,lhdon:null,tdlap:null'
-
+        const cleanDatesOnly = `gtttu:${startOfYearStr},gttden:${todayStr}`
+        const cleanDateTime = `gtttu:${startOfYearStr} 00:00:00,gttden:${todayStr} 23:59:59`
+        const cleanStartOnly = `gtttu:${startOfYearStr}`
+        
         const searchStateCandidates = [
-            fullGdtStateWithDates,
-            fullGdtStateWithDateTime,
-            fullGdtStateNull,
-            'selectType:1',
-            'state:1',
-            'invoices',
+            cleanDatesOnly,
+            cleanDateTime,
+            cleanStartOnly,
+            '', // Fallback without searchState param
         ]
 
         let invRes: Response | null = null
@@ -669,8 +667,10 @@ export async function fetchGdtInvoicesAction(params: {
 
         for (const candidateState of searchStateCandidates) {
             // Do NOT encode colons or commas using encodeURIComponent, GDT Java controller expects raw : and ,
-            const formattedState = candidateState.replace(/ /g, '%20')
-            const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&searchState=${formattedState}`
+            const formattedState = candidateState ? candidateState.replace(/ /g, '%20') : ''
+            const endpoint = formattedState
+                ? `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&searchState=${formattedState}`
+                : `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}`
 
             let res = await fetch(endpoint, {
                 headers: {
@@ -715,7 +715,7 @@ export async function fetchGdtInvoicesAction(params: {
                 }
 
                 // If not 500 Search params error, keep this response
-                if (res.status !== 500 || !lastErrorDetail.includes('Search params')) {
+                if (res.status !== 500) {
                     invRes = res
                     break
                 }
