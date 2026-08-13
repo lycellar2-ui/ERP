@@ -651,56 +651,108 @@ export async function fetchGdtInvoicesAction(params: {
         const todayStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${currentYear}`
         const startOfYearStr = `01/01/${currentYear}`
 
-        const cleanDatesOnly = `gtttu:${startOfYearStr},gttden:${todayStr}`
-        const cleanDateTime = `gtttu:${startOfYearStr} 00:00:00,gttden:${todayStr} 23:59:59`
-        const cleanStartOnly = `gtttu:${startOfYearStr}`
-        
-        const searchStateCandidates = [
-            cleanDatesOnly,
-            cleanDateTime,
-            cleanStartOnly,
-            '', // Fallback without searchState param
-        ]
+        const commonHeaders = {
+            'Authorization': `Bearer ${token}`,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Origin': 'https://hoadondientu.gdt.gov.vn',
+            'Referer': 'https://hoadondientu.gdt.gov.vn/',
+        }
 
         let invRes: Response | null = null
         let lastErrorDetail = ''
 
-        for (const candidateState of searchStateCandidates) {
-            // Do NOT encode colons or commas using encodeURIComponent, GDT Java controller expects raw : and ,
-            const formattedState = candidateState ? candidateState.replace(/ /g, '%20') : ''
-            const endpoint = formattedState
-                ? `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&searchState=${formattedState}`
-                : `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}`
+        // Strategy 1: POST with JSON body (modern GDT API format)
+        try {
+            const postBody = {
+                sort: 'tdlap:desc',
+                size,
+                page,
+                search: `gtttu:${startOfYearStr},gttden:${todayStr}`,
+            }
 
-            let res = await fetch(endpoint, {
+            let res = await fetch(baseUrl, {
+                method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'application/json, text/plain, */*',
-                    'Origin': 'https://hoadondientu.gdt.gov.vn',
-                    'Referer': 'https://hoadondientu.gdt.gov.vn/',
+                    ...commonHeaders,
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify(postBody),
                 cache: 'no-store',
             })
 
-            // If GDT returned 429 (Too Many Requests), pause 1.2s and retry with existing token
+            // Retry on 429
             if (res.status === 429) {
-                await new Promise(resolve => setTimeout(resolve, 1200))
-                res = await fetch(endpoint, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept': 'application/json, text/plain, */*',
-                        'Origin': 'https://hoadondientu.gdt.gov.vn',
-                        'Referer': 'https://hoadondientu.gdt.gov.vn/',
-                    },
+                await new Promise(resolve => setTimeout(resolve, 1500))
+                res = await fetch(baseUrl, {
+                    method: 'POST',
+                    headers: { ...commonHeaders, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(postBody),
                     cache: 'no-store',
                 })
             }
 
             if (res.ok) {
                 invRes = res
-                break
+            }
+        } catch { /* fall through to next strategy */ }
+
+        // Strategy 2: GET with clean date-range searchState
+        if (!invRes) {
+            const dateSearchStates = [
+                `gtttu:${startOfYearStr},gttden:${todayStr}`,
+                `gtttu:${startOfYearStr}%2000:00:00,gttden:${todayStr}%2023:59:59`,
+            ]
+
+            for (const searchState of dateSearchStates) {
+                const formattedState = searchState.replace(/ /g, '%20')
+                const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&search=${formattedState}`
+
+                let res = await fetch(endpoint, {
+                    headers: commonHeaders,
+                    cache: 'no-store',
+                })
+
+                if (res.status === 429) {
+                    await new Promise(resolve => setTimeout(resolve, 1500))
+                    res = await fetch(endpoint, { headers: commonHeaders, cache: 'no-store' })
+                }
+
+                if (res.ok) {
+                    invRes = res
+                    break
+                } else {
+                    try {
+                        const errJson = await res.clone().json()
+                        lastErrorDetail = errJson.message || errJson.error || JSON.stringify(errJson)
+                    } catch {
+                        lastErrorDetail = await res.text()
+                    }
+
+                    if (res.status !== 500) {
+                        invRes = res
+                        break
+                    }
+                }
+            }
+        }
+
+        // Strategy 3: GET without any search param (bare minimum)
+        if (!invRes) {
+            const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}`
+
+            let res = await fetch(endpoint, {
+                headers: commonHeaders,
+                cache: 'no-store',
+            })
+
+            if (res.status === 429) {
+                await new Promise(resolve => setTimeout(resolve, 1500))
+                res = await fetch(endpoint, { headers: commonHeaders, cache: 'no-store' })
+            }
+
+            if (res.ok) {
+                invRes = res
             } else {
                 try {
                     const errJson = await res.clone().json()
@@ -708,17 +760,7 @@ export async function fetchGdtInvoicesAction(params: {
                 } catch {
                     lastErrorDetail = await res.text()
                 }
-
-                // If 429 still persists after retry, pause a bit more before trying next candidate
-                if (res.status === 429) {
-                    await new Promise(resolve => setTimeout(resolve, 1500))
-                }
-
-                // If not 500 Search params error, keep this response
-                if (res.status !== 500) {
-                    invRes = res
-                    break
-                }
+                invRes = res
             }
         }
 

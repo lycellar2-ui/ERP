@@ -572,7 +572,7 @@ function GdtInvoiceSyncPanel() {
                             </span>
                         </div>
                         <p className="text-xs mt-1" style={{ color: '#8AAEBB' }}>
-                            Mã Số Thuế Công Ty: <strong style={{ color: '#E8F1F2' }}>0109579480</strong> • Tài khoản: CÔNG TY TNHH THE TASTEVERSE
+                            Mã Số Thuế Công Ty: <strong style={{ color: '#E8F1F2' }}>0109579480</strong> • Tài khoản: CÔNG TY CỔ PHẦN LYS CELLARS
                         </p>
                     </div>
                 </div>
