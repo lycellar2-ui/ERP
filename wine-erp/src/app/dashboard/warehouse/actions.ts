@@ -2122,14 +2122,14 @@ export async function deleteWarehouse(id: string) {
     }
 }
 
-// ─── Real-time WMS Alert: Get Latest Pending Delivery Order ─────
+// ─── Real-time WMS Alert: Get Latest Pending Delivery Order / Confirmed SO ─────
 export async function getLatestPendingDO(warehouseId?: string) {
     try {
         const where: any = { status: 'DRAFT' }
         if (warehouseId) where.warehouseId = warehouseId
 
         const count = await prisma.deliveryOrder.count({ where })
-        const latest = await prisma.deliveryOrder.findFirst({
+        const latestDO = await prisma.deliveryOrder.findFirst({
             where,
             select: {
                 id: true,
@@ -2142,17 +2142,66 @@ export async function getLatestPendingDO(warehouseId?: string) {
             orderBy: { createdAt: 'desc' },
         })
 
+        const latestSO = await prisma.salesOrder.findFirst({
+            where: { status: 'CONFIRMED' },
+            select: {
+                id: true,
+                soNo: true,
+                updatedAt: true,
+                customer: { select: { name: true } },
+                _count: { select: { lines: true } },
+            },
+            orderBy: { updatedAt: 'desc' },
+        })
+
+        let latest: any = null
+        if (latestDO && latestSO) {
+            if (new Date(latestDO.createdAt).getTime() >= new Date(latestSO.updatedAt).getTime()) {
+                latest = {
+                    id: latestDO.id,
+                    doNo: latestDO.doNo,
+                    soNo: latestDO.so?.soNo ?? '—',
+                    customerName: latestDO.so?.customer?.name ?? '—',
+                    warehouseName: latestDO.warehouse?.name ?? '—',
+                    lineCount: latestDO._count.lines,
+                    createdAt: latestDO.createdAt,
+                }
+            } else {
+                latest = {
+                    id: `so-${latestSO.id}`,
+                    doNo: latestSO.soNo,
+                    soNo: latestSO.soNo,
+                    customerName: latestSO.customer?.name ?? '—',
+                    warehouseName: 'Kho Hàng',
+                    lineCount: latestSO._count.lines,
+                    createdAt: latestSO.updatedAt,
+                }
+            }
+        } else if (latestDO) {
+            latest = {
+                id: latestDO.id,
+                doNo: latestDO.doNo,
+                soNo: latestDO.so?.soNo ?? '—',
+                customerName: latestDO.so?.customer?.name ?? '—',
+                warehouseName: latestDO.warehouse?.name ?? '—',
+                lineCount: latestDO._count.lines,
+                createdAt: latestDO.createdAt,
+            }
+        } else if (latestSO) {
+            latest = {
+                id: `so-${latestSO.id}`,
+                doNo: latestSO.soNo,
+                soNo: latestSO.soNo,
+                customerName: latestSO.customer?.name ?? '—',
+                warehouseName: 'Kho Hàng',
+                lineCount: latestSO._count.lines,
+                createdAt: latestSO.updatedAt,
+            }
+        }
+
         return {
-            count,
-            latest: latest ? {
-                id: latest.id,
-                doNo: latest.doNo,
-                soNo: latest.so?.soNo ?? '—',
-                customerName: latest.so?.customer?.name ?? '—',
-                warehouseName: latest.warehouse?.name ?? '—',
-                lineCount: latest._count.lines,
-                createdAt: latest.createdAt,
-            } : null,
+            count: count + (latestSO ? 1 : 0),
+            latest,
         }
     } catch (err) {
         return { count: 0, latest: null }

@@ -2,6 +2,8 @@
 // WEB NOTIFICATIONS & AUDIO ALERT UTILITY — WMS / ERP
 // ═══════════════════════════════════════════════════
 
+let globalAudioCtx: AudioContext | null = null
+
 /**
  * Synthesizes a clean 2-tone audio chime (D5 -> A5 -> D6) using HTML5 Web Audio API.
  * Guaranteed to work without external audio file dependencies or broken links.
@@ -12,7 +14,15 @@ export function playNotificationSound() {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
         if (!AudioContextClass) return
 
-        const ctx = new AudioContextClass()
+        if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
+            globalAudioCtx = new AudioContextClass()
+        }
+
+        if (globalAudioCtx.state === 'suspended') {
+            globalAudioCtx.resume().catch(() => {})
+        }
+
+        const ctx = globalAudioCtx
         const now = ctx.currentTime
 
         // Tone 1: D5 (587.33 Hz) -> A5 (880 Hz)
