@@ -12,10 +12,11 @@ interface CreateTransferDrawerProps {
 }
 
 type WarehouseOpt = { id: string; code: string; name: string }
-type ProductOpt = { id: string; skuCode: string; productName: string; country?: string | null; vintage?: number | null }
+type ProductOpt = { id: string; skuCode: string; productName: string; country?: string | null; vintage?: number | null; vintages?: number[] }
 
 interface TransferLineItem {
     productId: string
+    vintage?: number | null
     qtyTransferred: number
     qtyAvailable: number
 }
@@ -53,120 +54,89 @@ function ProductCombobox({
     selectedProductId: string
     onChange: (productId: string) => void
 }) {
-    const [isOpen, setIsOpen] = useState(false)
-    const [search, setSearch] = useState('')
+    const [query, setQuery] = useState('')
+    const [open, setOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
 
     const selectedProduct = products.find(p => p.id === selectedProductId)
 
     useEffect(() => {
-        if (selectedProduct && !isOpen) {
-            setSearch(`[${selectedProduct.skuCode}] ${selectedProduct.productName}`)
-        } else if (!selectedProduct && !isOpen) {
-            setSearch('')
-        }
-    }, [selectedProductId, selectedProduct, isOpen])
-
-    useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setIsOpen(false)
+                setOpen(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const filtered = products.filter(p => {
-        if (!search.trim() || (selectedProduct && search === `[${selectedProduct.skuCode}] ${selectedProduct.productName}`)) return true
-        const q = search.toLowerCase().trim()
-        return (
-            p.skuCode.toLowerCase().includes(q) ||
-            p.productName.toLowerCase().includes(q) ||
-            (p.country && p.country.toLowerCase().includes(q)) ||
-            (p.vintage && String(p.vintage).includes(q))
-        )
-    })
+    const filtered = query.trim() === ''
+        ? products.slice(0, 40)
+        : products.filter(p =>
+            p.skuCode.toLowerCase().includes(query.toLowerCase()) ||
+            p.productName.toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 40)
 
     return (
-        <div ref={containerRef} className="relative w-full">
-            <div className="relative flex items-center">
-                <input
-                    type="text"
-                    value={search}
-                    onFocus={(e) => {
-                        focusHandler.onFocus(e)
-                        setIsOpen(true)
-                    }}
-                    onBlur={focusHandler.onBlur}
-                    onChange={(e) => {
-                        setSearch(e.target.value)
-                        if (!isOpen) setIsOpen(true)
-                    }}
-                    placeholder="Gõ SKU hoặc tên sản phẩm..."
-                    className="w-full pl-3 pr-8 py-1.5 text-xs outline-none rounded"
-                    style={{ ...inputStyle }}
-                />
-                {search ? (
-                    <button
-                        type="button"
-                        onMouseDown={(e) => {
-                            e.preventDefault()
-                            onChange('')
-                            setSearch('')
-                            setIsOpen(true)
-                        }}
-                        className="absolute right-2.5 p-1 text-[#4A6A7A] hover:text-[#88CBB9] rounded cursor-pointer"
-                    >
-                        <X size={13} />
-                    </button>
-                ) : (
-                    <ChevronDown size={13} className="absolute right-2.5 pointer-events-none text-[#4A6A7A]" />
-                )}
+        <div ref={containerRef} className="relative w-full overflow-visible">
+            <div
+                onClick={() => setOpen(prev => !prev)}
+                className="w-full px-2.5 py-1.5 rounded flex items-center justify-between text-xs cursor-pointer border transition-colors"
+                style={{
+                    background: '#142433',
+                    borderColor: open ? '#87CBB9' : '#2A4355',
+                    color: selectedProduct ? '#E8F1F2' : '#8AAEBB',
+                }}
+            >
+                <span className="truncate font-semibold">
+                    {selectedProduct
+                        ? `[${selectedProduct.skuCode}] ${selectedProduct.productName}`
+                        : '— Gõ tìm SKU / Tên Rượu Vang —'}
+                </span>
+                <ChevronDown size={14} className="ml-1 shrink-0 text-[#8AAEBB]" />
             </div>
 
-            {/* Dropdown Options Popup */}
-            {isOpen && (
-                <div className="absolute z-[300] left-0 top-full mt-1 bg-[#142433] border border-[#2A4355] rounded-md shadow-2xl max-h-64 overflow-y-auto divide-y divide-[#2A4355]/40 w-full sm:w-[480px]">
+            {open && (
+                <div
+                    className="absolute left-0 top-full mt-1 w-full max-h-60 overflow-y-auto rounded shadow-2xl z-[9999] border divide-y divide-[#2A4355]/40"
+                    style={{ background: '#1B2E3D', borderColor: '#87CBB9' }}
+                >
+                    <div className="p-1.5 sticky top-0 bg-[#1B2E3D] z-10 border-b border-[#2A4355]">
+                        <input
+                            type="text"
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder="Nhập mã SKU (e.g. L40006) hoặc tên rượu..."
+                            className="w-full px-2.5 py-1 text-xs outline-none rounded font-medium"
+                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            autoFocus
+                        />
+                    </div>
+
                     {filtered.length === 0 ? (
-                        <div className="p-3 text-center text-xs text-[#4A6A7A]">
-                            Không tìm thấy sản phẩm nào phù hợp
-                        </div>
+                        <div className="p-3 text-center text-xs text-[#8AAEBB]">Không tìm thấy rượu phù hợp</div>
                     ) : (
                         filtered.map(p => {
                             const isSelected = p.id === selectedProductId
                             return (
                                 <div
                                     key={p.id}
-                                    onMouseDown={(e) => {
-                                        e.preventDefault()
+                                    onClick={() => {
                                         onChange(p.id)
-                                        setSearch(`[${p.skuCode}] ${p.productName}`)
-                                        setIsOpen(false)
+                                        setOpen(false)
+                                        setQuery('')
                                     }}
-                                    className={`p-2.5 cursor-pointer transition-colors flex items-center justify-between gap-2 ${isSelected ? 'bg-[#1B2E3D] text-[#87CBB9] font-bold' : 'hover:bg-[#1B2E3D]/60 text-[#E8F1F2]'}`}
+                                    className={`p-2 text-xs cursor-pointer transition-colors flex items-center justify-between ${isSelected ? 'bg-[#87CBB9]/20 text-[#87CBB9]' : 'hover:bg-[#142433] text-[#E8F1F2]'}`}
                                 >
-                                    <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-mono font-bold text-xs px-1.5 py-0.5 rounded"
-                                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
-                                                {p.skuCode}
-                                            </span>
-                                            {p.vintage && (
-                                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded font-bold"
-                                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
-                                                    {p.vintage}
-                                                </span>
-                                            )}
-                                            {p.country && (
-                                                <span className="text-[10px] text-[#8AAEBB]">
-                                                    • {p.country}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-xs font-semibold text-[#E8F1F2] truncate mt-0.5">{p.productName}</p>
+                                    <div>
+                                        <span className="font-mono font-bold text-[#D4A853] mr-1 text-[11px]">[{p.skuCode}]</span>
+                                        <span className="font-semibold">{p.productName}</span>
                                     </div>
-                                    {isSelected && <Check size={15} className="text-[#87CBB9] shrink-0 ml-2" />}
+                                    {p.vintages && p.vintages.length > 0 && (
+                                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#142433] text-[#87CBB9]">
+                                            {p.vintages.join(', ')}
+                                        </span>
+                                    )}
                                 </div>
                             )
                         })
@@ -214,7 +184,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
     if (!open) return null
 
     const handleAddLine = () => {
-        setLines(prev => [...prev, { productId: '', qtyTransferred: 1, qtyAvailable: 0 }])
+        setLines(prev => [...prev, { productId: '', vintage: null, qtyTransferred: 1, qtyAvailable: 0 }])
     }
 
     const handleRemoveLine = (idx: number) => {
@@ -222,7 +192,13 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
     }
 
     const handleLineProductChange = (idx: number, productId: string) => {
-        setLines(prev => prev.map((l, i) => i === idx ? { ...l, productId } : l))
+        const prod = products.find(p => p.id === productId)
+        const defaultVintage = prod?.vintages?.[0] ?? prod?.vintage ?? null
+        setLines(prev => prev.map((l, i) => i === idx ? { ...l, productId, vintage: defaultVintage } : l))
+    }
+
+    const handleLineVintageChange = (idx: number, vintage: number | null) => {
+        setLines(prev => prev.map((l, i) => i === idx ? { ...l, vintage } : l))
     }
 
     const handleLineQtyChange = (idx: number, qtyTransferred: number) => {
@@ -255,7 +231,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                 transferDate,
                 notes,
                 submitForApproval,
-                lines: validLines.map(l => ({ productId: l.productId, qtyTransferred: l.qtyTransferred })),
+                lines: validLines.map(l => ({ productId: l.productId, qtyTransferred: l.qtyTransferred, vintage: l.vintage })),
             })
 
             if (!res.success) {
@@ -434,43 +410,65 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                                             <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
                                                 <th className="px-3 py-2.5 w-12 text-center">STT</th>
                                                 <th className="px-3 py-2.5">Gõ Tìm SKU / Tên Rượu Vang</th>
-                                                <th className="px-3 py-2.5 text-center w-36">Số Lượng (Chai)</th>
+                                                <th className="px-3 py-2.5 text-center w-28">VTG (Niên Vụ)</th>
+                                                <th className="px-3 py-2.5 text-center w-32">Số Lượng (Chai)</th>
                                                 <th className="px-3 py-2.5 text-center w-10"></th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#2A4355]/40 overflow-visible">
-                                            {lines.map((line, idx) => (
-                                                <tr key={idx} className="hover:bg-[#1B2E3D]/30 transition-colors overflow-visible">
-                                                    <td className="px-3 py-2 text-center font-bold" style={{ color: '#8AAEBB' }}>{idx + 1}</td>
-                                                    <td className="px-3 py-2 overflow-visible">
-                                                        <ProductCombobox
-                                                            products={products}
-                                                            selectedProductId={line.productId}
-                                                            onChange={id => handleLineProductChange(idx, id)}
-                                                        />
-                                                    </td>
-                                                    <td className="px-3 py-2 text-center">
-                                                        <input
-                                                            type="number"
-                                                            min={1}
-                                                            value={line.qtyTransferred}
-                                                            onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
-                                                            {...focusHandler}
-                                                            className="w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none"
-                                                            style={{ ...inputStyle }}
-                                                        />
-                                                    </td>
-                                                    <td className="px-3 py-2 text-center">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemoveLine(idx)}
-                                                            className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors cursor-pointer"
-                                                        >
-                                                            <Trash2 size={15} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {lines.map((line, idx) => {
+                                                const p = products.find(prod => prod.id === line.productId)
+                                                const availableVintages = p?.vintages || []
+                                                return (
+                                                    <tr key={idx} className="hover:bg-[#1B2E3D]/30 transition-colors overflow-visible">
+                                                        <td className="px-3 py-2 text-center font-bold" style={{ color: '#8AAEBB' }}>{idx + 1}</td>
+                                                        <td className="px-3 py-2 overflow-visible">
+                                                            <ProductCombobox
+                                                                products={products}
+                                                                selectedProductId={line.productId}
+                                                                onChange={id => handleLineProductChange(idx, id)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-3 py-2 text-center">
+                                                            <select
+                                                                value={line.vintage ?? ''}
+                                                                onChange={e => handleLineVintageChange(idx, e.target.value ? parseInt(e.target.value) : null)}
+                                                                {...focusHandler}
+                                                                className="w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none cursor-pointer"
+                                                                style={{ ...inputStyle }}
+                                                            >
+                                                                <option value="">NV (K.Năm)</option>
+                                                                {availableVintages.map(v => (
+                                                                    <option key={v} value={v}>{v}</option>
+                                                                ))}
+                                                                {line.vintage && !availableVintages.includes(line.vintage) && (
+                                                                    <option value={line.vintage}>{line.vintage}</option>
+                                                                )}
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-3 py-2 text-center">
+                                                            <input
+                                                                type="number"
+                                                                min={1}
+                                                                value={line.qtyTransferred}
+                                                                onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
+                                                                {...focusHandler}
+                                                                className="w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none"
+                                                                style={{ ...inputStyle }}
+                                                            />
+                                                        </td>
+                                                        <td className="px-3 py-2 text-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveLine(idx)}
+                                                                className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors cursor-pointer"
+                                                            >
+                                                                <Trash2 size={15} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

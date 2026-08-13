@@ -743,6 +743,7 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `reg_doc.scope` | COMPANY, SUPPLIER, CUSTOMER, PRODUCT, SHIPMENT, LOT |
 | `reg_doc.status` | ACTIVE, EXPIRING, EXPIRED, REVOKED, RENEWAL_PENDING, DRAFT |
 | `proposal` | `startDate`, `endDate` (Thời hạn hiệu lực ngày bắt đầu và kết thúc) |
+| `transfer_order_lines` | `vintage` (Niên vụ chọn khi lập phiếu chuyển kho) |
 
 ### D. Indexes Quan Trọng
 ```sql

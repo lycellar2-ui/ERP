@@ -131,7 +131,7 @@ export async function createTransferOrder(input: {
     transferDate?: string
     notes?: string
     submitForApproval?: boolean
-    lines: { productId: string; qtyTransferred: number }[]
+    lines: { productId: string; qtyTransferred: number; vintage?: number | null }[]
 }): Promise<{ success: boolean; error?: string; transferNo?: string }> {
     try {
         const user = await requireAuth()
@@ -184,6 +184,7 @@ export async function createTransferOrder(input: {
                     create: input.lines.map(l => ({
                         productId: l.productId,
                         qtyTransferred: l.qtyTransferred,
+                        vintage: l.vintage ? Number(l.vintage) : null,
                     })),
                 },
             },
@@ -435,15 +436,35 @@ export async function advanceTransferStatus(id: string): Promise<{ success: bool
 // ── Options (Warehouses & Products with Stock) ─────
 export async function getTransferOptions() {
     return cached('transfers:options', async () => {
-        const [warehouses, products] = await Promise.all([
+        const [warehouses, products, stockLots] = await Promise.all([
             prisma.warehouse.findMany({ select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } }),
             prisma.product.findMany({
                 where: { status: 'ACTIVE' },
                 select: { id: true, skuCode: true, productName: true, country: true },
                 orderBy: { skuCode: 'asc' }
             }),
+            prisma.stockLot.findMany({
+                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                select: { productId: true, vintage: true },
+            }),
         ])
-        return { warehouses, products }
+
+        const vintageMap: Record<string, number[]> = {}
+        for (const lot of stockLots) {
+            if (lot.vintage) {
+                if (!vintageMap[lot.productId]) vintageMap[lot.productId] = []
+                if (!vintageMap[lot.productId].includes(lot.vintage)) {
+                    vintageMap[lot.productId].push(lot.vintage)
+                }
+            }
+        }
+
+        const productsWithVintages = products.map(p => ({
+            ...p,
+            vintages: (vintageMap[p.id] || []).sort((a, b) => b - a),
+        }))
+
+        return { warehouses, products: productsWithVintages }
     })
 }
 
@@ -533,7 +554,7 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
             productId: l.productId,
             productName: l.product.productName,
             skuCode: l.product.skuCode,
-            vintage: firstLot?.vintage ?? null,
+            vintage: l.vintage ?? firstLot?.vintage ?? null,
             country: l.product.country,
             qtyTransferred: qtyTrans,
             qtyReceived: Number(l.qtyReceived || 0),

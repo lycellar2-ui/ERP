@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-13 | Wine ERP v10.0 — Add Start & End Validity Period for Special Price Proposals*
+*Last updated: 2026-08-13 | Wine ERP v10.1 — Add Vintage Selection Support for Inter-Warehouse Transfers*
 

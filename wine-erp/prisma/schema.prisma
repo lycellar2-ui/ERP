@@ -2817,6 +2817,7 @@ model TransferOrderLine {
   transferOrder   TransferOrder @relation(fields: [transferOrderId], references: [id])
   productId       String
   product         Product       @relation(fields: [productId], references: [id])
+  vintage         Int?          // Vintage year selected for transfer
   qtyTransferred  Decimal
   qtyReceived     Decimal       @default(0)
 
