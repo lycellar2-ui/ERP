@@ -177,7 +177,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onR
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4">
-            <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-7xl h-[94vh] flex flex-col text-slate-900 shadow-2xl overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-[96vw] h-[94vh] flex flex-col text-slate-900 shadow-2xl overflow-hidden">
                 {/* MODAL HEADER FOR LEAD COMMAND CENTER */}
                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3">

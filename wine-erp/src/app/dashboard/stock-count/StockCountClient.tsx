@@ -256,7 +256,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     }
 
     return (
-        <div className="p-2 sm:p-6 max-w-7xl mx-auto space-y-3 sm:space-y-6">
+        <div className="w-full space-y-3 sm:space-y-6">
             {/* DESKTOP HEADER BANNER (Hidden on Mobile) */}
             <div className="hidden md:flex flex-row items-center justify-between gap-4 bg-white border border-slate-200 p-6 rounded-2xl shadow-xs">
                 <div className="flex items-center gap-3">
