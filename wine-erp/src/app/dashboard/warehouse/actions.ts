@@ -2121,3 +2121,40 @@ export async function deleteWarehouse(id: string) {
         return { success: false, error: err.message }
     }
 }
+
+// ─── Real-time WMS Alert: Get Latest Pending Delivery Order ─────
+export async function getLatestPendingDO(warehouseId?: string) {
+    try {
+        const where: any = { status: 'DRAFT' }
+        if (warehouseId) where.warehouseId = warehouseId
+
+        const count = await prisma.deliveryOrder.count({ where })
+        const latest = await prisma.deliveryOrder.findFirst({
+            where,
+            select: {
+                id: true,
+                doNo: true,
+                createdAt: true,
+                warehouse: { select: { name: true } },
+                so: { select: { soNo: true, customer: { select: { name: true } } } },
+                _count: { select: { lines: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        })
+
+        return {
+            count,
+            latest: latest ? {
+                id: latest.id,
+                doNo: latest.doNo,
+                soNo: latest.so?.soNo ?? '—',
+                customerName: latest.so?.customer?.name ?? '—',
+                warehouseName: latest.warehouse?.name ?? '—',
+                lineCount: latest._count.lines,
+                createdAt: latest.createdAt,
+            } : null,
+        }
+    } catch (err) {
+        return { count: 0, latest: null }
+    }
+}

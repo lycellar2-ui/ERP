@@ -552,7 +552,7 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Khắc phục Tồn Đầu Kỳ = 0** | `actions-nxt.ts` | Tính nguồn nhập tồn đầu kỳ từ `StockLot` (`receivedDate < fromDate`, loại trừ lô điều chuyển `TRF-`) kết hợp `GoodsReceiptLine`. Sửa dứt điểm lỗi tồn đầu kỳ = 0 làm tồn cuối kỳ bị âm |
 | **Loại bỏ luân chuyển nội bộ khi xem Tất cả các kho** | `actions-nxt.ts` | Chỉ cộng `TRANSFER_IN` / `TRANSFER_OUT` vào tổng nhập/xuất khi lọc một kho cụ thể. Ở chế độ xem "Tất cả các kho", các giao dịch điều chuyển nội bộ giữa 2 kho của công ty được ghi nhận net effect = 0, tránh thổi phồng tổng nhập/xuất công ty |
 | **Đồng bộ Dropdown chọn kho ở Header** | `WarehouseClient.tsx`, `StockMovementTab.tsx` | Truyền prop `selectedWarehouseId` từ header `WarehouseClient` xuống `StockMovementTab` và tự động re-query số liệu khi chọn kho từ header |
-| **Lọc vị trí kệ theo kho** | `actions-nxt.ts`, `StockMovementTab.tsx` | Cập nhật `getProductStockByLocation(productId, warehouseId)` thêm lọc `location: { warehouseId }` để bảng bên phải chỉ hiển thị các kệ thuộc kho đang chọn |
+| **Thẻ Cảnh Báo Nhắc Đơn Hàng Mới Tự Động (Web Notification & Audio Alert)** | `web-notifications.ts`, `WarehouseClient.tsx`, `actions.ts` | Bổ sung cơ chế phát âm thanh Web Audio API (Chime D5->A5->D6) + Nảy ô thông báo nổi Desktop (`Notification API`) ngoài màn hình máy tính khi có đơn bán hàng mới cần nhặt. Thêm nút bật/tắt `🔊 Bật Nhắc Đơn` trên thanh Header WMS |
 
 ### Chi tiết GR Variance Report
 

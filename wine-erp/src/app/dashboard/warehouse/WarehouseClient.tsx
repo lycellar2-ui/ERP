@@ -6,13 +6,19 @@ import {
     Thermometer, Box, X, Save, Loader2, AlertCircle, CheckCircle2,
     ChevronRight, Layers, PackagePlus, Truck, ShieldAlert, Trash2,
     DollarSign, AlertTriangle, Clock, Wine, ArrowUpDown, TrendingDown, Download, ChevronDown,
-    ArrowRightLeft, ClipboardList, LayoutGrid, ArrowLeft, RefreshCw
+    ArrowRightLeft, ClipboardList, LayoutGrid, ArrowLeft, RefreshCw, BellRing, BellOff, Volume2
 } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+    playNotificationSound,
+    requestBrowserNotificationPermission,
+    sendDesktopNotification
+} from '@/lib/web-notifications'
 import {
     WarehouseRow, StockLotRow, LocationRow,
     createWarehouse, editWarehouse, createLocation, getStockInventory, getLocations,
     getQuarantinedLots, moveToQuarantine, releaseFromQuarantine, writeOffStock,
-    getWarehouses, getWMSStats
+    getWarehouses, getWMSStats, getLatestPendingDO
 } from './actions'
 import { getLegalEntities } from '../sales/actions'
 import { formatVND, formatDate } from '@/lib/utils'
@@ -421,6 +427,85 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
     const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'receivedDate', dir: 'desc' })
     const [showMobileStats, setShowMobileStats] = useState(false)
 
+    // ── Real-time Notification Alert State ────────────────
+    const [audioNotifyEnabled, setAudioNotifyEnabled] = useState(false)
+    const [lastDOId, setLastDOId] = useState<string | null>(null)
+    const [pendingDOCount, setPendingDOCount] = useState<number>(0)
+
+    // Load initial notification setting from localStorage
+    useEffect(() => {
+        const stored = localStorage.getItem('wms_audio_notify') === 'true'
+        setAudioNotifyEnabled(stored)
+    }, [])
+
+    const toggleAudioNotify = async () => {
+        if (!audioNotifyEnabled) {
+            const granted = await requestBrowserNotificationPermission()
+            setAudioNotifyEnabled(true)
+            localStorage.setItem('wms_audio_notify', 'true')
+            playNotificationSound()
+            if (granted) {
+                toast.success('🔊 Đã bật thông báo nhặt hàng nổi & âm thanh!', {
+                    description: 'Hệ thống sẽ nảy ô thông báo ngoài màn hình và phát chuông khi có đơn mới.'
+                })
+            } else {
+                toast.info('🔊 Đã bật âm thanh nhặt hàng!', {
+                    description: 'Bạn có thể cấp quyền thông báo trình duyệt để nhận thông báo nổi.'
+                })
+            }
+        } else {
+            setAudioNotifyEnabled(false)
+            localStorage.setItem('wms_audio_notify', 'false')
+            toast.info('🔕 Đã tắt thông báo nhắc nhặt hàng.')
+        }
+    }
+
+    // Real-time polling for pending picking orders (every 12 seconds)
+    useEffect(() => {
+        let isSubscribed = true
+
+        const checkPendingDOs = async () => {
+            const res = await getLatestPendingDO(selectedWH || undefined)
+            if (!isSubscribed) return
+
+            setPendingDOCount(res.count)
+
+            if (res.latest) {
+                // If a new DO is created while staff is on WMS
+                if (lastDOId && lastDOId !== res.latest.id) {
+                    if (audioNotifyEnabled) {
+                        playNotificationSound()
+                        sendDesktopNotification(`📦 [LỆNH NHẶT HÀNG MỚI] ${res.latest.doNo}`, {
+                            body: `Khách hàng: ${res.latest.customerName}\nKho: ${res.latest.warehouseName} (${res.latest.lineCount} SKU)\nĐơn SO: ${res.latest.soNo}`,
+                            onClickUrl: '/dashboard/warehouse?tab=do',
+                        })
+                    }
+
+                    toast.warning(`📦 LỆNH NHẶT HÀNG MỚI: ${res.latest.doNo}`, {
+                        description: `Khách hàng: ${res.latest.customerName} — Đơn gốc ${res.latest.soNo} (${res.latest.lineCount} sản phẩm cần nhặt)`,
+                        action: {
+                            label: 'Đi nhặt hàng',
+                            onClick: () => {
+                                setViewMode('workspace')
+                                setActiveTab('do')
+                            }
+                        },
+                        duration: 12000,
+                    })
+                }
+                setLastDOId(res.latest.id)
+            }
+        }
+
+        checkPendingDOs()
+        const interval = setInterval(checkPendingDOs, 12000)
+
+        return () => {
+            isSubscribed = false
+            clearInterval(interval)
+        }
+    }, [selectedWH, lastDOId, audioNotifyEnabled])
+
     // Auto pre-select Kho Thắng Ân Giang Văn Minh (WH-TA-GVM) by default
     useEffect(() => {
         if (!selectedWH && warehouses.length > 0) {
@@ -761,8 +846,35 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                         </div>
                     )}
 
-                    {/* Right Action Group: Warehouse Selector Dropdown */}
+                    {/* Right Action Group: Warehouse Selector Dropdown & Notification Alert Toggle */}
                     <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={toggleAudioNotify}
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all cursor-pointer border ${
+                                audioNotifyEnabled
+                                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/20'
+                                    : 'bg-slate-100 border-slate-300 text-slate-600 hover:bg-slate-200'
+                            }`}
+                            title={audioNotifyEnabled ? 'Đã bật thông báo nhặt hàng (Bấm để tắt)' : 'Bấm để bật thông báo nhặt hàng nổi & âm thanh'}
+                        >
+                            {audioNotifyEnabled ? (
+                                <>
+                                    <BellRing size={14} className="text-emerald-600 animate-pulse shrink-0" />
+                                    <span>Nhắc Đơn: BẬT</span>
+                                    {pendingDOCount > 0 && (
+                                        <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-mono font-extrabold ml-0.5">
+                                            {pendingDOCount}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <BellOff size={14} className="text-slate-400 shrink-0" />
+                                    <span>Bật Nhắc Đơn</span>
+                                </>
+                            )}
+                        </button>
+
                         <div className="relative">
                             <select
                                 value={selectedWH ?? ''}
