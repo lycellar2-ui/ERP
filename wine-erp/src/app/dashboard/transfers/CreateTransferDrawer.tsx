@@ -93,12 +93,15 @@ function ProductCombobox({
                 <input
                     type="text"
                     value={search}
-                    onFocus={() => setIsOpen(true)}
+                    onFocus={(e) => {
+                        focusHandler.onFocus(e)
+                        setIsOpen(true)
+                    }}
+                    onBlur={focusHandler.onBlur}
                     onChange={(e) => {
                         setSearch(e.target.value)
                         if (!isOpen) setIsOpen(true)
                     }}
-                    {...focusHandler}
                     placeholder="Gõ SKU hoặc tên sản phẩm..."
                     className="w-full pl-3 pr-8 py-1.5 text-xs outline-none rounded"
                     style={{ ...inputStyle }}
