@@ -553,7 +553,7 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Loại bỏ luân chuyển nội bộ khi xem Tất cả các kho** | `actions-nxt.ts` | Chỉ cộng `TRANSFER_IN` / `TRANSFER_OUT` vào tổng nhập/xuất khi lọc một kho cụ thể. Ở chế độ xem "Tất cả các kho", các giao dịch điều chuyển nội bộ giữa 2 kho của công ty được ghi nhận net effect = 0, tránh thổi phồng tổng nhập/xuất công ty |
 | **Đồng bộ Dropdown chọn kho ở Header** | `WarehouseClient.tsx`, `StockMovementTab.tsx` | Truyền prop `selectedWarehouseId` từ header `WarehouseClient` xuống `StockMovementTab` và tự động re-query số liệu khi chọn kho từ header |
 | **Thẻ Cảnh Báo Nhắc Đơn Hàng Mới Tự Động (Web Notification & Audio Alert)** | `web-notifications.ts`, `WarehouseClient.tsx`, `actions.ts` | Bổ sung cơ chế phát âm thanh Web Audio API (Chime D5->A5->D6) + Nảy ô thông báo nổi Desktop (`Notification API`) ngoài màn hình máy tính khi có đơn bán hàng mới cần nhặt. Thêm nút bật/tắt `🔊 Bật Nhắc Đơn` trên thanh Header WMS |
-| **Tối ưu hóa giao diện Tab Kiểm Kê Kho (Full-Width UI & Gom Cột Thao Tác)** | `StockCountClient.tsx`, `StockCountTableModal.tsx` | Bỏ giới hạn độ rộng `max-w-7xl` và bỏ cuộn ngang bảng. Rút gọn 5 nút thao tác trùng lặp ở danh sách bên ngoài về duy nhất nút `📄 Mở Phiếu`, chuyển toàn bộ công cụ chi tiết (⚡ Bắt đầu, 📱 Đếm ĐT, 👤 Phân công, 🖨️ In phiếu) vào thanh công cụ bên trong Modal Chi Tiết Phiếu Kiểm Kê |
+| **Đồng bộ chuẩn Giao diện & Font chữ Kiểm Kê Kho theo chuẩn Đơn Bán Hàng** | `StockCountClient.tsx` | Chuẩn hóa toàn bộ layout, font chữ, mã phiếu (font-mono cyan blue), thanh chỉ số quick stats 1 dòng, tab bộ lọc số lượng badge pill, và các nút hành động (👁️ Xem, ⚡ Bắt Đầu, 🖨️ In) đồng bộ 100% với giao diện màn hình Đơn Bán Hàng |
 
 ### Chi tiết GR Variance Report
 

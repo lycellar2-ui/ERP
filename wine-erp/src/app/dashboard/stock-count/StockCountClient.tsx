@@ -57,6 +57,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     const [activeTab, setActiveTab] = useState<'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED'>('ALL')
     const [searchTerm, setSearchTerm] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [showStats, setShowStats] = useState(false)
 
     // Modal & View states
     const [showCreateModal, setShowCreateModal] = useState(false)
@@ -256,162 +257,142 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     }
 
     return (
-        <div className="w-full space-y-3 sm:space-y-6">
-            {/* DESKTOP HEADER BANNER (Hidden on Mobile) */}
-            <div className="hidden md:flex flex-row items-center justify-between gap-4 bg-white border border-slate-200 p-6 rounded-2xl shadow-xs">
+        <div className="w-full space-y-4 max-w-screen-2xl">
+            {/* Header & Quick Stats Bar — Matched with Sales Order UI */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <span className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl">
-                        <ClipboardList className="w-6 h-6" />
-                    </span>
-                    <div>
-                        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">HỆ THỐNG KIỂM KÊ KHO ERP</h1>
-                        <p className="text-xs text-slate-500">Kiểm kê Full kho, Cycle Count, Mã giao dịch & Đột xuất</p>
+                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">Kiểm Kê Kho</h1>
+
+                    {/* Inline Quick Stats */}
+                    <div className="hidden lg:flex items-center gap-x-4 text-xs border-l border-slate-200 pl-4">
+                        <span className="text-slate-500">Tổng Phiếu: <strong className="font-mono text-sm ml-1 text-slate-900">{stats.total}</strong></span>
+                        <span className="text-slate-500">Đang kiểm: <strong className="font-mono text-sm ml-1 text-amber-600">{stats.inProgress}</strong></span>
+                        <span className="text-slate-500">Đã xong: <strong className="font-mono text-sm ml-1 text-emerald-600">{stats.completed}</strong></span>
+                        <span className="text-slate-500">Phân công tôi: <strong className="font-mono text-sm ml-1 text-cyan-700">{stats.assignedToMe || 0}</strong></span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setShowBarcodeLookup(true)}
-                        className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-2 border border-slate-200 shadow-2xs transition cursor-pointer"
+                        onClick={() => setShowStats(!showStats)}
+                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border transition-all cursor-pointer ${
+                            showStats
+                                ? 'bg-[#87CBB9]/15 text-[#0A1926] border-[#87CBB9]/40'
+                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
                     >
-                        <QrCode className="w-4 h-4 text-emerald-600" />
-                        Tra cứu Barcode
+                        📊 Thống Kê
                     </button>
-
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="px-5 py-2.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-extrabold text-xs rounded-xl flex items-center gap-2 shadow-xs transition cursor-pointer active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Tạo Phiếu Kiểm Kê
-                    </button>
-                </div>
-            </div>
-
-            {/* MOBILE COMPACT ACTION BAR (< 768px) */}
-            <div className="flex md:hidden items-center justify-between gap-2 bg-white border border-slate-200 p-2.5 rounded-xl shadow-2xs">
-                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5 truncate">
-                    <ClipboardList className="w-4 h-4 text-emerald-600 shrink-0" /> KIỂM KÊ KHO
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0">
                     <button
                         onClick={() => setShowBarcodeLookup(true)}
-                        className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-extrabold text-[11px] rounded-lg border border-slate-200 flex items-center gap-1 active:scale-95"
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all cursor-pointer"
                     >
-                        <QrCode className="w-3.5 h-3.5 text-emerald-600" /> Barcode
+                        <QrCode size={14} className="text-emerald-600" /> Tra cứu Barcode
                     </button>
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-3 py-1.5 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] font-black text-[11px] rounded-lg flex items-center gap-1 active:scale-95 shadow-2xs"
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-[#0A1926] bg-[#87CBB9] hover:bg-[#76BAA8] rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
                     >
-                        <Plus className="w-3.5 h-3.5" /> + Phiếu Mới
+                        <Plus size={15} /> Tạo Phiếu Kiểm Kê
                     </button>
                 </div>
             </div>
 
-            {/* DESKTOP KPI CARDS (Hidden on Mobile) */}
-            <div className="hidden md:grid grid-cols-4 gap-2.5">
-                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
-                    <div>
-                        <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide block">TỔNG PHIẾU</span>
-                        <strong className="text-lg font-black text-slate-900 leading-tight mt-0.5 block">{stats.total}</strong>
-                    </div>
-                    <ClipboardList className="w-5 h-5 text-slate-400 shrink-0" />
-                </div>
-                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
-                    <div>
-                        <span className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wide block">ĐANG KIỂM KÊ</span>
-                        <strong className="text-lg font-black text-amber-600 leading-tight mt-0.5 block">{stats.inProgress}</strong>
-                    </div>
-                    <RefreshCw className="w-5 h-5 text-amber-500 shrink-0" />
-                </div>
-                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
-                    <div>
-                        <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wide block">ĐÃ DUYỆT / XONG</span>
-                        <strong className="text-lg font-black text-emerald-600 leading-tight mt-0.5 block">{stats.completed}</strong>
-                    </div>
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                </div>
-                <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs flex items-center justify-between">
-                    <div>
-                        <span className="text-[10px] font-extrabold text-cyan-700 uppercase tracking-wide block">PHÂN CÔNG CHO TÔI</span>
-                        <strong className="text-lg font-black text-cyan-700 leading-tight mt-0.5 block">{stats.assignedToMe}</strong>
-                    </div>
-                    <UserCheck className="w-5 h-5 text-cyan-600 shrink-0" />
-                </div>
-            </div>
-
-            {/* MOBILE 1-ROW COMPACT STAT STRIP (< 768px) */}
-            <div className="grid md:hidden grid-cols-4 gap-1.5 bg-slate-100 border border-slate-200/80 p-1.5 rounded-xl">
-                <div className="text-center bg-white py-1 px-1 rounded-lg border border-slate-200 shadow-2xs">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase block leading-none">Tất Cả</span>
-                    <strong className="text-xs font-black text-slate-900 leading-none mt-0.5 block">{stats.total}</strong>
-                </div>
-                <div className="text-center bg-white py-1 px-1 rounded-lg border border-slate-200 shadow-2xs">
-                    <span className="text-[9px] font-bold text-amber-600 uppercase block leading-none">Đang Kiểm</span>
-                    <strong className="text-xs font-black text-amber-600 leading-none mt-0.5 block">{stats.inProgress}</strong>
-                </div>
-                <div className="text-center bg-white py-1 px-1 rounded-lg border border-slate-200 shadow-2xs">
-                    <span className="text-[9px] font-bold text-emerald-600 uppercase block leading-none">Đã Xong</span>
-                    <strong className="text-xs font-black text-emerald-600 leading-none mt-0.5 block">{stats.completed}</strong>
-                </div>
-                <div className="text-center bg-white py-1 px-1 rounded-lg border border-slate-200 shadow-2xs">
-                    <span className="text-[9px] font-bold text-cyan-700 uppercase block leading-none">Gán Tôi</span>
-                    <strong className="text-xs font-black text-cyan-700 leading-none mt-0.5 block">{stats.assignedToMe}</strong>
-                </div>
-            </div>
-
-            {/* Filter Tabs & Search */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar">
-                    {[
-                        { key: 'ALL', label: `Tất cả (${stats.total})` },
-                        { key: 'ASSIGNED', label: `Phân công (${stats.assignedToMe})` },
-                        { key: 'IN_PROGRESS', label: `Đang kiểm (${stats.inProgress})` },
-                        { key: 'COMPLETED', label: `Đã xong (${stats.completed})` },
-                    ].map(tab => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key as any)}
-                            className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition cursor-pointer ${activeTab === tab.key ? 'bg-[#87CBB9] text-[#0A1926] font-extrabold shadow-2xs border border-[#76BAA8]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 font-bold'}`}
-                        >
-                            {tab.label}
+            {/* Collapsible Stats Cards — Matched with Sales Order UI */}
+            {showStats && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Thống Kê Chi Tiết</span>
+                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1 text-[#0891B2]">
+                            Thu gọn chỉ số ✕
                         </button>
-                    ))}
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase block">TỔNG PHIẾU</span>
+                            <strong className="text-lg font-black text-slate-900 mt-0.5 block font-mono">{stats.total}</strong>
+                        </div>
+                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
+                            <span className="text-[10px] font-bold text-amber-600 uppercase block">ĐANG KIỂM KÊ</span>
+                            <strong className="text-lg font-black text-amber-600 mt-0.5 block font-mono">{stats.inProgress}</strong>
+                        </div>
+                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
+                            <span className="text-[10px] font-bold text-emerald-600 uppercase block">ĐÃ DUYỆT / XONG</span>
+                            <strong className="text-lg font-black text-emerald-600 mt-0.5 block font-mono">{stats.completed}</strong>
+                        </div>
+                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
+                            <span className="text-[10px] font-bold text-cyan-700 uppercase block">PHÂN CÔNG CHO TÔI</span>
+                            <strong className="text-lg font-black text-cyan-700 mt-0.5 block font-mono">{stats.assignedToMe || 0}</strong>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Filter Tabs & Search Bar — Matched with Sales Order UI */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+                {/* Filter Tabs */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar">
+                    {[
+                        { key: 'ALL', label: 'Tất cả', count: stats.total },
+                        { key: 'ASSIGNED', label: 'Phân công', count: stats.assignedToMe || 0 },
+                        { key: 'IN_PROGRESS', label: 'Đang kiểm', count: stats.inProgress },
+                        { key: 'COMPLETED', label: 'Đã xong', count: stats.completed },
+                    ].map(tab => {
+                        const isActive = activeTab === tab.key
+                        return (
+                            <button
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key as any)}
+                                className={`px-3 py-1 rounded-md text-xs whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                                    isActive
+                                        ? 'bg-[#87CBB9]/25 text-[#0A1926] font-extrabold border border-[#87CBB9]/50 shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold'
+                                }`}
+                            >
+                                <span>{tab.label}</span>
+                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${isActive ? 'bg-[#87CBB9] text-[#0A1926]' : 'bg-slate-200 text-slate-700'}`}>
+                                    {tab.count}
+                                </span>
+                            </button>
+                        )
+                    })}
                 </div>
 
-                <div className="relative w-full sm:w-72">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                {/* Search input */}
+                <div className="relative w-full sm:w-64">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
-                        placeholder="Tìm mã phiếu, kho, nhân viên..."
+                        placeholder="Tìm số phiếu, kho, nhân viên..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:border-[#87CBB9] focus:ring-2 focus:ring-[#87CBB9]/20 shadow-2xs"
+                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#87CBB9] focus:ring-1 focus:ring-[#87CBB9] text-slate-900 placeholder-slate-400 shadow-2xs"
                     />
                 </div>
             </div>
 
-            {/* Sessions Table — Desktop View (>= 768px) */}
-            <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+            {/* Sessions Table — Matched with Sales Order Table UI */}
+            <div className="hidden md:block bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
                 <div className="w-full">
                     <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                            <tr className="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                                <th className="p-3.5 pl-4">Mã Phiếu / Tiêu Đề</th>
-                                <th className="p-3.5 whitespace-nowrap">Kho Hàng</th>
-                                <th className="p-3.5 whitespace-nowrap">Phạm Vi / Chế Độ</th>
-                                <th className="p-3.5 whitespace-nowrap">Người Kiểm Kê</th>
-                                <th className="p-3.5 text-center whitespace-nowrap">Số Dòng</th>
-                                <th className="p-3.5 text-right whitespace-nowrap">Chênh Lệch</th>
-                                <th className="p-3.5 text-center whitespace-nowrap">Trạng Thái</th>
-                                <th className="p-3.5 pr-4 text-right whitespace-nowrap">Thao Tác</th>
+                            <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                                <th className="p-3 pl-4">SỐ PHIẾU ↑</th>
+                                <th className="p-3">TIÊU ĐỀ KIỂM KÊ</th>
+                                <th className="p-3 whitespace-nowrap">KHO HÀNG</th>
+                                <th className="p-3 whitespace-nowrap">PHẠM VI / CHẾ ĐỘ</th>
+                                <th className="p-3 whitespace-nowrap">NGƯỜI PHỤ TRÁCH</th>
+                                <th className="p-3 text-center whitespace-nowrap">SỐ DÒNG</th>
+                                <th className="p-3 text-right whitespace-nowrap">CHÊNH LỆCH ⇅</th>
+                                <th className="p-3 text-center whitespace-nowrap">TRẠNG THÁI</th>
+                                <th className="p-3 whitespace-nowrap text-center">NGÀY TẠO ⌄</th>
+                                <th className="p-3 pr-4 text-right whitespace-nowrap">HÀNH ĐỘNG</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-800">
                             {filteredList.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                                    <td colSpan={10} className="p-8 text-center text-slate-400">
                                         Không tìm thấy phiên kiểm kê nào.
                                     </td>
                                 </tr>
@@ -421,45 +402,44 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         <tr
                                             key={row.id}
                                             onClick={() => setTableModalSessionId(row.id)}
-                                            className="hover:bg-amber-50/50 transition cursor-pointer group"
+                                            className="hover:bg-slate-50/80 transition cursor-pointer group"
                                         >
-                                            <td className="p-3.5 pl-4">
-                                                <div className="font-mono font-extrabold text-emerald-800 text-xs whitespace-nowrap tracking-tight group-hover:text-amber-700 transition">
-                                                    {row.sessionNo}
-                                                </div>
-                                                <div className="font-bold text-slate-900 mt-0.5 text-xs leading-snug line-clamp-1">{row.title}</div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5 whitespace-nowrap">
-                                                    <span>Tạo ngày: {new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>
-                                                    <span>•</span>
-                                                    <span className="font-semibold text-slate-700">👤 {row.createdByName}</span>
+                                            <td className="p-3 pl-4 font-mono font-bold text-[#0891B2] text-xs whitespace-nowrap group-hover:underline">
+                                                {row.sessionNo}
+                                            </td>
+
+                                            <td className="p-3">
+                                                <div className="font-bold text-slate-900 text-xs leading-snug line-clamp-1">{row.title}</div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                                    👤 Tạo bởi: {row.createdByName || 'Hệ thống'}
                                                 </div>
                                             </td>
 
-                                            <td className="p-3.5 font-bold text-slate-900 whitespace-nowrap">
+                                            <td className="p-3 font-semibold text-slate-800 whitespace-nowrap">
                                                 <div className="flex items-center gap-1.5">
-                                                    <Warehouse className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                                    <Warehouse className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                                     {row.warehouseName}
                                                 </div>
                                             </td>
 
-                                            <td className="p-3.5 whitespace-nowrap">
+                                            <td className="p-3 whitespace-nowrap">
                                                 <div className="flex items-center gap-1">
-                                                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center shrink-0">
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center shrink-0">
                                                         {row.scopeType === 'FULL_WAREHOUSE' ? '📦 Full Kho' :
                                                          row.scopeType === 'CYCLE_COUNT' ? '🔄 Cycle Count' :
                                                          row.scopeType === 'TRANSACTED_ITEMS' ? '⚡ Mã Giao Dịch' : '🚨 Đột Xuất'}
                                                     </span>
                                                     {row.isBlindCount && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center shrink-0">
+                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center shrink-0">
                                                             Mù
                                                         </span>
                                                     )}
                                                 </div>
                                             </td>
 
-                                            <td className="p-3.5 whitespace-nowrap">
+                                            <td className="p-3 whitespace-nowrap">
                                                 {row.assignedToName ? (
-                                                    <span className="text-xs font-bold text-cyan-700 flex items-center gap-1">
+                                                    <span className="text-xs font-semibold text-cyan-700 flex items-center gap-1">
                                                         <UserCheck className="w-3.5 h-3.5 shrink-0" /> {row.assignedToName}
                                                     </span>
                                                 ) : (
@@ -467,43 +447,61 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 )}
                                             </td>
 
-                                            <td className="p-3.5 text-center font-mono font-bold text-slate-800 whitespace-nowrap">{row.lineCount} mã</td>
+                                            <td className="p-3 text-center font-mono font-bold text-slate-800 whitespace-nowrap">{row.lineCount} mã</td>
 
-                                            <td className="p-3.5 text-right font-mono font-bold whitespace-nowrap">
-                                                <span className={row.totalVariance === 0 ? 'text-slate-500' : row.totalVariance > 0 ? 'text-amber-700' : 'text-rose-600'}>
+                                            <td className="p-3 text-right font-mono font-bold whitespace-nowrap">
+                                                <span className={row.totalVariance === 0 ? 'text-slate-500' : row.totalVariance > 0 ? 'text-amber-600' : 'text-rose-600'}>
                                                     {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} chai
                                                 </span>
                                             </td>
 
-                                            <td className="p-3.5 text-center whitespace-nowrap">
-                                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase inline-flex items-center shrink-0 ${
-                                                    row.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
-                                                    row.status === 'COMPLETED' ? 'bg-cyan-50 text-cyan-800 border border-cyan-200' :
-                                                    row.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                                            <td className="p-3 text-center whitespace-nowrap">
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 shrink-0 ${
+                                                    row.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                                    row.status === 'COMPLETED' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' :
+                                                    row.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                                                     'bg-slate-100 text-slate-600 border border-slate-200'
                                                 }`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${
+                                                        row.status === 'APPROVED' ? 'bg-emerald-500' :
+                                                        row.status === 'COMPLETED' ? 'bg-cyan-500' :
+                                                        row.status === 'IN_PROGRESS' ? 'bg-amber-500' :
+                                                        'bg-slate-400'
+                                                    }`} />
                                                     {row.status === 'APPROVED' ? 'Đã duyệt' : row.status === 'COMPLETED' ? 'Đã đếm xong' : row.status === 'IN_PROGRESS' ? 'Đang kiểm' : 'Nháp'}
                                                 </span>
                                             </td>
 
-                                            <td className="p-3.5 pr-4 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
-                                                <div className="flex items-center justify-end gap-1.5">
+                                            <td className="p-3 text-center text-[11px] text-slate-500 whitespace-nowrap">
+                                                {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+                                            </td>
+
+                                            <td className="p-3 pr-4 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center justify-end gap-1">
                                                     {row.status === 'DRAFT' && (
                                                         <button
                                                             onClick={() => handleStartSession(row.id)}
-                                                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-black flex items-center gap-1 transition cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
+                                                            className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
                                                             title="Kích hoạt bắt đầu kiểm kê"
                                                         >
-                                                            <Zap className="w-3.5 h-3.5" /> Bắt Đầu
+                                                            <Zap className="w-3 h-3" /> Bắt Đầu
                                                         </button>
                                                     )}
 
                                                     <button
                                                         onClick={() => setTableModalSessionId(row.id)}
-                                                        className="px-3 py-1 bg-[#87CBB9] hover:bg-[#76BAA8] text-[#0A1926] rounded-lg text-xs font-black flex items-center gap-1 transition cursor-pointer shadow-2xs whitespace-nowrap"
-                                                        title="Mở Chi tiết & Bảng Điền"
+                                                        className="px-2 py-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
+                                                        title="Xem & Làm việc chi tiết"
                                                     >
-                                                        <FileText className="w-3.5 h-3.5" /> Mở Phiếu
+                                                        <Eye className="w-3 h-3" /> Xem
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => handleOpenPrintView(row.id)}
+                                                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
+                                                        title="In Biên bản"
+                                                    >
+                                                        <Printer className="w-3 h-3 text-slate-500" /> In
                                                     </button>
                                                 </div>
                                             </td>
