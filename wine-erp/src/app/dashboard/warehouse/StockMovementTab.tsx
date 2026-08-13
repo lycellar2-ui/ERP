@@ -41,11 +41,15 @@ function formatYMD(date: Date): string {
     return `${y}-${m}-${d}`
 }
 
-export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[] }) {
+export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehouses: WarehouseOption[]; selectedWarehouseId?: string }) {
     const [viewMode, setViewMode] = useState<ViewMode>('SUMMARY')
 
     // ── Global Filter States ────────────────────────
-    const [warehouseId, setWarehouseId] = useState('')
+    const [warehouseId, setWarehouseId] = useState(selectedWarehouseId || '')
+
+    useEffect(() => {
+        setWarehouseId(selectedWarehouseId || '')
+    }, [selectedWarehouseId])
     
     // Default date range: 1st day of current month -> today
     const getDefaultDateRange = () => {
@@ -157,7 +161,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
     }
 
     // ── Load Detail Stock Ledger ────────────────────
-    const loadDetailReport = async (productObj?: typeof selectedProduct) => {
+    const loadDetailReport = useCallback(async (productObj?: typeof selectedProduct) => {
         const targetProd = productObj || selectedProduct
         if (!targetProd) return
 
@@ -171,7 +175,7 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
                     dateTo: dateTo || undefined,
                     movementType,
                 }),
-                getProductStockByLocation(targetProd.id),
+                getProductStockByLocation(targetProd.id, warehouseId || undefined),
             ])
             setMovements(res.movements)
             setDetailSummary(res.summary)
@@ -179,7 +183,14 @@ export function StockMovementTab({ warehouses }: { warehouses: WarehouseOption[]
         } finally {
             setLoadingDetail(false)
         }
-    }
+    }, [selectedProduct, warehouseId, dateFrom, dateTo, movementType])
+
+    // Reload detail report if view mode is DETAIL and filters change
+    useEffect(() => {
+        if (viewMode === 'DETAIL' && selectedProduct) {
+            loadDetailReport()
+        }
+    }, [viewMode, loadDetailReport, selectedProduct])
 
     // Trigger drill-down detail view for a specific product
     const handleDrillDown = (item: WarehouseNXTItem) => {

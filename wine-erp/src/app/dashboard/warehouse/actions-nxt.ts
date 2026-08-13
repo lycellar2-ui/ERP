@@ -697,12 +697,13 @@ export async function getStockMovements(filters: {
 }
 
 // ── 4. Get current stock by location for a product ───
-export async function getProductStockByLocation(productId: string) {
+export async function getProductStockByLocation(productId: string, warehouseId?: string) {
     const lots = await prisma.stockLot.findMany({
         where: {
             productId,
             status: { in: ['AVAILABLE', 'RESERVED', 'QUARANTINE'] },
             qtyAvailable: { gt: 0 },
+            ...(warehouseId ? { location: { warehouseId } } : {}),
         },
         include: {
             location: {

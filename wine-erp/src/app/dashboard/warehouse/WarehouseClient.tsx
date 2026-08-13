@@ -906,7 +906,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                 <div className="space-y-4">
 
                     {/* NXT — Stock Movement Report Tab */}
-                    {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} />}
+                    {activeTab === 'nxt' && <StockMovementTab warehouses={warehouseList} selectedWarehouseId={selectedWH ?? undefined} />}
 
                     {/* 2D Warehouse Map Tab */}
                     {activeTab === 'map' && <WarehouseMapTab warehouses={warehouseList} selectedWarehouseId={selectedWH} isAdmin={isAdmin} />}
