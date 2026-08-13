@@ -150,18 +150,18 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
     return (
         <>
-            <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10, 25, 38, 0.7)', backdropFilter: 'blur(4px)' }}>
+            <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15, 23, 42, 0.4)' }}>
                 <div className="w-full max-w-3xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200"
-                    style={{ background: '#142433', borderLeft: '1px solid #2A4355' }}>
+                    style={{ background: '#FFFFFF', borderLeft: '1px solid #E2E8F0' }}>
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-[#2A4355] flex items-center justify-between shrink-0" style={{ background: '#142433' }}>
+                    <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between shrink-0" style={{ background: '#FFFFFF' }}>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
-                                <ArrowRightLeft size={18} />
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: 'rgba(135, 203, 185, 0.15)', color: '#0A1926', border: '1px solid rgba(135, 203, 185, 0.3)' }}>
+                                <ArrowRightLeft size={18} style={{ color: '#0A1926' }} />
                             </div>
                             <div>
-                                <h3 className="text-base font-bold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
-                                    PHIẾU CHUYỂN KHO: <span className="font-mono" style={{ color: '#D4A853' }}>{detail?.transferNo || '...'}</span>
+                                <h3 className="text-base font-bold" style={{ color: '#0F172A' }}>
+                                    PHIẾU CHUYỂN KHO: <span className="font-mono" style={{ color: '#B47816' }}>{detail?.transferNo || '...'}</span>
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
@@ -176,8 +176,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             {detail && (
                                 <button
                                     onClick={() => setPrintModalOpen(true)}
-                                    className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:opacity-90"
-                                    style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid rgba(212,168,83,0.3)', color: '#D4A853' }}
+                                    className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                    style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155' }}
                                     title="In phiếu chuyển kho ra giấy A4 để ký tên 4 bên"
                                 >
                                     <Printer size={15} /> In Phiếu (A4)
@@ -185,8 +185,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             )}
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-lg hover:bg-[#1B2E3D] transition-colors cursor-pointer"
-                                style={{ color: '#8AAEBB' }}
+                                className="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                style={{ color: '#64748B' }}
                             >
                                 <X size={20} />
                             </button>
@@ -194,28 +194,28 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ background: '#142433' }}>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-5">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20 gap-3" style={{ color: '#8AAEBB' }}>
-                                <Loader2 size={32} className="animate-spin" style={{ color: '#D4A853' }} />
+                            <div className="flex flex-col items-center justify-center py-20 gap-3" style={{ color: '#64748B' }}>
+                                <Loader2 size={32} className="animate-spin" style={{ color: '#B47816' }} />
                                 <span className="text-xs font-bold">Đang tải thông tin chi tiết phiếu...</span>
                             </div>
                         ) : detail ? (
                             <>
                                 {/* Status Timeline Bar */}
-                                <div className="p-4 rounded-xl space-y-2" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                    <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#8AAEBB' }}>Tiến Trình Phiếu Chuyển Kho</h4>
+                                <div className="p-4 rounded-xl space-y-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                    <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Tiến Trình Phiếu Chuyển Kho</h4>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                                        <div className={`p-2 rounded-lg border font-bold ${['PENDING_ACCOUNTING', 'CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-[#142433] text-[#4A6A7A] border-[#2A4355]'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${['PENDING_ACCOUNTING', 'CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                                             1. Lập Phiếu
                                         </div>
-                                        <div className={`p-2 rounded-lg border font-bold ${['CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : detail.status === 'PENDING_ACCOUNTING' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30 animate-pulse' : 'bg-[#142433] text-[#4A6A7A] border-[#2A4355]'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${['CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : detail.status === 'PENDING_ACCOUNTING' ? 'bg-amber-50 text-amber-800 border-amber-300 animate-pulse' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                                             2. Kế Toán Duyệt
                                         </div>
-                                        <div className={`p-2 rounded-lg border font-bold ${['IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : detail.status === 'CONFIRMED' ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : 'bg-[#142433] text-[#4A6A7A] border-[#2A4355]'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${['IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : detail.status === 'CONFIRMED' ? 'bg-sky-50 text-sky-800 border-sky-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                                             3. Xuất Kho (Đi)
                                         </div>
-                                        <div className={`p-2 rounded-lg border font-bold ${detail.status === 'RECEIVED' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-[#142433] text-[#4A6A7A] border-[#2A4355]'}`}>
+                                        <div className={`p-2 rounded-lg border font-bold ${detail.status === 'RECEIVED' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                                             4. Nhận Kho (Đến)
                                         </div>
                                     </div>
@@ -223,15 +223,15 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                 {/* Dynamic Action Box Based on Status & User Role */}
                                 {detail.status === 'DRAFT' && (
-                                    <div className="p-4 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                    <div className="p-4 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <div>
-                                            <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>Phiếu đang ở trạng thái Nháp</p>
-                                            <p className="text-[11px]" style={{ color: '#8AAEBB' }}>Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt</p>
+                                            <p className="text-xs font-bold" style={{ color: '#0F172A' }}>Phiếu đang ở trạng thái Nháp</p>
+                                            <p className="text-[11px]" style={{ color: '#64748B' }}>Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt</p>
                                         </div>
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleSubmitDraft}
-                                            className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer hover:opacity-90"
+                                            className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs"
                                             style={{ background: '#87CBB9', color: '#0A1926' }}
                                         >
                                             Gửi Kế Toán Duyệt
@@ -243,10 +243,10 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     <div className="p-4 rounded-xl space-y-3" style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.3)' }}>
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                             <div>
-                                                <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: '#D4A853' }}>
-                                                    <Clock size={16} style={{ color: '#D4A853' }} /> Cần Kế Toán Phê Duyệt Phiếu Chuyển Kho
+                                                <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: '#B47816' }}>
+                                                    <Clock size={16} style={{ color: '#B47816' }} /> Cần Kế Toán Phê Duyệt Phiếu Chuyển Kho
                                                 </p>
-                                                <p className="text-[11px] mt-0.5" style={{ color: '#8AAEBB' }}>
+                                                <p className="text-[11px] mt-0.5" style={{ color: '#475569' }}>
                                                     Kế toán kiểm tra danh mục hàng hóa, số lượng & tính hợp lệ để xác nhận duyệt phiếu
                                                 </p>
                                             </div>
@@ -254,14 +254,14 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 <div className="flex items-center gap-2 justify-end">
                                                     <button
                                                         onClick={() => setShowRejectInput(true)}
-                                                        className="px-3.5 py-2 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-300 font-bold text-xs hover:bg-rose-500/20 cursor-pointer"
+                                                        className="px-3.5 py-2 rounded-lg border border-rose-300 bg-white text-rose-700 font-bold text-xs hover:bg-rose-50 cursor-pointer"
                                                     >
                                                         Từ Chối
                                                     </button>
                                                     <button
                                                         disabled={actionLoading}
                                                         onClick={handleApprove}
-                                                        className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer hover:opacity-90"
+                                                        className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer"
                                                         style={{ background: '#87CBB9', color: '#0A1926' }}
                                                     >
                                                         <Check size={15} /> Duyệt Phiếu Chuyển Kho
@@ -271,17 +271,16 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         </div>
 
                                         {showRejectInput && (
-                                            <div className="p-3 bg-[#142433] rounded-lg border border-rose-500/30 space-y-2">
+                                            <div className="p-3 bg-white rounded-lg border border-rose-200 space-y-2">
                                                 <input
                                                     type="text"
                                                     value={rejectReason}
                                                     onChange={e => setRejectReason(e.target.value)}
                                                     placeholder="Nhập lý do từ chối phiếu chuyển kho này..."
-                                                    className="w-full px-3 py-2 rounded-lg border border-[#2A4355] text-xs outline-none focus:border-rose-500"
-                                                    style={{ background: '#1B2E3D', color: '#E8F1F2' }}
+                                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-rose-500"
                                                 />
                                                 <div className="flex justify-end gap-2">
-                                                    <button onClick={() => setShowRejectInput(false)} className="px-3 py-1.5 text-xs font-bold text-[#8AAEBB] hover:bg-[#1B2E3D] rounded-lg">Hủy</button>
+                                                    <button onClick={() => setShowRejectInput(false)} className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
                                                     <button onClick={handleReject} disabled={actionLoading} className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700">Xác Nhận Từ Chối</button>
                                                 </div>
                                             </div>
@@ -290,19 +289,19 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'CONFIRMED' && (
-                                    <div className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                    <div className="p-4 rounded-xl bg-sky-50 border border-sky-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
-                                                <CheckCircle2 size={16} className="text-sky-400" /> Kế toán đã phê duyệt — Sẵn sàng xuất kho
+                                            <p className="text-xs font-bold text-sky-900 flex items-center gap-1.5">
+                                                <CheckCircle2 size={16} className="text-sky-600" /> Kế toán đã phê duyệt — Sẵn sàng xuất kho
                                             </p>
-                                            <p className="text-[11px] text-sky-200/70 mt-0.5">
+                                            <p className="text-[11px] text-sky-700 mt-0.5">
                                                 Thủ kho xuất hàng bấm "In Phiếu A4" để ký nhận giấy & nhấp "Xuất Kho & Vận Chuyển"
                                             </p>
                                         </div>
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleDispatch}
-                                            className="px-4 py-2.5 rounded-lg bg-sky-600 text-white font-bold text-xs hover:bg-sky-500 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                            className="px-4 py-2.5 rounded-lg bg-sky-600 text-white font-bold text-xs hover:bg-sky-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                         >
                                             <Truck size={15} /> Xuất Kho & Vận Chuyển
                                         </button>
@@ -310,19 +309,19 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
 
                                 {detail.status === 'IN_TRANSIT' && (
-                                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                    <div className="p-4 rounded-xl bg-blue-50 border border-blue-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
-                                                <Truck size={16} className="text-blue-400" /> Hàng đang vận chuyển trên đường
+                                            <p className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                                                <Truck size={16} className="text-blue-600" /> Hàng đang vận chuyển trên đường
                                             </p>
-                                            <p className="text-[11px] text-blue-200/70 mt-0.5">
+                                            <p className="text-[11px] text-blue-700 mt-0.5">
                                                 Khi hàng đến Kho Nhận, Thủ kho đến kiểm đếm và bấm "Xác Nhận Nhận Hàng"
                                             </p>
                                         </div>
                                         <button
                                             disabled={actionLoading}
                                             onClick={handleReceive}
-                                            className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 hover:opacity-90"
+                                            className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                             style={{ background: '#87CBB9', color: '#0A1926' }}
                                         >
                                             <PackageCheck size={15} /> Xác Nhận Đã Nhận Hàng
@@ -332,44 +331,44 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                 {/* Overview Metadata Table */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#87CBB9' }}>🔴 Kho Xuất (Kho Đi)</p>
-                                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{detail.fromWarehouse}</p>
+                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>🔴 Kho Xuất (Kho Đi)</p>
+                                        <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{detail.fromWarehouse}</p>
                                     </div>
 
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#87CBB9' }}>🟢 Kho Nhận (Kho Đến)</p>
-                                        <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>{detail.toWarehouse}</p>
+                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>🟢 Kho Nhận (Kho Đến)</p>
+                                        <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{detail.toWarehouse}</p>
                                     </div>
 
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#8AAEBB' }}>👤 Người Yêu Cầu / Chuyển Kho</p>
-                                        <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{detail.requesterName}</p>
-                                        <p className="text-[11px] font-mono" style={{ color: '#8AAEBB' }}>{formatDate(detail.transferDate)}</p>
+                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>👤 Người Yêu Cầu / Chuyển Kho</p>
+                                        <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{detail.requesterName}</p>
+                                        <p className="text-[11px] font-mono" style={{ color: '#64748B' }}>{formatDate(detail.transferDate)}</p>
                                     </div>
 
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#8AAEBB' }}>💼 Kế Toán Phê Duyệt</p>
-                                        <p className="text-xs font-bold" style={{ color: '#E8F1F2' }}>{detail.accountingApprovedBy || 'Chưa duyệt'}</p>
+                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>💼 Kế Toán Phê Duyệt</p>
+                                        <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{detail.accountingApprovedBy || 'Chưa duyệt'}</p>
                                         {detail.accountingApprovedAt && (
-                                            <p className="text-[11px] font-mono" style={{ color: '#87CBB9' }}>Duyệt lúc {formatDate(detail.accountingApprovedAt)}</p>
+                                            <p className="text-[11px] font-mono" style={{ color: '#16A34A' }}>Duyệt lúc {formatDate(detail.accountingApprovedAt)}</p>
                                         )}
                                     </div>
                                 </div>
 
                                 {detail.notes && (
-                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#8AAEBB' }}>📝 Ghi Chú / Lý do</p>
-                                        <p className="text-xs font-medium" style={{ color: '#E8F1F2' }}>{detail.notes}</p>
+                                    <div className="p-3.5 rounded-xl space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                        <p className="text-[10px] font-bold uppercase" style={{ color: '#64748B' }}>📝 Ghi Chú</p>
+                                        <p className="text-xs font-medium" style={{ color: '#0F172A' }}>{detail.notes}</p>
                                     </div>
                                 )}
 
                                 {/* Line Items Table */}
-                                <div className="rounded-xl overflow-hidden shadow-2xs" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                <div className="rounded-xl overflow-hidden shadow-2xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-xs border-collapse">
                                             <thead>
-                                                <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', color: '#8AAEBB' }}>
+                                                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
                                                     <th className="p-3 font-semibold uppercase text-[10px] w-10 text-center">STT</th>
                                                     <th className="p-3 font-semibold uppercase text-[10px]">Mã SKU</th>
                                                     <th className="p-3 font-semibold uppercase text-[10px]">Sản Phẩm</th>
@@ -379,16 +378,16 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     <th className="p-3 font-semibold uppercase text-[10px] text-right">Thành Tiền</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-[#2A4355]">
+                                            <tbody className="divide-y" style={{ borderColor: '#F1F5F9' }}>
                                                 {detail.lines.map((l, idx) => (
-                                                    <tr key={l.id} className="hover:bg-[#142433]/50">
-                                                        <td className="p-3 text-center font-bold" style={{ color: '#8AAEBB' }}>{idx + 1}</td>
-                                                        <td className="p-3 font-mono font-bold" style={{ color: '#D4A853' }}>{l.skuCode}</td>
-                                                        <td className="p-3 font-bold" style={{ color: '#E8F1F2' }}>{l.productName}</td>
-                                                        <td className="p-3 text-center font-mono" style={{ color: '#8AAEBB' }}>{l.vintage || 'NV'}</td>
-                                                        <td className="p-3 text-center font-mono font-bold" style={{ color: '#87CBB9' }}>{l.qtyTransferred} chai</td>
-                                                        <td className="p-3 text-right font-mono" style={{ color: '#8AAEBB' }}>{formatVND(l.unitCost)}</td>
-                                                        <td className="p-3 text-right font-mono font-bold" style={{ color: '#E8F1F2' }}>{formatVND(l.totalValue)}</td>
+                                                    <tr key={l.id} className="hover:bg-slate-50">
+                                                        <td className="p-3 text-center font-bold" style={{ color: '#64748B' }}>{idx + 1}</td>
+                                                        <td className="p-3 font-mono font-bold" style={{ color: '#B47816' }}>{l.skuCode}</td>
+                                                        <td className="p-3 font-bold" style={{ color: '#0F172A' }}>{l.productName}</td>
+                                                        <td className="p-3 text-center font-mono" style={{ color: '#475569' }}>{l.vintage || 'NV'}</td>
+                                                        <td className="p-3 text-center font-mono font-bold" style={{ color: '#B47816' }}>{l.qtyTransferred} chai</td>
+                                                        <td className="p-3 text-right font-mono" style={{ color: '#64748B' }}>{formatVND(l.unitCost)}</td>
+                                                        <td className="p-3 text-right font-mono font-bold" style={{ color: '#0F172A' }}>{formatVND(l.totalValue)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -402,18 +401,18 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ borderTop: '1px solid #2A4355', background: '#142433' }}>
+                    <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                         <button
                             onClick={() => setPrintModalOpen(true)}
-                            className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer hover:opacity-90"
-                            style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid rgba(212,168,83,0.3)', color: '#D4A853' }}
+                            className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                            style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#0F172A' }}
                         >
                             <Printer size={15} /> In Phiếu Giấy A4
                         </button>
                         <button
                             onClick={onClose}
-                            className="px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer hover:bg-[#1B2E3D]"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                            className="px-4 py-2.5 rounded-lg text-xs font-semibold transition-all"
+                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#64748B' }}
                         >
                             Đóng
                         </button>

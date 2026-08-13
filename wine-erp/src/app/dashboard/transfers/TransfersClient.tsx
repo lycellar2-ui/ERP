@@ -9,12 +9,12 @@ import { TransferDetailDrawer } from './TransferDetailDrawer'
 import { formatDate } from '@/lib/utils'
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', border: '#2A4355' },
-    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', border: 'rgba(212,168,83,0.4)' },
-    CONFIRMED: { label: 'Kế Toán Đã Duyệt', color: '#38BDF8', bg: 'rgba(2,132,199,0.12)', border: 'rgba(56,189,248,0.4)' },
-    IN_TRANSIT: { label: 'Đang Chuyển', color: '#60A5FA', bg: 'rgba(37,99,235,0.12)', border: 'rgba(96,165,250,0.4)' },
-    RECEIVED: { label: 'Đã Nhận Hàng', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)', border: 'rgba(135,203,185,0.4)' },
-    CANCELLED: { label: 'Đã Hủy', color: '#F87171', bg: 'rgba(220,38,38,0.12)', border: 'rgba(248,113,113,0.4)' },
+    DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
+    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(212,168,83,0.15)', border: '#F59E0B' },
+    CONFIRMED: { label: 'Kế Toán Đã Duyệt', color: '#0284C7', bg: 'rgba(2,132,199,0.12)', border: '#38BDF8' },
+    IN_TRANSIT: { label: 'Đang Chuyển', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', border: '#60A5FA' },
+    RECEIVED: { label: 'Đã Nhận Hàng', color: '#16A34A', bg: 'rgba(22,163,74,0.12)', border: '#4ADE80' },
+    CANCELLED: { label: 'Đã Hủy', color: '#DC2626', bg: 'rgba(220,38,38,0.12)', border: '#F87171' },
 }
 
 export function TransfersClient({ initialRows, currentUserRoles = [] }: {
@@ -86,18 +86,18 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl min-h-screen p-1" style={{ background: '#0A1926' }}>
+        <div className="space-y-6 max-w-screen-2xl">
             {/* Header Toolbar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
                         <ArrowRightLeft size={20} />
                     </div>
                     <div>
-                        <h2 className="text-lg font-extrabold flex items-center gap-2" style={{ color: '#E8F1F2' }}>
+                        <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                             Chuyển Kho Nội Bộ (Phiếu Chuyển Kho)
                         </h2>
-                        <p className="text-xs" style={{ color: '#8AAEBB' }}>
+                        <p className="text-xs text-slate-500">
                             Quản lý phiếu luân chuyển hàng hóa giữa các kho, duyệt Kế toán & In chứng từ A4 ký 4 bên
                         </p>
                     </div>
@@ -106,8 +106,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={reload}
-                        className="p-2 rounded-xl transition-colors cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}
+                        className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                         title="Tải lại danh sách"
                     >
                         <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -115,8 +114,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
 
                     <button
                         onClick={() => setCreateOpen(true)}
-                        className="px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md cursor-pointer hover:opacity-90"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}
+                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
                     >
                         <Plus size={16} /> Lập Phiếu Chuyển Kho Mới
                     </button>
@@ -128,57 +126,42 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
                     {[
                         { key: 'ALL', label: 'Tất Cả', count: statusCounts.ALL },
-                        { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING },
+                        { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING, badgeColor: 'bg-amber-500 text-white' },
                         { key: 'CONFIRMED', label: 'Đã Duyệt', count: statusCounts.CONFIRMED },
                         { key: 'IN_TRANSIT', label: 'Đang Chuyển', count: statusCounts.IN_TRANSIT },
                         { key: 'RECEIVED', label: 'Hoàn Tất', count: statusCounts.RECEIVED },
-                    ].map(t => {
-                        const isActive = statusTab === t.key
-                        return (
-                            <button
-                                key={t.key}
-                                onClick={() => setStatusTab(t.key)}
-                                className="px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5"
-                                style={{
-                                    background: isActive ? 'rgba(135,203,185,0.15)' : '#142433',
-                                    color: isActive ? '#87CBB9' : '#8AAEBB',
-                                    border: `1px solid ${isActive ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
-                                }}
-                            >
-                                <span>{t.label}</span>
-                                <span
-                                    className="px-1.5 py-0.5 text-[10px] rounded-full font-mono font-bold"
-                                    style={{
-                                        background: isActive ? 'rgba(135,203,185,0.2)' : '#1B2E3D',
-                                        color: isActive ? '#87CBB9' : '#8AAEBB',
-                                    }}
-                                >
-                                    {t.count}
-                                </span>
-                            </button>
-                        )
-                    })}
+                    ].map(t => (
+                        <button
+                            key={t.key}
+                            onClick={() => setStatusTab(t.key)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#87CBB9] text-[#0A1926] font-extrabold shadow-2xs border border-[#76BAA8]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                        >
+                            <span>{t.label}</span>
+                            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-[#0A1926]/15 text-[#0A1926]' : 'bg-slate-100 text-slate-700')}`}>
+                                {t.count}
+                            </span>
+                        </button>
+                    ))}
                 </div>
 
                 <div className="relative w-full sm:w-64">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
-                        className="w-full pl-9 pr-3 py-2 rounded-xl text-xs outline-none transition-all shadow-xs"
-                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
                     />
                 </div>
             </div>
 
             {/* List Table */}
-            <div className="rounded-xl overflow-hidden shadow-xs" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                            <tr style={{ background: '#1B2E3D', borderBottom: '1px solid #2A4355', color: '#8AAEBB' }}>
+                            <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
                                 <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">Mã Phiếu</th>
                                 <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">🔴 Kho Xuất (Đi)</th>
                                 <th className="p-3 font-extrabold uppercase text-[11px] whitespace-nowrap">🟢 Kho Nhận (Đến)</th>
@@ -190,10 +173,10 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                                 <th className="p-3 font-extrabold uppercase text-[11px] text-right whitespace-nowrap">Thao Tác</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#2A4355]" style={{ background: '#142433' }}>
+                        <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={9} className="p-12 text-center" style={{ color: '#4A6A7A' }}>
+                                    <td colSpan={9} className="p-12 text-center text-slate-400">
                                         Không tìm thấy phiếu chuyển kho nào
                                     </td>
                                 </tr>
@@ -204,27 +187,27 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                                         <tr
                                             key={r.id}
                                             onClick={() => setSelectedId(r.id)}
-                                            className="hover:bg-[#1B2E3D] transition-colors cursor-pointer"
+                                            className="hover:bg-amber-50/40 transition-colors cursor-pointer"
                                         >
-                                            <td className="p-3 font-mono font-extrabold whitespace-nowrap" style={{ color: '#D4A853' }}>
+                                            <td className="p-3 font-mono font-extrabold text-amber-700 whitespace-nowrap">
                                                 {r.transferNo}
                                             </td>
-                                            <td className="p-3 font-bold whitespace-nowrap" style={{ color: '#E8F1F2' }}>
+                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
                                                 [{r.fromWarehouseCode}] {r.fromWarehouse}
                                             </td>
-                                            <td className="p-3 font-bold whitespace-nowrap" style={{ color: '#E8F1F2' }}>
+                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
                                                 [{r.toWarehouseCode}] {r.toWarehouse}
                                             </td>
-                                            <td className="p-3 font-medium whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                            <td className="p-3 text-slate-800 font-medium whitespace-nowrap">
                                                 {r.requesterName}
                                             </td>
-                                            <td className="p-3 font-mono whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                            <td className="p-3 font-mono text-slate-600 whitespace-nowrap">
                                                 {formatDate(r.transferDate)}
                                             </td>
-                                            <td className="p-3 text-center font-mono font-bold whitespace-nowrap" style={{ color: '#E8F1F2' }}>
+                                            <td className="p-3 text-center font-mono font-bold text-slate-800 whitespace-nowrap">
                                                 {r.lineCount} mã
                                             </td>
-                                            <td className="p-3 text-center font-mono font-extrabold whitespace-nowrap" style={{ color: '#87CBB9' }}>
+                                            <td className="p-3 text-center font-mono font-extrabold text-emerald-700 whitespace-nowrap">
                                                 {r.totalQty.toLocaleString()} chai
                                             </td>
                                             <td className="p-3 text-center whitespace-nowrap">
@@ -247,15 +230,14 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                                                     )}
                                                     <button
                                                         onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}
-                                                        className="px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer hover:bg-[#2A4355]"
-                                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
                                                     >
                                                         <Eye size={12} /> Xem Phiếu
                                                     </button>
                                                     {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
                                                         <button
                                                             onClick={e => handleCancel(r.id, e)}
-                                                            className="p-1 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                                                            className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
                                                             title="Hủy phiếu này"
                                                         >
                                                             <Ban size={14} />
