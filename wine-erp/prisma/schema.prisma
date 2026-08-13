@@ -2948,6 +2948,8 @@ model Proposal {
 
   // ── Thời hạn ──
   deadline        DateTime?                          // Hạn xử lý mong muốn
+  startDate       DateTime?                          // Ngày bắt đầu hiệu lực (Giá đặc biệt / Chương trình)
+  endDate         DateTime?                          // Ngày kết thúc hiệu lực (Giá đặc biệt / Chương trình)
 
   // ── Người liên quan ──
   createdBy       String

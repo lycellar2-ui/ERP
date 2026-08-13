@@ -96,6 +96,8 @@ export async function getProposals(filters?: {
             estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
             currency: p.currency,
             deadline: p.deadline,
+            startDate: p.startDate,
+            endDate: p.endDate,
             status: p.status,
             currentLevel: p.currentLevel,
             creatorName: p.creator.name ?? p.creator.email,
@@ -177,6 +179,8 @@ export async function createProposal(input: {
     estimatedAmount?: number
     currency?: string
     deadline?: string
+    startDate?: string
+    endDate?: string
     createdBy: string
     departmentId?: string
     customerId?: string
@@ -198,6 +202,8 @@ export async function createProposal(input: {
                 estimatedAmount: input.estimatedAmount ?? null,
                 currency: input.currency ?? 'VND',
                 deadline: input.deadline ? new Date(input.deadline) : null,
+                startDate: input.startDate ? new Date(input.startDate) : null,
+                endDate: input.endDate ? new Date(input.endDate) : null,
                 createdBy: input.createdBy,
                 departmentId: input.departmentId ?? null,
                 status: 'DRAFT',
@@ -236,6 +242,8 @@ export async function updateProposal(id: string, input: {
     category?: string
     priority?: string
     deadline?: string
+    startDate?: string
+    endDate?: string
     customerId?: string
     scope?: string
     discountPct?: number
@@ -259,7 +267,9 @@ export async function updateProposal(id: string, input: {
                     ...(input.estimatedAmount !== undefined && { estimatedAmount: input.estimatedAmount }),
                     ...(input.category && { category: input.category as any }),
                     ...(input.priority && { priority: input.priority as any }),
-                    ...(input.deadline && { deadline: new Date(input.deadline) }),
+                    ...(input.deadline !== undefined && { deadline: input.deadline ? new Date(input.deadline) : null }),
+                    ...(input.startDate !== undefined && { startDate: input.startDate ? new Date(input.startDate) : null }),
+                    ...(input.endDate !== undefined && { endDate: input.endDate ? new Date(input.endDate) : null }),
                     ...(input.customerId !== undefined && { customerId: input.customerId }),
                     ...(input.scope !== undefined && { scope: input.scope }),
                     ...(input.discountPct !== undefined && { discountPct: input.discountPct }),
@@ -662,8 +672,8 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
     }
 
     const userId = proposal.createdBy ?? 'system'
-    const startDate = proposal.resolvedAt ?? proposal.submittedAt ?? new Date()
-    const endDate = new Date('2026-12-31T23:59:59.999Z')
+    const startDate = proposal.startDate ?? proposal.resolvedAt ?? proposal.submittedAt ?? new Date()
+    const endDate = proposal.endDate ?? new Date('2026-12-31T23:59:59.999Z')
     let createdCount = 0
 
     // 1. Specific product prices

@@ -610,6 +610,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     <div style="padding-left: 15px;">
                         <p style="margin: 4px 0;"><strong>Khách hàng áp dụng:</strong> ${detail.customer?.name || ''} (${detail.customer?.code || 'N/A'})</p>
                         <p style="margin: 4px 0;"><strong>Phạm vi áp dụng:</strong> ${scopeText}</p>
+                        <p style="margin: 4px 0;"><strong>Thời hạn hiệu lực:</strong> ${detail.startDate ? new Date(detail.startDate).toLocaleDateString('vi-VN') : 'Từ ngày phê duyệt'} đến ${detail.endDate ? new Date(detail.endDate).toLocaleDateString('vi-VN') : 'khi có thông báo mới'}</p>
                         ${detail.discountPct !== null && detail.discountPct !== undefined ? `<p style="margin: 4px 0;"><strong>Mức chiết khấu toàn danh mục:</strong> <span style="font-weight: bold; font-size: 16px;">${detail.discountPct}%</span></p>` : ''}
                     </div>
 
@@ -1624,6 +1625,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         expectedOutcome: '',
         estimatedAmount: '',
         deadline: '',
+        startDate: '',
+        endDate: '',
         customerId: '',
         scope: 'ENTIRE_PORTFOLIO',
         discountPct: '',
@@ -1660,6 +1663,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
             ...form,
             estimatedAmount: form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined,
             discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
+            startDate: form.startDate || undefined,
+            endDate: form.endDate || undefined,
             priceItems: (isTastingCategory || form.category === 'PRICE_ADJUSTMENT') && priceLines.length > 0
                 ? priceLines 
                 : undefined,
@@ -1828,6 +1833,32 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         }))
                                     }}
                                 />
+                            </div>
+
+                            {/* Effective Validity Period (Start & End Date) */}
+                            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-[#2A4355] bg-[#142433]">
+                                <div>
+                                    <label className="text-xs font-bold uppercase mb-1 block text-[#87CBB9]">
+                                        📅 Ngày bắt đầu hiệu lực
+                                    </label>
+                                    <input 
+                                        type="date"
+                                        value={form.startDate}
+                                        onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                                        style={{ ...inputStyle, background: '#1B2E3D', borderColor: '#2A4355' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold uppercase mb-1 block text-[#D4A853]">
+                                        📅 Ngày kết thúc hiệu lực
+                                    </label>
+                                    <input 
+                                        type="date"
+                                        value={form.endDate}
+                                        onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                                        style={{ ...inputStyle, background: '#1B2E3D', borderColor: '#2A4355' }}
+                                    />
+                                </div>
                             </div>
 
                             <div>
@@ -2208,6 +2239,15 @@ function DetailDrawer({ detail, loading, onClose, userId, isCEO, userRoles, onAp
                                              detail.scope === 'MIXED' ? 'Kết hợp' : 'N/A'}
                                         </p>
                                     </div>
+                                </div>
+
+                                <div className="p-2.5 rounded text-xs" style={{ background: '#142433' }}>
+                                    <p style={{ color: '#4A6A7A' }}>Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)</p>
+                                    <p className="font-bold mt-0.5" style={{ color: '#87CBB9' }}>
+                                        📅 {detail.startDate ? new Date(detail.startDate).toLocaleDateString('vi-VN') : 'Từ ngày phê duyệt'} 
+                                        {' ➔ '} 
+                                        {detail.endDate ? new Date(detail.endDate).toLocaleDateString('vi-VN') : 'Khi có thông báo mới (không thời hạn)'}
+                                    </p>
                                 </div>
                                 
                                 {detail.discountPct !== null && detail.discountPct !== undefined && (

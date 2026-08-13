@@ -742,6 +742,7 @@ Xem chi tiết tại: [`database-domain-schemas.md`](./database-domain-schemas.m
 | `reg_doc.type` | 27 loại: DISTRIBUTION_LICENSE, FIRE_SAFETY_CERT, CERTIFICATE_OF_ORIGIN... (xem đặc tả CNT) |
 | `reg_doc.scope` | COMPANY, SUPPLIER, CUSTOMER, PRODUCT, SHIPMENT, LOT |
 | `reg_doc.status` | ACTIVE, EXPIRING, EXPIRED, REVOKED, RENEWAL_PENDING, DRAFT |
+| `proposal` | `startDate`, `endDate` (Thời hạn hiệu lực ngày bắt đầu và kết thúc) |
 
 ### D. Indexes Quan Trọng
 ```sql

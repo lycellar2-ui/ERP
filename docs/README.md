@@ -235,5 +235,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-10 15:55 | Wine ERP v9.9.7 — Tasting Sales Order with Proposal Linkage & Free Sample Clearance*
+*Last updated: 2026-08-13 | Wine ERP v10.0 — Add Start & End Validity Period for Special Price Proposals*
 
