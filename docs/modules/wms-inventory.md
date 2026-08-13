@@ -545,6 +545,15 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Phân quyền Cấu hình Kho về Cài đặt & RBAC System Admin** | `SettingsClient.tsx`, `WarehouseClient.tsx` | Đưa toàn bộ cấu hình kho (Pháp nhân quản lý, Cho phép Bán Hàng `allowSales`, Cho phép Điều Chuyển `allowTransfer`, Kho Mặc Định `isDefault`) về mục Cài Đặt hệ thống & RBAC (`SYS:ADMIN`). Gỡ nút Cấu Hình Kho khỏi màn hình WMS để tránh thủ kho chọn nhầm |
 | **Tái thiết kế Sơ Đồ Kho 2D Light Theme & Sửa Lỗi Kiểm Kê Kho** | `WarehouseMapTab.tsx`, `actions.ts`, `schema.prisma` | Bổ sung Khung Ranh Giới Tổng Thể Mặt Bằng Kho (`24m x 16m`). Sửa triệt để lỗi tạo đợt kiểm kê kho (`Invalid value for argument type. Expected CountType`): bổ sung `FULL`, `SPOT` vào `CountType` enum trong Prisma schema, đồng thời mapping tương thích an toàn cho cả `FULL_PHYSICAL`, `FULL`, `CYCLE`, `SPOT` |
 
+#### Phase 8: Báo Cáo Nhập Xuất Tồn & Lọc Đồng Bộ Kho Hàng (13/08/2026)
+
+| Tính năng / Sửa lỗi | File | Chi tiết |
+|---|---|---|
+| **Khắc phục Tồn Đầu Kỳ = 0** | `actions-nxt.ts` | Tính nguồn nhập tồn đầu kỳ từ `StockLot` (`receivedDate < fromDate`, loại trừ lô điều chuyển `TRF-`) kết hợp `GoodsReceiptLine`. Sửa dứt điểm lỗi tồn đầu kỳ = 0 làm tồn cuối kỳ bị âm |
+| **Loại bỏ luân chuyển nội bộ khi xem Tất cả các kho** | `actions-nxt.ts` | Chỉ cộng `TRANSFER_IN` / `TRANSFER_OUT` vào tổng nhập/xuất khi lọc một kho cụ thể. Ở chế độ xem "Tất cả các kho", các giao dịch điều chuyển nội bộ giữa 2 kho của công ty được ghi nhận net effect = 0, tránh thổi phồng tổng nhập/xuất công ty |
+| **Đồng bộ Dropdown chọn kho ở Header** | `WarehouseClient.tsx`, `StockMovementTab.tsx` | Truyền prop `selectedWarehouseId` từ header `WarehouseClient` xuống `StockMovementTab` và tự động re-query số liệu khi chọn kho từ header |
+| **Lọc vị trí kệ theo kho** | `actions-nxt.ts`, `StockMovementTab.tsx` | Cập nhật `getProductStockByLocation(productId, warehouseId)` thêm lọc `location: { warehouseId }` để bảng bên phải chỉ hiển thị các kệ thuộc kho đang chọn |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -555,5 +564,6 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-08-08 | Wine ERP v9.5 — Fix Stock Count Session Creation & CountType Enum Sync*
+*Last updated: 2026-08-13 | Wine ERP v10.2 — Fix Inventory Movement Report (NXT) Opening Stock & Multi-Warehouse Filter Sync*
+
 

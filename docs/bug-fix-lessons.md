@@ -40,6 +40,7 @@
 31. [BUG-042: Thủ Kho Nhìn Thấy Nút Xuất Hóa Đơn & Nút Tạo Đơn Hàng](#bug-042-thủ-kho-nhìn-thấy-nút-xuất-hóa-đơn--nút-tạo-đơn-hàng-do-thiếu-kiểm-tra-rbac-trên-ui--server-action)
 32. [BUG-043: Kế Toán & Trưởng Phòng Không Hiển Thị Nút Duyệt Tờ Trình Cơ Chế Giá](#bug-043-kế-toán--trưởng-phòng-không-hiển-thị-nút-duyệt-tờ-trình-cơ-chế-giá-do-hardcode-điều-kiện-isceo)
 33. [BUG-044: Tài Khoản Kế Toán Không Xem Được Danh Sách Khách Hàng (Chưa có khách hàng nào)](#bug-044-tài-khoản-kế-toán-không-xem-được-danh-sách-khách-hàng-chưa-có-khách-hàng-nào-do-lỗi-alias-role-và-quyền-mdmread)
+34. [BUG-045: Báo Cáo Nhập Xuất Tồn Sai Tồn Đầu Kỳ & Sai Số Liệu Luân Chuyển Khi Lọc Tất Cả Kho](#bug-045-báo-cáo-nhập-xuất-tồn-sai-tồn-đầu-kỳ--sai-số-liệu-luân-chuyển-khi-lọc-tất-cả-kho)
 
 ---
 
@@ -1841,6 +1842,41 @@ Khi người dùng nhập mã Captcha và ấn **"Đăng Nhập & Đồng Bộ H
 ### Bài học
 
 > ⚠️ **RULE 72: Khi tích hợp API với Cổng Hóa Đơn Điện Tử Thuế (`hoadondientu.gdt.gov.vn`), tham số `search` trên endpoint `/api/query/invoices/sold` và `/api/query/invoices/purchase` BẮT BỤC phải tuân theo chuẩn FIQL format (ví dụ: `search=tdlap=ge=01/01/2026T00:00:00;tdlap=le=13/08/2026T23:59:59`). Bỏ trống hoặc gửi sai định dạng `search` sẽ khiến Cổng Thuế trả lỗi HTTP 500 "Search params {null} is invalid".**
+
+---
+
+## BUG-045: Báo Cáo Nhập Xuất Tồn Sai Tồn Đầu Kỳ & Sai Số Liệu Luân Chuyển Khi Lọc Tất Cả Kho
+
+**Ngày:** 2026-08-13  
+**Severity:** 🔴 High — Tồn đầu kỳ bị tính bằng 0 làm tồn cuối kỳ âm (ví dụ: -2 chai), luân chuyển kho nội bộ bị cộng dồn thổi phồng nhập/xuất toàn công ty, không đồng bộ với dropdown chọn kho ở thanh Header.
+
+### Triệu chứng
+1. Khi tra cứu Báo Cáo Nhập Xuất Tồn Kho (`/dashboard/warehouse` -> Tab Báo Cáo Nhập Xuất Tồn), số lượng Tồn Đầu Kỳ hiển thị `0 chai` đối với các sản phẩm có lô hàng khởi tạo/nhập trực tiếp (`StockLot`), dẫn tới Tồn Cuối Kỳ bị âm dù tồn thực tế trong kho > 270 chai.
+2. Khi lọc **"Tất cả các kho"**, các phiếu điều chuyển nội bộ giữa 2 kho trong cùng công ty (ví dụ: Kho Thường Tín -> Kho Thắng Ân) bị cộng đồng thời vào cả **Tổng Nhập (+24)** và **Tổng Xuất (-24)** toàn công ty, thổi phồng tổng kim ngạch nhập/xuất dù tổng kho công ty không đổi.
+3. Khi đổi kho ở dropdown thanh Header trên cùng (`WarehouseClient`), tab Báo Cáo Nhập Xuất Tồn không nhận được `selectedWarehouseId` nên vẫn hiển thị số liệu `"Tất cả các kho"`.
+4. Bảng *"Phân bổ tồn kho thực tế theo vị trí"* ở panel bên phải không lọc vị trí kệ theo `warehouseId` được chọn.
+
+### Nguyên nhân gốc rễ
+1. Trong `src/app/dashboard/warehouse/actions-nxt.ts`, hàm `getWarehouseNXTReport()` và `getStockMovements()` trước đây chỉ aggregate số nhập từ `GoodsReceiptLine` (bảng phiếu nhập PO). Tuy nhiên, 550 lô hàng trong DB được khởi tạo/nhập trực tiếp dạng `StockLot` (không có dòng `GoodsReceiptLine`), khiến số tồn đầu kỳ và nhập trong kỳ bị tính bằng `0`.
+2. Khi `warehouseId` không được truyền (`Tất cả các kho`), truy vấn `transferOrderLine` tự động match tất cả các phiếu chuyển nội bộ và cộng dồn vào cả `inQty` lẫn `outQty`.
+3. Trong `WarehouseClient.tsx`, `<StockMovementTab />` không được truyền prop `selectedWarehouseId={selectedWH}`.
+4. Trong `actions-nxt.ts`, hàm `getProductStockByLocation(productId)` thiếu tham số `warehouseId` nên luôn query tất cả vị trí thuộc mọi kho.
+
+### Cách fix
+1. Trong `actions-nxt.ts`:
+   - Tính Tồn Đầu Kỳ và Nhập Trong Kỳ từ `StockLot` (`receivedDate < fromDate` và `gte fromDate lte toDate`, loại bỏ các lô chuyển kho `TRF-`).
+   - Đưa điều kiện kiểm tra `warehouseId`: Chỉ cộng `TRANSFER_IN` / `TRANSFER_OUT` vào `inQty` / `outQty` khi người dùng lọc một kho cụ thể. Khi lọc **"Tất cả các kho"**, các giao dịch điều chuyển nội bộ không cộng vào tổng nhập/xuất của công ty.
+   - Cập nhật `getProductStockByLocation(productId, warehouseId)` thêm lọc `location: { warehouseId }`.
+2. Trong `StockMovementTab.tsx`:
+   - Bổ sung prop `selectedWarehouseId?: string` và dùng `useEffect` để sync `warehouseId` filter state bất cứ khi nào người dùng chọn kho từ thanh Header.
+   - Tự động re-query chi tiết thẻ kho và vị trí kệ kho tương ứng với `warehouseId`.
+3. Trong `WarehouseClient.tsx`:
+   - Truyền `selectedWarehouseId={selectedWH ?? undefined}` vào `<StockMovementTab />`.
+
+### Bài học
+
+> ⚠️ **RULE 73: Khi tính Báo cáo Nhập Xuất Tồn (NXT), BẮT BỤC phải tính nguồn nhập từ `StockLot` (lô hàng nhập/khởi tạo) song song với `GoodsReceiptLine`. Khi ở chế độ xem "Tất cả các kho" (All Warehouses), chuyển kho nội bộ (`TRANSFER_IN`/`TRANSFER_OUT`) là giao dịch nội bộ công ty (net effect = 0), KHÔNG ĐƯỢC cộng dồn làm tăng Tổng Nhập và Tổng Xuất của toàn doanh nghiệp.**
+
 
 
 
