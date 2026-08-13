@@ -417,115 +417,173 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                 </div>
             </div>
 
-            {/* 🖨️ A4 PRINTABLE MODAL FOR PAPER SIGNING */}
+            {/* 🖨️ A4 PRINTABLE MODAL FOR PAPER SIGNING (MATCHING SALES ORDER PRINT PREVIEW) */}
             {printModalOpen && detail && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs overflow-y-auto print:p-0 print:bg-transparent">
-                    <div className="bg-white rounded-2xl max-w-4xl w-full p-8 text-slate-900 space-y-6 shadow-2xl relative print:shadow-none print:w-full print:max-w-none print:p-0">
-                        {/* Non-printable action bar */}
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-4 print:hidden">
-                            <h3 className="font-extrabold text-base flex items-center gap-2 text-slate-900">
-                                🖨️ Xem Trước Bản In Phiếu Chuyển Kho A4
-                            </h3>
-                            <div className="flex items-center gap-2">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
+                    <div className="bg-[#0D1821] border border-[#2A4355] rounded-xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
+                        {/* Header bar (Non-printable) */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F3547] bg-[#142433] print:hidden">
+                            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                                <Printer size={18} />
+                                <span>XEM TRƯỚC PHIẾU CHUYỂN KHO NỘI BỘ (PRINT PREVIEW)</span>
+                            </div>
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => window.print()}
-                                    className="px-5 py-2 rounded-xl bg-amber-500 text-white font-extrabold text-xs hover:bg-amber-600 transition-colors flex items-center gap-1.5 cursor-pointer shadow-md"
+                                    className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded transition-colors shadow cursor-pointer"
                                 >
-                                    <Printer size={16} /> Bấm Để In Phiếu Giấy (A4)
+                                    <Printer size={14} /> In / Xuất PDF
                                 </button>
                                 <button
                                     onClick={() => setPrintModalOpen(false)}
-                                    className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                    className="p-1 text-slate-400 hover:text-white rounded bg-[#1F3547] cursor-pointer"
                                 >
-                                    <X size={20} />
+                                    <X size={18} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* 📄 PRINTABLE VOUCHER CONTENT (A4 FORM STYLING) */}
-                        <div className="printable-voucher space-y-6 font-sans text-slate-900">
-                            {/* Header Company Info */}
-                            <div className="flex items-start justify-between border-b-2 border-slate-900 pb-4">
-                                <div>
-                                    <h2 className="font-black text-xl text-amber-800 tracking-wide uppercase">CÔNG TY CỔ PHẦN LY CELLARS</h2>
-                                    <p className="text-xs text-slate-600 mt-0.5">Địa chỉ: 15 Giang Văn Minh, Ba Đình, Hà Nội</p>
-                                    <p className="text-xs text-slate-600">Hotline: 090 123 4567 • Email: accounting@lycellars.vn</p>
+                        {/* Invoice Content Area */}
+                        <div className="p-0 bg-white text-black font-sans w-full h-full overflow-y-auto print:overflow-visible">
+                            <div className="max-w-[850px] mx-auto p-8 sm:p-12 print:p-0 print:max-w-none">
+                                {/* Print Header - Clean Company Info */}
+                                <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
+                                    <div>
+                                        <h2 className="font-bold text-xs text-slate-900 uppercase tracking-wide">
+                                            CÔNG TY CỔ PHẦN LYS CELLARS
+                                        </h2>
+                                        <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
+                                            Địa chỉ: 15 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội<br />
+                                            MST: 0109579480 &nbsp;|&nbsp; 
+                                            SĐT: 024.3933.8888 &nbsp;|&nbsp; 
+                                            Email: accounting@lyscellars.com
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
+                                            PHIẾU CHUYỂN KHO NỘI BỘ
+                                        </h1>
+                                        <p className="text-xs font-bold font-mono text-slate-900">Mã: {detail.transferNo}</p>
+                                        <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {formatDate(detail.createdAt)}</p>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">PHIẾU CHUYỂN KHO NỘI BỘ</h1>
-                                    <p className="text-sm font-mono font-bold text-amber-700 mt-1">Mã Phiếu: {detail.transferNo}</p>
-                                    <p className="text-xs text-slate-500 font-mono">Ngày lập: {formatDate(detail.createdAt)}</p>
-                                </div>
-                            </div>
 
-                            {/* Info Grid */}
-                            <div className="grid grid-cols-2 gap-6 text-xs p-4 rounded-xl bg-slate-50 border border-slate-300">
-                                <div>
-                                    <p className="mb-1"><strong className="text-slate-900">🔴 Kho Xuất (Kho đi):</strong> <span className="font-bold text-amber-900">{detail.fromWarehouse}</span></p>
-                                    <p className="mb-1"><strong className="text-slate-900">🟢 Kho Nhận (Kho đến):</strong> <span className="font-bold text-emerald-900">{detail.toWarehouse}</span></p>
-                                    <p><strong className="text-slate-900">👤 Người yêu cầu chuyển:</strong> {detail.requesterName}</p>
-                                </div>
-                                <div>
-                                    <p className="mb-1"><strong className="text-slate-900">📅 Ngày chuyển dự kiến:</strong> {formatDate(detail.transferDate)}</p>
-                                    <p className="mb-1"><strong className="text-slate-900">💼 Kế toán phê duyệt:</strong> {detail.accountingApprovedBy || 'Đã duyệt'}</p>
-                                    <p><strong className="text-slate-900">📝 Lý do chuyển kho:</strong> {detail.notes || 'Cân bằng kho nội bộ'}</p>
-                                </div>
-                            </div>
+                                {/* Transfer Route & Detail Grid */}
+                                <div className="grid grid-cols-2 gap-4 mb-3 text-xs leading-tight">
+                                    <div>
+                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Tuyến đường chuyển kho</h3>
+                                        <table className="w-full text-[10px]">
+                                            <tbody>
+                                                <tr>
+                                                    <td className="text-slate-600 pr-2 w-24 py-0.5">Kho xuất (Kho đi):</td>
+                                                    <td className="font-semibold text-slate-900 py-0.5">{detail.fromWarehouse}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Kho nhận (Kho đến):</td>
+                                                    <td className="font-semibold text-slate-900 py-0.5">{detail.toWarehouse}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Người lập phiếu:</td>
+                                                    <td className="py-0.5 text-slate-900">{detail.requesterName}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
 
-                            {/* Product List Table */}
-                            <table className="w-full text-left text-xs border-collapse border border-slate-900">
-                                <thead>
-                                    <tr className="bg-slate-200 border-b border-slate-900 text-slate-900 font-bold uppercase text-[11px]">
-                                        <th className="p-2.5 border-r border-slate-900 text-center w-10">STT</th>
-                                        <th className="p-2.5 border-r border-slate-900 w-28">Mã SKU</th>
-                                        <th className="p-2.5 border-r border-slate-900">Tên Sản Phẩm / Rượu Vang</th>
-                                        <th className="p-2.5 border-r border-slate-900 text-center w-16">VTG</th>
-                                        <th className="p-2.5 border-r border-slate-900 text-center w-24">Số Lượng</th>
-                                        <th className="p-2.5 border-r border-slate-900 text-right w-28">Đơn Giá Vốn</th>
-                                        <th className="p-2.5 text-right w-32">Thành Tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {detail.lines.map((line, idx) => (
-                                        <tr key={line.id} className="border-b border-slate-300">
-                                            <td className="p-2.5 border-r border-slate-300 text-center font-bold">{idx + 1}</td>
-                                            <td className="p-2.5 border-r border-slate-300 font-mono font-bold">{line.skuCode}</td>
-                                            <td className="p-2.5 border-r border-slate-300 font-bold">{line.productName}</td>
-                                            <td className="p-2.5 border-r border-slate-300 text-center font-mono">{line.vintage || 'NV'}</td>
-                                            <td className="p-2.5 border-r border-slate-300 text-center font-mono font-bold text-amber-900">{line.qtyTransferred} chai</td>
-                                            <td className="p-2.5 border-r border-slate-300 text-right font-mono">{formatVND(line.unitCost)}</td>
-                                            <td className="p-2.5 text-right font-mono font-bold">{formatVND(line.totalValue)}</td>
+                                    <div>
+                                        <h3 className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 text-slate-800 uppercase tracking-wide text-[10px]">Thông tin phê duyệt</h3>
+                                        <table className="w-full text-[10px]">
+                                            <tbody>
+                                                <tr>
+                                                    <td className="text-slate-600 pr-2 w-28 py-0.5">Ngày chuyển dự kiến:</td>
+                                                    <td className="font-semibold text-slate-900 py-0.5">{formatDate(detail.transferDate)}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Kế toán phê duyệt:</td>
+                                                    <td className="py-0.5 text-slate-900 font-semibold">{detail.accountingApprovedBy || 'Đã duyệt'}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="text-slate-600 pr-2 py-0.5">Trạng thái phiếu:</td>
+                                                    <td className="py-0.5 font-bold text-slate-900">{detail.status === 'APPROVED' ? 'Đã phê duyệt' : detail.status === 'COMPLETED' ? 'Hoàn thành' : detail.status}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Ghi chú / Lý do chuyển kho */}
+                                {detail.notes && (
+                                    <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed">
+                                        <span className="font-bold text-slate-900 uppercase">Lý do / Diễn giải chuyển kho: </span>
+                                        <span className="text-slate-800 italic">{detail.notes}</span>
+                                    </div>
+                                )}
+
+                                {/* Product Lines Table */}
+                                <table className="w-full text-[10px] mb-3 border-collapse border border-slate-300">
+                                    <thead>
+                                        <tr className="bg-white text-black font-bold border-b-2 border-slate-800">
+                                            <td className="px-2 py-1.5 text-center w-8 border-r border-slate-300">STT</td>
+                                            <td className="px-2 py-1.5 w-28 border-r border-slate-300">Mã SKU</td>
+                                            <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm / Rượu vang</td>
+                                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">VTG</td>
+                                            <td className="px-2 py-1.5 text-right w-20 border-r border-slate-300">Số lượng</td>
+                                            <td className="px-2 py-1.5 text-right w-28 border-r border-slate-300">Đơn giá vốn</td>
+                                            <td className="px-2 py-1.5 text-right w-32">Thành tiền</td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr className="bg-slate-100 font-bold text-xs border-t border-slate-900">
-                                        <td colSpan={4} className="p-2.5 text-right uppercase border-r border-slate-900">TỔNG CỘNG HÀNG CHUYỂN KHO:</td>
-                                        <td className="p-2.5 text-center font-mono font-extrabold text-amber-900 border-r border-slate-900">{detail.totalQty} chai</td>
-                                        <td colSpan={2} className="p-2.5 text-right font-mono font-extrabold text-slate-900">{formatVND(detail.totalValue)}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {detail.lines.map((line, idx) => (
+                                            <tr key={line.id} className="border-b border-slate-200 align-middle">
+                                                <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
+                                                <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{line.skuCode}</td>
+                                                <td className="px-2 py-1.5 border-r border-slate-200 font-semibold text-slate-900">
+                                                    {line.productName}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center font-mono text-slate-600 border-r border-slate-200">{line.vintage || 'NV'}</td>
+                                                <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{line.qtyTransferred} chai</td>
+                                                <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(line.unitCost)}</td>
+                                                <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums text-slate-900">{formatVND(line.totalValue)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
 
-                            {/* ✍️ PHYSICAL SIGNATURE BOXES FOR PRINTING (4 BÊN KÝ TÊN) */}
-                            <div className="pt-6">
-                                <p className="text-right text-xs italic mb-4">Hà Nội, Ngày ..... tháng ..... năm 2026</p>
-                                <div className="grid grid-cols-4 gap-4 text-center text-xs font-bold">
-                                    <div className="space-y-12">
-                                        <p className="uppercase">NGƯỜI LẬP PHIẾU</p>
-                                        <p className="text-slate-400 font-normal italic">(Ký, ghi rõ họ tên)</p>
+                                {/* Totals Section */}
+                                <div className="flex justify-end mb-3 break-inside-avoid print:break-inside-avoid">
+                                    <table className="w-80 text-[11px] border-collapse">
+                                        <tbody>
+                                            <tr className="border-b border-slate-200 font-semibold">
+                                                <td className="py-1 text-slate-700">Tổng số lượng rượu chuyển:</td>
+                                                <td className="py-1 text-right font-mono font-bold text-slate-900 tabular-nums">
+                                                    {detail.totalQty} chai
+                                                </td>
+                                            </tr>
+                                            <tr className="font-bold border-t-2 border-black">
+                                                <td className="py-1.5 text-slate-900 text-xs">Tổng giá trị chuyển kho (giá vốn):</td>
+                                                <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(detail.totalValue)}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Signatures (Matching SO print template style) */}
+                                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-300 pb-4 break-inside-avoid print:break-inside-avoid">
+                                    <div className="flex flex-col pb-12">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Người lập phiếu</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="space-y-12">
-                                        <p className="uppercase">KẾ TOÁN PHÊ DUYỆT</p>
-                                        <p className="text-slate-400 font-normal italic">(Ký, ghi rõ họ tên)</p>
+                                    <div className="flex flex-col pb-12">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Kế toán phê duyệt</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
-                                    <div className="space-y-12">
-                                        <p className="uppercase">THỦ KHO XUẤT (KHO ĐỊ)</p>
-                                        <p className="text-slate-400 font-normal italic">(Ký khi giao hàng)</p>
+                                    <div className="flex flex-col pb-12">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thủ kho xuất (kho đi)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký khi giao hàng)</p>
                                     </div>
-                                    <div className="space-y-12">
-                                        <p className="uppercase">THỦ KHO NHẬN (KHO ĐẾN)</p>
-                                        <p className="text-slate-400 font-normal italic">(Ký khi nhận đủ hàng)</p>
+                                    <div className="flex flex-col pb-12">
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thủ kho nhận (kho đến)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký khi nhận đủ hàng)</p>
                                     </div>
                                 </div>
                             </div>
