@@ -610,3 +610,102 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
         totalValue,
     }
 }
+
+// ── 10. Get FIFO Picking Location Suggestions for Transfer Order ───────
+export type TransferPickingItem = {
+    productId: string
+    skuCode: string
+    productName: string
+    vintageRequested: number | null
+    qtyRequested: number
+    pickingLocations: {
+        lotId: string
+        lotNo: string
+        locationId: string
+        locationCode: string
+        zone: string
+        rack: string | null
+        bin: string | null
+        vintage: number | null
+        qtyAvailable: number
+        qtyToPick: number
+    }[]
+    isSufficient: boolean
+    totalAvailableInWH: number
+}
+
+export async function getTransferPickingLocations(transferOrderId: string): Promise<TransferPickingItem[]> {
+    const to = await prisma.transferOrder.findUnique({
+        where: { id: transferOrderId },
+        include: {
+            lines: {
+                include: {
+                    product: { select: { skuCode: true, productName: true } }
+                }
+            }
+        }
+    })
+    if (!to) return []
+
+    const result: TransferPickingItem[] = []
+
+    for (const line of to.lines) {
+        let remaining = Number(line.qtyTransferred)
+
+        const whereCondition: any = {
+            productId: line.productId,
+            status: 'AVAILABLE',
+            qtyAvailable: { gt: 0 },
+            location: { warehouseId: to.fromWarehouseId },
+        }
+        const lineVintage = (line as any).vintage
+        if (lineVintage) {
+            whereCondition.vintage = lineVintage
+        }
+
+        const lots = await prisma.stockLot.findMany({
+            where: whereCondition,
+            include: {
+                location: { select: { id: true, locationCode: true, zone: true, rack: true, bin: true } }
+            },
+            orderBy: { receivedDate: 'asc' }, // FIFO: Order by oldest received date first
+        })
+
+        const totalAvailableInWH = lots.reduce((sum, l) => sum + Number(l.qtyAvailable), 0)
+        const pickingLocations: TransferPickingItem['pickingLocations'] = []
+
+        for (const lot of lots) {
+            const avail = Number(lot.qtyAvailable)
+            const take = Math.min(avail, Math.max(0, remaining))
+            if (take > 0) {
+                pickingLocations.push({
+                    lotId: lot.id,
+                    lotNo: lot.lotNo,
+                    locationId: lot.location.id,
+                    locationCode: lot.location.locationCode,
+                    zone: lot.location.zone,
+                    rack: lot.location.rack,
+                    bin: lot.location.bin,
+                    vintage: lot.vintage,
+                    qtyAvailable: avail,
+                    qtyToPick: take,
+                })
+                remaining -= take
+            }
+        }
+
+        result.push({
+            productId: line.productId,
+            skuCode: line.product.skuCode,
+            productName: line.product.productName,
+            vintageRequested: lineVintage ? Number(lineVintage) : null,
+            qtyRequested: Number(line.qtyTransferred),
+            pickingLocations,
+            isSufficient: totalAvailableInWH >= Number(line.qtyTransferred),
+            totalAvailableInWH,
+        })
+    }
+
+    return result
+}
+

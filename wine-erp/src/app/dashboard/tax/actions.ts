@@ -659,63 +659,36 @@ export async function fetchGdtInvoicesAction(params: {
             'Referer': 'https://hoadondientu.gdt.gov.vn/',
         }
 
+        // Candidates for GDT FIQL search query syntax
+        const candidates = [
+            // FIQL 1: Standard GDT FIQL date range with time
+            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00;tdlap=le=${todayStr}T23:59:59`,
+            // FIQL 2: FIQL date range without time
+            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr};tdlap=le=${todayStr}`,
+            // FIQL 3: FIQL start of year
+            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00`,
+            // FIQL 4: FIQL with state
+            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00;tdlap=le=${todayStr}T23:59:59&state=gtttu:${startOfYearStr},gttden:${todayStr}`,
+            // FIQL 5: All invoices from 2020
+            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=01/01/2020T00:00:00`,
+            // FIQL 6: All invoices from 1970
+            `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=01/01/1970T00:00:00`,
+        ]
+
         let invRes: Response | null = null
         let lastErrorDetail = ''
 
-        // Strategy 1: POST with JSON body (modern GDT API format)
-        try {
-            const postBody = {
-                sort: 'tdlap:desc',
-                size,
-                page,
-                search: `gtttu:${startOfYearStr},gttden:${todayStr}`,
-            }
-
-            let res = await fetch(baseUrl, {
-                method: 'POST',
-                headers: {
-                    ...commonHeaders,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(postBody),
-                cache: 'no-store',
-            })
-
-            // Retry on 429
-            if (res.status === 429) {
-                await new Promise(resolve => setTimeout(resolve, 1500))
-                res = await fetch(baseUrl, {
-                    method: 'POST',
-                    headers: { ...commonHeaders, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(postBody),
-                    cache: 'no-store',
-                })
-            }
-
-            if (res.ok) {
-                invRes = res
-            }
-        } catch { /* fall through to next strategy */ }
-
-        // Strategy 2: GET with clean date-range searchState
-        if (!invRes) {
-            const dateSearchStates = [
-                `gtttu:${startOfYearStr},gttden:${todayStr}`,
-                `gtttu:${startOfYearStr}%2000:00:00,gttden:${todayStr}%2023:59:59`,
-            ]
-
-            for (const searchState of dateSearchStates) {
-                const formattedState = searchState.replace(/ /g, '%20')
-                const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}&search=${formattedState}`
-
-                let res = await fetch(endpoint, {
+        for (const queryStr of candidates) {
+            const url = `${baseUrl}?${queryStr}`
+            try {
+                let res = await fetch(url, {
                     headers: commonHeaders,
                     cache: 'no-store',
                 })
 
                 if (res.status === 429) {
                     await new Promise(resolve => setTimeout(resolve, 1500))
-                    res = await fetch(endpoint, { headers: commonHeaders, cache: 'no-store' })
+                    res = await fetch(url, { headers: commonHeaders, cache: 'no-store' })
                 }
 
                 if (res.ok) {
@@ -728,39 +701,9 @@ export async function fetchGdtInvoicesAction(params: {
                     } catch {
                         lastErrorDetail = await res.text()
                     }
-
-                    if (res.status !== 500) {
-                        invRes = res
-                        break
-                    }
                 }
-            }
-        }
-
-        // Strategy 3: GET without any search param (bare minimum)
-        if (!invRes) {
-            const endpoint = `${baseUrl}?sort=tdlap:desc&size=${size}&page=${page}`
-
-            let res = await fetch(endpoint, {
-                headers: commonHeaders,
-                cache: 'no-store',
-            })
-
-            if (res.status === 429) {
-                await new Promise(resolve => setTimeout(resolve, 1500))
-                res = await fetch(endpoint, { headers: commonHeaders, cache: 'no-store' })
-            }
-
-            if (res.ok) {
-                invRes = res
-            } else {
-                try {
-                    const errJson = await res.clone().json()
-                    lastErrorDetail = errJson.message || errJson.error || JSON.stringify(errJson)
-                } catch {
-                    lastErrorDetail = await res.text()
-                }
-                invRes = res
+            } catch (err: any) {
+                lastErrorDetail = err.message
             }
         }
 

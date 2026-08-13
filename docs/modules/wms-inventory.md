@@ -102,7 +102,7 @@ Hệ thống hỗ trợ **nhiều kho** (Kho HCM, Kho HN, Kho Đà Nẵng, Showr
 - Cấp phát hàng từ kho nhập về → Showroom POS
 - Cấp phát cho sự kiện/tasting event ở địa điểm khác
 
-### 5.2 Luồng Nghiệp Vụ Phiếu Chuyển Kho Nội Bộ (Transfer Order Voucher)
+### 5.2 Luồng Nghiệp Vụ Phiếu Chuyển Kho Nội Bộ (Transfer Order Voucher & Pick List)
 
 ```
 Lập Phiếu Chuyển Kho (Form Đơn Hàng)
@@ -111,14 +111,19 @@ Trạng thái: PENDING_ACCOUNTING (Gửi Kế Toán Duyệt)
       ↓
 Kế toán Phê Duyệt (Status: CONFIRMED — Sẵn sàng)
       ↓
-Thủ Kho Xuất (Kho Đi): Bấm "In Phiếu A4" & "Xuất Kho & Vận Chuyển" (Status: IN_TRANSIT, Trừ kho FIFO Kho Đi)
+Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO): Hệ thống tự động gợi ý Vị trí Kệ (Zone/Rack/Bin), Mã Lô, Niên Vụ & Số lượng nhặt tại Kho Đi
+      ↓
+Thủ Kho Xuất (Kho Đi): Bấm "In Phiếu Nhặt Hàng (Pick List A4)" & "Xuất Kho & Vận Chuyển" (Status: IN_TRANSIT, Trừ kho FIFO Kho Đi)
       ↓
 Thủ Kho Nhận (Kho Đến): Kiểm hàng thực nhận & bấm "Xác Nhận Nhận Hàng" (Status: RECEIVED, Khởi tạo Stock Lot Kho Đến)
 ```
 
-**Đặc tả Phiếu Chuyển Kho Nội Bộ:**
+**Đặc tả Phiếu Chuyển Kho Nội Bộ & Luồng Nhặt Hàng:**
 - **Mẫu Chứng Từ Form Đơn Hàng (`TO-YYMM-xxxx`)**: Đầy đủ thông tin Kho Đi, Kho Đến, Người Lập Phiếu, Ngày Chuyển, Lý Do Chuyển & Giá Trị Chuyển Kho (Kiểm tra tồn kho Khả dụng Real-time ở Kho Đi).
-- **Mẫu In Giấy A4 Ký 4 Bên (`A4 Printable Voucher`)**: Tích hợp giao diện in ấn khổ A4 tiêu chuẩn chứng từ Kế toán Việt Nam, có 4 ô ký tên bằng tay ở chân phiếu dành cho: **Người Lập Phiếu**, **Kế Toán Phê Duyệt**, **Thủ Kho Xuất (Kho Đi)**, **Thủ Kho Nhận (Kho Đến)**.
+- **Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO - Kho Xuất)**: Hệ thống tự động phân tích và chỉ định Vị trí Kệ (Location Code), Mã Lô (`LotNo`), Niên vụ (`Vintage`) và Số lượng chai cần lấy tại từng ô kệ ở Kho Đi theo đúng nguyên tắc FIFO.
+- **Mẫu In Giấy A4 Ký 4 Bên (`A4 Printable Voucher`)**: Tích hợp giao diện in ấn khổ A4 tiêu chuẩn chứng từ Kế toán Việt Nam, hỗ trợ 2 chế độ in:
+  1. **Phiếu Chuyển Kho Nội Bộ A4**: 4 ô ký tên bằng tay ở chân phiếu dành cho: **Người Lập Phiếu**, **Kế Toán Phê Duyệt**, **Thủ Kho Xuất (Kho Đi)**, **Thủ Kho Nhận (Kho Đến)**.
+  2. **Danh Sách Nhặt Hàng (Pick List A4)**: Mẫu in chuyên dụng cho thủ kho di chuyển nhặt hàng tại các kệ kho, hiển thị nổi bật Cột Vị Trí Kệ, Mã Lô, SL Cần Nhặt và ô tích xác nhận nhặt.
 
 ### 5.3 Xử Lý Tồn Kho Trong Quá Trình Transfer
 

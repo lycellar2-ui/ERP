@@ -1789,6 +1789,60 @@ Khi mở drawer **Nhặt Hàng & Tạo DO** cho một Đơn Bán Hàng (`SO-2608
 
 > ⚠️ **RULE 70: Khi viết các helper function xử lý logic khớp nối (như `resolveWarehouseForSO`), BẮT BỤC phải khai báo exported function ở cấp module và KHÔNG ĐƯỢC khai báo hàm trùng tên bên trong Component con (`CreateDODrawer`). Các Modal/Drawer độc lập BẮT BỤC phải có cơ chế tự động re-fetch danh sách danh mục (Kho, Pháp Nhân) để đảm bảo không bị dính dữ liệu đứt gãy từ prop cha.**
 
+---
+
+## BUG-041: Internal Stock Transfers (TransferOrder) Missing from NXT Summary & Movement Reports
+
+**Ngày:** 2026-08-13  
+**Severity:** 🔴 High — Sai lệch báo cáo Nhập Xuất Tồn kho khi có giao dịch Điều Chuyển Nội Bộ.
+
+### Triệu chứng
+Phiếu Chuyển Kho `TO-2608-0001` ở trạng thái **Đã Nhận Hàng (`RECEIVED`)** (chuyển 120 chai từ Kho Thường Tín về Kho Thắng Ân), tuy nhiên khi kiểm tra **Báo Cáo Nhập Xuất Tồn Kho** (Tab Báo Cáo NXT Kho & Sổ Chi Tiết Giao Dịch Kho), không ghi nhận bất kỳ giao dịch Nhập/Xuất nào cho phiếu chuyển này.
+
+### Nguyên nhân gốc rễ
+1. Trong `src/app/dashboard/warehouse/actions-nxt.ts`, hàm `getWarehouseNXTReport()` chỉ tổng hợp số lượng Nhập từ `GoodsReceiptLine` (Phiếu Nhập Mua PO) và số lượng Xuất từ `DeliveryOrderLine` (Phiếu Xuất Bán SO).
+2. Tương tự, hàm `getStockMovements()` chỉ query dòng Nhập `GoodsReceiptLine` (`docType: 'GR'`) và dòng Xuất `DeliveryOrderLine` (`docType: 'DO'`).
+3. Dữ liệu từ bảng `TransferOrderLine` (`TRANSFER_IN` và `TRANSFER_OUT`) hoàn toàn bị bỏ qua trong cả 4 chỉ số: Tồn Đầu Kỳ, Nhập Trong Kỳ, Xuất Trong Kỳ và Sổ Chi Tiết Thẻ Kho.
+
+### Cách fix
+1. Trong `getWarehouseNXTReport()`, bổ sung aggregate `prisma.transferOrderLine.groupBy()` cho cả:
+   - **Nhập điều chuyển đầu kỳ & trong kỳ (`TRANSFER_IN`)**: Nhóm các phiếu có `status: 'RECEIVED'` theo `toWarehouseId`.
+   - **Xuất điều chuyển đầu kỳ & trong kỳ (`TRANSFER_OUT`)**: Nhóm các phiếu có `status: { in: ['IN_TRANSIT', 'RECEIVED'] }` theo `fromWarehouseId`.
+2. Tính toán tổng `opIn`, `opOut`, `inQty`, `outQty` bao gồm cả giao dịch điều chuyển kho.
+3. Trong `getStockMovements()`, bổ sung query lấy danh sách dòng điều chuyển `TRANSFER_IN` và `TRANSFER_OUT` để đưa vào Sổ Chi Tiết Thẻ Kho (Ledger), sắp xếp theo mốc thời gian và tính tồn lũy kế running balance chính xác.
+
+### Bài học
+
+> ⚠️ **RULE 71: Khi xây dựng Báo cáo Nhập Xuất Tồn (NXT) hoặc Sổ Thẻ Kho (Stock Movement Ledger), BẮT BỤC phải tổng hợp đầy đủ TẤT CẢ các luồng nhập/xuất kho của hệ thống bao gồm: Nhập mua hàng (`GR`), Xuất bán hàng (`DO`), Nhập/Xuất điều chuyển nội bộ (`TRANSFER_IN` / `TRANSFER_OUT`), và Điều chỉnh kiểm kê (`ADJ`). Không được chỉ query duy nhất PO/SO.**
+
+---
+
+## BUG-042: GDT Tax E-Invoice Integration Returning HTTP 500 "Search params {null} is invalid"
+
+**Ngày:** 2026-08-13  
+**Severity:** 🔴 High — Đăng nhập Cổng Thuế (`hoadondientu.gdt.gov.vn`) thành công nhưng không kéo được danh sách Hóa Đơn Điện Tử.
+
+### Triệu chứng
+Khi người dùng nhập mã Captcha và ấn **"Đăng Nhập & Đồng Bộ Hóa Đơn"** tại màn hình Tra Cứu Thuế (`/dashboard/tax`), giao diện trả về thông báo lỗi:
+`❌ Đăng nhập thành công nhưng không thể tải danh sách hóa đơn từ Cổng Thuế (Mã lỗi HTTP 500: Search params {null} is invalid).`
+
+### Nguyên nhân gốc rễ
+1. Backend Cổng Thuế Thuế Việt Nam (`hoadondientu.gdt.gov.vn`) sử dụng FIQL (Feed Item Query Language) / RSQL parser để xử lý tham số tìm kiếm `search` trong URL query string.
+2. Trong `src/app/dashboard/tax/actions.ts`, hàm `fetchGdtInvoicesAction` trước đây gửi request GET không có tham số `search` (`?sort=tdlap:desc&size=50&page=0`) hoặc gửi body POST không đúng chuẩn GET API của GDT.
+3. Khi Spring Boot backend của Cổng Thuế nhận request thiếu tham số `search` hoặc `search` không đúng cú pháp FIQL, controller truyền giá trị `null` vào parser dẫn tới văng lỗi `Search params {null} is invalid` và trả về HTTP 500.
+
+### Cách fix
+1. Cập nhật `fetchGdtInvoicesAction` trong `src/app/dashboard/tax/actions.ts` truyền đúng cú pháp FIQL search parameter mà Cổng Thuế yêu cầu:
+   - Candidate 1: `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00;tdlap=le=${todayStr}T23:59:59`
+   - Candidate 2: `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr};tdlap=le=${todayStr}`
+   - Candidate 3: `sort=tdlap:desc&size=${size}&page=${page}&search=tdlap=ge=${startOfYearStr}T00:00:00`
+2. Duyệt tuần tự danh sách các cú pháp FIQL hợp lệ cho tới khi nhận kết quả `HTTP 200 OK` từ Cổng Thuế.
+
+### Bài học
+
+> ⚠️ **RULE 72: Khi tích hợp API với Cổng Hóa Đơn Điện Tử Thuế (`hoadondientu.gdt.gov.vn`), tham số `search` trên endpoint `/api/query/invoices/sold` và `/api/query/invoices/purchase` BẮT BỤC phải tuân theo chuẩn FIQL format (ví dụ: `search=tdlap=ge=01/01/2026T00:00:00;tdlap=le=13/08/2026T23:59:59`). Bỏ trống hoặc gửi sai định dạng `search` sẽ khiến Cổng Thuế trả lỗi HTTP 500 "Search params {null} is invalid".**
+
+
 
 
 

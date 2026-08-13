@@ -153,8 +153,10 @@ export async function getWarehouseNXTReport(filters: {
     // 2. Fetch Aggregates using groupBy for extreme performance
     const grWarehouseFilter = warehouseId ? { warehouseId } : {}
     const doWarehouseFilter = warehouseId ? { warehouseId } : {}
+    const trfInWarehouseFilter = warehouseId ? { toWarehouseId: warehouseId } : {}
+    const trfOutWarehouseFilter = warehouseId ? { fromWarehouseId: warehouseId } : {}
 
-    // A. Opening GR (CONFIRMED before fromDate)
+    // A1. Opening GR (CONFIRMED before fromDate)
     const openingGr = await prisma.goodsReceiptLine.groupBy({
         by: ['productId'],
         _sum: { qtyReceived: true },
@@ -169,7 +171,22 @@ export async function getWarehouseNXTReport(filters: {
     const openingGrMap = new Map<string, number>()
     openingGr.forEach(item => openingGrMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
 
-    // B. Opening DO (SHIPPED/DELIVERED before fromDate)
+    // A2. Opening Transfer IN (RECEIVED before fromDate)
+    const openingTrfIn = await prisma.transferOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyTransferred: true },
+        where: {
+            transferOrder: {
+                status: 'RECEIVED',
+                receivedAt: { lt: fromDate },
+                ...trfInWarehouseFilter,
+            },
+        },
+    })
+    const openingTrfInMap = new Map<string, number>()
+    openingTrfIn.forEach(item => openingTrfInMap.set(item.productId, Number(item._sum.qtyTransferred ?? 0)))
+
+    // B1. Opening DO (SHIPPED/DELIVERED before fromDate)
     const openingDo = await prisma.deliveryOrderLine.groupBy({
         by: ['productId'],
         _sum: { qtyShipped: true },
@@ -184,7 +201,22 @@ export async function getWarehouseNXTReport(filters: {
     const openingDoMap = new Map<string, number>()
     openingDo.forEach(item => openingDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
 
-    // C. Period GR (CONFIRMED between fromDate and toDate)
+    // B2. Opening Transfer OUT (IN_TRANSIT or RECEIVED before fromDate)
+    const openingTrfOut = await prisma.transferOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyTransferred: true },
+        where: {
+            transferOrder: {
+                status: { in: ['IN_TRANSIT', 'RECEIVED'] },
+                confirmedAt: { lt: fromDate },
+                ...trfOutWarehouseFilter,
+            },
+        },
+    })
+    const openingTrfOutMap = new Map<string, number>()
+    openingTrfOut.forEach(item => openingTrfOutMap.set(item.productId, Number(item._sum.qtyTransferred ?? 0)))
+
+    // C1. Period GR (CONFIRMED between fromDate and toDate)
     const periodGr = await prisma.goodsReceiptLine.groupBy({
         by: ['productId'],
         _sum: { qtyReceived: true },
@@ -199,7 +231,22 @@ export async function getWarehouseNXTReport(filters: {
     const periodGrMap = new Map<string, number>()
     periodGr.forEach(item => periodGrMap.set(item.productId, Number(item._sum.qtyReceived ?? 0)))
 
-    // D. Period DO (SHIPPED/DELIVERED between fromDate and toDate)
+    // C2. Period Transfer IN (RECEIVED between fromDate and toDate)
+    const periodTrfIn = await prisma.transferOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyTransferred: true },
+        where: {
+            transferOrder: {
+                status: 'RECEIVED',
+                receivedAt: { gte: fromDate, lte: toDate },
+                ...trfInWarehouseFilter,
+            },
+        },
+    })
+    const periodTrfInMap = new Map<string, number>()
+    periodTrfIn.forEach(item => periodTrfInMap.set(item.productId, Number(item._sum.qtyTransferred ?? 0)))
+
+    // D1. Period DO (SHIPPED/DELIVERED between fromDate and toDate)
     const periodDo = await prisma.deliveryOrderLine.groupBy({
         by: ['productId'],
         _sum: { qtyShipped: true },
@@ -213,6 +260,21 @@ export async function getWarehouseNXTReport(filters: {
     })
     const periodDoMap = new Map<string, number>()
     periodDo.forEach(item => periodDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
+
+    // D2. Period Transfer OUT (IN_TRANSIT or RECEIVED between fromDate and toDate)
+    const periodTrfOut = await prisma.transferOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyTransferred: true },
+        where: {
+            transferOrder: {
+                status: { in: ['IN_TRANSIT', 'RECEIVED'] },
+                confirmedAt: { gte: fromDate, lte: toDate },
+                ...trfOutWarehouseFilter,
+            },
+        },
+    })
+    const periodTrfOutMap = new Map<string, number>()
+    periodTrfOut.forEach(item => periodTrfOutMap.set(item.productId, Number(item._sum.qtyTransferred ?? 0)))
 
     // E. Avg Landed Cost per Product from stock lots
     const landedCosts = await prisma.stockLot.groupBy({
@@ -238,12 +300,12 @@ export async function getWarehouseNXTReport(filters: {
     let totalClosingValue = 0
 
     for (const p of products) {
-        const opIn = openingGrMap.get(p.id) ?? 0
-        const opOut = openingDoMap.get(p.id) ?? 0
+        const opIn = (openingGrMap.get(p.id) ?? 0) + (openingTrfInMap.get(p.id) ?? 0)
+        const opOut = (openingDoMap.get(p.id) ?? 0) + (openingTrfOutMap.get(p.id) ?? 0)
         const openingQty = Math.max(0, opIn - opOut)
 
-        const inQty = periodGrMap.get(p.id) ?? 0
-        const outQty = periodDoMap.get(p.id) ?? 0
+        const inQty = (periodGrMap.get(p.id) ?? 0) + (periodTrfInMap.get(p.id) ?? 0)
+        const outQty = (periodDoMap.get(p.id) ?? 0) + (periodTrfOutMap.get(p.id) ?? 0)
         const closingQty = Math.max(0, openingQty + inQty - outQty)
 
         // Skip zero stock / zero activity products if requested
@@ -349,7 +411,7 @@ export async function getStockMovements(filters: {
     const { fromDate, toDate } = parseDateRange(dateFrom, dateTo)
 
     // 1. Calculate Opening Balance before fromDate
-    const [opGr, opDo] = await Promise.all([
+    const [opGr, opDo, opTrfIn, opTrfOut] = await Promise.all([
         prisma.goodsReceiptLine.aggregate({
             where: {
                 productId,
@@ -372,14 +434,36 @@ export async function getStockMovements(filters: {
             },
             _sum: { qtyShipped: true },
         }),
+        prisma.transferOrderLine.aggregate({
+            where: {
+                productId,
+                transferOrder: {
+                    status: 'RECEIVED',
+                    receivedAt: { lt: fromDate },
+                    ...(warehouseId ? { toWarehouseId: warehouseId } : {}),
+                },
+            },
+            _sum: { qtyTransferred: true },
+        }),
+        prisma.transferOrderLine.aggregate({
+            where: {
+                productId,
+                transferOrder: {
+                    status: { in: ['IN_TRANSIT', 'RECEIVED'] },
+                    confirmedAt: { lt: fromDate },
+                    ...(warehouseId ? { fromWarehouseId: warehouseId } : {}),
+                },
+            },
+            _sum: { qtyTransferred: true },
+        }),
     ])
-    const opIn = Number(opGr._sum.qtyReceived ?? 0)
-    const opOut = Number(opDo._sum.qtyShipped ?? 0)
+    const opIn = Number(opGr._sum.qtyReceived ?? 0) + Number(opTrfIn._sum.qtyTransferred ?? 0)
+    const opOut = Number(opDo._sum.qtyShipped ?? 0) + Number(opTrfOut._sum.qtyTransferred ?? 0)
     const openingBalance = Math.max(0, opIn - opOut)
 
     const movements: StockMovementRow[] = []
 
-    // ── 2. GR Lines (NHẬP) ────────
+    // ── 2. GR Lines (NHẬP MUA HÀNG) ────────
     if (movementType === 'ALL' || movementType === 'IN') {
         const grWhere: any = {
             productId,
@@ -423,7 +507,56 @@ export async function getStockMovements(filters: {
         }
     }
 
-    // ── 3. DO Lines (XUẤT) ───────
+    // ── 3. Transfer IN Lines (NHẬP CHUYỂN KHO) ────
+    if (movementType === 'ALL' || movementType === 'IN') {
+        const trfInWhere: any = {
+            productId,
+            transferOrder: { status: 'RECEIVED' },
+        }
+        if (warehouseId) trfInWhere.transferOrder = { ...trfInWhere.transferOrder, toWarehouseId: warehouseId }
+        trfInWhere.transferOrder.receivedAt = { gte: fromDate, lte: toDate }
+
+        const trfInLines = await prisma.transferOrderLine.findMany({
+            where: trfInWhere,
+            include: {
+                transferOrder: {
+                    include: {
+                        toWarehouse: { select: { id: true, name: true } },
+                        fromWarehouse: { select: { id: true, name: true } },
+                    },
+                },
+            },
+            orderBy: { transferOrder: { receivedAt: 'asc' } },
+        })
+
+        for (const line of trfInLines) {
+            const lot = await prisma.stockLot.findFirst({
+                where: { productId, location: { warehouseId: line.transferOrder.toWarehouseId } },
+                select: { lotNo: true, unitLandedCost: true, location: { select: { locationCode: true } } },
+                orderBy: { receivedDate: 'desc' },
+            })
+
+            movements.push({
+                id: `trf-in-${line.id}`,
+                date: line.transferOrder.receivedAt ?? line.transferOrder.createdAt,
+                docType: 'TRANSFER_IN',
+                docNo: line.transferOrder.transferNo,
+                docId: line.transferOrder.id,
+                warehouseId: line.transferOrder.toWarehouse.id,
+                warehouseName: line.transferOrder.toWarehouse.name,
+                locationCode: lot?.location?.locationCode ?? '—',
+                lotNo: lot?.lotNo ?? '—',
+                qtyIn: Number(line.qtyTransferred),
+                qtyOut: 0,
+                balance: 0,
+                unitCost: Number(lot?.unitLandedCost ?? 0),
+                reference: `Nhận điều chuyển từ: ${line.transferOrder.fromWarehouse.name}`,
+                note: line.transferOrder.notes || '',
+            })
+        }
+    }
+
+    // ── 4. DO Lines (XUẤT BÁN HÀNG) ───────
     if (movementType === 'ALL' || movementType === 'OUT') {
         const doWhere: any = {
             productId,
@@ -468,10 +601,58 @@ export async function getStockMovements(filters: {
         }
     }
 
-    // ── 4. Sort by date ──────────────────────────────
+    // ── 5. Transfer OUT Lines (XUẤT CHUYỂN KHO) ────
+    if (movementType === 'ALL' || movementType === 'OUT') {
+        const trfOutWhere: any = {
+            productId,
+            transferOrder: { status: { in: ['IN_TRANSIT', 'RECEIVED'] } },
+        }
+        if (warehouseId) trfOutWhere.transferOrder = { ...trfOutWhere.transferOrder, fromWarehouseId: warehouseId }
+        trfOutWhere.transferOrder.confirmedAt = { gte: fromDate, lte: toDate }
+
+        const trfOutLines = await prisma.transferOrderLine.findMany({
+            where: trfOutWhere,
+            include: {
+                transferOrder: {
+                    include: {
+                        fromWarehouse: { select: { id: true, name: true } },
+                        toWarehouse: { select: { id: true, name: true } },
+                    },
+                },
+            },
+            orderBy: { transferOrder: { confirmedAt: 'asc' } },
+        })
+
+        for (const line of trfOutLines) {
+            const lot = await prisma.stockLot.findFirst({
+                where: { productId, location: { warehouseId: line.transferOrder.fromWarehouseId } },
+                select: { lotNo: true, unitLandedCost: true, location: { select: { locationCode: true } } },
+            })
+
+            movements.push({
+                id: `trf-out-${line.id}`,
+                date: line.transferOrder.confirmedAt ?? line.transferOrder.createdAt,
+                docType: 'TRANSFER_OUT',
+                docNo: line.transferOrder.transferNo,
+                docId: line.transferOrder.id,
+                warehouseId: line.transferOrder.fromWarehouse.id,
+                warehouseName: line.transferOrder.fromWarehouse.name,
+                locationCode: lot?.location?.locationCode ?? '—',
+                lotNo: lot?.lotNo ?? '—',
+                qtyIn: 0,
+                qtyOut: Number(line.qtyTransferred),
+                balance: 0,
+                unitCost: Number(lot?.unitLandedCost ?? 0),
+                reference: `Điều chuyển đến: ${line.transferOrder.toWarehouse.name}`,
+                note: line.transferOrder.notes || '',
+            })
+        }
+    }
+
+    // ── 6. Sort by date ──────────────────────────────
     movements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-    // ── 5. Calculate step-by-step running balance ───
+    // ── 7. Calculate step-by-step running balance ───
     let currentBal = openingBalance
     let totalIn = 0
     let totalOut = 0
