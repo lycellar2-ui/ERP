@@ -21,6 +21,7 @@ interface TransferLineItem {
 }
 
 const TRANSFER_REASONS = [
+    'Điều hàng',
     'Phân bổ hàng hóa cho Kho Cửa hàng / HORECA',
     'Cân bằng tồn kho giữa các kho chi nhánh',
     'Chuyển sang Kho Lạnh bảo quản đặc biệt (Grand Cru)',

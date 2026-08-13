@@ -58,6 +58,13 @@ export type TransferOrderDetail = {
         unitCost: number
         totalValue: number
     }[]
+    fromWarehouseEntity?: {
+        companyName: string
+        address: string
+        taxId: string
+        phone: string
+        email: string
+    } | null
     totalQty: number
     totalValue: number
 }
@@ -469,7 +476,22 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
     const to = await prisma.transferOrder.findUnique({
         where: { id },
         include: {
-            fromWarehouse: { select: { name: true, code: true } },
+            fromWarehouse: {
+                select: {
+                    name: true,
+                    code: true,
+                    address: true,
+                    legalEntity: {
+                        select: {
+                            name: true,
+                            address: true,
+                            taxId: true,
+                            phone: true,
+                            email: true,
+                        },
+                    },
+                },
+            },
             toWarehouse: { select: { name: true, code: true } },
             lines: {
                 include: {
@@ -524,6 +546,23 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
     const totalQty = lineDetails.reduce((s: number, l: any) => s + l.qtyTransferred, 0)
     const totalValue = lineDetails.reduce((s: number, l: any) => s + l.totalValue, 0)
 
+    const fromWH = to.fromWarehouse as any
+    const le = fromWH?.legalEntity
+
+    const fromWarehouseEntity = le ? {
+        companyName: le.name,
+        address: le.address || fromWH?.address || 'Hà Nội',
+        taxId: le.taxId || '—',
+        phone: le.phone || '024.3933.8888',
+        email: le.email || 'accounting@lyscellars.com',
+    } : {
+        companyName: fromWH?.name || 'CÔNG TY CỔ PHẦN LYS CELLARS',
+        address: fromWH?.address || '15 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội',
+        taxId: '0109579480',
+        phone: '024.3933.8888',
+        email: 'accounting@lyscellars.com',
+    }
+
     return {
         id: to.id,
         transferNo: to.transferNo,
@@ -545,6 +584,7 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
         receivedAt: to.receivedAt,
         createdAt: to.createdAt,
         lines: lineDetails,
+        fromWarehouseEntity,
         totalQty,
         totalValue,
     }

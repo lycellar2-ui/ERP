@@ -446,17 +446,17 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                         {/* Invoice Content Area */}
                         <div className="p-0 bg-white text-black font-sans w-full h-full overflow-y-auto print:overflow-visible">
                             <div className="max-w-[850px] mx-auto p-8 sm:p-12 print:p-0 print:max-w-none">
-                                {/* Print Header - Clean Company Info */}
+                                {/* Print Header - Dynamic Company Info from Source Warehouse */}
                                 <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
                                     <div>
                                         <h2 className="font-bold text-xs text-slate-900 uppercase tracking-wide">
-                                            CÔNG TY CỔ PHẦN LYS CELLARS
+                                            {detail.fromWarehouseEntity?.companyName || detail.fromWarehouse || "CÔNG TY CỔ PHẦN LYS CELLARS"}
                                         </h2>
                                         <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
-                                            Địa chỉ: 15 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội<br />
-                                            MST: 0109579480 &nbsp;|&nbsp; 
-                                            SĐT: 024.3933.8888 &nbsp;|&nbsp; 
-                                            Email: accounting@lyscellars.com
+                                            Địa chỉ: {detail.fromWarehouseEntity?.address || "15 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội"}<br />
+                                            MST: {detail.fromWarehouseEntity?.taxId || "0109579480"} &nbsp;|&nbsp; 
+                                            SĐT: {detail.fromWarehouseEntity?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
+                                            Email: {detail.fromWarehouseEntity?.email || "accounting@lyscellars.com"}
                                         </p>
                                     </div>
                                     <div className="text-right">
