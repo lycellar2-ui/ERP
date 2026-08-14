@@ -52,10 +52,11 @@ type Props = {
 export default function PrintableAuditReport({ detail, onClose, onRefreshed }: Props) {
     const [isApproving, setIsApproving] = useState(false)
 
+    const hasAnyActual = detail.lines.some(l => l.qtyActual !== null)
     const totalSystemQty = detail.lines.reduce((sum, l) => sum + Number(l.qtySystem || 0), 0)
-    const totalActualQty = detail.lines.reduce((sum, l) => sum + Number(l.qtyActual ?? 0), 0)
-    const totalVarianceQty = detail.lines.reduce((sum, l) => sum + Number(l.variance ?? 0), 0)
-    const totalVarianceValue = detail.lines.reduce((sum, l) => sum + Number(l.varianceValueVND || 0), 0)
+    const totalActualQty = detail.lines.filter(l => l.qtyActual !== null).reduce((sum, l) => sum + Number(l.qtyActual ?? 0), 0)
+    const totalVarianceQty = detail.lines.filter(l => l.qtyActual !== null).reduce((sum, l) => sum + Number(l.variance ?? 0), 0)
+    const totalVarianceValue = detail.lines.filter(l => l.qtyActual !== null).reduce((sum, l) => sum + Number(l.varianceValueVND || 0), 0)
 
     const handlePrint = () => {
         window.print()
@@ -84,6 +85,23 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible print:inset-auto print:static">
+            <style>{`
+                @media print {
+                    @page {
+                        size: A4 portrait;
+                        margin: 10mm 8mm 10mm 8mm;
+                    }
+                    body {
+                        font-family: 'Times New Roman', Times, 'Liberation Serif', serif !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                }
+                .font-times {
+                    font-family: 'Times New Roman', Times, 'Liberation Serif', serif;
+                }
+            `}</style>
+
             {/* Top Toolbar (Hidden on Print) */}
             <div className="max-w-4xl mx-auto mb-4 bg-white border border-slate-200 text-slate-900 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl print:hidden">
                 <div className="flex items-center gap-3">
@@ -119,7 +137,10 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
             </div>
 
             {/* REAL A4 FORM DOCUMENT PRINT CONTAINER */}
-            <div className="max-w-4xl mx-auto bg-white text-black p-8 sm:p-12 shadow-2xl rounded-none print:shadow-none print:p-0 print:max-w-none font-serif leading-normal">
+            <div 
+                className="max-w-4xl mx-auto bg-white text-black p-8 sm:p-12 shadow-2xl rounded-none print:shadow-none print:p-0 print:max-w-none font-times leading-normal"
+                style={{ fontFamily: '"Times New Roman", Times, "Liberation Serif", serif' }}
+            >
                 {/* Header: Company & Quốc Hiệu */}
                 <div className="flex justify-between items-start border-b border-black pb-4 mb-6">
                     <div>
@@ -166,14 +187,18 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                 {/* Detail Table */}
                 <div className="mb-6">
                     <div className="font-extrabold uppercase text-xs mb-2">II. KẾT QUẢ KIỂM KÊ CHI TIẾT:</div>
-                    <table className="w-full text-left border-collapse border border-black text-xs font-serif">
+                    <table 
+                        className="w-full text-left border-collapse border border-black text-xs font-times"
+                        style={{ fontFamily: '"Times New Roman", Times, "Liberation Serif", serif' }}
+                    >
                         <thead>
                             <tr className="bg-slate-100 text-black font-extrabold text-[11px] text-center border-b border-black">
                                 <th className="border border-black p-1.5 w-8">STT</th>
-                                <th className="border border-black p-1.5 w-20">Vị Trí</th>
-                                <th className="border border-black p-1.5 w-24">Mã SKU</th>
-                                <th className="border border-black p-1.5">Tên Sản Phẩm & Vintage</th>
-                                <th className="border border-black p-1.5 w-16">ĐVT</th>
+                                <th className="border border-black p-1.5 w-24">Vị Trí</th>
+                                <th className="border border-black p-1.5 w-20">Mã SKU</th>
+                                <th className="border border-black p-1.5">Tên Sản Phẩm</th>
+                                <th className="border border-black p-1.5 w-16 text-center">Vintage</th>
+                                <th className="border border-black p-1.5 w-12 text-center">ĐVT</th>
                                 <th className="border border-black p-1.5 w-24 text-right">Tồn Sổ Sách</th>
                                 <th className="border border-black p-1.5 w-24 text-right">Kiểm Thực Tế</th>
                                 <th className="border border-black p-1.5 w-20 text-center">Chênh Lệch</th>
@@ -194,7 +219,9 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                                         <td className="border border-black p-1.5 font-mono font-bold">{line.skuCode}</td>
                                         <td className="border border-black p-1.5">
                                             <div className="font-bold">{line.productName}</div>
-                                            <div className="text-[10px] text-slate-700 italic">Vintage: {line.vintage ?? 'NV'}</div>
+                                        </td>
+                                        <td className="border border-black p-1.5 text-center font-mono font-semibold">
+                                            {line.vintage ?? 'NV'}
                                         </td>
                                         <td className="border border-black p-1.5 text-center">Chai</td>
                                         <td className="border border-black p-1.5 text-right font-mono">
@@ -208,9 +235,11 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                                             )}
                                         </td>
                                         <td className="border border-black p-1.5 text-center font-mono font-bold">
-                                            {variance === null || variance === 0 ? (
+                                            {line.qtyActual === null ? (
+                                                '-'
+                                            ) : variance === 0 ? (
                                                 'Khớp'
-                                            ) : variance > 0 ? (
+                                            ) : variance !== null && variance > 0 ? (
                                                 `+${variance}`
                                             ) : (
                                                 `${variance}`
@@ -225,14 +254,24 @@ export default function PrintableAuditReport({ detail, onClose, onRefreshed }: P
                         </tbody>
                         <tfoot>
                             <tr className="font-extrabold text-xs bg-slate-50 border-t-2 border-black">
-                                <td colSpan={5} className="border border-black p-2 text-right uppercase">CỘNG TỔNG CỘNG:</td>
+                                <td colSpan={6} className="border border-black p-2 text-right uppercase">CỘNG TỔNG CỘNG:</td>
                                 <td className="border border-black p-2 text-right font-mono">{totalSystemQty} chai</td>
-                                <td className="border border-black p-2 text-right font-mono">{totalActualQty} chai</td>
+                                <td className="border border-black p-2 text-right font-mono">
+                                    {hasAnyActual ? `${totalActualQty} chai` : '-'}
+                                </td>
                                 <td className="border border-black p-2 text-center font-mono">
-                                    {totalVarianceQty === 0 ? '0' : totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty} chai
+                                    {!hasAnyActual ? (
+                                        '-'
+                                    ) : totalVarianceQty === 0 ? (
+                                        '0 chai'
+                                    ) : totalVarianceQty > 0 ? (
+                                        `+${totalVarianceQty} chai`
+                                    ) : (
+                                        `${totalVarianceQty} chai`
+                                    )}
                                 </td>
                                 <td className="border border-black p-2 text-[11px]">
-                                    Giá trị lệch: {totalVarianceValue.toLocaleString('vi-VN')} đ
+                                    {hasAnyActual ? `Giá trị lệch: ${totalVarianceValue.toLocaleString('vi-VN')} đ` : '-'}
                                 </td>
                             </tr>
                         </tfoot>

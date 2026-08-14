@@ -1877,6 +1877,33 @@ Khi người dùng nhập mã Captcha và ấn **"Đăng Nhập & Đồng Bộ H
 
 > ⚠️ **RULE 73: Khi tính Báo cáo Nhập Xuất Tồn (NXT), BẮT BỤC phải tính nguồn nhập từ `StockLot` (lô hàng nhập/khởi tạo) song song với `GoodsReceiptLine`. Khi ở chế độ xem "Tất cả các kho" (All Warehouses), chuyển kho nội bộ (`TRANSFER_IN`/`TRANSFER_OUT`) là giao dịch nội bộ công ty (net effect = 0), KHÔNG ĐƯỢC cộng dồn làm tăng Tổng Nhập và Tổng Xuất của toàn doanh nghiệp.**
 
+---
+
+## BUG-046: Mẫu In Biên Bản Kiểm Kê A4 Lỗi Font Tiếng Việt, Sai Trạng Thái Chênh Lệch và Thiếu Cột Vintage Độc Lập
+
+**Ngày:** 2026-08-14  
+**Severity:** 🟡 Medium — Văn bản in A4 kiểm kê bị lỗi tách dấu tiếng Việt trên Windows, hiển thị "Khớp" sai lệch khi chưa nhập số đếm, và gom chung Tên sản phẩm với Niên vụ.
+
+### Triệu chứng
+1. Khi in/xem Biên bản kiểm kê A4 (`PrintableAuditReport.tsx`), các từ tiếng Việt có dấu ghép (như `THẮNG ÂN`, `TẦNG`, `Số`, `Mã phiếu`, `THÀNH PHẦN`, `Kế toán kho`, `KẾT QUẢ`, `Tồn Sổ Sách`, `Kiểm Thực Tế`) bị lỗi tách dấu thành 2 ký tự riêng lẻ (VD: `THẮ´NG ÂN`, `Tồ`n Sổ Sách`, `Kiểm Thực Tế´`).
+2. Các dòng kiểm kê chưa đếm hoặc chưa nhập số thực tế (`qtyActual: null`), cột Chênh Lệch vẫn hiển thị chữ "Khớp" dù tồn sổ sách đang có số lượng (1, 60, 36, 11...).
+3. Tên sản phẩm và Niên vụ (Vintage) bị gộp chung vào 1 cột `Tên Sản Phẩm & Vintage`.
+
+### Nguyên nhân gốc rễ
+1. Class `font-serif` trong Tailwind CSS ưu tiên font `Georgia` trên Windows trước `Times New Roman`. Font `Georgia` trên Windows không hỗ trợ đầy đủ các ký tự Unicode tiếng Việt tổ hợp/dựng sẵn (precomposed Unicode), dẫn đến việc bộ kết xuất font tách rời nguyên âm và dấu thanh/dấu mũ.
+2. Logic kiểm tra chênh lệch `{variance === null || variance === 0 ? 'Khớp' : ...}` coi `null` (chưa kiểm) giống với `0` (khớp).
+3. Cột bảng gộp chung Tên & Vintage vào 1 cột thay vì tách riêng theo tiêu chuẩn biểu mẫu kế toán kho.
+
+### Cách fix
+1. Cấu hình font chữ chuẩn văn bản hành chính Việt Nam (`Times New Roman, Times, Liberation Serif, serif`) cho toàn bộ tài liệu in A4 và bảng biểu, khắc phục 100% hiện tượng lỗi tách dấu tiếng Việt.
+2. Sửa logic: nếu `qtyActual === null` thì hiển thị dấu gạch ngang `-`, chỉ hiển thị `Khớp` khi `qtyActual !== null` và `variance === 0`, hiển thị `+${variance}` (khi thừa) hoặc `${variance}` (khi thiếu).
+3. Tách cột `Vintage` (Niên vụ) thành cột riêng biệt độc lập (10 cột tổng thể), căn giữa và định dạng font rõ ràng; điều chỉnh `colSpan={6}` ở dòng tổng cộng cuối bảng.
+
+### Bài học
+
+> ⚠️ **RULE 74: Các mẫu in chứng từ chuẩn A4 (Biên bản kiểm kê, Hóa đơn, Phiếu xuất nhập kho) BẮT BỤC phải khai báo font chuẩn hành chính `"Times New Roman", Times, "Liberation Serif", serif` thay vì `font-serif` (để tránh lỗi Windows tự động fallback sang `Georgia` làm bể dấu tiếng Việt). Các chỉ số chênh lệch kiểm kê khi `qtyActual === null` (chưa đếm) BẮT BỤC phải hiển thị `-` (không được hiển thị `Khớp`).**
+
+
 
 
 
