@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-08-14 09:30
-> Status: Production — 29 modules, 123 DB models, 78 enums, 35 dashboard routes, A4 Printable Audit Report Font & Variance Fixes
+> Last updated: 2026-08-15 00:00
+> Status: Production — 29 modules, 123 DB models, 78 enums, 35 dashboard routes, Mobile 2D Warehouse Map & Transfer Order Vintage Sync
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 74 rules from 47 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 76 rules from 48 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
 
 ## Tech Stack (Verified)

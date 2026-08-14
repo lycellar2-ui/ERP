@@ -16,7 +16,7 @@ export async function getDOPrintDetail(doId: string) {
                             purchasingName: true, purchasingPhone: true,
                             deliveryNotes: true,
                             parent: { select: { name: true, taxId: true, vatCompanyName: true } },
-                            addresses: { where: { isDefault: true }, take: 1 },
+                            addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }], take: 1 },
                             contacts: { select: { name: true, phone: true, isPrimary: true } },
                         }
                     },
@@ -55,14 +55,27 @@ export async function getDOPrintDetail(doId: string) {
     const receiverName = so.customer.receiverName || so.customer.name
     const deliveryNotes = so.customer.deliveryNotes || null
 
-    // Build shipping address
-    const addr = so.shippingAddress
+    // Build shipping address with fallback to customer's registered address
+    const defaultAddr = so.customer.addresses?.[0]
+    const addr = so.shippingAddress || defaultAddr
     const fullAddress = addr
         ? [addr.address, addr.ward, addr.district, addr.city].filter(Boolean).join(', ')
         : 'Nhận tại kho'
 
-    // Map DO lines to SO lines to get pricing
+    // Map DO lines to SO lines to get pricing & vintage
     const soLineMap = new Map(so.lines.map(l => [l.productId, l]))
+
+    // Legal Entity fallback
+    const le = so.legalEntity || {
+        name: "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN",
+        address: "Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội",
+        taxId: "0316123456",
+        phone: "024.3933.8888",
+        email: "orders@lyscellars.com",
+        bankAccountName: "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN",
+        bankAccountNumber: "1023456789",
+        bankName: "Vietcombank (VCB) - Chi nhánh TP. Hà Nội",
+    }
 
     return {
         doNo: d.doNo,
@@ -72,7 +85,7 @@ export async function getDOPrintDetail(doId: string) {
         // SO info
         soNo: so.soNo,
         paymentTerm: so.paymentTerm,
-        orderDiscount: Number(so.orderDiscount),
+        orderDiscount: Number(so.orderDiscount ?? 0),
         vatRate: Number(so.vatRate ?? 10),
         soNotes: so.notes ?? null,
         // Customer
@@ -95,28 +108,20 @@ export async function getDOPrintDetail(doId: string) {
         deliveryNotes,
         // Shipping
         shippingAddress: fullAddress,
-        salesRepName: so.salesRep.name,
+        salesRepName: so.salesRep?.name ?? '—',
         // Legal Entity
-        legalEntity: so.legalEntity ? {
-            name: so.legalEntity.name,
-            address: so.legalEntity.address,
-            taxId: so.legalEntity.taxId,
-            phone: so.legalEntity.phone,
-            email: so.legalEntity.email,
-            bankAccountName: so.legalEntity.bankAccountName,
-            bankAccountNumber: so.legalEntity.bankAccountNumber,
-            bankName: so.legalEntity.bankName,
-        } : null,
+        legalEntity: le,
         // Warehouse
         warehouseCode: d.warehouse.code,
         warehouseName: d.warehouse.name,
-        // Lines (with pricing from SO)
+        // Lines (with pricing & vintage from SO/lot)
         lines: d.lines.map(l => {
             const soLine = soLineMap.get(l.productId)
             return {
                 productName: l.product.productName,
                 skuCode: l.product.skuCode,
                 lotNo: l.lot.lotNo,
+                vintage: (l.lot as any).vintage ?? (soLine as any)?.vintage ?? null,
                 locationCode: l.location.locationCode,
                 zone: l.location.zone,
                 rack: l.location.rack,

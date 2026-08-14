@@ -6,7 +6,7 @@ import {
     X, Eye, MousePointer2, Minus, DoorOpen, Type, Trash2, RotateCcw,
     ChevronDown, Box, Layers, Package, Calendar, ShieldCheck, Thermometer,
     Sparkles, RefreshCw, Info, Building2, MapPin, Sliders, Maximize, Check,
-    Ruler, LayoutTemplate
+    Ruler, LayoutTemplate, LayoutGrid, Map as MapIcon, Filter
 } from 'lucide-react'
 import {
     MapLocation, MapWarehouse, MapLocationProduct,
@@ -27,6 +27,7 @@ interface Boundary { width: number; height: number }
 interface LayoutConfig { walls: Wall[]; doors: Door[]; labels: Label[]; boundary?: Boundary }
 
 type Tool = 'select' | 'wall' | 'door' | 'label' | 'eraser'
+type DisplayView = 'map' | 'cards'
 
 // ═══════════════════════════════════════════════════════════
 // Clean High-Contrast Light Theme Color Tokens
@@ -57,7 +58,7 @@ function occColor(pct: number) {
         dot: '#0284C7',
         badgeBg: '#E0F2FE',
         badgeText: '#075985',
-        label: 'Trung bình (40-70%)'
+        label: 'Vừa (40-70%)'
     }
     if (pct > 0) return {
         fill: '#ECFDF5',
@@ -111,6 +112,7 @@ export function WarehouseMapTab({
     const [mapData, setMapData] = useState<MapWarehouse | null>(null)
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [displayView, setDisplayView] = useState<DisplayView>('map')
 
     // Sync selectedWH when selectedWarehouseId changes
     useEffect(() => {
@@ -121,9 +123,11 @@ export function WarehouseMapTab({
 
     // Canvas State
     const [zoom, setZoom] = useState(1)
-    const [pan, setPan] = useState({ x: 40, y: 40 })
+    const [pan, setPan] = useState({ x: 30, y: 30 })
     const [isPanning, setIsPanning] = useState(false)
     const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
+    const touchStartDist = useRef<number | null>(null)
+    const touchStartCenter = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
     const canvasRef = useRef<HTMLDivElement>(null)
 
     // Tools
@@ -136,7 +140,7 @@ export function WarehouseMapTab({
         walls: [],
         doors: [],
         labels: [],
-        boundary: { width: 2400, height: 1600 }
+        boundary: { width: 1500, height: 750 }
     })
     const [wallDrawing, setWallDrawing] = useState<{ x1: number; y1: number } | null>(null)
     const [doorRotation, setDoorRotation] = useState<number>(0)
@@ -151,16 +155,18 @@ export function WarehouseMapTab({
     const [locations, setLocations] = useState<MapLocation[]>([])
     const [hasChanges, setHasChanges] = useState(false)
 
-    // Zone resize modal
+    // Zone filter & modal
+    const [selectedZoneFilter, setSelectedZoneFilter] = useState<string>('ALL')
     const [resizeZoneName, setResizeZoneName] = useState<string | null>(null)
-    const [zoneW, setZoneW] = useState<number>(80)
-    const [zoneH, setZoneH] = useState<number>(60)
+    const [zoneW, setZoneW] = useState<number>(140)
+    const [zoneH, setZoneH] = useState<number>(90)
 
     // Search & Popups
     const [searchTerm, setSearchTerm] = useState('')
     const [highlightLocs, setHighlightLocs] = useState<string[]>([])
     const [searchResults, setSearchResults] = useState<{ skuCode: string; productName: string; totalQty: number; locationIds: string[] }[]>([])
     const [showLocModal, setShowLocModal] = useState(false)
+    const [showLegendDrawer, setShowLegendDrawer] = useState(false)
 
     // Toast
     const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
@@ -168,6 +174,22 @@ export function WarehouseMapTab({
         setToast({ msg, type })
         setTimeout(() => setToast(null), 3000)
     }
+
+    // Auto-fit function for Mobile & Desktop
+    const fitToScreen = useCallback(() => {
+        if (!canvasRef.current || !layoutCfg.boundary) return
+        const rect = canvasRef.current.getBoundingClientRect()
+        const bW = layoutCfg.boundary.width || 1500
+        const bH = layoutCfg.boundary.height || 750
+        const scaleX = (rect.width - 40) / bW
+        const scaleY = (rect.height - 40) / bH
+        const fitScale = Math.min(1.2, Math.max(0.2, Math.min(scaleX, scaleY)))
+        setZoom(fitScale)
+        setPan({
+            x: Math.max(10, Math.round((rect.width - bW * fitScale) / 2)),
+            y: Math.max(10, Math.round((rect.height - bH * fitScale) / 2)),
+        })
+    }, [layoutCfg.boundary])
 
     // ── Load map data ──────────────────────────────────
     const loadMap = useCallback(async (whId: string) => {
@@ -182,18 +204,21 @@ export function WarehouseMapTab({
             ])
             setMapData(data)
             setLocations(data?.locations ?? [])
+            const b = cfg?.boundary || { width: 1500, height: 750 }
             setLayoutCfg(cfg && cfg.boundary ? cfg : {
                 walls: cfg?.walls ?? [],
                 doors: cfg?.doors ?? [],
                 labels: cfg?.labels ?? [],
-                boundary: { width: 2400, height: 1600 }
+                boundary: b
             })
-            setPan({ x: 40, y: 40 })
-            setZoom(1)
+            // Default fit on load
+            setTimeout(() => {
+                fitToScreen()
+            }, 100)
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [fitToScreen])
 
     useEffect(() => { if (selectedWH) loadMap(selectedWH) }, [selectedWH, loadMap])
 
@@ -216,7 +241,7 @@ export function WarehouseMapTab({
         }
     }, [editMode])
 
-    // ── Canvas mouse handlers ──────────────────────────
+    // ── Canvas mouse & touch handlers ──────────────────
     const toCanvas = useCallback((clientX: number, clientY: number) => {
         const rect = canvasRef.current?.getBoundingClientRect()
         if (!rect) return { x: 0, y: 0 }
@@ -268,7 +293,6 @@ export function WarehouseMapTab({
         } else if (tool === 'eraser') {
             const threshold = 20
             const px = pos.x, py = pos.y
-            // Walls
             const wallIdx = layoutCfg.walls.findIndex(w => {
                 const dx = w.x2 - w.x1, dy = w.y2 - w.y1
                 const len = Math.sqrt(dx * dx + dy * dy)
@@ -282,14 +306,12 @@ export function WarehouseMapTab({
                 setHasChanges(true)
                 return
             }
-            // Doors
             const doorIdx = layoutCfg.doors.findIndex(d => Math.hypot(px - d.x, py - d.y) < threshold)
             if (doorIdx >= 0) {
                 setLayoutCfg(prev => ({ ...prev, doors: prev.doors.filter((_, i) => i !== doorIdx) }))
                 setHasChanges(true)
                 return
             }
-            // Labels
             const lblIdx = layoutCfg.labels.findIndex(l => Math.hypot(px - l.x, py - l.y) < threshold + 20)
             if (lblIdx >= 0) {
                 setLayoutCfg(prev => ({ ...prev, labels: prev.labels.filter((_, i) => i !== lblIdx) }))
@@ -309,7 +331,6 @@ export function WarehouseMapTab({
         const pos = toCanvas(e.clientX, e.clientY)
         setMousePos(pos)
 
-        // Eraser hover check
         if (tool === 'eraser') {
             const threshold = 20
             const px = pos.x, py = pos.y
@@ -326,7 +347,6 @@ export function WarehouseMapTab({
             setHoveredWallId(null)
         }
 
-        // Drag location position
         if (dragLoc && editMode && tool === 'select') {
             const dx = (e.clientX - dragLoc.startX) / zoom
             const dy = (e.clientY - dragLoc.startY) / zoom
@@ -337,7 +357,6 @@ export function WarehouseMapTab({
             setHasChanges(true)
         }
 
-        // Drag location resize
         if (resizeLoc && editMode && tool === 'select') {
             const dx = (e.clientX - resizeLoc.startX) / zoom
             const dy = (e.clientY - resizeLoc.startY) / zoom
@@ -355,10 +374,52 @@ export function WarehouseMapTab({
         setResizeLoc(null)
     }
 
+    // Touch Support for Mobile Drag & Pinch-to-Zoom
+    const onTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 1) {
+            const t = e.touches[0]
+            setIsPanning(true)
+            panStart.current = { x: t.clientX, y: t.clientY, panX: pan.x, panY: pan.y }
+            touchStartDist.current = null
+        } else if (e.touches.length === 2) {
+            setIsPanning(false)
+            const t1 = e.touches[0]
+            const t2 = e.touches[1]
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY)
+            touchStartDist.current = dist
+            touchStartCenter.current = {
+                x: (t1.clientX + t2.clientX) / 2,
+                y: (t1.clientY + t2.clientY) / 2
+            }
+        }
+    }
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 1 && isPanning) {
+            const t = e.touches[0]
+            setPan({
+                x: panStart.current.panX + (t.clientX - panStart.current.x),
+                y: panStart.current.panY + (t.clientY - panStart.current.y),
+            })
+        } else if (e.touches.length === 2 && touchStartDist.current !== null) {
+            const t1 = e.touches[0]
+            const t2 = e.touches[1]
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY)
+            const factor = dist / touchStartDist.current
+            setZoom(z => Math.min(3, Math.max(0.2, z * factor)))
+            touchStartDist.current = dist
+        }
+    }
+
+    const onTouchEnd = () => {
+        setIsPanning(false)
+        touchStartDist.current = null
+    }
+
     const onWheel = (e: React.WheelEvent) => {
         e.preventDefault()
         const delta = e.deltaY > 0 ? -0.1 : 0.1
-        setZoom(prev => Math.min(3, Math.max(0.3, prev + delta)))
+        setZoom(prev => Math.min(3, Math.max(0.2, prev + delta)))
     }
 
     // ── Save handlers ──────────────────────────────────
@@ -413,682 +474,505 @@ export function WarehouseMapTab({
 
     const selectedLoc = locations.find(l => l.id === selectedLocId)
     const zones = [...new Set(locations.map(l => l.zone))].sort()
-    const floorW = layoutCfg.boundary?.width ?? 2400
-    const floorH = layoutCfg.boundary?.height ?? 1600
+    const floorW = layoutCfg.boundary?.width ?? 1500
+    const floorH = layoutCfg.boundary?.height ?? 750
+
+    // Filter locations for Cards view
+    const filteredLocations = locations.filter(l => {
+        if (selectedZoneFilter !== 'ALL' && l.zone !== selectedZoneFilter) return false
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase()
+            const matchCode = l.locationCode.toLowerCase().includes(term)
+            const matchProduct = l.products.some(p => p.skuCode.toLowerCase().includes(term) || p.productName.toLowerCase().includes(term))
+            if (!matchCode && !matchProduct) return false
+        }
+        return true
+    })
 
     // ═══════════════════════════════════════════════════
-    // RENDER (Clean Bright Light Theme)
+    // RENDER
     // ═══════════════════════════════════════════════════
     return (
-        <div className="flex flex-col gap-0 rounded-2xl overflow-hidden shadow-sm bg-white border border-slate-200" style={{ height: 'calc(100vh - 170px)', minHeight: 640 }}>
+        <div className="flex flex-col gap-0 rounded-2xl overflow-hidden shadow-sm bg-white border border-slate-200" style={{ height: 'calc(100vh - 160px)', minHeight: 560 }}>
             {/* ── Top Bar ─────────────────────────────── */}
-            <div className="flex flex-wrap items-center gap-3 p-3.5 bg-slate-50 border-b border-slate-200">
-
-                {/* Warehouse Title */}
-                <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
-                        <Building2 size={18} className="text-amber-600" />
-                        {mapData ? mapData.name : 'Sơ Đồ Kho 2D'}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 sm:p-3.5 bg-slate-50 border-b border-slate-200">
+                {/* Left: Warehouse Title & View Mode Toggle */}
+                <div className="flex items-center justify-between sm:justify-start gap-2.5">
+                    <span className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5 truncate">
+                        <Building2 size={18} className="text-amber-600 shrink-0" />
+                        <span className="truncate">{mapData ? mapData.name : 'Sơ Đồ Kho 2D'}</span>
                     </span>
-                </div>
 
-                {/* Search SKU / Product */}
-                <div className="flex-1 relative max-w-xs">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                        placeholder="Tìm SKU, tên rượu trên sơ đồ..."
-                        className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs outline-none bg-white border border-slate-300 text-slate-900 focus:border-amber-500 shadow-2xs transition-all"
-                    />
-                </div>
-
-                {/* Zoom Controls */}
-                <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white border border-slate-300 shadow-2xs">
-                    <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Thu nhỏ"><ZoomOut size={14} /></button>
-                    <span className="text-xs font-mono font-bold w-11 text-center text-slate-800">{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Phóng to"><ZoomIn size={14} /></button>
-                    <button onClick={() => { setZoom(1); setPan({ x: 40, y: 40 }) }} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Về mặc định"><Maximize2 size={14} /></button>
-                </div>
-
-                {/* Edit & Save Controls */}
-                {mapData && (
-                    <div className="flex items-center gap-2 ml-auto">
-                        {!editMode ? (
-                            <button onClick={() => setEditMode(true)}
-                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-xs cursor-pointer">
-                                <Move size={14} /> Chỉnh Sửa Sơ Đồ
-                            </button>
-                        ) : (
-                            <>
-                                <button onClick={handleAutoLayout} disabled={saving}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
-                                    <Grid3x3 size={13} /> Sắp Xếp Tự Động
-                                </button>
-                                <button onClick={handleSaveAll} disabled={saving}
-                                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${hasChanges ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-sm' : 'bg-slate-200 text-slate-600'}`}>
-                                    {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                                    Lưu Sơ Đồ
-                                </button>
-                                <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
-                                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs">
-                                    <Eye size={14} /> Hoàn Tất
-                                </button>
-                            </>
-                        )}
+                    {/* View Switcher (2D Map vs Card Grid) */}
+                    <div className="flex items-center p-0.5 rounded-xl bg-slate-200/80 border border-slate-300 shrink-0">
+                        <button
+                            onClick={() => setDisplayView('map')}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${displayView === 'map' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            title="Xem sơ đồ dạng bản đồ mặt bằng 2D"
+                        >
+                            <MapIcon size={13} />
+                            <span>Bản Đồ 2D</span>
+                        </button>
+                        <button
+                            onClick={() => setDisplayView('cards')}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${displayView === 'cards' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            title="Xem dạng danh sách thẻ Pallet trực quan cho điện thoại"
+                        >
+                            <LayoutGrid size={13} />
+                            <span>Thẻ Vị Trí ({locations.length})</span>
+                        </button>
                     </div>
-                )}
+                </div>
+
+                {/* Center / Right: Search & View Controls */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-0.5 sm:pb-0">
+                    {/* Search Input */}
+                    <div className="relative flex-1 sm:w-60 min-w-[140px]">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                            placeholder="Tìm SKU, Pallet, rượu..."
+                            className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs outline-none bg-white border border-slate-300 text-slate-900 focus:border-amber-500 shadow-2xs transition-all"
+                        />
+                    </div>
+
+                    {/* 2D Zoom & Auto-Fit Controls (Only in Map view) */}
+                    {displayView === 'map' && (
+                        <div className="flex items-center gap-1 px-1.5 py-1 rounded-xl bg-white border border-slate-300 shadow-2xs shrink-0">
+                            <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Thu nhỏ"><ZoomOut size={14} /></button>
+                            <span className="text-[11px] font-mono font-bold w-9 text-center text-slate-800">{Math.round(zoom * 100)}%</span>
+                            <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="p-1 rounded hover:bg-slate-100 text-slate-600 cursor-pointer" title="Phóng to"><ZoomIn size={14} /></button>
+                            <button
+                                onClick={fitToScreen}
+                                className="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-200 cursor-pointer flex items-center gap-1"
+                                title="Căn chỉnh vừa vặn toàn bộ mặt bằng kho vào màn hình"
+                            >
+                                <Maximize2 size={12} />
+                                <span className="hidden sm:inline">Vừa Khung</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Mobile Legend Button */}
+                    <button
+                        onClick={() => setShowLegendDrawer(prev => !prev)}
+                        className="p-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 md:hidden cursor-pointer shrink-0 shadow-2xs"
+                        title="Xem chú thích và thống kê"
+                    >
+                        <Info size={15} className="text-amber-600" />
+                    </button>
+
+                    {/* Edit Controls */}
+                    {mapData && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            {!editMode ? (
+                                <button onClick={() => { setEditMode(true); setDisplayView('map') }}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-xs cursor-pointer">
+                                    <Move size={13} />
+                                    <span className="hidden sm:inline">Sắp Xếp Sơ Đồ</span>
+                                    <span className="sm:hidden">Sửa</span>
+                                </button>
+                            ) : (
+                                <>
+                                    <button onClick={handleAutoLayout} disabled={saving}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                                        <Grid3x3 size={13} />
+                                        <span className="hidden md:inline">Tự Động</span>
+                                    </button>
+                                    <button onClick={handleSaveAll} disabled={saving}
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${hasChanges ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-sm' : 'bg-slate-200 text-slate-600'}`}>
+                                        {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                                        <span>Lưu</span>
+                                    </button>
+                                    <button onClick={() => { setEditMode(false); setTool('select'); setWallDrawing(null) }}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs">
+                                        <Eye size={13} />
+                                        <span>Xong</span>
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* ── Main Canvas & Control Area ─────────────────────────────── */}
+            {/* ── Main Content Body ─────────────────────────────── */}
             <div className="flex flex-1 overflow-hidden relative">
-                {/* Left Drawing Toolbar (Active in Edit Mode) */}
-                {editMode && (
-                    <div className="flex flex-col gap-1.5 p-2 bg-slate-100 border-r border-slate-200 z-20 shrink-0 shadow-2xs" style={{ width: 72 }}>
-                        {([
-                            { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn/Sửa' },
-                            { key: 'wall' as Tool, icon: Minus, label: 'Vẽ Tường' },
-                            { key: 'door' as Tool, icon: DoorOpen, label: 'Vẽ Cửa' },
-                            { key: 'label' as Tool, icon: Type, label: 'Nhãn' },
-                            { key: 'eraser' as Tool, icon: Trash2, label: 'Tẩy' },
-                        ]).map(t => (
-                            <button key={t.key} onClick={() => { setTool(t.key); setWallDrawing(null) }}
-                                title={t.label}
-                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${tool === t.key ? 'bg-amber-500 text-white shadow-sm scale-105' : 'text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200'}`}>
-                                <t.icon size={18} />
-                                <span>{t.label}</span>
-                            </button>
-                        ))}
 
-                        {/* Door Controls (Width & Rotation) */}
-                        {tool === 'door' && (
-                            <div className="mt-2 pt-2 border-t border-slate-200 flex flex-col gap-1.5 text-[10px]">
-                                <label className="font-bold text-slate-600 block text-[9px] uppercase tracking-wider">Độ dài cửa (px):</label>
-                                <input
-                                    type="number"
-                                    value={doorWidth}
-                                    min={15}
-                                    max={300}
-                                    onChange={e => setDoorWidth(Math.max(15, parseInt(e.target.value) || 44))}
-                                    className="w-full px-2 py-1 rounded bg-slate-100 border border-slate-300 font-mono font-bold text-center text-slate-900 text-xs outline-none focus:border-amber-500"
-                                />
-                                <div className="grid grid-cols-2 gap-1 mt-0.5">
-                                    {[30, 44, 60, 80].map(w => (
-                                        <button
-                                            key={w}
-                                            onClick={() => setDoorWidth(w)}
-                                            className={`py-1 rounded text-[9px] font-bold border transition-colors cursor-pointer ${doorWidth === w ? 'bg-amber-500 text-white border-amber-600' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'}`}
-                                        >
-                                            {w}px {w === 44 ? '★' : ''}
-                                        </button>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => setDoorRotation(r => (r + 90) % 360)}
-                                    className="mt-1 p-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold hover:bg-amber-200 w-full text-center cursor-pointer"
-                                    title="Xoay cửa 90 độ"
-                                >
-                                    Xoay {doorRotation}°
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="mt-auto pt-2 border-t border-slate-200">
-                            <button onClick={() => { setLayoutCfg({ walls: [], doors: [], labels: [], boundary: { width: 2400, height: 1600 } }); setHasChanges(true) }}
-                                title="Reset vẽ tường cửa" className="flex flex-col items-center gap-0.5 p-2 rounded-xl text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 w-full cursor-pointer">
-                                <RotateCcw size={14} />
-                                Reset
+                {/* ═══════════════════════════════════════════════════ */}
+                {/* VIEW MODE A: RESPONSIVE CARDS GRID FOR MOBILE/TABLET */}
+                {/* ═══════════════════════════════════════════════════ */}
+                {displayView === 'cards' && (
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-5 bg-slate-100 space-y-5">
+                        {/* Zone Filter Chips */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                            <button
+                                onClick={() => setSelectedZoneFilter('ALL')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${selectedZoneFilter === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'}`}
+                            >
+                                Tất Cả Vị Trí ({locations.length})
                             </button>
+                            {zones.map(z => {
+                                const zCount = locations.filter(l => l.zone === z).length
+                                const zBottles = locations.filter(l => l.zone === z).reduce((s, l) => s + l.totalQty, 0)
+                                return (
+                                    <button
+                                        key={z}
+                                        onClick={() => setSelectedZoneFilter(z)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${selectedZoneFilter === z ? 'text-white shadow-xs' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'}`}
+                                        style={selectedZoneFilter === z ? { background: ZONE_COLORS[z] ?? '#0284C7' } : {}}
+                                    >
+                                        <Layers size={12} />
+                                        <span>ZONE {z} ({zCount} ô • {formatNumber(zBottles)} chai)</span>
+                                    </button>
+                                )
+                            })}
                         </div>
+
+                        {/* Cards Grid Grouped by Zone */}
+                        {zones.filter(z => selectedZoneFilter === 'ALL' || selectedZoneFilter === z).map(z => {
+                            const zoneLocs = filteredLocations.filter(l => l.zone === z)
+                            if (zoneLocs.length === 0) return null
+                            const totalZoneQty = zoneLocs.reduce((s, l) => s + l.totalQty, 0)
+
+                            return (
+                                <div key={z} className="space-y-2.5">
+                                    <div className="flex items-center justify-between border-b border-slate-300 pb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-3 h-3 rounded-full" style={{ background: ZONE_COLORS[z] ?? '#0284C7' }} />
+                                            <h3 className="font-extrabold text-sm text-slate-900">
+                                                {z === 'A' ? 'ZONE A: Khu Vực Pallet Mới' : z === 'B' ? 'ZONE B: Khu Vực Kho Cũ & Kệ Sắt' : `ZONE ${z}`}
+                                            </h3>
+                                            <span className="text-xs text-slate-500 font-semibold">({zoneLocs.length} vị trí)</span>
+                                        </div>
+                                        <span className="text-xs font-extrabold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                                            {formatNumber(totalZoneQty)} chai
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                        {zoneLocs.map(loc => {
+                                            const oc = occColor(loc.occupancyPct)
+                                            const isSelected = selectedLocId === loc.id
+                                            const isHighlighted = highlightLocs.includes(loc.id)
+
+                                            return (
+                                                <div
+                                                    key={loc.id}
+                                                    onClick={() => {
+                                                        setSelectedLocId(loc.id)
+                                                        setShowLocModal(true)
+                                                    }}
+                                                    className="p-3.5 rounded-2xl bg-white border transition-all hover:shadow-md cursor-pointer flex flex-col justify-between gap-2.5 relative group"
+                                                    style={{
+                                                        borderColor: isSelected ? '#2563EB' : isHighlighted ? '#F59E0B' : oc.border,
+                                                        boxShadow: isSelected ? '0 0 0 3px rgba(37,99,235,0.2)' : isHighlighted ? '0 0 0 3px rgba(245,158,11,0.25)' : 'none'
+                                                    }}
+                                                >
+                                                    {/* Header: Code & Occupancy Badge */}
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: oc.dot }} />
+                                                            <span className="font-mono font-extrabold text-xs text-slate-900 truncate">
+                                                                {loc.locationCode.replace('LOC-TT-', '')}
+                                                            </span>
+                                                        </div>
+                                                        <span
+                                                            className="text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0"
+                                                            style={{ background: oc.badgeBg, color: oc.badgeText }}
+                                                        >
+                                                            {loc.occupancyPct}% • {oc.label}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Occupancy Progress bar */}
+                                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-300"
+                                                            style={{ width: `${Math.min(100, loc.occupancyPct)}%`, background: oc.dot }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Products list preview */}
+                                                    <div className="space-y-1 my-0.5">
+                                                        {loc.products.length === 0 ? (
+                                                            <p className="text-[11px] text-slate-400 italic">Vị trí đang trống</p>
+                                                        ) : (
+                                                            loc.products.slice(0, 2).map((p, idx) => (
+                                                                <div key={idx} className="flex items-center justify-between gap-1 text-[11px]">
+                                                                    <span className="text-slate-800 font-semibold truncate">
+                                                                        {p.productName}
+                                                                    </span>
+                                                                    <span className="font-mono font-bold text-slate-900 shrink-0">
+                                                                        {p.qtyAvailable}c
+                                                                    </span>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                        {loc.products.length > 2 && (
+                                                            <p className="text-[10px] text-amber-700 font-bold">
+                                                                + Thêm {loc.products.length - 2} mã rượu khác...
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Footer: Total & Tap to View */}
+                                                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                                                        <span className="text-[11px] text-slate-500 font-semibold">
+                                                            {loc.products.length} mã rượu
+                                                        </span>
+                                                        <span className="font-mono font-extrabold text-emerald-700">
+                                                            {formatNumber(loc.totalQty)} chai
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 )}
 
-                {/* 2D Canvas Area (Clean Light Graph Paper) */}
-                <div
-                    ref={canvasRef}
-                    className="flex-1 relative overflow-hidden select-none"
-                    style={{
-                        background: '#E2E8F0', // Shaded backdrop outside floorplan boundary
-                        backgroundImage: 'radial-gradient(circle, #CBD5E1 1.2px, transparent 1.2px)',
-                        backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
-                        backgroundPosition: `${pan.x}px ${pan.y}px`,
-                        cursor: isPanning || spaceHeld ? 'grabbing'
-                            : tool === 'wall' ? 'crosshair'
-                                : tool === 'door' ? 'crosshair'
-                                    : tool === 'label' ? 'text'
-                                        : tool === 'eraser' ? 'not-allowed'
-                                            : editMode ? 'default' : 'grab',
-                    }}
-                    onMouseDown={onCanvasMouseDown}
-                    onMouseMove={onCanvasMouseMove}
-                    onMouseUp={onCanvasMouseUp}
-                    onMouseLeave={onCanvasMouseUp}
-                    onWheel={onWheel}
-                >
-                    {loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-xs z-50">
-                            <div className="flex flex-col items-center gap-2 bg-white p-5 rounded-2xl border border-slate-200 text-amber-700 text-xs font-bold shadow-xl">
-                                <Loader2 size={32} className="animate-spin text-amber-600" />
-                                <span>Đang tải dữ liệu sơ đồ kho...</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {!mapData && !loading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <Box size={44} className="text-slate-400" />
-                            <p className="text-sm font-semibold text-slate-500">Chọn kho để xem sơ đồ 2D vị trí</p>
-                        </div>
-                    )}
-
-                    {mapData && (
-                        <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
-
-                            {/* 🏢 Outer Warehouse Floor Container & Perimeter Frame */}
-                            <div style={{
-                                position: 'absolute',
-                                left: 0, top: 0,
-                                width: floorW, height: floorH,
-                                background: '#FFFFFF',
-                                backgroundImage: 'radial-gradient(circle, #E2E8F0 1.2px, transparent 1.2px)',
-                                backgroundSize: '24px 24px',
-                                border: '10px solid #1E293B', // Solid Charcoal Outer Wall
-                                borderRadius: 16,
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)',
-                                pointerEvents: 'none',
-                                zIndex: 0,
-                            }}>
-                                {/* Dimension Badge on Top Left Wall */}
-                                <div className="absolute -top-9 left-2 bg-amber-500 text-white px-3.5 py-1 rounded-t-xl text-[11px] font-extrabold font-mono flex items-center gap-1.5 shadow-sm border border-amber-600">
-                                    <Building2 size={14} className="text-white" />
-                                    RANH GIỚI TỔNG THỂ MẶT BẰNG KHO ({floorW / 100}m × {floorH / 100}m)
-                                </div>
-                            </div>
-
-                            {/* SVG Architectural Layer: Walls, Doors & Drawing Previews */}
-                            <svg style={{ position: 'absolute', top: 0, left: 0, width: Math.max(3000, floorW + 400), height: Math.max(2000, floorH + 400), zIndex: 1, pointerEvents: 'none' }}>
-                                {/* Drawn Inner Walls */}
-                                {layoutCfg.walls.map(w => {
-                                    const isHovered = hoveredWallId === w.id
-                                    return (
-                                        <g key={w.id}>
-                                            <line x1={w.x1} y1={w.y1} x2={w.x2} y2={w.y2}
-                                                stroke={isHovered ? '#EF4444' : '#1E293B'}
-                                                strokeWidth={isHovered ? 14 : w.thickness || 10}
-                                                strokeLinecap="round" />
-                                            {/* Wall joint dots */}
-                                            <circle cx={w.x1} cy={w.y1} r={5} fill={isHovered ? '#EF4444' : '#1E293B'} />
-                                            <circle cx={w.x2} cy={w.y2} r={5} fill={isHovered ? '#EF4444' : '#1E293B'} />
-                                        </g>
-                                    )
-                                })}
-
-                                {/* Active Wall drawing preview line */}
-                                {wallDrawing && (
-                                    <g>
-                                        <line x1={wallDrawing.x1} y1={wallDrawing.y1}
-                                            x2={snap(mousePos.x)} y2={snap(mousePos.y)}
-                                            stroke="#F59E0B" strokeWidth={10} strokeLinecap="round" strokeDasharray="8 4" opacity={0.9} />
-                                        <circle cx={wallDrawing.x1} cy={wallDrawing.y1} r={6} fill="#F59E0B" />
-                                        <circle cx={snap(mousePos.x)} cy={snap(mousePos.y)} r={6} fill="#F59E0B" />
-                                    </g>
-                                )}
-
-                                {/* Doors with Architectural Swing Arc */}
-                                {layoutCfg.doors.map(d => (
-                                    <g key={d.id} transform={`translate(${d.x}, ${d.y}) rotate(${d.rotation})`}>
-                                        <rect x={-d.width / 2} y={-4} width={d.width} height={8} fill="#F59E0B" stroke="#B45309" strokeWidth={1.5} rx={2} />
-                                        <path d={`M ${-d.width / 2} 4 A ${d.width / 2} ${d.width / 2} 0 0 1 ${d.width / 2} 4`}
-                                            fill="none" stroke="#F59E0B" strokeWidth={1.5} strokeDasharray="3 2" />
-                                    </g>
-                                ))}
-
-                                {/* Ghost Door preview when placing */}
-                                {editMode && tool === 'door' && (
-                                    <g transform={`translate(${snap(mousePos.x)}, ${snap(mousePos.y)}) rotate(${doorRotation})`} opacity={0.75}>
-                                        <rect x={-doorWidth / 2} y={-4} width={doorWidth} height={8} fill="#F59E0B" stroke="#B45309" strokeWidth={1.5} rx={2} strokeDasharray="3 2" />
-                                        <path d={`M ${-doorWidth / 2} 4 A ${doorWidth / 2} ${doorWidth / 2} 0 0 1 ${doorWidth / 2} 4`}
-                                            fill="none" stroke="#F59E0B" strokeWidth={1.5} strokeDasharray="3 2" />
-                                    </g>
-                                )}
-
-                                {/* Labels */}
-                                {layoutCfg.labels.map(l => (
-                                    <text key={l.id} x={l.x} y={l.y} fontSize={l.fontSize || 14}
-                                        fill="#1E293B" fontWeight="800" fontFamily="Inter, sans-serif"
-                                        style={{ userSelect: 'none' }}>
-                                        {l.text}
-                                    </text>
-                                ))}
-                            </svg>
-
-                            {/* Zone Badges */}
-                            {zones.map(zone => {
-                                const zoneLocs = locations.filter(l => l.zone === zone)
-                                if (zoneLocs.length === 0) return null
-                                const minX = Math.min(...zoneLocs.map(l => l.posX))
-                                const minY = Math.min(...zoneLocs.map(l => l.posY))
-                                const zColor = ZONE_COLORS[zone] ?? '#64748B'
-                                return (
-                                    <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX - 10, top: minY - 36, zIndex: 2, pointerEvents: isDrawingTool ? 'none' : 'auto' }}>
-                                        {/* Zone Badge */}
-                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-extrabold shadow-2xs"
-                                            style={{ background: zColor, color: '#FFFFFF', width: 'fit-content', letterSpacing: 0.5 }}>
-                                            <Layers size={12} />
-                                            ZONE {zone}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-
-                            {/* Location Blocks (Interactive Bins / Shelves) */}
-                            {locations.map(loc => {
-                                const oc = occColor(loc.occupancyPct)
-                                const isHighlighted = highlightLocs.includes(loc.id)
-                                const isSelected = selectedLocId === loc.id
-
-                                return (
-                                    <div
-                                        key={loc.id}
-                                        onMouseDown={e => {
-                                            if (editMode && tool === 'select' && !spaceHeld) {
-                                                e.stopPropagation()
-                                                setSelectedLocId(loc.id)
-                                                setDragLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origX: loc.posX, origY: loc.posY })
-                                            }
-                                        }}
-                                        onClick={e => {
-                                            if (!isDrawingTool) {
-                                                e.stopPropagation()
-                                                setSelectedLocId(loc.id)
-                                                if (!editMode) setShowLocModal(true) // Open Popup Modal in View mode!
-                                            }
-                                        }}
-                                        className="absolute transition-all duration-150 group overflow-hidden"
-                                        style={{
-                                            left: loc.posX, top: loc.posY,
-                                            width: loc.width, height: loc.height,
-                                            background: oc.fill,
-                                            border: `2px solid ${isSelected ? '#2563EB' : isHighlighted ? '#F59E0B' : oc.border}`,
-                                            borderRadius: 10,
-                                            zIndex: isSelected ? 20 : isHighlighted ? 15 : 10,
-                                            cursor: editMode && isDrawingTool ? 'inherit' : editMode && tool === 'select' ? 'move' : 'pointer',
-                                            pointerEvents: editMode && isDrawingTool ? 'none' : 'auto',
-                                            boxShadow: isSelected ? '0 0 0 4px rgba(37,99,235,0.25), 0 4px 12px rgba(0,0,0,0.1)' :
-                                                isHighlighted ? '0 0 0 4px rgba(245,158,11,0.3), 0 0 16px rgba(245,158,11,0.2)' : 'none',
-                                            padding: loc.width < 100 || loc.height < 60 ? '4px 6px' : '6px 8px',
-                                            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                                            userSelect: 'none',
-                                        }}
-                                    >
-                                        {/* Top: Location Code & Temp badge */}
-                                        <div className="flex items-center justify-between gap-1 overflow-hidden min-w-0">
-                                            <span
-                                                className="font-extrabold font-mono text-slate-900 whitespace-nowrap truncate min-w-0"
-                                                style={{ fontSize: loc.width < 100 ? 9 : 11, letterSpacing: 0.2 }}
-                                                title={loc.locationCode}
-                                            >
-                                                {loc.locationCode}
-                                            </span>
-                                            {loc.tempControlled && (
-                                                <span className="text-[10px] shrink-0" title="Kho lạnh bảo quản rượu">❄️</span>
-                                            )}
-                                        </div>
-
-                                        {/* Occupancy Progress Bar */}
-                                        <div className="w-full rounded-full overflow-hidden bg-slate-200/80 my-0.5 shrink-0" style={{ height: loc.height < 60 ? 3 : 5 }}>
-                                            <div style={{ width: `${loc.occupancyPct}%`, height: '100%', background: oc.dot, borderRadius: 99, transition: 'width 0.3s' }} />
-                                        </div>
-
-                                        {/* Bottom: Qty & Occupancy % */}
-                                        <div className="flex items-center justify-between gap-1 overflow-hidden min-w-0">
-                                            <span
-                                                className="font-bold font-mono whitespace-nowrap truncate min-w-0"
-                                                style={{ color: oc.text, fontSize: loc.width < 100 ? 9 : 10 }}
-                                                title={loc.totalQty > 0 ? `${formatNumber(loc.totalQty)} chai` : 'Trống'}
-                                            >
-                                                {loc.totalQty > 0 ? `${formatNumber(loc.totalQty)} chai` : 'Trống'}
-                                            </span>
-                                            <span
-                                                className="font-extrabold whitespace-nowrap shrink-0"
-                                                style={{ color: oc.text, fontSize: loc.width < 100 ? 9 : 10 }}
-                                            >
-                                                {loc.occupancyPct}%
-                                            </span>
-                                        </div>
-
-                                        {/* Drag-to-Resize Handle (Active in Edit Mode) */}
-                                        {editMode && tool === 'select' && (
-                                            <div
-                                                onMouseDown={e => {
-                                                    e.stopPropagation()
-                                                    setResizeLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origW: loc.width, origH: loc.height })
-                                                }}
-                                                className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-amber-500 border border-white rounded-sm cursor-se-resize shadow-md flex items-center justify-center hover:scale-125 transition-transform z-30"
-                                                title="Kéo góc này để thay đổi Kích thước (Rộng x Cao)"
-                                            >
-                                                <Maximize size={10} className="text-white" />
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-
-                    {/* Tool Hint Floating Banners (Crisp Amber/White High-Contrast Pills) */}
-                    {wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-amber-500 text-white shadow-xl border border-amber-600 flex items-center gap-2">
-                            <span>🧱 Click chọn điểm kết thúc tường</span>
-                            {(() => {
-                                const dist = Math.hypot(snap(mousePos.x) - wallDrawing.x1, snap(mousePos.y) - wallDrawing.y1)
-                                return <span className="bg-amber-700 px-2 py-0.5 rounded-lg font-mono">Chiều dài: {Math.round(dist)}px (~{(dist / 100).toFixed(1)}m)</span>
-                            })()}
-                            <span className="text-amber-100">• ESC để hủy</span>
-                        </div>
-                    )}
-                    {editMode && tool === 'door' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-amber-500 text-white shadow-xl border border-amber-600 flex items-center gap-2">
-                            <span>🚪 Click vị trí để đặt cửa</span>
-                            <span className="bg-amber-700 px-2 py-0.5 rounded-lg">Góc xoay: {doorRotation}°</span>
-                        </div>
-                    )}
-                    {editMode && tool === 'wall' && !wallDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-amber-500 text-white shadow-xl border border-amber-600 flex items-center gap-2">
-                            <span>🧱 Click để chọn điểm bắt đầu vẽ tường</span>
-                            <span className="bg-amber-700/90 text-amber-100 px-2.5 py-0.5 rounded-lg font-bold">• Giữ Space để kéo bản đồ</span>
-                        </div>
-                    )}
-                    {editMode && tool === 'select' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-xs font-extrabold z-50 bg-white text-slate-800 shadow-lg border border-slate-300 flex items-center gap-2">
-                            <Sliders size={16} className="text-amber-600" />
-                            <span className="text-slate-900 font-extrabold">📐 Kéo góc vuông màu cam ở mỗi ô để đổi kích thước Rộng x Cao</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Right Side Control & Legend Panel (Clean Light Theme) */}
-                <div className="flex flex-col gap-4 p-4 overflow-y-auto shrink-0 bg-slate-50 border-l border-slate-200 text-slate-800" style={{ width: 300 }}>
-
-                    {/* 🏢 Warehouse Floorplan Boundary Settings */}
-                    {editMode && (
-                        <div className="p-3.5 rounded-xl bg-white border border-slate-300 shadow-2xs text-xs space-y-2.5">
-                            <h4 className="font-extrabold text-slate-900 flex items-center gap-1.5 text-xs">
-                                <LayoutTemplate size={14} className="text-amber-600" /> Kích Thước Mặt Bằng Kho
-                            </h4>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Rộng kho (px)</label>
-                                    <input
-                                        type="number"
-                                        value={floorW}
-                                        onChange={e => {
-                                            const w = Math.max(1000, parseInt(e.target.value) || 2400)
-                                            setLayoutCfg(prev => ({ ...prev, boundary: { width: w, height: prev.boundary?.height ?? 1600 } }))
-                                            setHasChanges(true)
-                                        }}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Sâu kho (px)</label>
-                                    <input
-                                        type="number"
-                                        value={floorH}
-                                        onChange={e => {
-                                            const h = Math.max(800, parseInt(e.target.value) || 1600)
-                                            setLayoutCfg(prev => ({ ...prev, boundary: { width: prev.boundary?.width ?? 2400, height: h } }))
-                                            setHasChanges(true)
-                                        }}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex gap-1.5">
-                                {[
-                                    { label: '2000x1400', w: 2000, h: 1400 },
-                                    { label: '2400x1600', w: 2400, h: 1600 },
-                                    { label: '3200x2000', w: 3200, h: 2000 },
-                                ].map(p => (
-                                    <button
-                                        key={p.label}
-                                        onClick={() => {
-                                            setLayoutCfg(prev => ({ ...prev, boundary: { width: p.w, height: p.h } }))
-                                            setHasChanges(true)
-                                        }}
-                                        className="flex-1 py-1 rounded-md bg-slate-100 hover:bg-amber-500 text-slate-700 hover:text-white border border-slate-200 text-[10px] font-mono font-bold transition-colors cursor-pointer text-center"
-                                    >
-                                        {p.label}
+                {/* ═══════════════════════════════════════════════════ */}
+                {/* VIEW MODE B: 2D INTERACTIVE CANVAS MAP */}
+                {/* ═══════════════════════════════════════════════════ */}
+                {displayView === 'map' && (
+                    <>
+                        {/* Left Drawing Toolbar (Active in Edit Mode) */}
+                        {editMode && (
+                            <div className="flex flex-col gap-1.5 p-2 bg-slate-100 border-r border-slate-200 z-20 shrink-0 shadow-2xs" style={{ width: 68 }}>
+                                {([
+                                    { key: 'select' as Tool, icon: MousePointer2, label: 'Chọn' },
+                                    { key: 'wall' as Tool, icon: Minus, label: 'Tường' },
+                                    { key: 'door' as Tool, icon: DoorOpen, label: 'Cửa' },
+                                    { key: 'label' as Tool, icon: Type, label: 'Nhãn' },
+                                    { key: 'eraser' as Tool, icon: Trash2, label: 'Tẩy' },
+                                ]).map(t => (
+                                    <button key={t.key} onClick={() => { setTool(t.key); setWallDrawing(null) }}
+                                        title={t.label}
+                                        className={`flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${tool === t.key ? 'bg-amber-500 text-white shadow-sm scale-105' : 'text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200'}`}>
+                                        <t.icon size={16} />
+                                        <span>{t.label}</span>
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* 🚪 Door List & Width/Length Manager */}
-                    {editMode && layoutCfg.doors.length > 0 && (
-                        <div className="p-3.5 rounded-xl bg-white border border-amber-300 shadow-2xs text-xs space-y-2.5">
-                            <h4 className="font-extrabold text-amber-800 flex items-center justify-between text-xs">
-                                <span className="flex items-center gap-1.5"><DoorOpen size={14} className="text-amber-600" /> Thay Đổi Độ Dài Cửa Kho</span>
-                                <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">{layoutCfg.doors.length} cửa</span>
-                            </h4>
-                            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                                {layoutCfg.doors.map((d, idx) => (
-                                    <div key={d.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-bold text-[11px] text-slate-800">🚪 Cửa ra vào #{idx + 1}</span>
-                                            <button
-                                                onClick={() => {
-                                                    setLayoutCfg(prev => ({ ...prev, doors: prev.doors.filter(item => item.id !== d.id) }))
-                                                    setHasChanges(true)
+                        {/* 2D Canvas Area */}
+                        <div
+                            ref={canvasRef}
+                            className="flex-1 relative overflow-hidden select-none touch-none"
+                            style={{
+                                background: '#E2E8F0',
+                                backgroundImage: 'radial-gradient(circle, #CBD5E1 1.2px, transparent 1.2px)',
+                                backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
+                                backgroundPosition: `${pan.x}px ${pan.y}px`,
+                                cursor: isPanning || spaceHeld ? 'grabbing'
+                                    : tool === 'wall' || tool === 'door' ? 'crosshair'
+                                        : tool === 'label' ? 'text'
+                                            : tool === 'eraser' ? 'not-allowed'
+                                                : editMode ? 'default' : 'grab',
+                            }}
+                            onMouseDown={onCanvasMouseDown}
+                            onMouseMove={onCanvasMouseMove}
+                            onMouseUp={onCanvasMouseUp}
+                            onMouseLeave={onCanvasMouseUp}
+                            onTouchStart={onTouchStart}
+                            onTouchMove={onTouchMove}
+                            onTouchEnd={onTouchEnd}
+                            onWheel={onWheel}
+                        >
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-xs z-50">
+                                    <div className="flex flex-col items-center gap-2 bg-white p-5 rounded-2xl border border-slate-200 text-amber-700 text-xs font-bold shadow-xl">
+                                        <Loader2 size={32} className="animate-spin text-amber-600" />
+                                        <span>Đang tải dữ liệu sơ đồ kho...</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!mapData && !loading && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                                    <Box size={44} className="text-slate-400" />
+                                    <p className="text-sm font-semibold text-slate-500">Chọn kho để xem sơ đồ 2D vị trí</p>
+                                </div>
+                            )}
+
+                            {mapData && (
+                                <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+
+                                    {/* 🏢 Outer Warehouse Perimeter Frame */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: 0, top: 0,
+                                        width: floorW, height: floorH,
+                                        background: '#FFFFFF',
+                                        backgroundImage: 'radial-gradient(circle, #E2E8F0 1.2px, transparent 1.2px)',
+                                        backgroundSize: '24px 24px',
+                                        border: '8px solid #1E293B',
+                                        borderRadius: 14,
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)',
+                                        pointerEvents: 'none',
+                                        zIndex: 0,
+                                    }}>
+                                        <div className="absolute -top-8 left-2 bg-amber-500 text-white px-3 py-0.5 rounded-t-lg text-[10px] font-extrabold font-mono flex items-center gap-1.5 shadow-sm border border-amber-600">
+                                            <Building2 size={12} className="text-white" />
+                                            {mapData.name.toUpperCase()} (MẶT BẰNG KHO)
+                                        </div>
+                                    </div>
+
+                                    {/* Architectural SVG Layer: Walls & Doors */}
+                                    <svg style={{ position: 'absolute', top: 0, left: 0, width: Math.max(2000, floorW + 200), height: Math.max(1200, floorH + 200), zIndex: 1, pointerEvents: 'none' }}>
+                                        {layoutCfg.walls.map(w => (
+                                            <line key={w.id} x1={w.x1} y1={w.y1} x2={w.x2} y2={w.y2}
+                                                stroke="#1E293B" strokeWidth={w.thickness || 8} strokeLinecap="round" />
+                                        ))}
+
+                                        {layoutCfg.doors.map(d => (
+                                            <g key={d.id} transform={`translate(${d.x}, ${d.y}) rotate(${d.rotation})`}>
+                                                <rect x={-d.width / 2} y={-4} width={d.width} height={8} fill="#F59E0B" stroke="#B45309" strokeWidth={1.5} rx={2} />
+                                                <path d={`M ${-d.width / 2} 4 A ${d.width / 2} ${d.width / 2} 0 0 1 ${d.width / 2} 4`}
+                                                    fill="none" stroke="#F59E0B" strokeWidth={1.5} strokeDasharray="3 2" />
+                                            </g>
+                                        ))}
+
+                                        {layoutCfg.labels.map(l => (
+                                            <text key={l.id} x={l.x} y={l.y} fontSize={l.fontSize || 14}
+                                                fill="#334155" fontWeight="800" fontFamily="Inter, sans-serif"
+                                                style={{ userSelect: 'none' }}>
+                                                {l.text}
+                                            </text>
+                                        ))}
+                                    </svg>
+
+                                    {/* Zone Badges */}
+                                    {zones.map(zone => {
+                                        const zoneLocs = locations.filter(l => l.zone === zone)
+                                        if (zoneLocs.length === 0) return null
+                                        const minX = Math.min(...zoneLocs.map(l => l.posX))
+                                        const minY = Math.min(...zoneLocs.map(l => l.posY))
+                                        const zColor = ZONE_COLORS[zone] ?? '#0284C7'
+                                        return (
+                                            <div key={`zone-${zone}`} style={{ position: 'absolute', left: minX, top: minY - 30, zIndex: 2, pointerEvents: 'none' }}>
+                                                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-extrabold shadow-2xs"
+                                                    style={{ background: zColor, color: '#FFFFFF' }}>
+                                                    <Layers size={11} />
+                                                    ZONE {zone}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+
+                                    {/* Location Blocks (Interactive Bins / Shelves) */}
+                                    {locations.map(loc => {
+                                        const oc = occColor(loc.occupancyPct)
+                                        const isHighlighted = highlightLocs.includes(loc.id)
+                                        const isSelected = selectedLocId === loc.id
+
+                                        return (
+                                            <div
+                                                key={loc.id}
+                                                onMouseDown={e => {
+                                                    if (editMode && tool === 'select' && !spaceHeld) {
+                                                        e.stopPropagation()
+                                                        setSelectedLocId(loc.id)
+                                                        setDragLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origX: loc.posX, origY: loc.posY })
+                                                    }
                                                 }}
-                                                className="p-1 rounded text-rose-500 hover:bg-rose-100 hover:text-rose-700 cursor-pointer transition-colors"
-                                                title="Xóa cửa này khỏi sơ đồ"
+                                                onClick={e => {
+                                                    if (!isDrawingTool) {
+                                                        e.stopPropagation()
+                                                        setSelectedLocId(loc.id)
+                                                        if (!editMode) setShowLocModal(true)
+                                                    }
+                                                }}
+                                                className="absolute transition-all duration-150 group overflow-hidden"
+                                                style={{
+                                                    left: loc.posX, top: loc.posY,
+                                                    width: loc.width, height: loc.height,
+                                                    background: oc.fill,
+                                                    border: `2px solid ${isSelected ? '#2563EB' : isHighlighted ? '#F59E0B' : oc.border}`,
+                                                    borderRadius: 10,
+                                                    zIndex: isSelected ? 20 : isHighlighted ? 15 : 10,
+                                                    cursor: editMode && isDrawingTool ? 'inherit' : editMode && tool === 'select' ? 'move' : 'pointer',
+                                                    pointerEvents: editMode && isDrawingTool ? 'none' : 'auto',
+                                                    boxShadow: isSelected ? '0 0 0 3px rgba(37,99,235,0.25)' : isHighlighted ? '0 0 0 3px rgba(245,158,11,0.3)' : '0 2px 4px rgba(0,0,0,0.03)',
+                                                    padding: '5px 8px',
+                                                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                                                    userSelect: 'none',
+                                                }}
                                             >
-                                                <Trash2 size={12} />
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Độ dài cửa (px)</label>
-                                                <input
-                                                    type="number"
-                                                    min={15}
-                                                    max={400}
-                                                    value={d.width}
-                                                    onChange={e => {
-                                                        const w = Math.max(15, parseInt(e.target.value) || 44)
-                                                        setLayoutCfg(prev => ({
-                                                            ...prev,
-                                                            doors: prev.doors.map(item => item.id === d.id ? { ...item, width: w } : item)
-                                                        }))
-                                                        setHasChanges(true)
-                                                    }}
-                                                    className="w-full px-2 py-1 rounded bg-white border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500"
-                                                />
+                                                {/* Top: Location Code & Occupancy badge */}
+                                                <div className="flex items-center justify-between gap-1 overflow-hidden min-w-0">
+                                                    <span className="font-extrabold font-mono text-slate-900 text-xs truncate">
+                                                        {loc.locationCode.replace('LOC-TT-', '')}
+                                                    </span>
+                                                    <span
+                                                        className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0"
+                                                        style={{ background: oc.badgeBg, color: oc.badgeText }}
+                                                    >
+                                                        {loc.occupancyPct}%
+                                                    </span>
+                                                </div>
+
+                                                {/* Occupancy Progress Bar */}
+                                                <div className="w-full rounded-full overflow-hidden bg-slate-200/80 my-0.5 shrink-0" style={{ height: 4 }}>
+                                                    <div style={{ width: `${Math.min(100, loc.occupancyPct)}%`, height: '100%', background: oc.dot, borderRadius: 99 }} />
+                                                </div>
+
+                                                {/* Bottom: Wine Summary & Qty */}
+                                                <div className="flex items-center justify-between gap-1 text-[10px] overflow-hidden min-w-0">
+                                                    <span className="text-slate-600 font-semibold truncate">
+                                                        {loc.products[0]?.productName || 'Trống'}
+                                                    </span>
+                                                    <span className="font-extrabold font-mono shrink-0" style={{ color: oc.text }}>
+                                                        {formatNumber(loc.totalQty)}c
+                                                    </span>
+                                                </div>
+
+                                                {/* Drag-to-Resize Handle */}
+                                                {editMode && tool === 'select' && (
+                                                    <div
+                                                        onMouseDown={e => {
+                                                            e.stopPropagation()
+                                                            setResizeLoc({ id: loc.id, startX: e.clientX, startY: e.clientY, origW: loc.width, origH: loc.height })
+                                                        }}
+                                                        className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 border border-white rounded-sm cursor-se-resize shadow-md flex items-center justify-center"
+                                                    >
+                                                        <Maximize size={10} className="text-white" />
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Góc xoay</label>
-                                                <select
-                                                    value={d.rotation}
-                                                    onChange={e => {
-                                                        const rot = parseInt(e.target.value) || 0
-                                                        setLayoutCfg(prev => ({
-                                                            ...prev,
-                                                            doors: prev.doors.map(item => item.id === d.id ? { ...item, rotation: rot } : item)
-                                                        }))
-                                                        setHasChanges(true)
-                                                    }}
-                                                    className="w-full px-2 py-1 rounded bg-white border border-slate-300 font-mono font-bold text-xs outline-none focus:border-amber-500 cursor-pointer"
-                                                >
-                                                    <option value={0}>0° (Ngang)</option>
-                                                    <option value={90}>90° (Dọc)</option>
-                                                    <option value={180}>180°</option>
-                                                    <option value={270}>270°</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* 📐 Dimension & Size Editor for Selected Location */}
-                    {selectedLoc && editMode && (
-                        <div className="p-3.5 rounded-xl bg-white border border-amber-300 shadow-xs text-xs space-y-2.5">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-extrabold text-amber-700 flex items-center gap-1.5 text-xs">
-                                    <Sliders size={14} /> Chỉnh Kích Thước: {selectedLoc.locationCode}
-                                </h4>
-                                <button onClick={() => setSelectedLocId(null)} className="text-slate-400 hover:text-slate-700 cursor-pointer"><X size={12} /></button>
-                            </div>
-
-                            {/* Direct W x H Numerical Inputs */}
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Rộng (Width - px)</label>
-                                    <input
-                                        type="number"
-                                        value={selectedLoc.width}
-                                        onChange={e => {
-                                            const w = Math.max(40, parseInt(e.target.value) || 40)
-                                            setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: w } : l))
-                                            setHasChanges(true)
-                                        }}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-slate-900 font-mono font-bold text-xs outline-none focus:border-amber-500"
-                                    />
+                                        )
+                                    })}
                                 </div>
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Cao (Height - px)</label>
-                                    <input
-                                        type="number"
-                                        value={selectedLoc.height}
-                                        onChange={e => {
-                                            const h = Math.max(30, parseInt(e.target.value) || 30)
-                                            setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, height: h } : l))
-                                            setHasChanges(true)
-                                        }}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-slate-900 font-mono font-bold text-xs outline-none focus:border-amber-500"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Quick Presets */}
-                            <div>
-                                <p className="text-[10px] font-bold text-slate-500 mb-1">Mẫu kích thước chuẩn:</p>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                    {[
-                                        { label: '80×60 (Chuẩn)', w: 80, h: 60 },
-                                        { label: '120×80 (Vừa)', w: 120, h: 80 },
-                                        { label: '160×100 (Rộng)', w: 160, h: 100 },
-                                        { label: '240×80 (Kệ Dài)', w: 240, h: 80 },
-                                    ].map(p => (
-                                        <button
-                                            key={p.label}
-                                            onClick={() => {
-                                                setLocations(prev => prev.map(l => l.id === selectedLoc.id ? { ...l, width: p.w, height: p.h } : l))
-                                                setHasChanges(true)
-                                            }}
-                                            className="px-2 py-1 rounded-md bg-slate-50 border border-slate-200 hover:border-amber-500 text-[10px] font-mono font-semibold text-slate-700 hover:text-amber-800 transition-colors cursor-pointer text-center"
-                                        >
-                                            {p.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Bulk Zone Resize Button */}
-                            <button
-                                onClick={() => handleApplyZoneResize(selectedLoc.zone, selectedLoc.width, selectedLoc.height)}
-                                className="w-full py-1.5 px-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-[11px] font-bold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-1"
-                            >
-                                <Sparkles size={13} /> Áp dụng {selectedLoc.width}x{selectedLoc.height} cho ZONE {selectedLoc.zone}
-                            </button>
+                            )}
                         </div>
-                    )}
+                    </>
+                )}
 
-                    {/* Occupancy Legend */}
-                    <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2.5 text-slate-800 flex items-center gap-1.5">
-                            <Info size={14} className="text-amber-600" /> Chú Thích Mức Tồn Kho
-                        </h4>
-                        <div className="space-y-2">
-                            {[
-                                { label: 'Trống (0%)', pct: 0 },
-                                { label: 'Thấp (1-40%)', pct: 20 },
-                                { label: 'Trung bình (40-70%)', pct: 50 },
-                                { label: 'Cao (70-90%)', pct: 80 },
-                                { label: 'Đầy (>90%)', pct: 95 },
-                            ].map(item => {
-                                const c = occColor(item.pct)
-                                return (
-                                    <div key={item.label} className="flex items-center gap-2">
-                                        <div className="w-4 h-4 rounded-md shrink-0 shadow-2xs" style={{ background: c.fill, border: `2px solid ${c.border}` }} />
-                                        <span className="text-xs font-semibold text-slate-700">{item.label}</span>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                {/* ═══════════════════════════════════════════════════ */}
+                {/* RIGHT SIDEBAR: Legend & Metrics (Collapsible on Mobile) */}
+                {/* ═══════════════════════════════════════════════════ */}
+                <div className={`
+                    ${showLegendDrawer ? 'fixed inset-y-0 right-0 z-50 shadow-2xl flex' : 'hidden md:flex'}
+                    flex-col gap-3.5 p-4 overflow-y-auto shrink-0 bg-slate-50 border-l border-slate-200 text-slate-800 w-72 sm:w-80
+                `}>
+                    {/* Mobile Close Button */}
+                    <div className="flex items-center justify-between md:hidden border-b border-slate-200 pb-2.5">
+                        <span className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                            <Info size={16} className="text-amber-600" /> Thống Kê & Chú Thích
+                        </span>
+                        <button onClick={() => setShowLegendDrawer(false)} className="p-1 rounded text-slate-400 hover:text-slate-700 cursor-pointer"><X size={18} /></button>
                     </div>
-
-                    {/* Floor Plan Elements Legend */}
-                    {editMode && (
-                        <div className="pt-3 border-t border-slate-200 space-y-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">Vật Thể Bản Đồ</h4>
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-5 h-2.5 rounded bg-slate-800" />
-                                <span className="text-xs font-semibold text-slate-700">Tường ngăn trong</span>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-5 h-2 rounded bg-amber-500" />
-                                <span className="text-xs font-semibold text-slate-700">Cửa ra vào</span>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-5 h-2.5 rounded bg-slate-900 border border-slate-700" />
-                                <span className="text-xs font-semibold text-slate-700">Tường bao ngoài kho</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Zones Summary & Batch Resize */}
-                    {zones.length > 0 && (
-                        <div className="pt-3 border-t border-slate-200">
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-800">Danh Sách Zone ({zones.length})</h4>
-                            <div className="space-y-2">
-                                {zones.map(z => {
-                                    const zLocs = locations.filter(l => l.zone === z)
-                                    const avgW = zLocs.length > 0 ? zLocs[0].width : 80
-                                    const avgH = zLocs.length > 0 ? zLocs[0].height : 60
-                                    return (
-                                        <div key={z} className="p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs">
-                                            <span className="px-2.5 py-1 rounded text-xs font-extrabold"
-                                                style={{ background: ZONE_COLORS[z] ?? '#475569', color: '#FFFFFF' }}>
-                                                ZONE {z} ({zLocs.length} ô)
-                                            </span>
-                                            {editMode && (
-                                                <button
-                                                    onClick={() => {
-                                                        setResizeZoneName(z)
-                                                        setZoneW(avgW)
-                                                        setZoneH(avgH)
-                                                    }}
-                                                    className="px-2 py-1 rounded bg-slate-100 hover:bg-amber-500 text-slate-700 hover:text-white text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1 border border-slate-200"
-                                                >
-                                                    <Sliders size={11} /> {avgW}x{avgH}
-                                                </button>
-                                            )}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Quick Warehouse Stats */}
                     {mapData && (
-                        <div className="pt-3 border-t border-slate-200 grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <div className="p-2.5 rounded-xl text-center bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-base font-extrabold text-amber-600 font-mono">{locations.length}</p>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase">Tổng Vị Trí</p>
@@ -1100,22 +984,53 @@ export function WarehouseMapTab({
                         </div>
                     )}
 
-                    {/* Search Results Summary */}
-                    {searchResults.length > 0 && (
-                        <div className="pt-3 border-t border-slate-200">
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-xs font-bold uppercase text-amber-700">Kết Quả Tìm Kiếm</h4>
-                                <button onClick={() => { setSearchResults([]); setHighlightLocs([]); setSearchTerm('') }}
-                                    className="p-1 rounded hover:bg-slate-200 text-slate-500 cursor-pointer"><X size={12} /></button>
-                            </div>
-                            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                                {searchResults.map(r => (
-                                    <div key={r.skuCode} className="p-2 rounded-xl bg-white border border-slate-200 text-xs shadow-2xs">
-                                        <p className="font-bold text-amber-600 font-mono">{r.skuCode}</p>
-                                        <p className="text-[11px] text-slate-700 truncate">{r.productName}</p>
-                                        <p className="text-[10px] font-bold text-emerald-600 mt-1">{formatNumber(r.totalQty)} chai • {r.locationIds.length} vị trí</p>
+                    {/* Occupancy Legend */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-800 flex items-center gap-1.5">
+                            <Info size={14} className="text-amber-600" /> Mức Tồn Kho
+                        </h4>
+                        <div className="space-y-1.5">
+                            {[
+                                { label: 'Trống (0%)', pct: 0 },
+                                { label: 'Thấp (1-40%)', pct: 20 },
+                                { label: 'Vừa (40-70%)', pct: 50 },
+                                { label: 'Cao (70-90%)', pct: 80 },
+                                { label: 'Đầy (>90%)', pct: 95 },
+                            ].map(item => {
+                                const c = occColor(item.pct)
+                                return (
+                                    <div key={item.label} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-md shrink-0" style={{ background: c.fill, border: `1.5px solid ${c.border}` }} />
+                                            <span className="font-semibold text-slate-700">{item.label}</span>
+                                        </div>
                                     </div>
-                                ))}
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Zones Summary */}
+                    {zones.length > 0 && (
+                        <div className="pt-2 border-t border-slate-200">
+                            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-800">Danh Sách Zone ({zones.length})</h4>
+                            <div className="space-y-1.5">
+                                {zones.map(z => {
+                                    const zLocs = locations.filter(l => l.zone === z)
+                                    const zQty = zLocs.reduce((s, l) => s + l.totalQty, 0)
+                                    return (
+                                        <div key={z} className="p-2 rounded-xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs text-xs">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="px-2 py-0.5 rounded text-[11px] font-extrabold text-white"
+                                                    style={{ background: ZONE_COLORS[z] ?? '#0284C7' }}>
+                                                    ZONE {z}
+                                                </span>
+                                                <span className="text-slate-600 font-semibold">({zLocs.length} ô)</span>
+                                            </div>
+                                            <span className="font-mono font-bold text-emerald-700">{formatNumber(zQty)}c</span>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
                     )}
@@ -1123,183 +1038,89 @@ export function WarehouseMapTab({
             </div>
 
             {/* ═══════════════════════════════════════════════════ */}
-            {/* MODAL: Batch Zone Resize Modal (Clean Light Theme) */}
-            {/* ═══════════════════════════════════════════════════ */}
-            {resizeZoneName && (
-                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[999] flex items-center justify-center p-4">
-                    <div className="rounded-2xl shadow-2xl max-w-sm w-full bg-white border border-slate-200 text-slate-900 p-5 space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                                📐 Đổi Kích Thước Tất Cả Ô Thuộc ZONE {resizeZoneName}
-                            </h3>
-                            <button onClick={() => setResizeZoneName(null)} className="text-slate-400 hover:text-slate-700 cursor-pointer"><X size={16} /></button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                            <div>
-                                <label className="text-[11px] font-bold text-slate-600 block mb-1">Rộng mới (Width - px)</label>
-                                <input
-                                    type="number"
-                                    value={zoneW}
-                                    onChange={e => setZoneW(Math.max(40, parseInt(e.target.value) || 40))}
-                                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 font-mono font-bold text-sm text-slate-900 outline-none focus:border-amber-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[11px] font-bold text-slate-600 block mb-1">Cao mới (Height - px)</label>
-                                <input
-                                    type="number"
-                                    value={zoneH}
-                                    onChange={e => setZoneH(Math.max(30, parseInt(e.target.value) || 30))}
-                                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 font-mono font-bold text-sm text-slate-900 outline-none focus:border-amber-500"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
-                            <button onClick={() => setResizeZoneName(null)} className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
-                                Hủy
-                            </button>
-                            <button
-                                onClick={() => handleApplyZoneResize(resizeZoneName, zoneW, zoneH)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                            >
-                                <Check size={14} /> Đồng Ý Đổi Size
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ═══════════════════════════════════════════════════ */}
-            {/* POPUP MODAL: Detailed Location Inventory (Clean Light Theme) */}
+            {/* POPUP MODAL: Detailed Location Inventory Modal */}
             {/* ═══════════════════════════════════════════════════ */}
             {showLocModal && selectedLoc && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-4">
-                    <div className="rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden bg-white border border-slate-200 text-slate-900 flex flex-col max-h-[85vh]">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-3 sm:p-4">
+                    <div className="rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden bg-white border border-slate-200 text-slate-900 flex flex-col max-h-[85vh]">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-4.5 bg-slate-50 border-b border-slate-200">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
-                                    <MapPin size={20} />
+                        <div className="flex items-center justify-between p-3.5 sm:p-4 bg-slate-50 border-b border-slate-200">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
+                                    <MapPin size={18} />
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-extrabold flex items-center gap-2 text-slate-900">
+                                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-1.5">
                                         📍 Vị Trí: <span className="font-mono text-amber-700">{selectedLoc.locationCode}</span>
-                                        {selectedLoc.tempControlled && (
-                                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-semibold flex items-center gap-1">
-                                                ❄️ Bảo quản lạnh
-                                            </span>
-                                        )}
                                     </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Zone: <strong className="text-slate-800">{selectedLoc.zone}</strong> • Rack: <strong className="text-slate-800">{selectedLoc.rack ?? '—'}</strong> • Bin: <strong className="text-slate-800">{selectedLoc.bin ?? '—'}</strong> • Loại: <strong className="text-slate-800">{selectedLoc.type}</strong>
+                                    <p className="text-[11px] text-slate-500">
+                                        Zone: <strong className="text-slate-800">{selectedLoc.zone}</strong> • Sức chứa: <strong className="text-slate-800">{selectedLoc.capacityCases ?? 50} thùng</strong>
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 cursor-pointer"
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
 
-                        {/* Occupancy & Metric Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-50 border-b border-slate-200">
-                            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                                <p className="text-[11px] font-bold text-slate-500 uppercase">Tổng Hàng Trong Kệ</p>
-                                <p className="text-xl font-extrabold text-emerald-600 font-mono mt-0.5">{formatNumber(selectedLoc.totalQty)} <span className="text-xs font-normal">chai</span></p>
+                        {/* Metrics */}
+                        <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border-b border-slate-200">
+                            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase">Tổng Tồn</p>
+                                <p className="text-lg font-extrabold text-emerald-600 font-mono mt-0.5">{formatNumber(selectedLoc.totalQty)} <span className="text-xs font-normal">chai</span></p>
                             </div>
-                            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                                <p className="text-[11px] font-bold text-slate-500 uppercase">Sức Chứa Tối Đa</p>
-                                <p className="text-xl font-extrabold text-sky-600 font-mono mt-0.5">{selectedLoc.capacityCases ? selectedLoc.capacityCases * 12 : 500} <span className="text-xs font-normal">chai</span></p>
-                            </div>
-                            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                                <p className="text-[11px] font-bold text-slate-500 uppercase">Tỷ Lệ Lấp Đầy</p>
-                                <div className="flex items-center justify-between mt-0.5">
-                                    <span className="text-xl font-extrabold font-mono" style={{ color: occColor(selectedLoc.occupancyPct).text }}>
-                                        {selectedLoc.occupancyPct}%
-                                    </span>
-                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ background: occColor(selectedLoc.occupancyPct).badgeBg, color: occColor(selectedLoc.occupancyPct).badgeText }}>
-                                        {occColor(selectedLoc.occupancyPct).label}
-                                    </span>
-                                </div>
+                            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase">Lấp Đầy</p>
+                                <p className="text-lg font-extrabold font-mono mt-0.5" style={{ color: occColor(selectedLoc.occupancyPct).text }}>
+                                    {selectedLoc.occupancyPct}% <span className="text-xs font-normal">({occColor(selectedLoc.occupancyPct).label})</span>
+                                </p>
                             </div>
                         </div>
 
-                        {/* Inventory Product / Stock Lots Table (Clean High-Contrast Light Table) */}
-                        <div className="p-4 flex-1 overflow-y-auto">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-3 flex items-center gap-2">
-                                <Package size={16} className="text-amber-600" /> Danh Sách Lô Hàng & Rượu Đang Tồn Kho ({selectedLoc.products.length} mã)
+                        {/* Product list */}
+                        <div className="p-3 sm:p-4 flex-1 overflow-y-auto space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-2 flex items-center gap-1.5">
+                                <Package size={15} className="text-amber-600" /> Danh Sách Rượu ({selectedLoc.products.length} mã)
                             </h4>
 
                             {selectedLoc.products.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-slate-400 border border-dashed border-slate-300 rounded-xl bg-slate-50">
-                                    <Box size={38} className="mb-2 text-slate-300" />
-                                    <p className="text-sm font-semibold text-slate-500">Vị trí/kệ này hiện đang trống</p>
+                                <div className="flex flex-col items-center justify-center py-8 text-slate-400 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                                    <Box size={32} className="mb-1 text-slate-300" />
+                                    <p className="text-xs font-semibold text-slate-500">Vị trí này hiện đang trống</p>
                                 </div>
                             ) : (
-                                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                                                <th className="p-3 font-bold uppercase text-[11px] whitespace-nowrap">Mã SKU</th>
-                                                <th className="p-3 font-bold uppercase text-[11px]">Sản Phẩm & Rượu Vang</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-center whitespace-nowrap">Vintage</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] whitespace-nowrap">Mã Lô (Lot No)</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-center whitespace-nowrap">Trạng Thái</th>
-                                                <th className="p-3 font-bold uppercase text-[11px] text-right whitespace-nowrap">Tồn Kho (Chai)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-200 bg-white">
-                                            {selectedLoc.products.map((p, i) => (
-                                                <tr key={p.id || i} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="p-3 font-mono font-extrabold text-slate-800 whitespace-nowrap">
-                                                        {p.skuCode || '—'}
-                                                    </td>
-                                                    <td className="p-3">
-                                                        <p className="font-bold text-slate-900 text-xs">{p.productName}</p>
-                                                        {p.country && (
-                                                            <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                                                                Quốc gia: {p.country}
-                                                            </p>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3 text-center font-bold whitespace-nowrap">
-                                                        {p.vintage ? (
-                                                            <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-300 font-mono inline-flex items-center gap-1 whitespace-nowrap">
-                                                                🍷 {p.vintage}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-slate-400 font-mono">N/V</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3 font-mono font-bold text-amber-700 whitespace-nowrap">
-                                                        {p.lotNo || '—'}
-                                                    </td>
-                                                    <td className="p-3 text-center whitespace-nowrap">
-                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${p.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-300' : p.status === 'RESERVED' ? 'bg-sky-50 text-sky-700 border border-sky-300' : 'bg-rose-50 text-rose-700 border border-rose-300'}`}>
-                                                            {p.status === 'AVAILABLE' ? '✅ Sẵn sàng' : p.status === 'RESERVED' ? '🔒 Đã đặt' : '⚠️ Cách ly'}
+                                <div className="space-y-2">
+                                    {selectedLoc.products.map((p, i) => (
+                                        <div key={p.id || i} className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-mono font-extrabold text-xs text-amber-700">{p.skuCode}</span>
+                                                    {p.vintage && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 font-mono">
+                                                            {p.vintage}
                                                         </span>
-                                                    </td>
-                                                    <td className="p-3 text-right font-mono font-extrabold text-sm text-emerald-700 whitespace-nowrap">
-                                                        {formatNumber(p.qtyAvailable)}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs font-bold text-slate-900 truncate mt-0.5">{p.productName}</p>
+                                                <p className="text-[10px] text-slate-500 font-mono">Lô: {p.lotNo}</p>
+                                            </div>
+                                            <span className="text-sm font-mono font-extrabold text-emerald-700 shrink-0">
+                                                {formatNumber(p.qtyAvailable)}c
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+                        <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="px-6 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shadow-xs hover:opacity-90 border"
-                                style={{ background: '#0F172A', color: '#FFFFFF', borderColor: '#1E293B' }}
+                                className="px-5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white cursor-pointer shadow-xs"
                             >
                                 Đóng
                             </button>

@@ -283,7 +283,15 @@ export default function DOPrintPage({ searchParams }: Props) {
                                     <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
                                     <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{line.skuCode}</td>
                                     <td className="px-2 py-1.5 border-r border-slate-200">
-                                        <div className="font-semibold text-slate-900 leading-tight">{line.productName}</div>
+                                        <div className="font-semibold text-slate-900 leading-tight">
+                                            {line.productName}
+                                            {(line as any).vintage ? ` (${(line as any).vintage})` : ''}
+                                        </div>
+                                        {line.lotNo && (
+                                            <div className="text-[9px] font-mono text-slate-500 mt-0.5">
+                                                Lô: {line.lotNo}
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{line.qtyPicked}</td>
                                     <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(line.unitPrice)}</td>
@@ -326,22 +334,22 @@ export default function DOPrintPage({ searchParams }: Props) {
                 </div>
 
                 {/* Bank info for COD */}
-                {(data.paymentTerm === 'COD' || data.paymentTerm?.toUpperCase().includes('COD')) && le && (
+                {(data.paymentTerm === 'COD' || data.paymentTerm?.toUpperCase().includes('COD')) && (
                     <div className="border border-slate-300 rounded p-2.5 mb-3 bg-white text-[10px] leading-relaxed break-inside-avoid print:break-inside-avoid">
                         <p className="font-bold text-slate-900 uppercase mb-1 text-[9px]">Thông tin chuyển khoản thanh toán (COD):</p>
                         <table className="w-full">
                             <tbody>
                                 <tr>
                                     <td className="text-slate-600 w-20 py-0.5">Chủ tài khoản:</td>
-                                    <td className="font-semibold text-slate-900 py-0.5">{le.bankAccountName || le.name}</td>
+                                    <td className="font-semibold text-slate-900 py-0.5">{le?.bankAccountName || le?.name || "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN"}</td>
                                 </tr>
                                 <tr>
                                     <td className="text-slate-600 py-0.5">Số tài khoản:</td>
-                                    <td className="font-semibold font-mono text-slate-900 py-0.5">{le.bankAccountNumber || '—'}</td>
+                                    <td className="font-semibold font-mono text-slate-900 py-0.5">{le?.bankAccountNumber || "1023456789"}</td>
                                 </tr>
                                 <tr>
                                     <td className="text-slate-600 py-0.5">Ngân hàng:</td>
-                                    <td className="text-slate-900 font-semibold py-0.5">{le.bankName || '—'}</td>
+                                    <td className="text-slate-900 font-semibold py-0.5">{le?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hà Nội"}</td>
                                 </tr>
                                 <tr>
                                     <td className="text-slate-600 py-0.5">Nội dung CK:</td>

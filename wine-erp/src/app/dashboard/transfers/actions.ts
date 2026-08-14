@@ -391,6 +391,7 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
                         qtyAvailable: line.qtyTransferred,
                         unitLandedCost: avgCost,
                         receivedDate: new Date(),
+                        vintage: sourceLot?.vintage ?? null,
                         status: 'AVAILABLE',
                     },
                 })

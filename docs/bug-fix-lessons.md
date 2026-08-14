@@ -1903,6 +1903,54 @@ Khi người dùng nhập mã Captcha và ấn **"Đăng Nhập & Đồng Bộ H
 
 > ⚠️ **RULE 74: Các mẫu in chứng từ chuẩn A4 (Biên bản kiểm kê, Hóa đơn, Phiếu xuất nhập kho) BẮT BỤC phải khai báo font chuẩn hành chính `"Times New Roman", Times, "Liberation Serif", serif` thay vì `font-serif` (để tránh lỗi Windows tự động fallback sang `Georgia` làm bể dấu tiếng Việt). Các chỉ số chênh lệch kiểm kê khi `qtyActual === null` (chưa đếm) BẮT BỤC phải hiển thị `-` (không được hiển thị `Khớp`).**
 
+---
+
+## BUG-047: Phiếu Nhận Chuyển Kho (Receive TransferOrder) Bị Mất Thông Tin Niên Vụ (Vintage) Khi Sinh Lô Hàng Mới Ở Kho Đích
+
+**Ngày:** 2026-08-14  
+**Severity:** 🟡 Medium — Khi thủ kho nhận hàng điều chuyển kho nội bộ, lô hàng mới sinh ra ở kho nhận bị `vintage = null`.
+
+### Triệu chứng
+1. Tạo phiếu chuyển kho `TO-2608-0002` chuyển sản phẩm có niên vụ (ví dụ: `L20068` Vintage 2023, `L40010` Vintage 2025) từ Kho Thường Tín sang Kho Thắng Ân.
+2. Khi xác nhận Đã Nhận Hàng (`RECEIVED`), bản ghi `StockLot` mới sinh ra tại Kho Thắng Ân bị trống niên vụ (`vintage = null`).
+3. Khi tiếp tục tạo phiếu chuyển kho hoặc xuất bán từ kho nhận, danh sách Vintage bị rỗng hoặc không chọn được niên vụ tương ứng.
+
+### Nguyên nhân gốc rễ
+Trong `src/app/dashboard/transfers/actions.ts`, hàm `receiveTransferOrder` khi gọi `tx.stockLot.create({ data: { ... } })` đã bỏ sót trường `vintage: sourceLot?.vintage ?? null`.
+
+### Cách fix
+Bổ sung `vintage: sourceLot?.vintage ?? null` vào payload tạo `StockLot` trong hàm `receiveTransferOrder` để đảm bảo 100% lô hàng ở kho nhận kế thừa chính xác niên vụ từ lô hàng gốc ở kho xuất.
+
+### Bài học
+
+> ⚠️ **RULE 75: Khi thực hiện giao dịch Điều chuyển kho nội bộ (`TransferOrder`), hàm tạo `StockLot` ở Kho Đích BẮT BỤC phải sao chép đầy đủ các thuộc tính chất lượng của sản phẩm bao gồm Niên Vụ (`vintage: sourceLot?.vintage`), Đơn giá vốn (`unitLandedCost`), và Pháp nhân sở hữu (`ownerEntityId`).**
+
+---
+
+## BUG-048: Giao Diện Sơ Đồ Kho 2D Bị Lộn Xộn & Khó Tương Tác Trên Điện Thoại Di Động
+
+**Ngày:** 2026-08-14  
+**Severity:** 🟡 Medium — Bản đồ 2D sơ đồ kho trên điện thoại bị tràn khung, thanh panel chiếm hết chiều ngang và thiếu chế độ xem thẻ danh sách tiện lợi cho thủ kho.
+
+### Triệu chứng
+1. Khi mở Sơ đồ kho (`WarehouseMapTab`) trên màn hình điện thoại (< 500px), thanh công cụ bị vỡ nhiều dòng, sidebar chú thích 300px chiếm hết diện tích và không thể thao tác kéo/zoom bằng ngón tay.
+2. Tọa độ các vị trí kho mới tạo bị rải rác không thẳng hàng.
+
+### Nguyên nhân gốc rễ
+1. Component `WarehouseMapTab.tsx` thiết kế ban đầu dựa trên sự kiện chuột desktop (`onMouseDown`, `onMouseMove`), thiếu touch gesture handlers (`onTouchStart`, `onTouchMove`, `onTouchEnd`).
+2. Thiếu chế độ xem dạng thẻ danh sách (Card List Grid) tối ưu cho màn hình cảm ứng dọc của smartphone.
+
+### Cách fix
+1. Bổ sung chế độ chuyển đổi linh hoạt: **🗺️ Bản Đồ 2D** và **📋 Thẻ Vị Trí Pallet (Card Grid)** với bộ lọc theo từng Zone.
+2. Tích hợp cảm ứng đa điểm: Kéo 1 ngón (`touch pan`), chụm/mở 2 ngón (`pinch-to-zoom`), và nút **🎯 Vừa Khung (Fit Screen)** tự động co giãn vừa vặn màn hình điện thoại.
+3. Đồng bộ tọa độ ngăn nắp theo hàng lối cho Kho Thường Tín (Zone A: Khu Pallet Mới, Zone B: Khu Kho Cũ).
+4. Thu gọn thanh Chú thích/Thống kê trên mobile thành Drawer/Bottom Sheet nổi.
+
+### Bài học
+
+> ⚠️ **RULE 76: Mọi màn hình sơ đồ không gian 2D (Warehouse Map, Floorplan) BẮT BỤC phải hỗ trợ: 1) Touch gestures (pan 1 ngón, pinch-to-zoom 2 ngón), 2) Nút tự động Fit Screen theo kích thước viewport, và 3) Chế độ xem phụ trợ dạng Thẻ Danh Sách (Responsive Card Grid) để tối ưu cho thao tác kiểm đếm bằng điện thoại di động của thủ kho.**
+
+
 
 
 

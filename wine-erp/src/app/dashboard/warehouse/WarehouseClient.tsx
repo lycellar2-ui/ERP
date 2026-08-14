@@ -209,7 +209,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                             <span className="text-xs text-[#94A3B8] font-mono">NV</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-1.5 font-mono font-bold text-amber-700 whitespace-nowrap">
+                                    <td className="px-3 py-1.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                                         {lot.lotNo}
                                     </td>
                                     <td className="px-3 py-1.5 whitespace-nowrap">
@@ -352,7 +352,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                         <tbody>
                             {lots.map((lot: any) => (
                                 <tr key={lot.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                    <td className="px-4 py-3 font-mono font-bold" style={{ color: '#B47816' }}>{lot.lotNo}</td>
+                                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{lot.lotNo}</td>
                                     <td className="px-4 py-3 font-semibold" style={{ color: '#0F172A' }}>{lot.product?.productName || lot.productId}</td>
                                     <td className="px-4 py-3 font-mono font-bold" style={{ color: '#0F172A' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
                                     <td className="px-4 py-3 font-mono text-[#64748B]">{lot.location?.locationCode || '—'}</td>

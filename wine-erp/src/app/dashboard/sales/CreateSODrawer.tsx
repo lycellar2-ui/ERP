@@ -1424,12 +1424,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.code}</td>
                                                 </tr>
                                                 <tr>
+                                                    <td className="text-slate-600 pr-2 py-0.5">SĐT liên hệ:</td>
+                                                    <td className="font-semibold font-mono text-slate-900 py-0.5">
+                                                        {selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || (selectedCustomer as any)?.contacts?.[0]?.phone || '—'}
+                                                    </td>
+                                                </tr>
+                                                <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Phân kênh:</td>
                                                     <td className="py-0.5 text-slate-900">{channel || '—'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Mã số thuế:</td>
-                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.taxId || '—'}</td>
+                                                    <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.taxId || (selectedCustomer as any)?.parent?.taxId || '—'}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -1440,8 +1446,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         <table className="w-full text-[10px]">
                                             <tbody>
                                                 <tr>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Người nhận:</td>
+                                                    <td className="font-semibold text-slate-900 py-0.5">{selectedCustomer?.receiverName || selectedCustomer?.name}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="text-slate-600 pr-2 py-0.5">SĐT nhận hàng:</td>
+                                                    <td className="font-bold font-mono text-slate-900 py-0.5">
+                                                        {selectedCustomer?.receiverPhone || selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || '—'}
+                                                    </td>
+                                                </tr>
+                                                <tr>
                                                     <td className="text-slate-600 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
-                                                    <td className="py-0.5 text-slate-900">{selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address || 'Nhận tại kho'}</td>
+                                                    <td className="py-0.5 text-slate-900">{selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address || selectedCustomer?.addresses?.[0]?.address || 'Nhận tại kho'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td className="text-slate-600 pr-2 py-0.5">Sales Rep:</td>
@@ -1457,11 +1473,21 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     </div>
                                 </div>
 
-                                {/* Ghi chú / Diễn giải đơn hàng */}
-                                {notes && (
-                                    <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed">
-                                        <span className="font-bold text-slate-900 uppercase">Ghi chú / Diễn giải: </span>
-                                        <span className="text-slate-800 italic">{notes}</span>
+                                {/* Ghi chú / Diễn giải đơn hàng & Lưu ý giao hàng */}
+                                {((selectedCustomer as any)?.deliveryNotes || notes) && (
+                                    <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed space-y-1">
+                                        {(selectedCustomer as any)?.deliveryNotes && (
+                                            <div>
+                                                <span className="font-bold text-amber-900 uppercase">📦 Lưu ý giao hàng: </span>
+                                                <span className="text-slate-900 font-medium">{(selectedCustomer as any).deliveryNotes}</span>
+                                            </div>
+                                        )}
+                                        {notes && (
+                                            <div>
+                                                <span className="font-bold text-slate-900 uppercase">Ghi chú / Diễn giải: </span>
+                                                <span className="text-slate-800 italic">{notes}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

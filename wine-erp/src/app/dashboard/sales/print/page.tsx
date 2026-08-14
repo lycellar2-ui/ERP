@@ -108,22 +108,30 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
         )
     }
 
-    // Calculations
+    // Calculations with robust support for old/new and Tasting orders
     const subtotal = order.lines.reduce((s: number, l) => {
         const qty = Number(l.qtyOrdered)
         const price = Number(l.unitPrice)
         const disc = Number(l.lineDiscountPct)
         return s + qty * price * (1 - disc / 100)
     }, 0)
-    const discountAmount = subtotal * (Number(order.orderDiscount) / 100)
+    const discountAmount = subtotal * (Number(order.orderDiscount ?? 0) / 100)
     const afterDiscount = subtotal - discountAmount
-    const vatIncluded = false
-    const vatAmount = vatIncluded ? 0 : afterDiscount * 0.1
-    const grandTotal = afterDiscount + vatAmount
+    const vatRate = (order as any).vatRate !== undefined && (order as any).vatRate !== null ? Number((order as any).vatRate) : 10
+    const vatAmount = (order as any).vatAmount !== undefined && (order as any).vatAmount !== null 
+        ? Number((order as any).vatAmount)
+        : afterDiscount * (vatRate / 100)
+    const grandTotal = (order as any).orderType === 'TASTING'
+        ? 0
+        : (order as any).totalAmount !== undefined && (order as any).totalAmount !== null && Number((order as any).totalAmount) > 0
+            ? (Number((order as any).vatAmount) > 0 ? Number((order as any).totalAmount) + Number((order as any).vatAmount) : Number((order as any).totalAmount))
+            : afterDiscount + vatAmount
 
-    // Address combination
-    const fullAddress = order.shippingAddress 
-        ? [order.shippingAddress.address, order.shippingAddress.ward, order.shippingAddress.district, order.shippingAddress.city].filter(Boolean).join(', ')
+    // Address combination with fallback to customer default address
+    const defaultAddr = order.customer.addresses?.[0]
+    const addr = order.shippingAddress || defaultAddr
+    const fullAddress = addr 
+        ? [addr.address, addr.ward, addr.district, addr.city].filter(Boolean).join(', ')
         : 'Nhận tại kho'
 
     const totalQty = order.lines.reduce((sum, l) => sum + Number(l.qtyOrdered), 0)
@@ -265,7 +273,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                 </tr>
                                 <tr>
                                     <td className="text-slate-600 pr-2 py-0.5">Sales Rep:</td>
-                                    <td className="py-0.5 text-slate-900">{order.salesRep.name}</td>
+                                    <td className="py-0.5 text-slate-900">{order.salesRep?.name || '—'}</td>
                                 </tr>
                                 <tr>
                                     <td className="text-slate-600 pr-2 py-0.5">Thanh toán:</td>
@@ -321,7 +329,10 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                     <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
                                     <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{product.skuCode}</td>
                                     <td className="px-2 py-1.5 border-r border-slate-200">
-                                        <div className="font-semibold text-slate-900 leading-tight">{product.productName}</div>
+                                        <div className="font-semibold text-slate-900 leading-tight">
+                                            {product.productName}
+                                            {(line as any).vintage ? ` (${(line as any).vintage})` : ''}
+                                        </div>
                                     </td>
                                     <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{Number(line.qtyOrdered)}</td>
                                     <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(Number(line.unitPrice))}</td>
@@ -347,16 +358,14 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                             </tr>
                             {discountAmount > 0 && (
                                 <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-600">Chiết khấu đơn ({Number(order.orderDiscount)}%):</td>
+                                    <td className="py-1 text-slate-600">Chiết khấu đơn ({Number(order.orderDiscount ?? 0)}%):</td>
                                     <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(discountAmount)}</td>
                                 </tr>
                             )}
-                            {!vatIncluded && (
-                                <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-600">Thuế VAT (10%):</td>
-                                    <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
-                                </tr>
-                            )}
+                            <tr className="border-b border-slate-200">
+                                <td className="py-1 text-slate-600">Thuế VAT ({vatRate}%):</td>
+                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
+                            </tr>
                             <tr className="font-bold border-t-2 border-black">
                                 <td className="py-1.5 text-slate-900 text-xs">Tổng cộng thanh toán:</td>
                                 <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(grandTotal)}</td>
@@ -374,7 +383,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                 <tr>
                                     <td className="text-slate-600 w-20 py-0.5">Chủ tài khoản:</td>
                                     <td className="font-semibold text-slate-900 py-0.5">
-                                        {(order as any).legalEntity?.bankAccountName || "CÔNG TY TNHH LY'S CELLARS"}
+                                        {(order as any).legalEntity?.bankAccountName || "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN"}
                                     </td>
                                 </tr>
                                 <tr>
@@ -386,7 +395,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                 <tr>
                                     <td className="text-slate-600 py-0.5">Ngân hàng:</td>
                                     <td className="text-slate-900 font-semibold py-0.5">
-                                        {(order as any).legalEntity?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hồ Chí Minh"}
+                                        {(order as any).legalEntity?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hà Nội"}
                                     </td>
                                 </tr>
                                 <tr>
