@@ -721,6 +721,23 @@ function SODetailDrawer({
                                         <span className="font-semibold" style={{ color: '#E8F1F2' }}>{detail.salesRep.name}</span>
                                     </div>
                                     <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                        <span style={{ color: '#4A6A7A' }}>SĐT nhận hàng:</span>
+                                        <span className="font-semibold font-mono" style={{ color: '#87CBB9' }}>
+                                            {(detail.customer as any).receiverPhone || (detail.customer as any).purchasingPhone || (detail.customer as any).contacts?.find((c: any) => c.isPrimary)?.phone || '—'}
+                                            {(detail.customer as any).receiverName && (detail.customer as any).receiverName !== detail.customer.name && (
+                                                <span className="text-[10px] ml-1 text-[#8AAEBB]">({(detail.customer as any).receiverName})</span>
+                                            )}
+                                        </span>
+                                    </div>
+                                    {detail.shippingAddress && (
+                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                            <span style={{ color: '#4A6A7A' }} className="shrink-0">Địa chỉ giao:</span>
+                                            <span className="font-medium text-right text-[#E8F1F2] text-[11px] ml-2">
+                                                {[detail.shippingAddress.address, detail.shippingAddress.ward, detail.shippingAddress.district, detail.shippingAddress.city].filter(Boolean).join(', ')}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
                                         <span style={{ color: '#4A6A7A' }}>Kỳ hạn thanh toán:</span>
                                         <span className="font-semibold" style={{ color: '#D4A853' }}>{detail.paymentTerm}</span>
                                     </div>

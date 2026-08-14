@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw } from 'lucide-react'
+import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
@@ -492,9 +492,24 @@ export function DeliveryOrderTab({ warehouses }: {
                                     Chi Tiết DO {detailData?.doNo ?? '...'}
                                 </h3>
                                 {detailData && (
-                                    <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
-                                        SO: {detailData.soNo} · KH: {detailData.customerName} · Kho: {detailData.warehouseName}
-                                    </p>
+                                    <div className="text-xs mt-1 space-y-0.5" style={{ color: '#64748B' }}>
+                                        <p>
+                                            <strong className="text-slate-900">SO:</strong> {detailData.soNo} · <strong className="text-slate-900">KH:</strong> {detailData.customerName} · <strong className="text-slate-900">Kho:</strong> {detailData.warehouseName}
+                                        </p>
+                                        {(detailData as any).customerPhone && (
+                                            <p className="flex items-center gap-1.5 font-mono text-emerald-700 font-bold">
+                                                <Phone size={11} /> {(detailData as any).customerPhone}
+                                                {(detailData as any).receiverName && (detailData as any).receiverName !== detailData.customerName && (
+                                                    <span className="text-slate-500 font-sans font-normal">({(detailData as any).receiverName})</span>
+                                                )}
+                                            </p>
+                                        )}
+                                        {(detailData as any).shippingAddress && (
+                                            <p className="flex items-center gap-1 text-[11px] text-slate-500 truncate" title={(detailData as any).shippingAddress}>
+                                                <MapPin size={10} className="shrink-0" /> {(detailData as any).shippingAddress}
+                                            </p>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                             <button onClick={() => setDetailData(null)} className="p-2 rounded-lg hover:bg-slate-100" style={{ color: '#64748B' }}><X size={18} /></button>

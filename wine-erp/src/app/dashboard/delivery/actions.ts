@@ -182,6 +182,8 @@ export interface RouteStopRow {
     id: string
     sequence: number
     customerName: string
+    receiverName?: string | null
+    customerPhone?: string | null
     customerAddress: string
     soNo: string
     status: string
@@ -201,7 +203,15 @@ export async function getRouteStops(routeId: string): Promise<RouteStopRow[]> {
                     so: {
                         select: {
                             soNo: true,
-                            customer: { select: { name: true } },
+                            customer: {
+                                select: {
+                                    name: true,
+                                    receiverName: true,
+                                    receiverPhone: true,
+                                    purchasingPhone: true,
+                                    contacts: { select: { phone: true, isPrimary: true } },
+                                }
+                            },
                             lines: { select: { id: true } },
                         },
                     },
@@ -212,19 +222,25 @@ export async function getRouteStops(routeId: string): Promise<RouteStopRow[]> {
         orderBy: { sequence: 'asc' },
     })
 
-    return stops.map((s, i) => ({
-        id: s.id,
-        sequence: s.sequence ?? i + 1,
-        customerName: s.do.so.customer.name,
-        customerAddress: s.address,
-        soNo: s.do.so.soNo,
-        status: s.status,
-        codAmount: Number(s.codAmount),
-        podSignedAt: s.podSignedAt,
-        notes: s.pod?.notes ?? null,
-        signatureUrl: s.pod?.signatureUrl ?? null,
-        itemCount: s.do.so.lines.length,
-    }))
+    return stops.map((s, i) => {
+        const cust = s.do.so.customer
+        const phone = cust.receiverPhone || cust.purchasingPhone || cust.contacts?.find(c => c.isPrimary)?.phone || cust.contacts?.[0]?.phone || null
+        return {
+            id: s.id,
+            sequence: s.sequence ?? i + 1,
+            customerName: cust.name,
+            receiverName: cust.receiverName || cust.name,
+            customerPhone: phone,
+            customerAddress: s.address,
+            soNo: s.do.so.soNo,
+            status: s.status,
+            codAmount: Number(s.codAmount),
+            podSignedAt: s.podSignedAt,
+            notes: s.pod?.notes ?? null,
+            signatureUrl: s.pod?.signatureUrl ?? null,
+            itemCount: s.do.so.lines.length,
+        }
+    })
 }
 
 // ── Record Delivery Failure (Reverse Logistics) ───
@@ -278,6 +294,7 @@ export type FailedDeliveryRow = {
     routeDate: Date
     driverName: string
     customerName: string
+    customerPhone?: string | null
     soNo: string
     codAmount: number
     failureReason: string
@@ -294,7 +311,19 @@ export async function getFailedDeliveries(): Promise<FailedDeliveryRow[]> {
             },
             do: {
                 select: {
-                    so: { select: { soNo: true, customer: { select: { name: true } } } },
+                    so: {
+                        select: {
+                            soNo: true,
+                            customer: {
+                                select: {
+                                    name: true,
+                                    receiverPhone: true,
+                                    purchasingPhone: true,
+                                    contacts: { select: { phone: true, isPrimary: true } },
+                                }
+                            }
+                        },
+                    },
                 },
             },
             pod: { select: { notes: true, confirmedAt: true } },
@@ -303,17 +332,22 @@ export async function getFailedDeliveries(): Promise<FailedDeliveryRow[]> {
         take: 50,
     })
 
-    return stops.map(s => ({
-        stopId: s.id,
-        routeDate: s.route.routeDate,
-        driverName: s.route.driver.name,
-        customerName: s.do.so.customer.name,
-        soNo: s.do.so.soNo,
-        codAmount: Number(s.codAmount),
-        failureReason: s.pod?.notes?.includes('[Lý do: ') ? (s.pod.notes.split(']')[0].replace('[Lý do: ', '') || 'UNKNOWN') : 'UNKNOWN',
-        notes: s.pod?.notes || null,
-        failedAt: s.pod?.confirmedAt ?? s.route.routeDate,
-    }))
+    return stops.map(s => {
+        const cust = s.do.so.customer
+        const phone = cust.receiverPhone || cust.purchasingPhone || cust.contacts?.find(c => c.isPrimary)?.phone || cust.contacts?.[0]?.phone || null
+        return {
+            stopId: s.id,
+            routeDate: s.route.routeDate,
+            driverName: s.route.driver.name,
+            customerName: cust.name,
+            customerPhone: phone,
+            soNo: s.do.so.soNo,
+            codAmount: Number(s.codAmount),
+            failureReason: s.pod?.notes?.includes('[Lý do: ') ? (s.pod.notes.split(']')[0].replace('[Lý do: ', '') || 'UNKNOWN') : 'UNKNOWN',
+            notes: s.pod?.notes || null,
+            failedAt: s.pod?.confirmedAt ?? s.route.routeDate,
+        }
+    })
 }
 
 // ── Schedule Redelivery ───────────────────────────
@@ -480,6 +514,8 @@ export type ShipperManifestStop = {
     id: string
     sequence: number
     customerName: string
+    receiverName?: string | null
+    customerPhone?: string | null
     address: string
     soNo: string
     itemCount: number
@@ -530,7 +566,15 @@ export async function getShipperManifest(
                             so: {
                                 select: {
                                     soNo: true,
-                                    customer: { select: { name: true } },
+                                    customer: {
+                                        select: {
+                                            name: true,
+                                            receiverName: true,
+                                            receiverPhone: true,
+                                            purchasingPhone: true,
+                                            contacts: { select: { phone: true, isPrimary: true } },
+                                        }
+                                    },
                                     lines: { select: { id: true } },
                                 },
                             },
@@ -546,20 +590,26 @@ export async function getShipperManifest(
 
     if (!route) return null
 
-    const stops: ShipperManifestStop[] = route.stops.map((s, i) => ({
-        id: s.id,
-        sequence: s.sequence ?? i + 1,
-        customerName: s.do.so.customer.name,
-        address: s.address,
-        soNo: s.do.so.soNo,
-        itemCount: s.do.so.lines.length,
-        codAmount: Number(s.codAmount),
-        status: s.status,
-        podSignedAt: s.podSignedAt,
-        signatureUrl: s.pod?.signatureUrl ?? null,
-        photoUrl: s.pod?.photoUrl ?? null,
-        notes: s.pod?.notes ?? null,
-    }))
+    const stops: ShipperManifestStop[] = route.stops.map((s, i) => {
+        const cust = s.do.so.customer
+        const phone = cust.receiverPhone || cust.purchasingPhone || cust.contacts?.find(c => c.isPrimary)?.phone || cust.contacts?.[0]?.phone || null
+        return {
+            id: s.id,
+            sequence: s.sequence ?? i + 1,
+            customerName: cust.name,
+            receiverName: cust.receiverName || cust.name,
+            customerPhone: phone,
+            address: s.address,
+            soNo: s.do.so.soNo,
+            itemCount: s.do.so.lines.length,
+            codAmount: Number(s.codAmount),
+            status: s.status,
+            podSignedAt: s.podSignedAt,
+            signatureUrl: s.pod?.signatureUrl ?? null,
+            photoUrl: s.pod?.photoUrl ?? null,
+            notes: s.pod?.notes ?? null,
+        }
+    })
 
     return {
         routeId: route.id,

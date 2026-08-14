@@ -212,6 +212,12 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                     <td className="font-mono text-slate-900 py-0.5">{order.customer.code}</td>
                                 </tr>
                                 <tr>
+                                    <td className="text-slate-600 pr-2 py-0.5">SĐT liên hệ:</td>
+                                    <td className="font-semibold font-mono text-slate-900 py-0.5">
+                                        {(order.customer as any).purchasingPhone || (order.customer as any).contacts?.find((c: any) => c.isPrimary)?.phone || (order.customer as any).contacts?.[0]?.phone || '—'}
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td className="text-slate-600 pr-2 py-0.5">MST VAT:</td>
                                     <td className="font-mono text-slate-900 py-0.5">
                                         {(order.customer as any).taxId ? (
@@ -244,6 +250,16 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         <table className="w-full text-[10px]">
                             <tbody>
                                 <tr>
+                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Người nhận:</td>
+                                    <td className="font-semibold text-slate-900 py-0.5">{(order.customer as any).receiverName || order.customer.name}</td>
+                                </tr>
+                                <tr>
+                                    <td className="text-slate-600 pr-2 py-0.5">SĐT nhận hàng:</td>
+                                    <td className="font-bold font-mono text-slate-900 py-0.5">
+                                        {(order.customer as any).receiverPhone || (order.customer as any).purchasingPhone || (order.customer as any).contacts?.find((c: any) => c.isPrimary)?.phone || '—'}
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td className="text-slate-600 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
                                     <td className="py-0.5 text-slate-900">{fullAddress}</td>
                                 </tr>
@@ -264,11 +280,21 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                     </div>
                 </div>
 
-                {/* Ghi chú / Diễn giải đơn hàng */}
-                {order.notes && (
-                    <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed">
-                        <span className="font-bold text-slate-900 uppercase">Ghi chú / Diễn giải: </span>
-                        <span className="text-slate-800 italic">{order.notes}</span>
+                {/* Ghi chú giao hàng & Diễn giải đơn hàng */}
+                {((order.customer as any).deliveryNotes || order.notes) && (
+                    <div className="mb-3 text-[10px] p-2 bg-slate-50 border border-slate-300 rounded leading-relaxed space-y-1">
+                        {(order.customer as any).deliveryNotes && (
+                            <div>
+                                <span className="font-bold text-amber-900 uppercase">📦 Lưu ý giao hàng: </span>
+                                <span className="text-slate-900 font-medium">{(order.customer as any).deliveryNotes}</span>
+                            </div>
+                        )}
+                        {order.notes && (
+                            <div>
+                                <span className="font-bold text-slate-900 uppercase">Ghi chú / Diễn giải: </span>
+                                <span className="text-slate-800 italic">{order.notes}</span>
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Truck, MapPin, Package, CheckCircle2, Clock, Plus, X, Save, Loader2, AlertCircle, ChevronDown, Camera, Image as ImageIcon, AlertTriangle, RotateCcw } from 'lucide-react'
+import { Truck, MapPin, Package, CheckCircle2, Clock, Plus, X, Save, Loader2, AlertCircle, ChevronDown, Camera, Image as ImageIcon, AlertTriangle, RotateCcw, Phone } from 'lucide-react'
 import {
     DeliveryRouteRow, DriverOption, VehicleOption, RouteStopRow,
     getDeliveryRoutes, updateRouteStatus, createDeliveryRoute, getDriversAndVehicles,
@@ -158,7 +158,19 @@ function EPODDrawer({ open, routeId, onClose }: {
                                             {stop.sequence}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{stop.customerName}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-semibold" style={{ color: '#E8F1F2' }}>{stop.customerName}</p>
+                                                {stop.customerPhone && (
+                                                    <span className="text-xs font-mono font-bold flex items-center gap-1 text-[#87CBB9]">
+                                                        <Phone size={10} /> {stop.customerPhone}
+                                                    </span>
+                                                )}
+                                                {stop.receiverName && stop.receiverName !== stop.customerName && (
+                                                    <span className="text-[11px]" style={{ color: '#8AAEBB' }}>
+                                                        ({stop.receiverName})
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-xs" style={{ color: '#4A6A7A' }}>{stop.customerAddress || 'Không có địa chỉ'}</p>
                                         </div>
                                     </div>

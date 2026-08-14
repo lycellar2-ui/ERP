@@ -298,7 +298,22 @@ export async function getDODetail(doId: string) {
     const d = await prisma.deliveryOrder.findUnique({
         where: { id: doId },
         include: {
-            so: { select: { soNo: true, customer: { select: { name: true } } } },
+            so: {
+                select: {
+                    soNo: true,
+                    shippingAddress: true,
+                    customer: {
+                        select: {
+                            name: true,
+                            receiverName: true,
+                            receiverPhone: true,
+                            purchasingPhone: true,
+                            deliveryNotes: true,
+                            contacts: { select: { phone: true, isPrimary: true } },
+                        }
+                    }
+                }
+            },
             warehouse: { select: { name: true } },
             lines: {
                 include: {
@@ -310,9 +325,19 @@ export async function getDODetail(doId: string) {
         },
     })
     if (!d) return null
+    const cust = d.so.customer
+    const customerPhone = cust.receiverPhone || cust.purchasingPhone || cust.contacts?.find(c => c.isPrimary)?.phone || cust.contacts?.[0]?.phone || null
+    const receiverName = cust.receiverName || cust.name
+    const addr = d.so.shippingAddress
+    const shippingAddress = addr ? [addr.address, addr.ward, addr.district, addr.city].filter(Boolean).join(', ') : null
+
     return {
         id: d.id, doNo: d.doNo, soNo: d.so.soNo,
-        customerName: d.so.customer.name,
+        customerName: cust.name,
+        customerPhone,
+        receiverName,
+        shippingAddress,
+        deliveryNotes: cust.deliveryNotes || null,
         warehouseName: d.warehouse.name, status: d.status, createdAt: d.createdAt,
         lines: d.lines.map(l => ({
             id: l.id, productName: l.product.productName, skuCode: l.product.skuCode,

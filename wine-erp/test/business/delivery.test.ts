@@ -7,9 +7,10 @@ const mockPrisma = {
     deliveryStop: {
         update: vi.fn(),
         findUnique: vi.fn(),
+        findMany: vi.fn(),
         count: vi.fn(),
     },
-    deliveryRoute: { update: vi.fn() },
+    deliveryRoute: { update: vi.fn(), findFirst: vi.fn() },
     $transaction: vi.fn(async (ops: any) => {
         if (Array.isArray(ops)) return Promise.all(ops)
         return ops()
@@ -18,7 +19,7 @@ const mockPrisma = {
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
-const { recordEPOD, recordDeliveryFailure } = await import('@/app/dashboard/delivery/actions')
+const { recordEPOD, recordDeliveryFailure, getRouteStops, getShipperManifest } = await import('@/app/dashboard/delivery/actions')
 
 beforeEach(() => { vi.clearAllMocks() })
 
@@ -103,3 +104,107 @@ describe('DLV-02: recordDeliveryFailure', () => {
         expect(result.error).toContain('Connection lost')
     })
 })
+
+// ═══════════════════════════════════════════════════
+// DLV-03: Customer Phone in Stops and Manifest
+// ═══════════════════════════════════════════════════
+
+describe('DLV-03: Customer Phone Resolution', () => {
+    it('should include customerPhone and receiverName in getRouteStops', async () => {
+        mockPrisma.deliveryStop.findMany.mockResolvedValue([
+            {
+                id: 'stop-1',
+                sequence: 1,
+                address: '123 Ba Dinh, Ha Noi',
+                status: 'PENDING',
+                codAmount: 500000,
+                podSignedAt: null,
+                pod: null,
+                do: {
+                    so: {
+                        soNo: 'SO-001',
+                        customer: {
+                            name: 'Nha Hang Sen',
+                            receiverName: 'Anh Tuan',
+                            receiverPhone: '0912345678',
+                            purchasingPhone: '0987654321',
+                            contacts: [{ phone: '0900000000', isPrimary: true }],
+                        },
+                        lines: [{ id: 'line-1' }, { id: 'line-2' }],
+                    },
+                },
+            },
+            {
+                id: 'stop-2',
+                sequence: 2,
+                address: '456 Hoan Kiem, Ha Noi',
+                status: 'PENDING',
+                codAmount: 0,
+                podSignedAt: null,
+                pod: null,
+                do: {
+                    so: {
+                        soNo: 'SO-002',
+                        customer: {
+                            name: 'Khach Hang VIP',
+                            receiverName: null,
+                            receiverPhone: null,
+                            purchasingPhone: null,
+                            contacts: [{ phone: '0933333333', isPrimary: true }],
+                        },
+                        lines: [{ id: 'line-3' }],
+                    },
+                },
+            },
+        ])
+
+        const stops = await getRouteStops('route-1')
+
+        expect(stops).toHaveLength(2)
+        expect(stops[0].customerPhone).toBe('0912345678')
+        expect(stops[0].receiverName).toBe('Anh Tuan')
+        expect(stops[1].customerPhone).toBe('0933333333')
+        expect(stops[1].receiverName).toBe('Khach Hang VIP')
+    })
+
+    it('should include customerPhone and receiverName in getShipperManifest', async () => {
+        mockPrisma.deliveryRoute.findFirst.mockResolvedValue({
+            id: 'route-1',
+            routeDate: new Date('2026-08-14'),
+            driver: { name: 'Nguyen Van Tai' },
+            vehicle: { plateNo: '29C-12345', type: 'VAN' },
+            status: 'IN_PROGRESS',
+            stops: [
+                {
+                    id: 'stop-1',
+                    sequence: 1,
+                    address: '789 Cau Giay, Ha Noi',
+                    codAmount: 1000000,
+                    status: 'PENDING',
+                    podSignedAt: null,
+                    pod: null,
+                    do: {
+                        so: {
+                            soNo: 'SO-003',
+                            customer: {
+                                name: 'Bar Sunset',
+                                receiverName: 'Chi Lan',
+                                receiverPhone: '0988888888',
+                                purchasingPhone: null,
+                                contacts: [],
+                            },
+                            lines: [{ id: 'l1' }],
+                        },
+                    },
+                },
+            ],
+        })
+
+        const manifest = await getShipperManifest('driver-1')
+
+        expect(manifest).not.toBeNull()
+        expect(manifest?.stops[0].customerPhone).toBe('0988888888')
+        expect(manifest?.stops[0].receiverName).toBe('Chi Lan')
+    })
+})
+

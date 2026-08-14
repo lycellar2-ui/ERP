@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from 'react'
 import {
     Truck, MapPin, CheckCircle2, Navigation, Camera, X, Loader2,
-    Package, ChevronRight, ArrowLeft, Clock
+    Package, ChevronRight, ArrowLeft, Clock, Phone
 } from 'lucide-react'
 import {
     ShipperManifest, ShipperManifestStop,
@@ -225,6 +225,22 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                             {cfg.label}
                                         </span>
                                     </div>
+                                    {stop.customerPhone && (
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <Phone size={11} style={{ color: '#87CBB9' }} />
+                                            <a href={`tel:${stop.customerPhone.replace(/\s+/g, '')}`}
+                                                className="text-xs font-mono font-bold hover:underline"
+                                                style={{ color: '#87CBB9' }}
+                                                onClick={e => e.stopPropagation()}>
+                                                {stop.customerPhone}
+                                            </a>
+                                            {stop.receiverName && stop.receiverName !== stop.customerName && (
+                                                <span className="text-[10px] truncate max-w-[120px]" style={{ color: '#8AAEBB' }}>
+                                                    ({stop.receiverName})
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                     <p className="text-xs mt-0.5 line-clamp-2" style={{ color: '#4A6A7A' }}>
                                         <MapPin size={10} className="inline mr-1" />{stop.address}
                                     </p>
@@ -247,6 +263,13 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                             {/* Action buttons */}
                             {!isDelivered && stop.status !== 'FAILED' && (
                                 <div className="flex gap-2 px-4 pb-3">
+                                    {stop.customerPhone && (
+                                        <a href={`tel:${stop.customerPhone.replace(/\s+/g, '')}`}
+                                            className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold justify-center"
+                                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                            <Phone size={12} /> Gọi
+                                        </a>
+                                    )}
                                     <a href={`https://maps.google.com/?q=${encodeURIComponent(stop.address)}`}
                                         target="_blank" rel="noopener"
                                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold flex-1 justify-center"
@@ -437,7 +460,16 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
 
             {/* Stop info card */}
             <div className="mx-4 mt-4 p-4 rounded-xl" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                <p className="text-sm font-semibold mb-1" style={{ color: '#E8F1F2' }}>{stop.customerName}</p>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                    <p className="text-sm font-semibold truncate" style={{ color: '#E8F1F2' }}>{stop.customerName}</p>
+                    {stop.customerPhone && (
+                        <a href={`tel:${stop.customerPhone.replace(/\s+/g, '')}`}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-bold shrink-0"
+                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                            <Phone size={11} /> {stop.customerPhone}
+                        </a>
+                    )}
+                </div>
                 <p className="text-xs mb-2" style={{ color: '#4A6A7A' }}>
                     <MapPin size={10} className="inline mr-1" />{stop.address}
                 </p>

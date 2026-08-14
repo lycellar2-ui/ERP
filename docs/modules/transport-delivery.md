@@ -37,7 +37,7 @@ Kỷ nguyên ERP không còn dùng giấy tờ thủ công quá nhiều.
 |---|---|---|
 | Delivery Route CRUD | `delivery/actions.ts` | Tạo, xem, cập nhật status route |
 | Driver & Vehicle Mgmt | `getDriversAndVehicles` | Dropdown tài xế + xe |
-| Route Stops | `getRouteStops` | Danh sách điểm giao per route |
+| Route Stops | `getRouteStops` | Danh sách điểm giao per route (kèm SĐT khách) |
 | **E-POD** | `recordEPOD` | Chữ ký điện tử + ghi chú xác nhận |
 | **POD Photo Upload** | `uploadPODPhoto` | Chụp ảnh bằng chứng giao hàng → Supabase |
 | **COD → AR Sync** | `syncCODToAR` | Thu hộ tiền → auto tạo AR Payment record |
@@ -47,5 +47,6 @@ Kỷ nguyên ERP không còn dùng giấy tờ thủ công quá nhiều.
 | **Shipper Manifest** | `getShipperManifest` | Bảng lộ trình ngày + stops + COD + POD status |
 | Delivery Stats | `getDeliveryStats` | KPI: total routes, delivered, in-progress, failed |
 | **Timemark Camera Watermark** | `ShipperView.tsx` | Đóng dấu ngày giờ + tọa độ GPS + tên khách hàng lên ảnh bằng chứng giao nhận (POD) bằng Canvas và tự động lưu về thư viện ảnh của Shipper |
+| **Customer Contact & Touch-to-call** | `ShipperView.tsx`, `actions.ts`, `warehouse/print/page.tsx` | Hiển thị SĐT khách hàng/người nhận, nút bấm gọi điện 1-chạm (Click-to-Call), in SĐT trên phiếu xuất kho DO và đơn bán hàng SO |
 
-*Last updated: 2026-07-16 22:50 | Wine ERP v7.6*
+*Last updated: 2026-08-14 12:15 | Wine ERP v7.8*

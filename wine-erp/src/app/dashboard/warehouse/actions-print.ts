@@ -12,8 +12,12 @@ export async function getDOPrintDetail(doId: string) {
                         select: {
                             name: true, code: true, taxId: true,
                             vatCompanyName: true, channel: true,
+                            receiverName: true, receiverPhone: true,
+                            purchasingName: true, purchasingPhone: true,
+                            deliveryNotes: true,
                             parent: { select: { name: true, taxId: true, vatCompanyName: true } },
                             addresses: { where: { isDefault: true }, take: 1 },
+                            contacts: { select: { name: true, phone: true, isPrimary: true } },
                         }
                     },
                     legalEntity: {
@@ -44,6 +48,13 @@ export async function getDOPrintDetail(doId: string) {
 
     const so = d.so
 
+    // Resolve customer phone
+    const primaryContact = so.customer.contacts?.find(c => c.isPrimary)
+    const firstContact = so.customer.contacts?.[0]
+    const customerPhone = so.customer.receiverPhone || so.customer.purchasingPhone || primaryContact?.phone || firstContact?.phone || null
+    const receiverName = so.customer.receiverName || so.customer.name
+    const deliveryNotes = so.customer.deliveryNotes || null
+
     // Build shipping address
     const addr = so.shippingAddress
     const fullAddress = addr
@@ -73,7 +84,15 @@ export async function getDOPrintDetail(doId: string) {
             channel: so.customer.channel,
             parentTaxId: so.customer.parent?.taxId ?? null,
             parentVatName: so.customer.parent?.vatCompanyName ?? so.customer.parent?.name ?? null,
+            phone: customerPhone,
+            receiverPhone: so.customer.receiverPhone ?? null,
+            receiverName: receiverName,
+            purchasingPhone: so.customer.purchasingPhone ?? null,
+            deliveryNotes: deliveryNotes,
         },
+        customerPhone,
+        receiverName,
+        deliveryNotes,
         // Shipping
         shippingAddress: fullAddress,
         salesRepName: so.salesRep.name,
