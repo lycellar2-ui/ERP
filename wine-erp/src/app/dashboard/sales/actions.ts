@@ -257,7 +257,7 @@ export async function getSalesOrderDetail(id: string) {
             legalEntity: true,
             warehouse: true,
             proposal: { select: { id: true, proposalNo: true, title: true, status: true, estimatedAmount: true } },
-            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, receiverName: true, receiverPhone: true, purchasingName: true, purchasingPhone: true, deliveryNotes: true, contacts: { select: { name: true, phone: true, isPrimary: true } }, addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }], take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }], take: 1 } } } } },
+            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, receiverName: true, receiverPhone: true, purchasingName: true, purchasingPhone: true, deliveryNotes: true, contacts: { select: { name: true, phone: true, isPrimary: true } }, addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }], take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }], take: 1 } } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {
@@ -310,7 +310,7 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
             legalEntity: true,
             warehouse: true,
             proposal: { select: { id: true, proposalNo: true, title: true, status: true, estimatedAmount: true } },
-            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } } } },
+            customer: { select: { id: true, name: true, code: true, creditLimit: true, paymentTerm: true, channel: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, receiverName: true, receiverPhone: true, purchasingName: true, purchasingPhone: true, deliveryNotes: true, contacts: { select: { name: true, phone: true, isPrimary: true } }, addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }], take: 1 }, parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }], take: 1 } } } } },
             salesRep: { select: { id: true, name: true } },
             shippingAddress: true,
             lines: {
@@ -440,6 +440,7 @@ export async function getCustomersForSO() {
                 id: true,
                 name: true,
                 code: true,
+                taxId: true,
                 creditLimit: true,
                 creditHold: true,
                 paymentTerm: true,
@@ -449,6 +450,18 @@ export async function getCustomersForSO() {
                 allowDirectSO: true,
                 brandGroup: true,
                 salesRepId: true,
+                receiverName: true,
+                receiverPhone: true,
+                purchasingName: true,
+                purchasingPhone: true,
+                contacts: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        isPrimary: true,
+                    }
+                },
                 addresses: {
                     select: {
                         id: true,
@@ -466,6 +479,7 @@ export async function getCustomersForSO() {
                         id: true,
                         name: true,
                         code: true,
+                        taxId: true,
                         creditLimit: true,
                         creditHold: true,
                         entityType: true,

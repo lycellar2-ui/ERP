@@ -41,6 +41,9 @@
 32. [BUG-043: Kế Toán & Trưởng Phòng Không Hiển Thị Nút Duyệt Tờ Trình Cơ Chế Giá](#bug-043-kế-toán--trưởng-phòng-không-hiển-thị-nút-duyệt-tờ-trình-cơ-chế-giá-do-hardcode-điều-kiện-isceo)
 33. [BUG-044: Tài Khoản Kế Toán Không Xem Được Danh Sách Khách Hàng (Chưa có khách hàng nào)](#bug-044-tài-khoản-kế-toán-không-xem-được-danh-sách-khách-hàng-chưa-có-khách-hàng-nào-do-lỗi-alias-role-và-quyền-mdmread)
 34. [BUG-045: Báo Cáo Nhập Xuất Tồn Sai Tồn Đầu Kỳ & Sai Số Liệu Luân Chuyển Khi Lọc Tất Cả Kho](#bug-045-báo-cáo-nhập-xuất-tồn-sai-tồn-đầu-kỳ--sai-số-liệu-luân-chuyển-khi-lọc-tất-cả-kho)
+35. [BUG-047: Phiếu Nhận Chuyển Kho (Receive TransferOrder) Bị Mất Thông Tin Niên Vụ (Vintage)](#bug-047-phiếu-nhận-chuyển-kho-receive-transferorder-bị-mất-thông-tin-niên-vụ-vintage-khi-sinh-lô-hàng-mới-ở-kho-đích)
+36. [BUG-048: Giao Diện Sơ Đồ Kho 2D Bị Lộn Xộn & Khó Tương Tác Trên Điện Thoại Di Động](#bug-048-giao-diện-sơ-đồ-kho-2d-bị-lộn-xộn--khó-tương-tác-trên-điện-thoại-di-động)
+37. [BUG-049: Vercel Build Fail — Type Error 'purchasingPhone' Không Tồn Tại Trên Type 'Customer' & Sai Trường createdAt Trên CustomerAddress OrderBy](#bug-049-vercel-build-fail--type-error-purchasingphone-không-tồn-tại-trên-type-customer--sai-trường-createdat-trên-customeraddress-orderby)
 
 ---
 
@@ -1949,6 +1952,36 @@ Bổ sung `vintage: sourceLot?.vintage ?? null` vào payload tạo `StockLot` tr
 ### Bài học
 
 > ⚠️ **RULE 76: Mọi màn hình sơ đồ không gian 2D (Warehouse Map, Floorplan) BẮT BỤC phải hỗ trợ: 1) Touch gestures (pan 1 ngón, pinch-to-zoom 2 ngón), 2) Nút tự động Fit Screen theo kích thước viewport, và 3) Chế độ xem phụ trợ dạng Thẻ Danh Sách (Responsive Card Grid) để tối ưu cho thao tác kiểm đếm bằng điện thoại di động của thủ kho.**
+
+---
+
+## BUG-049: Vercel Build Fail — Type Error 'purchasingPhone' Không Tồn Tại Trên Type 'Customer' & Sai Trường createdAt Trên CustomerAddress OrderBy
+
+**Ngày:** 2026-08-15  
+**Severity:** 🔴 Critical — Vercel Production Build bị chặn do lỗi TypeScript compile `Type error: Property 'purchasingPhone' does not exist on type 'Customer'`.
+
+### Triệu chứng
+1. Khi triển khai lên Vercel (`npm run build`), Next.js TypeScript check văng lỗi:
+   ```
+   ./src/app/dashboard/sales/CreateSODrawer.tsx:1429:76
+   Type error: Property 'purchasingPhone' does not exist on type 'Customer'.
+   ```
+2. Đồng thời phát hiện lỗi Prisma sort `Object literal may only specify known properties, and 'createdAt' does not exist in type 'CustomerAddressOrderByWithRelationInput'` tại `src/app/dashboard/sales/actions.ts:260` và `src/app/dashboard/warehouse/actions-print.ts:19`.
+
+### Nguyên nhân gốc rễ
+1. Trong `CreateSODrawer.tsx`, `interface Customer` chưa khai báo các thuộc tính liên hệ khách hàng (`purchasingName`, `purchasingPhone`, `receiverName`, `receiverPhone`, `contacts`, `taxId`).
+2. Trong `src/app/dashboard/sales/actions.ts`, hàm `getCustomersForSO()` query Prisma chưa `select` các trường thông tin liên hệ và mã số thuế (`taxId`, `purchasingName`, `purchasingPhone`, `receiverName`, `receiverPhone`, `contacts`).
+3. Model `CustomerAddress` trong `prisma/schema.prisma` không có trường `createdAt` (chỉ có `isDefault`, `id`, `label`, `address`, `ward`, `district`, `city`, `isBilling`), nhưng câu truy vấn `findUnique` lại sử dụng `addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] }`. Điều này phá vỡ type inference của toàn bộ hàm `getSalesOrderDetail` và `getDOPrintDetail`, kéo theo hàng loạt type error ở các component gọi hàm.
+
+### Cách fix
+1. Cập nhật `interface Customer` trong `CreateSODrawer.tsx` bổ sung đầy đủ các trường `purchasingName`, `purchasingPhone`, `receiverName`, `receiverPhone`, `contacts`, `taxId`.
+2. Bổ sung `taxId`, `purchasingName`, `purchasingPhone`, `receiverName`, `receiverPhone`, `contacts` vào mệnh đề `select` của `getCustomersForSO()` và đồng bộ `customer` select trong `getSalesOrderDetailWithMargin` với `getSalesOrderDetail`.
+3. Sửa `orderBy` của `addresses` thành `{ orderBy: [{ isDefault: 'desc' }, { id: 'asc' }] }` tại `src/app/dashboard/sales/actions.ts` và `src/app/dashboard/warehouse/actions-print.ts`.
+
+### Bài học
+
+> ⚠️ **RULE 77: Khi sắp xếp quan hệ lồng nhau trong Prisma (`addresses`, `contacts`), BẮT BỤC phải đối chiếu chính xác các trường hiện có trong `schema.prisma` (ví dụ `CustomerAddress` không có `createdAt`, dùng `id` hoặc `isDefault`). Khi thêm các trường hiển thị thông tin khách hàng trên UI/Drawer, BẮT BỤC phải khai báo đồng bộ cả `interface` TypeScript và mệnh đề `select` trong Server Action.**
+
 
 
 

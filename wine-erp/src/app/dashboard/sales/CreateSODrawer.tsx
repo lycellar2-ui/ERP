@@ -63,11 +63,21 @@ interface Customer {
     creditHold: boolean
     paymentTerm: string
     channel: string | null
-    defaultLegalEntityId: string | null
+    defaultLegalEntityId?: string | null
     parentId: string | null
     entityType: string
     allowDirectSO: boolean
     brandGroup: string | null
+    purchasingName?: string | null
+    purchasingPhone?: string | null
+    receiverName?: string | null
+    receiverPhone?: string | null
+    contacts?: {
+        id?: string
+        name?: string | null
+        phone?: string | null
+        isPrimary?: boolean
+    }[]
     addresses?: {
         id: string
         label: string
@@ -82,6 +92,7 @@ interface Customer {
         id: string
         name: string
         code: string
+        taxId?: string | null
         creditLimit: number
         creditHold: boolean
     } | null

@@ -16,7 +16,7 @@ export async function getDOPrintDetail(doId: string) {
                             purchasingName: true, purchasingPhone: true,
                             deliveryNotes: true,
                             parent: { select: { name: true, taxId: true, vatCompanyName: true } },
-                            addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }], take: 1 },
+                            addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }], take: 1 },
                             contacts: { select: { name: true, phone: true, isPrimary: true } },
                         }
                     },
