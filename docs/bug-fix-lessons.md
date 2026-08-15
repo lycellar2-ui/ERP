@@ -44,6 +44,7 @@
 35. [BUG-047: Phiếu Nhận Chuyển Kho (Receive TransferOrder) Bị Mất Thông Tin Niên Vụ (Vintage)](#bug-047-phiếu-nhận-chuyển-kho-receive-transferorder-bị-mất-thông-tin-niên-vụ-vintage-khi-sinh-lô-hàng-mới-ở-kho-đích)
 36. [BUG-048: Giao Diện Sơ Đồ Kho 2D Bị Lộn Xộn & Khó Tương Tác Trên Điện Thoại Di Động](#bug-048-giao-diện-sơ-đồ-kho-2d-bị-lộn-xộn--khó-tương-tác-trên-điện-thoại-di-động)
 37. [BUG-049: Vercel Build Fail — Type Error 'purchasingPhone' Không Tồn Tại Trên Type 'Customer' & Sai Trường createdAt Trên CustomerAddress OrderBy](#bug-049-vercel-build-fail--type-error-purchasingphone-không-tồn-tại-trên-type-customer--sai-trường-createdat-trên-customeraddress-orderby)
+38. [BUG-050: Phiếu Chuyển Kho Đã Hoàn Tất/Đang Vận Chuyển Bị Cảnh Báo Ảo 'Thiếu Tồn (0 chai sẵn)' Trong Drawer](#bug-050-phiếu-chuyển-kho-đã-hoàn-tấtđang-vận-chuyển-bị-cảnh-báo-ảo-thiếu-tồn-0-chai-sẵn-trong-drawer)
 
 ---
 
@@ -1981,6 +1982,34 @@ Bổ sung `vintage: sourceLot?.vintage ?? null` vào payload tạo `StockLot` tr
 ### Bài học
 
 > ⚠️ **RULE 77: Khi sắp xếp quan hệ lồng nhau trong Prisma (`addresses`, `contacts`), BẮT BỤC phải đối chiếu chính xác các trường hiện có trong `schema.prisma` (ví dụ `CustomerAddress` không có `createdAt`, dùng `id` hoặc `isDefault`). Khi thêm các trường hiển thị thông tin khách hàng trên UI/Drawer, BẮT BỤC phải khai báo đồng bộ cả `interface` TypeScript và mệnh đề `select` trong Server Action.**
+
+---
+
+## BUG-050: Phiếu Chuyển Kho Đã Hoàn Tất/Đang Vận Chuyển Bị Cảnh Báo Ảo 'Thiếu Tồn (0 chai sẵn)' Trong Drawer
+
+**Ngày:** 2026-08-15  
+**Severity:** 🟡 Medium / UX Logic — Khi mở chi tiết Phiếu chuyển kho đã xuất hoặc đã nhận hàng hoàn tất (`IN_TRANSIT`, `RECEIVED`), mục gợi ý nhặt hàng FIFO hiển thị cảnh báo `⚠️ Thiếu Tồn (0 chai sẵn) - Không tìm thấy lô hàng khả dụng ở Kho Xuất` gây hiểu nhầm hàng chưa được xuất.
+
+### Triệu chứng
+1. Mở chi tiết phiếu chuyển kho `TO-2608-0002` ở trạng thái `Đã Nhận Hàng (Hoàn tất)`.
+2. Hàng hóa (ví dụ: chai `L20069`) đã được trừ tồn kho Thường Tín và nhập vào kho Thắng Ân (Lô `TRF-000555`).
+3. Tuy nhiên, bảng "GỢI Ý VỊ TRÍ NHẶT HÀNG (PICK LIST FIFO)" lại hiển thị `⚠️ Thiếu Tồn (0 chai sẵn)` và báo đỏ `Không tìm thấy lô hàng khả dụng ở Kho Xuất`.
+
+### Nguyên nhân gốc rễ
+Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` truy vấn tồn kho khả dụng thời gian thực (`qtyAvailable`) tại Kho Xuất. Đối với các phiếu đã xuất hàng (`IN_TRANSIT`, `RECEIVED`), toàn bộ số lượng đã được xuất và trừ tồn tại kho xuất (tồn kho thời gian thực giảm về 0 nếu kho chỉ có đúng số lượng đó), dẫn đến việc thuật toán FIFO tưởng nhầm là kho xuất không đủ hàng.
+
+### Cách fix
+1. Trong `TransferDetailDrawer.tsx`, kiểm tra trạng thái phiếu chuyển kho:
+   - Nếu `status === 'RECEIVED'`: Chuyển giao diện sang chế độ xác nhận xanh lá `Trạng Thái Nhặt Hàng: Đã Xuất Kho & Nhập Kho Hoàn Tất`, hiển thị badge `🟢 Đã Xuất & Nhận Đủ ({qtyRequested} chai)` và thông báo xác nhận toàn bộ số lượng đã được xuất kho thành công từ kho đi và nhập đủ vào kho đích.
+   - Nếu `status === 'IN_TRANSIT'`: Chuyển giao diện sang chế độ `Đã Xuất Kho — Đang Vận Chuyển` với badge `🚚 Đã Xuất Kho ({qtyRequested} chai)`.
+   - Nếu `status === 'CANCELLED'`: Hiển thị thông báo phiếu đã hủy / từ chối.
+   - Chỉ hiển thị cảnh báo thiếu tồn `⚠️ Thiếu Tồn` đối với các phiếu đang chờ xử lý (`DRAFT`, `PENDING_APPROVAL`, `CONFIRMED`).
+2. Cập nhật nhãn vị trí trên bản in Pick List khi phiếu đã xuất thành `Đã xuất kho`.
+
+### Bài học
+
+> ⚠️ **RULE 78: Đối với các chứng từ kho đã hoàn tất xuất/nhập (`IN_TRANSIT`, `RECEIVED`, `DELIVERED`), UI BẮT BỤC phải phản ánh trạng thái lịch sử đã hoàn thành (Fulfillment Status), KHÔNG ĐƯỢC áp dụng các cảnh báo thiếu tồn của thời gian thực (Real-time Stock Check) lên chứng từ quá khứ.**
+
 
 
 

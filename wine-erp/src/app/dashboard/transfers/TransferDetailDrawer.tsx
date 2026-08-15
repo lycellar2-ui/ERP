@@ -371,70 +371,179 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     </div>
                                 )}
 
-                                {/* 📍 FIFO PICKING LOCATION SUGGESTIONS (GỢI Ý VỊ TRÍ NHẶT HÀNG CHO THỦ KHO) */}
-                                <div className="p-4 rounded-xl space-y-3" style={{ background: '#F0F9FF', border: '1px solid #BAE6FD' }}>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <MapPin size={16} className="text-sky-600" />
-                                            <h4 className="text-xs font-extrabold text-sky-950 uppercase tracking-wide">
-                                                Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO tại {detail.fromWarehouse})
-                                            </h4>
-                                        </div>
-                                        <button
-                                            onClick={() => { setPrintDocType('PICK_LIST'); setPrintModalOpen(true) }}
-                                            className="px-2.5 py-1 text-[11px] font-bold rounded bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-1 shadow-2xs cursor-pointer"
+                                {/* 📍 FIFO PICKING LOCATION / DISPATCH FULFILLMENT STATUS */}
+                                {(() => {
+                                    const isReceived = detail.status === 'RECEIVED'
+                                    const isInTransit = detail.status === 'IN_TRANSIT'
+                                    const isCancelled = detail.status === 'CANCELLED'
+                                    const isDispatchedOrDone = isReceived || isInTransit
+
+                                    if (isCancelled) {
+                                        return (
+                                            <div className="p-4 rounded-xl space-y-2 bg-rose-50 border border-rose-200">
+                                                <div className="flex items-center gap-2 text-rose-800">
+                                                    <ShieldAlert size={16} className="text-rose-600" />
+                                                    <h4 className="text-xs font-extrabold uppercase tracking-wide">
+                                                        Phiếu Chuyển Kho Đã Hủy / Bị Từ Chối
+                                                    </h4>
+                                                </div>
+                                                <p className="text-xs text-rose-700">
+                                                    Phiếu chuyển kho này không còn hiệu lực. Hàng hóa chưa hoặc không được xuất kho.
+                                                </p>
+                                            </div>
+                                        )
+                                    }
+
+                                    return (
+                                        <div
+                                            className="p-4 rounded-xl space-y-3"
+                                            style={
+                                                isReceived
+                                                    ? { background: '#F0FDF4', border: '1px solid #BBF7D0' }
+                                                    : isInTransit
+                                                    ? { background: '#EFF6FF', border: '1px solid #BFDBFE' }
+                                                    : { background: '#F0F9FF', border: '1px solid #BAE6FD' }
+                                            }
                                         >
-                                            <Printer size={12} /> In Phiếu Nhặt Hàng
-                                        </button>
-                                    </div>
-
-                                    {pickingLocations.length === 0 ? (
-                                        <p className="text-xs text-sky-700 italic">Đang tải gợi ý vị trí nhặt hàng...</p>
-                                    ) : (
-                                        <div className="space-y-2.5">
-                                            {pickingLocations.map(p => (
-                                                <div key={p.productId} className="p-3 bg-white rounded-lg border border-sky-200 shadow-2xs space-y-2">
-                                                    <div className="flex items-center justify-between flex-wrap gap-1">
-                                                        <div>
-                                                            <span className="font-mono font-bold text-amber-700 text-xs mr-1.5">[{p.skuCode}]</span>
-                                                            <span className="font-bold text-slate-900 text-xs">{p.productName}</span>
-                                                            {p.vintageRequested && <span className="ml-2 font-mono text-[10px] text-slate-500 font-semibold">({p.vintageRequested})</span>}
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[11px] font-mono font-bold text-sky-900">Yêu cầu: {p.qtyRequested} chai</span>
-                                                            {p.isSufficient ? (
-                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700">🟢 Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)</span>
-                                                            ) : (
-                                                                <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700">⚠️ Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Locations list for this product */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
-                                                        {p.pickingLocations.length === 0 ? (
-                                                            <div className="text-[11px] text-rose-600 font-semibold col-span-2">Không tìm thấy lô hàng khả dụng ở Kho Xuất</div>
-                                                        ) : p.pickingLocations.map((loc, i) => (
-                                                            <div key={i} className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200 text-xs">
-                                                                <div className="space-y-0.5">
-                                                                    <div className="flex items-center gap-1 font-mono font-extrabold text-slate-900">
-                                                                        <Layers size={12} className="text-sky-600" />
-                                                                        <span>Kệ/Vị trí: <span className="text-blue-700 font-bold">{loc.locationCode}</span></span>
-                                                                    </div>
-                                                                    <div className="text-[10px] text-slate-500 font-mono">Lô: {loc.lotNo} {loc.vintage ? `· Vintage ${loc.vintage}` : ''}</div>
-                                                                </div>
-                                                                <div className="text-right font-mono">
-                                                                    <span className="font-bold text-emerald-700 text-xs block">Nhặt {loc.qtyToPick} chai</span>
-                                                                    <span className="text-[10px] text-slate-400">Tồn kệ: {loc.qtyAvailable}</span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    {isReceived ? (
+                                                        <PackageCheck size={18} className="text-emerald-600 shrink-0" />
+                                                    ) : isInTransit ? (
+                                                        <Truck size={18} className="text-blue-600 shrink-0" />
+                                                    ) : (
+                                                        <MapPin size={16} className="text-sky-600 shrink-0" />
+                                                    )}
+                                                    <div>
+                                                        <h4
+                                                            className={`text-xs font-extrabold uppercase tracking-wide ${
+                                                                isReceived ? 'text-emerald-950' : isInTransit ? 'text-blue-950' : 'text-sky-950'
+                                                            }`}
+                                                        >
+                                                            {isReceived
+                                                                ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho & Nhập Kho Hoàn Tất`
+                                                                : isInTransit
+                                                                ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho (${detail.fromWarehouse}) — Đang Vận Chuyển`
+                                                                : `Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO tại ${detail.fromWarehouse})`}
+                                                        </h4>
+                                                        <p className="text-[11px] text-slate-600 mt-0.5">
+                                                            {isReceived
+                                                                ? `Toàn bộ hàng đã được xuất thành công từ ${detail.fromWarehouse} và nhập đủ vào ${detail.toWarehouse}.`
+                                                                : isInTransit
+                                                                ? `Hàng đã được trừ tồn tại ${detail.fromWarehouse}, đang trên đường chuyển đến ${detail.toWarehouse}.`
+                                                                : `Vị trí các lô hàng khả dụng theo nguyên tắc FIFO tại kho xuất.`}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            ))}
+                                                <button
+                                                    onClick={() => { setPrintDocType('PICK_LIST'); setPrintModalOpen(true) }}
+                                                    className={`px-2.5 py-1 text-[11px] font-bold rounded text-white flex items-center gap-1 shadow-2xs cursor-pointer ${
+                                                        isReceived ? 'bg-emerald-600 hover:bg-emerald-700' : isInTransit ? 'bg-blue-600 hover:bg-blue-700' : 'bg-sky-600 hover:bg-sky-700'
+                                                    }`}
+                                                >
+                                                    <Printer size={12} /> In Phiếu Nhặt Hàng
+                                                </button>
+                                            </div>
+
+                                            {pickingLocations.length === 0 ? (
+                                                <p className="text-xs text-slate-500 italic">Đang tải thông tin vị trí nhặt hàng...</p>
+                                            ) : (
+                                                <div className="space-y-2.5">
+                                                    {pickingLocations.map(p => (
+                                                        <div
+                                                            key={p.productId}
+                                                            className={`p-3 bg-white rounded-lg shadow-2xs space-y-2 border ${
+                                                                isReceived ? 'border-emerald-200' : isInTransit ? 'border-blue-200' : 'border-sky-200'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center justify-between flex-wrap gap-1">
+                                                                <div>
+                                                                    <span className="font-mono font-bold text-amber-700 text-xs mr-1.5">[{p.skuCode}]</span>
+                                                                    <span className="font-bold text-slate-900 text-xs">{p.productName}</span>
+                                                                    {p.vintageRequested && (
+                                                                        <span className="ml-2 font-mono text-[10px] text-slate-500 font-semibold">
+                                                                            ({p.vintageRequested})
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[11px] font-mono font-bold text-slate-900">
+                                                                        Yêu cầu: {p.qtyRequested} chai
+                                                                    </span>
+                                                                    {isReceived ? (
+                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                                                                            <CheckCircle2 size={10} /> Đã Xuất & Nhận Đủ ({p.qtyRequested} chai)
+                                                                        </span>
+                                                                    ) : isInTransit ? (
+                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-800 flex items-center gap-1">
+                                                                            <Truck size={10} /> Đã Xuất Kho ({p.qtyRequested} chai)
+                                                                        </span>
+                                                                    ) : p.isSufficient ? (
+                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700">
+                                                                            🟢 Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700">
+                                                                            ⚠️ Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Locations list or Completed Status */}
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+                                                                {isDispatchedOrDone && p.pickingLocations.length === 0 ? (
+                                                                    <div
+                                                                        className={`p-2 rounded text-xs flex items-center gap-2 col-span-2 ${
+                                                                            isReceived
+                                                                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
+                                                                                : 'bg-blue-50 text-blue-800 border border-blue-100'
+                                                                        }`}
+                                                                    >
+                                                                        {isReceived ? (
+                                                                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                                                                        ) : (
+                                                                            <Truck size={14} className="text-blue-600 shrink-0" />
+                                                                        )}
+                                                                        <span>
+                                                                            Đã xuất kho đủ <strong>{p.qtyRequested} chai</strong> (Tồn kho tại <em>{detail.fromWarehouse}</em> đã được trừ hoàn tất khi xuất hàng).
+                                                                        </span>
+                                                                    </div>
+                                                                ) : p.pickingLocations.length === 0 ? (
+                                                                    <div className="text-[11px] text-rose-600 font-semibold col-span-2">
+                                                                        Không tìm thấy lô hàng khả dụng ở Kho Xuất
+                                                                    </div>
+                                                                ) : (
+                                                                    p.pickingLocations.map((loc, i) => (
+                                                                        <div key={i} className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200 text-xs">
+                                                                            <div className="space-y-0.5">
+                                                                                <div className="flex items-center gap-1 font-mono font-extrabold text-slate-900">
+                                                                                    <Layers size={12} className="text-sky-600" />
+                                                                                    <span>Kệ/Vị trí: <span className="text-blue-700 font-bold">{loc.locationCode}</span></span>
+                                                                                </div>
+                                                                                <div className="text-[10px] text-slate-500 font-mono">
+                                                                                    Lô: {loc.lotNo} {loc.vintage ? `· Vintage ${loc.vintage}` : ''}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-right font-mono">
+                                                                                <span className="font-bold text-emerald-700 text-xs block">
+                                                                                    {isDispatchedOrDone ? 'Đã nhặt' : 'Nhặt'} {loc.qtyToPick} chai
+                                                                                </span>
+                                                                                <span className="text-[10px] text-slate-400">
+                                                                                    {isDispatchedOrDone ? `Tồn dư hiện tại: ${loc.qtyAvailable}` : `Tồn kệ: ${loc.qtyAvailable}`}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
+                                    )
+                                })()}
 
                                 {/* Line Items Table */}
                                 <div className="rounded-xl overflow-hidden shadow-2xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -731,7 +840,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 {pickingLocations.flatMap(p => 
                                                     p.pickingLocations.length > 0 
                                                         ? p.pickingLocations.map((loc, idx) => ({ ...loc, skuCode: p.skuCode, productName: p.productName, isFirst: idx === 0, count: p.pickingLocations.length }))
-                                                        : [{ lotId: '', lotNo: '—', locationId: '', locationCode: 'Chưa xếp kệ', zone: '', rack: '', bin: '', vintage: p.vintageRequested, qtyAvailable: 0, qtyToPick: p.qtyRequested, skuCode: p.skuCode, productName: p.productName, isFirst: true, count: 1 }]
+                                                        : [{ lotId: '', lotNo: '—', locationId: '', locationCode: (detail.status === 'RECEIVED' || detail.status === 'IN_TRANSIT') ? 'Đã xuất kho' : 'Chưa xếp kệ', zone: '', rack: '', bin: '', vintage: p.vintageRequested, qtyAvailable: 0, qtyToPick: p.qtyRequested, skuCode: p.skuCode, productName: p.productName, isFirst: true, count: 1 }]
                                                 ).map((row, idx) => (
                                                     <tr key={idx} className="border-b border-slate-300 align-middle">
                                                         <td className="px-2 py-2 text-center text-slate-600 border-r border-slate-300 font-mono">{idx + 1}</td>
