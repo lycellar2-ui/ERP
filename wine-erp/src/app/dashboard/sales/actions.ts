@@ -810,13 +810,16 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             }
         }
 
-        // --- 3. Validate Single VAT Rate across all lines ---
+        // --- 3. Compute dynamic VAT amount across all lines ---
+        const orderDiscountMultiplier = 1 - (input.orderDiscount ?? 0) / 100
+        let vatAmount = 0
         const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
-        if (distinctVatRates.length > 1) {
-            return {
-                success: false,
-                error: `Mỗi đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất để xuất hóa đơn. Đơn hiện tại có các mức VAT: ${distinctVatRates.join('%, ')}%.`
-            }
+
+        for (const l of input.lines) {
+            const lineAmount = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
+            const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
+            const rate = l.vatRate ?? 10
+            vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
         }
 
         // --- 4. Create the SO ---
@@ -829,16 +832,6 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
         }, 0)
 
         const finalAmount = totalAmount * (1 - (input.orderDiscount ?? 0) / 100)
-
-        // Calculate dynamic VAT amount
-        let vatAmount = 0
-        const orderDiscountMultiplier = 1 - (input.orderDiscount ?? 0) / 100
-        for (const l of input.lines) {
-            const lineAmount = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
-            const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
-            const rate = l.vatRate ?? 10
-            vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
-        }
 
         const orderDateObj = input.orderDate ? new Date(input.orderDate) : new Date()
 
@@ -855,7 +848,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 shippingAddressId: input.shippingAddressId ?? null,
                 orderDiscount: input.orderDiscount ?? 0,
                 totalAmount: finalAmount,
-                vatRate: 10,
+                vatRate: distinctVatRates.length === 1 ? distinctVatRates[0] : 10,
                 vatAmount: Math.round(vatAmount),
                 status: 'DRAFT',
                 legalEntityId: input.legalEntityId,
@@ -971,18 +964,11 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             }
         }
 
-        // Validate Single VAT Rate across all lines
-        const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
-        if (distinctVatRates.length > 1) {
-            return {
-                success: false,
-                error: `Mỗi đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất để xuất hóa đơn. Đơn hiện tại đang có các mức VAT: ${distinctVatRates.join('%, ')}%.`
-            }
-        }
-
-        // Calculate dynamic VAT amount
-        let vatAmount = 0
+        // Calculate dynamic VAT amount across all lines
         const orderDiscountMultiplier = 1 - (input.orderDiscount ?? 0) / 100
+        let vatAmount = 0
+        const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
+
         for (const l of input.lines) {
             const lineAmount = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
             const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
@@ -1003,7 +989,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     paymentTerm: input.paymentTerm,
                     orderDiscount: input.orderDiscount ?? 0,
                     totalAmount: finalAmount,
-                    vatRate: 10,
+                    vatRate: distinctVatRates.length === 1 ? distinctVatRates[0] : 10,
                     vatAmount: Math.round(vatAmount),
                     legalEntityId: input.legalEntityId,
                     shippingAddressId: input.shippingAddressId ?? null,

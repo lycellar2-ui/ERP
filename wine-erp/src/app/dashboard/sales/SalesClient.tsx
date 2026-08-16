@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
@@ -445,6 +445,20 @@ function SODetailDrawer({
         return () => { cancelled = true }
     }, [soId, canSeeMargin])
 
+    const detailVatBreakdown = useMemo(() => {
+        if (!detail?.lines) return []
+        const map: Record<number, number> = {}
+        const discountMultiplier = 1 - Number(detail.orderDiscount ?? 0) / 100
+        for (const l of detail.lines) {
+            const rate = (l as any).vatRate !== undefined && (l as any).vatRate !== null ? Number((l as any).vatRate) : 10
+            const lineVal = Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct ?? 0) / 100) * discountMultiplier
+            map[rate] = (map[rate] || 0) + lineVal * (rate / 100)
+        }
+        return Object.entries(map)
+            .map(([rateStr, amt]) => ({ rate: Number(rateStr), amount: Math.round(amt) }))
+            .sort((a, b) => a.rate - b.rate)
+    }, [detail])
+
     const getStepTimestamp = (step: SOStatus, orderCreatedAt: Date | string, orderUpdatedAt: Date | string, orderStatus: string): Date | null => {
         if (step === 'DRAFT') return new Date(orderCreatedAt)
         
@@ -762,10 +776,25 @@ function SODetailDrawer({
                                             <span style={{ color: '#4A6A7A' }}>Tổng tiền trước thuế (Sau CK):</span>
                                             <span className="font-bold font-mono text-sm" style={{ color: '#E8F1F2' }}>{formatVND(Number(detail.totalAmount))}</span>
                                         </div>
-                                        <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
-                                            <span style={{ color: '#4A6A7A' }}>Tiền thuế VAT:</span>
-                                            <span className="font-bold font-mono" style={{ color: '#8AAEBB' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
-                                        </div>
+                                        {detailVatBreakdown.length > 1 ? (
+                                            <>
+                                                {detailVatBreakdown.map((vb: { rate: number; amount: number }) => (
+                                                    <div key={vb.rate} className="flex justify-between py-0.5 pl-2 text-[11px]" style={{ color: '#8AAEBB' }}>
+                                                        <span>↳ Thuế GTGT ({vb.rate}%):</span>
+                                                        <span className="font-mono">{formatVND(vb.amount)}</span>
+                                                    </div>
+                                                ))}
+                                                <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                                    <span style={{ color: '#4A6A7A' }}>Tổng tiền thuế VAT:</span>
+                                                    <span className="font-bold font-mono" style={{ color: '#8AAEBB' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
+                                                <span style={{ color: '#4A6A7A' }}>Tiền thuế VAT ({detailVatBreakdown[0]?.rate ?? (detail as any).vatRate ?? 10}%):</span>
+                                                <span className="font-bold font-mono" style={{ color: '#8AAEBB' }}>{formatVND(Number(detail.vatAmount ?? 0))}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
                                             <span style={{ color: '#4A6A7A' }}>Tổng thanh toán (Có VAT):</span>
                                             <span className="font-bold font-mono text-sm text-[#87CBB9]">{formatVND(Number(detail.totalAmount) + Number(detail.vatAmount ?? 0))}</span>

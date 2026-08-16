@@ -2010,6 +2010,36 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 78: Đối với các chứng từ kho đã hoàn tất xuất/nhập (`IN_TRANSIT`, `RECEIVED`, `DELIVERED`), UI BẮT BỤC phải phản ánh trạng thái lịch sử đã hoàn thành (Fulfillment Status), KHÔNG ĐƯỢC áp dụng các cảnh báo thiếu tồn của thời gian thực (Real-time Stock Check) lên chứng từ quá khứ.**
 
+---
+
+## BUG-051: Đơn Hàng Không Tách Đa Thuế Suất VAT (8% và 10%) & Bị Chặn Khi Có Nhiều Mức Thuế
+
+**Ngày:** 2026-08-16  
+**Severity:** 🟡 Medium / Financial & Tax Compliance — Đơn hàng chứa sản phẩm đồ uống không cồn (ZERO alcohol - thuế suất 8% theo NĐ 72/2024/NĐ-CP) và vang có cồn (10%) bị gộp thuế hoặc bị chặn bởi Single VAT validation.
+
+### Triệu chứng
+1. Đơn hàng `SO-2608-0048` (Samé Bistro) chứa mã `L10036` (La Jara ZERO Sparkling Rosé) và `L20016` (Famille Lancon La Solitude Rouge) nhưng không tách 2 dòng thuế 8% và 10%, mà gom chung 10%.
+2. Form tạo/sửa SO tự động ép VAT dòng thứ 2 theo dòng thứ 1 và cảnh báo chặn `Mỗi hóa đơn/đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất`.
+3. Phiếu in đơn hàng và Drawer chỉ hiển thị 1 dòng `Thuế VAT (10%)`.
+
+### Nguyên nhân gốc rễ
+1. Dữ liệu Master Data: Bảng `Product` của `L10036` và `L10035` để mặc định `vatRate = 10` thay vì `8`.
+2. Validation & Auto-inherit: `CreateSODrawer.tsx`, `EditSODrawer.tsx` và `actions.ts` (`createSalesOrder`, `updateSalesOrder`) có logic ép và chặn nhiều mức VAT.
+3. Phiếu in và Drawer: Chưa tính và bóc tách nhóm thuế (Tax Breakdown Grouping) theo từng mức thuế suất.
+
+### Cách fix
+1. Cập nhật `vatRate = 8%` cho các dòng sản phẩm ZERO không cồn (`L10035`, `L10036`) trong Master Data và cập nhật lại số tiền thuế VAT cho đơn `SO-2608-0048`.
+2. Bỏ ràng buộc ép 1 mức VAT duy nhất trong `CreateSODrawer`, `EditSODrawer`, và `actions.ts`. Tính tiền thuế VAT động theo từng dòng: `lineVat = lineAmtAfterOrderDiscount * (line.vatRate / 100)`.
+3. Cập nhật `CreateSODrawer`, `EditSODrawer`, `SODetailDrawer` (`SalesClient.tsx`) và mẫu in đơn hàng (`sales/print/page.tsx`) để tự động tổng hợp và hiển thị bảng bóc tách chi tiết:
+   - `Thuế GTGT (8%): [Số tiền]`
+   - `Thuế GTGT (10%): [Số tiền]`
+   - Thêm cột `VAT %` trên bảng sản phẩm bản in khi đơn có nhiều mức thuế.
+
+### Bài học
+
+> ⚠️ **RULE 79: Đơn hàng và chứng từ thương mại BẮT BỤC phải hỗ trợ đa mức thuế suất VAT (Multi-rate VAT: 0%, 5%, 8%, 10%) theo từng dòng sản phẩm (Line-item Tax). Tổng tiền thuế phải được tính toán độc lập theo từng mức thuế và hiển thị bóc tách rõ ràng (Tax Breakdown Summary) trên cả Drawer chi tiết và Mẫu in chứng từ (Print A4).**
+
+
 
 
 

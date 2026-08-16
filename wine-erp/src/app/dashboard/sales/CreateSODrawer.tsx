@@ -452,23 +452,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     }
 
     const addLine = () => {
-        const existingLine = lines.find(l => l.productId)
-        const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : 10
-        setLines(prev => [...prev, { productId: '', productName: '', skuCode: '', qtyOrdered: 1, unitPrice: 0, lineDiscountPct: 0, stock: 0, priceSource: null, vatRate: inheritedVatRate }])
+        setLines(prev => [...prev, { productId: '', productName: '', skuCode: '', qtyOrdered: 1, unitPrice: 0, lineDiscountPct: 0, stock: 0, priceSource: null, vatRate: 10 }])
     }
 
     const updateLine = (i: number, field: keyof SOLine, value: any) => {
         setLines(prev => {
-            let newVatRate: number | null = null
-            if (field === 'vatRate') {
-                newVatRate = Number(value)
-                toast.info(`Đã áp dụng thuế suất VAT ${newVatRate}% đồng bộ cho toàn bộ đơn hàng`)
-            }
-
             return prev.map((l, idx) => {
-                if (field === 'vatRate' && newVatRate !== null) {
-                    return { ...l, vatRate: newVatRate }
-                }
                 if (idx !== i) return l
                 if (field === 'productId') {
                     const p = products.find(p => p.id === value)!
@@ -487,14 +476,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                         [i]: `[${p.skuCode}] ${p.productName}`
                     }))
 
-                    const existingLine = prev.find((item, itemIdx) => itemIdx !== i && item.productId)
-                    const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (p?.vatRate ? Number(p.vatRate) : 10)
-
-                    if (existingLine && p?.vatRate && Number(p.vatRate) !== inheritedVatRate) {
-                        toast.info(`Sản phẩm "${p.productName}" có VAT gốc ${p.vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo đơn hàng để đồng nhất 1 loại thuế suất.`)
-                    }
-
-                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, lineDiscountPct: 0, priceSource, vatRate: inheritedVatRate }
+                    const prodVat = p?.vatRate !== undefined ? Number(p.vatRate) : 10
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, lineDiscountPct: 0, priceSource, vatRate: prodVat }
                 }
                 return { ...l, [field]: value }
             })
@@ -514,6 +497,19 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     }, 0)
     const finalTotal = subtotal * (1 - orderDiscount / 100) + vatAmount
 
+    const vatBreakdown = useMemo(() => {
+        const map: Record<number, { amount: number; rate: number }> = {}
+        const discountMultiplier = 1 - orderDiscount / 100
+        for (const l of lines) {
+            if (!l.productId) continue
+            const rate = l.vatRate ?? 10
+            const lineAmt = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100) * discountMultiplier
+            if (!map[rate]) map[rate] = { amount: 0, rate }
+            map[rate].amount += lineAmt * (rate / 100)
+        }
+        return Object.values(map).sort((a, b) => a.rate - b.rate)
+    }, [lines, orderDiscount])
+
     const effectiveCreditLimit = selectedCustomer
         ? (selectedCustomer.parentId && Number(selectedCustomer.creditLimit) === 0 && selectedCustomer.parent)
             ? Number(selectedCustomer.parent.creditLimit)
@@ -528,11 +524,6 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         if (!legalEntityId) return toast.error('Vui lòng chọn pháp nhân xuất tuyến')
         if (lines.length === 0) return toast.error('Thêm ít nhất 1 sản phẩm')
         if (lines.some(l => !l.productId)) return toast.error('Vui lòng chọn sản phẩm cho tất cả các dòng')
-
-        const distinctVat = Array.from(new Set(lines.map(l => Number(l.vatRate ?? 10))))
-        if (distinctVat.length > 1) {
-            return toast.error(`Mỗi hóa đơn/đơn hàng chỉ được phép có 1 loại thuế suất VAT duy nhất! Đơn hiện tại đang dính các mức: ${distinctVat.join('%, ')}%.`)
-        }
 
         setSaving(true)
         const promise = createSalesOrder({
@@ -1317,10 +1308,25 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         <p>Trước thuế (Sau CK)</p>
                                         <p className="font-mono">{formatVND(subtotal * (1 - orderDiscount / 100))}</p>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs text-[#8AAEBB] mb-2.5">
-                                        <p>Thuế VAT</p>
-                                        <p className="font-mono">{formatVND(vatAmount)}</p>
-                                    </div>
+                                    {vatBreakdown.length > 1 ? (
+                                        <div className="space-y-1 my-2 py-2 border-y border-[#2A4355]/40 text-xs text-[#8AAEBB]">
+                                            {vatBreakdown.map(vb => (
+                                                <div key={vb.rate} className="flex justify-between items-center pl-2">
+                                                    <p>↳ Thuế GTGT ({vb.rate}%)</p>
+                                                    <p className="font-mono">{formatVND(Math.round(vb.amount))}</p>
+                                                </div>
+                                            ))}
+                                            <div className="flex justify-between items-center font-semibold pt-1 text-[#E8F1F2]">
+                                                <p>Tổng tiền thuế VAT</p>
+                                                <p className="font-mono">{formatVND(Math.round(vatAmount))}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-between items-center text-xs text-[#8AAEBB] mb-2.5">
+                                            <p>Thuế VAT ({vatBreakdown[0]?.rate ?? 10}%)</p>
+                                            <p className="font-mono">{formatVND(Math.round(vatAmount))}</p>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid #2A4355' }}>
                                         <p className="text-sm font-semibold" style={{ color: '#8AAEBB' }}>Tổng Thanh Toán (Gồm VAT)</p>
                                         <p className="text-xl font-bold" style={{ color: '#87CBB9' }}>
@@ -1557,10 +1563,25 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(subtotal * (orderDiscount / 100))}</td>
                                                 </tr>
                                             )}
-                                            <tr className="border-b border-slate-200">
-                                                <td className="py-1 text-slate-600">Thuế VAT:</td>
-                                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
-                                            </tr>
+                                            {vatBreakdown.length > 1 ? (
+                                                <>
+                                                    {vatBreakdown.map(vb => (
+                                                        <tr key={vb.rate} className="border-b border-slate-200">
+                                                            <td className="py-1 text-slate-600">Thuế GTGT ({vb.rate}%):</td>
+                                                            <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(vb.amount))}</td>
+                                                        </tr>
+                                                    ))}
+                                                    <tr className="border-b border-slate-200 font-semibold">
+                                                        <td className="py-1 text-slate-700">Tổng tiền thuế VAT:</td>
+                                                        <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(vatAmount))}</td>
+                                                    </tr>
+                                                </>
+                                            ) : (
+                                                <tr className="border-b border-slate-200">
+                                                    <td className="py-1 text-slate-600">Thuế VAT ({vatBreakdown[0]?.rate ?? 10}%):</td>
+                                                    <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(vatAmount))}</td>
+                                                </tr>
+                                            )}
                                             <tr className="font-bold border-t-2 border-black">
                                                 <td className="py-1.5 text-slate-900 text-xs">Tổng cộng thanh toán:</td>
                                                 <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(finalTotal)}</td>
