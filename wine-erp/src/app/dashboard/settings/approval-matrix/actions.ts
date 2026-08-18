@@ -30,10 +30,25 @@ export interface SystemRoleInfo {
     name: string
 }
 
+export interface PORouteConfig {
+    creatorRoles: string[]
+    steps: StepRoleConfig[]
+}
+
 export interface ApprovalMatrixData {
     proposalRoutes: ProposalRouteConfig[]
+    poRoute: PORouteConfig
     thresholds: ThresholdConfig[]
     availableRoles: SystemRoleInfo[]
+}
+
+export const DEFAULT_PO_ROUTING: PORouteConfig = {
+    creatorRoles: ['THU_MUA', 'ADMIN'],
+    steps: [
+        { level: 1, role: 'THU_MUA', label: 'Trưởng Phòng Mua Hàng' },
+        { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng / GĐ Tài Chính' },
+        { level: 3, role: 'CEO', label: 'Tổng Giám Đốc (CEO)' },
+    ]
 }
 
 // Available system roles for selection
@@ -216,6 +231,16 @@ export async function getApprovalMatrix(): Promise<ApprovalMatrixData> {
             return defaultCfg
         })
 
+        // Build PO route
+        const dbPoValue = configMap.get('procurement.purchase_order')
+        let poRoute: PORouteConfig = DEFAULT_PO_ROUTING
+        if (dbPoValue && typeof dbPoValue === 'object') {
+            const val = dbPoValue as any
+            const creatorRoles: string[] = Array.isArray(val.creatorRoles) ? val.creatorRoles : DEFAULT_PO_ROUTING.creatorRoles
+            const steps: StepRoleConfig[] = Array.isArray(val.steps) && val.steps.length > 0 ? val.steps : DEFAULT_PO_ROUTING.steps
+            poRoute = { creatorRoles, steps }
+        }
+
         // Build thresholds
         const thresholds: ThresholdConfig[] = DEFAULT_THRESHOLDS.map(dt => {
             const dbValue = configMap.get(dt.key)
@@ -225,8 +250,43 @@ export async function getApprovalMatrix(): Promise<ApprovalMatrixData> {
             return { ...dt, value }
         })
 
-        return { proposalRoutes, thresholds, availableRoles: SYSTEM_ROLES }
+        return { proposalRoutes, poRoute, thresholds, availableRoles: SYSTEM_ROLES }
     }, 120_000)
+}
+
+// ─── Save PO route ───────────────────────────────
+export async function savePORoute(
+    poRouteConfig: PORouteConfig
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requirePermission('SYS', 'ADMIN')
+        const key = 'procurement.purchase_order'
+        await prisma.approvalConfig.upsert({
+            where: { configKey: key },
+            update: {
+                value: {
+                    creatorRoles: poRouteConfig.creatorRoles,
+                    steps: poRouteConfig.steps,
+                } as any,
+                updatedAt: new Date()
+            },
+            create: {
+                configKey: key,
+                value: {
+                    creatorRoles: poRouteConfig.creatorRoles,
+                    steps: poRouteConfig.steps,
+                } as any,
+                label: 'Đơn mua hàng (PO)'
+            }
+        })
+        revalidateCache('settings')
+        revalidateCache('procurement')
+        revalidatePath('/dashboard/settings/approval-matrix')
+        revalidatePath('/dashboard/procurement')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }
 
 // ─── Save single proposal route ──────────────────

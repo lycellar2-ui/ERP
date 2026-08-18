@@ -4,7 +4,19 @@ import { useState } from 'react'
 import { Shield, Save, ChevronRight, AlertTriangle, Settings2, DollarSign, Percent, FileText, Loader2, Plus, Trash2, UserCheck, Layers, Edit3, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { CATEGORY_LABELS } from '../../proposals/constants'
-import { type ApprovalMatrixData, type ProposalRouteConfig, type ThresholdConfig, type StepRoleConfig, type SystemRoleInfo, saveAllRoutes, saveAllThresholds } from './actions'
+import { 
+    type ApprovalMatrixData, 
+    type ProposalRouteConfig, 
+    type PORouteConfig,
+    type ThresholdConfig, 
+    type StepRoleConfig, 
+    type SystemRoleInfo, 
+    saveAllRoutes, 
+    saveAllThresholds,
+    savePORoute,
+    DEFAULT_PO_ROUTING,
+} from './actions'
+import { ShoppingBag } from 'lucide-react'
 
 interface Props {
     initialData: ApprovalMatrixData
@@ -16,14 +28,20 @@ export function ApprovalMatrixClient({ initialData }: Props) {
     const availableRoles = initialData?.availableRoles ?? []
 
     const [routes, setRoutes] = useState<ProposalRouteConfig[]>(safeProposalRoutes)
+    const [poRoute, setPoRoute] = useState<PORouteConfig>(initialData?.poRoute ?? DEFAULT_PO_ROUTING)
     const [thresholds, setThresholds] = useState<ThresholdConfig[]>(safeThresholds)
     const [savingRoutes, setSavingRoutes] = useState(false)
+    const [savingPoRoute, setSavingPoRoute] = useState(false)
     const [savingThresholds, setSavingThresholds] = useState(false)
-    const [dirty, setDirty] = useState({ routes: false, thresholds: false })
+    const [dirty, setDirty] = useState({ routes: false, po: false, thresholds: false })
     
-    // Modal state for editing a route configuration
+    // Modal state for editing a proposal route configuration
     const [editingCategory, setEditingCategory] = useState<string | null>(null)
     const [editDraft, setEditDraft] = useState<ProposalRouteConfig | null>(null)
+
+    // Modal state for editing PO route
+    const [editingPoModal, setEditingPoModal] = useState(false)
+    const [poDraft, setPoDraft] = useState<PORouteConfig | null>(null)
 
     const getRoleName = (code: string) => {
         const found = availableRoles.find(r => r.code === code)
@@ -33,6 +51,42 @@ export function ApprovalMatrixClient({ initialData }: Props) {
     const openEditModal = (route: ProposalRouteConfig) => {
         setEditingCategory(route.category)
         setEditDraft(JSON.parse(JSON.stringify(route)))
+    }
+
+    const openPoEditModal = () => {
+        setPoDraft(JSON.parse(JSON.stringify(poRoute)))
+        setEditingPoModal(true)
+    }
+
+    const handleSavePoDraft = () => {
+        if (!poDraft) return
+        if (poDraft.steps.length === 0) {
+            toast.error('Phải có ít nhất 1 cấp phê duyệt')
+            return
+        }
+
+        setPoRoute(poDraft)
+        setDirty(d => ({ ...d, po: true }))
+        setEditingPoModal(false)
+        setPoDraft(null)
+        toast.success('Đã cập nhật dự thảo ma trận duyệt PO')
+    }
+
+    const handleSavePoRoute = async () => {
+        setSavingPoRoute(true)
+        toast.promise(
+            savePORoute(poRoute).then(r => {
+                if (!r.success) throw new Error(r.error)
+                setDirty(d => ({ ...d, po: false }))
+                return r
+            }),
+            {
+                loading: 'Đang lưu quy trình duyệt PO...',
+                success: 'Đã cập nhật quy trình duyệt Đơn mua hàng (PO)!',
+                error: 'Lỗi lưu cấu hình PO',
+                finally: () => setSavingPoRoute(false),
+            }
+        )
     }
 
     const handleSaveEditDraft = () => {
@@ -241,7 +295,116 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 </div>
             </div>
 
-            {/* ═══ Section 2: Threshold Configuration ═══ */}
+            {/* ═══ Section 2: PO Approval Matrix ═══ */}
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between px-5 py-4"
+                    style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                    <div className="flex items-center gap-3">
+                        <ShoppingBag size={18} style={{ color: '#D4A853' }} />
+                        <div>
+                            <h3 className="text-sm font-bold" style={{ color: '#E8F1F2' }}>Cấu Hình Luồng Duyệt Đơn Mua Hàng (PO - Procurement)</h3>
+                            <p className="text-[11px]" style={{ color: '#4A6A7A' }}>Tùy chỉnh số cấp duyệt, Role tạo, và Role duyệt ở từng bước đơn mua hàng</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleSavePoRoute}
+                        disabled={!dirty.po || savingPoRoute}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40"
+                        style={{
+                            background: dirty.po ? '#D4A853' : 'rgba(212,168,83,0.15)',
+                            color: dirty.po ? '#0A1926' : '#4A6A7A',
+                        }}
+                    >
+                        {savingPoRoute ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                        {savingPoRoute ? 'Đang lưu...' : dirty.po ? 'Lưu Cấu Hình PO' : 'Đã lưu'}
+                    </button>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                    <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 850 }}>
+                        <thead>
+                            <tr style={{ background: '#0D1E2B' }}>
+                                <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '25%' }}>Nghiệp Vụ</th>
+                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '10%' }}>Số Cấp</th>
+                                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '25%' }}>Quyền Tạo PO</th>
+                                <th className="px-5 py-3 text-left text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '30%' }}>Quy Trình Duyệt Theo Role</th>
+                                <th className="px-4 py-3 text-center text-xs uppercase tracking-wider font-bold"
+                                    style={{ color: '#4A6A7A', width: '10%' }}>Tùy Chỉnh</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style={{ background: 'transparent' }} className="hover:bg-[#1B2E3D]/50 transition">
+                                <td className="px-5 py-3.5">
+                                    <span className="text-sm font-bold block" style={{ color: '#E8F1F2' }}>
+                                        📦 Đơn Mua Hàng Quốc Tế & Nội Địa
+                                    </span>
+                                    <span className="text-[10px] font-mono text-[#6A8A9A]">procurement.purchase_order</span>
+                                </td>
+
+                                <td className="px-4 py-3.5 text-center">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold font-mono"
+                                        style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                        <Layers size={12} /> {poRoute.steps.length} cấp
+                                    </span>
+                                </td>
+
+                                <td className="px-4 py-3.5">
+                                    {poRoute.creatorRoles.length === 0 ? (
+                                        <span className="text-xs text-gray-400 font-medium italic">Tất cả các Role</span>
+                                    ) : (
+                                        <div className="flex gap-1 flex-wrap">
+                                            {poRoute.creatorRoles.map(rCode => (
+                                                <span key={rCode} className="text-[10px] font-semibold px-2 py-0.5 rounded"
+                                                    style={{ background: '#1B2E3D', color: '#87CBB9', border: '1px solid #2A4355' }}>
+                                                    {getRoleName(rCode)}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </td>
+
+                                <td className="px-5 py-3.5">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        {poRoute.steps.map((st, i) => (
+                                            <span key={i} className="flex items-center gap-1">
+                                                <span className="text-xs font-bold px-2 py-1 rounded flex items-center gap-1"
+                                                    style={{
+                                                        background: i === poRoute.steps.length - 1 ? 'rgba(224,82,82,0.15)' : 'rgba(74,143,171,0.15)',
+                                                        color: i === poRoute.steps.length - 1 ? '#E05252' : '#4A8FAB',
+                                                        border: `1px solid ${i === poRoute.steps.length - 1 ? '#E05252' : '#4A8FAB'}40`
+                                                    }}>
+                                                    <span className="text-[9px] opacity-75 font-mono">Cấp {st.level}:</span>
+                                                    {st.label || getRoleName(st.role)}
+                                                </span>
+                                                {i < poRoute.steps.length - 1 && (
+                                                    <ChevronRight size={14} style={{ color: '#4A6A7A' }} />
+                                                )}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </td>
+
+                                <td className="px-4 py-3.5 text-center">
+                                    <button
+                                        onClick={openPoEditModal}
+                                        className="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center gap-1 mx-auto transition-all"
+                                        style={{ background: '#1B2E3D', color: '#D4A853', border: '1px solid #2A4355' }}
+                                        title="Sửa số cấp và phân quyền Role duyệt PO"
+                                    >
+                                        <Edit3 size={13} /> Sửa
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* ═══ Section 3: Threshold Configuration ═══ */}
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
@@ -458,6 +621,183 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                                 onClick={handleSaveEditDraft}
                                 className="px-5 py-2 text-xs font-bold rounded shadow transition-all"
                                 style={{ background: '#87CBB9', color: '#0A1926' }}
+                            >
+                                Áp Dụng Thay Đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ═══ Edit PO Route Modal ═══ */}
+            {editingPoModal && poDraft && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+                    <div className="w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #2A4355' }}>
+                            <div>
+                                <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+                                    Cấu Hình Luồng Phê Duyệt: Đơn Mua Hàng (PO)
+                                </h3>
+                                <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>Mã cấu hình: procurement.purchase_order</p>
+                            </div>
+                            <button onClick={() => { setEditingPoModal(false); setPoDraft(null); }} className="p-1 rounded hover:bg-[#1B2E3D]">
+                                <X size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                            {/* 1. Creator Roles Selection */}
+                            <div>
+                                <label className="text-xs font-bold uppercase tracking-wider block mb-2" style={{ color: '#87CBB9' }}>
+                                    1. Quyền Tạo Đơn Mua Hàng (Role được mở form tạo PO)
+                                </label>
+                                <p className="text-xs text-gray-400 mb-3">Nếu không chọn Role nào, tất cả người dùng hệ thống đều được phép tạo PO.</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {availableRoles.map(r => {
+                                        const isChecked = poDraft.creatorRoles.includes(r.code)
+                                        return (
+                                            <button
+                                                key={r.code}
+                                                type="button"
+                                                onClick={() => {
+                                                    setPoDraft(prev => {
+                                                        if (!prev) return prev
+                                                        const nextRoles = isChecked
+                                                            ? prev.creatorRoles.filter(c => c !== r.code)
+                                                            : [...prev.creatorRoles, r.code]
+                                                        return { ...prev, creatorRoles: nextRoles }
+                                                    })
+                                                }}
+                                                className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold text-left transition border ${isChecked ? 'bg-[#87CBB9]/15 border-[#87CBB9] text-[#87CBB9]' : 'bg-[#1B2E3D] border-[#2A4355] text-gray-300'}`}
+                                            >
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-[#87CBB9] border-[#87CBB9]' : 'border-gray-500'}`}>
+                                                    {isChecked && <Check size={12} className="text-[#0A1926]" />}
+                                                </div>
+                                                <span>{r.name}</span>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 2. Number of Approval Steps & Roles */}
+                            <div className="pt-4 border-t border-[#2A4355]">
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="text-xs font-bold uppercase tracking-wider block" style={{ color: '#D4A853' }}>
+                                        2. Số Cấp & Role Phê Duyệt PO Theo Thứ Tự
+                                    </label>
+                                    <button
+                                        type="button"
+                                        disabled={poDraft.steps.length >= 5}
+                                        onClick={() => {
+                                            setPoDraft(prev => {
+                                                if (!prev || prev.steps.length >= 5) return prev
+                                                const nextLevel = prev.steps.length + 1
+                                                const defaultRole = nextLevel === 1 ? 'THU_MUA' : nextLevel === 2 ? 'KE_TOAN' : 'CEO'
+                                                const defaultLabel = nextLevel === 1 ? 'Trưởng Phòng Mua Hàng' : nextLevel === 2 ? 'Kế Toán Trưởng' : 'Tổng Giám Đốc'
+                                                return {
+                                                    ...prev,
+                                                    steps: [...prev.steps, { level: nextLevel, role: defaultRole, label: defaultLabel }]
+                                                }
+                                            })
+                                        }}
+                                        className="text-xs flex items-center gap-1 font-bold text-[#87CBB9] hover:underline disabled:opacity-40"
+                                    >
+                                        <Plus size={14} /> Thêm cấp duyệt
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {poDraft.steps.map((step, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-[#2A4355]" style={{ background: '#1B2E3D' }}>
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0"
+                                                style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                                                {idx + 1}
+                                            </div>
+                                            
+                                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="text-[10px] text-gray-400 block mb-1">Role duyệt Cấp {idx + 1}</label>
+                                                    <select
+                                                        value={step.role}
+                                                        onChange={e => {
+                                                            const newRole = e.target.value
+                                                            setPoDraft(prev => {
+                                                                if (!prev) return prev
+                                                                const copy = [...prev.steps]
+                                                                copy[idx] = { ...copy[idx], role: newRole }
+                                                                return { ...prev, steps: copy }
+                                                            })
+                                                        }}
+                                                        className="w-full p-2 text-xs font-semibold rounded outline-none"
+                                                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    >
+                                                        {availableRoles.map(r => (
+                                                            <option key={r.code} value={r.code}>{r.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] text-gray-400 block mb-1">Tên bước (Hiển thị UI)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={step.label || ''}
+                                                        placeholder={`Cấp ${idx + 1}`}
+                                                        onChange={e => {
+                                                            const newLabel = e.target.value
+                                                            setPoDraft(prev => {
+                                                                if (!prev) return prev
+                                                                const copy = [...prev.steps]
+                                                                copy[idx] = { ...copy[idx], label: newLabel }
+                                                                return { ...prev, steps: copy }
+                                                            })
+                                                        }}
+                                                        className="w-full p-2 text-xs font-semibold rounded outline-none"
+                                                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {poDraft.steps.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPoDraft(prev => {
+                                                            if (!prev) return prev
+                                                            const filtered = prev.steps.filter((_, i) => i !== idx)
+                                                            const reindexed = filtered.map((st, i) => ({ ...st, level: i + 1 }))
+                                                            return { ...prev, steps: reindexed }
+                                                        })
+                                                    }}
+                                                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-md shrink-0 mt-3"
+                                                    title="Xóa cấp này"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 border-t border-[#2A4355] flex justify-end gap-3" style={{ background: '#102230' }}>
+                            <button
+                                type="button"
+                                onClick={() => { setEditingPoModal(false); setPoDraft(null); }}
+                                className="px-4 py-2 text-xs font-semibold rounded text-gray-400 hover:bg-[#1B2E3D]"
+                            >
+                                Huỷ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSavePoDraft}
+                                className="px-5 py-2 text-xs font-bold rounded shadow transition-all"
+                                style={{ background: '#D4A853', color: '#0A1926' }}
                             >
                                 Áp Dụng Thay Đổi
                             </button>

@@ -342,8 +342,11 @@ enum ShipmentStatus {
 | Insurance Policy Management | ✅ Hoàn thành |
 | Landed Cost Breakdown Modal | ✅ Hoàn thành |
 | PO Detail → Shipments integration | ✅ Hoàn thành |
+| PO Multi-Line Compact Table (Incoterms, B/L, Vessel, ETA, GR progress) | ✅ Hoàn thành |
+| PO Multi-Level Approval Workflow (Cấu hình ma trận duyệt đa cấp tương tự Tờ Trình) | ✅ Hoàn thành |
+| PO In-App Notifications & Telegram Alert cho các cấp duyệt và người tạo PO | ✅ Hoàn thành |
 | Sidebar navigation | ✅ Hoàn thành |
 
 ---
 
-*Last updated: 2026-03-08 00:45 | Module SHP — 100% hoàn thành*
+*Last updated: 2026-08-18 18:10 | Module SHP & PRC — Hoàn thành cấu hình quy trình duyệt PO đa cấp & hệ thống thông báo realtime*

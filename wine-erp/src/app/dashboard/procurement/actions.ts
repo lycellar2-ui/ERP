@@ -7,24 +7,72 @@ import { cached, revalidateCache } from '@/lib/cache'
 import { requireAuth } from '@/lib/session'
 import { findHierarchicalTaxRate } from '@/lib/tax-utils'
 
+import { DEFAULT_PO_ROUTING, type PORouteConfig, type StepRoleConfig } from '@/app/dashboard/settings/approval-matrix/actions'
+import { formatVND } from '@/lib/utils'
+
 // ─── Types ────────────────────────────────────────
+export type POShipmentSummary = {
+    id: string
+    billOfLading: string
+    vesselName: string | null
+    voyageNo: string | null
+    containerNo: string | null
+    containerType: string | null
+    eta: Date | null
+    etd: Date | null
+    portOfLoading: string | null
+    portOfDischarge: string | null
+    status: string
+    milestoneProgress: number
+}
+
+export type POApprovalLog = {
+    id: string
+    step?: number
+    action: string
+    actorName: string
+    comment: string | null
+    createdAt: Date
+}
+
+export type POStepConfig = StepRoleConfig
+
 export type PORow = {
     id: string
     poNo: string
+    legalEntityId?: string
+    legalEntityCode?: string | null
+    legalEntityName?: string | null
     supplierName: string
     supplierId: string
+    supplierCode?: string | null
+    supplierCountry?: string | null
+    incoterms?: string | null
+    paymentTerm?: string | null
     currency: string
     exchangeRate: number
     status: string
+    currentApprovalStep?: number
+    totalApprovalSteps?: number
     totalAmount: number
     lineCount: number
     totalQty: number
-    createdAt: Date
-    signatureUrl?: string | null
+    totalQtyReceived: number
+    receivedPercentage: number
+    estimatedDelivery?: Date | null
+    creatorName?: string | null
+    docCount?: number
     documents?: { id: string; name: string; fileUrl: string; uploadedAt: Date }[]
+    shipments: POShipmentSummary[]
+    latestShipment?: POShipmentSummary | null
+    createdAt: Date
 }
 
 export type PODetail = PORow & {
+    currentApprovalStep: number
+    totalApprovalSteps: number
+    approvalSteps: POStepConfig[]
+    approvalHistory: POApprovalLog[]
     lines: {
         id: string
         productId: string
@@ -71,11 +119,19 @@ export async function getPurchaseOrders(filters: {
     search?: string
     status?: string
     supplierId?: string
+    legalEntityId?: string
+    currency?: string
+    incoterms?: string
+    dateFrom?: string
+    dateTo?: string
     page?: number
     pageSize?: number
-} = {}): Promise<{ rows: PORow[]; total: number }> {
-    const { search, status, supplierId, page = 1, pageSize = 20 } = filters
-    const cacheKey = `procurement:list:${page}:${pageSize}:${search ?? ''}:${status ?? ''}:${supplierId ?? ''}`
+} = {}): Promise<{ rows: PORow[]; total: number; statusCounts: Record<string, number> }> {
+    const { 
+        search, status, supplierId, legalEntityId, currency, incoterms, 
+        dateFrom, dateTo, page = 1, pageSize = 20 
+    } = filters
+    const cacheKey = `procurement:list:${page}:${pageSize}:${search ?? ''}:${status ?? ''}:${supplierId ?? ''}:${legalEntityId ?? ''}:${currency ?? ''}:${incoterms ?? ''}:${dateFrom ?? ''}:${dateTo ?? ''}`
     return cached(cacheKey, async () => {
 
         const where: any = {}
@@ -83,60 +139,198 @@ export async function getPurchaseOrders(filters: {
             where.OR = [
                 { poNo: { contains: search, mode: 'insensitive' } },
                 { supplier: { name: { contains: search, mode: 'insensitive' } } },
+                { supplier: { code: { contains: search, mode: 'insensitive' } } },
+                { shipments: { some: { billOfLading: { contains: search, mode: 'insensitive' } } } },
+                { shipments: { some: { vesselName: { contains: search, mode: 'insensitive' } } } },
+                { shipments: { some: { containerNo: { contains: search, mode: 'insensitive' } } } },
             ]
         }
         if (status) where.status = status
         if (supplierId) where.supplierId = supplierId
+        if (legalEntityId) where.legalEntityId = legalEntityId
+        if (currency) where.currency = currency
+        if (incoterms) where.incoterms = incoterms
+        if (dateFrom) {
+            where.createdAt = { ...(where.createdAt || {}), gte: new Date(dateFrom) }
+        }
+        if (dateTo) {
+            where.createdAt = { ...(where.createdAt || {}), lte: new Date(dateTo + 'T23:59:59.999Z') }
+        }
 
-        const [items, total] = await Promise.all([
+        const [items, total, countGroupBy] = await Promise.all([
             prisma.purchaseOrder.findMany({
                 where,
                 include: {
-                    supplier: { select: { name: true } },
+                    legalEntity: { select: { id: true, code: true, name: true } },
+                    supplier: { select: { id: true, name: true, code: true, country: true, paymentTerm: true, incoterms: true } },
+                    creator: { select: { id: true, name: true } },
+                    documents: { select: { id: true, name: true, fileUrl: true, uploadedAt: true } },
                     lines: { select: { qtyOrdered: true, unitPrice: true } },
+                    shipments: {
+                        select: {
+                            id: true,
+                            billOfLading: true,
+                            vesselName: true,
+                            voyageNo: true,
+                            containerNo: true,
+                            containerType: true,
+                            eta: true,
+                            etd: true,
+                            portOfLoading: true,
+                            portOfDischarge: true,
+                            status: true,
+                            milestones: { select: { completedAt: true } },
+                        },
+                        orderBy: { createdAt: 'desc' },
+                    },
+                    goodsReceipts: {
+                        where: { status: 'CONFIRMED' },
+                        select: {
+                            lines: { select: { qtyReceived: true } },
+                        },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * pageSize,
                 take: pageSize,
             }),
             prisma.purchaseOrder.count({ where }),
+            prisma.purchaseOrder.groupBy({
+                by: ['status'],
+                _count: { id: true },
+            }),
         ])
 
-        const rows = items.map(po => ({
-            id: po.id,
-            poNo: po.poNo,
-            supplierName: po.supplier.name,
-            supplierId: po.supplierId,
-            currency: po.currency,
-            exchangeRate: Number(po.exchangeRate),
-            status: po.status,
-            totalAmount: po.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0),
-            lineCount: po.lines.length,
-            totalQty: po.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0),
-            createdAt: po.createdAt,
-        }))
+        const statusCounts: Record<string, number> = { ALL: 0 }
+        for (const item of countGroupBy) {
+            statusCounts[item.status] = item._count.id
+            statusCounts.ALL += item._count.id
+        }
 
-        return { rows, total }
+        const rows: PORow[] = items.map((po: any) => {
+            const totalAmount = po.lines.reduce((s: number, l: any) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+            const totalQty = po.lines.reduce((s: number, l: any) => s + Number(l.qtyOrdered), 0)
+            const totalQtyReceived = po.goodsReceipts.reduce(
+                (sum: number, gr: any) => sum + gr.lines.reduce((lsum: number, l: any) => lsum + Number(l.qtyReceived || 0), 0),
+                0
+            )
+            const receivedPercentage = totalQty > 0 ? Math.min(100, Math.round((totalQtyReceived / totalQty) * 100)) : 0
+
+            const shipments: POShipmentSummary[] = po.shipments.map((s: any) => {
+                const totalM = s.milestones.length
+                const completedM = s.milestones.filter((m: any) => !!m.completedAt).length
+                const milestoneProgress = totalM > 0 ? Math.round((completedM / totalM) * 100) : 0
+                return {
+                    id: s.id,
+                    billOfLading: s.billOfLading,
+                    vesselName: s.vesselName,
+                    voyageNo: s.voyageNo,
+                    containerNo: s.containerNo,
+                    containerType: s.containerType,
+                    eta: s.eta,
+                    etd: s.etd,
+                    portOfLoading: s.portOfLoading,
+                    portOfDischarge: s.portOfDischarge,
+                    status: s.status,
+                    milestoneProgress,
+                }
+            })
+
+            return {
+                id: po.id,
+                poNo: po.poNo,
+                legalEntityId: po.legalEntityId,
+                legalEntityCode: po.legalEntity?.code ?? null,
+                legalEntityName: po.legalEntity?.name ?? null,
+                supplierName: po.supplier.name,
+                supplierId: po.supplierId,
+                supplierCode: po.supplier.code ?? null,
+                supplierCountry: po.supplier.country ?? null,
+                incoterms: po.incoterms || po.supplier.incoterms || null,
+                paymentTerm: po.paymentTerm || po.supplier.paymentTerm || null,
+                currency: po.currency,
+                exchangeRate: Number(po.exchangeRate),
+                status: po.status,
+                totalAmount,
+                lineCount: po.lines.length,
+                totalQty,
+                totalQtyReceived,
+                receivedPercentage,
+                estimatedDelivery: po.estimatedDelivery,
+                creatorName: po.creator?.name ?? null,
+                docCount: po.documents.length,
+                documents: po.documents,
+                shipments,
+                latestShipment: shipments[0] ?? null,
+                createdAt: po.createdAt,
+            }
+        })
+
+        return { rows, total, statusCounts }
     }) // end cached
 }
 
-// ─── Get single PO with lines ─────────────────────
+// ─── Get single PO with lines & approval history ──
 export async function getPODetail(id: string): Promise<PODetail | null> {
-    const po = await prisma.purchaseOrder.findUnique({
-        where: { id },
-        include: {
-            supplier: { select: { name: true } },
-            lines: {
-                include: {
-                    product: { select: { productName: true, skuCode: true } },
+    const [po, approvalRequest, auditLogs, routeConfig] = await Promise.all([
+        prisma.purchaseOrder.findUnique({
+            where: { id },
+            include: {
+                legalEntity: { select: { id: true, code: true, name: true } },
+                supplier: { select: { id: true, name: true, code: true, country: true, paymentTerm: true, incoterms: true } },
+                creator: { select: { id: true, name: true } },
+                lines: {
+                    include: {
+                        product: { select: { productName: true, skuCode: true } },
+                    },
+                },
+                documents: { orderBy: { uploadedAt: 'desc' } },
+                shipments: {
+                    select: {
+                        id: true,
+                        billOfLading: true,
+                        vesselName: true,
+                        voyageNo: true,
+                        containerNo: true,
+                        containerType: true,
+                        eta: true,
+                        etd: true,
+                        portOfLoading: true,
+                        portOfDischarge: true,
+                        status: true,
+                        milestones: { select: { completedAt: true } },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                },
+                goodsReceipts: {
+                    where: { status: 'CONFIRMED' },
+                    select: {
+                        lines: { select: { qtyReceived: true } },
+                    },
                 },
             },
-            documents: { orderBy: { uploadedAt: 'desc' } },
-        },
-    })
+        }),
+        prisma.approvalRequest.findFirst({
+            where: { docType: 'PURCHASE_ORDER', docId: id },
+            include: {
+                logs: {
+                    orderBy: { createdAt: 'desc' },
+                    include: { approver: { select: { name: true } } },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        }).catch(() => null),
+        prisma.auditLog.findMany({
+            where: { entityType: 'PurchaseOrder', entityId: id },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+        }).catch(() => []),
+        getPORouteConfig(),
+    ])
+
     if (!po) return null
 
-    const lines = po.lines.map(l => ({
+    const lines = po.lines.map((l: any) => ({
         id: l.id,
         productId: l.productId,
         productName: l.product.productName,
@@ -147,22 +341,112 @@ export async function getPODetail(id: string): Promise<PODetail | null> {
         lineTotal: Number(l.qtyOrdered) * Number(l.unitPrice),
     }))
 
+    const totalAmount = lines.reduce((s: number, l: any) => s + l.lineTotal, 0)
+    const totalQty = lines.reduce((s: number, l: any) => s + l.qtyOrdered, 0)
+    const totalQtyReceived = po.goodsReceipts.reduce(
+        (sum: number, gr: any) => sum + gr.lines.reduce((lsum: number, l: any) => lsum + Number(l.qtyReceived || 0), 0),
+        0
+    )
+    const receivedPercentage = totalQty > 0 ? Math.min(100, Math.round((totalQtyReceived / totalQty) * 100)) : 0
+
+    const shipments: POShipmentSummary[] = po.shipments.map((s: any) => {
+        const totalM = s.milestones.length
+        const completedM = s.milestones.filter((m: any) => !!m.completedAt).length
+        const milestoneProgress = totalM > 0 ? Math.round((completedM / totalM) * 100) : 0
+        return {
+            id: s.id,
+            billOfLading: s.billOfLading,
+            vesselName: s.vesselName,
+            voyageNo: s.voyageNo,
+            containerNo: s.containerNo,
+            containerType: s.containerType,
+            eta: s.eta,
+            etd: s.etd,
+            portOfLoading: s.portOfLoading,
+            portOfDischarge: s.portOfDischarge,
+            status: s.status,
+            milestoneProgress,
+        }
+    })
+
+    // Combine approvalRequest logs and audit status change logs
+    const approvalHistory: POApprovalLog[] = []
+    if (approvalRequest && approvalRequest.logs.length > 0) {
+        for (const l of approvalRequest.logs) {
+            approvalHistory.push({
+                id: l.id,
+                step: l.step,
+                action: l.action,
+                actorName: l.approver?.name || 'Cấp Quản Lý',
+                comment: l.comment,
+                createdAt: l.createdAt,
+            })
+        }
+    } else {
+        for (const al of auditLogs) {
+            const desc = (al.newValue as any)?.description || (al.newValue as any)?.reason || (al.newValue as any)?.comment || null
+            approvalHistory.push({
+                id: al.id,
+                action: al.action,
+                actorName: al.userName || 'System',
+                comment: desc,
+                createdAt: al.createdAt,
+            })
+        }
+    }
+
+    const currentApprovalStep = approvalRequest?.currentStep || 1
+    const totalApprovalSteps = routeConfig.steps.length
+
     return {
         id: po.id,
         poNo: po.poNo,
+        legalEntityId: po.legalEntityId,
+        legalEntityCode: po.legalEntity?.code ?? null,
+        legalEntityName: po.legalEntity?.name ?? null,
         supplierName: po.supplier.name,
         supplierId: po.supplierId,
+        supplierCode: po.supplier.code ?? null,
+        supplierCountry: po.supplier.country ?? null,
+        incoterms: po.incoterms || po.supplier.incoterms || null,
+        paymentTerm: po.paymentTerm || po.supplier.paymentTerm || null,
         currency: po.currency,
         exchangeRate: Number(po.exchangeRate),
         status: po.status,
-        totalAmount: lines.reduce((s, l) => s + l.lineTotal, 0),
+        currentApprovalStep,
+        totalApprovalSteps,
+        approvalSteps: routeConfig.steps,
+        totalAmount,
         lineCount: lines.length,
-        totalQty: lines.reduce((s, l) => s + l.qtyOrdered, 0),
-        createdAt: po.createdAt,
-        signatureUrl: po.signatureUrl,
+        totalQty,
+        totalQtyReceived,
+        receivedPercentage,
+        estimatedDelivery: po.estimatedDelivery,
+        creatorName: po.creator?.name ?? null,
+        docCount: po.documents.length,
         documents: po.documents,
+        shipments,
+        latestShipment: shipments[0] ?? null,
         lines,
+        approvalHistory,
+        createdAt: po.createdAt,
     }
+}
+
+// ─── Helper to load PO Route Config ──────────────
+async function getPORouteConfig(): Promise<PORouteConfig> {
+    try {
+        const config = await prisma.approvalConfig.findUnique({
+            where: { configKey: 'procurement.purchase_order' }
+        })
+        if (config?.value && typeof config.value === 'object') {
+            const val = config.value as any
+            const creatorRoles = Array.isArray(val.creatorRoles) ? val.creatorRoles : DEFAULT_PO_ROUTING.creatorRoles
+            const steps = Array.isArray(val.steps) && val.steps.length > 0 ? val.steps : DEFAULT_PO_ROUTING.steps
+            return { creatorRoles, steps }
+        }
+    } catch { /* fallback */ }
+    return DEFAULT_PO_ROUTING
 }
 
 // ─── Schema ───────────────────────────────────────
@@ -252,14 +536,290 @@ export async function createPurchaseOrder(input: CreatePOInput) {
     return { success: true, id: po.id, poNo: po.poNo }
 }
 
+// ─── PO Approval Workflow Actions ─────────────────
+
+// 1. Submit PO for Approval
+export async function submitPOForApproval(id: string) {
+    const user = await requireAuth()
+    const po = await prisma.purchaseOrder.findUnique({
+        where: { id },
+        include: { lines: true, supplier: { select: { name: true } } }
+    })
+    if (!po) return { success: false, error: 'PO không tồn tại' }
+    if (po.status !== 'DRAFT') {
+        return { success: false, error: `Chỉ có thể gửi duyệt PO đang ở trạng thái Nháp (DRAFT)` }
+    }
+
+    const routeConfig = await getPORouteConfig()
+    const firstStep = routeConfig.steps[0] ?? { level: 1, role: 'THU_MUA', label: 'Trưởng Phòng Mua Hàng' }
+    const totalVND = po.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice) * Number(po.exchangeRate), 0)
+
+    // Create or update ApprovalRequest
+    let req = await prisma.approvalRequest.findFirst({
+        where: { docType: 'PURCHASE_ORDER', docId: id }
+    })
+
+    if (req) {
+        await prisma.approvalRequest.update({
+            where: { id: req.id },
+            data: { currentStep: firstStep.level, status: 'PENDING', requestedBy: user.id }
+        })
+    } else {
+        let template = await prisma.approvalTemplate.findFirst({
+            where: { docType: 'PURCHASE_ORDER' }
+        })
+        if (!template) {
+            template = await prisma.approvalTemplate.create({
+                data: {
+                    name: 'Quy Trình Phê Duyệt PO',
+                    docType: 'PURCHASE_ORDER',
+                    steps: {
+                        create: routeConfig.steps.map(s => ({
+                            stepOrder: s.level,
+                            approverRole: s.role,
+                            name: s.label || `Cấp ${s.level}`
+                        }))
+                    }
+                }
+            })
+        }
+
+        req = await prisma.approvalRequest.create({
+            data: {
+                templateId: template.id,
+                docType: 'PURCHASE_ORDER',
+                docId: id,
+                currentStep: firstStep.level,
+                status: 'PENDING',
+                requestedBy: user.id
+            }
+        })
+    }
+
+    await prisma.purchaseOrder.update({
+        where: { id },
+        data: { status: 'PENDING_APPROVAL' },
+    })
+
+    try {
+        const { logAudit } = await import('@/lib/audit')
+        await logAudit({
+            action: 'STATUS_CHANGE',
+            entityType: 'PurchaseOrder',
+            entityId: id,
+            description: `Gửi phê duyệt đơn mua hàng ${po.poNo} (Cấp 1: ${firstStep.label || firstStep.role})`,
+            newValue: { status: 'PENDING_APPROVAL', step: firstStep.level, role: firstStep.role },
+        })
+    } catch { /* silent */ }
+
+    // Send In-App Notification to first step role
+    try {
+        const { triggerNotificationForRole } = await import('@/lib/notifications')
+        await triggerNotificationForRole(firstStep.role, {
+            title: `Đơn mua hàng ${po.poNo} chờ phê duyệt (Cấp 1)`,
+            content: `PO ${po.poNo} từ NCC ${po.supplier.name} (Trị giá ≈ ${formatVND(totalVND)}) đang chờ bạn phê duyệt ở Cấp 1 (${firstStep.label || firstStep.role}).`,
+            type: 'info',
+            link: `/dashboard/procurement?id=${po.id}`
+        })
+    } catch (notiErr) {
+        console.error('[PO Approval] Notification error:', notiErr)
+    }
+
+    revalidateCache('procurement')
+    revalidatePath('/dashboard/procurement')
+    return { success: true }
+}
+
+// 2. Approve PO (Phê Duyệt Đơn Hàng Theo Cấp)
+export async function approvePO(id: string, comment?: string) {
+    const user = await requireAuth()
+    const po = await prisma.purchaseOrder.findUnique({
+        where: { id },
+        include: { lines: true, supplier: { select: { name: true } } }
+    })
+    if (!po) return { success: false, error: 'PO không tồn tại' }
+    if (po.status !== 'PENDING_APPROVAL') {
+        return { success: false, error: 'Chỉ có thể phê duyệt PO đang ở trạng thái Chờ duyệt (PENDING_APPROVAL)' }
+    }
+
+    const routeConfig = await getPORouteConfig()
+    const req = await prisma.approvalRequest.findFirst({
+        where: { docType: 'PURCHASE_ORDER', docId: id, status: 'PENDING' },
+    })
+
+    const currentStepLevel = req ? req.currentStep : 1
+    const currentIdx = routeConfig.steps.findIndex(s => s.level === currentStepLevel)
+    const nextStep = (currentIdx >= 0 && currentIdx < routeConfig.steps.length - 1) ? routeConfig.steps[currentIdx + 1] : null
+    const totalVND = po.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice) * Number(po.exchangeRate), 0)
+
+    if (req) {
+        await prisma.approvalLog.create({
+            data: {
+                requestId: req.id,
+                step: currentStepLevel,
+                action: 'APPROVE',
+                approvedBy: user.id,
+                comment: comment || `Đã phê duyệt Cấp ${currentStepLevel}`,
+            }
+        })
+    }
+
+    if (nextStep) {
+        // Move to next step
+        if (req) {
+            await prisma.approvalRequest.update({
+                where: { id: req.id },
+                data: { currentStep: nextStep.level }
+            })
+        }
+
+        try {
+            const { logAudit } = await import('@/lib/audit')
+            await logAudit({
+                action: 'APPROVE',
+                entityType: 'PurchaseOrder',
+                entityId: id,
+                description: `Phê duyệt Cấp ${currentStepLevel}. Chuyển lên Cấp ${nextStep.level} (${nextStep.label || nextStep.role})`,
+                newValue: { step: nextStep.level, approver: user.name, comment }
+            })
+        } catch { /* silent */ }
+
+        // Send Notification to Next Step Role
+        try {
+            const { triggerNotificationForRole } = await import('@/lib/notifications')
+            await triggerNotificationForRole(nextStep.role, {
+                title: `Đơn mua hàng ${po.poNo} chờ phê duyệt (Cấp ${nextStep.level})`,
+                content: `Cấp ${currentStepLevel} đã duyệt. Đơn PO ${po.poNo} (Trị giá ≈ ${formatVND(totalVND)}) đang chờ bạn phê duyệt ở Cấp ${nextStep.level} (${nextStep.label || nextStep.role}).`,
+                type: 'info',
+                link: `/dashboard/procurement?id=${po.id}`
+            })
+        } catch (notiErr) {
+            console.error('[PO Approval] Noti error:', notiErr)
+        }
+
+    } else {
+        // Final approval step completed!
+        if (req) {
+            await prisma.approvalRequest.update({
+                where: { id: req.id },
+                data: { status: 'APPROVED' }
+            })
+        }
+
+        await prisma.purchaseOrder.update({
+            where: { id },
+            data: { status: 'APPROVED' },
+        })
+
+        try {
+            const { logAudit } = await import('@/lib/audit')
+            await logAudit({
+                action: 'APPROVE',
+                entityType: 'PurchaseOrder',
+                entityId: id,
+                description: `Phê duyệt hoàn tất PO ${po.poNo}${comment ? `: ${comment}` : ''}`,
+                newValue: { status: 'APPROVED', comment },
+            })
+        } catch { /* silent */ }
+
+        // Send Success Notification to Creator
+        try {
+            const { createNotification } = await import('@/lib/notifications')
+            await createNotification({
+                userId: po.createdBy,
+                title: `Đơn mua hàng ${po.poNo} đã được Phê Duyệt hoàn tất!`,
+                content: `Đơn hàng ${po.poNo} từ NCC ${po.supplier.name} đã được duyệt đầy đủ qua tất cả các cấp. Bạn có thể khởi tạo Lô Vận Tải hoặc Nhập Kho.`,
+                type: 'success',
+                link: `/dashboard/procurement?id=${po.id}`
+            })
+        } catch (notiErr) {
+            console.error('[PO Approval] Creator noti error:', notiErr)
+        }
+    }
+
+    revalidateCache('procurement')
+    revalidatePath('/dashboard/procurement')
+    return { success: true }
+}
+
+// 3. Reject PO (Từ Chối Phê Duyệt PO)
+export async function rejectPO(id: string, reason: string) {
+    const user = await requireAuth()
+    if (!reason || !reason.trim()) {
+        return { success: false, error: 'Vui lòng nhập lý do từ chối phê duyệt' }
+    }
+
+    const po = await prisma.purchaseOrder.findUnique({
+        where: { id },
+        include: { supplier: { select: { name: true } } }
+    })
+    if (!po) return { success: false, error: 'PO không tồn tại' }
+    if (po.status !== 'PENDING_APPROVAL') {
+        return { success: false, error: 'Chỉ có thể từ chối PO đang ở trạng thái Chờ duyệt' }
+    }
+
+    const req = await prisma.approvalRequest.findFirst({
+        where: { docType: 'PURCHASE_ORDER', docId: id, status: 'PENDING' },
+    })
+
+    if (req) {
+        await prisma.approvalLog.create({
+            data: {
+                requestId: req.id,
+                step: req.currentStep,
+                action: 'REJECT',
+                approvedBy: user.id,
+                comment: reason,
+            }
+        })
+        await prisma.approvalRequest.update({
+            where: { id: req.id },
+            data: { status: 'REJECTED' },
+        })
+    }
+
+    // Revert PO back to DRAFT so purchaser can make edits
+    await prisma.purchaseOrder.update({
+        where: { id },
+        data: { status: 'DRAFT' },
+    })
+
+    try {
+        const { logAudit } = await import('@/lib/audit')
+        await logAudit({
+            action: 'REJECT',
+            entityType: 'PurchaseOrder',
+            entityId: id,
+            description: `Từ chối PO ${po.poNo}. Lý do: ${reason}`,
+            newValue: { status: 'DRAFT', reason },
+        })
+    } catch { /* silent */ }
+
+    // Send Warning Notification to Creator
+    try {
+        const { createNotification } = await import('@/lib/notifications')
+        await createNotification({
+            userId: po.createdBy,
+            title: `Đơn mua hàng ${po.poNo} bị Từ Chối phê duyệt`,
+            content: `Đơn hàng ${po.poNo} đã bị từ chối duyệt. Lý do: "${reason}". Vui lòng điều chỉnh lại đơn hàng.`,
+            type: 'warning',
+            link: `/dashboard/procurement?id=${po.id}`
+        })
+    } catch (notiErr) {
+        console.error('[PO Approval] Creator noti error:', notiErr)
+    }
+
+    revalidateCache('procurement')
+    revalidatePath('/dashboard/procurement')
+    return { success: true }
+}
+
 // ─── Update PO status (with validation + audit) ───
-// Manual transitions: DRAFT→PENDING_APPROVAL, PENDING_APPROVAL→APPROVED/CANCELLED
-// Auto transitions (called by GR/Shipment hooks): APPROVED→IN_TRANSIT, IN_TRANSIT→PARTIALLY_RECEIVED/RECEIVED
 export async function updatePOStatus(id: string, status: string) {
     await requireAuth()
     const ALLOWED_TRANSITIONS: Record<string, string[]> = {
         DRAFT: ['PENDING_APPROVAL', 'CANCELLED'],
-        PENDING_APPROVAL: ['APPROVED', 'CANCELLED'],
+        PENDING_APPROVAL: ['APPROVED', 'CANCELLED', 'DRAFT'],
         APPROVED: ['IN_TRANSIT', 'CANCELLED'],
         IN_TRANSIT: ['PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'],
         PARTIALLY_RECEIVED: ['RECEIVED', 'CANCELLED'],
@@ -292,10 +852,10 @@ export async function updatePOStatus(id: string, status: string) {
         })
     } catch { /* silent */ }
 
+    revalidateCache('procurement')
     revalidatePath('/dashboard/procurement')
     return { success: true }
 }
-
 
 // ─── Stats for dashboard ──────────────────────────
 export async function getPOStats() {
@@ -310,7 +870,7 @@ export async function getPOStats() {
     }) // end cached
 }
 
-// ─── Upload Documents & E-Sign ──────────────────────
+// ─── Upload Documents ──────────────────────────────
 import { uploadFile } from '@/lib/storage'
 
 export async function uploadPODocument(poId: string, formData: FormData) {
@@ -334,20 +894,6 @@ export async function uploadPODocument(poId: string, formData: FormData) {
         revalidateCache('procurement')
         revalidatePath('/dashboard/procurement')
         return { success: true, document: doc }
-    } catch (err: any) {
-        return { success: false, error: err.message }
-    }
-}
-
-export async function signPO(poId: string, signatureUrl: string) {
-    try {
-        await prisma.purchaseOrder.update({
-            where: { id: poId },
-            data: { signatureUrl, status: 'APPROVED' },
-        })
-        revalidateCache('procurement')
-        revalidatePath('/dashboard/procurement')
-        return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
@@ -685,4 +1231,13 @@ export async function getExchangeRateSummary(): Promise<{
     }, 120_000) // 2 min cache
     // Strip Prisma Decimal objects for Next.js client serialization
     return JSON.parse(JSON.stringify(result))
+}
+
+// ─── Legal Entities for Filter ────────────────────
+export async function getLegalEntitiesForProcurement(): Promise<{ id: string; code: string; name: string }[]> {
+    const entities = await prisma.legalEntity.findMany({
+        select: { id: true, code: true, name: true },
+        orderBy: { code: 'asc' },
+    })
+    return entities
 }
