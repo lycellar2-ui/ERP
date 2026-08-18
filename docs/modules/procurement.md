@@ -35,7 +35,8 @@
 - **Bộ lọc thời gian MISA**: Tùy chọn nhanh (*Hôm nay, Hôm qua, Tuần này, Tuần trước, Tháng này, Quý này, Năm nay, Tùy chỉnh*) kèm 2 ô chọn ngày.
 - **Bộ lọc mở rộng**: Lọc theo Pháp nhân nhập khẩu, Incoterms (*EXW, FOB, CIF, DDP*), Tiền tệ giao dịch.
 
-### 3.3 Tạo & Soạn Thảo Đơn Mua Hàng
+### 3.3 Tạo & Chỉnh Sửa Đơn Mua Hàng (Create & Edit Draft PO)
+- **Chỉnh sửa đơn Nháp (EditPODrawer)**: Cho phép sửa toàn diện các đơn hàng ở trạng thái `DRAFT` (hoặc bị trả về khi Từ chối): thay đổi nhà cung cấp, pháp nhân, tiền tệ, tỷ giá, thêm/bớt sản phẩm, đổi quy cách thùng/chai và đơn giá.
 - **Tìm kiếm SKU/Sản phẩm thông minh**: Tự động gợi ý theo mã SKU hoặc tên rượu vang có debounce và hiển thị cờ quốc gia.
 - **Quy cách đóng gói linh hoạt**:
   - Hỗ trợ Thùng 6 chai (`CASE_6`), Thùng 12 chai (`CASE_12`), Thùng 3 chai (`CASE_3`), Thùng 1 chai (`CASE_1`) và Chai lẻ (`BOTTLE`).

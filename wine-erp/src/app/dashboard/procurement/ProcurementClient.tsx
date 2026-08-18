@@ -7,14 +7,14 @@ import {
     Package, Globe, ArrowRight, Eye, UploadCloud, Ship, Anchor,
     Filter, RefreshCw, Printer, Calendar, ArrowUpDown, ChevronRight,
     Building2, FileCheck, Layers, ExternalLink, Box, Send, CheckSquare, XCircle, ShieldCheck,
-    Download, ChevronUp, Copy
+    Download, ChevronUp, Copy, Pencil
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
     PORow, PODetail, CreatePOInput, POApprovalLog, POCurrencyBreakdown
 } from './types'
 import {
-    createPurchaseOrder, updatePOStatus,
+    createPurchaseOrder, updatePurchaseOrder, updatePOStatus,
     getPurchaseOrders, getPODetail, uploadPODocument, convertPOToVND,
     getExchangeRateSummary, getLegalEntitiesForProcurement,
     submitPOForApproval, approvePO, rejectPO, exportPurchaseOrdersExcel
@@ -884,6 +884,506 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     )
 }
 
+// ── Edit PO Drawer ─────────────────────────────────
+function EditPODrawer({ open, poId, onClose, onUpdated }: {
+    open: boolean
+    poId: string | null
+    onClose: () => void
+    onUpdated: (poNo: string) => void
+}) {
+    const [suppliers, setSuppliers] = useState<{ id: string; name: string; defaultCurrency: string; country: string; incoterms?: string | null }[]>([])
+    const [products, setProducts] = useState<{ id: string; productName: string; skuCode: string; country?: string }[]>([])
+    const [legalEntities, setLegalEntities] = useState<{ id: string; code: string; name: string }[]>([])
+    const [supplierId, setSupplierId] = useState('')
+    const [legalEntityId, setLegalEntityId] = useState('')
+    const [incoterms, setIncoterms] = useState('EXW')
+    const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'NZD' | 'AUD'>('USD')
+    const [exchangeRate, setExchangeRate] = useState(25500)
+    const [lines, setLines] = useState<DraftPOLine[]>([])
+    const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
+    const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null)
+    const [poNo, setPoNo] = useState('')
+    const [loadingDetail, setLoadingDetail] = useState(false)
+    const [saving, setSaving] = useState(false)
+
+    useEffect(() => {
+        if (!open || !poId) return
+        setLoadingDetail(true)
+        Promise.all([
+            getSuppliers({ pageSize: 200 }).then(r => setSuppliers(r.rows.map(x => ({ id: x.id, name: x.name, defaultCurrency: x.defaultCurrency, country: x.country, incoterms: x.incoterms })))),
+            getProducts({ pageSize: 500 }).then(r => setProducts(r.rows.map(p => ({ id: p.id, productName: p.productName, skuCode: p.skuCode, country: p.country })))),
+            getLegalEntitiesForProcurement().then(setLegalEntities),
+            getPODetail(poId),
+        ]).then(([_, __, ___, detail]) => {
+            if (detail) {
+                setPoNo(detail.poNo)
+                setSupplierId(detail.supplierId)
+                setLegalEntityId(detail.legalEntityId || '')
+                setIncoterms(detail.incoterms || 'EXW')
+                setCurrency(detail.currency as any)
+                setExchangeRate(detail.exchangeRate || 25500)
+
+                const queries: Record<number, string> = {}
+                const draftLines: DraftPOLine[] = detail.lines.map((l, i) => {
+                    queries[i] = `[${l.skuCode}] ${l.productName}`
+                    const isCase12 = l.uom === 'CASE_12'
+                    const isCase6 = l.uom === 'CASE_6'
+                    const isCase3 = l.uom === 'CASE_3'
+                    const isCase1 = l.uom === 'CASE_1'
+                    const packType = isCase12 ? 'CASE_12' : isCase6 ? 'CASE_6' : isCase3 ? 'CASE_3' : isCase1 ? 'CASE_1' : 'BOTTLE'
+                    const multiplier = getPackMultiplier(packType)
+                    const qtyInput = multiplier > 1 ? l.qtyOrdered / multiplier : l.qtyOrdered
+                    const priceInput = multiplier > 1 ? l.unitPrice * multiplier : l.unitPrice
+                    return {
+                        productId: l.productId,
+                        packType: packType as any,
+                        pricingMode: multiplier > 1 ? 'PER_CASE' : 'PER_BOTTLE',
+                        qtyInput: Math.max(1, Math.round(qtyInput)),
+                        priceInput: Number(priceInput.toFixed(2)),
+                    }
+                })
+                setLines(draftLines.length > 0 ? draftLines : [{ productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0 }])
+                setSearchQueries(queries)
+            }
+        }).catch(err => {
+            toast.error('Lỗi khi tải chi tiết PO: ' + err.message)
+        }).finally(() => {
+            setLoadingDetail(false)
+        })
+    }, [open, poId])
+
+    const getFilteredProducts = (query: string) => {
+        let q = query.trim().toLowerCase()
+        if (!q) return products.slice(0, 20)
+        if (q.startsWith('[')) {
+            const closeIdx = q.indexOf(']')
+            if (closeIdx !== -1) {
+                const afterClose = q.substring(closeIdx + 1).trim()
+                if (afterClose) q = afterClose
+                else return products.slice(0, 20)
+            }
+        }
+        const results = []
+        for (const p of products) {
+            if (p.productName.toLowerCase().includes(q) || p.skuCode.toLowerCase().includes(q)) {
+                results.push(p)
+                if (results.length >= 25) break
+            }
+        }
+        return results
+    }
+
+    const totalFOB = lines.reduce((s, l) => {
+        const calc = getLineCalculations(l)
+        return s + calc.lineTotal
+    }, 0)
+    const totalVND = totalFOB * exchangeRate
+
+    const addLine = () => setLines(ls => [...ls, { productId: '', packType: 'CASE_6', pricingMode: 'PER_CASE', qtyInput: 10, priceInput: 0 }])
+    const removeLine = (i: number) => {
+        setLines(ls => ls.filter((_, idx) => idx !== i))
+        setSearchQueries(prev => {
+            const next: Record<number, string> = {}
+            const oldKeys = Object.keys(prev).map(Number).sort((a, b) => a - b)
+            let newIdx = 0
+            for (const k of oldKeys) {
+                if (k === i) continue
+                next[newIdx] = prev[k]
+                newIdx++
+            }
+            return next
+        })
+    }
+    const setLine = (i: number, key: keyof DraftPOLine, val: any) =>
+        setLines(ls => ls.map((l, idx) => idx === i ? { ...l, [key]: val } : l))
+
+    const handleSave = async () => {
+        if (!poId) return
+        if (!supplierId) return toast.error('Vui lòng chọn nhà cung cấp')
+        if (lines.some(l => !l.productId || l.priceInput <= 0)) return toast.error('Điền đầy đủ thông tin tất cả dòng sản phẩm')
+        setSaving(true)
+
+        const formattedLines = lines.map(l => {
+            const calc = getLineCalculations(l)
+            return {
+                productId: l.productId,
+                qtyOrdered: calc.totalBottles,
+                unitPrice: Number(calc.unitPricePerBottle.toFixed(4)),
+                uom: l.packType,
+            }
+        })
+
+        toast.promise(
+            updatePurchaseOrder(poId, { supplierId, currency, exchangeRate, lines: formattedLines, legalEntityId, incoterms }).then(res => {
+                if (!res.success) throw new Error(res.error || 'Lỗi cập nhật PO')
+                onUpdated(res.poNo || poNo)
+                return res
+            }),
+            {
+                loading: 'Đang lưu chỉnh sửa PO...',
+                success: 'Cập nhật PO thành công!',
+                error: (err: any) => `Lỗi: ${err.message}`,
+                finally: () => setSaving(false)
+            }
+        )
+    }
+
+    const inputCls = "w-full px-3 py-2 rounded-lg text-xs outline-none transition-all"
+    const inputStyle = { background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }
+
+    if (!open) return null
+
+    return (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={onClose}>
+            <div className="w-full sm:w-[720px] max-w-full h-full overflow-y-auto flex flex-col"
+                style={{ background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}
+                onClick={e => e.stopPropagation()}>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-[#2A4355]">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.15)' }}>
+                            <Pencil size={18} style={{ color: '#D4A853' }} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-base" style={{ color: '#E8F1F2' }}>
+                                Chỉnh Sửa Đơn Mua Hàng: <span className="font-mono text-[#87CBB9]">{poNo}</span>
+                            </h3>
+                            <p className="text-xs" style={{ color: '#4A6A7A' }}>Chỉnh sửa thông tin đơn hàng, số lượng, quy cách đóng gói và đơn giá</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]"><X size={18} /></button>
+                </div>
+
+                {loadingDetail ? (
+                    <div className="flex-1 flex items-center justify-center py-16 text-[#87CBB9]">
+                        <Loader2 size={24} className="animate-spin mr-2" /> Đang tải thông tin PO...
+                    </div>
+                ) : (
+                    <>
+                        {/* Body */}
+                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                            <p className="text-[11px] uppercase tracking-wider font-bold text-[#87CBB9]">── Thông Tin Chung</p>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Nhà Cung Cấp / Winery *</label>
+                                    <select
+                                        className={inputCls}
+                                        style={inputStyle}
+                                        value={supplierId}
+                                        onChange={e => setSupplierId(e.target.value)}
+                                    >
+                                        <option value="">-- Chọn Nhà Cung Cấp --</option>
+                                        {suppliers.map(s => (
+                                            <option key={s.id} value={s.id}>
+                                                {COUNTRY_FLAGS[s.country] || '🌐'} {s.name} ({s.defaultCurrency || 'USD'})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Pháp Nhân Nhập Khẩu</label>
+                                    <select
+                                        className={inputCls}
+                                        style={inputStyle}
+                                        value={legalEntityId}
+                                        onChange={e => setLegalEntityId(e.target.value)}
+                                    >
+                                        {legalEntities.map(e => (
+                                            <option key={e.id} value={e.id}>
+                                                [{e.code}] {e.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Incoterms</label>
+                                    <select
+                                        className={inputCls}
+                                        style={inputStyle}
+                                        value={incoterms}
+                                        onChange={e => setIncoterms(e.target.value)}
+                                    >
+                                        <option value="EXW">EXW (Tại xưởng)</option>
+                                        <option value="FOB">FOB (Giao lên tàu)</option>
+                                        <option value="CIF">CIF (Cước + BH + Hàng)</option>
+                                        <option value="DDP">DDP (Giao tại kho)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Tiền Tệ</label>
+                                    <select
+                                        className={inputCls}
+                                        style={inputStyle}
+                                        value={currency}
+                                        onChange={e => setCurrency(e.target.value as any)}
+                                    >
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="AUD">AUD (A$)</option>
+                                        <option value="NZD">NZD (NZ$)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold text-[#8AAEBB] block mb-1">Tỷ Giá Quy Đổi VNĐ</label>
+                                    <input
+                                        type="number"
+                                        className={inputCls}
+                                        style={inputStyle}
+                                        value={exchangeRate}
+                                        onChange={e => setExchangeRate(Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Line Items */}
+                            <div className="flex items-center justify-between pt-2">
+                                <p className="text-[11px] uppercase tracking-wider font-bold text-[#87CBB9]">
+                                    ── Danh Sách Sản Phẩm ({lines.length})
+                                </p>
+                                <button onClick={addLine}
+                                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold"
+                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                    <Plus size={12} /> Thêm Sản Phẩm
+                                </button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {lines.map((line, i) => {
+                                    const calc = getLineCalculations(line)
+
+                                    return (
+                                        <div key={i} className="p-3.5 rounded-xl space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-[#8AAEBB]">Dòng #{i + 1}</span>
+                                                    {line.productId && (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-[#87CBB9] border border-emerald-500/30">
+                                                            {calc.totalBottles} chai
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {lines.length > 1 && (
+                                                    <button onClick={() => removeLine(i)} className="p-1 rounded text-[#E85D5D] hover:bg-[#1B2E3D]">
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Searchable Product Autocomplete Input */}
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    placeholder="🔍 Gõ SKU hoặc tên sản phẩm / rượu vang..."
+                                                    value={searchQueries[i] ?? ''}
+                                                    onFocus={e => {
+                                                        setActiveDropdownIndex(i)
+                                                        e.target.select()
+                                                    }}
+                                                    onBlur={() => {
+                                                        setTimeout(() => {
+                                                            setActiveDropdownIndex(null)
+                                                            const currentProduct = products.find(p => p.id === line.productId)
+                                                            if (currentProduct) {
+                                                                setSearchQueries(prev => ({
+                                                                    ...prev,
+                                                                    [i]: `[${currentProduct.skuCode}] ${currentProduct.productName}`
+                                                                }))
+                                                            } else if (!line.productId) {
+                                                                setSearchQueries(prev => ({ ...prev, [i]: '' }))
+                                                            }
+                                                        }, 200)
+                                                    }}
+                                                    onChange={e => {
+                                                        const val = e.target.value
+                                                        setSearchQueries(prev => ({ ...prev, [i]: val }))
+                                                        setActiveDropdownIndex(i)
+                                                    }}
+                                                    className={inputCls}
+                                                    style={inputStyle}
+                                                />
+
+                                                {activeDropdownIndex === i && (
+                                                    <div className="absolute left-0 top-full mt-1 max-h-60 overflow-y-auto z-50 rounded-xl bg-[#142433] border border-[#2A4355] w-full shadow-2xl p-1">
+                                                        {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
+                                                            <div className="px-3 py-2 text-xs text-[#4A6A7A] italic text-center">
+                                                                Không tìm thấy sản phẩm nào
+                                                            </div>
+                                                        ) : (
+                                                            getFilteredProducts(searchQueries[i] ?? '').map(p => (
+                                                                <div
+                                                                    key={p.id}
+                                                                    onMouseDown={() => {
+                                                                        setLine(i, 'productId', p.id)
+                                                                        setSearchQueries(prev => ({
+                                                                            ...prev,
+                                                                            [i]: `[${p.skuCode}] ${p.productName}`
+                                                                        }))
+                                                                        setActiveDropdownIndex(null)
+                                                                    }}
+                                                                    className="px-3 py-2 text-xs cursor-pointer rounded-lg hover:bg-[#1B2E3D] transition-colors flex items-center justify-between gap-2 border-b border-[#2A4355]/20 last:border-b-0"
+                                                                >
+                                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                        <span className="font-mono font-bold text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
+                                                                        <span className="font-semibold text-[#E8F1F2] truncate">{p.productName}</span>
+                                                                    </div>
+                                                                    {p.country && (
+                                                                        <span className="text-[11px] shrink-0">{COUNTRY_FLAGS[p.country] || '🌐'}</span>
+                                                                    )}
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Row Controls: Quy cách đóng gói, Chế độ giá, Số lượng, Đơn giá */}
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                                <div>
+                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">Quy cách đóng gói</label>
+                                                    <select
+                                                        className={inputCls}
+                                                        style={inputStyle}
+                                                        value={line.packType}
+                                                        onChange={e => {
+                                                            const val = e.target.value as any
+                                                            setLine(i, 'packType', val)
+                                                            if (val === 'BOTTLE') {
+                                                                setLine(i, 'pricingMode', 'PER_BOTTLE')
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="CASE_6">📦 Thùng 6 chai</option>
+                                                        <option value="CASE_12">📦 Thùng 12 chai</option>
+                                                        <option value="CASE_3">📦 Thùng 3 chai</option>
+                                                        <option value="CASE_1">📦 Thùng 1 chai</option>
+                                                        <option value="BOTTLE">🍾 Chai lẻ (1 chai)</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">Hình thức nhập giá</label>
+                                                    <select
+                                                        className={inputCls}
+                                                        style={{ ...inputStyle, opacity: line.packType === 'BOTTLE' ? 0.6 : 1 }}
+                                                        value={line.pricingMode}
+                                                        disabled={line.packType === 'BOTTLE'}
+                                                        onChange={e => setLine(i, 'pricingMode', e.target.value as any)}
+                                                    >
+                                                        <option value="PER_CASE">Giá theo Thùng</option>
+                                                        <option value="PER_BOTTLE">Giá theo Chai</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
+                                                        Số lượng ({line.packType === 'BOTTLE' ? 'chai' : 'thùng'})
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        className={inputCls}
+                                                        style={inputStyle}
+                                                        value={line.qtyInput}
+                                                        onChange={e => setLine(i, 'qtyInput', Math.max(1, Number(e.target.value)))}
+                                                    />
+                                                    {calc.isCase && (
+                                                        <span className="text-[10px] font-mono text-[#87CBB9] block mt-0.5">
+                                                            = {calc.totalBottles} chai
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-semibold text-[#4A6A7A] block mb-0.5">
+                                                        {line.pricingMode === 'PER_CASE' && calc.isCase
+                                                            ? `Đơn giá thùng (${currency})`
+                                                            : `Đơn giá chai (${currency})`}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        step={0.01}
+                                                        className={inputCls}
+                                                        style={inputStyle}
+                                                        value={line.priceInput}
+                                                        onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
+                                                    />
+                                                    {calc.isCase && (
+                                                        <span className="text-[10px] font-mono text-[#8AAEBB] block mt-0.5">
+                                                            {line.pricingMode === 'PER_CASE'
+                                                                ? `(≈ ${calc.unitPricePerBottle.toFixed(2)} ${currency}/chai)`
+                                                                : `(≈ ${calc.unitPricePerCase.toFixed(2)} ${currency}/thùng)`}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Line Total preview */}
+                                            <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#2A4355]/40">
+                                                <span className="text-[#4A6A7A]">
+                                                    Thành tiền dòng:
+                                                    <span className="ml-1 text-[11px] text-[#8AAEBB]">
+                                                        ({calc.totalBottles} chai × {calc.unitPricePerBottle.toFixed(2)} {currency})
+                                                    </span>
+                                                </span>
+                                                <span className="font-mono font-bold text-[#E8F1F2]">
+                                                    {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                                                    <span className="text-[10px] ml-1.5 text-[#87CBB9]">
+                                                        (≈ {formatVND(calc.lineTotal * exchangeRate)})
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 border-t border-[#2A4355] flex-shrink-0 space-y-3" style={{ background: '#142433' }}>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs text-[#8AAEBB]">Tổng giá trị đơn hàng ({currency}):</p>
+                                    <p className="text-lg font-bold font-mono text-[#E8F1F2]">
+                                        {totalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-[#8AAEBB]">Quy đổi VNĐ:</p>
+                                    <p className="text-lg font-bold font-mono text-[#87CBB9]">
+                                        {formatVND(totalVND)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={onClose}
+                                    className="px-4 py-3 rounded-xl text-xs font-semibold border border-[#2A4355] text-[#8AAEBB] hover:bg-[#1B2E3D]">
+                                    Huỷ
+                                </button>
+                                <button onClick={handleSave} disabled={saving}
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all shadow-sm"
+                                    style={{ background: '#D4A853', color: '#0A1926' }}>
+                                    {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                                    Lưu Thay Đổi Đơn PO
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    )
+}
+
 // ── Props & Main Component ─────────────────────────
 interface Props {
     initialRows: PORow[]
@@ -910,6 +1410,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
     const [legalEntities, setLegalEntities] = useState<{ id: string; code: string; name: string }[]>([])
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const [editDrawerOpen, setEditDrawerOpen] = useState(false)
+    const [editPoId, setEditPoId] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [successMsg, setSuccessMsg] = useState('')
 
@@ -1564,6 +2066,15 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     <Eye size={13} />
                                                 </button>
 
+                                                {/* Edit Draft PO */}
+                                                {row.status === 'DRAFT' && (
+                                                    <button onClick={() => { setEditPoId(row.id); setEditDrawerOpen(true); }}
+                                                        className="p-1.5 rounded-lg text-[#D4A853] hover:bg-[#1B2E3D] border border-amber-500/20"
+                                                        title="Chỉnh sửa PO">
+                                                        <Pencil size={13} />
+                                                    </button>
+                                                )}
+
                                                 {/* Status Stepper */}
                                                 <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} />
 
@@ -1641,7 +2152,15 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             </div>
 
                             <div className="flex items-center justify-between pt-2 border-t border-[#2A4355]/40 text-xs" onClick={e => e.stopPropagation()}>
-                                <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} />
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} />
+                                    {row.status === 'DRAFT' && (
+                                        <button onClick={() => { setEditPoId(row.id); setEditDrawerOpen(true); }}
+                                            className="px-2 py-1 text-xs font-bold rounded-lg text-[#D4A853] bg-[#1B2E3D] border border-amber-500/20 flex items-center gap-1">
+                                            <Pencil size={11} /> Sửa
+                                        </button>
+                                    )}
+                                </div>
                                 <button onClick={() => showDetail(row.id)}
                                     className="px-2.5 py-1 text-xs font-bold rounded-lg text-[#87CBB9] bg-[#1B2E3D] border border-emerald-500/20">
                                     Chi Tiết
@@ -1674,9 +2193,19 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     </p>
                                 )}
                             </div>
-                            <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]">
-                                <X size={18} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {poDetail && poDetail.status === 'DRAFT' && (
+                                    <button onClick={() => { setEditPoId(selectedId); setEditDrawerOpen(true); }}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
+                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}
+                                        title="Chỉnh sửa PO">
+                                        <Pencil size={13} /> Sửa Đơn
+                                    </button>
+                                )}
+                                <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-lg text-[#8AAEBB] hover:bg-[#1B2E3D]">
+                                    <X size={18} />
+                                </button>
+                            </div>
                         </div>
 
                         {detailLoading ? (
@@ -2016,6 +2545,22 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     setDrawerOpen(false)
                     toast.success(`Đã tạo thành công đơn mua hàng ${poNo}!`)
                     refresh()
+                }}
+            />
+
+            {/* Edit PO Drawer */}
+            <EditPODrawer
+                open={editDrawerOpen}
+                poId={editPoId}
+                onClose={() => {
+                    setEditDrawerOpen(false)
+                    setEditPoId(null)
+                }}
+                onUpdated={poNo => {
+                    setEditDrawerOpen(false)
+                    setEditPoId(null)
+                    refresh()
+                    if (selectedId) showDetail(selectedId)
                 }}
             />
 

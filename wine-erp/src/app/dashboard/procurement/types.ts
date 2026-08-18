@@ -82,10 +82,16 @@ export const poLineSchema = z.object({
     qtyOrdered: z.number().positive(),
     unitPrice: z.number().positive(),
     uom: z.string().default('BOTTLE'),
+    packType: z.string().optional(),
+    pricingMode: z.string().optional(),
 })
 
 export const createPOSchema = z.object({
     supplierId: z.string().min(1, 'Chọn nhà cung cấp'),
+    legalEntityId: z.string().optional(),
+    incoterms: z.string().optional(),
+    paymentTerm: z.string().optional(),
+    notes: z.string().optional(),
     currency: z.enum(['USD', 'EUR', 'GBP', 'NZD', 'AUD']).default('USD'),
     exchangeRate: z.number().positive().default(25000),
     lines: z.array(poLineSchema).min(1, 'Cần ít nhất 1 dòng sản phẩm'),

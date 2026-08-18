@@ -454,6 +454,82 @@ export async function createPurchaseOrder(input: CreatePOInput) {
     return { success: true, id: po.id, poNo: po.poNo }
 }
 
+// ─── Update PO (Draft only) ───────────────────────
+export async function updatePurchaseOrder(id: string, input: CreatePOInput) {
+    await requireAuth()
+    const data = createPOSchema.parse(input)
+    const userId = await getOrCreateSystemUser()
+
+    const po = await prisma.purchaseOrder.findUnique({
+        where: { id },
+        select: { id: true, poNo: true, status: true, legalEntityId: true }
+    })
+    if (!po) {
+        return { success: false, error: 'Không tìm thấy đơn mua hàng' }
+    }
+    if (po.status !== 'DRAFT') {
+        return { success: false, error: 'Chỉ có thể chỉnh sửa đơn mua hàng ở trạng thái Nháp' }
+    }
+
+    const supplier = await prisma.supplier.findUnique({
+        where: { id: data.supplierId },
+        select: { defaultCurrency: true }
+    })
+    if (!supplier) {
+        return { success: false, error: 'Không tìm thấy nhà cung cấp' }
+    }
+    if (supplier.defaultCurrency && supplier.defaultCurrency !== data.currency) {
+        return { success: false, error: `Tiền tệ đơn hàng (${data.currency}) không khớp với tiền tệ mặc định của nhà cung cấp (${supplier.defaultCurrency})` }
+    }
+
+    await prisma.$transaction(async (tx) => {
+        // Delete old lines
+        await tx.purchaseOrderLine.deleteMany({
+            where: { poId: id }
+        })
+
+        // Update PO and recreate lines
+        await tx.purchaseOrder.update({
+            where: { id },
+            data: {
+                supplierId: data.supplierId,
+                currency: data.currency,
+                exchangeRate: data.exchangeRate,
+                legalEntityId: data.legalEntityId || po.legalEntityId,
+                incoterms: data.incoterms || undefined,
+                paymentTerm: data.paymentTerm || undefined,
+                notes: data.notes !== undefined ? data.notes : undefined,
+                lines: {
+                    create: data.lines.map(l => ({
+                        productId: l.productId,
+                        qtyOrdered: l.qtyOrdered,
+                        unitPrice: l.unitPrice,
+                        uom: l.uom,
+                    })),
+                },
+            }
+        })
+
+        await tx.auditLog.create({
+            data: {
+                entityType: 'PurchaseOrder',
+                entityId: id,
+                action: 'UPDATE',
+                userId,
+                newValue: {
+                    description: `Cập nhật nội dung đơn mua hàng ${po.poNo}`,
+                    lineCount: data.lines.length,
+                    currency: data.currency,
+                },
+            }
+        })
+    })
+
+    revalidateCache('procurement')
+    revalidatePath('/dashboard/procurement')
+    return { success: true, id: po.id, poNo: po.poNo }
+}
+
 // ─── PO Approval Workflow Actions ─────────────────
 
 // 1. Submit PO for Approval
