@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
     type GoodsReceiptRow,
     getGoodsReceipts, getPOsForReceiving, createGoodsReceipt, confirmGoodsReceipt,
-    getGRDetail,
+    getGRDetail, getLocations,
 } from './actions'
 import { formatDate, formatVND } from '@/lib/utils'
 
@@ -206,7 +206,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
-                                                {['SKU', 'Sản Phẩm', 'Lô', 'Vị Trí', 'Dự Kiến', 'Thực Nhận', 'Chênh Lệch'].map(h => (
+                                                {['SKU', 'Sản Phẩm', 'Niên Vụ', 'Lô', 'Vị Trí', 'Dự Kiến', 'Thực Nhận', 'Chênh Lệch'].map(h => (
                                                     <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-extrabold">{h}</th>
                                                 ))}
                                             </tr>
@@ -216,6 +216,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                 <tr key={l.id} className="hover:bg-slate-50">
                                                     <td className="px-3 py-2 text-xs font-bold font-mono text-emerald-700">{l.skuCode}</td>
                                                     <td className="px-3 py-2 text-xs font-bold text-slate-900">{l.productName}</td>
+                                                    <td className="px-3 py-2 text-xs font-mono text-purple-700 font-bold">{l.vintage ? l.vintage : '—'}</td>
                                                     <td className="px-3 py-2 text-xs font-mono text-amber-700 font-bold">{l.lotNo}</td>
                                                     <td className="px-3 py-2 text-xs font-mono text-slate-600">{l.locationCode}</td>
                                                     <td className="px-3 py-2 text-xs font-mono font-bold text-slate-700">{l.qtyExpected}</td>
@@ -257,8 +258,10 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
 }) {
     const [pos, setPOs] = useState<POOption[]>([])
     const [selectedPO, setSelectedPO] = useState<POOption | null>(null)
-    const [warehouseId, setWarehouseId] = useState('')
-    const [lines, setLines] = useState<{ productId: string; qtyReceived: number; locationId: string }[]>([])
+    const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id || '')
+    const [locations, setLocations] = useState<{ id: string; locationCode: string; zone: string; rack?: string | null; bin?: string | null }[]>([])
+    const [loadingLocations, setLoadingLocations] = useState(false)
+    const [lines, setLines] = useState<{ productId: string; qtyReceived: number; locationId: string; vintage: string }[]>([])
     const [saving, setSaving] = useState(false)
 
     useEffect(() => {
@@ -267,6 +270,29 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
         })
     }, [])
 
+    // Fetch locations when warehouse changes
+    useEffect(() => {
+        if (!warehouseId) {
+            setLocations([])
+            return
+        }
+        setLoadingLocations(true)
+        getLocations(warehouseId).then(locs => {
+            setLocations(locs)
+            if (locs.length > 0) {
+                // Auto-fill first location for lines if not set
+                setLines(prev => prev.map(l => ({
+                    ...l,
+                    locationId: l.locationId || locs[0].id
+                })))
+            }
+        }).catch(err => {
+            console.error('Lỗi khi lấy vị trí kho:', err)
+        }).finally(() => {
+            setLoadingLocations(false)
+        })
+    }, [warehouseId])
+
     const selectPO = (poId: string) => {
         const po = pos.find(p => p.id === poId) || null
         setSelectedPO(po)
@@ -274,51 +300,67 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
             setLines(po.lines.map(l => ({
                 productId: l.productId,
                 qtyReceived: l.qtyOrdered,
-                locationId: '',
+                locationId: locations.length > 0 ? locations[0].id : '',
+                vintage: '',
             })))
         }
     }
 
     const handleSave = async () => {
-        if (!selectedPO || !warehouseId) return toast.error('Chọn PO và kho')
+        if (!selectedPO || !warehouseId) return toast.error('Vui lòng chọn PO và kho nhận')
         const validLines = lines.filter(l => l.qtyReceived > 0 && l.locationId)
-        if (validLines.length === 0) return toast.error('Nhập số lượng và chọn vị trí')
-        setSaving(true)
-        toast.promise(
-            createGoodsReceipt({ poId: selectedPO.id, warehouseId, lines: validLines }).then(async (res) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi')
-                onCreated()
-                return res
-            }),
-            {
-                loading: 'Đang tạo phiếu nhập kho...',
-                success: 'Đã tạo Goods Receipt!',
-                error: (err: Error) => `Lỗi: ${err.message}`
-            }
-        )
-        setSaving(false)
+        if (validLines.length === 0) return toast.error('Vui lòng nhập số lượng nhận (> 0) và chọn vị trí kho cho các sản phẩm')
+        try {
+            await toast.promise(
+                createGoodsReceipt({
+                    poId: selectedPO.id,
+                    warehouseId,
+                    lines: validLines.map(l => ({
+                        productId: l.productId,
+                        qtyReceived: l.qtyReceived,
+                        locationId: l.locationId,
+                        vintage: l.vintage?.trim() ? (isNaN(Number(l.vintage.trim())) ? l.vintage.trim() : Number(l.vintage.trim())) : null,
+                    }))
+                }).then(async (res) => {
+                    if (!res.success) throw new Error(res.error || 'Lỗi tạo phiếu nhập kho')
+                    onCreated()
+                    return res
+                }),
+                {
+                    loading: 'Đang tạo phiếu nhập kho...',
+                    success: 'Đã tạo Goods Receipt thành công!',
+                    error: (err: Error) => `Lỗi: ${err.message}`
+                }
+            )
+        } finally {
+            setSaving(false)
+        }
     }
 
     const inputCls = "w-full px-3 py-2 rounded-xl text-xs outline-none bg-white border border-slate-200 text-slate-900 focus:border-emerald-500 shadow-2xs"
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs">
-            <div className="w-full sm:w-[560px] max-w-full h-full overflow-y-auto bg-white border-l border-slate-200 shadow-2xl">
-                <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                    <h3 className="text-base font-extrabold text-slate-900">Tạo Phiếu Nhập Kho (GR)</h3>
+            <div className="w-full sm:w-[680px] max-w-full h-full overflow-y-auto bg-white border-l border-slate-200 shadow-2xl flex flex-col">
+                <div className="flex items-center justify-between p-5 border-b border-slate-100 flex-shrink-0">
+                    <div>
+                        <h3 className="text-base font-extrabold text-slate-900">Tạo Phiếu Nhập Kho (Goods Receipt)</h3>
+                        <p className="text-xs text-slate-500 font-medium">Nhập hàng từ PO đã duyệt vào vị trí kho thực tế</p>
+                    </div>
                     <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600"><X size={18} /></button>
                 </div>
-                <div className="p-5 space-y-4">
+
+                <div className="p-5 space-y-4 flex-1 overflow-y-auto">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-bold mb-1 text-slate-700">Purchase Order *</label>
+                            <label className="block text-xs font-bold mb-1 text-slate-700">Đơn Mua Hàng (PO) *</label>
                             <select value={selectedPO?.id ?? ''} onChange={e => selectPO(e.target.value)} className={inputCls}>
                                 <option value="">— Chọn PO —</option>
                                 {pos.map(p => <option key={p.id} value={p.id}>{p.poNo} — {p.supplierName}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold mb-1 text-slate-700">Kho Nhận *</label>
+                            <label className="block text-xs font-bold mb-1 text-slate-700">Kho Nhận Hàng *</label>
                             <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} className={inputCls}>
                                 <option value="">— Chọn kho —</option>
                                 {warehouses.map(w => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}
@@ -328,32 +370,97 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
 
                     {selectedPO && lines.length > 0 && (
                         <>
-                            <p className="text-xs font-extrabold uppercase tracking-wide text-amber-700">
-                                Sản Phẩm ({lines.length} dòng)
-                            </p>
-                            <div className="space-y-2">
+                            <div className="flex items-center justify-between pt-2">
+                                <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-800">
+                                    Sản Phẩm Cần Nhập ({lines.length} dòng)
+                                </p>
+                                <span className="text-[11px] text-slate-500">
+                                    {locations.length > 0 ? `Đã nạp ${locations.length} vị trí khả dụng` : (loadingLocations ? 'Đang tải vị trí...' : 'Chưa có vị trí')}
+                                </span>
+                            </div>
+
+                            <div className="space-y-3">
                                 {selectedPO.lines.map((pol, i) => (
-                                    <div key={pol.productId} className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2">
-                                        <p className="text-xs font-extrabold text-slate-900">{pol.productName}</p>
-                                        <p className="text-[10px] text-slate-500 font-medium">
-                                            {pol.skuCode} · PO qty: {pol.qtyOrdered}
+                                    <div key={pol.productId} className="p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 space-y-2.5 shadow-2xs">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <p className="text-xs font-extrabold text-slate-900 truncate">{pol.productName}</p>
+                                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 shrink-0">
+                                                PO: {pol.qtyOrdered} chai
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 font-mono">
+                                            SKU: {pol.skuCode}
                                         </p>
-                                        <div className="grid grid-cols-2 gap-2">
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
                                             <div>
-                                                <label className="text-[10px] font-bold block mb-0.5 text-slate-600">SL Thực Nhận</label>
-                                                <input type="number" min={0} value={lines[i]?.qtyReceived ?? 0}
+                                                <label className="text-[10px] font-bold block mb-0.5 text-slate-600">
+                                                    SL Thực Nhận (Chai) *
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={lines[i]?.qtyReceived ?? 0}
                                                     onChange={e => {
-                                                        const v = [...lines]; v[i] = { ...v[i], qtyReceived: Number(e.target.value) }; setLines(v)
+                                                        const v = [...lines]
+                                                        v[i] = { ...v[i], qtyReceived: Number(e.target.value) }
+                                                        setLines(v)
                                                     }}
-                                                    className={inputCls} />
+                                                    className={inputCls}
+                                                />
                                             </div>
+
                                             <div>
-                                                <label className="text-[10px] font-bold block mb-0.5 text-slate-600">Vị Trí Kho</label>
-                                                <input type="text" placeholder="VD: loc_id" value={lines[i]?.locationId ?? ''}
+                                                <label className="text-[10px] font-bold block mb-0.5 text-slate-600">
+                                                    Niên Vụ (Vintage)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="VD: 2020, 2022, NV..."
+                                                    value={lines[i]?.vintage ?? ''}
                                                     onChange={e => {
-                                                        const v = [...lines]; v[i] = { ...v[i], locationId: e.target.value }; setLines(v)
+                                                        const v = [...lines]
+                                                        v[i] = { ...v[i], vintage: e.target.value }
+                                                        setLines(v)
                                                     }}
-                                                    className={inputCls} />
+                                                    className={inputCls}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="text-[10px] font-bold block mb-0.5 text-slate-600">
+                                                    Vị Trí Kho * {loadingLocations && <Loader2 size={10} className="animate-spin inline ml-1 text-emerald-600" />}
+                                                </label>
+                                                {locations.length > 0 ? (
+                                                    <select
+                                                        value={lines[i]?.locationId ?? ''}
+                                                        onChange={e => {
+                                                            const v = [...lines]
+                                                            v[i] = { ...v[i], locationId: e.target.value }
+                                                            setLines(v)
+                                                        }}
+                                                        className={inputCls}
+                                                    >
+                                                        <option value="">-- Chọn vị trí --</option>
+                                                        {locations.map(loc => (
+                                                            <option key={loc.id} value={loc.id}>
+                                                                📍 {loc.locationCode} {loc.zone ? `(Khu ${loc.zone}${loc.rack ? ` - Kệ ${loc.rack}` : ''}${loc.bin ? ` - Ô ${loc.bin}` : ''})` : ''}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        placeholder={loadingLocations ? "Đang tải vị trí..." : "Nhập mã vị trí (hoặc ID)"}
+                                                        value={lines[i]?.locationId ?? ''}
+                                                        onChange={e => {
+                                                            const v = [...lines]
+                                                            v[i] = { ...v[i], locationId: e.target.value }
+                                                            setLines(v)
+                                                        }}
+                                                        className={inputCls}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -361,11 +468,13 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                             </div>
                         </>
                     )}
+                </div>
 
-                    <button onClick={handleSave} disabled={saving}
-                        className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs">
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex-shrink-0">
+                    <button onClick={handleSave} disabled={saving || !selectedPO}
+                        className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white cursor-pointer shadow-xs transition-all">
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        Tạo Phiếu Nhập Kho
+                        Tạo Phiếu Nhập Kho & Khởi Tạo Lô Hàng
                     </button>
                 </div>
             </div>

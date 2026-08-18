@@ -429,6 +429,7 @@ export const GoodsReceiptLineSchema = z.object({
     productId: z.string().min(1),
     qtyReceived: z.number().int().positive('SL nhận phải > 0'),
     locationId: z.string().min(1),
+    vintage: z.union([z.number().int(), z.string()]).optional().nullable(),
     unitLandedCost: nonNegativeNumber.optional(),
 })
 

@@ -30,6 +30,7 @@ export type GRLineInput = {
     productId: string
     qtyReceived: number
     locationId: string
+    vintage?: number | string | null
     unitLandedCost?: number
 }
 
@@ -156,6 +157,7 @@ export async function createGoodsReceipt(input: {
                     }
                 }
                 const lotNo = `${lotPrefix}${String(nextLotSeq).padStart(5, '0')}`
+                const vintageInt = line.vintage != null && line.vintage !== '' ? (typeof line.vintage === 'string' ? parseInt(line.vintage, 10) : line.vintage) : null
 
                 const lot = await tx.stockLot.create({
                     data: {
@@ -168,6 +170,7 @@ export async function createGoodsReceipt(input: {
                         qtyAvailable: 0,
                         unitLandedCost: line.unitLandedCost ?? 0,
                         receivedDate: now,
+                        vintage: vintageInt != null && !isNaN(vintageInt) ? vintageInt : null,
                         status: 'PENDING',
                     },
                 })
@@ -272,7 +275,7 @@ export async function getGRDetail(grId: string) {
             lines: {
                 include: {
                     product: { select: { productName: true, skuCode: true } },
-                    lot: { select: { lotNo: true, location: { select: { locationCode: true } } } },
+                    lot: { select: { lotNo: true, vintage: true, location: { select: { locationCode: true } } } },
                 },
             },
         },
@@ -286,6 +289,7 @@ export async function getGRDetail(grId: string) {
         confirmedAt: gr.confirmedAt, createdAt: gr.createdAt,
         lines: gr.lines.map(l => ({
             id: l.id, productName: l.product.productName, skuCode: l.product.skuCode,
+            vintage: l.lot?.vintage ?? null,
             lotNo: l.lot?.lotNo ?? '—', locationCode: l.lot?.location?.locationCode ?? '—',
             qtyExpected: Number(l.qtyExpected), qtyReceived: Number(l.qtyReceived), variance: Number(l.variance),
         })),

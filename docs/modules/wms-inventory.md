@@ -555,6 +555,13 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Thẻ Cảnh Báo Nhắc Đơn Hàng Mới Tự Động (Web Notification & Audio Alert)** | `web-notifications.ts`, `WarehouseClient.tsx`, `actions.ts` | Bổ sung cơ chế phát âm thanh Web Audio API (Chime D5->A5->D6) + Nảy ô thông báo nổi Desktop (`Notification API`) ngoài màn hình máy tính khi có đơn bán hàng mới cần nhặt. Thêm nút bật/tắt `🔊 Bật Nhắc Đơn` trên thanh Header WMS |
 | **Đồng bộ chuẩn Giao diện & Font chữ Kiểm Kê Kho theo chuẩn Đơn Bán Hàng** | `StockCountClient.tsx` | Chuẩn hóa toàn bộ layout, font chữ, mã phiếu (font-mono cyan blue), thanh chỉ số quick stats 1 dòng, tab bộ lọc số lượng badge pill, và các nút hành động (👁️ Xem, ⚡ Bắt Đầu, 🖨️ In) đồng bộ 100% với giao diện màn hình Đơn Bán Hàng |
 
+#### Phase 9: Goods Receipt (GR) Location Dropdown & Vintage Support (18/08/2026)
+
+| Tính năng | File | Chi tiết |
+|---|---|---|
+| **Vị Trí Kho Dropdown theo Kho Nhận** | `GoodsReceiptTab.tsx`, `actions.ts`, `actions-gr.ts` | Khi chọn kho nhận, hệ thống tự động tải danh sách vị trí kho khả dụng (`Location` / Zone - Kệ - Ô) và hiển thị dạng dropdown chọn nhanh thay vì nhập tay text tự do |
+| **Hỗ trợ Niên Vụ (Vintage) khi Nhập Kho** | `validations.ts`, `actions.ts`, `actions-gr.ts`, `GoodsReceiptTab.tsx` | Bổ sung trường Niên Vụ (`vintage`, VD: `2020`, `2021`, `NV`) cho từng dòng sản phẩm khi tạo phiếu Goods Receipt, lưu trực tiếp vào bản ghi `StockLot` tương ứng và hiển thị trên bảng chi tiết GR |
+
 ### Chi tiết GR Variance Report
 
 ```
@@ -565,6 +572,6 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-08-13 | Wine ERP v10.2 — Fix Inventory Movement Report (NXT) Opening Stock & Multi-Warehouse Filter Sync*
+*Last updated: 2026-08-18 | Wine ERP v10.3 — Goods Receipt Location Dropdown & Vintage Lot Support*
 
 
