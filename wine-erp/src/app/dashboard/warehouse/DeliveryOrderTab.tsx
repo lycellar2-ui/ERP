@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin } from 'lucide-react'
+import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
