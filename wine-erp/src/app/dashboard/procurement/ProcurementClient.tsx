@@ -6,7 +6,8 @@ import {
     FileText, ChevronDown, X, Trash2, Loader2, Save, AlertCircle,
     Package, Globe, ArrowRight, Eye, UploadCloud, Ship, Anchor,
     Filter, RefreshCw, Printer, Calendar, ArrowUpDown, ChevronRight,
-    Building2, FileCheck, Layers, ExternalLink, Box, Send, CheckSquare, XCircle, ShieldCheck
+    Building2, FileCheck, Layers, ExternalLink, Box, Send, CheckSquare, XCircle, ShieldCheck,
+    Download, ChevronUp, Copy
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
@@ -16,7 +17,7 @@ import {
     createPurchaseOrder, updatePOStatus,
     getPurchaseOrders, getPODetail, uploadPODocument, convertPOToVND,
     getExchangeRateSummary, getLegalEntitiesForProcurement,
-    submitPOForApproval, approvePO, rejectPO
+    submitPOForApproval, approvePO, rejectPO, exportPurchaseOrdersExcel
 } from './actions'
 import { getShipments, type ShipmentRow } from './shipment-actions'
 import { ShipmentDetailDrawer } from './ShipmentDetailDrawer'
@@ -48,10 +49,129 @@ const PO_STATUS: Record<string, { label: string; color: string; bg: string; icon
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)', icon: FileText },
     PENDING_APPROVAL: { label: 'Chờ duyệt', color: '#D4A853', bg: 'rgba(212,168,83,0.15)', icon: Clock },
     APPROVED: { label: 'Đã duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)', icon: CheckCircle2 },
-    IN_TRANSIT: { label: 'Đang vận chuyển', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Truck },
-    PARTIALLY_RECEIVED: { label: 'Nhận một phần', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)', icon: Package },
+    IN_TRANSIT: { label: 'Đang trên tàu', color: '#4A8FAB', bg: 'rgba(74,143,171,0.15)', icon: Ship },
+    PARTIALLY_RECEIVED: { label: 'Nhận 1 phần', color: '#87CBB9', bg: 'rgba(135,203,185,0.15)', icon: Package },
     RECEIVED: { label: 'Đã nhận đủ', color: '#5BA88A', bg: 'rgba(91,168,138,0.25)', icon: CheckCircle2 },
     CANCELLED: { label: 'Đã huỷ', color: '#E85D5D', bg: 'rgba(232,93,93,0.12)', icon: X },
+}
+
+export type DatePresetKey = 
+    | 'ALL' 
+    | 'TODAY' 
+    | 'YESTERDAY' 
+    | 'THIS_WEEK' 
+    | 'LAST_WEEK' 
+    | 'THIS_MONTH' 
+    | 'LAST_MONTH' 
+    | 'THIS_QUARTER' 
+    | 'LAST_QUARTER' 
+    | 'THIS_YEAR' 
+    | 'LAST_YEAR' 
+    | 'CUSTOM'
+
+export const DATE_PRESET_OPTIONS: { key: DatePresetKey; label: string }[] = [
+    { key: 'ALL', label: 'Tất cả thời gian' },
+    { key: 'TODAY', label: 'Hôm nay' },
+    { key: 'YESTERDAY', label: 'Hôm qua' },
+    { key: 'THIS_WEEK', label: 'Tuần này' },
+    { key: 'LAST_WEEK', label: 'Tuần trước' },
+    { key: 'THIS_MONTH', label: 'Tháng này' },
+    { key: 'LAST_MONTH', label: 'Tháng trước' },
+    { key: 'THIS_QUARTER', label: 'Quý này' },
+    { key: 'LAST_QUARTER', label: 'Quý trước' },
+    { key: 'THIS_YEAR', label: 'Năm nay' },
+    { key: 'LAST_YEAR', label: 'Năm trước' },
+    { key: 'CUSTOM', label: 'Tùy chỉnh' },
+]
+
+export function getDatePresetRange(preset: DatePresetKey): { dateFrom: string; dateTo: string } {
+    const now = new Date()
+    const formatDateStr = (d: Date) => {
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+
+    switch (preset) {
+        case 'TODAY': {
+            const todayStr = formatDateStr(now)
+            return { dateFrom: todayStr, dateTo: todayStr }
+        }
+        case 'YESTERDAY': {
+            const y = new Date(now)
+            y.setDate(y.getDate() - 1)
+            const yStr = formatDateStr(y)
+            return { dateFrom: yStr, dateTo: yStr }
+        }
+        case 'THIS_WEEK': {
+            const dayOfWeek = now.getDay()
+            const diffToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek)
+            const mon = new Date(now)
+            mon.setDate(now.getDate() + diffToMon)
+            return { dateFrom: formatDateStr(mon), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_WEEK': {
+            const dayOfWeek = now.getDay()
+            const diffToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek)
+            const lastMon = new Date(now)
+            lastMon.setDate(now.getDate() + diffToMon - 7)
+            const lastSun = new Date(lastMon)
+            lastSun.setDate(lastMon.getDate() + 6)
+            return { dateFrom: formatDateStr(lastMon), dateTo: formatDateStr(lastSun) }
+        }
+        case 'THIS_MONTH': {
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_MONTH': {
+            const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+            const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(lastDay) }
+        }
+        case 'THIS_QUARTER': {
+            const currentMonth = now.getMonth()
+            const qStartMonth = Math.floor(currentMonth / 3) * 3
+            const firstDay = new Date(now.getFullYear(), qStartMonth, 1)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_QUARTER': {
+            const currentMonth = now.getMonth()
+            const qStartMonth = Math.floor(currentMonth / 3) * 3 - 3
+            const firstDay = new Date(now.getFullYear(), qStartMonth, 1)
+            const lastDay = new Date(now.getFullYear(), qStartMonth + 3, 0)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(lastDay) }
+        }
+        case 'THIS_YEAR': {
+            const firstDay = new Date(now.getFullYear(), 0, 1)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(now) }
+        }
+        case 'LAST_YEAR': {
+            const firstDay = new Date(now.getFullYear() - 1, 0, 1)
+            const lastDay = new Date(now.getFullYear() - 1, 11, 31)
+            return { dateFrom: formatDateStr(firstDay), dateTo: formatDateStr(lastDay) }
+        }
+        case 'ALL':
+        default:
+            return { dateFrom: '', dateTo: '' }
+    }
+}
+
+function POStatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) {
+    return (
+        <div className="p-4 rounded-md flex items-center gap-4"
+            style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
+                style={{ background: `${accent}20` }}>
+                <div className="w-3 h-3 rounded-sm" style={{ background: accent }} />
+            </div>
+            <div>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>{label}</p>
+                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{value}</p>
+                {sub && <p className="text-xs mt-0.5" style={{ color: '#4A6A7A' }}>{sub}</p>}
+            </div>
+        </div>
+    )
 }
 
 const TAB_ORDER = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'] as const
@@ -64,6 +184,48 @@ const TAB_LABELS: Record<string, string> = {
     PARTIALLY_RECEIVED: 'Nhận 1 phần',
     RECEIVED: 'Đã nhận đủ',
     CANCELLED: 'Đã huỷ',
+}
+
+function FilterTabs({ active, counts, onChange }: { active: string; counts: Record<string, number>; onChange: (s: string) => void }) {
+    return (
+        <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {TAB_ORDER.map(tab => {
+                const isActive = (tab === 'ALL' && active === '') || tab === active
+                const count = tab === 'ALL' ? (counts.ALL ?? 0) : (counts[tab] ?? 0)
+                return (
+                    <button key={tab} onClick={() => onChange(tab === 'ALL' ? '' : tab)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md whitespace-nowrap transition-all"
+                        style={{
+                            background: isActive ? 'rgba(135,203,185,0.15)' : 'transparent',
+                            color: isActive ? '#87CBB9' : '#4A6A7A',
+                            border: `1px solid ${isActive ? 'rgba(135,203,185,0.3)' : 'transparent'}`,
+                        }}
+                        onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(135,203,185,0.06)')}
+                        onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}>
+                        {TAB_LABELS[tab]}
+                        <span className="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
+                            style={{ background: isActive ? 'rgba(135,203,185,0.2)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#4A6A7A' }}>
+                            {count}
+                        </span>
+                    </button>
+                )
+            })}
+        </div>
+    )
+}
+
+function SortHeader({ label, field, current, dir, onSort, style }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void; style?: React.CSSProperties }) {
+    const isActive = current === field
+    return (
+        <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
+            style={{ color: isActive ? '#87CBB9' : '#8AAEBB', ...style }}
+            onClick={() => onSort(field)}>
+            <span className="inline-flex items-center gap-1">
+                {label}
+                {isActive ? (dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ArrowUpDown size={10} style={{ opacity: 0.4 }} />}
+            </span>
+        </th>
+    )
 }
 
 function POStatusBadge({ status }: { status: string }) {
@@ -740,7 +902,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
     const [incotermsFilter, setIncotermsFilter] = useState('')
     const [dateFrom, setDateFrom] = useState('')
     const [dateTo, setDateTo] = useState('')
+    const [datePreset, setDatePreset] = useState<DatePresetKey>('ALL')
     const [showFilters, setShowFilters] = useState(false)
+    const [showStats, setShowStats] = useState(false)
+    const [sortBy, setSortBy] = useState<string>('createdAt')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
     const [legalEntities, setLegalEntities] = useState<{ id: string; code: string; name: string }[]>([])
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -814,8 +980,77 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         setIncotermsFilter('')
         setDateFrom('')
         setDateTo('')
+        setDatePreset('ALL')
         refresh({ search: '', status: '', legalEntityId: '', currency: '', incoterms: '', dateFrom: '', dateTo: '' })
     }
+
+    const handleDatePresetChange = (preset: DatePresetKey) => {
+        setDatePreset(preset)
+        if (preset === 'CUSTOM') return
+        const range = getDatePresetRange(preset)
+        setDateFrom(range.dateFrom)
+        setDateTo(range.dateTo)
+        refresh({ dateFrom: range.dateFrom, dateTo: range.dateTo })
+    }
+
+    const handleStatusTab = (tab: string) => {
+        setStatusFilter(tab)
+        refresh({ status: tab })
+    }
+
+    const handleExportExcel = async () => {
+        toast.promise(
+            exportPurchaseOrdersExcel({
+                search,
+                status: statusFilter,
+                legalEntityId: legalEntityFilter,
+                currency: currencyFilter,
+                incoterms: incotermsFilter,
+                dateFrom,
+                dateTo
+            }).then(res => {
+                const link = document.createElement('a')
+                link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${res.base64}`
+                link.download = res.filename
+                link.click()
+                return res
+            }),
+            {
+                loading: 'Đang xuất dữ liệu PO ra file Excel...',
+                success: 'Xuất file Excel đơn mua hàng thành công!',
+                error: (err: any) => `Lỗi xuất file: ${err.message}`
+            }
+        )
+    }
+
+    const handleSort = (field: string) => {
+        if (sortBy === field) {
+            setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'))
+        } else {
+            setSortBy(field)
+            setSortDir('asc')
+        }
+    }
+
+    const sortedRows = useMemo(() => {
+        return [...rows].sort((a, b) => {
+            let valA: any = (a as any)[sortBy]
+            let valB: any = (b as any)[sortBy]
+            if (sortBy === 'supplier') {
+                valA = a.supplierName
+                valB = b.supplierName
+            } else if (sortBy === 'totalAmount') {
+                valA = a.totalAmount * a.exchangeRate
+                valB = b.totalAmount * b.exchangeRate
+            } else if (sortBy === 'createdAt') {
+                valA = new Date(a.createdAt).getTime()
+                valB = new Date(b.createdAt).getTime()
+            }
+            if (valA < valB) return sortDir === 'asc' ? -1 : 1
+            if (valA > valB) return sortDir === 'asc' ? 1 : -1
+            return 0
+        })
+    }, [rows, sortBy, sortDir])
 
     const hasActiveFilters = !!(search || statusFilter || legalEntityFilter || currencyFilter || incotermsFilter || dateFrom || dateTo)
 
@@ -914,26 +1149,44 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         )
     }
 
-    const statCards = [
-        { label: 'Tổng PO', value: stats.total, icon: ShoppingCart, accent: '#87CBB9' },
-        { label: 'Nháp / Chờ duyệt', value: stats.draft, icon: Clock, accent: '#D4A853' },
-        { label: 'Đã duyệt', value: stats.approved, icon: CheckCircle2, accent: '#5BA88A' },
-        { label: 'Đang vận chuyển', value: stats.inTransit, icon: Ship, accent: '#4A8FAB' },
-    ]
-
     return (
         <div className="space-y-4 max-w-screen-2xl">
-            {/* Header */}
+            {/* Header with Inline Stats and Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl sm:text-2xl font-extrabold" style={{ color: '#E8F1F2' }}>
-                        Quản Lý Đơn Mua Hàng (PO)
-                    </h2>
-                    <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>
-                        Theo dõi đơn mua từ Winery, Vận tải quốc tế (Shipments / B/L), Incoterms và Tiến độ nhập kho
-                    </p>
+                <div className="flex items-center gap-3">
+                    {/* Inline Quick Stats matching SalesClient */}
+                    <div className="hidden lg:flex items-center gap-x-4 text-xs">
+                        <span style={{ color: '#8AAEBB' }}>
+                            Tổng PO: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{stats.total}</strong>
+                        </span>
+                        <span style={{ color: '#8AAEBB' }}>
+                            Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#D4A853' }}>{stats.draft + (statusCounts.PENDING_APPROVAL || 0)}</strong>
+                        </span>
+                        <span style={{ color: '#8AAEBB' }}>
+                            Đã duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#5BA88A' }}>{stats.approved}</strong>
+                        </span>
+                        <span style={{ color: '#8AAEBB' }}>
+                            Đang trên tàu: <strong className="font-mono text-sm ml-1" style={{ color: '#4A8FAB' }}>{stats.inTransit}</strong>
+                        </span>
+                        <span style={{ color: '#8AAEBB' }}>
+                            Đã nhập đủ: <strong className="font-mono text-sm ml-1" style={{ color: '#87CBB9' }}>{statusCounts.RECEIVED ?? 0}</strong>
+                        </span>
+                    </div>
                 </div>
+
                 <div className="flex items-center gap-2">
+                    <button onClick={() => setShowStats(!showStats)}
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
+                        style={{ 
+                            background: showStats ? 'rgba(135,203,185,0.15)' : 'rgba(138,174,187,0.1)', 
+                            color: showStats ? '#87CBB9' : '#8AAEBB', 
+                            border: `1px solid ${showStats ? 'rgba(135,203,185,0.3)' : 'rgba(138,174,187,0.25)'}` 
+                        }}
+                        onMouseEnter={e => { if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.2)' }}
+                        onMouseLeave={e => { if (!showStats) e.currentTarget.style.background = 'rgba(138,174,187,0.1)' }}>
+                        📊 Thống Kê
+                    </button>
+
                     <button onClick={async () => { 
                         setShowFxPanel(!showFxPanel); 
                         if (!showFxPanel) { 
@@ -943,112 +1196,136 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             setFxLoading(false) 
                         } 
                     }}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
-                        style={{ color: '#D4A853', background: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.3)' }}>
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
+                        style={{ background: 'rgba(212,168,83,0.1)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.2)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(212,168,83,0.1)')}>
                         <Globe size={14} /> Tỷ Giá Ngoại Tệ
                     </button>
+
+                    <button onClick={handleExportExcel}
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
+                        style={{ background: 'rgba(138,174,187,0.1)', color: '#8AAEBB', border: '1px solid rgba(138,174,187,0.25)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.2)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.1)')}>
+                        <Download size={14} /> Excel
+                    </button>
+
                     <button onClick={() => setDrawerOpen(true)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
-                        style={{ background: '#87CBB9', color: '#0A1926' }}>
-                        <Plus size={15} /> Tạo PO Mới
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
+                        style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
+                        <Plus size={16} /> Tạo PO Mới
                     </button>
                 </div>
             </div>
 
-            {/* Quick Stat Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {statCards.map(s => (
-                    <div key={s.label} className="flex items-center gap-3.5 p-3.5 rounded-2xl"
-                        style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: `${s.accent}20` }}>
-                            <s.icon size={18} style={{ color: s.accent }} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: '#4A6A7A' }}>{s.label}</p>
-                            <p className="text-lg font-extrabold mt-0.5 font-mono" style={{ color: '#E8F1F2' }}>{s.value}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Quick Status Filter Tabs */}
-            <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                {TAB_ORDER.map(tab => {
-                    const isActive = (tab === 'ALL' && statusFilter === '') || tab === statusFilter
-                    const count = tab === 'ALL' ? (statusCounts.ALL ?? total) : (statusCounts[tab] ?? 0)
-                    return (
-                        <button key={tab} onClick={() => {
-                            const next = tab === 'ALL' ? '' : tab
-                            setStatusFilter(next)
-                            refresh({ status: next })
-                        }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg whitespace-nowrap transition-all"
-                            style={{
-                                background: isActive ? 'rgba(135,203,185,0.15)' : 'transparent',
-                                color: isActive ? '#87CBB9' : '#8AAEBB',
-                                border: `1px solid ${isActive ? 'rgba(135,203,185,0.3)' : 'transparent'}`,
-                            }}>
-                            {TAB_LABELS[tab]}
-                            <span className="px-1.5 py-0.2 text-[10px] rounded-full font-bold"
-                                style={{ background: isActive ? 'rgba(135,203,185,0.25)' : 'rgba(74,106,122,0.15)', color: isActive ? '#87CBB9' : '#4A6A7A' }}>
-                                {count}
-                            </span>
+            {/* Collapsible Stats Section matching Sales */}
+            {showStats && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4A6A7A' }}>Thống Kê Chi Tiết Đơn Mua Hàng</span>
+                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#87CBB9' }}>
+                            Thu gọn chỉ số ✕
                         </button>
-                    )
-                })}
-            </div>
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <POStatCard label="Tổng Số PO" value={stats.total} accent="#87CBB9" />
+                        <POStatCard label="Nháp & Chờ Duyệt" value={stats.draft + (statusCounts.PENDING_APPROVAL || 0)} accent="#D4A853" />
+                        <POStatCard label="Đã Phê Duyệt" value={stats.approved} accent="#5BA88A" />
+                        <POStatCard label="Đang Vận Chuyển" value={stats.inTransit} accent="#4A8FAB" />
+                    </div>
+                </div>
+            )}
 
-            {/* Filter Search Bar & Controls */}
-            <div className="flex flex-wrap items-center justify-between gap-2.5 p-2 rounded-xl"
-                style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <div className="flex flex-1 items-center gap-2 min-w-[280px]">
-                    <div className="relative flex-1">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A6A7A]" />
-                        <input
-                            placeholder="Tìm Số PO, Nhà Cung Cấp, Số B/L, Tàu, Container..."
+            {/* Toolbar: Tabs & Main Filters */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-[#2A4355]/30">
+                {/* Left side: Quick Filter Tabs */}
+                <div className="flex-1 min-w-0">
+                    <FilterTabs active={statusFilter} counts={statusCounts} onChange={handleStatusTab} />
+                </div>
+
+                {/* Right side: Search + Date inputs + Filter button */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Search input */}
+                    <div className="relative w-full sm:w-48 xl:w-64">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <input type="text" placeholder="Tìm số PO, nhà cung cấp, B/L..."
                             value={search}
                             onChange={e => {
-                                setSearch(e.target.value)
-                                refresh({ search: e.target.value })
+                                const val = e.target.value
+                                setSearch(val)
+                                refresh({ search: val })
                             }}
-                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none font-medium"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                        />
+                            className="w-full pl-9 pr-3 py-1.5 text-xs outline-none"
+                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                     </div>
-                </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
+                    {/* MISA-style Date Period Preset Dropdown */}
+                    <div className="flex items-center gap-1.5 bg-[#1B2E3D] px-2.5 py-1 border border-[#2A4355] rounded-[4px]">
+                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#4A6A7A' }} />
+                        <select
+                            value={datePreset}
+                            onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
+                            className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1"
+                            style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#E8F1F2' }}
+                        >
+                            {DATE_PRESET_OPTIONS.map(opt => (
+                                <option key={opt.key} value={opt.key} className="bg-[#0D1E2B] text-[#E8F1F2]">
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+
+                        <div className="flex items-center gap-1 border-l border-[#2A4355] pl-1.5 ml-0.5">
+                            <input type="date" value={dateFrom}
+                                onChange={e => {
+                                    setDatePreset('CUSTOM')
+                                    setDateFrom(e.target.value)
+                                    refresh({ dateFrom: e.target.value, dateTo })
+                                }}
+                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>→</span>
+                            <input type="date" value={dateTo}
+                                onChange={e => {
+                                    setDatePreset('CUSTOM')
+                                    setDateTo(e.target.value)
+                                    refresh({ dateFrom, dateTo: e.target.value })
+                                }}
+                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                        </div>
+                    </div>
+
+                    {/* Filter Toggle Button */}
                     <button onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
                         style={{
-                            background: showFilters || hasActiveFilters ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
-                            color: showFilters || hasActiveFilters ? '#87CBB9' : '#8AAEBB',
-                            border: `1px solid ${showFilters || hasActiveFilters ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
-                        }}>
-                        <Filter size={13} />
+                            background: (showFilters || hasActiveFilters) ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
+                            color: (showFilters || hasActiveFilters) ? '#87CBB9' : '#8AAEBB',
+                            border: `1px solid ${(showFilters || hasActiveFilters) ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
+                        }}
+                    >
+                        <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
                         Bộ lọc
-                        {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-[#87CBB9]" />}
+                        {hasActiveFilters && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#87CBB9]" />
+                        )}
                     </button>
-
-                    {hasActiveFilters && (
-                        <button onClick={handleClearFilters}
-                            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg text-[#E85D5D] hover:bg-[#1B2E3D]">
-                            Xoá lọc
-                        </button>
-                    )}
                 </div>
             </div>
 
             {/* Collapsible Advanced Filters */}
             {showFilters && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 p-3.5 rounded-xl animate-in slide-in-from-top-2 duration-150"
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150"
                     style={{ background: '#142433', border: '1px solid #2A4355' }}>
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-[#4A6A7A]">Pháp Nhân Nhập Khẩu</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Pháp Nhân Nhập Khẩu</label>
                         <select value={legalEntityFilter}
                             onChange={e => { setLegalEntityFilter(e.target.value); refresh({ legalEntityId: e.target.value }) }}
-                            className="w-full px-2.5 py-1.5 text-xs outline-none rounded"
+                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
                             style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                             <option value="">Tất cả pháp nhân</option>
                             {legalEntities.map(e => (
@@ -1058,10 +1335,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-[#4A6A7A]">Incoterms</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Incoterms</label>
                         <select value={incotermsFilter}
                             onChange={e => { setIncotermsFilter(e.target.value); refresh({ incoterms: e.target.value }) }}
-                            className="w-full px-2.5 py-1.5 text-xs outline-none rounded"
+                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
                             style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                             <option value="">Tất cả Incoterms</option>
                             <option value="EXW">EXW (Tại xưởng)</option>
@@ -1072,10 +1349,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-[#4A6A7A]">Tiền Tệ</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Tiền Tệ</label>
                         <select value={currencyFilter}
                             onChange={e => { setCurrencyFilter(e.target.value); refresh({ currency: e.target.value }) }}
-                            className="w-full px-2.5 py-1.5 text-xs outline-none rounded"
+                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
                             style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}>
                             <option value="">Tất cả tiền tệ</option>
                             <option value="USD">USD ($)</option>
@@ -1086,20 +1363,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         </select>
                     </div>
 
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-[#4A6A7A]">Từ Ngày</label>
-                        <input type="date" value={dateFrom}
-                            onChange={e => { setDateFrom(e.target.value); refresh({ dateFrom: e.target.value }) }}
-                            className="w-full px-2.5 py-1.5 text-xs outline-none rounded"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }} />
-                    </div>
-
-                    <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1 text-[#4A6A7A]">Đến Ngày</label>
-                        <input type="date" value={dateTo}
-                            onChange={e => { setDateTo(e.target.value); refresh({ dateTo: e.target.value }) }}
-                            className="w-full px-2.5 py-1.5 text-xs outline-none rounded"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }} />
+                    <div className="flex items-end">
+                        {hasActiveFilters && (
+                            <button onClick={handleClearFilters}
+                                className="w-full py-1.5 text-xs font-semibold rounded transition-all border"
+                                style={{ background: 'rgba(232,93,93,0.1)', color: '#E85D5D', borderColor: 'rgba(232,93,93,0.25)' }}>
+                                Xoá Bộ Lọc
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -1111,22 +1382,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     <table className="w-full text-left border-collapse" style={{ minWidth: 1080 }}>
                         <thead>
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-extrabold text-[#8AAEBB]" style={{ width: '22%' }}>
-                                    Mã PO & Vận Tải (Shipment)
-                                </th>
-                                <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-extrabold text-[#8AAEBB]" style={{ width: '22%' }}>
-                                    Nhà Cung Cấp & Pháp Nhân
-                                </th>
-                                <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-extrabold text-[#8AAEBB]" style={{ width: '16%' }}>
-                                    Quy Mô & Nhập Kho
-                                </th>
-                                <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-extrabold text-[#8AAEBB]" style={{ width: '16%' }}>
-                                    Giá Trị & Quy Đổi
-                                </th>
-                                <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-extrabold text-[#8AAEBB]" style={{ width: '14%' }}>
+                                <SortHeader label="Mã PO & Vận Tải (Shipment)" field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '22%' }} />
+                                <SortHeader label="Nhà Cung Cấp & Pháp Nhân" field="supplier" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '22%' }} />
+                                <SortHeader label="Quy Mô & Nhập Kho" field="totalQty" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '16%' }} />
+                                <SortHeader label="Giá Trị & Quy Đổi" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '16%' }} />
+                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-[#8AAEBB]" style={{ width: '14%' }}>
                                     Trạng Thái & Hồ Sơ
                                 </th>
-                                <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-extrabold text-[#8AAEBB] text-right" style={{ width: '10%' }}>
+                                <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-[#8AAEBB] text-right" style={{ width: '10%' }}>
                                     Thao Tác
                                 </th>
                             </tr>
@@ -1143,7 +1406,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         ))}
                                     </tr>
                                 ))
-                            ) : rows.length === 0 ? (
+                            ) : sortedRows.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="text-center py-16 text-[#4A6A7A]">
                                         <FileText size={32} className="mx-auto mb-2 opacity-40 text-[#8AAEBB]" />
@@ -1158,7 +1421,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         )}
                                     </td>
                                 </tr>
-                            ) : rows.map(row => {
+                            ) : sortedRows.map(row => {
                                 const incoCfg = INCOTERMS_CFG[row.incoterms || 'EXW'] || INCOTERMS_CFG.EXW
                                 const flag = COUNTRY_FLAGS[row.supplierCountry || 'FR'] || '🌐'
                                 const isSelected = selectedId === row.id

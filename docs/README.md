@@ -58,6 +58,7 @@
 | **Server Action files** | 42 files |
 | **Module spec files** | 27 files |
 | **Sidebar nav items** | 37 items (7 groups) |
+| **Sidebar nav items** | 37 items (7 groups) |
 
 ### Bảng Module đầy đủ
 
@@ -68,7 +69,7 @@
 | 3 | `CRM` | Customer Relationship Management | [crm.md](./modules/crm.md) | `/crm`, `/pipeline` |
 | 4 | `CNT` | Contract Management & Regulated Documents | [contract-management.md](./modules/contract-management.md) | `/contracts` |
 | 5 | `TAX` | Tax Reference & Market Price Lookup | [market-price-tax-lookup.md](./modules/market-price-tax-lookup.md) | `/tax`, `/market-price` |
-| 6 | `PRC` | Procurement & Import | [tax-and-landed-cost.md](./modules/tax-and-landed-cost.md) | `/procurement` |
+| 6 | `PRC` | Procurement & Purchase Order | [procurement.md](./modules/procurement.md) | `/procurement` |
 | 7 | `SHP` | Shipment Tracking (Milestones, Costs) | [shipment-tracking.md](./modules/shipment-tracking.md) | `/shipments` |
 | 8 | `CST` | Product Costing (Giá vốn/chai) | [product-costing.md](./modules/product-costing.md) | `/costing` |
 | 9 | `AGN` | Agency Portal (External Partners) | [import-agency-portal.md](./modules/import-agency-portal.md) | `/agency` |
@@ -93,7 +94,7 @@
 | 28 | `MGN` | Margin Simulation (Mô phỏng biên lợi nhuận) | [margin.md](./modules/margin.md) | `/margin` |
 | 29 | `SFV` | Sales Field Visit (Viếng thăm điểm bán) | [sales-field-visit.md](./modules/sales-field-visit.md) | `/sales/visits` |
 
-**Tổng: 29 modules** (27 có spec file riêng, 2 nằm trong spec file khác)
+**Tổng: 29 modules** (28 có spec file riêng, 1 nằm trong spec file khác)
 
 ---
 

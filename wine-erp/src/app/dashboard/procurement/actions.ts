@@ -1141,3 +1141,113 @@ export async function getLegalEntitiesForProcurement(): Promise<{ id: string; co
     })
     return entities
 }
+
+// ─── Export Purchase Orders Excel ─────────────────
+export async function exportPurchaseOrdersExcel(filters: {
+    status?: string
+    search?: string
+    legalEntityId?: string
+    currency?: string
+    incoterms?: string
+    dateFrom?: string
+    dateTo?: string
+} = {}): Promise<{ base64: string; filename: string }> {
+    await requireAuth()
+    const { status, search, legalEntityId, currency, incoterms, dateFrom, dateTo } = filters
+    const where: any = {}
+    if (status) where.status = status
+    if (legalEntityId) where.legalEntityId = legalEntityId
+    if (currency) where.currency = currency
+    if (incoterms) where.incoterms = incoterms
+    if (dateFrom || dateTo) {
+        where.createdAt = {}
+        if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+        if (dateTo) where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z')
+    }
+    if (search) {
+        where.OR = [
+            { poNo: { contains: search, mode: 'insensitive' } },
+            { supplier: { name: { contains: search, mode: 'insensitive' } } },
+        ]
+    }
+
+    const pos = await prisma.purchaseOrder.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+            supplier: { select: { name: true, code: true, country: true } },
+            legalEntity: { select: { code: true, name: true } },
+            shipments: { select: { billOfLading: true, vesselName: true, containerNo: true, status: true } },
+            lines: {
+                include: {
+                    product: { select: { skuCode: true, productName: true } }
+                }
+            }
+        },
+        take: 5000,
+    })
+
+    const XLSX = await import('xlsx')
+    
+    // Sheet 1: Chi Tiết Từng Dòng Sản Phẩm PO
+    const lineItemData: any[] = []
+    for (const p of pos) {
+        const rate = Number(p.exchangeRate)
+        for (const l of p.lines) {
+            const qty = Number(l.qtyOrdered)
+            const price = Number(l.unitPrice)
+            const lineTotal = qty * price
+            lineItemData.push({
+                'Số PO': p.poNo,
+                'Ngày Lập': p.createdAt.toISOString().split('T')[0],
+                'Trạng Thái': p.status,
+                'Nhà Cung Cấp': p.supplier.name,
+                'Quốc Gia': p.supplier.country || '',
+                'Pháp Nhân': p.legalEntity?.code || '',
+                'Incoterms': p.incoterms || 'EXW',
+                'Mã SKU': l.product.skuCode,
+                'Tên Sản Phẩm': l.product.productName,
+                'Số Lượng (Chai)': qty,
+                'Đơn Giá Ngoại Tệ': price,
+                'Tiền Tệ': p.currency,
+                'Thành Tiền Ngoại Tệ': lineTotal,
+                'Tỷ Giá VNĐ': rate,
+                'Thành Tiền VNĐ': Math.round(lineTotal * rate),
+                'Vận Đơn B/L': p.shipments[0]?.billOfLading || '',
+                'Tên Tàu': p.shipments[0]?.vesselName || '',
+                'Số Container': p.shipments[0]?.containerNo || '',
+            })
+        }
+    }
+
+    // Sheet 2: Tổng Hợp Đơn Mua Hàng
+    const summaryData = pos.map(p => {
+        const rate = Number(p.exchangeRate)
+        const totalForeign = p.lines.reduce((s, l) => s + Number(l.qtyOrdered) * Number(l.unitPrice), 0)
+        return {
+            'Số PO': p.poNo,
+            'Ngày Lập': p.createdAt.toISOString().split('T')[0],
+            'Trạng Thái': p.status,
+            'Nhà Cung Cấp': p.supplier.name,
+            'Pháp Nhân': p.legalEntity?.code || '',
+            'Incoterms': p.incoterms || 'EXW',
+            'Tiền Tệ': p.currency,
+            'Tỷ Giá VNĐ': rate,
+            'Số SKU': p.lines.length,
+            'Tổng Số Chai': p.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0),
+            'Tổng Ngoại Tệ': totalForeign,
+            'Tổng Giá Trị VNĐ': Math.round(totalForeign * rate),
+            'Vận Đơn B/L': p.shipments.map(s => s.billOfLading).join(', ') || '',
+        }
+    })
+
+    const wb = XLSX.utils.book_new()
+    const wsLine = XLSX.utils.json_to_sheet(lineItemData)
+    const wsSum = XLSX.utils.json_to_sheet(summaryData)
+    XLSX.utils.book_append_sheet(wb, wsLine, 'Chi Tiết Dòng Hàng PO')
+    XLSX.utils.book_append_sheet(wb, wsSum, 'Tổng Hợp PO')
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    const filename = `PurchaseOrders_Export_${new Date().toISOString().split('T')[0]}.xlsx`
+    return { base64: buffer.toString('base64'), filename }
+}
