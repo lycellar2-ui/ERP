@@ -1178,7 +1178,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
         return pos.filter(p => p.poNo.toLowerCase().includes(q) || p.supplierName.toLowerCase().includes(q))
     }, [pos, poSearch])
 
-    const handleSave = async () => {
+    const handleSave = async (autoConfirm = false) => {
         if (!selectedPO || !warehouseId) return toast.error('Vui lòng chọn PO và kho nhận')
         const validLines = lines.filter(l => l.qtyReceived > 0 && l.locationId)
         if (validLines.length === 0) return toast.error('Vui lòng nhập số lượng nhận (> 0) và chọn vị trí kho cho các sản phẩm')
@@ -1189,6 +1189,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                 createGoodsReceipt({
                     poId: selectedPO.id,
                     warehouseId,
+                    autoConfirm,
                     lines: validLines.map(l => ({
                         productId: l.productId,
                         qtyReceived: l.qtyReceived,
@@ -1201,8 +1202,8 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                     return res
                 }),
                 {
-                    loading: 'Đang tạo phiếu nhập kho & khởi tạo lô hàng...',
-                    success: 'Đã tạo Goods Receipt thành công!',
+                    loading: autoConfirm ? 'Đang tạo & xác nhận nhập kho (cập nhật tồn)...' : 'Đang tạo phiếu nhập kho nháp...',
+                    success: autoConfirm ? 'Đã nhập kho thành công — Tồn kho thực tế đã được cập nhật!' : 'Đã lưu phiếu nhập kho (Nháp)! Hãy bấm "Xác Nhận" để ghi nhận tồn.',
                     error: (err: Error) => `Lỗi: ${err.message}`
                 }
             )
@@ -1458,17 +1459,28 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="p-4 border-t flex-shrink-0"
+                {/* Footer with Dual Action Buttons */}
+                <div className="p-4 border-t flex-shrink-0 flex items-center justify-between gap-3"
                     style={{ background: '#142433', borderColor: '#2A4355' }}>
                     <button
-                        onClick={handleSave}
+                        onClick={() => handleSave(false)}
                         disabled={saving || !selectedPO}
-                        className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 hover:opacity-90 active:scale-[0.99]"
-                        style={{ background: '#5BA88A', color: '#0F1E2E' }}
+                        className="px-4 py-2.5 text-xs font-semibold rounded-xl transition-all border cursor-pointer disabled:opacity-50 hover:bg-[#1B2E3D]"
+                        style={{ color: '#8AAEBB', borderColor: '#2A4355' }}
+                        title="Lưu phiếu GR ở trạng thái Nháp (chưa ghi nhận tồn kho)"
                     >
-                        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-                        <span>Tạo Phiếu Nhập Kho & Khởi Tạo Lô Hàng</span>
+                        Lưu Nháp (DRAFT)
+                    </button>
+
+                    <button
+                        onClick={() => handleSave(true)}
+                        disabled={saving || !selectedPO}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 hover:opacity-90 active:scale-[0.99]"
+                        style={{ background: '#5BA88A', color: '#0F1E2E' }}
+                        title="Tạo phiếu và ghi nhận tồn kho vào kho thực tế ngay lập tức"
+                    >
+                        {saving ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                        <span>Tạo & Xác Nhận Nhập Kho (Cộng Tồn)</span>
                     </button>
                 </div>
             </div>

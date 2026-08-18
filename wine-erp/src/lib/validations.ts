@@ -437,6 +437,7 @@ export const GoodsReceiptCreateSchema = z.object({
     poId: z.string().min(1, 'Thiếu PO'),
     warehouseId: z.string().min(1, 'Thiếu kho'),
     shipmentId: z.string().optional(),
+    autoConfirm: z.boolean().optional(),
     lines: z.array(GoodsReceiptLineSchema).min(1, 'Cần ít nhất 1 dòng nhập'),
 })
 

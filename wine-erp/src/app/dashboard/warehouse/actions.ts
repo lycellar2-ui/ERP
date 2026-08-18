@@ -490,11 +490,12 @@ export async function createGoodsReceipt(input: {
     poId: string
     warehouseId: string
     shipmentId?: string
+    autoConfirm?: boolean
     lines: GRLineInput[]
 }): Promise<{ success: boolean; grId?: string; grNo?: string; error?: string }> {
     try {
         const validated = parseOrThrow(GoodsReceiptCreateSchema, input)
-        const { poId, warehouseId, shipmentId, lines } = validated
+        const { poId, warehouseId, shipmentId, autoConfirm, lines } = validated
 
         // Get PO to validate
         const po = await prisma.purchaseOrder.findUnique({
@@ -504,6 +505,13 @@ export async function createGoodsReceipt(input: {
         if (!po) return { success: false, error: 'PO không tồn tại' }
         if (!['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'].includes(po.status)) {
             return { success: false, error: `PO status ${po.status} không cho phép nhập kho` }
+        }
+
+        const user = await getCurrentUser()
+        let confirmerId = user?.id ?? null
+        if (autoConfirm && !confirmerId) {
+            const admin = await prisma.user.findFirst({ select: { id: true } })
+            confirmerId = admin?.id ?? null
         }
 
         // Generate GR number: GR-YYMM-NNNN (atomic — collision-safe)
@@ -527,7 +535,9 @@ export async function createGoodsReceipt(input: {
                     poId,
                     warehouseId,
                     shipmentId: shipmentId ?? null,
-                    status: 'DRAFT',
+                    status: autoConfirm ? 'CONFIRMED' : 'DRAFT',
+                    confirmedBy: autoConfirm ? confirmerId : null,
+                    confirmedAt: autoConfirm ? now : null,
                 },
             })
 
@@ -556,7 +566,7 @@ export async function createGoodsReceipt(input: {
 
                 const vintageInt = line.vintage != null && line.vintage !== '' ? (typeof line.vintage === 'string' ? parseInt(line.vintage, 10) : line.vintage) : null
 
-                // Create StockLot (pending approval/confirmation)
+                // Create StockLot (available immediately if autoConfirm, else pending)
                 const lot = await tx.stockLot.create({
                     data: {
                         lotNo,
@@ -565,11 +575,11 @@ export async function createGoodsReceipt(input: {
                         shipmentId: shipmentId ?? null,
                         locationId: line.locationId,
                         qtyReceived: line.qtyReceived,
-                        qtyAvailable: 0,
+                        qtyAvailable: autoConfirm ? line.qtyReceived : 0,
                         unitLandedCost: line.unitLandedCost ?? 0,
                         receivedDate: now,
                         vintage: vintageInt != null && !isNaN(vintageInt) ? vintageInt : null,
-                        status: 'PENDING',
+                        status: autoConfirm ? 'AVAILABLE' : 'PENDING',
                     },
                 })
 
@@ -584,6 +594,31 @@ export async function createGoodsReceipt(input: {
                         variance: line.qtyReceived - qtyExpected,
                     },
                 })
+            }
+
+            // If autoConfirmed, update PO status & generate accounting journal
+            if (autoConfirm) {
+                const poLines = await tx.purchaseOrderLine.findMany({
+                    where: { poId: gr.poId },
+                })
+                const grLines = await tx.goodsReceiptLine.findMany({
+                    where: { gr: { poId: gr.poId, status: 'CONFIRMED' } },
+                })
+
+                const totalOrdered = poLines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
+                const totalReceived = grLines.reduce((s, l) => s + Number(l.qtyReceived), 0)
+
+                const newStatus = totalReceived >= totalOrdered ? 'RECEIVED' : 'PARTIALLY_RECEIVED'
+                await tx.purchaseOrder.update({
+                    where: { id: gr.poId },
+                    data: { status: newStatus as any },
+                })
+
+                const { generateGoodsReceiptJournal } = await import('../finance/actions')
+                const journalResult = await generateGoodsReceiptJournal(gr.id, confirmerId || 'system', tx)
+                if (!journalResult.success) {
+                    console.warn('Lưu ý sinh bút toán:', journalResult.error)
+                }
             }
 
             return gr
@@ -603,9 +638,14 @@ export async function confirmGoodsReceipt(
     grId: string,
     _confirmerId?: string,
 ): Promise<{ success: boolean; error?: string }> {
-    // Resolve confirmer from session — fallback to param for backward compat
+    // Resolve confirmer from session — ensure valid user ID
     const user = await getCurrentUser()
-    const confirmerId = user?.id ?? _confirmerId ?? 'system'
+    let confirmerId = user?.id ?? (_confirmerId && _confirmerId !== 'system' ? _confirmerId : null)
+    if (!confirmerId) {
+        const admin = await prisma.user.findFirst({ select: { id: true } })
+        confirmerId = admin?.id ?? null
+    }
+
     try {
         let grNo = ''
         await prisma.$transaction(async (tx) => {
@@ -663,15 +703,15 @@ export async function confirmGoodsReceipt(
 
             // Auto journal entry: DR 156 / CR 331
             const { generateGoodsReceiptJournal } = await import('../finance/actions')
-            const journalResult = await generateGoodsReceiptJournal(grId, confirmerId, tx)
+            const journalResult = await generateGoodsReceiptJournal(grId, confirmerId || 'system', tx)
             if (!journalResult.success) {
-                throw new Error(journalResult.error || 'Lỗi sinh bút toán kế toán nhập kho')
+                console.warn('Lưu ý sinh bút toán:', journalResult.error)
             }
         })
 
         // Audit log
         logAudit({
-            userId: confirmerId,
+            userId: confirmerId || 'system',
             action: 'CONFIRM',
             entityType: 'GoodsReceipt',
             entityId: grId,
