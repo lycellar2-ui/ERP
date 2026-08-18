@@ -811,21 +811,21 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     const validLinesCount = lines.filter(l => l.qtyPicked > 0 && l.lotId).length
     const totalPicked = lines.reduce((sum, l) => sum + (l.lotId ? l.qtyPicked : 0), 0)
 
-    const darkInputStyle = {
-        background: '#142433',
-        border: '1px solid #2A4355',
-        color: '#E8F1F2',
+    const lightInputStyle = {
+        background: '#FFFFFF',
+        border: '1px solid #CBD5E1',
+        color: '#0F172A',
     }
 
     // ── Shared sub-components ───────────────────────
     const renderSOSelect = () => (
         <div>
-            <label className="block text-xs font-bold mb-1.5" style={{ color: '#E8F1F2' }}>Đơn Hàng (Sales Order) *</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Đơn Hàng (Sales Order) *</label>
             <select
                 value={selectedSO?.id ?? ''}
                 onChange={e => selectSO(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none transition-colors"
-                style={darkInputStyle}
+                style={lightInputStyle}
             >
                 <option value="">— Chọn đơn SO —</option>
                 {sos.map(s => (
@@ -837,25 +837,25 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
     const renderDateSelect = () => (
         <div>
-            <label className="block text-xs font-bold mb-1.5" style={{ color: '#E8F1F2' }}>Ngày Xuất Hàng *</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Ngày Xuất Hàng *</label>
             <input
                 type="date"
                 value={issuedDate}
                 onChange={e => setIssuedDate(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-xs outline-none font-medium"
-                style={darkInputStyle}
+                style={lightInputStyle}
             />
         </div>
     )
 
     const renderWarehouseSelect = () => (
         <div>
-            <label className="block text-xs font-bold mb-1.5" style={{ color: '#E8F1F2' }}>Kho Xuất Bán Hàng *</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Kho Xuất Bán Hàng *</label>
             <select
                 value={warehouseId}
                 onChange={e => setWarehouseId(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors font-medium"
-                style={darkInputStyle}
+                style={lightInputStyle}
             >
                 <option value="">— Chọn kho xuất bán —</option>
                 {currentWhs
@@ -893,7 +893,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     const renderProductLines = () => (
         <>
             <div className="flex items-center justify-between pt-1">
-                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-700">
                     Sản Phẩm Cần Nhặt ({selectedSO!.lines.length} mặt hàng)
                 </p>
             </div>
@@ -911,21 +911,18 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     const isOverPicked = totalPickedForProduct > sol.qtyOrdered
 
                     return (
-                        <div key={sol.productId} className="p-4 rounded-xl space-y-3 border shadow-sm"
-                            style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                        <div key={sol.productId} className="p-4 rounded-xl space-y-3 border border-slate-200 bg-white shadow-xs">
                             {/* Product Header: Name + Badges */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                                 <div className="space-y-1">
-                                    <p className="text-sm font-bold leading-tight" style={{ color: '#E8F1F2' }}>
+                                    <p className="text-sm font-bold text-slate-900 leading-tight">
                                         {sol.productName}
                                     </p>
                                     <div className="flex items-center gap-2 flex-wrap text-xs">
-                                        <span className="font-mono font-bold px-2 py-0.5 rounded text-[11px]"
-                                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                        <span className="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-100 text-slate-700 border border-slate-200">
                                             SKU: {sol.skuCode}
                                         </span>
-                                        <span className="font-semibold px-2 py-0.5 rounded text-[11px]"
-                                            style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                                        <span className="font-semibold px-2 py-0.5 rounded text-[11px] bg-amber-50 text-amber-800 border border-amber-200">
                                             Niên vụ yêu cầu: {sol.vintage ? sol.vintage : 'NV'}
                                         </span>
                                     </div>
@@ -933,17 +930,16 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
                                 {/* Ordered Badge & Status */}
                                 <div className="flex items-center gap-2 flex-wrap self-start sm:self-center">
-                                    <span className="text-xs font-mono font-extrabold px-3 py-1 rounded-lg"
-                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.35)' }}>
+                                    <span className="text-xs font-mono font-extrabold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
                                         ĐẶT: {sol.qtyOrdered} CHAI
                                     </span>
                                     <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg"
                                         style={
                                             isSufficient
-                                                ? { background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.35)' }
+                                                ? { background: 'rgba(22,163,74,0.1)', color: '#15803D', border: '1px solid rgba(22,163,74,0.3)' }
                                                 : isOverPicked
-                                                ? { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.35)' }
-                                                : { background: 'rgba(232,93,93,0.15)', color: '#E85D5D', border: '1px solid rgba(232,93,93,0.35)' }
+                                                ? { background: 'rgba(217,119,6,0.1)', color: '#B45309', border: '1px solid rgba(217,119,6,0.3)' }
+                                                : { background: 'rgba(220,38,38,0.1)', color: '#B91C1C', border: '1px solid rgba(220,38,38,0.3)' }
                                         }>
                                         {isSufficient ? (
                                             <>
@@ -969,11 +965,11 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                     const isLocInsufficient = selectedLot && selectedLot.qtyAvailable < pick.qtyPicked
 
                                     return (
-                                        <div key={pick.globalIdx} className="p-3 rounded-lg border grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start"
-                                            style={{ background: '#142433', borderColor: isLocInsufficient ? '#E85D5D' : '#2A4355' }}>
+                                        <div key={pick.globalIdx} className="p-3 rounded-lg border bg-slate-50 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start"
+                                            style={{ borderColor: isLocInsufficient ? '#FCA5A5' : '#E2E8F0' }}>
                                             {/* Col 1: Location selection */}
                                             <div className="sm:col-span-8 space-y-1.5">
-                                                <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#8AAEBB' }}>
+                                                <label className="text-[10px] font-bold uppercase tracking-wider block text-slate-700">
                                                     Vị Trí Kho & Lô Hàng {productPicks.length > 1 ? `(Vị trí ${pickIdx + 1})` : ''} *
                                                 </label>
                                                 <select
@@ -989,8 +985,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         }
                                                         setLines(v)
                                                     }}
-                                                    className="w-full px-3 py-2 rounded-lg text-xs outline-none font-medium"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: pick.lotId ? '#87CBB9' : '#8AAEBB' }}
+                                                    className="w-full px-3 py-2 rounded-lg text-xs outline-none font-medium bg-white border border-slate-300 text-slate-900"
                                                 >
                                                     <option value="">— Chọn vị trí nhặt hàng —</option>
                                                     {availLots.map((lot, idx) => {
@@ -1004,15 +999,14 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                 </select>
 
                                                 {selectedLot && (
-                                                    <div className="flex items-center gap-2 text-[11px] px-2.5 py-1 rounded-md border flex-wrap"
-                                                        style={{ background: '#1B2E3D', borderColor: '#2A4355', color: '#8AAEBB' }}>
-                                                        <span>Vị trí: <strong style={{ color: '#E8F1F2' }}>{selectedLot.locationCode}</strong> ({selectedLot.zone})</span>
-                                                        <span style={{ color: '#2A4355' }}>·</span>
-                                                        <span>Lô: <strong className="font-mono" style={{ color: '#87CBB9' }}>{selectedLot.lotNo}</strong></span>
-                                                        <span style={{ color: '#2A4355' }}>·</span>
-                                                        <span>Vintage: <strong style={{ color: '#D4A853' }}>{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
-                                                        <span style={{ color: '#2A4355' }}>·</span>
-                                                        <span>Tồn: <strong className="font-mono font-bold text-emerald-400">{selectedLot.qtyAvailable} chai</strong></span>
+                                                    <div className="flex items-center gap-2 text-[11px] px-2.5 py-1.5 rounded-md bg-white border border-slate-200 text-slate-600 flex-wrap">
+                                                        <span>Vị trí: <strong className="text-slate-900 font-bold">{selectedLot.locationCode}</strong> ({selectedLot.zone})</span>
+                                                        <span className="text-slate-300">·</span>
+                                                        <span>Lô: <strong className="font-mono text-slate-800">{selectedLot.lotNo}</strong></span>
+                                                        <span className="text-slate-300">·</span>
+                                                        <span>Vintage: <strong className="text-amber-800 font-semibold">{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
+                                                        <span className="text-slate-300">·</span>
+                                                        <span>Tồn: <strong className="font-mono font-bold text-emerald-700">{selectedLot.qtyAvailable} chai</strong></span>
                                                     </div>
                                                 )}
                                             </div>
@@ -1020,7 +1014,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             {/* Col 2: Quantity picked input */}
                                             <div className="sm:col-span-4 flex items-center gap-2 pt-0.5">
                                                 <div className="flex-1">
-                                                    <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-center" style={{ color: '#8AAEBB' }}>
+                                                    <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-center text-slate-600">
                                                         SL Nhặt (Chai) *
                                                     </label>
                                                     <input
@@ -1032,11 +1026,10 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                             v[pick.globalIdx] = { ...v[pick.globalIdx], qtyPicked: Number(e.target.value) }
                                                             setLines(v)
                                                         }}
-                                                        className="w-full px-3 py-2 rounded-lg text-sm font-mono font-bold text-center outline-none"
+                                                        className="w-full px-3 py-2 rounded-lg text-sm font-mono font-bold text-center outline-none bg-white border"
                                                         style={{
-                                                            background: '#1B2E3D',
-                                                            border: isLocInsufficient ? '1px solid #E85D5D' : '1px solid #2A4355',
-                                                            color: isLocInsufficient ? '#E85D5D' : '#5BA88A'
+                                                            borderColor: isLocInsufficient ? '#EF4444' : '#CBD5E1',
+                                                            color: isLocInsufficient ? '#DC2626' : '#16A34A'
                                                         }}
                                                     />
                                                 </div>
@@ -1046,8 +1039,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         onClick={() => {
                                                             setLines(prev => prev.filter((_, idx) => idx !== pick.globalIdx))
                                                         }}
-                                                        className="p-2 rounded-lg shrink-0 mt-5 transition-colors cursor-pointer"
-                                                        style={{ color: '#E85D5D', border: '1px solid #2A4355', background: '#1B2E3D' }}
+                                                        className="p-2 rounded-lg shrink-0 mt-5 transition-colors cursor-pointer text-rose-600 hover:bg-rose-50 border border-slate-200 bg-white"
                                                         title="Xóa vị trí nhặt hàng này"
                                                     >
                                                         <Trash2 size={14} />
@@ -1066,8 +1058,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             { productId: sol.productId, lotId: '', locationId: '', qtyPicked: 1 }
                                         ])
                                     }}
-                                    className="text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:opacity-80 pt-1"
-                                    style={{ color: '#87CBB9' }}
+                                    className="text-xs font-semibold flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-all cursor-pointer pt-1"
                                 >
                                     <Plus size={14} /> Tách vị trí nhặt hàng khác cho sản phẩm này
                                 </button>
@@ -1084,8 +1075,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
             <button
                 onClick={() => handleSave(false)}
                 disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 hover:bg-[#1B2E3D]"
-                style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB', minHeight: '46px' }}
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200"
+                style={{ minHeight: '46px' }}
             >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 <span>Lưu Nháp DO</span>
@@ -1094,8 +1085,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
             <button
                 onClick={() => handleSave(true)}
                 disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 hover:opacity-90 active:scale-[0.99]"
-                style={{ background: '#5BA88A', color: '#0F1E2E', minHeight: '46px' }}
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
+                style={{ background: '#D4A853', color: '#0A1926', minHeight: '46px' }}
             >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 <span>Tạo & Xác Nhận Xuất Kho</span>
@@ -1104,39 +1095,35 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     )
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs">
-            <div className="w-full sm:w-[680px] max-w-full h-full flex flex-col shadow-2xl border-l"
-                style={{ background: '#0F1E2E', borderColor: '#2A4355' }}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
+            <div className="w-full sm:w-[680px] max-w-full h-full flex flex-col shadow-2xl bg-white border-l border-slate-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 shrink-0 border-b"
-                    style={{ background: '#142433', borderColor: '#2A4355' }}>
+                <div className="flex items-center justify-between p-4 sm:p-5 shrink-0 border-b border-slate-200 bg-white">
                     <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>Nhặt Hàng & Tạo DO</h3>
+                            <h3 className="text-base font-bold text-slate-900">Nhặt Hàng & Tạo DO</h3>
                             {selectedSO && (
-                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded"
-                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
                                     {selectedSO.soNo}
                                 </span>
                             )}
                         </div>
                         {selectedSO && (
-                            <p className="text-xs mt-1 truncate" style={{ color: '#8AAEBB' }}>
-                                Khách hàng: <strong style={{ color: '#E8F1F2' }}>{selectedSO.customerName}</strong>
+                            <p className="text-xs mt-1 truncate text-slate-600">
+                                Khách hàng: <strong className="text-slate-900">{selectedSO.customerName}</strong>
                             </p>
                         )}
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-[#8AAEBB] hover:text-[#E8F1F2] hover:bg-[#1B2E3D] cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
                     >
                         <X size={18} />
                     </button>
                 </div>
 
                 {/* Mobile Step Indicator */}
-                <div className="flex sm:hidden items-center gap-1 px-4 py-3 shrink-0 border-b"
-                    style={{ background: '#142433', borderColor: '#2A4355' }}>
+                <div className="flex sm:hidden items-center gap-1 px-4 py-3 shrink-0 border-b border-slate-200 bg-slate-50">
                     {[
                         { step: 1 as const, label: 'Chọn Đơn' },
                         { step: 2 as const, label: 'Nhặt Hàng' },
@@ -1151,21 +1138,21 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 }}
                                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold w-full justify-center transition-all"
                                 style={{
-                                    background: mobileStep === s.step ? '#5BA88A' : mobileStep > s.step ? 'rgba(91,168,138,0.15)' : '#1B2E3D',
-                                    color: mobileStep === s.step ? '#0F1E2E' : mobileStep > s.step ? '#5BA88A' : '#8AAEBB',
+                                    background: mobileStep === s.step ? '#D4A853' : mobileStep > s.step ? 'rgba(22,163,74,0.15)' : '#F1F5F9',
+                                    color: mobileStep === s.step ? '#0A1926' : mobileStep > s.step ? '#15803D' : '#64748B',
                                 }}
                             >
                                 <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0"
                                     style={{
-                                        background: mobileStep === s.step ? '#0F1E2E' : 'transparent',
-                                        color: mobileStep === s.step ? '#5BA88A' : 'inherit',
+                                        background: mobileStep === s.step ? '#0A1926' : 'transparent',
+                                        color: mobileStep === s.step ? '#D4A853' : 'inherit',
                                         border: mobileStep === s.step ? 'none' : '1px solid currentColor',
                                     }}>
                                     {mobileStep > s.step ? '✓' : s.step}
                                 </span>
                                 {s.label}
                             </button>
-                            {idx < 2 && <div className="w-3 h-px shrink-0" style={{ background: '#2A4355' }} />}
+                            {idx < 2 && <div className="w-3 h-px shrink-0 bg-slate-300" />}
                         </div>
                     ))}
                 </div>
@@ -1176,23 +1163,21 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     <div className="hidden sm:block p-5 space-y-4">
                         {selectedSO ? (
                             <div className="space-y-3">
-                                <div className="p-3.5 rounded-xl border flex items-center justify-between"
-                                    style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
                                     <div>
-                                        <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#8AAEBB' }}>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
                                             Đơn Hàng Bán Ra
                                         </span>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-sm font-bold font-mono" style={{ color: '#87CBB9' }}>{selectedSO.soNo}</span>
-                                            <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>· {selectedSO.customerName}</span>
+                                            <span className="text-sm font-bold font-mono text-amber-800">{selectedSO.soNo}</span>
+                                            <span className="text-xs font-semibold text-slate-800">· {selectedSO.customerName}</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#8AAEBB' }}>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
                                             Kho Xuất Bán
                                         </span>
-                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded inline-block mt-0.5"
-                                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded inline-block mt-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200">
                                             {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
                                         </span>
                                     </div>
@@ -1217,9 +1202,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                         {/* Step 1 */}
                         {mobileStep === 1 && (
                             <div className="space-y-4">
-                                <div className="p-3.5 rounded-xl border space-y-3"
-                                    style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
-                                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>
+                                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
                                         Bước 1: Chọn Đơn Hàng, Kho & Ngày Xuất
                                     </p>
                                     <div className="space-y-3">
@@ -1229,14 +1213,12 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                     </div>
                                 </div>
                                 {selectedSO && (
-                                    <div className="p-3 rounded-xl border space-y-2"
-                                        style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
-                                        <p className="text-xs font-semibold" style={{ color: '#8AAEBB' }}>Sản phẩm trong đơn:</p>
+                                    <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                                        <p className="text-xs font-semibold text-slate-600">Sản phẩm trong đơn:</p>
                                         {selectedSO.lines.map(l => (
-                                            <div key={l.productId} className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border"
-                                                style={{ background: '#142433', borderColor: '#2A4355' }}>
-                                                <span className="truncate pr-2" style={{ color: '#E8F1F2' }}>{l.productName}</span>
-                                                <span className="font-mono font-bold shrink-0" style={{ color: '#D4A853' }}>×{l.qtyOrdered}</span>
+                                            <div key={l.productId} className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white">
+                                                <span className="truncate pr-2 text-slate-800 font-medium">{l.productName}</span>
+                                                <span className="font-mono font-bold shrink-0 text-amber-800">×{l.qtyOrdered}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1246,8 +1228,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                     disabled={!canGoStep2}
                                     className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-xl transition-all disabled:opacity-50"
                                     style={{
-                                        background: canGoStep2 ? '#5BA88A' : '#142433',
-                                        color: canGoStep2 ? '#0F1E2E' : '#8AAEBB',
+                                        background: canGoStep2 ? '#D4A853' : '#F1F5F9',
+                                        color: canGoStep2 ? '#0A1926' : '#94A3B8',
                                         minHeight: '46px',
                                     }}>
                                     Tiếp Theo: Nhặt Hàng <ArrowRight size={16} />
@@ -1262,8 +1244,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setMobileStep(1)}
-                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl border"
-                                        style={{ background: '#142433', borderColor: '#2A4355', color: '#8AAEBB', minHeight: '46px' }}>
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl border border-slate-300 bg-slate-100 text-slate-700"
+                                        style={{ minHeight: '46px' }}>
                                         ← Quay Lại
                                     </button>
                                     <button
@@ -1271,8 +1253,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                         disabled={validLinesCount === 0}
                                         className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl disabled:opacity-50"
                                         style={{
-                                            background: validLinesCount > 0 ? '#5BA88A' : '#142433',
-                                            color: validLinesCount > 0 ? '#0F1E2E' : '#8AAEBB',
+                                            background: validLinesCount > 0 ? '#D4A853' : '#F1F5F9',
+                                            color: validLinesCount > 0 ? '#0A1926' : '#94A3B8',
                                             minHeight: '46px',
                                         }}>
                                         Xác Nhận ({validLinesCount}/{lines.length}) →
@@ -1284,29 +1266,28 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                         {/* Step 3 */}
                         {mobileStep === 3 && selectedSO && (
                             <div className="space-y-4">
-                                <div className="p-3.5 rounded-xl border space-y-3"
-                                    style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
-                                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>
+                                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
                                         Bước 3: Xác Nhận Xuất Kho
                                     </p>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
-                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Đơn hàng</p>
-                                            <p className="text-sm font-bold font-mono" style={{ color: '#87CBB9' }}>{selectedSO.soNo}</p>
+                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
+                                            <p className="text-[10px] uppercase font-bold text-slate-500">Đơn hàng</p>
+                                            <p className="text-sm font-bold font-mono text-amber-800">{selectedSO.soNo}</p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
-                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Kho xuất</p>
-                                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
+                                            <p className="text-[10px] uppercase font-bold text-slate-500">Kho xuất</p>
+                                            <p className="text-sm font-bold text-slate-900">
                                                 {warehouses.find(w => w.id === warehouseId)?.code ?? '—'}
                                             </p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
-                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Sản phẩm</p>
-                                            <p className="text-sm font-bold" style={{ color: '#5BA88A' }}>{validLinesCount} mặt hàng</p>
+                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
+                                            <p className="text-[10px] uppercase font-bold text-slate-500">Sản phẩm</p>
+                                            <p className="text-sm font-bold text-emerald-700">{validLinesCount} mặt hàng</p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
-                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Tổng nhặt</p>
-                                            <p className="text-sm font-bold font-mono text-emerald-400">{totalPicked.toLocaleString()} chai</p>
+                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
+                                            <p className="text-[10px] uppercase font-bold text-slate-500">Tổng nhặt</p>
+                                            <p className="text-sm font-bold font-mono text-emerald-700">{totalPicked.toLocaleString()} chai</p>
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
@@ -1314,15 +1295,14 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             const line = lines[i]
                                             const lot = lotsMap[sol.productId]?.find(l => l.id === line?.lotId)
                                             return (
-                                                <div key={sol.productId} className="flex items-center justify-between text-xs px-3 py-2 rounded-lg border"
-                                                    style={{ background: '#142433', borderColor: line?.lotId ? '#5BA88A' : '#D4A853' }}>
+                                                <div key={sol.productId} className="flex items-center justify-between text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white">
                                                     <div className="min-w-0 pr-2">
-                                                        <p className="truncate font-bold" style={{ color: '#E8F1F2' }}>{sol.productName}</p>
-                                                        <p className="text-[10px]" style={{ color: '#8AAEBB' }}>
+                                                        <p className="truncate font-bold text-slate-900">{sol.productName}</p>
+                                                        <p className="text-[10px] text-slate-500">
                                                             {lot ? `Vị trí: ${lot.locationCode} (${lot.zone}) · Vintage: ${lot.vintage ?? 'NV'}` : 'Chưa chọn vị trí'}
                                                         </p>
                                                     </div>
-                                                    <span className="font-mono font-bold shrink-0" style={{ color: line?.lotId ? '#5BA88A' : '#D4A853' }}>
+                                                    <span className="font-mono font-bold shrink-0 text-emerald-700">
                                                         {line?.lotId ? `${line.qtyPicked} chai` : '—'}
                                                     </span>
                                                 </div>
@@ -1332,8 +1312,8 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 </div>
                                 <button
                                     onClick={() => setMobileStep(2)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl"
-                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#475569' }}>
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-300 bg-white text-slate-700"
+                                >
                                     ← Sửa Lại Nhặt Hàng
                                 </button>
                                 {renderSaveButtons()}
