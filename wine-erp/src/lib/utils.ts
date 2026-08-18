@@ -32,7 +32,14 @@ export function formatPercent(n: number, decimals = 1): string {
     return `${n.toFixed(decimals)}%`
 }
 
-// ─── Date formatting ────────────────────────────────
+// ─── Date formatting & parsing ──────────────────────
+export function getLocalDateString(date: Date = new Date()): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
 export function formatDate(date: Date | string): string {
     return new Intl.DateTimeFormat('vi-VN', {
         day: '2-digit', month: '2-digit', year: 'numeric',
@@ -44,6 +51,33 @@ export function formatDateTime(date: Date | string): string {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
     }).format(new Date(date))
+}
+
+/**
+ * Parse an input date (e.g. "YYYY-MM-DD" from <input type="date">)
+ * and attach the current real-time (hours, minutes, seconds, milliseconds)
+ * so that document creation/update timestamp reflects real-time instead of 00:00:00 UTC (07:00 AM VN).
+ */
+export function parseDateWithCurrentTime(inputDate?: string | Date | null): Date {
+    const now = new Date()
+    if (!inputDate) return now
+    if (inputDate instanceof Date) return inputDate
+
+    const str = String(inputDate).trim()
+    if (!str) return now
+
+    // Check if it's date-only string like "YYYY-MM-DD"
+    const dateMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (dateMatch) {
+        const year = parseInt(dateMatch[1], 10)
+        const month = parseInt(dateMatch[2], 10) - 1
+        const day = parseInt(dateMatch[3], 10)
+
+        return new Date(year, month, day, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds())
+    }
+
+    const parsed = new Date(str)
+    return isNaN(parsed.getTime()) ? now : parsed
 }
 
 // ─── ID generators ─────────────────────────────────

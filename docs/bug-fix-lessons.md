@@ -2039,6 +2039,35 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 79: Đơn hàng và chứng từ thương mại BẮT BỤC phải hỗ trợ đa mức thuế suất VAT (Multi-rate VAT: 0%, 5%, 8%, 10%) theo từng dòng sản phẩm (Line-item Tax). Tổng tiền thuế phải được tính toán độc lập theo từng mức thuế và hiển thị bóc tách rõ ràng (Tax Breakdown Summary) trên cả Drawer chi tiết và Mẫu in chứng từ (Print A4).**
 
+---
+
+## BUG-052: Ngày Giờ Tạo Đơn Hàng & Chứng Từ Bị Mặc Định 07:00 Sáng Do Lệch Múi Giờ UTC Date-Only
+
+**Ngày:** 2026-08-18  
+**Severity:** 🟡 Medium — Thời gian tạo đơn hàng SO, chuyển kho TO, xuất kho DO bị cố định hiển thị `07:00` sáng do parse chuỗi ngày dạng Date-only (`YYYY-MM-DD`).
+
+### Triệu chứng
+1. Tất cả đơn hàng mới tạo qua giao diện đều hiển thị giờ lập/ngày tạo là `07:00` sáng trên bảng danh sách, chi tiết đơn hàng và bản in chứng từ.
+2. Form Drawer khởi tạo ngày bằng `new Date().toISOString().split('T')[0]` dẫn đến trường hợp vào sáng sớm (00:00 - 06:59 tại Việt Nam) bị lệch thành ngày hôm trước theo UTC.
+
+### Nguyên nhân gốc rễ
+1. Ô nhập liệu ngày sử dụng `<input type="date">` gửi chuỗi chỉ có ngày `YYYY-MM-DD` lên backend (ví dụ `"2026-08-18"`).
+2. Khi Server Action gọi `new Date("2026-08-18")`, đặc tả JavaScript parse chuỗi date-only thành `00:00:00.000 UTC`.
+3. Khi hiển thị lên giao diện tại Việt Nam (UTC+7), `00:00 UTC + 7h` chuyển thành `07:00:00`.
+
+### Cách fix
+1. Trong `src/lib/utils.ts`, xây dựng hàm `parseDateWithCurrentTime(inputDate)`:
+   - Tách các thành phần năm, tháng, ngày từ chuỗi `YYYY-MM-DD`.
+   - Kết hợp với giờ, phút, giây, mili-giây của thời điểm thực tế hiện tại (`new Date()`).
+2. Bổ sung `getLocalDateString(date)` trong `src/lib/utils.ts` để lấy ngày theo múi giờ local máy người dùng thay vì UTC `toISOString()`.
+3. Áp dụng `parseDateWithCurrentTime` tại các Server Action: `createSalesOrder`, `updateSalesOrder`, `createTransfer`, `updateDeliveryOrderDate`.
+4. Cập nhật `CreateSODrawer.tsx` và `EditSODrawer.tsx` sử dụng `getLocalDateString` cho giá trị ngày mặc định.
+
+### Bài học
+
+> ⚠️ **RULE 80: Khi lưu trữ các trường ngày tháng tạo chứng từ (createdAt, orderDate, transferDate) từ ô nhập liệu Date-only (`<input type="date">`), BẮT BUỘC phải dùng `parseDateWithCurrentTime()` để gắn kèm giờ phút giây thực tế lúc thao tác, tránh việc `new Date("YYYY-MM-DD")` bị ép về 00:00 UTC dẫn đến hiển thị cố định 07:00 sáng tại Việt Nam (UTC+7).**
+
+
 
 
 

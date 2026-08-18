@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/db'
 import { cached, revalidateCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
-import { generateSoNo } from '@/lib/utils'
+import { generateSoNo, parseDateWithCurrentTime } from '@/lib/utils'
 import { logAudit } from '@/lib/audit'
 import { submitForApproval } from '@/lib/approval'
 import { notifySOApprovalRequired, notifySOCreated, notifySOPendingAdmin, notifySOPendingCEO, notifySOPendingAccounting, notifySOConfirmed } from '@/lib/notifications'
@@ -19,6 +19,7 @@ export type SOType = 'STANDARD' | 'TASTING' | 'SAMPLE'
 export interface SalesOrderRow {
     id: string
     soNo: string
+    invoiceNo?: string | null
     customerName: string
     customerCode: string
     channel: SalesChannel
@@ -140,7 +141,7 @@ export async function getSalesOrders(filters: {
         }
 
         if (search) {
-            conditions.push(`(so."soNo" ILIKE $${paramIndex} OR c.name ILIKE $${paramIndex} OR c.code ILIKE $${paramIndex})`)
+            conditions.push(`(so."soNo" ILIKE $${paramIndex} OR c.name ILIKE $${paramIndex} OR c.code ILIKE $${paramIndex} OR EXISTS (SELECT 1 FROM ar_invoices inv WHERE inv."soId" = so.id AND inv."invoiceNo" ILIKE $${paramIndex}))`)
             params.push(`%${search}%`)
             paramIndex++
         }
@@ -177,7 +178,8 @@ export async function getSalesOrders(filters: {
                    c.name as customer_name, c.code as customer_code,
                    u.name as sales_rep_name,
                    le.name as legal_entity_name, le.code as legal_entity_code,
-                   (SELECT COUNT(*)::int FROM sales_order_lines sol WHERE sol."soId" = so.id) as line_count
+                   (SELECT COUNT(*)::int FROM sales_order_lines sol WHERE sol."soId" = so.id) as line_count,
+                   (SELECT string_agg(inv."invoiceNo", ', ' ORDER BY inv."createdAt" ASC) FROM ar_invoices inv WHERE inv."soId" = so.id) as invoice_no
             FROM sales_orders so
             JOIN customers c ON c.id = so."customerId"
             JOIN users u ON u.id = so."salesRepId"
@@ -222,6 +224,7 @@ export async function getSalesOrders(filters: {
             rows: orders.map((o: any) => ({
                 id: o.id,
                 soNo: o.soNo,
+                invoiceNo: o.invoice_no || null,
                 customerName: o.customer_name,
                 customerCode: o.customer_code,
                 channel: o.channel as SalesChannel,
@@ -833,7 +836,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
 
         const finalAmount = totalAmount * (1 - (input.orderDiscount ?? 0) / 100)
 
-        const orderDateObj = input.orderDate ? new Date(input.orderDate) : new Date()
+        const orderDateObj = parseDateWithCurrentTime(input.orderDate)
 
         const so = await prisma.salesOrder.create({
             data: {
@@ -983,7 +986,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             prisma.salesOrder.update({
                 where: { id: input.soId },
                 data: {
-                    ...(input.orderDate ? { createdAt: new Date(input.orderDate) } : {}),
+                    ...(input.orderDate ? { createdAt: parseDateWithCurrentTime(input.orderDate) } : {}),
                     customerId: input.customerId,
                     channel: input.channel,
                     paymentTerm: input.paymentTerm,
@@ -2335,6 +2338,7 @@ export async function exportSalesOrdersExcel(filters: {
             salesRep: { select: { name: true } },
             legalEntity: { select: { name: true } },
             warehouse: { select: { name: true } },
+            arInvoices: { select: { invoiceNo: true } },
             lines: {
                 include: {
                     product: { select: { skuCode: true, productName: true, country: true } },
@@ -2355,6 +2359,7 @@ export async function exportSalesOrdersExcel(filters: {
         if (o.lines.length === 0) {
             lineItemExportData.push({
                 'Số Đơn Hàng (SO)': o.soNo,
+                'Số Hóa Đơn': o.arInvoices?.map(i => i.invoiceNo).join(', ') || '',
                 'Ngày Lập Đơn': o.createdAt.toISOString().split('T')[0],
                 'Mã Khách Hàng': o.customer.code,
                 'Tên Khách Hàng': o.customer.name,
@@ -2393,6 +2398,7 @@ export async function exportSalesOrdersExcel(filters: {
 
                 lineItemExportData.push({
                     'Số Đơn Hàng (SO)': o.soNo,
+                    'Số Hóa Đơn': o.arInvoices?.map(i => i.invoiceNo).join(', ') || '',
                     'Ngày Lập Đơn': o.createdAt.toISOString().split('T')[0],
                     'Mã Khách Hàng': o.customer.code,
                     'Tên Khách Hàng': o.customer.name,
@@ -2426,6 +2432,7 @@ export async function exportSalesOrdersExcel(filters: {
     // Sheet 2: Tổng Hợp Đơn Hàng
     const summaryExportData = orders.map(o => ({
         'Số Đơn Hàng (SO)': o.soNo,
+        'Số Hóa Đơn': o.arInvoices?.map(i => i.invoiceNo).join(', ') || '',
         'Ngày Tạo': o.createdAt.toISOString().split('T')[0],
         'Khách Hàng': o.customer.name,
         'Mã Khách Hàng': o.customer.code,

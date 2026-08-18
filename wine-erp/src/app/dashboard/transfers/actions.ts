@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { requireAuth, hasRole } from '@/lib/session'
+import { parseDateWithCurrentTime } from '@/lib/utils'
 
 export type TransferOrderRow = {
     id: string
@@ -177,7 +178,7 @@ export async function createTransferOrder(input: {
                 fromWarehouseId: input.fromWarehouseId,
                 toWarehouseId: input.toWarehouseId,
                 requesterId: user.id,
-                transferDate: input.transferDate ? new Date(input.transferDate) : new Date(),
+                transferDate: parseDateWithCurrentTime(input.transferDate),
                 status,
                 notes: input.notes ?? null,
                 lines: {

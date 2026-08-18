@@ -8,6 +8,7 @@ import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, GoodsReceiptCreateSchema } from '@/lib/validations'
 import { getCurrentUser } from '@/lib/session'
 import { serialize } from '@/lib/serialize'
+import { parseDateWithCurrentTime } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────
 export type WarehouseRow = {
@@ -1146,7 +1147,7 @@ export async function updateDeliveryOrderDate(
     customDate: string | Date
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const d = new Date(customDate)
+        const d = parseDateWithCurrentTime(customDate)
         if (isNaN(d.getTime())) return { success: false, error: 'Ngày xuất hàng không hợp lệ' }
 
         const deliveryOrder = await prisma.deliveryOrder.findUnique({

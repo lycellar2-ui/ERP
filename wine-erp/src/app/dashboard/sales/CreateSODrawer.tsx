@@ -9,7 +9,7 @@ import {
     getProductPricesForChannel, getActiveAllocationsForProducts,
     getLegalEntities, LegalEntityRow, getApprovedProposalsForSO, getProposalWithItemsForSO,
 } from './actions'
-import { formatVND } from '@/lib/utils'
+import { formatVND, getLocalDateString } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { useQuery } from '@tanstack/react-query'
 
@@ -188,7 +188,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         return result
     }, [customers])
 
-    const [orderDate, setOrderDate] = useState(() => new Date().toISOString().split('T')[0])
+    const [orderDate, setOrderDate] = useState(() => getLocalDateString())
     const [customerId, setCustomerId] = useState('')
     const [channel, setChannel] = useState<SalesChannel>('HORECA')
     const [paymentTerm, setPaymentTerm] = useState('NET30')
@@ -563,7 +563,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     }
 
     const resetForm = () => {
-        setOrderDate(new Date().toISOString().split('T')[0])
+        setOrderDate(getLocalDateString())
         setCustomerId(''); setSelectedCustomer(null); setChannel('HORECA')
         setPaymentTerm('NET30'); setOrderDiscount(0); setLines([])
         setOrderType('STANDARD'); setProposalId('')

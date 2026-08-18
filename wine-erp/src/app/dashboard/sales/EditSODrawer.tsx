@@ -9,7 +9,7 @@ import {
     getProductPricesForChannel, getSalesOrderDetailWithMargin,
     getLegalEntities, LegalEntityRow,
 } from './actions'
-import { formatVND } from '@/lib/utils'
+import { formatVND, getLocalDateString } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { useQuery } from '@tanstack/react-query'
 
@@ -224,7 +224,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
         setSoNo(detail.soNo)
         if (detail.createdAt) {
-            setOrderDate(new Date(detail.createdAt).toISOString().split('T')[0])
+            setOrderDate(getLocalDateString(new Date(detail.createdAt)))
         }
         setCustomerId(detail.customerId)
         setChannel(detail.channel as SalesChannel)

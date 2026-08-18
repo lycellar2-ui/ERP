@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-08-16 16:45
-> Status: Production — 29 modules, 123 DB models, 78 enums, 35 dashboard routes, Support Multi-Rate VAT (8% and 10%) on Sales Orders & Print Templates
+> Last updated: 2026-08-18 08:50
+> Status: Production — 29 modules, 123 DB models, 78 enums, 35 dashboard routes, Real-Time Timestamps on SO & TO
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 79 rules from 51 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 80 rules from 52 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
 
 ## Tech Stack (Verified)

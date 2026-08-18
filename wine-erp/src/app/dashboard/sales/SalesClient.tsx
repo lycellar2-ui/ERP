@@ -1171,6 +1171,15 @@ function SalesOrderMobileCard({
                     </span>
                 )}
 
+                {/* Invoice Number Badge */}
+                {row.invoiceNo && (
+                    <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold"
+                        style={{ background: 'rgba(135,203,185,0.1)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.25)' }}
+                        title={`Số hóa đơn: ${row.invoiceNo}`}>
+                        HĐ: {row.invoiceNo}
+                    </span>
+                )}
+
                 {/* Sales Rep Name */}
                 <span className="text-[10px] ml-auto" style={{ color: '#8AAEBB' }}>
                     Rep: <span className="font-medium">{row.salesRepName}</span>
@@ -2106,24 +2115,25 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 950 }}>
                         <thead>
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '10%' }} />
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '22%' }}>Khách Hàng</th>
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '8%' }}>Kênh</th>
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '8%' }}>Pháp Nhân</th>
-                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '12%' }} />
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '12%' }}>Nhân viên Sales</th>
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '12%' }}>Trạng Thái</th>
+                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '9%' }} />
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Số Hóa Đơn</th>
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '19%' }}>Khách Hàng</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '7%' }}>Kênh</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '7%' }}>Pháp Nhân</th>
+                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '11%' }} />
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Nhân viên Sales</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Trạng Thái</th>
                                 <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#8AAEBB', width: '18%' }}>Hành Động</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#8AAEBB', width: '16%' }}>Hành Động</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={9} className="text-center py-12" style={{ color: '#4A6A7A' }}>
+                                <tr><td colSpan={10} className="text-center py-12" style={{ color: '#4A6A7A' }}>
                                     <Loader2 size={20} className="inline animate-spin mr-2" />Đang tải...
                                 </td></tr>
                             ) : rows.length === 0 ? (
-                                <tr><td colSpan={9} className="text-center py-16" style={{ color: '#4A6A7A' }}>
+                                <tr><td colSpan={10} className="text-center py-16" style={{ color: '#4A6A7A' }}>
                                     <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
                                     <p className="text-sm font-semibold">{hasActiveFilters ? 'Không tìm thấy đơn hàng phù hợp với bộ lọc' : 'Hệ thống chưa có đơn hàng nào'}</p>
                                     {hasActiveFilters && (
@@ -2139,6 +2149,15 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                     <td className="px-4 py-1.5 whitespace-nowrap">
                                         <span className="text-[11px] font-bold font-mono" style={{ color: '#87CBB9' }}>{row.soNo}</span>
+                                    </td>
+                                    <td className="px-3 py-1.5 whitespace-nowrap">
+                                        {row.invoiceNo ? (
+                                            <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded"
+                                                style={{ background: 'rgba(135,203,185,0.08)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.2)' }}
+                                                title={row.invoiceNo}>
+                                                {row.invoiceNo}
+                                            </span>
+                                        ) : null}
                                     </td>
                                     <td className="px-4 py-1.5">
                                         <p className="text-[13px] font-semibold truncate max-w-[240px]" style={{ color: '#E8F1F2' }} title={row.customerName}>{row.customerName}</p>
