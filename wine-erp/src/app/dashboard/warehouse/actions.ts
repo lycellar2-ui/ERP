@@ -2234,7 +2234,112 @@ export async function getLatestPendingDO(warehouseId?: string) {
             count: count + (latestSO ? 1 : 0),
             latest,
         }
-    } catch (err) {
+    } catch (err: any) {
+        console.error('getLatestPendingDO error:', err)
         return { count: 0, latest: null }
     }
+}
+
+// ── Export Goods Receipts to Excel ─────────────────
+export async function exportGoodsReceiptsExcel(filters: {
+    warehouseId?: string
+    status?: string
+    dateFrom?: string
+    dateTo?: string
+} = {}): Promise<{ base64: string; filename: string }> {
+    const where: any = {}
+    if (filters.warehouseId) where.warehouseId = filters.warehouseId
+    if (filters.status) where.status = filters.status
+    if (filters.dateFrom || filters.dateTo) {
+        where.createdAt = {}
+        if (filters.dateFrom) where.createdAt.gte = new Date(filters.dateFrom)
+        if (filters.dateTo) {
+            const to = new Date(filters.dateTo)
+            to.setHours(23, 59, 59, 999)
+            where.createdAt.lte = to
+        }
+    }
+
+    const grs = await prisma.goodsReceipt.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+            po: {
+                select: {
+                    poNo: true,
+                    supplier: { select: { name: true, country: true } },
+                    legalEntity: { select: { code: true } },
+                },
+            },
+            warehouse: { select: { code: true, name: true } },
+            confirmer: { select: { name: true } },
+            lines: {
+                include: {
+                    product: { select: { skuCode: true, productName: true } },
+                    lot: {
+                        select: {
+                            lotNo: true,
+                            vintage: true,
+                            location: { select: { locationCode: true, zone: true } },
+                        },
+                    },
+                },
+            },
+        },
+        take: 5000,
+    })
+
+    const XLSX = await import('xlsx')
+
+    // Sheet 1: Chi Tiết Dòng Hàng Nhập Kho
+    const lineItemData: any[] = []
+    for (const gr of grs) {
+        for (const l of gr.lines) {
+            lineItemData.push({
+                'Số Phiếu GR': gr.grNo,
+                'Số Đơn PO': gr.po?.poNo || '',
+                'Kho Nhận': gr.warehouse?.name || '',
+                'Nhà Cung Cấp': gr.po?.supplier?.name || '',
+                'Trạng Thái': gr.status === 'CONFIRMED' ? 'Đã Xác Nhận' : 'Nháp',
+                'Mã SKU': l.product.skuCode,
+                'Tên Sản Phẩm': l.product.productName,
+                'Niên Vụ': l.lot?.vintage || '',
+                'Mã Lô (Lot)': l.lot?.lotNo || '',
+                'Vị Trí Kho': l.lot?.location?.locationCode || '',
+                'Khu Vực': l.lot?.location?.zone || '',
+                'SL Dự Kiến (PO)': Number(l.qtyExpected),
+                'SL Thực Nhận': Number(l.qtyReceived),
+                'Chênh Lệch': Number(l.variance),
+                'Người Xác Nhận': gr.confirmer?.name || '',
+                'Ngày Xác Nhận': gr.confirmedAt ? gr.confirmedAt.toISOString().split('T')[0] : '',
+                'Ngày Tạo Phiếu': gr.createdAt.toISOString().split('T')[0],
+            })
+        }
+    }
+
+    // Sheet 2: Tổng Hợp Phiếu Nhập Kho
+    const summaryData = grs.map(gr => ({
+        'Số Phiếu GR': gr.grNo,
+        'Số Đơn PO': gr.po?.poNo || '',
+        'Kho Nhận': gr.warehouse?.name || '',
+        'Nhà Cung Cấp': gr.po?.supplier?.name || '',
+        'Trạng Thái': gr.status === 'CONFIRMED' ? 'Đã Xác Nhận' : 'Nháp',
+        'Số Mặt Hàng (SKU)': gr.lines.length,
+        'Tổng SL Dự Kiến': gr.lines.reduce((s, l) => s + Number(l.qtyExpected), 0),
+        'Tổng SL Thực Nhận': gr.lines.reduce((s, l) => s + Number(l.qtyReceived), 0),
+        'Tổng Chênh Lệch': gr.lines.reduce((s, l) => s + Number(l.variance), 0),
+        'Người Xác Nhận': gr.confirmer?.name || '',
+        'Ngày Xác Nhận': gr.confirmedAt ? gr.confirmedAt.toISOString().split('T')[0] : '',
+        'Ngày Tạo Phiếu': gr.createdAt.toISOString().split('T')[0],
+    }))
+
+    const wb = XLSX.utils.book_new()
+    const wsLine = XLSX.utils.json_to_sheet(lineItemData)
+    const wsSum = XLSX.utils.json_to_sheet(summaryData)
+    XLSX.utils.book_append_sheet(wb, wsLine, 'Chi Tiết Dòng Hàng GR')
+    XLSX.utils.book_append_sheet(wb, wsSum, 'Tổng Hợp Phiếu Nhập Kho')
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    const filename = `GoodsReceipts_Export_${new Date().toISOString().split('T')[0]}.xlsx`
+    return { base64: buffer.toString('base64'), filename }
 }
