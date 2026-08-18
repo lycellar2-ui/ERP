@@ -811,39 +811,53 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     const validLinesCount = lines.filter(l => l.qtyPicked > 0 && l.lotId).length
     const totalPicked = lines.reduce((sum, l) => sum + (l.lotId ? l.qtyPicked : 0), 0)
 
+    const darkInputStyle = {
+        background: '#142433',
+        border: '1px solid #2A4355',
+        color: '#E8F1F2',
+    }
+
     // ── Shared sub-components ───────────────────────
     const renderSOSelect = () => (
         <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#475569' }}>Sales Order *</label>
-            <select value={selectedSO?.id ?? ''} onChange={e => selectSO(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm font-mono outline-none transition-colors"
-                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}>
-                <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn SO —</option>
-                {sos.map(s => <option key={s.id} value={s.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>{s.soNo} — {s.customerName}</option>)}
+            <label className="block text-xs font-bold mb-1.5" style={{ color: '#E8F1F2' }}>Đơn Hàng (Sales Order) *</label>
+            <select
+                value={selectedSO?.id ?? ''}
+                onChange={e => selectSO(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none transition-colors"
+                style={darkInputStyle}
+            >
+                <option value="">— Chọn đơn SO —</option>
+                {sos.map(s => (
+                    <option key={s.id} value={s.id}>{s.soNo} — {s.customerName} ({s.lines.length} SP)</option>
+                ))}
             </select>
         </div>
     )
 
     const renderDateSelect = () => (
         <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#475569' }}>📅 Ngày Xuất Hàng *</label>
+            <label className="block text-xs font-bold mb-1.5" style={{ color: '#E8F1F2' }}>Ngày Xuất Hàng *</label>
             <input
                 type="date"
                 value={issuedDate}
                 onChange={e => setIssuedDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none font-medium"
-                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
+                className="w-full px-3 py-2 rounded-lg text-xs outline-none font-medium"
+                style={darkInputStyle}
             />
         </div>
     )
 
     const renderWarehouseSelect = () => (
         <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: '#475569' }}>Kho Xuất Bán Hàng *</label>
-            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors font-medium"
-                style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}>
-                <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn kho xuất bán —</option>
+            <label className="block text-xs font-bold mb-1.5" style={{ color: '#E8F1F2' }}>Kho Xuất Bán Hàng *</label>
+            <select
+                value={warehouseId}
+                onChange={e => setWarehouseId(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-xs outline-none transition-colors font-medium"
+                style={darkInputStyle}
+            >
+                <option value="">— Chọn kho xuất bán —</option>
                 {currentWhs
                     .filter((w: any) => {
                         const targetLegalEntityId = selectedSO?.legalEntityId
@@ -863,10 +877,10 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     .map((w: any) => {
                         const isAllowed = w.allowSales !== false
                         return (
-                            <option key={w.id} value={w.id} disabled={!isAllowed} style={{ background: '#FFFFFF', color: isAllowed ? '#0F172A' : '#94A3B8' }}>
+                            <option key={w.id} value={w.id} disabled={!isAllowed}>
                                 {isAllowed
-                                    ? `${w.isDefault ? '⭐ [Kho Mặc Định]' : '✔️ [Kho Xuất Bán]'} ${w.code} — ${w.name}`
-                                    : `⛔ [Chỉ Điều Chuyển - Không Xuất Bán] ${w.code} — ${w.name}`
+                                    ? `[Kho xuất bán] ${w.code} — ${w.name}${w.isDefault ? ' (Mặc định)' : ''}`
+                                    : `[Chỉ điều chuyển] ${w.code} — ${w.name}`
                                 }
                             </option>
                         )
@@ -878,13 +892,13 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
     const renderProductLines = () => (
         <>
-            <div className="flex items-center justify-between pt-2">
-                <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#B47816' }}>
-                    Nhặt Hàng ({selectedSO!.lines.length} loại sản phẩm)
+            <div className="flex items-center justify-between pt-1">
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>
+                    Sản Phẩm Cần Nhặt ({selectedSO!.lines.length} mặt hàng)
                 </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
                 {selectedSO!.lines.map((sol) => {
                     const availLots = lotsMap[sol.productId] || []
                     const productPicks = lines
@@ -897,39 +911,70 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     const isOverPicked = totalPickedForProduct > sol.qtyOrdered
 
                     return (
-                        <div key={sol.productId} className="p-3.5 rounded-xl space-y-3"
-                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                            <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-bold leading-tight" style={{ color: '#0F172A' }}>{sol.productName}</p>
-                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded shrink-0"
-                                    style={{ background: 'rgba(212,168,83,0.15)', color: '#B47816' }}>
-                                    ×{sol.qtyOrdered}
-                                </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs" style={{ color: '#64748B' }}>
-                                <span>SKU: <strong className="font-mono text-[#334155]">{sol.skuCode}</strong> · 🍇 Vintage Đơn Hàng: <strong className="font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">{sol.vintage ? sol.vintage : 'NV'}</strong></span>
-                                <span className={`text-[11px] font-semibold ${isOverPicked ? 'text-amber-600 font-bold' : isSufficient ? 'text-emerald-600' : 'text-amber-600 font-bold'}`}>
-                                    {isSufficient 
-                                        ? `✅ Đủ (Tồn kho: ${totalStockAvailable} — Nhặt ${totalPickedForProduct}/${sol.qtyOrdered} chai)`
-                                        : isOverPicked 
-                                        ? `⚠️ Nhặt vượt nhu cầu (${totalPickedForProduct}/${sol.qtyOrdered} chai)`
-                                        : `⚠️ Thiếu (Tồn kho: ${totalStockAvailable} — Nhặt ${totalPickedForProduct}/${sol.qtyOrdered} chai)`
-                                    }
-                                </span>
+                        <div key={sol.productId} className="p-4 rounded-xl space-y-3 border shadow-sm"
+                            style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                            {/* Product Header: Name + Badges */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-bold leading-tight" style={{ color: '#E8F1F2' }}>
+                                        {sol.productName}
+                                    </p>
+                                    <div className="flex items-center gap-2 flex-wrap text-xs">
+                                        <span className="font-mono font-bold px-2 py-0.5 rounded text-[11px]"
+                                            style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                            SKU: {sol.skuCode}
+                                        </span>
+                                        <span className="font-semibold px-2 py-0.5 rounded text-[11px]"
+                                            style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.25)' }}>
+                                            Niên vụ yêu cầu: {sol.vintage ? sol.vintage : 'NV'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Ordered Badge & Status */}
+                                <div className="flex items-center gap-2 flex-wrap self-start sm:self-center">
+                                    <span className="text-xs font-mono font-extrabold px-3 py-1 rounded-lg"
+                                        style={{ background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.35)' }}>
+                                        ĐẶT: {sol.qtyOrdered} CHAI
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg"
+                                        style={
+                                            isSufficient
+                                                ? { background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.35)' }
+                                                : isOverPicked
+                                                ? { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.35)' }
+                                                : { background: 'rgba(232,93,93,0.15)', color: '#E85D5D', border: '1px solid rgba(232,93,93,0.35)' }
+                                        }>
+                                        {isSufficient ? (
+                                            <>
+                                                <CheckCircle2 size={13} />
+                                                <span>Đã nhặt: {totalPickedForProduct}/{sol.qtyOrdered} chai</span>
+                                            </>
+                                        ) : isOverPicked ? (
+                                            <span>Vượt: {totalPickedForProduct}/{sol.qtyOrdered} chai</span>
+                                        ) : (
+                                            <>
+                                                <AlertCircle size={13} />
+                                                <span>Thiếu: {totalPickedForProduct}/{sol.qtyOrdered} chai (Tồn: {totalStockAvailable})</span>
+                                            </>
+                                        )}
+                                    </span>
+                                </div>
                             </div>
 
-                            {/* Render Split Location Pick Lines for this Product */}
+                            {/* Render Split Location Pick Lines */}
                             <div className="space-y-2.5 pt-1">
                                 {productPicks.map((pick, pickIdx) => {
                                     const selectedLot = availLots.find(l => l.id === pick.lotId)
                                     const isLocInsufficient = selectedLot && selectedLot.qtyAvailable < pick.qtyPicked
 
                                     return (
-                                        <div key={pick.globalIdx} className="p-2.5 rounded-lg border bg-white grid grid-cols-1 sm:grid-cols-12 gap-2 items-end"
-                                            style={{ borderColor: isLocInsufficient ? '#FCA5A5' : '#E2E8F0' }}>
-                                            <div className="sm:col-span-8">
-                                                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: '#475569' }}>
-                                                    Vị Trí Kho & Niên Vụ (Vintage) {productPicks.length > 1 ? `· Vị trí ${pickIdx + 1}` : ''}
+                                        <div key={pick.globalIdx} className="p-3 rounded-lg border grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start"
+                                            style={{ background: '#142433', borderColor: isLocInsufficient ? '#E85D5D' : '#2A4355' }}>
+                                            {/* Col 1: Location selection */}
+                                            <div className="sm:col-span-8 space-y-1.5">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#8AAEBB' }}>
+                                                    Vị Trí Kho & Lô Hàng {productPicks.length > 1 ? `(Vị trí ${pickIdx + 1})` : ''} *
                                                 </label>
                                                 <select
                                                     value={pick.lotId}
@@ -944,40 +989,56 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         }
                                                         setLines(v)
                                                     }}
-                                                    className="w-full px-2.5 py-1.5 rounded-lg text-xs outline-none font-sans font-medium"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: pick.lotId ? '#B47816' : '#64748B' }}
+                                                    className="w-full px-3 py-2 rounded-lg text-xs outline-none font-medium"
+                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: pick.lotId ? '#87CBB9' : '#8AAEBB' }}
                                                 >
-                                                    <option value="" style={{ background: '#FFFFFF', color: '#0F172A' }}>— Chọn vị trí nhặt hàng —</option>
+                                                    <option value="">— Chọn vị trí nhặt hàng —</option>
                                                     {availLots.map((lot, idx) => {
                                                         const vtg = lot.vintage ? lot.vintage : (sol.vintage ? sol.vintage : 'NV')
                                                         return (
-                                                            <option key={lot.id} value={lot.id} style={{ background: '#FFFFFF', color: '#0F172A' }}>
-                                                                {idx === 0 ? '⭐ [Ưu Tiên FIFO] ' : ''}📍 {lot.zone}{lot.rack ? ` / Kệ: ${lot.rack}` : ''}{lot.bin ? ` / Ô: ${lot.bin}` : ''} · 🍇 Vintage: {vtg} (Tồn: {lot.qtyAvailable} chai)
+                                                            <option key={lot.id} value={lot.id}>
+                                                                {idx === 0 ? '[FIFO] ' : ''}{lot.locationCode} · {lot.zone}{lot.rack ? ` (Kệ ${lot.rack})` : ''}{lot.bin ? ` (Ô ${lot.bin})` : ''} | Vintage: {vtg} | Tồn: {lot.qtyAvailable} chai
                                                             </option>
                                                         )
                                                     })}
                                                 </select>
+
                                                 {selectedLot && (
-                                                    <div className="mt-1 flex items-center gap-2 text-[10px] px-2 py-1 rounded flex-wrap font-medium"
-                                                        style={{ background: 'rgba(212,168,83,0.12)', border: '1px solid rgba(212,168,83,0.3)', color: '#1E293B' }}>
-                                                        <span>📍 Vị Trí: <strong className="font-bold text-slate-900">{selectedLot.zone}</strong>{selectedLot.rack && <> / Kệ: {selectedLot.rack}</>}{selectedLot.bin && <> / Ô: {selectedLot.bin}</>}</span>
-                                                        <span>| 🍇 Vintage: <strong className="font-bold text-amber-800">{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
-                                                        <span>| 📦 Tồn: <strong className="font-bold text-emerald-700">{selectedLot.qtyAvailable} chai</strong></span>
+                                                    <div className="flex items-center gap-2 text-[11px] px-2.5 py-1 rounded-md border flex-wrap"
+                                                        style={{ background: '#1B2E3D', borderColor: '#2A4355', color: '#8AAEBB' }}>
+                                                        <span>Vị trí: <strong style={{ color: '#E8F1F2' }}>{selectedLot.locationCode}</strong> ({selectedLot.zone})</span>
+                                                        <span style={{ color: '#2A4355' }}>·</span>
+                                                        <span>Lô: <strong className="font-mono" style={{ color: '#87CBB9' }}>{selectedLot.lotNo}</strong></span>
+                                                        <span style={{ color: '#2A4355' }}>·</span>
+                                                        <span>Vintage: <strong style={{ color: '#D4A853' }}>{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
+                                                        <span style={{ color: '#2A4355' }}>·</span>
+                                                        <span>Tồn: <strong className="font-mono font-bold text-emerald-400">{selectedLot.qtyAvailable} chai</strong></span>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <div className="sm:col-span-4 flex items-center gap-2">
+                                            {/* Col 2: Quantity picked input */}
+                                            <div className="sm:col-span-4 flex items-center gap-2 pt-0.5">
                                                 <div className="flex-1">
-                                                    <label className="text-[10px] font-semibold block mb-1" style={{ color: '#64748B' }}>SL Nhặt</label>
-                                                    <input type="number" min={0} value={pick.qtyPicked}
+                                                    <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-center" style={{ color: '#8AAEBB' }}>
+                                                        SL Nhặt (Chai) *
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        value={pick.qtyPicked}
                                                         onChange={e => {
                                                             const v = [...lines]
                                                             v[pick.globalIdx] = { ...v[pick.globalIdx], qtyPicked: Number(e.target.value) }
                                                             setLines(v)
                                                         }}
-                                                        className="w-full px-2.5 py-1.5 rounded-lg text-sm font-mono font-bold text-center"
-                                                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: isLocInsufficient ? '#DC2626' : '#16A34A' }} />
+                                                        className="w-full px-3 py-2 rounded-lg text-sm font-mono font-bold text-center outline-none"
+                                                        style={{
+                                                            background: '#1B2E3D',
+                                                            border: isLocInsufficient ? '1px solid #E85D5D' : '1px solid #2A4355',
+                                                            color: isLocInsufficient ? '#E85D5D' : '#5BA88A'
+                                                        }}
+                                                    />
                                                 </div>
                                                 {productPicks.length > 1 && (
                                                     <button
@@ -985,10 +1046,11 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         onClick={() => {
                                                             setLines(prev => prev.filter((_, idx) => idx !== pick.globalIdx))
                                                         }}
-                                                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0 mt-4 transition-colors"
+                                                        className="p-2 rounded-lg shrink-0 mt-5 transition-colors cursor-pointer"
+                                                        style={{ color: '#E85D5D', border: '1px solid #2A4355', background: '#1B2E3D' }}
                                                         title="Xóa vị trí nhặt hàng này"
                                                     >
-                                                        <X size={16} />
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 )}
                                             </div>
@@ -1004,9 +1066,10 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             { productId: sol.productId, lotId: '', locationId: '', qtyPicked: 1 }
                                         ])
                                     }}
-                                    className="text-xs font-semibold text-amber-700 flex items-center gap-1 hover:underline pt-1"
+                                    className="text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:opacity-80 pt-1"
+                                    style={{ color: '#87CBB9' }}
                                 >
-                                    <Plus size={14} /> Thêm vị trí nhặt hàng khác cho sản phẩm này (Tách vị trí)
+                                    <Plus size={14} /> Tách vị trí nhặt hàng khác cho sản phẩm này
                                 </button>
                             </div>
                         </div>
@@ -1018,40 +1081,62 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
 
     const renderSaveButtons = () => (
         <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button onClick={() => handleSave(false)} disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl transition-all hover:brightness-95"
-                style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155', minHeight: '48px' }}>
+            <button
+                onClick={() => handleSave(false)}
+                disabled={saving}
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 hover:bg-[#1B2E3D]"
+                style={{ background: '#142433', border: '1px solid #2A4355', color: '#8AAEBB', minHeight: '46px' }}
+            >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Lưu Nháp DO
+                <span>Lưu Nháp DO</span>
             </button>
 
-            <button onClick={() => handleSave(true)} disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl shadow-md transition-all hover:brightness-105"
-                style={{ background: '#D4A853', color: '#0A1926', minHeight: '48px' }}>
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                ⚡ Xác Nhận Xuất Kho
+            <button
+                onClick={() => handleSave(true)}
+                disabled={saving}
+                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 hover:opacity-90 active:scale-[0.99]"
+                style={{ background: '#5BA88A', color: '#0F1E2E', minHeight: '46px' }}
+            >
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                <span>Tạo & Xác Nhận Xuất Kho</span>
             </button>
         </div>
     )
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(15, 23, 42, 0.4)' }}>
-            <div className="w-full sm:w-[580px] max-w-full h-full flex flex-col shadow-2xl" style={{ background: '#FFFFFF' }}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs">
+            <div className="w-full sm:w-[680px] max-w-full h-full flex flex-col shadow-2xl border-l"
+                style={{ background: '#0F1E2E', borderColor: '#2A4355' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-5 shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                <div className="flex items-center justify-between p-5 shrink-0 border-b"
+                    style={{ background: '#142433', borderColor: '#2A4355' }}>
                     <div className="min-w-0">
-                        <h3 className="text-base font-bold" style={{ color: '#0F172A' }}>Nhặt Hàng & Tạo DO</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>Nhặt Hàng & Tạo DO</h3>
+                            {selectedSO && (
+                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded"
+                                    style={{ background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }}>
+                                    {selectedSO.soNo}
+                                </span>
+                            )}
+                        </div>
                         {selectedSO && (
-                            <p className="text-xs mt-0.5 font-mono font-semibold truncate" style={{ color: '#B47816' }}>
-                                {selectedSO.soNo} · {selectedSO.customerName}
+                            <p className="text-xs mt-1 truncate" style={{ color: '#8AAEBB' }}>
+                                Khách hàng: <strong style={{ color: '#E8F1F2' }}>{selectedSO.customerName}</strong>
                             </p>
                         )}
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg shrink-0 hover:bg-slate-100 transition-colors" style={{ color: '#64748B' }}><X size={20} /></button>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg text-[#8AAEBB] hover:text-[#E8F1F2] hover:bg-[#1B2E3D] cursor-pointer"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
 
                 {/* Mobile Step Indicator */}
-                <div className="flex sm:hidden items-center gap-1 px-4 py-3 shrink-0" style={{ borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                <div className="flex sm:hidden items-center gap-1 px-4 py-3 shrink-0 border-b"
+                    style={{ background: '#142433', borderColor: '#2A4355' }}>
                     {[
                         { step: 1 as const, label: 'Chọn Đơn' },
                         { step: 2 as const, label: 'Nhặt Hàng' },
@@ -1066,21 +1151,21 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 }}
                                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold w-full justify-center transition-all"
                                 style={{
-                                    background: mobileStep === s.step ? '#D4A853' : mobileStep > s.step ? 'rgba(22,163,74,0.15)' : '#F1F5F9',
-                                    color: mobileStep === s.step ? '#0A1926' : mobileStep > s.step ? '#16A34A' : '#64748B',
+                                    background: mobileStep === s.step ? '#5BA88A' : mobileStep > s.step ? 'rgba(91,168,138,0.15)' : '#1B2E3D',
+                                    color: mobileStep === s.step ? '#0F1E2E' : mobileStep > s.step ? '#5BA88A' : '#8AAEBB',
                                 }}
                             >
                                 <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0"
                                     style={{
-                                        background: mobileStep === s.step ? '#0A1926' : 'transparent',
-                                        color: mobileStep === s.step ? '#D4A853' : 'inherit',
+                                        background: mobileStep === s.step ? '#0F1E2E' : 'transparent',
+                                        color: mobileStep === s.step ? '#5BA88A' : 'inherit',
                                         border: mobileStep === s.step ? 'none' : '1px solid currentColor',
                                     }}>
                                     {mobileStep > s.step ? '✓' : s.step}
                                 </span>
                                 {s.label}
                             </button>
-                            {idx < 2 && <div className="w-3 h-px shrink-0" style={{ background: '#CBD5E1' }} />}
+                            {idx < 2 && <div className="w-3 h-px shrink-0" style={{ background: '#2A4355' }} />}
                         </div>
                     ))}
                 </div>
@@ -1091,18 +1176,24 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     <div className="hidden sm:block p-5 space-y-4">
                         {selectedSO ? (
                             <div className="space-y-3">
-                                <div className="p-3.5 rounded-xl flex items-center justify-between" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                <div className="p-3.5 rounded-xl border flex items-center justify-between"
+                                    style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
                                     <div>
-                                        <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Đơn Hàng Bán (Mặc Định)</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#8AAEBB' }}>
+                                            Đơn Hàng Bán Ra
+                                        </span>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-sm font-bold font-mono" style={{ color: '#B47816' }}>{selectedSO.soNo}</span>
-                                            <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>· {selectedSO.customerName}</span>
+                                            <span className="text-sm font-bold font-mono" style={{ color: '#87CBB9' }}>{selectedSO.soNo}</span>
+                                            <span className="text-xs font-semibold" style={{ color: '#E8F1F2' }}>· {selectedSO.customerName}</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[10px] font-bold uppercase tracking-wide block" style={{ color: '#64748B' }}>Kho Xuất Bán (Tự Động Mặc Định)</span>
-                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded" style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A' }}>
-                                            🏢 {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
+                                        <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: '#8AAEBB' }}>
+                                            Kho Xuất Bán
+                                        </span>
+                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded inline-block mt-0.5"
+                                            style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                                            {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
                                         </span>
                                     </div>
                                 </div>
@@ -1126,8 +1217,9 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                         {/* Step 1 */}
                         {mobileStep === 1 && (
                             <div className="space-y-4">
-                                <div className="p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#B47816' }}>
+                                <div className="p-3.5 rounded-xl border space-y-3"
+                                    style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>
                                         Bước 1: Chọn Đơn Hàng, Kho & Ngày Xuất
                                     </p>
                                     <div className="space-y-3">
@@ -1137,13 +1229,14 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                     </div>
                                 </div>
                                 {selectedSO && (
-                                    <div className="p-3 rounded-xl space-y-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-xs font-semibold" style={{ color: '#64748B' }}>Sản phẩm trong đơn:</p>
+                                    <div className="p-3 rounded-xl border space-y-2"
+                                        style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                                        <p className="text-xs font-semibold" style={{ color: '#8AAEBB' }}>Sản phẩm trong đơn:</p>
                                         {selectedSO.lines.map(l => (
-                                            <div key={l.productId} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg"
-                                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                <span className="truncate pr-2" style={{ color: '#0F172A' }}>{l.productName}</span>
-                                                <span className="font-mono font-bold shrink-0" style={{ color: '#B47816' }}>×{l.qtyOrdered}</span>
+                                            <div key={l.productId} className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border"
+                                                style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                                <span className="truncate pr-2" style={{ color: '#E8F1F2' }}>{l.productName}</span>
+                                                <span className="font-mono font-bold shrink-0" style={{ color: '#D4A853' }}>×{l.qtyOrdered}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1151,13 +1244,13 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 <button
                                     onClick={() => setMobileStep(2)}
                                     disabled={!canGoStep2}
-                                    className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold rounded-xl transition-all"
+                                    className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-xl transition-all disabled:opacity-50"
                                     style={{
-                                        background: canGoStep2 ? '#D4A853' : '#F1F5F9',
-                                        color: canGoStep2 ? '#0A1926' : '#94A3B8',
-                                        minHeight: '48px',
+                                        background: canGoStep2 ? '#5BA88A' : '#142433',
+                                        color: canGoStep2 ? '#0F1E2E' : '#8AAEBB',
+                                        minHeight: '46px',
                                     }}>
-                                    Tiếp Theo → Nhặt Hàng <ArrowRight size={16} />
+                                    Tiếp Theo: Nhặt Hàng <ArrowRight size={16} />
                                 </button>
                             </div>
                         )}
@@ -1169,18 +1262,18 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setMobileStep(1)}
-                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl"
-                                        style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155', minHeight: '48px' }}>
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl border"
+                                        style={{ background: '#142433', borderColor: '#2A4355', color: '#8AAEBB', minHeight: '46px' }}>
                                         ← Quay Lại
                                     </button>
                                     <button
                                         onClick={() => setMobileStep(3)}
                                         disabled={validLinesCount === 0}
-                                        className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl"
+                                        className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-xl disabled:opacity-50"
                                         style={{
-                                            background: validLinesCount > 0 ? '#D4A853' : '#F1F5F9',
-                                            color: validLinesCount > 0 ? '#0A1926' : '#94A3B8',
-                                            minHeight: '48px',
+                                            background: validLinesCount > 0 ? '#5BA88A' : '#142433',
+                                            color: validLinesCount > 0 ? '#0F1E2E' : '#8AAEBB',
+                                            minHeight: '46px',
                                         }}>
                                         Xác Nhận ({validLinesCount}/{lines.length}) →
                                     </button>
@@ -1191,28 +1284,29 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                         {/* Step 3 */}
                         {mobileStep === 3 && selectedSO && (
                             <div className="space-y-4">
-                                <div className="p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#B47816' }}>
+                                <div className="p-3.5 rounded-xl border space-y-3"
+                                    style={{ background: '#1B2E3D', borderColor: '#2A4355' }}>
+                                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>
                                         Bước 3: Xác Nhận Xuất Kho
                                     </p>
-                                    <div className="grid grid-cols-2 gap-2 mb-3">
-                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Đơn hàng</p>
-                                            <p className="text-sm font-bold font-mono" style={{ color: '#B47816' }}>{selectedSO.soNo}</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Đơn hàng</p>
+                                            <p className="text-sm font-bold font-mono" style={{ color: '#87CBB9' }}>{selectedSO.soNo}</p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Kho xuất</p>
-                                            <p className="text-sm font-bold" style={{ color: '#0F172A' }}>
+                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Kho xuất</p>
+                                            <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
                                                 {warehouses.find(w => w.id === warehouseId)?.code ?? '—'}
                                             </p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Sản phẩm</p>
-                                            <p className="text-sm font-bold" style={{ color: '#16A34A' }}>{validLinesCount} loại</p>
+                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Sản phẩm</p>
+                                            <p className="text-sm font-bold" style={{ color: '#5BA88A' }}>{validLinesCount} mặt hàng</p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                            <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Tổng nhặt</p>
-                                            <p className="text-sm font-bold font-mono" style={{ color: '#16A34A' }}>{totalPicked.toLocaleString()} chai</p>
+                                        <div className="px-3 py-2 rounded-lg border" style={{ background: '#142433', borderColor: '#2A4355' }}>
+                                            <p className="text-[10px] uppercase font-bold" style={{ color: '#8AAEBB' }}>Tổng nhặt</p>
+                                            <p className="text-sm font-bold font-mono text-emerald-400">{totalPicked.toLocaleString()} chai</p>
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
@@ -1220,16 +1314,16 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             const line = lines[i]
                                             const lot = lotsMap[sol.productId]?.find(l => l.id === line?.lotId)
                                             return (
-                                                <div key={sol.productId} className="flex items-center justify-between text-xs px-2.5 py-2 rounded-lg"
-                                                    style={{ background: '#FFFFFF', border: line?.lotId ? '1px solid rgba(22,163,74,0.3)' : '1px solid rgba(212,168,83,0.3)' }}>
+                                                <div key={sol.productId} className="flex items-center justify-between text-xs px-3 py-2 rounded-lg border"
+                                                    style={{ background: '#142433', borderColor: line?.lotId ? '#5BA88A' : '#D4A853' }}>
                                                     <div className="min-w-0 pr-2">
-                                                        <p className="truncate font-medium" style={{ color: '#0F172A' }}>{sol.productName}</p>
-                                                        <p className="text-[10px] font-medium" style={{ color: '#64748B' }}>
-                                                            {lot ? `📍 Vị Trí: ${lot.zone}${lot.rack ? ` / Kệ: ${lot.rack}` : ''}${lot.bin ? ` / Ô: ${lot.bin}` : ''} · 🍇 Vintage: ${lot.vintage ? lot.vintage : (sol.vintage ? sol.vintage : 'NV')}` : '⚠️ Chưa chọn vị trí'}
+                                                        <p className="truncate font-bold" style={{ color: '#E8F1F2' }}>{sol.productName}</p>
+                                                        <p className="text-[10px]" style={{ color: '#8AAEBB' }}>
+                                                            {lot ? `Vị trí: ${lot.locationCode} (${lot.zone}) · Vintage: ${lot.vintage ?? 'NV'}` : 'Chưa chọn vị trí'}
                                                         </p>
                                                     </div>
-                                                    <span className="font-mono font-bold shrink-0" style={{ color: line?.lotId ? '#16A34A' : '#B47816' }}>
-                                                        {line?.lotId ? `✓ ${line.qtyPicked}` : '—'}
+                                                    <span className="font-mono font-bold shrink-0" style={{ color: line?.lotId ? '#5BA88A' : '#D4A853' }}>
+                                                        {line?.lotId ? `${line.qtyPicked} chai` : '—'}
                                                     </span>
                                                 </div>
                                             )
