@@ -5,7 +5,7 @@ import {
     Search, Plus, PackagePlus, CheckCircle2, Clock,
     FileText, ChevronDown, X, Trash2, Loader2, Save, AlertCircle,
     Package, RefreshCw, Printer, Calendar, ArrowUpDown, ChevronRight,
-    Download, ChevronUp, MapPin, Eye, Building2, Layers, ShieldCheck, CheckSquare, Sparkles
+    Download, ChevronUp, MapPin, Eye, Building2, Layers, ShieldCheck, CheckSquare, Sparkles, Box
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -16,11 +16,21 @@ import {
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 
 // ── Types ──────────────────────────────────────────
+type POLineOption = {
+    id: string
+    productId: string
+    productName: string
+    skuCode: string
+    unitsPerCase: number
+    qtyOrdered: number
+    casesOrdered: number
+}
+
 type POOption = {
     id: string
     poNo: string
     supplierName: string
-    lines: { productId: string; productName: string; skuCode: string; qtyOrdered: number }[]
+    lines: POLineOption[]
 }
 
 type GRDetail = Awaited<ReturnType<typeof getGRDetail>>
@@ -328,14 +338,15 @@ export function GoodsReceiptTab({ warehouses }: {
             // Warehouse filter
             if (warehouseFilter && r.warehouseId !== warehouseFilter) return false
 
-            // Search query (GR No, PO No, Warehouse name, ConfirmedBy)
+            // Search query (GR No, PO No, Warehouse name, ConfirmedBy, Product summary)
             if (searchQuery.trim()) {
                 const q = searchQuery.toLowerCase().trim()
                 const matchGR = r.grNo.toLowerCase().includes(q)
                 const matchPO = r.poNo.toLowerCase().includes(q)
                 const matchWH = r.warehouseName.toLowerCase().includes(q)
                 const matchConfirmer = (r.confirmedBy ?? '').toLowerCase().includes(q)
-                if (!matchGR && !matchPO && !matchWH && !matchConfirmer) return false
+                const matchProducts = (r.productSummary ?? '').toLowerCase().includes(q)
+                if (!matchGR && !matchPO && !matchWH && !matchConfirmer && !matchProducts) return false
             }
 
             // Date Range
@@ -368,6 +379,10 @@ export function GoodsReceiptTab({ warehouses }: {
 
     const totalBottlesFiltered = useMemo(() => {
         return filteredRows.reduce((sum, r) => sum + r.totalQtyReceived, 0)
+    }, [filteredRows])
+
+    const totalCasesFiltered = useMemo(() => {
+        return filteredRows.reduce((sum, r) => sum + (r.totalCases || Math.round((r.totalQtyReceived / 6) * 10) / 10), 0)
     }, [filteredRows])
 
     const inputCls = "px-3 py-2 rounded-lg text-xs outline-none transition-all"
@@ -417,7 +432,9 @@ export function GoodsReceiptTab({ warehouses }: {
                             </span>
                             <span style={{ color: '#2A4355' }}>·</span>
                             <span className="font-semibold" style={{ color: '#4A8FAB' }}>
-                                Tổng nhận: <strong className="font-mono">{rows.reduce((s, r) => s + r.totalQtyReceived, 0).toLocaleString()}</strong> chai
+                                Tổng nhận: <strong className="font-mono text-emerald-400">
+                                    {Math.round(rows.reduce((s, r) => s + (r.totalCases || r.totalQtyReceived / 6), 0) * 10) / 10} thùng
+                                </strong> ({rows.reduce((s, r) => s + r.totalQtyReceived, 0).toLocaleString()} chai)
                             </span>
                         </div>
                     </div>
@@ -489,9 +506,9 @@ export function GoodsReceiptTab({ warehouses }: {
                         accent="#5BA88A"
                     />
                     <GRStatCard
-                        label="Tổng Chai Thực Nhận"
-                        value={totalBottlesFiltered.toLocaleString()}
-                        sub="Chai rượu đã tiếp nhận"
+                        label="Tổng Thùng / Chai Nhận"
+                        value={`${Math.round(totalCasesFiltered * 10) / 10} thùng`}
+                        sub={`${totalBottlesFiltered.toLocaleString()} chai thực nhận`}
                         accent="#4A8FAB"
                     />
                 </div>
@@ -512,7 +529,7 @@ export function GoodsReceiptTab({ warehouses }: {
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
                         <input
                             type="text"
-                            placeholder="Tìm số GR, số PO, kho, người xác nhận..."
+                            placeholder="Tìm số GR, số PO, mã SKU, tên SP, kho nhận..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             className={`${inputCls} w-full pl-9 pr-8`}
@@ -624,7 +641,7 @@ export function GoodsReceiptTab({ warehouses }: {
                             <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Đơn Mua (PO)</th>
                             <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Kho Tiếp Nhận</th>
                             <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Số Mặt Hàng</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Tổng SL Nhận</th>
+                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Tổng SL Nhận (Thùng / Chai)</th>
                             <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Trạng Thái</th>
                             <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Người Xác Nhận</th>
                             <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Ngày Tạo</th>
@@ -652,6 +669,7 @@ export function GoodsReceiptTab({ warehouses }: {
                             filteredRows.map(gr => {
                                 const st = GR_STATUS[gr.status] ?? GR_STATUS.DRAFT
                                 const StatusIcon = st.icon
+                                const cases = gr.totalCases ?? (Math.round((gr.totalQtyReceived / 6) * 10) / 10)
                                 return (
                                     <tr
                                         key={gr.id}
@@ -700,9 +718,16 @@ export function GoodsReceiptTab({ warehouses }: {
                                             {gr.lineCount} sản phẩm
                                         </td>
 
-                                        {/* Total Qty */}
-                                        <td className="px-4 py-3.5 text-xs font-bold font-mono" style={{ color: '#E8F1F2' }}>
-                                            {gr.totalQtyReceived.toLocaleString()} <span className="text-[10px] font-normal" style={{ color: '#4A6A7A' }}>chai</span>
+                                        {/* Total Qty (Cases + Bottles) */}
+                                        <td className="px-4 py-3.5 text-xs font-medium">
+                                            <div className="flex items-baseline gap-1.5">
+                                                <strong className="font-mono text-sm" style={{ color: '#87CBB9' }}>
+                                                    {cases} thùng
+                                                </strong>
+                                                <span className="text-[11px] font-mono" style={{ color: '#8AAEBB' }}>
+                                                    ({gr.totalQtyReceived.toLocaleString()} chai)
+                                                </span>
+                                            </div>
                                         </td>
 
                                         {/* Status */}
@@ -775,7 +800,7 @@ export function GoodsReceiptTab({ warehouses }: {
                         </span>
                         <div className="flex items-center gap-4">
                             <span>
-                                Tổng SL thực nhận: <strong className="font-mono text-sm" style={{ color: '#87CBB9' }}>{totalBottlesFiltered.toLocaleString()}</strong> chai
+                                Tổng SL thực nhận: <strong className="font-mono text-sm" style={{ color: '#87CBB9' }}>{Math.round(totalCasesFiltered * 10) / 10} thùng</strong> <span style={{ color: '#8AAEBB' }}>({totalBottlesFiltered.toLocaleString()} chai)</span>
                             </span>
                         </div>
                     </div>
@@ -797,6 +822,7 @@ export function GoodsReceiptTab({ warehouses }: {
                     filteredRows.map(gr => {
                         const st = GR_STATUS[gr.status] ?? GR_STATUS.DRAFT
                         const StatusIcon = st.icon
+                        const cases = gr.totalCases ?? (Math.round((gr.totalQtyReceived / 6) * 10) / 10)
                         return (
                             <div
                                 key={gr.id}
@@ -832,7 +858,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                 <div className="flex items-center justify-between pt-2 text-xs border-t"
                                     style={{ borderColor: '#2A4355' }}>
                                     <span style={{ color: '#8AAEBB' }}>
-                                        {gr.lineCount} sản phẩm · <strong className="font-mono" style={{ color: '#E8F1F2' }}>{gr.totalQtyReceived.toLocaleString()}</strong> chai
+                                        {gr.lineCount} sản phẩm · <strong className="font-mono text-emerald-400">{cases} thùng</strong> ({gr.totalQtyReceived.toLocaleString()} chai)
                                     </span>
                                     <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                         <button
@@ -862,7 +888,7 @@ export function GoodsReceiptTab({ warehouses }: {
             {/* ── 6. Detail Slide-over Drawer (Matching Sales/Procurement) ── */}
             {(detailData || detailLoading) && (
                 <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs">
-                    <div className="w-full sm:w-[680px] max-w-full h-full overflow-y-auto border-l shadow-2xl flex flex-col"
+                    <div className="w-full sm:w-[780px] max-w-full h-full overflow-y-auto border-l shadow-2xl flex flex-col"
                         style={{ background: '#0F1E2E', borderColor: '#2A4355' }}>
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between p-5 border-b flex-shrink-0"
@@ -982,9 +1008,9 @@ export function GoodsReceiptTab({ warehouses }: {
                                             Chi Tiết Sản Phẩm Nhập Kho ({detailData.lines.length} dòng)
                                         </h4>
                                         <span className="text-xs" style={{ color: '#8AAEBB' }}>
-                                            Tổng nhận: <strong className="font-mono" style={{ color: '#E8F1F2' }}>
-                                                {detailData.lines.reduce((s, l) => s + l.qtyReceived, 0).toLocaleString()}
-                                            </strong> chai
+                                            Tổng nhận: <strong className="font-mono text-emerald-400" style={{ color: '#87CBB9' }}>
+                                                {Math.round(detailData.lines.reduce((s, l) => s + (l.casesReceived || (l.qtyReceived / (l.unitsPerCase || 6))), 0) * 10) / 10} thùng
+                                            </strong> ({detailData.lines.reduce((s, l) => s + l.qtyReceived, 0).toLocaleString()} chai)
                                         </span>
                                     </div>
 
@@ -996,10 +1022,11 @@ export function GoodsReceiptTab({ warehouses }: {
                                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', color: '#8AAEBB' }}>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Mã SKU</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Tên Sản Phẩm</th>
+                                                        <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Quy Cách</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Niên Vụ</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Mã Lô</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Vị Trí</th>
-                                                        <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold text-right">Dự Kiến</th>
+                                                        <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold text-right">Dự Kiến (PO)</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold text-right">Thực Nhận</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold text-right">Chênh Lệch</th>
                                                     </tr>
@@ -1013,6 +1040,9 @@ export function GoodsReceiptTab({ warehouses }: {
                                                             <td className="px-3 py-2.5 font-medium" style={{ color: '#E8F1F2' }}>
                                                                 {l.productName}
                                                             </td>
+                                                            <td className="px-3 py-2.5 font-mono text-[11px]" style={{ color: '#8AAEBB' }}>
+                                                                {l.unitsPerCase || 6} chai/thùng
+                                                            </td>
                                                             <td className="px-3 py-2.5 font-mono font-bold" style={{ color: '#D4A853' }}>
                                                                 {l.vintage ? l.vintage : '—'}
                                                             </td>
@@ -1022,17 +1052,28 @@ export function GoodsReceiptTab({ warehouses }: {
                                                             <td className="px-3 py-2.5 font-mono font-medium" style={{ color: '#4A8FAB' }}>
                                                                 {l.locationCode}
                                                             </td>
-                                                            <td className="px-3 py-2.5 font-mono font-bold text-right" style={{ color: '#8AAEBB' }}>
-                                                                {l.qtyExpected}
+                                                            <td className="px-3 py-2.5 font-mono text-right" style={{ color: '#8AAEBB' }}>
+                                                                <div>
+                                                                    <strong>{l.casesExpected ?? Math.round((l.qtyExpected / (l.unitsPerCase || 6)) * 10) / 10} thg</strong>
+                                                                    <p className="text-[10px] opacity-75">{l.qtyExpected} chai</p>
+                                                                </div>
                                                             </td>
-                                                            <td className="px-3 py-2.5 font-mono font-bold text-right" style={{ color: '#5BA88A' }}>
-                                                                {l.qtyReceived}
+                                                            <td className="px-3 py-2.5 font-mono text-right" style={{ color: '#5BA88A' }}>
+                                                                <div>
+                                                                    <strong>{l.casesReceived ?? Math.round((l.qtyReceived / (l.unitsPerCase || 6)) * 10) / 10} thg</strong>
+                                                                    <p className="text-[10px] opacity-75">{l.qtyReceived} chai</p>
+                                                                </div>
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono font-bold text-right"
                                                                 style={{
                                                                     color: l.variance > 0 ? '#5BA88A' : (l.variance < 0 ? '#E85D5D' : '#8AAEBB')
                                                                 }}>
-                                                                {l.variance === 0 ? '—' : (l.variance > 0 ? `+${l.variance}` : l.variance)}
+                                                                {l.variance === 0 ? '—' : (
+                                                                    <div>
+                                                                        <span>{l.casesVariance > 0 ? `+${l.casesVariance}` : l.casesVariance} thg</span>
+                                                                        <p className="text-[10px]">{l.variance > 0 ? `+${l.variance}` : l.variance} chai</p>
+                                                                    </div>
+                                                                )}
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -1063,7 +1104,7 @@ export function GoodsReceiptTab({ warehouses }: {
 }
 
 // ═══════════════════════════════════════════════════
-// CREATE GR DRAWER (Dark Theme & Live Dropdowns)
+// CREATE GR DRAWER (Dark Theme & Live Dropdowns + Cases)
 // ═══════════════════════════════════════════════════
 function CreateGRDrawer({ warehouses, onClose, onCreated }: {
     warehouses: { id: string; code: string; name: string }[]
@@ -1076,7 +1117,13 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
     const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id || '')
     const [locations, setLocations] = useState<{ id: string; locationCode: string; zone: string; rack?: string | null; bin?: string | null }[]>([])
     const [loadingLocations, setLoadingLocations] = useState(false)
-    const [lines, setLines] = useState<{ productId: string; qtyReceived: number; locationId: string; vintage: string }[]>([])
+    const [lines, setLines] = useState<{
+        productId: string
+        qtyReceived: number
+        casesReceived: number
+        locationId: string
+        vintage: string
+    }[]>([])
     const [saving, setSaving] = useState(false)
 
     useEffect(() => {
@@ -1112,12 +1159,16 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
         const po = pos.find(p => p.id === poId) || null
         setSelectedPO(po)
         if (po) {
-            setLines(po.lines.map(l => ({
-                productId: l.productId,
-                qtyReceived: l.qtyOrdered,
-                locationId: locations.length > 0 ? locations[0].id : '',
-                vintage: '',
-            })))
+            setLines(po.lines.map(l => {
+                const u = l.unitsPerCase || 6
+                return {
+                    productId: l.productId,
+                    qtyReceived: l.qtyOrdered,
+                    casesReceived: l.casesOrdered ?? Math.round((l.qtyOrdered / u) * 10) / 10,
+                    locationId: locations.length > 0 ? locations[0].id : '',
+                    vintage: '',
+                }
+            }))
         }
     }
 
@@ -1169,7 +1220,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs">
-            <div className="w-full sm:w-[680px] max-w-full h-full overflow-y-auto border-l shadow-2xl flex flex-col"
+            <div className="w-full sm:w-[740px] max-w-full h-full overflow-y-auto border-l shadow-2xl flex flex-col"
                 style={{ background: '#0F1E2E', borderColor: '#2A4355' }}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b flex-shrink-0"
@@ -1206,7 +1257,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                             >
                                 <option value="">— Chọn đơn PO —</option>
                                 {filteredPOs.map(p => (
-                                    <option key={p.id} value={p.id}>{p.poNo} — {p.supplierName}</option>
+                                    <option key={p.id} value={p.id}>{p.poNo} — {p.supplierName} ({p.lines.length} SP)</option>
                                 ))}
                             </select>
                         </div>
@@ -1234,7 +1285,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                         <>
                             <div className="flex items-center justify-between pt-2">
                                 <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#87CBB9' }}>
-                                    Danh Sách Sản Phẩm Cần Nhập ({lines.length} dòng)
+                                    Sản Phẩm Cần Nhập ({lines.length} dòng)
                                 </p>
                                 <span className="text-[11px]" style={{ color: '#8AAEBB' }}>
                                     {locations.length > 0
@@ -1243,109 +1294,165 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                 </span>
                             </div>
 
-                            <div className="space-y-3">
-                                {selectedPO.lines.map((pol, i) => (
-                                    <div
-                                        key={pol.productId}
-                                        className="p-4 rounded-xl border space-y-3 shadow-sm"
-                                        style={{ background: '#1B2E3D', borderColor: '#2A4355' }}
-                                    >
-                                        <div className="flex items-center justify-between gap-2">
-                                            <p className="text-xs font-bold truncate" style={{ color: '#E8F1F2' }}>
-                                                {pol.productName}
-                                            </p>
-                                            <span
-                                                className="text-[11px] font-mono font-bold px-2 py-0.5 rounded shrink-0"
-                                                style={{
-                                                    background: 'rgba(135,203,185,0.15)',
-                                                    color: '#87CBB9',
-                                                    border: '1px solid rgba(135,203,185,0.3)',
-                                                }}
-                                            >
-                                                PO: {pol.qtyOrdered} chai
-                                            </span>
-                                        </div>
-                                        <p className="text-[11px] font-mono" style={{ color: '#8AAEBB' }}>
-                                            SKU: {pol.skuCode}
-                                        </p>
+                            <div className="space-y-3.5">
+                                {selectedPO.lines.map((pol, i) => {
+                                    const u = pol.unitsPerCase || 6
+                                    return (
+                                        <div
+                                            key={pol.productId}
+                                            className="p-4 rounded-xl border space-y-3 shadow-sm"
+                                            style={{ background: '#1B2E3D', borderColor: '#2A4355' }}
+                                        >
+                                            {/* Product Title & Badges */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                <div>
+                                                    <p className="text-sm font-bold" style={{ color: '#E8F1F2' }}>
+                                                        {pol.productName || 'Sản phẩm ' + pol.skuCode}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                        <span
+                                                            className="text-xs font-mono font-bold px-2 py-0.5 rounded"
+                                                            style={{
+                                                                background: 'rgba(135,203,185,0.15)',
+                                                                color: '#87CBB9',
+                                                                border: '1px solid rgba(135,203,185,0.3)',
+                                                            }}
+                                                        >
+                                                            SKU: {pol.skuCode}
+                                                        </span>
+                                                        <span
+                                                            className="text-[11px] font-semibold px-2 py-0.5 rounded"
+                                                            style={{
+                                                                background: '#142433',
+                                                                color: '#8AAEBB',
+                                                                border: '1px solid #2A4355',
+                                                            }}
+                                                        >
+                                                            Quy cách: {u} chai/thùng
+                                                        </span>
+                                                    </div>
+                                                </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                                            <div>
-                                                <label className="text-[10px] font-bold block mb-1" style={{ color: '#8AAEBB' }}>
-                                                    SL Thực Nhận (Chai) *
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    value={lines[i]?.qtyReceived ?? 0}
-                                                    onChange={e => {
-                                                        const v = [...lines]
-                                                        v[i] = { ...v[i], qtyReceived: Number(e.target.value) }
-                                                        setLines(v)
-                                                    }}
-                                                    className={inputCls}
-                                                    style={darkInputStyle}
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="text-[10px] font-bold block mb-1" style={{ color: '#8AAEBB' }}>
-                                                    Niên Vụ (Vintage)
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="VD: 2020, 2022, NV..."
-                                                    value={lines[i]?.vintage ?? ''}
-                                                    onChange={e => {
-                                                        const v = [...lines]
-                                                        v[i] = { ...v[i], vintage: e.target.value }
-                                                        setLines(v)
-                                                    }}
-                                                    className={inputCls}
-                                                    style={darkInputStyle}
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="text-[10px] font-bold block mb-1" style={{ color: '#8AAEBB' }}>
-                                                    Vị Trí Kho * {loadingLocations && <Loader2 size={10} className="animate-spin inline ml-1 text-emerald-400" />}
-                                                </label>
-                                                {locations.length > 0 ? (
-                                                    <select
-                                                        value={lines[i]?.locationId ?? ''}
-                                                        onChange={e => {
-                                                            const v = [...lines]
-                                                            v[i] = { ...v[i], locationId: e.target.value }
-                                                            setLines(v)
+                                                <div className="flex items-center gap-2 self-start sm:self-center">
+                                                    <span
+                                                        className="text-xs font-mono font-bold px-2.5 py-1 rounded-md shrink-0"
+                                                        style={{
+                                                            background: 'rgba(212,168,83,0.15)',
+                                                            color: '#D4A853',
+                                                            border: '1px solid rgba(212,168,83,0.3)',
                                                         }}
-                                                        className={inputCls}
-                                                        style={darkInputStyle}
                                                     >
-                                                        <option value="">-- Chọn vị trí --</option>
-                                                        {locations.map(loc => (
-                                                            <option key={loc.id} value={loc.id}>
-                                                                📍 {loc.locationCode} {loc.zone ? `(Khu ${loc.zone}${loc.rack ? ` - Kệ ${loc.rack}` : ''}${loc.bin ? ` - Ô ${loc.bin}` : ''})` : ''}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                ) : (
+                                                        PO: {pol.casesOrdered ?? Math.round((pol.qtyOrdered / u) * 10) / 10} thùng ({pol.qtyOrdered} chai)
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Input Grid: SL Thùng, SL Chai, Niên Vụ, Vị Trí Kho */}
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                                                {/* SL Thùng */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold block mb-1" style={{ color: '#87CBB9' }}>
+                                                        SL Thùng Thực Nhận *
+                                                    </label>
                                                     <input
-                                                        type="text"
-                                                        placeholder={loadingLocations ? "Đang tải vị trí..." : "Nhập mã vị trí (hoặc ID)"}
-                                                        value={lines[i]?.locationId ?? ''}
+                                                        type="number"
+                                                        step="any"
+                                                        min={0}
+                                                        value={lines[i]?.casesReceived ?? 0}
                                                         onChange={e => {
+                                                            const cases = Number(e.target.value)
+                                                            const bottles = Math.round(cases * u)
                                                             const v = [...lines]
-                                                            v[i] = { ...v[i], locationId: e.target.value }
+                                                            v[i] = { ...v[i], casesReceived: cases, qtyReceived: bottles }
                                                             setLines(v)
                                                         }}
                                                         className={inputCls}
                                                         style={darkInputStyle}
                                                     />
-                                                )}
+                                                </div>
+
+                                                {/* SL Chai */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold block mb-1" style={{ color: '#8AAEBB' }}>
+                                                        SL Chai Thực Nhận *
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={lines[i]?.qtyReceived ?? 0}
+                                                        onChange={e => {
+                                                            const bottles = Number(e.target.value)
+                                                            const cases = Math.round((bottles / u) * 10) / 10
+                                                            const v = [...lines]
+                                                            v[i] = { ...v[i], qtyReceived: bottles, casesReceived: cases }
+                                                            setLines(v)
+                                                        }}
+                                                        className={inputCls}
+                                                        style={darkInputStyle}
+                                                    />
+                                                </div>
+
+                                                {/* Niên Vụ (Vintage) */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold block mb-1" style={{ color: '#8AAEBB' }}>
+                                                        Niên Vụ (Vintage)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="VD: 2020, 2022, NV..."
+                                                        value={lines[i]?.vintage ?? ''}
+                                                        onChange={e => {
+                                                            const v = [...lines]
+                                                            v[i] = { ...v[i], vintage: e.target.value }
+                                                            setLines(v)
+                                                        }}
+                                                        className={inputCls}
+                                                        style={darkInputStyle}
+                                                    />
+                                                </div>
+
+                                                {/* Vị Trí Kho */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold block mb-1" style={{ color: '#8AAEBB' }}>
+                                                        Vị Trí Kho * {loadingLocations && <Loader2 size={10} className="animate-spin inline ml-1 text-emerald-400" />}
+                                                    </label>
+                                                    {locations.length > 0 ? (
+                                                        <select
+                                                            value={lines[i]?.locationId ?? ''}
+                                                            onChange={e => {
+                                                                const v = [...lines]
+                                                                v[i] = { ...v[i], locationId: e.target.value }
+                                                                setLines(v)
+                                                            }}
+                                                            className={inputCls}
+                                                            style={darkInputStyle}
+                                                        >
+                                                            <option value="">-- Chọn vị trí --</option>
+                                                            {locations.map(loc => (
+                                                                <option key={loc.id} value={loc.id}>
+                                                                    📍 {loc.locationCode} {loc.zone ? `(Khu ${loc.zone}${loc.rack ? ` - Kệ ${loc.rack}` : ''}${loc.bin ? ` - Ô ${loc.bin}` : ''})` : ''}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            placeholder={loadingLocations ? "Đang tải vị trí..." : "Nhập mã vị trí (hoặc ID)"}
+                                                            value={lines[i]?.locationId ?? ''}
+                                                            onChange={e => {
+                                                                const v = [...lines]
+                                                                v[i] = { ...v[i], locationId: e.target.value }
+                                                                setLines(v)
+                                                            }}
+                                                            className={inputCls}
+                                                            style={darkInputStyle}
+                                                        />
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         </>
                     )}

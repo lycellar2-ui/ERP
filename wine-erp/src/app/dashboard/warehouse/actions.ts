@@ -382,9 +382,11 @@ export type GoodsReceiptRow = {
     status: string
     lineCount: number
     totalQtyReceived: number
+    totalCases?: number
     confirmedBy: string | null
     confirmedAt: Date | null
     createdAt: Date
+    productSummary?: string
 }
 
 export type GRLineInput = {
@@ -412,48 +414,75 @@ export async function getGoodsReceipts(filters: {
             po: { select: { poNo: true } },
             warehouse: { select: { name: true } },
             confirmer: { select: { name: true } },
-            lines: { select: { qtyReceived: true } },
+            lines: {
+                include: {
+                    product: { select: { productName: true, skuCode: true, unitsPerCase: true } }
+                }
+            },
         },
         orderBy: { createdAt: 'desc' },
         take: 100,
     })
 
-    return receipts.map(gr => ({
-        id: gr.id,
-        grNo: gr.grNo,
-        poNo: gr.po.poNo,
-        poId: gr.poId,
-        warehouseName: gr.warehouse.name,
-        warehouseId: gr.warehouseId,
-        status: gr.status,
-        lineCount: gr.lines.length,
-        totalQtyReceived: gr.lines.reduce((s, l) => s + Number(l.qtyReceived), 0),
-        confirmedBy: gr.confirmer?.name ?? null,
-        confirmedAt: gr.confirmedAt,
-        createdAt: gr.createdAt,
-    }))
+    return receipts.map(gr => {
+        const totalQtyReceived = gr.lines.reduce((s, l) => s + Number(l.qtyReceived), 0)
+        const totalCases = gr.lines.reduce((s, l) => {
+            const u = l.product?.unitsPerCase || 6
+            return s + Number(l.qtyReceived) / u
+        }, 0)
+
+        return {
+            id: gr.id,
+            grNo: gr.grNo,
+            poNo: gr.po.poNo,
+            poId: gr.poId,
+            warehouseName: gr.warehouse.name,
+            warehouseId: gr.warehouseId,
+            status: gr.status,
+            lineCount: gr.lines.length,
+            totalQtyReceived,
+            totalCases: Math.round(totalCases * 10) / 10,
+            confirmedBy: gr.confirmer?.name ?? null,
+            confirmedAt: gr.confirmedAt,
+            createdAt: gr.createdAt,
+            productSummary: gr.lines.map(l => `${l.product.skuCode} - ${l.product.productName} (${l.qtyReceived} chai)`).join(', ')
+        }
+    })
 }
 
 // ── Get POs ready for receiving ───────────────────
 export async function getPOsForReceiving() {
     const raw = await prisma.purchaseOrder.findMany({
         where: { status: { in: ['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'] } },
-        select: {
-            id: true,
-            poNo: true,
+        include: {
             supplier: { select: { name: true } },
             lines: {
-                select: {
-                    id: true,
-                    productId: true,
-                    product: { select: { productName: true, skuCode: true } },
-                    qtyOrdered: true,
+                include: {
+                    product: { select: { productName: true, skuCode: true, unitsPerCase: true, format: true } },
                 },
             },
         },
         orderBy: { createdAt: 'desc' },
     })
-    return serialize(raw)
+
+    return raw.map(p => ({
+        id: p.id,
+        poNo: p.poNo,
+        supplierName: p.supplier.name,
+        lines: p.lines.map(l => {
+            const u = l.product.unitsPerCase || 6
+            const qty = Number(l.qtyOrdered)
+            return {
+                id: l.id,
+                productId: l.productId,
+                productName: l.product.productName,
+                skuCode: l.product.skuCode,
+                unitsPerCase: u,
+                qtyOrdered: qty,
+                casesOrdered: Math.round((qty / u) * 10) / 10,
+            }
+        })
+    }))
 }
 
 // ── Create Goods Receipt from PO ──────────────────
@@ -2020,7 +2049,7 @@ export async function getGRDetail(grId: string) {
             confirmer: { select: { name: true } },
             lines: {
                 include: {
-                    product: { select: { productName: true, skuCode: true } },
+                    product: { select: { productName: true, skuCode: true, unitsPerCase: true } },
                     lot: { select: { lotNo: true, vintage: true, location: { select: { locationCode: true } } } },
                 },
             },
@@ -2037,17 +2066,27 @@ export async function getGRDetail(grId: string) {
         confirmedBy: gr.confirmer?.name ?? null,
         confirmedAt: gr.confirmedAt,
         createdAt: gr.createdAt,
-        lines: gr.lines.map(l => ({
-            id: l.id,
-            productName: l.product.productName,
-            skuCode: l.product.skuCode,
-            vintage: l.lot?.vintage ?? null,
-            lotNo: l.lot?.lotNo ?? '—',
-            locationCode: l.lot?.location?.locationCode ?? '—',
-            qtyExpected: Number(l.qtyExpected),
-            qtyReceived: Number(l.qtyReceived),
-            variance: Number(l.variance),
-        })),
+        lines: gr.lines.map(l => {
+            const u = l.product.unitsPerCase || 6
+            const qtyExp = Number(l.qtyExpected)
+            const qtyRec = Number(l.qtyReceived)
+            const diff = Number(l.variance)
+            return {
+                id: l.id,
+                productName: l.product.productName,
+                skuCode: l.product.skuCode,
+                unitsPerCase: u,
+                vintage: l.lot?.vintage ?? null,
+                lotNo: l.lot?.lotNo ?? '—',
+                locationCode: l.lot?.location?.locationCode ?? '—',
+                qtyExpected: qtyExp,
+                casesExpected: Math.round((qtyExp / u) * 10) / 10,
+                qtyReceived: qtyRec,
+                casesReceived: Math.round((qtyRec / u) * 10) / 10,
+                variance: diff,
+                casesVariance: Math.round((diff / u) * 10) / 10,
+            }
+        }),
     }
 }
 
