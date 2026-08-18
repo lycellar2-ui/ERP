@@ -475,21 +475,17 @@ function SODetailDrawer({
             return ev ? new Date(ev.createdAt) : null
         }
         if (step === 'DELIVERED') {
-            const steps = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
-            const currentIdx = steps.indexOf(orderStatus as SOStatus)
-            if (currentIdx >= 3) {
-                const ev = timeline.find(e => e.action === 'CONFIRM' && e.description?.includes('Phiếu xuất'))
-                return ev ? new Date(ev.createdAt) : new Date(orderUpdatedAt)
-            }
+            const hasDelivery = detail?.deliveryOrders?.some((d: any) => d.status === 'SHIPPED' || d.status === 'DELIVERED')
+            const ev = timeline.find(e => (e.action === 'CONFIRM' && e.description?.includes('Phiếu xuất')) || (e as any).entityType === 'DeliveryOrder')
+            if (ev) return new Date(ev.createdAt)
+            if (hasDelivery) return new Date(orderUpdatedAt)
             return null
         }
         if (step === 'INVOICED') {
-            const steps = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED', 'DELIVERED', 'INVOICED', 'PAID']
-            const currentIdx = steps.indexOf(orderStatus as SOStatus)
-            if (currentIdx >= 4) {
-                const ev = timeline.find(e => e.description?.includes('Hóa đơn'))
-                return ev ? new Date(ev.createdAt) : new Date(orderUpdatedAt)
-            }
+            const hasInvoice = (detail?.arInvoices && detail.arInvoices.length > 0)
+            const ev = timeline.find(e => e.description?.includes('Hóa đơn') || (e.action === 'CREATE' && (e as any).entityType === 'ARInvoice'))
+            if (ev) return new Date(ev.createdAt)
+            if (hasInvoice || orderStatus === 'INVOICED' || orderStatus === 'PAID') return new Date(orderUpdatedAt)
             return null
         }
         if (step === 'PAID') {
@@ -653,10 +649,22 @@ function SODetailDrawer({
                                             case 'CANCELLED': activeIdx = -1; break;
                                         }
 
+                                        const hasDelivery = detail.deliveryOrders?.some((d: any) => d.status === 'SHIPPED' || d.status === 'DELIVERED')
+                                        const hasInvoice = detail.arInvoices && detail.arInvoices.length > 0
+
                                         return steps.map((stepInfo, i) => {
                                             const { s, label } = stepInfo
-                                            const isDone = activeIdx > i
-                                            const isCurrent = activeIdx === i
+                                            let isDone = activeIdx > i
+                                            let isCurrent = activeIdx === i
+
+                                            if (s === 'DELIVERED') {
+                                                isDone = !!hasDelivery || detail.status === 'DELIVERED'
+                                                isCurrent = (detail.status === 'CONFIRMED' || detail.status === 'PARTIALLY_DELIVERED') && !hasDelivery
+                                            } else if (s === 'INVOICED') {
+                                                isDone = hasInvoice || detail.status === 'INVOICED' || detail.status === 'PAID'
+                                                isCurrent = detail.status === 'INVOICED' || (detail.status === 'DELIVERED' && !hasInvoice)
+                                            }
+
                                             const ts = getStepTimestamp(s as SOStatus, detail.createdAt, detail.updatedAt, detail.status)
                                             
                                             return (

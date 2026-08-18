@@ -69,7 +69,7 @@ export async function getDeliveryOrders(filters: {
 // ── Get SOs ready for delivery ────────────────────
 export async function getSOsForDelivery() {
     const raw = await prisma.salesOrder.findMany({
-        where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED'] } },
+        where: { status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'INVOICED'] } },
         select: {
             id: true, soNo: true, warehouseId: true, legalEntityId: true, createdAt: true,
             legalEntity: { select: { code: true, name: true } },
@@ -130,7 +130,7 @@ export async function createDeliveryOrder(input: {
         if (!so) return { success: false, error: 'SO không tồn tại' }
         if (!wh) return { success: false, error: 'Kho xuất hàng không tồn tại' }
 
-        if (!['CONFIRMED', 'PARTIALLY_DELIVERED'].includes(so.status)) {
+        if (!['CONFIRMED', 'PARTIALLY_DELIVERED', 'INVOICED'].includes(so.status)) {
             return { success: false, error: `SO status ${so.status} không cho phép xuất kho` }
         }
 

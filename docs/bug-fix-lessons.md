@@ -2067,6 +2067,31 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 80: Khi lưu trữ các trường ngày tháng tạo chứng từ (createdAt, orderDate, transferDate) từ ô nhập liệu Date-only (`<input type="date">`), BẮT BUỘC phải dùng `parseDateWithCurrentTime()` để gắn kèm giờ phút giây thực tế lúc thao tác, tránh việc `new Date("YYYY-MM-DD")` bị ép về 00:00 UTC dẫn đến hiển thị cố định 07:00 sáng tại Việt Nam (UTC+7).**
 
+---
+
+## BUG-053: Tiến Trình Đơn Hàng (Stepper) Tự Động Đánh Dấu 'Đã Giao Hàng' Khi Xuất Hóa Đơn Trước Khi Xuất Kho
+
+**Ngày:** 2026-08-18  
+**Severity:** 🟡 Medium — Drawer chi tiết đơn hàng hiển thị tích xanh `✓` tại bước "Giao hàng" và gán thời gian giả định khi đơn hàng chỉ mới Xuất / Gán hóa đơn VAT.
+
+### Triệu chứng
+1. Khi đơn hàng được Gán / Xuất hóa đơn VAT (`INVOICED`) trước khi kho tạo Lệnh xuất kho (DO), thanh tiến trình 6 bước trong Drawer chi tiết đơn hàng hiển thị bước "Giao hàng" là đã hoàn thành (tích xanh `✓`) kèm thời gian cập nhật của đơn hàng.
+2. Người dùng nhìn vào có cảm giác hệ thống đã tự động xuất kho / đã giao hàng, dù thực tế tồn kho chưa bị trừ và mục "Lệnh Giao Hàng (DO)" vẫn báo "Chưa có lệnh giao hàng".
+
+### Nguyên nhân gốc rễ
+1. Thanh tiến trình Stepper trong `SalesClient.tsx` áp dụng so sánh thứ tự tuyến tính giả định `activeIdx > i`. Khi trạng thái là `INVOICED` (chỉ số 5), bước `DELIVERED` (chỉ số 4) tự động bị tính là `isDone = true`.
+2. Hàm `getStepTimestamp('DELIVERED')` fallback về `orderUpdatedAt` nếu đơn hàng có trạng thái `INVOICED`, gây ra mốc thời gian giả định cho bước giao hàng.
+
+### Cách fix
+1. Trong `SalesClient.tsx`:
+   - Tính toán trạng thái hoàn thành (`isDone`) của bước `DELIVERED` dựa trên dữ liệu thực tế: `detail.deliveryOrders.some(d => d.status === 'SHIPPED' || d.status === 'DELIVERED') || detail.status === 'DELIVERED'`.
+   - Cập nhật `getStepTimestamp('DELIVERED')` chỉ trả về thời gian nếu thực sự có Phiếu xuất kho đã xác nhận hoặc có sự kiện xuất kho trong audit trail.
+2. Cập nhật `warehouse/actions-do.ts` và `warehouse/actions.ts` cho phép các đơn hàng đã xuất hóa đơn trước (`INVOICED`) vẫn có thể được tạo Phiếu xuất kho (DO) bình thường nếu chưa giao hết.
+
+### Bài học
+
+> ⚠️ **RULE 81: Thanh tiến trình trạng thái (Timeline Stepper) đối với các chu trình có thể xảy ra song song hoặc đảo thứ tự (như Xuất HĐ trước khi Giao hàng) KHÔNG ĐƯỢC dựa hoàn toàn vào chỉ số mảng tuyến tính (`activeIdx > i`). Mỗi bước nghiệp vụ vật lý (Kho/Giao hàng/Hóa đơn) BẮT BUỘC phải kiểm tra trực tiếp sự tồn tại và trạng thái của chứng từ thực tế tương ứng.**
+
 
 
 
