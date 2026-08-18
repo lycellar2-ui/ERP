@@ -7,83 +7,18 @@ import { cached, revalidateCache } from '@/lib/cache'
 import { requireAuth } from '@/lib/session'
 import { findHierarchicalTaxRate } from '@/lib/tax-utils'
 
-import { DEFAULT_PO_ROUTING, type PORouteConfig, type StepRoleConfig } from '@/app/dashboard/settings/approval-matrix/actions'
+import { DEFAULT_PO_ROUTING, type PORouteConfig } from '@/app/dashboard/settings/approval-matrix/constants'
+import {
+    type POShipmentSummary,
+    type POApprovalLog,
+    type POStepConfig,
+    type PORow,
+    type PODetail,
+    type CreatePOInput,
+    type POCurrencyBreakdown,
+    createPOSchema,
+} from './types'
 import { formatVND } from '@/lib/utils'
-
-// ─── Types ────────────────────────────────────────
-export type POShipmentSummary = {
-    id: string
-    billOfLading: string
-    vesselName: string | null
-    voyageNo: string | null
-    containerNo: string | null
-    containerType: string | null
-    eta: Date | null
-    etd: Date | null
-    portOfLoading: string | null
-    portOfDischarge: string | null
-    status: string
-    milestoneProgress: number
-}
-
-export type POApprovalLog = {
-    id: string
-    step?: number
-    action: string
-    actorName: string
-    comment: string | null
-    createdAt: Date
-}
-
-export type POStepConfig = StepRoleConfig
-
-export type PORow = {
-    id: string
-    poNo: string
-    legalEntityId?: string
-    legalEntityCode?: string | null
-    legalEntityName?: string | null
-    supplierName: string
-    supplierId: string
-    supplierCode?: string | null
-    supplierCountry?: string | null
-    incoterms?: string | null
-    paymentTerm?: string | null
-    currency: string
-    exchangeRate: number
-    status: string
-    currentApprovalStep?: number
-    totalApprovalSteps?: number
-    totalAmount: number
-    lineCount: number
-    totalQty: number
-    totalQtyReceived: number
-    receivedPercentage: number
-    estimatedDelivery?: Date | null
-    creatorName?: string | null
-    docCount?: number
-    documents?: { id: string; name: string; fileUrl: string; uploadedAt: Date }[]
-    shipments: POShipmentSummary[]
-    latestShipment?: POShipmentSummary | null
-    createdAt: Date
-}
-
-export type PODetail = PORow & {
-    currentApprovalStep: number
-    totalApprovalSteps: number
-    approvalSteps: POStepConfig[]
-    approvalHistory: POApprovalLog[]
-    lines: {
-        id: string
-        productId: string
-        productName: string
-        skuCode: string
-        qtyOrdered: number
-        unitPrice: number
-        uom: string
-        lineTotal: number
-    }[]
-}
 
 // ─── POStatus enum ────────────────────────────────
 // DRAFT | PENDING_APPROVAL | APPROVED | IN_TRANSIT | PARTIALLY_RECEIVED | RECEIVED | CANCELLED
@@ -448,23 +383,6 @@ async function getPORouteConfig(): Promise<PORouteConfig> {
     } catch { /* fallback */ }
     return DEFAULT_PO_ROUTING
 }
-
-// ─── Schema ───────────────────────────────────────
-const poLineSchema = z.object({
-    productId: z.string().min(1),
-    qtyOrdered: z.number().positive(),
-    unitPrice: z.number().positive(),
-    uom: z.string().default('BOTTLE'),
-})
-
-const createPOSchema = z.object({
-    supplierId: z.string().min(1, 'Chọn nhà cung cấp'),
-    currency: z.enum(['USD', 'EUR', 'GBP', 'NZD', 'AUD']).default('USD'),
-    exchangeRate: z.number().positive().default(25000),
-    lines: z.array(poLineSchema).min(1, 'Cần ít nhất 1 dòng sản phẩm'),
-})
-
-export type CreatePOInput = z.infer<typeof createPOSchema>
 
 // ─── Create PO ────────────────────────────────────
 export async function createPurchaseOrder(input: CreatePOInput) {
@@ -1127,24 +1045,6 @@ export async function importPOFromExcel(data: {
 // ═══════════════════════════════════════════════════
 // MULTI-CURRENCY VND CONVERSION
 // ═══════════════════════════════════════════════════
-
-export type POCurrencyBreakdown = {
-    poId: string
-    poNo: string
-    currency: string
-    exchangeRate: number
-    totalForeign: number
-    totalVND: number
-    lines: {
-        skuCode: string
-        productName: string
-        qty: number
-        unitPriceForeign: number
-        unitPriceVND: number
-        lineTotalForeign: number
-        lineTotalVND: number
-    }[]
-}
 
 // Convert a specific PO to VND breakdown
 export async function convertPOToVND(poId: string): Promise<{ success: boolean; data?: POCurrencyBreakdown; error?: string }> {

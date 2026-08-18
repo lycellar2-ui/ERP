@@ -96,6 +96,7 @@ Ma trận interactive: **14 loại tờ trình** × **3 cấp duyệt**
 |--------|-------|
 | `getApprovalMatrix()` | Load full config từ DB, fallback default nếu chưa có |
 | `saveProposalRoute(category, levels)` | Upsert routing cho 1 loại tờ trình |
+| `savePORoute(poRouteConfig)` | Upsert routing đa cấp cho Đơn mua hàng (PO) |
 | `saveThreshold(key, value)` | Upsert 1 ngưỡng |
 | `saveAllRoutes(routes)` | Bulk upsert tất cả routing |
 | `saveAllThresholds(thresholds)` | Bulk upsert tất cả ngưỡng |
@@ -107,8 +108,14 @@ Ma trận interactive: **14 loại tờ trình** × **3 cấp duyệt**
 ```
 src/app/dashboard/settings/approval-matrix/
 ├── page.tsx                    # Server page (fetch data)
-├── actions.ts                  # Server actions (CRUD)
-└── ApprovalMatrixClient.tsx    # Client component (interactive matrix UI)
+├── constants.ts               # Types, initial configs, system role catalog
+├── actions.ts                  # Server actions (Pure async functions for Next.js RPC)
+└── ApprovalMatrixClient.tsx    # Client component (interactive matrix UI & PO route modal)
+
+src/app/dashboard/procurement/
+├── types.ts                    # Dedicated TypeScript definitions for procurement
+├── actions.ts                  # Pure Server Actions for PO management & approval
+└── ProcurementClient.tsx       # Dynamic Stepper & Drawer UI
 
 prisma/schema.prisma            # Model ApprovalConfig
 src/components/layout/Sidebar.tsx # Sidebar link (Hệ Thống section)
@@ -122,7 +129,7 @@ src/components/layout/Sidebar.tsx # Sidebar link (Hệ Thống section)
 |--------|--------------|
 | **PRO (Tờ Trình)** | `proposals/actions.ts` đọc `CATEGORY_ROUTING` → sử dụng khi submit + approve |
 | **SLS (Sales)** | `sales/actions.ts` đọc `SO_APPROVAL_THRESHOLD` + `DISCOUNT_APPROVAL_THRESHOLD` |
-| **PRC (Procurement)** | `procurement/ProcurementClient.tsx` StatusStepper đọc threshold khi advance PO |
+| **PRC (Procurement)** | `procurement/actions.ts` đọc `procurement.purchase_order` → chạy luồng duyệt đa cấp & realtime notifications |
 | **DSH (Dashboard)** | Widget "Chờ CEO Duyệt" gộp PO + SO + Tờ Trình theo config |
 
 ---
@@ -132,16 +139,15 @@ src/components/layout/Sidebar.tsx # Sidebar link (Hệ Thống section)
 | Tính năng | Trạng thái |
 |-----------|-----------|
 | Database model `ApprovalConfig` | ✅ |
-| Server actions (5 functions) | ✅ |
+| Server actions (6 functions) | ✅ |
 | Interactive matrix UI (toggle grid) | ✅ |
+| PO Multi-Level Approval Routing Modal | ✅ |
 | Threshold input fields | ✅ |
 | Summary reference panel | ✅ |
 | Sidebar navigation link | ✅ |
 | Persist to DB (upsert) | ✅ |
 | Fallback defaults | ✅ |
 
-> **Note:** Hiện tại `SO_APPROVAL_THRESHOLD` trong `sales/actions.ts` vẫn dùng hardcoded constant. Kế hoạch tiếp theo sẽ kết nối trực tiếp với `ApprovalConfig` table để hoàn chỉnh dynamic config.
-
 ---
 
-*Last updated: 2026-03-08 | Wine ERP v5.2*
+*Last updated: 2026-08-18 21:55 | Module APM & PRC — Tách types/constants độc lập & hỗ trợ Next.js Turbopack build*
