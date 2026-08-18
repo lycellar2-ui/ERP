@@ -15,6 +15,7 @@ import * as XLSX from 'xlsx'
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
 export type SOType = 'STANDARD' | 'TASTING' | 'SAMPLE'
+export type SODeliveryStatus = 'UNDELIVERED' | 'PREPARING' | 'PARTIALLY_DELIVERED' | 'DELIVERED'
 
 export interface SalesOrderRow {
     id: string
@@ -24,6 +25,9 @@ export interface SalesOrderRow {
     customerCode: string
     channel: SalesChannel
     status: SOStatus
+    deliveryStatus: SODeliveryStatus
+    totalQtyOrdered?: number
+    totalQtyShipped?: number
     orderType?: SOType
     proposalId?: string | null
     proposalNo?: string | null
@@ -179,7 +183,10 @@ export async function getSalesOrders(filters: {
                    u.name as sales_rep_name,
                    le.name as legal_entity_name, le.code as legal_entity_code,
                    (SELECT COUNT(*)::int FROM sales_order_lines sol WHERE sol."soId" = so.id) as line_count,
-                   (SELECT string_agg(inv."invoiceNo", ', ' ORDER BY inv."createdAt" ASC) FROM ar_invoices inv WHERE inv."soId" = so.id) as invoice_no
+                   (SELECT string_agg(inv."invoiceNo", ', ' ORDER BY inv."createdAt" ASC) FROM ar_invoices inv WHERE inv."soId" = so.id) as invoice_no,
+                   (SELECT COALESCE(SUM(sol."qtyOrdered"), 0)::float FROM sales_order_lines sol WHERE sol."soId" = so.id) as total_qty_ordered,
+                   (SELECT COALESCE(SUM(dol."qtyShipped"), 0)::float FROM delivery_order_lines dol JOIN delivery_orders do_item ON do_item.id = dol."doId" WHERE do_item."soId" = so.id AND do_item.status IN ('SHIPPED', 'DELIVERED')) as total_qty_shipped,
+                   (SELECT COUNT(*)::int FROM delivery_orders do_item WHERE do_item."soId" = so.id AND do_item.status IN ('DRAFT', 'PICKING', 'PACKED')) as draft_do_count
             FROM sales_orders so
             JOIN customers c ON c.id = so."customerId"
             JOIN users u ON u.id = so."salesRepId"
@@ -221,29 +228,49 @@ export async function getSalesOrders(filters: {
         const approvalMap = Object.fromEntries(approvalRequests.map(r => [r.docId, r.currentStep]))
 
         return {
-            rows: orders.map((o: any) => ({
-                id: o.id,
-                soNo: o.soNo,
-                invoiceNo: o.invoice_no || null,
-                customerName: o.customer_name,
-                customerCode: o.customer_code,
-                channel: o.channel as SalesChannel,
-                status: o.status as SOStatus,
-                orderType: (o.orderType as SOType) || 'STANDARD',
-                proposalId: o.proposalId || null,
-                proposalNo: o.proposal_no || null,
-                proposalTitle: o.proposal_title || null,
-                totalAmount: Number(o.totalAmount),
-                orderDiscount: Number(o.orderDiscount),
-                paymentTerm: o.paymentTerm,
-                salesRepName: o.sales_rep_name,
-                legalEntityName: o.legal_entity_name,
-                legalEntityCode: o.legal_entity_code,
-                lineCount: o.line_count,
-                notes: null,
-                createdAt: o.createdAt,
-                approvalStep: approvalMap[o.id] ?? null,
-            })),
+            rows: orders.map((o: any) => {
+                const totalOrdered = Number(o.total_qty_ordered || 0)
+                const totalShipped = Number(o.total_qty_shipped || 0)
+                const draftDoCount = Number(o.draft_do_count || 0)
+
+                let deliveryStatus: SODeliveryStatus = 'UNDELIVERED'
+                if (o.status === 'DELIVERED' || (totalShipped >= totalOrdered && totalOrdered > 0)) {
+                    deliveryStatus = 'DELIVERED'
+                } else if (totalShipped > 0) {
+                    deliveryStatus = 'PARTIALLY_DELIVERED'
+                } else if (draftDoCount > 0) {
+                    deliveryStatus = 'PREPARING'
+                } else {
+                    deliveryStatus = 'UNDELIVERED'
+                }
+
+                return {
+                    id: o.id,
+                    soNo: o.soNo,
+                    invoiceNo: o.invoice_no || null,
+                    customerName: o.customer_name,
+                    customerCode: o.customer_code,
+                    channel: o.channel as SalesChannel,
+                    status: o.status as SOStatus,
+                    deliveryStatus,
+                    totalQtyOrdered: totalOrdered,
+                    totalQtyShipped: totalShipped,
+                    orderType: (o.orderType as SOType) || 'STANDARD',
+                    proposalId: o.proposalId || null,
+                    proposalNo: o.proposal_no || null,
+                    proposalTitle: o.proposal_title || null,
+                    totalAmount: Number(o.totalAmount),
+                    orderDiscount: Number(o.orderDiscount),
+                    paymentTerm: o.paymentTerm,
+                    salesRepName: o.sales_rep_name,
+                    legalEntityName: o.legal_entity_name,
+                    legalEntityCode: o.legal_entity_code,
+                    lineCount: o.line_count,
+                    notes: null,
+                    createdAt: o.createdAt,
+                    approvalStep: approvalMap[o.id] ?? null,
+                }
+            }),
             total,
         }
     }
@@ -2339,6 +2366,7 @@ export async function exportSalesOrdersExcel(filters: {
             legalEntity: { select: { name: true } },
             warehouse: { select: { name: true } },
             arInvoices: { select: { invoiceNo: true } },
+            deliveryOrders: { select: { status: true } },
             lines: {
                 include: {
                     product: { select: { skuCode: true, productName: true, country: true } },
@@ -2430,24 +2458,36 @@ export async function exportSalesOrdersExcel(filters: {
     }
 
     // Sheet 2: Tổng Hợp Đơn Hàng
-    const summaryExportData = orders.map(o => ({
-        'Số Đơn Hàng (SO)': o.soNo,
-        'Số Hóa Đơn': o.arInvoices?.map(i => i.invoiceNo).join(', ') || '',
-        'Ngày Tạo': o.createdAt.toISOString().split('T')[0],
-        'Khách Hàng': o.customer.name,
-        'Mã Khách Hàng': o.customer.code,
-        'Mã Số Thuế': o.customer.taxId || '',
-        'Kênh Bán Hàng': o.channel,
-        'Doanh Số (VND)': Number(o.totalAmount),
-        'Chiết Khấu (%)': Number(o.orderDiscount),
-        'Tiền Thuế VAT': Number(o.vatAmount || 0),
-        'Điều Khoản Thanh Toán': o.paymentTerm,
-        'Nhân Viên Sales': o.salesRep.name,
-        'Pháp Nhân': o.legalEntity?.name ?? '',
-        'Kho Xuất': o.warehouse?.name ?? '',
-        'Trạng Thái': o.status,
-        'Số Dòng Hàng': o.lines.length,
-    }))
+    const summaryExportData = orders.map(o => {
+        let deliveryText = 'Chưa giao'
+        if (o.status === 'DELIVERED' || o.deliveryOrders?.some(d => d.status === 'SHIPPED' || d.status === 'DELIVERED')) {
+            deliveryText = 'Đã giao'
+        } else if (o.status === 'PARTIALLY_DELIVERED') {
+            deliveryText = 'Giao 1 phần'
+        } else if (o.deliveryOrders?.some(d => ['DRAFT', 'PICKING', 'PACKED'].includes(d.status))) {
+            deliveryText = 'Đang soạn hàng'
+        }
+
+        return {
+            'Số Đơn Hàng (SO)': o.soNo,
+            'Số Hóa Đơn': o.arInvoices?.map(i => i.invoiceNo).join(', ') || '',
+            'Ngày Tạo': o.createdAt.toISOString().split('T')[0],
+            'Khách Hàng': o.customer.name,
+            'Mã Khách Hàng': o.customer.code,
+            'Mã Số Thuế': o.customer.taxId || '',
+            'Kênh Bán Hàng': o.channel,
+            'Doanh Số (VND)': Number(o.totalAmount),
+            'Chiết Khấu (%)': Number(o.orderDiscount),
+            'Tiền Thuế VAT': Number(o.vatAmount || 0),
+            'Điều Khoản Thanh Toán': o.paymentTerm,
+            'Nhân Viên Sales': o.salesRep.name,
+            'Pháp Nhân': o.legalEntity?.name ?? '',
+            'Kho Xuất': o.warehouse?.name ?? '',
+            'Trạng Thái Đơn': o.status,
+            'Trạng Thái Giao Hàng': deliveryText,
+            'Số Dòng Hàng': o.lines.length,
+        }
+    })
 
     const workbook = XLSX.utils.book_new()
     const wsDetail = XLSX.utils.json_to_sheet(lineItemExportData)

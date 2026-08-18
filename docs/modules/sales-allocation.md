@@ -199,8 +199,15 @@ PAID / CLOSED
 4. **Single VAT Enforcement:** Mỗi Đơn hàng Bán (SO) và Báo Giá (QTN) bắt buộc áp dụng **duy nhất 1 mức thuế suất VAT** trên toàn bộ các dòng sản phẩm để đảm bảo tính hợp lệ của Hóa đơn điện tử GTGT. Khi đổi VAT dòng bất kỳ, hệ thống tự động đồng bộ tất cả các dòng còn lại.
 5. **Approval Trigger:** SO > Ngưỡng giá trị hoặc Chiết khấu > X% → Tự động send Approval Workflow
 
-### D. Bộ Lọc & Tìm Kiếm Đơn Hàng Chuẩn MISA
-- **Cột Số Hóa Đơn (Invoice No Column)**: Bảng quản lý đơn hàng hiển thị cột **Số Hóa Đơn** (mã số hóa đơn VAT đã gán/xuất từ hệ thống hoặc hóa đơn điện tử). Nếu đơn chưa gán hóa đơn thì để trống. Đồng thời hỗ trợ tìm kiếm trực tiếp theo Số hóa đơn trong ô tìm kiếm tổng thể.
+### D. Bộ Lọc & Quản Lý Đơn Hàng Tách Biệt Nghiệp Vụ (SO Status vs Delivery Status vs Invoice Status)
+- **Tách biệt Đơn Hàng — Giao Hàng — Hóa Đơn**: Màn hình danh sách đơn hàng được phân tách thành các cột riêng biệt giúp người dùng bao quát trạng thái toàn diện ngay trên bảng mà không cần phải mở từng đơn:
+  - **Cột Số Hóa Đơn (Invoice No)**: Hiển thị mã số hóa đơn VAT đã gán/xuất từ hệ thống hoặc hóa đơn điện tử (ví dụ `VAT123`). Nếu đơn chưa xuất hóa đơn thì để trống.
+  - **Cột Trạng Thái Đơn (Order Status)**: Thể hiện quy trình duyệt / phê duyệt (`Nháp`, `Chờ Sale Admin duyệt`, `Chờ CEO duyệt`, `Chờ KT duyệt`, `Đã Xác Nhận`, `Huỷ`).
+  - **Cột Giao Hàng (Delivery Status)**: Thể hiện tiến độ thực xuất của phân hệ Kho (WMS) độc lập:
+    - 🟢 **Đã Giao**: Toàn bộ số lượng đặt đã được xuất kho / hoàn tất giao hàng.
+    - 🔵 **Giao 1 phần**: Đã xuất 1 phần hàng kèm tỷ lệ số lượng (ví dụ `Giao 1 phần (2/6)`).
+    - 🟡 **Đang soạn**: Đang trong quá trình nhặt hàng / đóng gói (Lệnh DO dạng DRAFT/PICKING/PACKED).
+    - ⚪ **Chưa giao**: Chưa có bất kỳ phiếu xuất kho nào.
 - **Bộ lọc Kỳ Thời Gian MISA (Date Period Filter)**: Cho phép lọc nhanh đơn hàng theo các preset thời gian tiêu chuẩn: *Tất cả thời gian, Hôm nay, Hôm qua, Tuần này, Tuần trước, Tháng này, Tháng trước, Quý này (Q1-Q4), Quý trước, Năm nay, Năm trước, Tùy chỉnh*.
 - **Bộ lọc đa chiều (Advanced Filters)**: Tìm kiếm số SO / tên KH / mã KH / số Hóa đơn, Lọc theo Trạng thái (Tabs), Sales phụ trách, Kênh phân phối, Pháp nhân, Kho xuất, Điều khoản công nợ và Cảnh báo cần xử lý.
 

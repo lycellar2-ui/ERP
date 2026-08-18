@@ -268,12 +268,54 @@ function StatusBadge({ status, approvalStep }: { status: SOStatus; approvalStep?
         }
     }
     return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold rounded-full"
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap"
             style={{ color: cfg.color, background: cfg.bg }}>
             <Icon size={11} />
             {label}
         </span>
     )
+}
+
+function DeliveryStatusBadge({ 
+    status, 
+    shipped, 
+    ordered 
+}: { 
+    status?: 'UNDELIVERED' | 'PREPARING' | 'PARTIALLY_DELIVERED' | 'DELIVERED'; 
+    shipped?: number; 
+    ordered?: number 
+}) {
+    switch (status) {
+        case 'DELIVERED':
+            return (
+                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
+                    style={{ background: 'rgba(91,168,138,0.15)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.3)' }}>
+                    <Truck size={11} /> Đã Giao
+                </span>
+            )
+        case 'PARTIALLY_DELIVERED':
+            return (
+                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
+                    style={{ background: 'rgba(74,143,171,0.15)', color: '#4A8FAB', border: '1px solid rgba(74,143,171,0.3)' }}>
+                    <Truck size={11} /> Giao 1 phần {ordered ? `(${shipped}/${ordered})` : ''}
+                </span>
+            )
+        case 'PREPARING':
+            return (
+                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
+                    style={{ background: 'rgba(212,168,83,0.12)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }}>
+                    <Clock size={11} /> Đang soạn
+                </span>
+            )
+        case 'UNDELIVERED':
+        default:
+            return (
+                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
+                    style={{ background: 'rgba(138,174,187,0.06)', color: '#6A8A9A', border: '1px solid rgba(138,174,187,0.15)' }}>
+                    Chưa giao
+                </span>
+            )
+    }
 }
 
 function SOStatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) {
@@ -1208,9 +1250,10 @@ function SalesOrderMobileCard({
                     )}
                 </div>
 
-                {/* StatusBadge component */}
-                <div className="scale-90 origin-right">
+                {/* StatusBadge component & DeliveryStatusBadge */}
+                <div className="flex items-center gap-1.5 scale-90 origin-right flex-wrap justify-end">
                     <StatusBadge status={row.status} approvalStep={row.approvalStep} />
+                    <DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} />
                 </div>
             </div>
 
@@ -2120,28 +2163,29 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {/* Table (Desktop View) */}
             <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #2A4355' }}>
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 950 }}>
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: 1050 }}>
                         <thead>
                             <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
-                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '9%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Số Hóa Đơn</th>
-                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '19%' }}>Khách Hàng</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '7%' }}>Kênh</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '7%' }}>Pháp Nhân</th>
-                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '11%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Nhân viên Sales</th>
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '10%' }}>Trạng Thái</th>
-                                <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
-                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#8AAEBB', width: '16%' }}>Hành Động</th>
+                                <SortHeader label="Số SO" field="soNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '8%' }} />
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Số Hóa Đơn</th>
+                                <th className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '17%' }}>Khách Hàng</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '6%' }}>Kênh</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '6%' }}>Pháp Nhân</th>
+                                <SortHeader label="Doanh Số" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '10%' }} />
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Nhân viên Sales</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Trạng Thái Đơn</th>
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#8AAEBB', width: '9%' }}>Giao Hàng</th>
+                                <SortHeader label="Ngày Tạo" field="createdAt" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '7%' }} />
+                                <th className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold text-center" style={{ color: '#8AAEBB', width: '15%' }}>Hành Động</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={10} className="text-center py-12" style={{ color: '#4A6A7A' }}>
+                                <tr><td colSpan={11} className="text-center py-12" style={{ color: '#4A6A7A' }}>
                                     <Loader2 size={20} className="inline animate-spin mr-2" />Đang tải...
                                 </td></tr>
                             ) : rows.length === 0 ? (
-                                <tr><td colSpan={10} className="text-center py-16" style={{ color: '#4A6A7A' }}>
+                                <tr><td colSpan={11} className="text-center py-16" style={{ color: '#4A6A7A' }}>
                                     <FileText size={32} className="mx-auto mb-3" style={{ color: '#2A4355' }} />
                                     <p className="text-sm font-semibold">{hasActiveFilters ? 'Không tìm thấy đơn hàng phù hợp với bộ lọc' : 'Hệ thống chưa có đơn hàng nào'}</p>
                                     {hasActiveFilters && (
@@ -2168,16 +2212,16 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                         ) : null}
                                     </td>
                                     <td className="px-4 py-1.5">
-                                        <p className="text-[13px] font-semibold truncate max-w-[240px]" style={{ color: '#E8F1F2' }} title={row.customerName}>{row.customerName}</p>
+                                        <p className="text-[13px] font-semibold truncate max-w-[220px]" style={{ color: '#E8F1F2' }} title={row.customerName}>{row.customerName}</p>
                                         <p className="text-[10px] font-mono" style={{ color: '#4A6A7A' }}>{row.customerCode}</p>
                                     </td>
-                                    <td className="px-4 py-1.5 whitespace-nowrap">
+                                    <td className="px-3 py-1.5 whitespace-nowrap">
                                         <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
                                             style={{ background: 'rgba(135,203,185,0.1)', color: '#8AAEBB' }}>
                                             {CHANNEL_LABEL[row.channel] ?? row.channel}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-1.5 whitespace-nowrap">
+                                    <td className="px-3 py-1.5 whitespace-nowrap">
                                         {row.legalEntityCode ? (
                                             <span className="text-[11px] px-1.5 py-0.5 rounded-full font-semibold"
                                                 style={{ background: row.legalEntityCode === 'TA' ? 'rgba(212,168,83,0.12)' : 'rgba(135,203,185,0.12)', color: row.legalEntityCode === 'TA' ? '#D4A853' : '#87CBB9' }}>
@@ -2191,9 +2235,10 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                         <p className="text-[13px] font-bold font-mono" style={{ color: '#E8F1F2' }}>{formatVND(row.totalAmount)}</p>
                                         {row.orderDiscount > 0 && <p className="text-[10px]" style={{ color: '#5BA88A' }}>CK {row.orderDiscount}%</p>}
                                     </td>
-                                    <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
-                                    <td className="px-4 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
-                                    <td className="px-4 py-1.5 text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>{formatDateTime(row.createdAt)}</td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#8AAEBB' }}>{row.salesRepName}</td>
+                                    <td className="px-3 py-1.5 whitespace-nowrap"><StatusBadge status={row.status} approvalStep={row.approvalStep} /></td>
+                                    <td className="px-3 py-1.5 whitespace-nowrap"><DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} /></td>
+                                    <td className="px-3 py-1.5 text-xs whitespace-nowrap" style={{ color: '#4A6A7A' }}>{formatDateTime(row.createdAt)}</td>
                                     <td className="px-4 py-1.5">
                                         <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                                             <button onClick={() => setDetailId(row.id)} className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition-all"
