@@ -3206,6 +3206,160 @@ export async function createARInvoiceForSO(
     }
 }
 
+// ── Update AR Invoice Number (called by Accountant/CEO/Admin) ────────
+export async function updateARInvoiceNo(
+    invoiceId: string,
+    newInvoiceNo: string
+): Promise<{ success: boolean; invoiceNo?: string; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const canInvoice = user.permissions.includes('TAX:CREATE') || 
+                           user.permissions.includes('TAX:WRITE') || 
+                           user.permissions.includes('FIN:WRITE') || 
+                           user.permissions.includes('SYS:ADMIN') || 
+                           user.roles.includes('CEO') || 
+                           user.roles.includes('KE_TOAN') ||
+                           user.roles.includes('Kế Toán') ||
+                           user.roles.includes('ACCOUNTANT')
+                           
+        if (!canInvoice) {
+            return { success: false, error: 'Tài khoản của bạn không có quyền sửa số hóa đơn (Cần quyền Kế toán / TAX:WRITE)' }
+        }
+
+        const trimmedNo = newInvoiceNo?.trim()
+        if (!trimmedNo) {
+            return { success: false, error: 'Mã số hóa đơn không được để trống' }
+        }
+
+        const inv = await prisma.aRInvoice.findUnique({
+            where: { id: invoiceId },
+            include: { so: { select: { id: true, soNo: true } } }
+        })
+        if (!inv) return { success: false, error: 'Hóa đơn không tồn tại' }
+
+        if (inv.invoiceNo === trimmedNo) {
+            return { success: true, invoiceNo: inv.invoiceNo }
+        }
+
+        // Check if new invoiceNo already exists on a different invoice
+        const existing = await prisma.aRInvoice.findUnique({ where: { invoiceNo: trimmedNo } })
+        if (existing && existing.id !== invoiceId) {
+            return { success: false, error: `Mã hóa đơn "${trimmedNo}" đã tồn tại trong hệ thống` }
+        }
+
+        const oldNo = inv.invoiceNo
+        const updated = await prisma.aRInvoice.update({
+            where: { id: invoiceId },
+            data: { invoiceNo: trimmedNo }
+        })
+
+        try {
+            await logAudit({
+                userId: user.id,
+                userName: user.name,
+                action: 'UPDATE',
+                entityType: 'ARInvoice',
+                entityId: inv.id,
+                oldValue: { invoiceNo: oldNo },
+                newValue: { invoiceNo: trimmedNo, soNo: inv.so?.soNo }
+            })
+        } catch { /* silent */ }
+
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/finance')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true, invoiceNo: updated.invoiceNo }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Delete / Unlink AR Invoice from Sales Order (called by Accountant/CEO/Admin) ──
+export async function deleteARInvoice(
+    invoiceId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const canInvoice = user.permissions.includes('TAX:CREATE') || 
+                           user.permissions.includes('TAX:WRITE') || 
+                           user.permissions.includes('FIN:WRITE') || 
+                           user.permissions.includes('SYS:ADMIN') || 
+                           user.roles.includes('CEO') || 
+                           user.roles.includes('KE_TOAN') ||
+                           user.roles.includes('Kế Toán') ||
+                           user.roles.includes('ACCOUNTANT')
+                           
+        if (!canInvoice) {
+            return { success: false, error: 'Tài khoản của bạn không có quyền gỡ hóa đơn (Cần quyền Kế toán / TAX:WRITE)' }
+        }
+
+        const inv = await prisma.aRInvoice.findUnique({
+            where: { id: invoiceId },
+            include: { 
+                payments: true,
+                so: { 
+                    include: { 
+                        deliveryOrders: { select: { status: true } },
+                        lines: { select: { qtyOrdered: true } }
+                    } 
+                } 
+            }
+        })
+        if (!inv) return { success: false, error: 'Hóa đơn không tồn tại' }
+
+        if (inv.payments && inv.payments.length > 0) {
+            return { success: false, error: 'Hóa đơn đã phát sinh phiếu thu thanh toán, không thể xóa hoặc gỡ bỏ' }
+        }
+        if (Number(inv.paidAmount || 0) > 0) {
+            return { success: false, error: 'Hóa đơn đã được thanh toán 1 phần, không thể gỡ bỏ' }
+        }
+
+        const soId = inv.soId
+        const so = inv.so
+
+        await prisma.aRInvoice.delete({
+            where: { id: invoiceId }
+        })
+
+        // Revert SO status if needed
+        if (so && soId) {
+            const hasDelivery = so.deliveryOrders.some((d: any) => d.status === 'SHIPPED' || d.status === 'DELIVERED')
+            const hasPartialDelivery = so.deliveryOrders.some((d: any) => ['DRAFT', 'PICKING', 'PACKED'].includes(d.status))
+            let revertedStatus: SOStatus = 'CONFIRMED'
+            if (hasDelivery) {
+                revertedStatus = 'DELIVERED'
+            } else if (hasPartialDelivery) {
+                revertedStatus = 'PARTIALLY_DELIVERED'
+            }
+
+            await prisma.salesOrder.update({
+                where: { id: soId },
+                data: { status: revertedStatus }
+            })
+        }
+
+        try {
+            await logAudit({
+                userId: user.id,
+                userName: user.name,
+                action: 'DELETE',
+                entityType: 'ARInvoice',
+                entityId: inv.id,
+                oldValue: { invoiceNo: inv.invoiceNo, soNo: so?.soNo }
+            })
+        } catch { /* silent */ }
+
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/finance')
+        revalidateCache('sales')
+        revalidateCache('dashboard')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
 // ── Get approved/active proposals for SO ────────
 export async function getApprovedProposalsForSO(customerId?: string) {
     const user = await getCurrentUser()

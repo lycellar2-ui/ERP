@@ -25,6 +25,7 @@ PAID / CLOSED
 ```
 
 > **Hóa Đơn Công Nợ (AR)**: Trên Drawer chi tiết đơn hàng (`SalesClient.tsx`), Kế toán/Admin có thể nhấp trực tiếp nút **`+ Xuất / Gắn Hóa Đơn VAT`** để tự động sinh mã hóa đơn hệ thống (`VAT-SO-xxxxxx`) hoặc điền mã Hóa đơn điện tử VAT (từ MISA/VNPT/Viettel). Đơn hàng sẽ tự động chuyển trạng thái sang **`INVOICED`** và ghi nhận vào sổ công nợ AR.
+> Ngoài ra, hệ thống hỗ trợ **✏️ Chỉnh sửa mã số hóa đơn** bất kỳ lúc nào nếu nhập sai/đổi số HĐ điện tử, và **❌ Gỡ bỏ/Hủy gán hóa đơn** (khi chưa phát sinh thanh toán) để tự động hoàn trả trạng thái đơn hàng (`CONFIRMED` hoặc `DELIVERED`).
 
 ---
 

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, ArrowUpDown, Calendar, ChevronUp, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
-import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, SalesChannel } from './actions'
+import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { useSearchParams } from 'next/navigation'
@@ -420,6 +420,8 @@ function SODetailDrawer({
     const [loading, setLoading] = useState(true)
     const [timelineLoading, setTimelineLoading] = useState(true)
     const [creatingInvoice, setCreatingInvoice] = useState(false)
+    const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null)
+    const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null)
 
     const handleCreateInvoice = async () => {
         if (!soId || creatingInvoice) return
@@ -444,6 +446,57 @@ function SODetailDrawer({
             toast.error(err.message || 'Lỗi kết nối hệ thống')
         } finally {
             setCreatingInvoice(false)
+        }
+    }
+
+    const handleEditInvoice = async (invId: string, currentInvoiceNo: string) => {
+        const newNo = window.prompt('Nhập mã số hóa đơn mới:', currentInvoiceNo)
+        if (newNo === null) return
+        const trimmed = newNo.trim()
+        if (!trimmed) {
+            toast.error('Mã số hóa đơn không được để trống')
+            return
+        }
+        if (trimmed === currentInvoiceNo) return
+
+        setEditingInvoiceId(invId)
+        try {
+            const res = await updateARInvoiceNo(invId, trimmed)
+            if (res.success) {
+                toast.success(`Đã cập nhật mã hóa đơn thành ${res.invoiceNo}!`)
+                const updated = await getSalesOrderDetail(soId)
+                setDetail(updated)
+                getSOTimeline(soId).then(setTimeline).catch(() => {})
+            } else {
+                toast.error(res.error || 'Lỗi cập nhật hóa đơn')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi kết nối hệ thống')
+        } finally {
+            setEditingInvoiceId(null)
+        }
+    }
+
+    const handleDeleteInvoice = async (invId: string, invNo: string) => {
+        if (!window.confirm(`Bạn có chắc chắn muốn gỡ bỏ hóa đơn ${invNo} khỏi đơn hàng này không? Trạng thái đơn hàng sẽ được hoàn trả lại.`)) {
+            return
+        }
+
+        setDeletingInvoiceId(invId)
+        try {
+            const res = await deleteARInvoice(invId)
+            if (res.success) {
+                toast.success(`Đã gỡ bỏ hóa đơn ${invNo} thành công!`)
+                const updated = await getSalesOrderDetail(soId)
+                setDetail(updated)
+                getSOTimeline(soId).then(setTimeline).catch(() => {})
+            } else {
+                toast.error(res.error || 'Lỗi gỡ hóa đơn')
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi kết nối hệ thống')
+        } finally {
+            setDeletingInvoiceId(null)
         }
     }
 
@@ -1078,12 +1131,34 @@ function SODetailDrawer({
                                 ) : (
                                     <div className="space-y-1.5">
                                         {detail.arInvoices.map(inv => (
-                                            <div key={inv.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                                                <div>
-                                                    <span className="text-xs font-bold font-mono block" style={{ color: '#87CBB9' }}>{inv.invoiceNo}</span>
+                                            <div key={inv.id} className="flex items-center justify-between py-2 px-3 rounded gap-2" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-xs font-bold font-mono text-[#87CBB9] truncate">{inv.invoiceNo}</span>
+                                                        {canCreateInvoice && (
+                                                            <button
+                                                                onClick={() => handleEditInvoice(inv.id, inv.invoiceNo)}
+                                                                disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id}
+                                                                className="p-1 rounded text-[#8AAEBB] hover:text-[#87CBB9] hover:bg-[#2A4355]/40 transition-colors"
+                                                                title="Chỉnh sửa mã số hóa đơn"
+                                                            >
+                                                                {editingInvoiceId === inv.id ? <Loader2 size={11} className="animate-spin" /> : <Pencil size={11} />}
+                                                            </button>
+                                                        )}
+                                                        {canCreateInvoice && inv.status !== 'PAID' && (
+                                                            <button
+                                                                onClick={() => handleDeleteInvoice(inv.id, inv.invoiceNo)}
+                                                                disabled={editingInvoiceId === inv.id || deletingInvoiceId === inv.id}
+                                                                className="p-1 rounded text-[#8AAEBB] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                                                title="Gỡ bỏ hóa đơn"
+                                                            >
+                                                                {deletingInvoiceId === inv.id ? <Loader2 size={11} className="animate-spin text-red-400" /> : <X size={11} />}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <span className="text-[10px] block mt-0.5" style={{ color: '#4A6A7A' }}>Hạn: {formatDate(inv.dueDate)}</span>
                                                 </div>
-                                                <div className="text-right">
+                                                <div className="text-right shrink-0">
                                                     <span className="text-xs font-bold font-mono block" style={{ color: '#E8F1F2' }}>{formatVND(Number(inv.amount))}</span>
                                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mt-0.5" style={getInvoiceStatusStyle(inv.status)}>
                                                         {INVOICE_STATUS_LABELS[inv.status] ?? inv.status}
