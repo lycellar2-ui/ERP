@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, GoodsReceiptCreateSchema } from '@/lib/validations'
-import { getCurrentUser } from '@/lib/session'
+import { getCurrentUser, requireAuth } from '@/lib/session'
 import { serialize } from '@/lib/serialize'
 import { parseDateWithCurrentTime } from '@/lib/utils'
 
@@ -227,6 +227,7 @@ const warehouseSchema = z.object({
 })
 
 export async function createWarehouse(input: z.infer<typeof warehouseSchema>) {
+    await requireAuth()
     const data = warehouseSchema.parse(input)
     await prisma.warehouse.create({ data })
     revalidateCache('wms')
@@ -246,6 +247,7 @@ const locationSchema = z.object({
 })
 
 export async function createLocation(input: z.infer<typeof locationSchema>) {
+    await requireAuth()
     const data = locationSchema.parse(input)
     const locationCode = [data.zone, data.rack, data.bin].filter(Boolean).join('-').toUpperCase()
     await prisma.location.create({
@@ -258,6 +260,7 @@ export async function createLocation(input: z.infer<typeof locationSchema>) {
 // ── Delete Location ───────────────────────────────
 export async function deleteLocation(locationId: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const loc = await prisma.location.findUnique({
             where: { id: locationId },
             include: { stockLots: { where: { qtyAvailable: { gt: 0 } }, select: { id: true } } },
@@ -960,6 +963,17 @@ export async function createDeliveryOrder(input: {
             })
 
             for (const line of lines) {
+                // Verify lot legal entity ownership if SO has legal entity
+                if (so.legalEntityId) {
+                    const pickedLot = await tx.stockLot.findUnique({
+                        where: { id: line.lotId },
+                        select: { ownerEntityId: true, lotNo: true },
+                    })
+                    if (pickedLot && pickedLot.ownerEntityId !== so.legalEntityId) {
+                        throw new Error(`Lô hàng ${pickedLot.lotNo} không thuộc sở hữu của Pháp Nhân đơn hàng. Vui lòng chọn đúng lô cùng Pháp Nhân!`)
+                    }
+                }
+
                 // Create DO line
                 await tx.deliveryOrderLine.create({
                     data: {
@@ -1192,6 +1206,10 @@ export async function reverseDeliveryOrder(
                 where: { id: deliveryOrder.soId },
                 data: { status: 'CONFIRMED' },
             })
+
+            // 4. Reverse COGS accounting journal: DR 156 / CR 632
+            const { reverseDeliveryOrderCOGSJournal } = await import('../finance/actions')
+            await reverseDeliveryOrderCOGSJournal(doId, user?.id ?? 'system', tx)
         })
 
         if (user?.id) {
@@ -1293,10 +1311,22 @@ export async function transferStock(input: {
                     },
                 })
             } else {
-                const count = await tx.stockLot.count()
+                const lastTrfLot = await tx.stockLot.findFirst({
+                    where: { lotNo: { startsWith: 'TRF-' } },
+                    orderBy: { lotNo: 'desc' },
+                    select: { lotNo: true },
+                })
+                let nextTrfSeq = 1
+                if (lastTrfLot) {
+                    const parts = lastTrfLot.lotNo.split('-')
+                    const parsed = parseInt(parts[parts.length - 1], 10)
+                    if (!isNaN(parsed)) nextTrfSeq = parsed + 1
+                }
+                const lotNo = `TRF-${String(nextTrfSeq).padStart(6, '0')}`
+
                 await tx.stockLot.create({
                     data: {
-                        lotNo: `TRF-${String(count + 1).padStart(6, '0')}`,
+                        lotNo,
                         ownerEntityId: lot.ownerEntityId,
                         productId: lot.productId,
                         locationId: input.toLocationId,
@@ -1305,6 +1335,7 @@ export async function transferStock(input: {
                         qtyAvailable: input.qty,
                         unitLandedCost: lot.unitLandedCost,
                         receivedDate: new Date(),
+                        vintage: lot.vintage ?? null,
                         status: 'AVAILABLE',
                     },
                 })
@@ -1538,11 +1569,23 @@ export async function moveToQuarantine(input: {
                 }
             }
 
-            // Create quarantine lot
-            const count = await tx.stockLot.count()
+            // Create quarantine lot with atomic numbering
+            const lastQrtLot = await tx.stockLot.findFirst({
+                where: { lotNo: { startsWith: 'QRT-' } },
+                orderBy: { lotNo: 'desc' },
+                select: { lotNo: true },
+            })
+            let nextQrtSeq = 1
+            if (lastQrtLot) {
+                const parts = lastQrtLot.lotNo.split('-')
+                const parsed = parseInt(parts[parts.length - 1], 10)
+                if (!isNaN(parsed)) nextQrtSeq = parsed + 1
+            }
+            const lotNo = `QRT-${String(nextQrtSeq).padStart(6, '0')}`
+
             await tx.stockLot.create({
                 data: {
-                    lotNo: `QRT-${String(count + 1).padStart(6, '0')}`,
+                    lotNo,
                     ownerEntityId: lot.ownerEntityId,
                     productId: lot.productId,
                     locationId: lot.locationId,
@@ -1551,6 +1594,7 @@ export async function moveToQuarantine(input: {
                     qtyAvailable: input.qty,
                     unitLandedCost: lot.unitLandedCost,
                     receivedDate: new Date(),
+                    vintage: lot.vintage ?? null,
                     status: 'QUARANTINE',
                 },
             })
@@ -1646,6 +1690,7 @@ export async function writeOffStock(input: {
     reason: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const lot = await prisma.stockLot.findUnique({ where: { id: input.lotId } })
         if (!lot) return { success: false, error: 'Lot không tồn tại' }
         if (Number(lot.qtyAvailable) < input.qty) {
@@ -1773,7 +1818,7 @@ export async function getWMSFullStats() {
 
         prisma.stockLot.findMany({
             where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-            select: { qtyAvailable: true, unitLandedCost: true },
+            select: { productId: true, qtyAvailable: true, unitLandedCost: true },
         }),
 
         prisma.stockLot.count({
@@ -1807,7 +1852,7 @@ export async function getWMSFullStats() {
         locationCount,
         totalQty,
         totalValue,
-        distinctSKUs: new Set(stockLots).size,
+        distinctSKUs: new Set(stockLots.map(l => l.productId)).size,
         quarantinedLots: quarantinedCount,
         lowStockAlerts: lowStockProducts.length,
         recentGRsThisWeek: recentGRs,
@@ -2202,6 +2247,7 @@ export async function editWarehouse(id: string, input: {
     isDefault?: boolean;
 }) {
     try {
+        await requireAuth()
         if (input.isDefault && input.legalEntityId) {
             // Unset previous default warehouse for this legal entity
             await prisma.warehouse.updateMany({
@@ -2221,6 +2267,7 @@ export async function editWarehouse(id: string, input: {
 // ─── Delete Warehouse ───────────────────────────────
 export async function deleteWarehouse(id: string) {
     try {
+        await requireAuth()
         const locCount = await prisma.location.count({ where: { warehouseId: id } })
         if (locCount > 0) return { success: false, error: 'Kho còn locations, không thể xóa. Hãy xóa hết locations trước.' }
         await prisma.warehouse.delete({ where: { id } })

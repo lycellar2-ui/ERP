@@ -6,7 +6,11 @@ vi.mock('@/lib/cache', () => ({
     cached: vi.fn((key, fn) => fn()),
     revalidateCache: vi.fn(),
 }))
-vi.mock('@/lib/utils', () => ({ generateSoNo: vi.fn((n: number) => `SO-2603-${String(n).padStart(4, '0')}`) }))
+vi.mock('@/lib/utils', () => ({
+    generateSoNo: vi.fn((n: number) => `SO-2603-${String(n).padStart(4, '0')}`),
+    parseDateWithCurrentTime: vi.fn((d: any) => new Date(d || Date.now())),
+    formatVND: vi.fn((n: number) => `${n} đ`),
+}))
 vi.mock('@/lib/session', () => ({
     requirePermission: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
     getCurrentUser: vi.fn().mockResolvedValue({ id: 'u1', name: 'Mock User', email: 'mock@test.com' }),
@@ -15,7 +19,7 @@ vi.mock('@/lib/session', () => ({
 }))
 
 const mockPrisma = {
-    salesOrder: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
+    salesOrder: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
     salesOrderLine: { findMany: vi.fn() },
     allocationCampaign: { findMany: vi.fn() },
     allocationQuota: { update: vi.fn(), create: vi.fn() },
@@ -41,8 +45,12 @@ const {
 
 beforeEach(() => {
     vi.clearAllMocks()
-    mockPrisma.customer.findUnique.mockResolvedValue({ creditLimit: 0, name: 'Test Customer', defaultLegalEntityId: null })
+    const currentYYMM = `${new Date().getFullYear().toString().slice(-2)}${String(new Date().getMonth() + 1).padStart(2, '0')}`
+    mockPrisma.customer.findUnique.mockResolvedValue({ creditLimit: 0, name: 'Test Customer', defaultLegalEntityId: null, entityType: 'INDIVIDUAL', allowDirectSO: true })
     mockPrisma.customer.findMany.mockResolvedValue([])
+    mockPrisma.salesOrder.findFirst.mockResolvedValue({ soNo: `SO-${currentYYMM}-0042` })
+    mockPrisma.salesOrder.findUnique.mockResolvedValue(null)
+    mockPrisma.salesOrder.create.mockResolvedValue({ id: 'so-new', soNo: `SO-${currentYYMM}-0043`, lines: [] })
     mockPrisma.user.findMany.mockResolvedValue([])
 })
 
@@ -71,11 +79,11 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
     })
 
     it('should create SO when quota allows', async () => {
+        const currentYYMM = `${new Date().getFullYear().toString().slice(-2)}${String(new Date().getMonth() + 1).padStart(2, '0')}`
         // No active campaigns → no quota restriction
         mockPrisma.allocationCampaign.findMany.mockResolvedValue([])
-        mockPrisma.salesOrder.count.mockResolvedValue(42)
         mockPrisma.salesOrder.create.mockResolvedValue({
-            id: 'so-new', soNo: 'SO-2603-0043',
+            id: 'so-new', soNo: `SO-${currentYYMM}-0043`,
             lines: [{ id: 'line-1', productId: 'p-1' }],
         })
 
@@ -87,12 +95,11 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
         })
 
         expect(result.success).toBe(true)
-        expect(result.soNo).toBe('SO-2603-0043')
+        expect(result.soNo).toBe(`SO-${currentYYMM}-0043`)
     })
 
     it('should calculate totalAmount with line discounts + order discount', async () => {
         mockPrisma.allocationCampaign.findMany.mockResolvedValue([])
-        mockPrisma.salesOrder.count.mockResolvedValue(0)
         mockPrisma.salesOrder.create.mockResolvedValue({ id: 'so-1', soNo: 'SO-01', lines: [] })
 
         await createSalesOrder({
@@ -118,7 +125,6 @@ describe('SLS-01: createSalesOrder with Allocation Quota', () => {
 
     it('should calculate dynamic line-level VAT correctly', async () => {
         mockPrisma.allocationCampaign.findMany.mockResolvedValue([])
-        mockPrisma.salesOrder.count.mockResolvedValue(0)
         mockPrisma.salesOrder.create.mockResolvedValue({ id: 'so-2', soNo: 'SO-02', lines: [] })
 
         await createSalesOrder({

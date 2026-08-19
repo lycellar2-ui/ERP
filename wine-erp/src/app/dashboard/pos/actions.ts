@@ -243,32 +243,63 @@ export async function processPOSSale(input: {
             const nextSeq = lastSO ? parseInt(lastSO.soNo.slice(-4)) + 1 : 1
             soNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
 
+            // Find POS default warehouse (Showroom / Retail store)
+            let posWarehouse = await tx.warehouse.findFirst({
+                where: { legalEntityId, allowSales: true, isDefault: true }
+            })
+            if (!posWarehouse) {
+                posWarehouse = await tx.warehouse.findFirst({
+                    where: { code: 'WH-TA-GVM' }
+                })
+            }
+            if (!posWarehouse) {
+                posWarehouse = await tx.warehouse.findFirst({
+                    where: { allowSales: true }
+                })
+            }
+
             // Deduct stock FIFO per item with Row Locking to prevent race conditions
             for (const item of validated.items) {
                 await tx.$executeRaw`SELECT id FROM stock_lots WHERE "productId" = ${item.productId} AND status = 'AVAILABLE' AND "qtyAvailable" > 0 FOR UPDATE`
 
                 let remaining = item.qty
+                const whereLot: any = {
+                    productId: item.productId,
+                    status: 'AVAILABLE',
+                    qtyAvailable: { gt: 0 },
+                }
+                if (posWarehouse) {
+                    whereLot.location = { warehouseId: posWarehouse.id }
+                }
+                if (legalEntityId) {
+                    whereLot.ownerEntityId = legalEntityId
+                }
+
                 const lots = await tx.stockLot.findMany({
-                    where: {
-                        productId: item.productId,
-                        status: 'AVAILABLE',
-                        qtyAvailable: { gt: 0 },
-                    },
+                    where: whereLot,
                     orderBy: { receivedDate: 'asc' },
                 })
 
                 for (const lot of lots) {
                     if (remaining <= 0) break
                     const take = Math.min(Number(lot.qtyAvailable), remaining)
-                    await tx.stockLot.update({
-                        where: { id: lot.id },
-                        data: { qtyAvailable: { decrement: take } },
+                    const isFullyConsumed = Number(lot.qtyAvailable) === take
+
+                    const updated = await tx.stockLot.updateMany({
+                        where: { id: lot.id, qtyAvailable: { gte: take } },
+                        data: {
+                            qtyAvailable: { decrement: take },
+                            ...(isFullyConsumed ? { status: 'CONSUMED' } : {})
+                        },
                     })
+                    if (updated.count === 0) {
+                        throw new Error(`Tồn kho của sản phẩm ${item.skuCode} đã thay đổi do có giao dịch đồng thời.`)
+                    }
                     remaining -= take
                 }
 
                 if (remaining > 0) {
-                    throw new Error(`Không đủ tồn kho cho ${item.skuCode}`)
+                    throw new Error(`Không đủ tồn kho khả dụng tại ${posWarehouse?.name || 'Kho bán hàng'} cho SKU ${item.skuCode} (cần ${item.qty}, thiếu ${remaining})`)
                 }
             }
 

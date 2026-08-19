@@ -247,30 +247,32 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
 
     return (
         <>
-            <div className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(10,5,2,0.7)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
-                onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300"
-                style={{ width: 'min(720px, 97vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
-
+            <div
+                className={`fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                onClick={onClose}
+            />
+            <div
+                className={`fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
+                style={{ width: 'min(720px, 97vw)' }}
+            >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #2A4355' }}>
+                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(135,203,185,0.15)' }}>
-                            <Building2 size={20} style={{ color: '#87CBB9' }} />
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
+                            <Building2 size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg" style={{ color: '#E8F1F2' }}>
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-white">
                                 {detail?.supplier.name ?? 'Đang tải...'}
                             </h3>
-                            <p className="text-xs font-mono" style={{ color: '#4A6A7A' }}>
+                            <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
                                 {detail?.supplier.code ?? ''}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#4A6A7A' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#1B2E3D')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '')}><X size={18} /></button>
+                    <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                        <X size={18} />
+                    </button>
                 </div>
 
                 {/* Tabs */}

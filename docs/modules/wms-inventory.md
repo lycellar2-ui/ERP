@@ -88,7 +88,8 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 2. Pick List chỉ định: SKU nào, Lô nào (FIFO), Vị trí (Khu vực / Zone), số lượng bao nhiêu.
 3. Thủ kho nhặt hàng trên điện thoại với giao diện mobile tối ưu (3-step wizard & compact layout).
 4. Sau khi nhặt xong → In **Phiếu Xuất Kho (PDF)** — mẫu in tiêu chuẩn A4 (đồng bộ layout với Đơn Bán Hàng), kèm hàng giao cho Shipper / Khách hàng.
-5. Khi giao thành công → Bấm **"Đã Giao Hàng"** (status: DELIVERED) → SO chuyển DELIVERED, Tồn kho tự động cập nhật & tự sinh bút toán Giá vốn hàng bán (COGS).
+5. Khi giao thành công → Bấm **"Đã Giao Hàng"** (status: DELIVERED) → SO chuyển DELIVERED, Tồn kho tự động cập nhật & tự sinh bút toán Giá vốn hàng bán (COGS: Nợ 632 / Có 156).
+6. **Hoàn tác Xuất Kho (Reverse DO — Admin only):** Khi hoàn tác DO, hệ thống tự động hoàn trả số lượng vào `StockLot`, chuyển DO về `CANCELLED`, hoàn về trạng thái đơn hàng `CONFIRMED` và **tự động sinh bút toán đảo Giá vốn Nợ 156 / Có 632** để cân đối sổ cái tài chính.
 
 ---
 

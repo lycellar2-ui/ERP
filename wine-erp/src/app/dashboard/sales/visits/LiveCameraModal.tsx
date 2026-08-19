@@ -151,20 +151,20 @@ export function LiveCameraModal({ title, subtitle, onCapture, onClose }: Props) 
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" style={{ background: 'rgba(10,5,2,0.85)', backdropFilter: 'blur(4px)' }}>
-            <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col shadow-2xl" style={{ background: '#0D1E2B', border: '1px solid #2A4355' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+            <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col shadow-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] animate-in zoom-in-95 duration-150">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid #2A4355', background: '#142433' }}>
+                <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-lg bg-[#87CBB9]/10 text-[#87CBB9]">
+                        <div className="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
                             <Camera size={18} />
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold text-[#E8F1F2]">{title}</h3>
-                            <p className="text-[11px] text-[#4A6A7A]">{subtitle || 'Bắt buộc chụp ảnh trực tiếp từ Camera'}</p>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{subtitle || 'Bắt buộc chụp ảnh trực tiếp từ Camera'}</p>
                         </div>
                     </div>
-                    <button onClick={() => { stopActiveStream(); onClose(); }} className="p-1.5 rounded-lg text-gray-400 hover:bg-[#1B2E3D] hover:text-white transition">
+                    <button onClick={() => { stopActiveStream(); onClose(); }} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer">
                         <X size={18} />
                     </button>
                 </div>

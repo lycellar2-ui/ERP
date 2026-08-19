@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, Tag } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, Tag, Search, ChevronDown, CheckCircle2, Building2, Star, Calendar, FileText, ShoppingBag, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -23,17 +23,17 @@ const CHANNELS: { value: SalesChannel; label: string }[] = [
 const getPriceBadgeStyle = (source: string) => {
     switch (source) {
         case 'SPECIAL_PRICE':
-            return { background: 'rgba(212,168,83,0.15)', color: '#D4A853', border: '1px solid rgba(212,168,83,0.3)' }
+            return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700/50'
         case 'FIXED_PRICE':
-            return { background: 'rgba(135,203,185,0.15)', color: '#87CBB9', border: '1px solid rgba(135,203,185,0.3)' }
+            return 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-700/50'
         case 'FIXED_DISCOUNT':
-            return { background: 'rgba(230,138,0,0.15)', color: '#E68A00', border: '1px solid rgba(230,138,0,0.3)' }
+            return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-700/50'
         case 'CHANNEL_BASE':
-            return { background: 'rgba(91,168,138,0.1)', color: '#5BA88A', border: '1px solid rgba(91,168,138,0.2)' }
+            return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700/50'
         case 'RETAIL_FALLBACK':
-            return { background: 'rgba(138,180,248,0.1)', color: '#8AB4F8', border: '1px solid rgba(138,180,248,0.2)' }
+            return 'bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-700/50'
         default:
-            return { background: 'rgba(74,106,122,0.1)', color: '#4A6A7A', border: '1px solid rgba(74,106,122,0.2)' }
+            return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
     }
 }
 
@@ -86,14 +86,6 @@ interface Customer {
 }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number }
 interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number }
-
-const inputStyle = {
-    background: '#142433',
-    border: '1px solid #2A4355',
-    color: '#E8F1F2',
-    borderRadius: '4px',
-    outline: 'none',
-}
 
 interface EditSODrawerProps {
     open: boolean
@@ -195,7 +187,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
     useEffect(() => {
         if (selectedCustomer) {
-            setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
+            setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name.replace(/^\u00A0\u00A0\u00A0↳\s*/, '')}`)
         } else {
             setCustomerSearchInput('')
         }
@@ -445,7 +437,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
             loading: 'Đang cập nhật...',
             success: () => {
                 setTimeout(() => { onSaved() }, 500)
-                return `Đã cập nhật ${soNo}`
+                return `Đã cập nhật thành công ${soNo}`
             },
             error: (e: Error) => e.message,
             finally: () => setSaving(false),
@@ -455,266 +447,359 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(10,25,38,0.8)' }}>
+        <div className="fixed inset-0 z-50 flex bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+            {/* Backdrop click outside to close */}
             <div className="hidden md:block md:flex-1" onClick={onClose} />
-            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full overflow-y-auto" style={{ background: '#0F2133', borderLeft: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <div>
-                        <h2 className="text-lg font-bold" style={{ color: '#D4A853' }}>Sửa Đơn Hàng</h2>
-                        <p className="text-xs" style={{ color: '#4A6A7A' }}>{soNo} — Chỉ DRAFT mới sửa được</p>
+
+            {/* Main Drawer Container */}
+            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden bg-white dark:bg-[#111C24] shadow-2xl border-l border-slate-200 dark:border-[#223645] animate-in slide-in-from-right duration-300">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#223645] bg-white dark:bg-[#15232E] shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold text-lg border border-amber-500/20">
+                            ✏️
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-base font-bold text-slate-900 dark:text-white">Sửa Đơn Bán Hàng</h2>
+                                <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-md border border-amber-300 dark:border-amber-700/50">
+                                    {soNo}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Chỉnh sửa thông tin đơn hàng ở trạng thái DRAFT</p>
+                        </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded hover:bg-white/5"><X size={18} style={{ color: '#4A6A7A' }} /></button>
+                    <button 
+                        onClick={onClose} 
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                        title="Đóng"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
 
-                <div className="p-4 space-y-4">
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50 dark:bg-[#0E171E]">
                     {(loadingData || loadingSO) ? (
-                        <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin" style={{ color: '#87CBB9' }} /></div>
+                        <div className="flex flex-col items-center justify-center py-24 gap-3">
+                            <Loader2 size={32} className="animate-spin text-amber-600 dark:text-amber-400" />
+                            <p className="text-xs text-slate-500 font-medium">Đang tải dữ liệu đơn hàng...</p>
+                        </div>
                     ) : (
                         <>
-                            {/* Customer Autocomplete Search */}
-                            <div>
-                                <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Khách Hàng</label>
-                                <div className="relative">
-                                    <div className={`relative flex items-center w-full rounded border-2 transition-all ${customerDropdownOpen ? 'border-[#87CBB9] ring-2 ring-[#87CBB9]/20' : 'border-[#2A4355]'} bg-[#142433]`}>
-                                        <span className="pl-3 text-slate-400 text-sm">🔍</span>
-                                        <input
-                                            type="text"
-                                            placeholder="Bấm vào đây hoặc gõ mã, tên khách hàng..."
-                                            value={customerSearchInput}
-                                            onFocus={e => {
-                                                setCustomerDropdownOpen(true)
-                                                e.target.select()
-                                            }}
-                                            onBlur={() => {
-                                                setTimeout(() => {
-                                                    setCustomerDropdownOpen(false)
-                                                    if (selectedCustomer) {
-                                                        setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name}`)
-                                                    } else {
-                                                        setCustomerSearchInput('')
-                                                    }
-                                                }, 200)
-                                            }}
-                                            onChange={e => {
-                                                setCustomerSearchInput(e.target.value)
-                                                setCustomerDropdownOpen(true)
-                                            }}
-                                            className="w-full pl-2 pr-8 py-2 text-sm font-semibold text-white bg-transparent outline-none placeholder:text-[#6A8A9A]"
-                                        />
-                                        {selectedCustomer ? (
-                                            <button
-                                                type="button"
-                                                onMouseDown={(e) => {
-                                                    e.preventDefault()
-                                                    setCustomerId('')
-                                                    setCustomerSearchInput('')
+                            {/* Row 1: Khách hàng + Địa chỉ + Ngày đơn hàng */}
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                                {/* Customer Selection */}
+                                <div className="md:col-span-5">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                        Khách Hàng *
+                                    </label>
+                                    <div className="relative">
+                                        <div className={`relative flex items-center w-full rounded-lg border-2 transition-all bg-white dark:bg-[#16232F] ${customerDropdownOpen ? 'border-amber-500 ring-4 ring-amber-500/10' : 'border-slate-200 dark:border-[#2A4355] hover:border-slate-300 dark:hover:border-[#3B5466]'}`}>
+                                            <div className="pl-3 text-slate-400">
+                                                <Search size={15} />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                placeholder="Tìm theo mã hoặc tên khách hàng..."
+                                                value={customerSearchInput}
+                                                onFocus={e => {
+                                                    setCustomerDropdownOpen(true)
+                                                    e.target.select()
+                                                }}
+                                                onBlur={() => {
+                                                    setTimeout(() => {
+                                                        setCustomerDropdownOpen(false)
+                                                        if (selectedCustomer) {
+                                                            setCustomerSearchInput(`[${selectedCustomer.code}] ${selectedCustomer.name.replace(/^\u00A0\u00A0\u00A0↳\s*/, '')}`)
+                                                        } else {
+                                                            setCustomerSearchInput('')
+                                                        }
+                                                    }, 200)
+                                                }}
+                                                onChange={e => {
+                                                    setCustomerSearchInput(e.target.value)
                                                     setCustomerDropdownOpen(true)
                                                 }}
-                                                className="absolute right-2 px-1.5 py-0.5 text-xs text-slate-400 hover:text-white bg-[#1F3547] hover:bg-red-500/80 rounded transition-colors"
-                                                title="Bỏ chọn khách hàng"
-                                            >
-                                                ✕
-                                            </button>
-                                        ) : (
-                                            <span className="absolute right-2.5 text-slate-400 pointer-events-none text-xs">▼</span>
-                                        )}
-                                    </div>
-                                    {customerDropdownOpen && (
-                                        <div className="absolute left-0 mt-1 max-h-72 overflow-y-auto z-[100] rounded-lg bg-[#0F1C28] border-2 border-[#2A4355] w-full shadow-2xl divide-y divide-[#1F3547]">
-                                            {filteredCustomers.length === 0 ? (
-                                                <div className="px-4 py-4 text-xs font-medium text-amber-400/90 text-center bg-[#142433]">
-                                                    🔍 Không tìm thấy khách hàng khớp với từ khóa "{customerSearchInput}"
-                                                </div>
+                                                className="w-full pl-2.5 pr-8 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                            />
+                                            {selectedCustomer ? (
+                                                <button
+                                                    type="button"
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault()
+                                                        setCustomerId('')
+                                                        setCustomerSearchInput('')
+                                                        setCustomerDropdownOpen(true)
+                                                    }}
+                                                    className="absolute right-2 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                                                    title="Xóa khách hàng"
+                                                >
+                                                    <X size={14} />
+                                                </button>
                                             ) : (
-                                                filteredCustomers.map(c => {
-                                                    const isCompany = c.entityType === 'COMPANY'
-                                                    const isDisabled = isCompany && !c.allowDirectSO
-                                                    const isSelected = c.id === customerId
-                                                    return (
-                                                        <div
-                                                            key={c.id}
-                                                            onMouseDown={() => {
-                                                                if (isDisabled) return
-                                                                handleCustomerChange(c.id)
-                                                                setCustomerDropdownOpen(false)
-                                                            }}
-                                                            className={`px-3.5 py-3 text-xs text-left transition-all ${
-                                                                isDisabled 
-                                                                    ? 'bg-[#0A141E] text-slate-500 opacity-60 cursor-not-allowed' 
-                                                                    : isSelected
-                                                                    ? 'bg-[#1F3E4D] text-white border-l-4 border-l-[#87CBB9]'
-                                                                    : 'cursor-pointer hover:bg-[#1B2E3D] hover:border-l-4 hover:border-l-[#87CBB9] text-white'
-                                                            }`}
-                                                        >
-                                                            <div className="flex items-center justify-between gap-2">
-                                                                <div className="flex items-center gap-2 flex-wrap">
-                                                                    <span className={`font-bold text-sm ${isDisabled ? 'text-slate-500' : 'text-[#87CBB9]'}`}>
-                                                                        [{c.code}]
-                                                                    </span>
-                                                                    <span className="font-semibold text-sm text-white">{c.name}</span>
-                                                                </div>
-                                                                {isSelected && (
-                                                                    <span className="text-[11px] px-2 py-0.5 rounded bg-[#87CBB9]/20 text-[#87CBB9] font-bold">✓ Đã chọn</span>
-                                                                )}
-                                                            </div>
-                                                            <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px]">
-                                                                {isCompany && (
-                                                                    <span className={`font-semibold ${isDisabled ? 'text-slate-500' : 'text-sky-400'}`}>
-                                                                        {c.allowDirectSO ? '🏢 Công ty (Được bán)' : '🏢 Công ty Cha (Chỉ tính công nợ)'}
-                                                                    </span>
-                                                                )}
-                                                                {c.brandGroup && (
-                                                                    <span className="px-2 py-0.5 bg-[#2A4355] text-slate-200 rounded font-semibold">
-                                                                        ✨ {c.brandGroup}
-                                                                    </span>
-                                                                )}
-                                                                {c.channel && (
-                                                                    <span className="px-2 py-0.5 bg-[#1C3344] text-[#8AAEBB] rounded">
-                                                                        Kênh: {c.channel}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })
+                                                <div className="absolute right-2.5 pointer-events-none text-slate-400">
+                                                    <ChevronDown size={14} />
+                                                </div>
                                             )}
                                         </div>
-                                    )}
-                                </div>
-                            </div>
 
-                            {/* Shipping Address Selection */}
-                            {selectedCustomer && (
-                                <div>
-                                    <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Địa Chỉ Giao Hàng *</label>
-                                    {(!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
-                                        <div className="p-3 rounded-md text-xs bg-red-950/20 border border-red-500/20 text-red-400">
-                                            ⚠️ Khách hàng chưa cấu hình địa chỉ giao hàng. Hãy cấu hình ở mục Khách hàng.
+                                        {/* Dropdown Customer Results */}
+                                        {customerDropdownOpen && (
+                                            <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white dark:bg-[#16232F] border border-slate-200 dark:border-[#2A4355] shadow-xl py-1 divide-y divide-slate-100 dark:divide-[#223645]">
+                                                {filteredCustomers.length === 0 ? (
+                                                    <div className="px-4 py-3 text-xs text-slate-400 text-center">
+                                                        Không tìm thấy khách hàng phù hợp
+                                                    </div>
+                                                ) : (
+                                                    filteredCustomers.map(c => {
+                                                        const isCompany = c.entityType === 'COMPANY'
+                                                        const isDisabled = isCompany && !c.allowDirectSO
+                                                        const isSelected = c.id === customerId
+
+                                                        return (
+                                                            <div
+                                                                key={c.id}
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault()
+                                                                    if (isDisabled) {
+                                                                        toast.error('Công ty này chỉ dùng quản lý công nợ. Vui lòng chọn Chi nhánh/Nhà hàng con!')
+                                                                        return
+                                                                    }
+                                                                    handleCustomerChange(c.id)
+                                                                    setCustomerDropdownOpen(false)
+                                                                }}
+                                                                className={`px-3.5 py-2.5 cursor-pointer transition-colors ${
+                                                                    isDisabled 
+                                                                        ? 'bg-slate-50 opacity-60 cursor-not-allowed dark:bg-slate-900/40' 
+                                                                        : isSelected 
+                                                                        ? 'bg-amber-50 dark:bg-amber-950/40 border-l-4 border-amber-500' 
+                                                                        : 'hover:bg-slate-50 dark:hover:bg-[#1C2C3A]'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex flex-col gap-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500' : 'bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300'}`}>
+                                                                                {c.code}
+                                                                            </span>
+                                                                            <span className={`font-semibold text-xs truncate ${isSelected ? 'text-amber-900 dark:text-amber-200' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                                                {c.name}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                                                            {isCompany && (
+                                                                                <span className="flex items-center gap-1 text-sky-600 font-medium">
+                                                                                    <Building2 size={11} /> {c.allowDirectSO ? 'Công ty' : 'Công ty Mẹ'}
+                                                                                </span>
+                                                                            )}
+                                                                            {c.brandGroup && (
+                                                                                <span className="text-amber-600 font-medium">
+                                                                                    ✨ {c.brandGroup}
+                                                                                </span>
+                                                                            )}
+                                                                            {c.channel && <span>Kênh: {c.channel}</span>}
+                                                                        </div>
+                                                                    </div>
+                                                                    {isSelected && (
+                                                                        <span className="shrink-0 text-amber-600 dark:text-amber-400">
+                                                                            <CheckCircle2 size={16} />
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Shipping Address Selection */}
+                                <div className="md:col-span-4">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                        Địa Chỉ Giao Hàng *
+                                    </label>
+                                    {!selectedCustomer ? (
+                                        <div className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-[#2A4355] text-slate-400 bg-slate-100/60 dark:bg-slate-900/40">
+                                            Chưa chọn khách hàng
+                                        </div>
+                                    ) : (!selectedCustomer.addresses || selectedCustomer.addresses.length === 0) ? (
+                                        <div className="px-3 py-2 text-xs bg-rose-50 border border-rose-200 text-rose-600 rounded-lg">
+                                            ⚠️ Khách hàng chưa có địa chỉ
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
-                                            <select
-                                                value={shippingAddressId}
-                                                onChange={e => setShippingAddressId(e.target.value)}
-                                                className="w-full px-3 py-2 text-sm outline-none"
-                                                style={inputStyle}
-                                            >
-                                                <option value="">-- Chọn địa chỉ giao hàng --</option>
-                                                {selectedCustomer.addresses.map(addr => (
-                                                    <option key={addr.id} value={addr.id}>
-                                                        {addr.label} ({addr.address})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {shippingAddressId && (() => {
-                                                const selectedAddr = selectedCustomer.addresses.find(a => a.id === shippingAddressId)
-                                                if (!selectedAddr) return null
-                                                return (
-                                                    <div className="p-3 rounded bg-[#142433] border border-[#2A4355]/40 text-xs text-gray-300 leading-relaxed">
-                                                        <span className="font-bold text-[#87CBB9]">{selectedAddr.label}: </span>
-                                                        {selectedAddr.address}
-                                                        {selectedAddr.ward && `, ${selectedAddr.ward}`}
-                                                        {selectedAddr.district && `, ${selectedAddr.district}`}
-                                                        {selectedAddr.city && `, ${selectedAddr.city}`}
-                                                        {selectedAddr.isDefault && <span className="ml-2 inline-block px-1.5 py-0.5 text-xs bg-[#5BA88A]/20 text-[#5BA88A] rounded border border-[#5BA88A]/30">Mặc định</span>}
-                                                    </div>
-                                                )
-                                            })()}
-                                        </div>
+                                        <select
+                                            value={shippingAddressId}
+                                            onChange={e => setShippingAddressId(e.target.value)}
+                                            className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        >
+                                            <option value="">-- Chọn địa chỉ giao hàng --</option>
+                                            {selectedCustomer.addresses.map(addr => (
+                                                <option key={addr.id} value={addr.id}>
+                                                    {addr.label}: {addr.address}
+                                                </option>
+                                            ))}
+                                        </select>
                                     )}
                                 </div>
-                            )}
 
-                            {/* Channel + Payment + Legal Entity + Order Date */}
-                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Kênh bán</label>
-                                    <select value={channel} onChange={e => handleChannelChange(e.target.value as SalesChannel)}
-                                        className="w-full px-3 py-2 text-sm" style={inputStyle}>
-                                        {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Payment Term</label>
-                                    <select value={paymentTerm} onChange={e => setPaymentTerm(e.target.value)}
-                                        className="w-full px-3 py-2 text-sm" style={inputStyle}>
-                                        {['COD', 'NET15', 'NET30', 'NET45', 'NET60', 'EOM_10', 'EOM_15'].map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Pháp Nhân</label>
-                                    <select value={legalEntityId} onChange={e => setLegalEntityId(e.target.value)}
-                                        className="w-full px-3 py-2 text-sm" style={inputStyle}>
-                                        <option value="">— Chọn —</option>
-                                        {entities.map(e => <option key={e.id} value={e.id}>{e.code}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>📅 Ngày Đơn Hàng</label>
+                                {/* Order Date */}
+                                <div className="md:col-span-3">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                        📅 Ngày Đơn Hàng *
+                                    </label>
                                     <input
                                         type="date"
                                         value={orderDate}
                                         onChange={e => setOrderDate(e.target.value)}
-                                        className="w-full px-3 py-2 text-sm font-mono outline-none rounded"
-                                        style={inputStyle}
+                                        className="w-full px-3 py-2 text-xs font-semibold font-mono rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                     />
+                                </div>
+                            </div>
+
+                            {/* Customer Selected Info / Address Preview */}
+                            {selectedCustomer && shippingAddressId && (() => {
+                                const selectedAddr = selectedCustomer.addresses?.find(a => a.id === shippingAddressId)
+                                if (!selectedAddr) return null
+                                return (
+                                    <div className="p-3 rounded-lg bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/40 text-xs text-slate-700 dark:text-slate-300 leading-relaxed flex items-center justify-between flex-wrap gap-2">
+                                        <div>
+                                            <span className="font-bold text-teal-800 dark:text-teal-300">{selectedAddr.label}: </span>
+                                            {selectedAddr.address}
+                                            {selectedAddr.ward && `, ${selectedAddr.ward}`}
+                                            {selectedAddr.district && `, ${selectedAddr.district}`}
+                                            {selectedAddr.city && `, ${selectedAddr.city}`}
+                                        </div>
+                                        {selectedAddr.isDefault && (
+                                            <span className="px-2 py-0.5 text-[10px] font-bold bg-teal-200 text-teal-900 rounded-full border border-teal-300">
+                                                Mặc định
+                                            </span>
+                                        )}
+                                    </div>
+                                )
+                            })()}
+
+                            {/* Credit Status Banner */}
+                            {selectedCustomer && (
+                                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-white dark:bg-[#16232F] border border-slate-200 dark:border-[#2A4355] shadow-xs text-xs">
+                                    <div className="flex items-center gap-4 flex-wrap">
+                                        <span className={`font-bold flex items-center gap-1.5 ${isCreditHold ? 'text-rose-600' : creditWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                            {isCreditHold ? '⚠️ Bị giữ tín dụng' : creditWarning ? '⚠️ Vượt hạn mức' : '✅ Tín dụng hợp lệ'}
+                                        </span>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                            Hạn mức: <strong className="font-mono text-slate-800 dark:text-slate-200">{formatVND(effectiveCreditLimit)}</strong>
+                                        </span>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                            Dư nợ: <strong className="font-mono text-amber-700 dark:text-amber-300">{formatVND(arBalance)}</strong>
+                                        </span>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                            Khả dụng: <strong className={`font-mono ${creditWarning ? 'text-rose-600' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatVND(Math.max(0, creditAvailable))}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Row 2: Kênh Bán, Payment Term, Pháp Nhân */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                                <div>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                        Kênh Bán
+                                    </label>
+                                    <select
+                                        value={channel}
+                                        onChange={e => handleChannelChange(e.target.value as SalesChannel)}
+                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                    >
+                                        {CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                        Payment Term (Hạn TT)
+                                    </label>
+                                    <select
+                                        value={paymentTerm}
+                                        onChange={e => setPaymentTerm(e.target.value)}
+                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                    >
+                                        {['COD', 'NET7', 'NET14', 'NET15', 'NET30', 'NET45', 'NET60', 'PREPAID', 'EOM_10', 'EOM_15'].map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                        Pháp Nhân Xuất Tuyến *
+                                    </label>
+                                    <select
+                                        value={legalEntityId}
+                                        onChange={e => setLegalEntityId(e.target.value)}
+                                        className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                    >
+                                        <option value="">— Chọn Pháp Nhân —</option>
+                                        {entities.map(e => <option key={e.id} value={e.id}>{e.name} ({e.code})</option>)}
+                                    </select>
                                 </div>
                             </div>
 
                             {/* Diễn giải / Ghi chú đơn hàng */}
                             <div>
-                                <label className="text-xs font-semibold mb-1 block" style={{ color: '#4A6A7A' }}>Diễn Giải / Ghi Chú Đơn Hàng</label>
+                                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                    Diễn Giải / Ghi Chú Đơn Hàng
+                                </label>
                                 <textarea
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
-                                    placeholder="Nhập diễn giải/ghi chú đơn hàng..."
+                                    placeholder="Nhập diễn giải/ghi chú giao hàng hoặc hóa đơn..."
                                     rows={2}
-                                    className="w-full px-3 py-1.5 text-xs outline-none rounded"
-                                    style={{ ...inputStyle }}
+                                    className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                                 />
                             </div>
 
-                            {/* Credit Warning */}
-                            {creditWarning && (
-                                <div className="flex items-center gap-2 p-3 rounded" style={{ background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.3)' }}>
-                                    <AlertCircle size={14} style={{ color: '#E05252' }} />
-                                    <span className="text-xs" style={{ color: '#E05252' }}>
-                                        {isCreditHold 
-                                            ? 'Khách hàng đang bị GIỮ TÍN DỤNG (Credit Hold)!' 
-                                            : `Vượt hạn mức tín dụng! Khả dụng: ${formatVND(creditAvailable)}`}
-                                    </span>
-                                </div>
-                            )}
+                            {/* Section: Bảng Sản Phẩm */}
+                            <div className="space-y-3 pt-2">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <ShoppingBag size={16} className="text-amber-600" />
+                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                                            DANH SÁCH SẢN PHẨM * ({lines.length})
+                                        </label>
+                                    </div>
 
-                            {/* Lines */}
-                            <div>
-                                <div className="flex items-center justify-between mb-2 relative">
-                                    <label className="text-xs font-semibold" style={{ color: '#4A6A7A' }}>Sản Phẩm</label>
-                                    <div className="w-64 relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Gõ mã/tên để thêm sản phẩm..."
-                                            value={addProductSearchQuery}
-                                            onFocus={() => setIsAddDropdownOpen(true)}
-                                            onBlur={() => {
-                                                setTimeout(() => {
-                                                    setIsAddDropdownOpen(false)
-                                                    setAddProductSearchQuery('')
-                                                }, 200)
-                                            }}
-                                            onChange={e => {
-                                                setAddProductSearchQuery(e.target.value)
-                                                setIsAddDropdownOpen(true)
-                                            }}
-                                            className="w-full px-2.5 py-1 text-xs outline-none"
-                                            style={inputStyle}
-                                        />
-                                        
+                                    {/* Add Product Search Input */}
+                                    <div className="w-full sm:w-80 relative">
+                                        <div className="relative flex items-center">
+                                            <input
+                                                type="text"
+                                                placeholder="Gõ mã SKU hoặc tên để thêm sản phẩm..."
+                                                value={addProductSearchQuery}
+                                                onFocus={() => setIsAddDropdownOpen(true)}
+                                                onBlur={() => {
+                                                    setTimeout(() => {
+                                                        setIsAddDropdownOpen(false)
+                                                        setAddProductSearchQuery('')
+                                                    }, 250)
+                                                }}
+                                                onChange={e => {
+                                                    setAddProductSearchQuery(e.target.value)
+                                                    setIsAddDropdownOpen(true)
+                                                }}
+                                                className="w-full pl-3 pr-8 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                            />
+                                            <div className="absolute right-2.5 text-slate-400 pointer-events-none">
+                                                <Search size={14} />
+                                            </div>
+                                        </div>
+
+                                        {/* Autocomplete Product Results */}
                                         {isAddDropdownOpen && (
-                                            <div className="absolute right-0 left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded shadow-xl border text-left bg-white dark:bg-[#142433] border-slate-200 dark:border-[#2A4355]">
+                                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg shadow-xl border bg-white dark:bg-[#16232F] border-slate-200 dark:border-[#2A4355] divide-y divide-slate-100 dark:divide-[#223645]">
                                                 {getFilteredAddProducts(addProductSearchQuery).length === 0 ? (
-                                                    <div className="px-2.5 py-2 text-xs text-slate-500 dark:text-gray-500">
-                                                        Không tìm thấy hoặc đã thêm
+                                                    <div className="px-3 py-2.5 text-xs text-slate-400 text-center">
+                                                        Không tìm thấy hoặc sản phẩm đã có trong đơn
                                                     </div>
                                                 ) : (
                                                     getFilteredAddProducts(addProductSearchQuery).map(p => (
@@ -725,10 +810,15 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 setAddProductSearchQuery('')
                                                                 setIsAddDropdownOpen(false)
                                                             }}
-                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] transition-colors flex items-center gap-1.5 border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0"
+                                                            className="px-3 py-2 text-xs cursor-pointer hover:bg-amber-50/70 dark:hover:bg-[#1C2C3A] transition-colors flex items-center justify-between gap-2"
                                                         >
-                                                            <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
-                                                            <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
+                                                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                <span className="font-bold font-mono text-teal-700 dark:text-teal-400 shrink-0">[{p.skuCode}]</span>
+                                                                <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{p.productName}</span>
+                                                            </div>
+                                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0 font-medium">
+                                                                (Tồn: {p.totalStock})
+                                                            </span>
                                                         </div>
                                                     ))
                                                 )}
@@ -738,196 +828,164 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 </div>
 
                                 {lines.length === 0 ? (
-                                    <div className="text-center py-6 rounded" style={{ background: '#142433', border: '1px dashed #2A4355' }}>
-                                        <Plus size={20} className="mx-auto mb-1" style={{ color: '#2A4355' }} />
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Tìm kiếm sản phẩm ở trên để thêm</p>
+                                    <div className="text-center py-10 rounded-xl border-2 border-dashed border-slate-200 dark:border-[#223645] bg-white dark:bg-[#121E27]">
+                                        <ShoppingBag size={28} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Đơn hàng chưa có sản phẩm nào</p>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">Tìm kiếm sản phẩm ở ô phía trên để thêm vào đơn</p>
                                     </div>
                                 ) : (
-                                    <>
-                                        {/* Desktop Table View */}
-                                        <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full" style={{ minHeight: '280px' }}>
-                                            <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
-                                                <thead>
-                                                    <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
-                                                        <th className="px-3 py-2.5">Sản Phẩm</th>
-                                                        <th className="px-3 py-2.5 w-20 text-center">Tồn Kho</th>
-                                                        <th className="px-3 py-2.5 w-20 text-center">SL</th>
-                                                        <th className="px-3 py-2.5 w-28 text-right">Đơn Giá</th>
-                                                        <th className="px-3 py-2.5 w-20 text-center">CK %</th>
-                                                        <th className="px-3 py-2.5 w-28 text-right">Thành Tiền</th>
-                                                        <th className="px-3 py-2.5 w-10 text-center"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-[#2A4355]/40">
-                                                    {lines.map((l, idx) => {
-                                                        const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
-                                                        const lowStock = l.stock < l.qtyOrdered
-                                                        const priceSource = priceMap[l.productId]?.source ?? l.priceSource
-                                                        const hasPriceBadge = priceSource && priceSource !== 'DEFAULT_ZERO'
-                                                        return (
-                                                            <tr key={idx} className={`hover:bg-[#1B2E3D]/30 transition-colors ${lowStock ? 'bg-red-950/10' : ''}`}>
-                                                                <td className="px-3 py-2">
-                                                                    <p className="font-semibold text-white">{l.skuCode}</p>
-                                                                    <p className="text-[11px] text-gray-300 whitespace-normal leading-relaxed max-w-[320px] mt-0.5">{l.productName}</p>
-                                                                    {hasPriceBadge && (
-                                                                        <div className="mt-1">
-                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                                                                                style={getPriceBadgeStyle(priceSource)}>
-                                                                                <Tag size={9} /> {getPriceBadgeLabel({ source: priceSource }, channel)}
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-center">
-                                                                    <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-[#8AAEBB]'}`}>{l.stock}</span>
-                                                                </td>
-                                                                <td className="px-3 py-2 text-center">
-                                                                    <input type="number" min={1} value={l.qtyOrdered}
-                                                                        onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value))}
-                                                                        className="w-14 px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
-                                                                        style={inputStyle}
-                                                                    />
-                                                                </td>
-                                                                <td className="px-3 py-2 text-right font-mono text-[#8AAEBB]">
-                                                                    {formatVND(l.unitPrice)}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-center">
-                                                                    <input type="number" min={0} max={100} value={l.lineDiscountPct}
-                                                                        onChange={e => updateLine(idx, 'lineDiscountPct', Math.min(100, Math.max(0, +e.target.value)))}
-                                                                        className="w-12 px-1 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
-                                                                        style={inputStyle}
-                                                                    />
-                                                                </td>
-                                                                <td className="px-3 py-2 text-right font-mono font-bold text-[#87CBB9]">
-                                                                    {formatVND(lineTotal)}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-center">
-                                                                    <button onClick={() => removeLine(idx)} className="text-red-500 hover:text-red-400 p-1.5 rounded transition-all">
-                                                                        <Trash2 size={14} />
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        )
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#223645] bg-white dark:bg-[#121E27] shadow-xs">
+                                        <table className="w-full text-xs text-left border-collapse min-w-[650px]">
+                                            <thead>
+                                                <tr className="bg-slate-100/90 dark:bg-[#162531] text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-[#223645] font-bold">
+                                                    <th className="px-3.5 py-3">Sản Phẩm</th>
+                                                    <th className="px-3 py-3 w-20 text-center">Tồn Kho</th>
+                                                    <th className="px-3 py-3 w-20 text-center">SL</th>
+                                                    <th className="px-3 py-3 w-28 text-right">Đơn Giá</th>
+                                                    <th className="px-3 py-3 w-20 text-center">CK %</th>
+                                                    <th className="px-3 py-3 w-20 text-center">VAT %</th>
+                                                    <th className="px-3 py-3 w-28 text-right">Thành Tiền</th>
+                                                    <th className="px-2 py-3 w-10 text-center"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 dark:divide-[#1C2C3A]">
+                                                {lines.map((l, idx) => {
+                                                    const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
+                                                    const lowStock = l.stock < l.qtyOrdered
+                                                    const priceSource = priceMap[l.productId]?.source ?? l.priceSource
+                                                    const hasPriceBadge = priceSource && priceSource !== 'DEFAULT_ZERO'
 
-                                        {/* Mobile Card View */}
-                                        <div className="block sm:hidden space-y-2">
-                                            {lines.map((l, idx) => {
-                                                const lineTotal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
-                                                const lowStock = l.stock < l.qtyOrdered
-                                                const priceSource = priceMap[l.productId]?.source ?? l.priceSource
-                                                const hasPriceBadge = priceSource && priceSource !== 'DEFAULT_ZERO'
-                                                return (
-                                                    <div key={idx} className="p-3 rounded-md space-y-2"
-                                                        style={{ background: '#142433', border: `1px solid ${lowStock ? 'rgba(139,26,46,0.35)' : '#2A4355'}` }}>
-                                                        <div className="flex items-start justify-between gap-2">
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="text-sm font-semibold text-[#E8F1F2] truncate">{l.skuCode}</p>
-                                                                <p className="text-xs text-gray-300 whitespace-normal leading-relaxed">{l.productName}</p>
-                                                            </div>
-                                                            <button onClick={() => removeLine(idx)} style={{ color: '#8B1A2E', padding: '4px' }} type="button">
-                                                                <Trash2 size={14} />
-                                                            </button>
-                                                        </div>
-                                                        {hasPriceBadge && (
-                                                            <div className="flex flex-wrap gap-1">
-                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                                                                    style={getPriceBadgeStyle(priceSource)}>
-                                                                    <Tag size={9} /> {getPriceBadgeLabel({ source: priceSource }, channel)}
+                                                    return (
+                                                        <tr key={idx} className={`hover:bg-slate-50/80 dark:hover:bg-[#16232F]/50 transition-colors ${lowStock ? 'bg-rose-50/40 dark:bg-rose-950/20' : ''}`}>
+                                                            <td className="px-3.5 py-2.5">
+                                                                <p className="font-mono font-bold text-slate-900 dark:text-white">{l.skuCode}</p>
+                                                                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug mt-0.5 max-w-[320px]">{l.productName}</p>
+                                                                {hasPriceBadge && (
+                                                                    <div className="mt-1">
+                                                                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${getPriceBadgeStyle(priceSource)}`}>
+                                                                            <Tag size={9} /> {getPriceBadgeLabel({ source: priceSource }, channel)}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-center">
+                                                                <span className={`font-mono font-bold ${lowStock ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                                                                    {l.stock}
                                                                 </span>
-                                                            </div>
-                                                        )}
-                                                        <div className="grid grid-cols-4 gap-2">
-                                                            <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>SL (Tồn: {l.stock})</p>
-                                                                <input type="number" min={1} value={l.qtyOrdered}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    min={1}
+                                                                    value={l.qtyOrdered}
                                                                     onChange={e => updateLine(idx, 'qtyOrdered', Math.max(1, +e.target.value))}
-                                                                    className="w-full px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
-                                                                    style={{ ...inputStyle, borderColor: lowStock ? '#8B1A2E' : '#2A4355' }}
+                                                                    className="w-16 px-2 py-1 text-xs text-center font-bold rounded-md border border-slate-300 dark:border-[#2A4355] bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
                                                                 />
-                                                                {lowStock && <p className="text-[10px] text-red-500 mt-0.5">Vượt tồn!</p>}
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>Đơn Giá</p>
-                                                                <input type="number" min={0} value={l.unitPrice}
-                                                                    readOnly
-                                                                    className="w-full px-2 py-1 text-xs text-right opacity-70 cursor-not-allowed bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
-                                                                    style={{ ...inputStyle, background: 'rgba(20,36,51,0.5)' }}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>CK (%)</p>
-                                                                <input type="number" min={0} max={100} value={l.lineDiscountPct}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                                {formatVND(l.unitPrice)}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={100}
+                                                                    value={l.lineDiscountPct}
                                                                     onChange={e => updateLine(idx, 'lineDiscountPct', Math.min(100, Math.max(0, +e.target.value)))}
-                                                                    className="w-full px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
-                                                                    style={inputStyle}
+                                                                    className="w-14 px-1.5 py-1 text-xs text-center rounded-md border border-slate-300 dark:border-[#2A4355] bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
                                                                 />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs mb-1" style={{ color: '#4A6A7A' }}>VAT (%)</p>
-                                                                <select value={l.vatRate ?? 10}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-center">
+                                                                <select
+                                                                    value={l.vatRate ?? 10}
                                                                     onChange={e => updateLine(idx, 'vatRate', Number(e.target.value))}
-                                                                    className="w-full px-2 py-1 text-xs text-center bg-[#0D1E2B] border border-[#2A4355] text-white rounded outline-none"
-                                                                    style={inputStyle}>
+                                                                    className="w-16 px-1.5 py-1 text-xs text-center rounded-md border border-slate-300 dark:border-[#2A4355] bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
+                                                                >
                                                                     <option value={10}>10%</option>
                                                                     <option value={8}>8%</option>
+                                                                    <option value={0}>0%</option>
                                                                 </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex justify-end pt-1">
-                                                            <p className="text-xs font-bold text-[#87CBB9]">
-                                                                = {formatVND(lineTotal)}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    </>
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-right font-mono font-bold text-teal-700 dark:text-teal-400">
+                                                                {formatVND(lineTotal)}
+                                                            </td>
+                                                            <td className="px-2 py-2.5 text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeLine(idx)}
+                                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors"
+                                                                    title="Xóa dòng"
+                                                                >
+                                                                    <Trash2 size={15} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 )}
                             </div>
 
-                            {/* Order Discount */}
-                            <div className="flex items-center gap-3 p-3 rounded" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                                <Tag size={14} style={{ color: '#D4A853' }} />
-                                <span className="text-xs" style={{ color: '#4A6A7A' }}>CK Đơn Hàng</span>
-                                <input type="number" min={0} max={100} value={orderDiscount}
-                                    onChange={e => setOrderDiscount(Math.min(100, Math.max(0, +e.target.value)))}
-                                    className="w-16 px-2 py-1 text-xs text-center" style={inputStyle} />
-                                <span className="text-xs" style={{ color: '#4A6A7A' }}>%</span>
-                                <div className="flex-1" />
+                            {/* Section: Tổng Hợp Tài Chính & Chiết Khấu */}
+                            <div className="p-4 rounded-xl bg-white dark:bg-[#16232F] border border-slate-200 dark:border-[#2A4355] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Tag size={15} className="text-amber-600" />
+                                    <span className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">CK Đơn Hàng:</span>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={orderDiscount}
+                                        onChange={e => setOrderDiscount(Math.min(100, Math.max(0, +e.target.value)))}
+                                        className="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-300 dark:border-[#2A4355] bg-slate-50 dark:bg-[#1A2A38] text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-amber-500"
+                                    />
+                                    <span className="text-xs font-semibold text-slate-500">%</span>
+                                </div>
+
                                 <div className="text-right space-y-1">
-                                    <div className="flex justify-end gap-4 text-xs text-[#4A6A7A]">
-                                        <span>Trước thuế: {formatVND(subtotal * (1 - orderDiscount / 100))}</span>
+                                    <div className="flex justify-end gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                                        <span>Trước thuế: <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(subtotal * (1 - orderDiscount / 100))}</strong></span>
+                                        <span>•</span>
                                         {vatBreakdown.length > 1 ? (
                                             <span>
                                                 VAT: {vatBreakdown.map(v => `${v.rate}%: ${formatVND(Math.round(v.amount))}`).join(' | ')} (Tổng: {formatVND(Math.round(vatAmount))})
                                             </span>
                                         ) : (
-                                            <span>VAT ({vatBreakdown[0]?.rate ?? 10}%): {formatVND(Math.round(vatAmount))}</span>
+                                            <span>VAT ({vatBreakdown[0]?.rate ?? 10}%): <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(Math.round(vatAmount))}</strong></span>
                                         )}
                                     </div>
-                                    <div className="flex justify-end items-center gap-2">
-                                        <p className="text-xs" style={{ color: '#4A6A7A' }}>Tổng thanh toán (Gồm VAT)</p>
-                                        <p className="text-lg font-bold" style={{ color: '#D4A853' }}>
+                                    <div className="flex justify-end items-baseline gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Tổng thanh toán (Gồm VAT):</span>
+                                        <span className="text-xl font-black font-mono text-amber-700 dark:text-amber-400">
                                             {formatVND(finalTotal)}
-                                        </p>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Save */}
-                            <button onClick={handleSave} disabled={saving || lines.length === 0}
-                                className="w-full py-3 text-sm font-bold rounded-md flex items-center justify-center gap-2 transition-all"
-                                style={{ background: saving ? '#2A4355' : '#D4A853', color: '#0A1926' }}>
-                                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                {saving ? 'Đang lưu...' : 'Cập Nhật Đơn Hàng'}
-                            </button>
                         </>
                     )}
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="px-6 py-4 border-t border-slate-200 dark:border-[#223645] bg-white dark:bg-[#15232E] flex items-center justify-end gap-3 shrink-0">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-5 py-2.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={saving || lines.length === 0 || loadingSO}
+                        className="px-6 py-2.5 text-xs font-bold rounded-lg flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                    >
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                    </button>
                 </div>
             </div>
         </div>

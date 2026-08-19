@@ -40,7 +40,7 @@ export interface WarehouseNXTSummary {
 export interface StockMovementRow {
     id: string
     date: Date
-    docType: 'GR' | 'DO' | 'ADJ' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'WRITE_OFF'
+    docType: 'GR' | 'DO' | 'ADJ' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'WRITE_OFF' | 'POS_SALE'
     docNo: string
     docId: string
     warehouseId: string
@@ -199,6 +199,21 @@ export async function getWarehouseNXTReport(filters: {
     const openingDoMap = new Map<string, number>()
     openingDo.forEach(item => openingDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
 
+    // B1.1 Opening POS Sales (Channel DIRECT_INDIVIDUAL, status PAID/DELIVERED/INVOICED before fromDate)
+    const openingPos = await prisma.salesOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyOrdered: true },
+        where: {
+            so: {
+                channel: 'DIRECT_INDIVIDUAL',
+                status: { in: ['PAID', 'DELIVERED', 'INVOICED'] },
+                createdAt: { lt: fromDate },
+            },
+        },
+    })
+    const openingPosMap = new Map<string, number>()
+    openingPos.forEach(item => openingPosMap.set(item.productId, Number(item._sum.qtyOrdered ?? 0)))
+
     // B2. Opening Transfer OUT (ONLY if filtering a specific warehouse)
     const openingTrfOutMap = new Map<string, number>()
     if (warehouseId) {
@@ -261,6 +276,21 @@ export async function getWarehouseNXTReport(filters: {
     const periodDoMap = new Map<string, number>()
     periodDo.forEach(item => periodDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
 
+    // D1.1 Period POS Sales (Channel DIRECT_INDIVIDUAL between fromDate and toDate)
+    const periodPos = await prisma.salesOrderLine.groupBy({
+        by: ['productId'],
+        _sum: { qtyOrdered: true },
+        where: {
+            so: {
+                channel: 'DIRECT_INDIVIDUAL',
+                status: { in: ['PAID', 'DELIVERED', 'INVOICED'] },
+                createdAt: { gte: fromDate, lte: toDate },
+            },
+        },
+    })
+    const periodPosMap = new Map<string, number>()
+    periodPos.forEach(item => periodPosMap.set(item.productId, Number(item._sum.qtyOrdered ?? 0)))
+
     // D2. Period Transfer OUT (ONLY if filtering a specific warehouse)
     const periodTrfOutMap = new Map<string, number>()
     if (warehouseId) {
@@ -303,11 +333,11 @@ export async function getWarehouseNXTReport(filters: {
 
     for (const p of products) {
         const opIn = (openingLotMap.get(p.id) ?? 0) + (openingTrfInMap.get(p.id) ?? 0)
-        const opOut = (openingDoMap.get(p.id) ?? 0) + (openingTrfOutMap.get(p.id) ?? 0)
+        const opOut = (openingDoMap.get(p.id) ?? 0) + (openingTrfOutMap.get(p.id) ?? 0) + (openingPosMap.get(p.id) ?? 0)
         const openingQty = Math.max(0, opIn - opOut)
 
         const inQty = (periodLotMap.get(p.id) ?? 0) + (periodTrfInMap.get(p.id) ?? 0)
-        const outQty = (periodDoMap.get(p.id) ?? 0) + (periodTrfOutMap.get(p.id) ?? 0)
+        const outQty = (periodDoMap.get(p.id) ?? 0) + (periodTrfOutMap.get(p.id) ?? 0) + (periodPosMap.get(p.id) ?? 0)
         const closingQty = Math.max(0, openingQty + inQty - outQty)
 
         // Skip zero stock / zero activity products if requested
@@ -416,7 +446,7 @@ export async function getStockMovements(filters: {
     const lotWarehouseFilter = warehouseId ? { location: { warehouseId } } : {}
     const doWarehouseFilter = warehouseId ? { warehouseId } : {}
 
-    const [opLots, opDo, opTrfIn, opTrfOut] = await Promise.all([
+    const [opLots, opDo, opPos, opTrfIn, opTrfOut] = await Promise.all([
         prisma.stockLot.aggregate({
             where: {
                 productId,
@@ -436,6 +466,17 @@ export async function getStockMovements(filters: {
                 },
             },
             _sum: { qtyShipped: true },
+        }),
+        prisma.salesOrderLine.aggregate({
+            where: {
+                productId,
+                so: {
+                    channel: 'DIRECT_INDIVIDUAL',
+                    status: { in: ['PAID', 'DELIVERED', 'INVOICED'] },
+                    createdAt: { lt: fromDate },
+                },
+            },
+            _sum: { qtyOrdered: true },
         }),
         warehouseId
             ? prisma.transferOrderLine.aggregate({
@@ -466,7 +507,7 @@ export async function getStockMovements(filters: {
     ])
 
     const opIn = Number(opLots._sum.qtyReceived ?? 0) + Number(opTrfIn._sum?.qtyTransferred ?? 0)
-    const opOut = Number(opDo._sum.qtyShipped ?? 0) + Number(opTrfOut._sum?.qtyTransferred ?? 0)
+    const opOut = Number(opDo._sum.qtyShipped ?? 0) + Number(opPos._sum?.qtyOrdered ?? 0) + Number(opTrfOut._sum?.qtyTransferred ?? 0)
     const openingBalance = Math.max(0, opIn - opOut)
 
     const movements: StockMovementRow[] = []

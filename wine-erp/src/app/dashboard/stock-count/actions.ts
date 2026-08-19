@@ -275,12 +275,16 @@ export async function createStockCountSessionExtended(input: {
         const wh = await prisma.warehouse.findUnique({ where: { id: input.warehouseId } })
         if (!wh) return { success: false, error: 'Kho hàng không tồn tại' }
 
-        // Generate sessionNo: e.g. KK-GVM-20260808-001
+        // Generate sessionNo: e.g. KK-GVM-20260808-001 (atomic max numbering)
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-        const countToday = await prisma.stockCountSession.count({
-            where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } }
+        const prefix = `KK-${wh.code}-${dateStr}-`
+        const lastSession = await prisma.stockCountSession.findFirst({
+            where: { sessionNo: { startsWith: prefix } },
+            orderBy: { sessionNo: 'desc' },
+            select: { sessionNo: true }
         })
-        const sessionNo = `KK-${wh.code}-${dateStr}-${String(countToday + 1).padStart(2, '0')}`
+        const nextSeq = lastSession?.sessionNo ? parseInt(lastSession.sessionNo.slice(-2), 10) + 1 : 1
+        const sessionNo = `${prefix}${String(nextSeq).padStart(2, '0')}`
         const title = input.title || `Kiểm kê ${input.scopeType === 'FULL_WAREHOUSE' ? 'Tổng thể' : input.scopeType === 'SPOT_COUNT' ? 'Đột xuất' : 'Chu kỳ'} - ${wh.name}`
 
         // Filter locations/lots
@@ -486,31 +490,120 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
 
         // Update session status
         const adjustmentNo = `ADJ-${session.sessionNo || session.id.slice(-6).toUpperCase()}`
+        const currentUser = await getCurrentUser()
+        const userId = currentUser?.id ?? 'system'
 
         await prisma.$transaction(async (tx) => {
+            let totalShortageVal = 0
+            let totalSurplusVal = 0
+
             // Update stock lots for lines with variance
             for (const line of session.lines) {
                 if (line.qtyActual !== null && Number(line.variance) !== 0) {
                     const varianceVal = Number(line.variance)
 
-                    // Find primary stock lot in this location
-                    const targetLot = await tx.stockLot.findFirst({
-                        where: {
-                            productId: line.productId,
-                            location: { warehouseId: session.warehouseId },
-                            status: 'AVAILABLE'
-                        }
-                    })
-
-                    if (targetLot) {
-                        const newQty = Math.max(0, Number(targetLot.qtyAvailable) + varianceVal)
-                        await tx.stockLot.update({
-                            where: { id: targetLot.id },
-                            data: {
-                                qtyAvailable: newQty,
-                                status: newQty === 0 ? 'CONSUMED' : 'AVAILABLE'
-                            }
+                    // Find primary stock lot matching location or warehouse
+                    let targetLot = null
+                    if (line.locationId) {
+                        targetLot = await tx.stockLot.findFirst({
+                            where: {
+                                productId: line.productId,
+                                locationId: line.locationId,
+                                status: 'AVAILABLE'
+                            },
+                            orderBy: { receivedDate: 'asc' }
                         })
+                    }
+                    if (!targetLot) {
+                        targetLot = await tx.stockLot.findFirst({
+                            where: {
+                                productId: line.productId,
+                                location: { warehouseId: session.warehouseId },
+                                status: 'AVAILABLE'
+                            },
+                            orderBy: { receivedDate: 'asc' }
+                        })
+                    }
+
+                    const unitCost = targetLot ? Number(targetLot.unitLandedCost) : 0
+
+                    if (varianceVal < 0) {
+                        // Shortage (Hao hụt / thiếu hàng)
+                        const shortageQty = Math.abs(varianceVal)
+                        totalShortageVal += shortageQty * unitCost
+
+                        if (targetLot) {
+                            const take = Math.min(Number(targetLot.qtyAvailable), shortageQty)
+                            const newQty = Number(targetLot.qtyAvailable) - take
+                            await tx.stockLot.update({
+                                where: { id: targetLot.id },
+                                data: {
+                                    qtyAvailable: newQty,
+                                    status: newQty === 0 ? 'CONSUMED' : 'AVAILABLE'
+                                }
+                            })
+                        }
+                    } else {
+                        // Surplus (Thừa hàng)
+                        totalSurplusVal += varianceVal * unitCost
+
+                        if (targetLot) {
+                            await tx.stockLot.update({
+                                where: { id: targetLot.id },
+                                data: {
+                                    qtyAvailable: { increment: varianceVal },
+                                    qtyReceived: { increment: varianceVal },
+                                    status: 'AVAILABLE'
+                                }
+                            })
+                        } else {
+                            // If no lot exists in warehouse, create new lot so surplus is recorded in DB
+                            let destLocId: string | null = line.locationId
+                            if (!destLocId) {
+                                const defaultLoc = await tx.location.findFirst({
+                                    where: { warehouseId: session.warehouseId },
+                                    orderBy: { locationCode: 'asc' }
+                                })
+                                destLocId = defaultLoc?.id ?? null
+                            }
+
+                            if (destLocId) {
+                                const lastLot = await tx.stockLot.findFirst({
+                                    where: { lotNo: { startsWith: 'ADJ-' } },
+                                    orderBy: { lotNo: 'desc' },
+                                    select: { lotNo: true }
+                                })
+                                let nextSeq = 1
+                                if (lastLot) {
+                                    const parts = lastLot.lotNo.split('-')
+                                    const parsed = parseInt(parts[parts.length - 1], 10)
+                                    if (!isNaN(parsed)) nextSeq = parsed + 1
+                                }
+                                const lotNo = `ADJ-${String(nextSeq).padStart(6, '0')}`
+
+                                let ownerEntityId: string | null = session.warehouse.legalEntityId
+                                if (!ownerEntityId) {
+                                    const firstLE = await tx.legalEntity.findFirst()
+                                    ownerEntityId = firstLE?.id ?? null
+                                }
+
+                                if (ownerEntityId) {
+                                    await tx.stockLot.create({
+                                        data: {
+                                            lotNo,
+                                            ownerEntityId,
+                                            productId: line.productId,
+                                            locationId: destLocId,
+                                            qtyReceived: varianceVal,
+                                            qtyAvailable: varianceVal,
+                                            unitLandedCost: unitCost,
+                                            receivedDate: new Date(),
+                                            status: 'AVAILABLE'
+                                        }
+                                    })
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -523,6 +616,17 @@ export async function approveAndCreateAdjustment(sessionId: string): Promise<{ s
                     adjustmentVoucherId: adjustmentNo
                 }
             })
+
+            // Auto-generate accounting journal for stock count adjustment
+            const { generateStockAdjustmentJournal } = await import('../finance/actions')
+            await generateStockAdjustmentJournal(
+                sessionId,
+                session.sessionNo || adjustmentNo,
+                totalShortageVal,
+                totalSurplusVal,
+                userId,
+                tx
+            )
         })
 
         revalidateCache('stock-count')

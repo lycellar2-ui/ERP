@@ -1,18 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+vi.mock('@/lib/session', () => ({
+    requireAuth: vi.fn().mockResolvedValue({ id: 'test-user', roles: ['ADMIN'] }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'test-user', roles: ['ADMIN'] }),
+}))
 
 const mockTx = {
     returnOrder: { update: vi.fn() },
-    creditNote: { create: vi.fn() },
+    creditNote: { create: vi.fn(), findFirst: vi.fn() },
     stockLot: { findFirst: vi.fn(), count: vi.fn(), create: vi.fn() },
     location: { findFirst: vi.fn() },
 }
 
 const mockPrisma = {
     salesOrder: { findUnique: vi.fn() },
-    returnOrder: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
-    creditNote: { count: vi.fn(), aggregate: vi.fn() },
+    returnOrder: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
+    creditNote: { count: vi.fn(), aggregate: vi.fn(), findFirst: vi.fn() },
     $transaction: vi.fn(async (cb: any) => {
         if (typeof cb === 'function') return cb(mockTx)
         return Promise.all(cb)
@@ -23,7 +27,11 @@ vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
 const { createReturnOrder, approveReturnOrder } = await import('@/app/dashboard/returns/actions')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.returnOrder.findFirst.mockResolvedValue({ returnNo: 'RET-000005' })
+    mockTx.creditNote.findFirst.mockResolvedValue(null)
+})
 
 // ═══════════════════════════════════════════════════
 // RET-01: Create Return Order
@@ -92,8 +100,10 @@ describe('RET-02: approveReturnOrder', () => {
         })
         mockPrisma.creditNote.count.mockResolvedValue(0)
         mockTx.location.findFirst.mockResolvedValue({ id: 'loc-q' })
-        mockTx.stockLot.findFirst.mockResolvedValue({ locationId: 'loc-q', shipmentId: 'ship-1', unitLandedCost: 350_000 })
-        mockTx.stockLot.count.mockResolvedValue(100)
+        mockTx.stockLot.findFirst.mockImplementation((args: any) => {
+            if (args?.where?.lotNo) return null
+            return { locationId: 'loc-q', shipmentId: 'ship-1', unitLandedCost: 350_000, ownerEntityId: 'le-lc' }
+        })
 
         const result = await approveReturnOrder('ret-1')
 

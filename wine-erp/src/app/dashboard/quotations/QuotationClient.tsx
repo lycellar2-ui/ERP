@@ -617,8 +617,8 @@ export function QuotationClient({ initialData }: Props) {
             {/* Detail Drawer */}
             {detailId && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setDetailId(null)} />
-                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(580px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setDetailId(null)} />
+                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(580px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#E8F1F2' }}>
                                 {detailLoading ? 'Chi Tiết Báo Giá' : `QT: ${detail?.quotationNo}`}
@@ -777,8 +777,8 @@ export function QuotationClient({ initialData }: Props) {
             {/* Create Drawer */}
             {createOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={handleCloseCreateDrawer} />
-                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(520px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={handleCloseCreateDrawer} />
+                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(520px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#E8F1F2' }}>Tạo Báo Giá Mới</h3>
                             <button onClick={handleCloseCreateDrawer} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
@@ -1055,8 +1055,8 @@ export function QuotationClient({ initialData }: Props) {
             {/* Send Drawer */}
             {sendDrawerOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setSendDrawerOpen(null)} />
-                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col" style={{ width: 'min(420px,95vw)', background: '#0D1E2B', borderLeft: '1px solid #2A4355' }}>
+                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setSendDrawerOpen(null)} />
+                    <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645] shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(420px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#E8F1F2' }}>Gửi Báo Giá</h3>
                             <button onClick={() => setSendDrawerOpen(null)} className="p-1.5 rounded" style={{ color: '#4A6A7A' }}><X size={18} /></button>
@@ -1154,12 +1154,12 @@ export function QuotationClient({ initialData }: Props) {
             {/* Quick Product Picker Modal */}
             {pickerOpen && (
                 <>
-                    <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(10,5,2,0.8)' }} onClick={() => setPickerOpen(false)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col rounded-sm"
-                        style={{ width: 'min(780px,95vw)', height: 'min(620px,90vh)', background: '#0D1E2B', border: '1px solid #2A4355', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+                    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setPickerOpen(false)} />
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col rounded-sm bg-[#0D1E2B] border border-[#2A4355] shadow-2xl"
+                        style={{ width: 'min(780px,95vw)', height: 'min(620px,90vh)' }}>
                         
                         {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #2A4355' }}>
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2A4355]">
                             <div>
                                 <h3 className="text-lg font-bold font-brand" style={{ color: '#E8F1F2' }}>
                                     🔍 Chọn sản phẩm nhanh

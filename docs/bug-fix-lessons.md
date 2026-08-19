@@ -2088,9 +2088,57 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
    - Cập nhật `getStepTimestamp('DELIVERED')` chỉ trả về thời gian nếu thực sự có Phiếu xuất kho đã xác nhận hoặc có sự kiện xuất kho trong audit trail.
 2. Cập nhật `warehouse/actions-do.ts` và `warehouse/actions.ts` cho phép các đơn hàng đã xuất hóa đơn trước (`INVOICED`) vẫn có thể được tạo Phiếu xuất kho (DO) bình thường nếu chưa giao hết.
 
+---
+
+## BUG-054: Sai Lệch Kế Toán Kho, Lệch Sổ NXT, Mất Niên Vụ Điều Chuyển & Race Condition Phân Hệ Kho (WMS)
+
+**Ngày:** 2026-08-19  
+**Severity:** 🔴 Critical — Phát hiện qua Comprehensive WMS Audit: Hoàn tác DO không đảo giá vốn COGS, duyệt kiểm kê thiếu bút toán kế toán chênh lệch, báo cáo NXT bỏ sót POS/Write-off, mất niên vụ & race condition khi chuyển kho, POS trừ kho tự do, và nguy cơ trùng mã do `count() + 1`.
+
+### Triệu chứng
+1. Khi Admin bấm **"Reverse DO"** để hoàn tác phiếu xuất kho DO, hàng hóa được trả về `StockLot`, nhưng bút toán Giá vốn Nợ 632 / Có 156 vẫn tồn tại trong sổ cái kế toán làm đội khống chi phí P&L.
+2. Duyệt đợt kiểm kê kho có chênh lệch thừa/thiếu (`approveAndCreateAdjustment`) chỉ chỉnh `qtyAvailable` mà không sinh bút toán điều chỉnh kế toán (Nợ 632 / Có 156 hoặc Nợ 156 / Có 711).
+3. Báo cáo Nhập Xuất Tồn (NXT) tính `outQty` chỉ từ `DeliveryOrderLine`, bỏ qua toàn bộ sản lượng Bán lẻ trực tiếp tại quầy POS (`DIRECT_INDIVIDUAL`), dẫn đến chênh lệch giữa NXT và tồn thực tế trên `StockLot`.
+4. Khi điều chuyển kho (`dispatchTransferOrder` & `receiveTransferOrder`), hệ thống không lọc niên vụ (`vintage`) khiến chai rượu niên vụ 2018 bị trừ nhầm thành niên vụ 2015, đồng thời vòng lặp trừ kho thiếu `updateMany({ where: { qtyAvailable: { gte: take } } })` gây nguy cơ trừ âm kho khi có thao tác đồng thời.
+5. Bán lẻ POS trừ kho theo FIFO không ràng buộc `location: { warehouseId }`, dẫn tới việc bán lẻ tại Showroom tự động trừ kho ở các tỉnh/thành phố khác.
+6. Sử dụng `prisma.model.count() + 1` để sinh mã chứng từ (`TO-`, `TRF-`, `QRT-`, `SMP-`, `RET-`, `CN-`, `KK-`) gây lỗi crash `Unique constraint failed` khi chạy đồng thời.
+
+### Nguyên nhân gốc rễ
+1. Thiếu liên kết giữa nghiệp vụ hoàn tác kho vận và nghiệp vụ đảo sổ cái kế toán giá vốn trong module `finance`.
+2. Kiểm kê kho chỉ cập nhật bảng `StockLot` mà không gọi Service sinh chứng từ kế toán kiểm kê định kỳ theo chuẩn VAS.
+3. Kênh bán lẻ POS không tạo phiếu DO trung gian mà trừ kho trực tiếp, nhưng module NXT chưa tổng hợp từ `SalesOrderLine` thuộc kênh `DIRECT_INDIVIDUAL`.
+4. Truy vấn điều chuyển kho thiếu mệnh đề `vintage: line.vintage` và thiếu điều kiện guard kiểm tra số dư khả dụng tức thời.
+5. Sinh mã chứng từ không dựa trên bản ghi có số thứ tự lớn nhất gần nhất (`findFirst({ orderBy: 'desc' })`).
+
+### Cách fix
+1. Trong `src/app/dashboard/finance/actions.ts`:
+   - Bổ sung `reverseDeliveryOrderCOGSJournal(doId)`: Tự động tạo bút toán đảo **Nợ 156 / Có 632** khi DO bị hoàn tác.
+   - Bổ sung `generateStockAdjustmentJournal(sessionId, sessionNo, totalShortage, totalSurplus)`: Tự động hạch toán chênh lệch kiểm kê (Nợ 632 / Có 156 cho thiếu, Nợ 156 / Có 711 cho thừa).
+2. Trong `src/app/dashboard/warehouse/actions.ts`:
+   - Tích hợp gọi `reverseDeliveryOrderCOGSJournal` trong transaction của `reverseDeliveryOrder`.
+   - Bổ sung validation kiểm tra `lot.ownerEntityId === so.legalEntityId` khi nhặt hàng xuất kho.
+   - Thêm `await requireAuth()` cho toàn bộ mutation server actions.
+   - Sửa thống kê `distinctSKUs` trong `getWMSFullStats` lấy `new Set(stockLots.map(l => l.productId)).size`.
+3. Trong `src/app/dashboard/transfers/actions.ts`:
+   - Áp dụng Atomic Max Numbering cho `TO-` và `TRF-`.
+   - Lọc chính xác `vintage: line.vintage` khi xuất và nhập kho điều chuyển.
+   - Dùng `updateMany({ where: { id: lot.id, qtyAvailable: { gte: take } }, data: { qtyAvailable: { decrement: take } } })` để bảo vệ chống race condition.
+4. Trong `src/app/dashboard/stock-count/actions.ts`:
+   - Khớp đúng vị trí `locationId` của từng dòng kiểm kê, tự động tạo mới lô `ADJ-` nếu phát sinh thừa hàng chưa từng có lô.
+   - Tự động gọi `generateStockAdjustmentJournal` hạch toán chênh lệch.
+5. Trong `src/app/dashboard/warehouse/actions-nxt.ts`:
+   - Tổng hợp thêm sản lượng bán lẻ POS (`SalesOrderLine` channel `DIRECT_INDIVIDUAL`) vào số lượng Xuất đầu kỳ và Xuất trong kỳ.
+6. Trong `src/app/dashboard/pos/actions.ts`:
+   - Giới hạn trừ kho đúng `posWarehouse` (Showroom/Kho bán lẻ) và đúng pháp nhân sở hữu `legalEntityId`.
+7. Trong `src/app/dashboard/warehouse/actions-sample.ts` & `src/app/dashboard/returns/actions.ts`:
+   - Chuyển đổi toàn bộ sinh mã chứng từ (`SMP-`, `SMR-`, `SMO-`, `SMA-`, `RET-`, `CN-`, `QRT-RET-`) sang Atomic Max Numbering và bổ sung `requireAuth()`.
+
 ### Bài học
 
-> ⚠️ **RULE 81: Thanh tiến trình trạng thái (Timeline Stepper) đối với các chu trình có thể xảy ra song song hoặc đảo thứ tự (như Xuất HĐ trước khi Giao hàng) KHÔNG ĐƯỢC dựa hoàn toàn vào chỉ số mảng tuyến tính (`activeIdx > i`). Mỗi bước nghiệp vụ vật lý (Kho/Giao hàng/Hóa đơn) BẮT BUỘC phải kiểm tra trực tiếp sự tồn tại và trạng thái của chứng từ thực tế tương ứng.**
+> ⚠️ **RULE 82: MỌI thao tác hoàn tác chứng từ kho (Reverse DO / Cancel GR) BẮT BUỘC phải đi kèm cơ chế đảo bút toán kế toán tương ứng (Reversing Journal Entry) trong cùng Database Transaction để tránh lệch sổ cái tài chính và bảng P&L.**
+
+> ⚠️ **RULE 83: Đối với Báo Cáo Nhập-Xuất-Tồn (NXT), mọi luồng làm giảm tồn kho (DO, POS bán lẻ trực tiếp, Xuất hủy Write-off, Điều chỉnh giảm kiểm kê) BẮT BUỘC phải được tính vào cột Xuất để đảm bảo: `Tồn đầu + Nhập - Xuất = Tồn cuối = Tổng qtyAvailable thực tế trên StockLot`.**
+
 
 
 

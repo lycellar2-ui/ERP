@@ -167,9 +167,14 @@ export async function createTransferOrder(input: {
         }
 
         const now = new Date()
-        const prefix = `TO-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}`
-        const count = await prisma.transferOrder.count()
-        const transferNo = `${prefix}-${String(count + 1).padStart(4, '0')}`
+        const prefix = `TO-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}-`
+        const lastTO = await prisma.transferOrder.findFirst({
+            where: { transferNo: { startsWith: prefix } },
+            orderBy: { transferNo: 'desc' },
+            select: { transferNo: true },
+        })
+        const nextSeq = lastTO ? parseInt(lastTO.transferNo.slice(-4), 10) + 1 : 1
+        const transferNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
         const status = input.submitForApproval ? 'PENDING_ACCOUNTING' : 'DRAFT'
 
         await prisma.transferOrder.create({
@@ -298,31 +303,39 @@ export async function dispatchTransferOrder(id: string): Promise<{ success: bool
             if (!to) throw new Error('Không tìm thấy phiếu chuyển kho')
             if (to.status !== 'CONFIRMED') throw new Error('Phiếu chuyển kho phải được Kế toán duyệt trước khi xuất kho')
 
-            // Trừ tồn kho tại Kho Đi theo FIFO
+            // Trừ tồn kho tại Kho Đi theo FIFO an toàn concurrency & đúng niên vụ
             for (const line of to.lines) {
                 let remaining = Number(line.qtyTransferred)
+                const whereLot: any = {
+                    productId: line.productId,
+                    status: 'AVAILABLE',
+                    qtyAvailable: { gt: 0 },
+                    location: { warehouseId: to.fromWarehouseId },
+                }
+                if (line.vintage) {
+                    whereLot.vintage = line.vintage
+                }
+
                 const lots = await tx.stockLot.findMany({
-                    where: {
-                        productId: line.productId,
-                        status: 'AVAILABLE',
-                        qtyAvailable: { gt: 0 },
-                        location: { warehouseId: to.fromWarehouseId },
-                    },
+                    where: whereLot,
                     orderBy: { receivedDate: 'asc' },
                 })
 
                 for (const lot of lots) {
                     if (remaining <= 0) break
                     const take = Math.min(Number(lot.qtyAvailable), remaining)
-                    await tx.stockLot.update({
-                        where: { id: lot.id },
+                    const updated = await tx.stockLot.updateMany({
+                        where: { id: lot.id, qtyAvailable: { gte: take } },
                         data: { qtyAvailable: { decrement: take } },
                     })
+                    if (updated.count === 0) {
+                        throw new Error(`Lô ${lot.lotNo} đã bị thay đổi do có giao dịch đồng thời. Vui lòng thử lại.`)
+                    }
                     remaining -= take
                 }
 
                 if (remaining > 0) {
-                    throw new Error(`Kho xuất không đủ tồn kho cho SKU ${line.product.skuCode} (thiếu ${remaining} chai)`)
+                    throw new Error(`Kho xuất không đủ tồn kho cho SKU ${line.product.skuCode}${line.vintage ? ` (niên vụ ${line.vintage})` : ''} (thiếu ${remaining} chai)`)
                 }
             }
 
@@ -368,8 +381,15 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
 
             for (const line of to.lines) {
                 // Ước tính giá vốn từ kho xuất
+                const whereSource: any = {
+                    productId: line.productId,
+                    location: { warehouseId: to.fromWarehouseId },
+                }
+                if (line.vintage) {
+                    whereSource.vintage = line.vintage
+                }
                 const sourceLot = await tx.stockLot.findFirst({
-                    where: { productId: line.productId, location: { warehouseId: to.fromWarehouseId } },
+                    where: whereSource,
                     orderBy: { receivedDate: 'desc' },
                 })
                 const avgCost = sourceLot ? Number(sourceLot.unitLandedCost) : 0
@@ -381,10 +401,22 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
                     ownerEntityId = firstLE.id
                 }
 
-                const lotCount = await tx.stockLot.count()
+                const lastTrf = await tx.stockLot.findFirst({
+                    where: { lotNo: { startsWith: 'TRF-' } },
+                    orderBy: { lotNo: 'desc' },
+                    select: { lotNo: true },
+                })
+                let nextTrfSeq = 1
+                if (lastTrf) {
+                    const parts = lastTrf.lotNo.split('-')
+                    const parsed = parseInt(parts[parts.length - 1], 10)
+                    if (!isNaN(parsed)) nextTrfSeq = parsed + 1
+                }
+                const lotNo = `TRF-${String(nextTrfSeq).padStart(6, '0')}`
+
                 await tx.stockLot.create({
                     data: {
-                        lotNo: `TRF-${String(lotCount + 1).padStart(6, '0')}`,
+                        lotNo,
                         ownerEntityId,
                         productId: line.productId,
                         locationId: destLocation.id,
@@ -392,7 +424,7 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
                         qtyAvailable: line.qtyTransferred,
                         unitLandedCost: avgCost,
                         receivedDate: new Date(),
-                        vintage: sourceLot?.vintage ?? null,
+                        vintage: line.vintage ?? sourceLot?.vintage ?? null,
                         status: 'AVAILABLE',
                     },
                 })

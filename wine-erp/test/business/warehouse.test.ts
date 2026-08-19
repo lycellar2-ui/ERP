@@ -2,11 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/audit', () => ({ logAudit: vi.fn().mockResolvedValue(undefined) }))
+vi.mock('@/lib/session', () => ({
+    requireAuth: vi.fn().mockResolvedValue({ id: 'test-user', roles: ['ADMIN'] }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'test-user', roles: ['ADMIN'] }),
+}))
 
 // Dynamic imports mocked at module level
 vi.mock('@/app/dashboard/finance/actions', () => ({
     generateGoodsReceiptJournal: vi.fn().mockResolvedValue({ success: true }),
     generateDeliveryOrderCOGSJournal: vi.fn().mockResolvedValue({ success: true }),
+    reverseDeliveryOrderCOGSJournal: vi.fn().mockResolvedValue({ success: true }),
 }))
 vi.mock('@/app/dashboard/qr-codes/actions', () => ({
     generateQRCodesForGR: vi.fn().mockResolvedValue({ success: true }),
@@ -28,7 +33,7 @@ const mockPrisma = {
     salesOrder: { findUnique: vi.fn() },
     deliveryOrder: { count: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
     stockLot: { findUnique: vi.fn(), update: vi.fn(), findFirst: vi.fn(), count: vi.fn(), create: vi.fn() },
-    warehouse: { findMany: vi.fn(), count: vi.fn(), create: vi.fn() },
+    warehouse: { findMany: vi.fn(), count: vi.fn(), create: vi.fn(), findUnique: vi.fn() },
     location: { findMany: vi.fn(), create: vi.fn(), findUnique: vi.fn(), delete: vi.fn() },
     $transaction: vi.fn(async (cb: any) => {
         if (typeof cb === 'function') return cb(mockTx)
@@ -54,6 +59,7 @@ beforeEach(() => {
         if (typeof cb === 'function') return cb(mockTx)
         return Promise.all(cb)
     })
+    mockPrisma.warehouse.findUnique.mockResolvedValue({ id: 'wh-1', code: 'WH-TA', name: 'Kho TA' })
     mockPrisma.goodsReceipt.findFirst.mockResolvedValue(null)
     mockPrisma.deliveryOrder.findFirst.mockResolvedValue(null)
     mockTx.stockLot.updateMany.mockResolvedValue({ count: 1 })

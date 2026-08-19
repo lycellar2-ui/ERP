@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { cached } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 import { SampleOriginType, SampleTxType, SampleReason } from '@prisma/client'
 
 // ═══════════════════════════════════════════════════
@@ -180,9 +181,16 @@ export async function createSampleProduct(data: {
     initialQty?: number
     notes?: string
 }) {
+    await requireAuth()
     const year = new Date().getFullYear()
-    const count = await prisma.sampleProduct.count()
-    const sampleCode = `SMP-${year}-${String(count + 1).padStart(4, '0')}`
+    const prefix = `SMP-${year}-`
+    const lastSample = await prisma.sampleProduct.findFirst({
+        where: { sampleCode: { startsWith: prefix } },
+        orderBy: { sampleCode: 'desc' },
+        select: { sampleCode: true }
+    })
+    const nextSeq = lastSample ? parseInt(lastSample.sampleCode.slice(-4), 10) + 1 : 1
+    const sampleCode = `${prefix}${String(nextSeq).padStart(4, '0')}`
 
     const initialQty = Number(data.initialQty ?? 0)
 
@@ -205,8 +213,14 @@ export async function createSampleProduct(data: {
 
     // If initial Qty > 0, record Initial Inbound Transaction
     if (initialQty > 0) {
-        const txCount = await prisma.sampleTransaction.count()
-        const docNo = `SMR-${year}-${String(txCount + 1).padStart(4, '0')}`
+        const smrPrefix = `SMR-${year}-`
+        const lastTx = await prisma.sampleTransaction.findFirst({
+            where: { docNo: { startsWith: smrPrefix } },
+            orderBy: { docNo: 'desc' },
+            select: { docNo: true }
+        })
+        const nextTxSeq = lastTx ? parseInt(lastTx.docNo.slice(-4), 10) + 1 : 1
+        const docNo = `${smrPrefix}${String(nextTxSeq).padStart(4, '0')}`
 
         await prisma.sampleTransaction.create({
             data: {
@@ -235,41 +249,47 @@ export async function createSampleTransaction(data: {
     requestedBy?: string
     notes?: string
 }) {
+    await requireAuth()
     const { sampleProductId, type, reason, qty, unitCost = 0, recipient, requestedBy, notes } = data
 
     if (qty <= 0) throw new Error('Số lượng giao dịch phải lớn hơn 0')
 
-    const sampleProd = await prisma.sampleProduct.findUnique({
-        where: { id: sampleProductId },
-    })
-
-    if (!sampleProd) throw new Error('Không tìm thấy thông tin hàng mẫu')
-
-    const currentQty = Number(sampleProd.qtyOnHand)
-
-    if (type === 'OUTBOUND' && qty > currentQty) {
-        throw new Error(`Số lượng xuất (${qty}) vượt quá tồn kho hàng mẫu hiện tại (${currentQty})`)
-    }
-
-    // Auto-generate docNo
     const year = new Date().getFullYear()
-    const txCount = await prisma.sampleTransaction.count()
-    const prefix = type === 'INBOUND' ? 'SMR' : type === 'OUTBOUND' ? 'SMO' : 'SMA'
-    const docNo = `${prefix}-${year}-${String(txCount + 1).padStart(4, '0')}`
+    const prefix = type === 'INBOUND' ? `SMR-${year}-` : type === 'OUTBOUND' ? `SMO-${year}-` : `SMA-${year}-`
 
-    // Calculate new qtyOnHand
-    let newQty = currentQty
-    if (type === 'INBOUND') {
-        newQty = currentQty + qty
-    } else if (type === 'OUTBOUND') {
-        newQty = currentQty - qty
-    } else if (type === 'ADJUSTMENT') {
-        newQty = qty // Set direct qty for adjustment
-    }
+    return prisma.$transaction(async (tx) => {
+        const sampleProd = await tx.sampleProduct.findUnique({
+            where: { id: sampleProductId },
+        })
 
-    // Database Transaction
-    const [transaction] = await prisma.$transaction([
-        prisma.sampleTransaction.create({
+        if (!sampleProd) throw new Error('Không tìm thấy thông tin hàng mẫu')
+
+        const currentQty = Number(sampleProd.qtyOnHand)
+
+        if (type === 'OUTBOUND' && qty > currentQty) {
+            throw new Error(`Số lượng xuất (${qty}) vượt quá tồn kho hàng mẫu hiện tại (${currentQty})`)
+        }
+
+        // Auto-generate docNo with atomic max numbering
+        const lastTx = await tx.sampleTransaction.findFirst({
+            where: { docNo: { startsWith: prefix } },
+            orderBy: { docNo: 'desc' },
+            select: { docNo: true }
+        })
+        const nextSeq = lastTx ? parseInt(lastTx.docNo.slice(-4), 10) + 1 : 1
+        const docNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
+
+        // Calculate new qtyOnHand
+        let newQty = currentQty
+        if (type === 'INBOUND') {
+            newQty = currentQty + qty
+        } else if (type === 'OUTBOUND') {
+            newQty = currentQty - qty
+        } else if (type === 'ADJUSTMENT') {
+            newQty = qty // Set direct qty for adjustment
+        }
+
+        const transaction = await tx.sampleTransaction.create({
             data: {
                 docNo,
                 type: type as SampleTxType,
@@ -281,14 +301,15 @@ export async function createSampleTransaction(data: {
                 requestedBy: requestedBy || null,
                 notes: notes || null,
             },
-        }),
-        prisma.sampleProduct.update({
+        })
+
+        await tx.sampleProduct.update({
             where: { id: sampleProductId },
             data: { qtyOnHand: newQty },
-        }),
-    ])
+        })
 
-    return transaction
+        return transaction
+    })
 }
 
 // ── 5. Fetch Sample Transactions History ──────────────

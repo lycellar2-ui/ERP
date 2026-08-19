@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2, Tag, ShieldAlert, Printer, Eye, Search, Building2, Star, ChevronDown, History, FileText, ShoppingBag } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
@@ -577,23 +577,36 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(10,25,38,0.8)' }}>
+        <div className="fixed inset-0 z-50 flex bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
             {/* Backdrop */}
             <div className="hidden md:block md:flex-1" onClick={onClose} />
 
             {/* Drawer */}
-            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden"
-                style={{ background: '#1B2E3D', borderLeft: '1px solid #2A4355' }}>
+            <div className="w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl h-full flex flex-col overflow-hidden bg-white dark:bg-[#111C24] shadow-2xl border-l border-slate-200 dark:border-[#223645]">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4"
-                    style={{ borderBottom: '1px solid #2A4355' }}>
-                    <div>
-                        <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
-                            {orderType === 'TASTING' ? '🍷 Tạo Đơn Hàng Tasting' : '🛒 Tạo Đơn Bán Hàng'}
-                        </h3>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                            <ShoppingBag size={20} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    {orderType === 'TASTING' ? '🍷 Tạo Đơn Hàng Tasting' : '🛒 Tạo Đơn Bán Hàng Mới'}
+                                </h3>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
+                                    {orderType === 'TASTING' ? 'TASTING' : 'STANDARD'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Tạo đơn đặt hàng mới, kiểm tra hạn mức tín dụng và chính sách giá
+                            </p>
+                        </div>
                     </div>
-                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={20} /></button>
+                    <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <X size={20} />
+                    </button>
                 </div>
 
                 {/* Body */}
@@ -1342,8 +1355,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-between items-center px-6 py-4" style={{ borderTop: '1px solid #2A4355' }}>
+                <div className="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50 shrink-0">
                     <button
+                        type="button"
                         onClick={() => {
                             if (!selectedCustomer) {
                                 toast.error('Vui lòng chọn khách hàng để xem file in')
@@ -1355,20 +1369,26 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                             }
                             setPreviewOpen(true)
                         }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded transition-colors bg-[#1F3547] hover:bg-[#2A4355] text-amber-300 border border-amber-500/30 shadow"
+                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors bg-white dark:bg-[#16232F] hover:bg-slate-100 dark:hover:bg-[#1F3547] text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-[#2A4355] shadow-xs cursor-pointer"
                         title="Xem trước phiếu đơn hàng trước khi tạo đơn"
                     >
-                        <Printer size={15} /> Xem File In
+                        <Printer size={15} className="text-amber-500" /> Xem File In
                     </button>
 
                     <div className="flex items-center gap-3">
-                        <button onClick={onClose} className="px-4 py-2 text-sm"
-                            style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1F3547] transition-colors cursor-pointer"
+                        >
                             Huỷ
                         </button>
-                        <button onClick={handleSave} disabled={saving}
-                            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold transition-all"
-                            style={{ background: '#87CBB9', color: '#0A1926', borderRadius: '6px' }}>
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                             {saving ? 'Đang lưu...' : (orderType === 'TASTING' ? '🍷 Tạo Đơn Hàng Tasting' : 'Tạo Đơn')}
                         </button>

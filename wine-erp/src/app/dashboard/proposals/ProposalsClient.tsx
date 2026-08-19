@@ -1480,10 +1480,10 @@ function BatchProductPickerModal({
     const selectedCount = Object.keys(selected).length
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-            <div className="w-full max-w-4xl max-h-[90vh] rounded-xl flex flex-col shadow-2xl" style={{ background: '#142433', border: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between p-5 border-b border-[#2A4355]">
-                    <h4 className="text-base font-bold text-[#E8F1F2]">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Product Picker)</h4>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+            <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] animate-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-[#223645]">
+                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Product Picker)</h4>
                     <button onClick={onClose} className="p-1 rounded hover:bg-[#1B2E3D]"><X size={20} className="text-gray-400" /></button>
                 </div>
 
@@ -1676,12 +1676,12 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.6)' }}>
-            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl" style={{ background: '#142433', borderLeft: '1px solid #2A4355' }}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645]">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6" style={{ borderBottom: '1px solid #2A4355' }}>
-                    <h3 className="text-xl font-bold" style={{ color: '#E8F1F2' }}>
-                        <FileText size={22} className="inline mr-2 text-[#87CBB9]" />
+                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <FileText size={22} className="text-amber-500" />
                         Tạo Tờ Trình Đề Xuất Mới
                     </h3>
                     <button onClick={onClose} className="p-1.5 rounded hover:bg-[#1B2E3D]"><X size={20} style={{ color: '#4A6A7A' }} /></button>

@@ -887,15 +887,13 @@ export function GoodsReceiptTab({ warehouses }: {
 
             {/* ── 6. Detail Slide-over Drawer (Matching Sales/Procurement) ── */}
             {(detailData || detailLoading) && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs">
-                    <div className="w-full sm:w-[780px] max-w-full h-full overflow-y-auto border-l shadow-2xl flex flex-col"
-                        style={{ background: '#0F1E2E', borderColor: '#2A4355' }}>
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+                    <div className="w-full sm:w-[780px] max-w-full h-full overflow-y-auto border-l border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] shadow-2xl flex flex-col">
                         {/* Drawer Header */}
-                        <div className="flex items-center justify-between p-5 border-b flex-shrink-0"
-                            style={{ background: '#142433', borderColor: '#2A4355' }}>
+                        <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50 flex-shrink-0">
                             <div>
                                 <div className="flex items-center gap-2.5 flex-wrap">
-                                    <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                         Phiếu Nhập Kho {detailData?.grNo ?? '...'}
                                     </h3>
                                     {detailData && (
@@ -1220,23 +1218,21 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs">
-            <div className="w-full sm:w-[740px] max-w-full h-full overflow-y-auto border-l shadow-2xl flex flex-col"
-                style={{ background: '#0F1E2E', borderColor: '#2A4355' }}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+            <div className="w-full sm:w-[740px] max-w-full h-full overflow-y-auto border-l border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] shadow-2xl flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b flex-shrink-0"
-                    style={{ background: '#142433', borderColor: '#2A4355' }}>
+                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50 flex-shrink-0">
                     <div>
-                        <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
                             Tạo Phiếu Nhập Kho (Goods Receipt)
                         </h3>
-                        <p className="text-xs mt-0.5" style={{ color: '#8AAEBB' }}>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             Nhập hàng từ đơn mua PO đã duyệt vào vị trí kho thực tế
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-[#8AAEBB] hover:text-[#E8F1F2] hover:bg-[#1B2E3D] cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                     >
                         <X size={18} />
                     </button>

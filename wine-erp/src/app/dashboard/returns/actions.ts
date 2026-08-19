@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { serialize } from '@/lib/serialize'
+import { requireAuth } from '@/lib/session'
 
 export type ReturnOrderRow = {
     id: string; returnNo: string; soNo: string; soId: string
@@ -49,14 +50,25 @@ export async function createReturnOrder(input: {
     lines: { productId: string; qtyReturned: number; unitPrice: number; reason?: string; condition?: string }[]
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const so = await prisma.salesOrder.findUnique({
             where: { id: input.soId },
             select: { soNo: true, customerId: true },
         })
         if (!so) return { success: false, error: 'SO not found' }
 
-        const count = await prisma.returnOrder.count()
-        const returnNo = `RET-${String(count + 1).padStart(6, '0')}`
+        const lastRet = await prisma.returnOrder.findFirst({
+            where: { returnNo: { startsWith: 'RET-' } },
+            orderBy: { returnNo: 'desc' },
+            select: { returnNo: true }
+        })
+        let nextSeq = 1
+        if (lastRet) {
+            const parts = lastRet.returnNo.split('-')
+            const parsed = parseInt(parts[parts.length - 1], 10)
+            if (!isNaN(parsed)) nextSeq = parsed + 1
+        }
+        const returnNo = `RET-${String(nextSeq).padStart(6, '0')}`
         const totalAmount = input.lines.reduce((s, l) => s + l.qtyReturned * l.unitPrice, 0)
 
         await prisma.returnOrder.create({
@@ -89,6 +101,7 @@ export async function createReturnOrder(input: {
 // ── Approve return → Create credit note + Quarantine stock ──────────
 export async function approveReturnOrder(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const ro = await prisma.returnOrder.findUnique({
             where: { id },
             include: {
@@ -101,10 +114,20 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
             return { success: false, error: 'Can only approve DRAFT or PENDING_INSPECTION' }
         }
 
-        const count = await prisma.creditNote.count()
-        const creditNoteNo = `CN-${String(count + 1).padStart(6, '0')}`
-
         await prisma.$transaction(async (tx) => {
+            const lastCN = await tx.creditNote.findFirst({
+                where: { creditNoteNo: { startsWith: 'CN-' } },
+                orderBy: { creditNoteNo: 'desc' },
+                select: { creditNoteNo: true }
+            })
+            let nextCNSeq = 1
+            if (lastCN) {
+                const parts = lastCN.creditNoteNo.split('-')
+                const parsed = parseInt(parts[parts.length - 1], 10)
+                if (!isNaN(parsed)) nextCNSeq = parsed + 1
+            }
+            const creditNoteNo = `CN-${String(nextCNSeq).padStart(6, '0')}`
+
             // 1. Update return order status
             await tx.returnOrder.update({
                 where: { id },
@@ -123,7 +146,13 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
                 },
             })
 
-            const qrtLocation = await tx.location.findFirst({ where: { type: 'QUARANTINE' } })
+            let qrtLocation = await tx.location.findFirst({ where: { type: 'QUARANTINE' } })
+            if (!qrtLocation) {
+                qrtLocation = await tx.location.findFirst({ orderBy: { locationCode: 'asc' } })
+            }
+            if (!qrtLocation) {
+                throw new Error('Hệ thống chưa có bất kỳ vị trí kho nào để lưu giữ hàng trả lại.')
+            }
 
             // 3. WMS: Create QUARANTINE stock lots for returned items
             for (const line of ro.lines) {
@@ -134,13 +163,25 @@ export async function approveReturnOrder(id: string): Promise<{ success: boolean
                     select: { locationId: true, shipmentId: true, unitLandedCost: true, ownerEntityId: true },
                 })
 
-                const lotCount = await tx.stockLot.count()
+                const lastQrtLot = await tx.stockLot.findFirst({
+                    where: { lotNo: { startsWith: 'QRT-RET-' } },
+                    orderBy: { lotNo: 'desc' },
+                    select: { lotNo: true }
+                })
+                let nextQrtSeq = 1
+                if (lastQrtLot) {
+                    const parts = lastQrtLot.lotNo.split('-')
+                    const parsed = parseInt(parts[parts.length - 1], 10)
+                    if (!isNaN(parsed)) nextQrtSeq = parsed + 1
+                }
+                const lotNo = `QRT-RET-${String(nextQrtSeq).padStart(6, '0')}`
+
                 await tx.stockLot.create({
                     data: {
-                        lotNo: `QRT-RET-${String(lotCount + 1).padStart(6, '0')}`,
+                        lotNo,
                         ownerEntityId: originalLot?.ownerEntityId ?? ro.so.legalEntityId,
                         productId: line.productId,
-                        locationId: originalLot?.locationId ?? qrtLocation?.id ?? 'UNKNOWN_LOC',
+                        locationId: originalLot?.locationId ?? qrtLocation.id,
                         shipmentId: originalLot?.shipmentId ?? null,
                         qtyReceived: line.qtyReturned,
                         qtyAvailable: line.qtyReturned,

@@ -2561,46 +2561,53 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             {/* Accounting Approval Modal */}
             {acctModalId && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={() => setAcctModalId(null)} />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ color: '#E8F1F2' }}>
+                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setAcctModalId(null)} />
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                            <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-base font-bold">🏛️</span>
                             Kế Toán Duyệt Đơn
                         </h3>
-                        <div className="mb-4">
-                            <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#4A6A7A' }}>
+                        <div className="mb-5">
+                            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
                                 Pháp Nhân Xuất Hoá Đơn
                             </label>
-                            <select value={acctEntityId} onChange={e => setAcctEntityId(e.target.value)}
-                                className="w-full px-3 py-2.5 text-sm outline-none"
-                                style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}>
+                            <select
+                                value={acctEntityId}
+                                onChange={e => setAcctEntityId(e.target.value)}
+                                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
+                            >
                                 <option value="">— Chưa chọn —</option>
                                 {legalEntities.map(e => (
                                     <option key={e.id} value={e.id}>{e.name} ({e.code}) — {e.code === 'TA' ? 'Nhập Khẩu' : 'Phân Phối'}</option>
                                 ))}
                             </select>
                         </div>
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => setAcctModalId(null)}
-                                className="px-4 py-2 text-sm" style={{ color: '#8AAEBB', border: '1px solid #2A4355', borderRadius: '6px' }}>
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setAcctModalId(null)}
+                                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
                                 Huỷ
                             </button>
-                            <button onClick={async () => {
-                                if (!acctEntityId) return toast.error('Vui lòng chọn pháp nhân')
-                                setActionLoading(acctModalId)
-                                toast.promise(acctApproveMutation.mutateAsync({ id: acctModalId, legalEntityId: acctEntityId }).then(() => {
-                                    setAcctModalId(null)
-                                    if (detailId === acctModalId) setDetailId(null)
-                                    reload()
-                                }), {
-                                    loading: 'Đang duyệt...',
-                                    success: 'KT duyệt thành công — chuyển CONFIRMED!',
-                                    error: (e: any) => `Lỗi: ${e.message}`,
-                                    finally: () => setActionLoading(null),
-                                })
-                            }}
-                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white"
-                                style={{ background: '#0891B2', borderRadius: '6px' }}>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    if (!acctEntityId) return toast.error('Vui lòng chọn pháp nhân')
+                                    setActionLoading(acctModalId)
+                                    toast.promise(acctApproveMutation.mutateAsync({ id: acctModalId, legalEntityId: acctEntityId }).then(() => {
+                                        setAcctModalId(null)
+                                        if (detailId === acctModalId) setDetailId(null)
+                                        reload()
+                                    }), {
+                                        loading: 'Đang duyệt...',
+                                        success: 'KT duyệt thành công — chuyển CONFIRMED!',
+                                        error: (e: any) => `Lỗi: ${e.message}`,
+                                        finally: () => setActionLoading(null),
+                                    })
+                                }}
+                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-all shadow-sm cursor-pointer"
+                            >
                                 <CheckCircle2 size={14} /> Duyệt & Xác Nhận
                             </button>
                         </div>
@@ -2719,39 +2726,40 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
 
     return (
         <>
-            <div className="fixed inset-0 z-40" style={{ background: 'rgba(10,5,2,0.7)' }} onClick={onClose} />
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-lg shadow-2xl"
-                style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
-                <div className="flex items-center justify-between mb-4 border-b border-[#2A4355] pb-3">
-                    <h3 className="text-lg font-bold" style={{ color: '#E8F1F2' }}>
+            <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={onClose} />
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-[#223645] pb-3">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm font-bold">🍷</span>
                         Duyệt Đơn Hàng & Chỉ Định Vintage
                     </h3>
-                    <button onClick={onClose} style={{ color: '#4A6A7A' }}><X size={18} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <X size={18} />
+                    </button>
                 </div>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12 gap-2 text-sm" style={{ color: '#8AAEBB' }}>
-                        <Loader2 size={24} className="animate-spin text-[#87CBB9]" />
+                    <div className="flex flex-col items-center justify-center py-12 gap-2 text-sm text-slate-500 dark:text-slate-400">
+                        <Loader2 size={24} className="animate-spin text-teal-600" />
                         Đang tải thông tin sản phẩm và tồn kho...
                     </div>
                 ) : !detail ? (
-                    <p className="text-center py-8 text-sm" style={{ color: '#4A6A7A' }}>Không tìm thấy đơn hàng</p>
+                    <p className="text-center py-8 text-sm text-slate-500 dark:text-slate-400">Không tìm thấy đơn hàng</p>
                 ) : (
                     <div className="space-y-4">
-                        <p className="text-xs" style={{ color: '#8AAEBB' }}>
-                            Mã đơn: <span className="font-bold text-[#87CBB9]">{detail.soNo}</span> · Khách hàng: <span className="font-semibold text-white">{detail.customer.name}</span>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Mã đơn: <span className="font-bold text-teal-600 dark:text-teal-400">{detail.soNo}</span> · Khách hàng: <span className="font-semibold text-slate-900 dark:text-white">{detail.customer.name}</span>
                         </p>
 
                         {/* Warehouse selector */}
-                        <div className="p-3 rounded-lg flex flex-col gap-1.5" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.2)' }}>
-                            <label className="text-xs font-semibold" style={{ color: '#D4A853' }}>
+                        <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-amber-900 dark:text-amber-300">
                                 Kho Xuất Bán Hàng * (Pháp nhân: {detail.legalEntity?.name || detail.legalEntity?.code || '—'})
                             </label>
                             <select
                                 value={selectedWarehouseId}
                                 onChange={e => setSelectedWarehouseId(e.target.value)}
-                                className="w-full px-3 py-2 text-xs outline-none rounded font-medium"
-                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none font-medium"
                             >
                                 <option value="">— Chọn kho xuất hàng —</option>
                                 {warehouses
@@ -2764,7 +2772,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                     .map((w: any) => {
                                         const isAllowed = w.allowSales !== false
                                         return (
-                                            <option key={w.id} value={w.id} disabled={!isAllowed} style={{ color: isAllowed ? '#E8F1F2' : '#64748B' }}>
+                                            <option key={w.id} value={w.id} disabled={!isAllowed}>
                                                 {isAllowed
                                                     ? `${w.isDefault ? '⭐ [Kho Mặc Định]' : '✔️ [Kho Xuất Bán]'} ${w.code} — ${w.name}`
                                                     : `⛔ [Chỉ Điều Chuyển - Không Xuất Bán] ${w.code} — ${w.name}`
@@ -2780,20 +2788,20 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             {detail.lines.map((line: any) => {
                                 const avail = availableVintages[line.productId] || []
                                 return (
-                                    <div key={line.id} className="p-3 rounded-lg flex flex-col gap-2" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div key={line.id} className="p-3 rounded-xl bg-slate-50 dark:bg-[#16232F] border border-slate-200 dark:border-[#223645] flex flex-col gap-2">
                                         <div className="flex justify-between items-start gap-2">
                                             <div className="min-w-0">
-                                                <p className="text-xs font-bold truncate text-[#E8F1F2]" title={line.product.productName}>
+                                                <p className="text-xs font-bold truncate text-slate-900 dark:text-white" title={line.product.productName}>
                                                     {line.product.productName}
                                                 </p>
-                                                <p className="text-[10px] text-[#4A6A7A] mt-0.5 font-mono">
+                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
                                                     SKU: {line.product.skuCode} · Số lượng: {Number(line.qtyOrdered)}
                                                 </p>
                                             </div>
                                         </div>
                                         
                                         <div className="flex items-center gap-2">
-                                            <label className="text-[10px] uppercase font-semibold whitespace-nowrap" style={{ color: '#8AAEBB' }}>
+                                            <label className="text-[10px] uppercase font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">
                                                 Vintage *
                                             </label>
                                             {avail.length > 0 ? (
@@ -2803,8 +2811,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                                         const val = Number(e.target.value)
                                                         setSelectedVintages(prev => ({ ...prev, [line.id]: val }))
                                                     }}
-                                                    className="flex-1 px-2.5 py-1.5 text-xs outline-none rounded"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#111C24] text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                                                 >
                                                     <option value="">— Chọn Vintage khả dụng —</option>
                                                     {avail.map(v => (
@@ -2812,7 +2819,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                                                     ))}
                                                 </select>
                                             ) : (
-                                                <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px]" style={{ background: 'rgba(138,174,187,0.06)', color: '#8AAEBB', border: '1px dashed rgba(138,174,187,0.2)' }}>
+                                                <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-700">
                                                     Không Vintage (Sản phẩm không Vintage hoặc Hết tồn kho)
                                                 </div>
                                             )}
@@ -2822,28 +2829,23 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
                             })}
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-3 border-t border-[#2A4355]">
-                            <button onClick={onClose} disabled={submitting}
-                                className="px-4 py-2 text-xs rounded transition-all"
-                                style={{ color: '#8AAEBB', border: '1px solid #2A4355' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(138,174,187,0.05)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-[#223645]">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                disabled={submitting}
+                                className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
+                            >
                                 Huỷ
                             </button>
-                            <button onClick={handleConfirm} disabled={submitting}
-                                className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded text-[#0A1926] transition-all"
-                                style={{ background: '#87CBB9' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = '#A5DED0')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '#87CBB9')}>
-                                {submitting ? (
-                                    <>
-                                        <Loader2 size={12} className="animate-spin" /> Đang duyệt...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle2 size={13} /> Duyệt Đơn Hàng
-                                    </>
-                                )}
+                            <button
+                                type="button"
+                                onClick={handleConfirm}
+                                disabled={submitting}
+                                className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                            >
+                                {submitting ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                                {submitting ? 'Đang duyệt...' : 'Xác Nhận Duyệt Đơn'}
                             </button>
                         </div>
                     </div>

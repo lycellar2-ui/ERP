@@ -250,30 +250,27 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10, 25, 38, 0.75)', backdropFilter: 'blur(4px)' }}>
-            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200"
-                style={{ background: '#0A1926', borderLeft: '1px solid #2A4355' }}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+            <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 bg-white dark:bg-[#111C24] border-l border-slate-200 dark:border-[#223645]">
                 
                 {/* Header (Matching CreateSODrawer) */}
-                <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ background: '#142433', borderBottom: '1px solid #2A4355' }}>
+                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold"
-                            style={{ background: 'rgba(135, 203, 185, 0.15)', color: '#87CBB9', border: '1px solid rgba(135, 203, 185, 0.3)' }}>
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold">
                             <ArrowRightLeft size={20} />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold" style={{ color: '#E8F1F2' }}>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Lập Phiếu Chuyển Kho Nội Bộ
                             </h3>
-                            <p className="text-xs" style={{ color: '#8AAEBB' }}>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                 Tạo phiếu điều chuyển rượu giữa các kho & gửi Kế toán phê duyệt
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg hover:bg-[#1B2E3D] transition-colors cursor-pointer"
-                        style={{ color: '#8AAEBB' }}
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
                         <X size={20} />
                     </button>
@@ -477,13 +474,12 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                     </div>
                 </div>
 
-                {/* Footer Bar (Matching CreateSODrawer Footer) */}
-                <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ background: '#142433', borderTop: '1px solid #2A4355' }}>
+                {/* Footer Bar */}
+                <div className="px-6 py-4 flex items-center justify-between shrink-0 border-t border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 text-xs font-semibold rounded transition-all cursor-pointer"
-                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB' }}
+                        className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
                         Hủy Bỏ
                     </button>
@@ -493,18 +489,16 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                             type="button"
                             disabled={submitting}
                             onClick={() => handleSubmit(false)}
-                            className="px-4 py-2 rounded text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#87CBB9' }}
+                            className="px-4 py-2 rounded-lg text-xs font-semibold border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
-                            <Save size={14} /> Lưu Nháp
+                            <Save size={14} className="text-amber-500" /> Lưu Nháp
                         </button>
 
                         <button
                             type="button"
                             disabled={submitting}
                             onClick={() => handleSubmit(true)}
-                            className="px-5 py-2 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow"
-                            style={{ background: '#87CBB9', color: '#0A1926' }}
+                            className="px-5 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
                         >
                             <Send size={14} /> Tạo & Gửi Duyệt
                         </button>

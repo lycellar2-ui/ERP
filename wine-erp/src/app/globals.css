@@ -97,14 +97,38 @@ html {
   background-color: var(--color-lys-surface) !important;
 }
 
-/* 3. Cards / Inputs / Popups (#1B2E3D) -> var(--color-lys-card) */
+/* 3. Cards / Inputs / Popups (#1B2E3D / #0F2133 / #0F1E2E / #1F3547 / #16232F) -> var(--color-lys-card) */
 [style*="#1B2E3D"],
 [style*="#1b2e3d"],
+[style*="#0F2133"],
+[style*="#0f2133"],
+[style*="#0F1E2E"],
+[style*="#0f1e2e"],
+[style*="#1F3547"],
+[style*="#1f3547"],
+[style*="#1F3E4D"],
+[style*="#1f3e4d"],
+[style*="#16232F"],
+[style*="#16232f"],
+[style*="#111C24"],
+[style*="#111c24"],
+[style*="#0E1A24"],
+[style*="#0e1a24"],
+[style*="#1A3040"],
+[style*="#1a3040"],
 [style*="rgb(27, 46, 61)"] {
   background: var(--color-lys-card) !important;
   background-color: var(--color-lys-card) !important;
 }
-[class*="bg-[#1B2E3D]"] {
+[class*="bg-[#1B2E3D]"],
+[class*="bg-[#0F2133]"],
+[class*="bg-[#0F1E2E]"],
+[class*="bg-[#1F3547]"],
+[class*="bg-[#1F3E4D]"],
+[class*="bg-[#16232F]"],
+[class*="bg-[#111C24]"],
+[class*="bg-[#0E1A24]"],
+[class*="bg-[#1A3040]"] {
   background-color: var(--color-lys-card) !important;
 }
 
@@ -130,17 +154,25 @@ html {
   background-color: var(--color-lys-surface) !important;
 }
 
-/* 5. Borders (#2A4355) -> var(--color-lys-border) */
+/* 5. Borders (#2A4355 / #1F3547 / #223645) -> var(--color-lys-border) */
 [style*="border"][style*="#2A4355"],
 [style*="border"][style*="#2a4355"],
+[style*="border"][style*="#1F3547"],
+[style*="border"][style*="#1f3547"],
+[style*="border"][style*="#223645"],
+[style*="border"][style*="#223645"],
 [style*="border-color: #2A4355"],
 [style*="border-color:#2A4355"],
+[style*="border-color: #1F3547"],
+[style*="border-color:#1F3547"],
 [style*="border-top"][style*="#2A4355"],
 [style*="border-bottom"][style*="#2A4355"],
 [style*="border-left"][style*="#2A4355"],
 [style*="border-right"][style*="#2A4355"],
 div[style*="border: 1px solid #2A4355"],
 div[style*="border:1px solid #2A4355"],
+div[style*="border: 1px solid #1F3547"],
+div[style*="border:1px solid #1F3547"],
 div[style*="border: 1px dashed #2A4355"],
 div[style*="border:1px dashed #2A4355"],
 table[style*="border-top: 1px solid #2A4355"],
@@ -148,7 +180,12 @@ table[style*="border-top:1px solid #2A4355"] {
   border-color: var(--color-lys-border) !important;
 }
 [class*="border-[#2A4355]"],
-[class*="border-[#2a4355]"] {
+[class*="border-[#2a4355]"],
+[class*="border-[#1F3547]"],
+[class*="border-[#1f3547]"],
+[class*="border-[#223645]"],
+[class*="divide-[#1F3547]"],
+[class*="divide-[#2A4355]"] {
   border-color: var(--color-lys-border) !important;
 }
 

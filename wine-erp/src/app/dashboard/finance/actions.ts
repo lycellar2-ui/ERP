@@ -936,6 +936,132 @@ export async function generateDeliveryOrderCOGSJournal(
     }
 }
 
+// ── Auto-generate Reversal: Hoàn tác DO → DR 156 (Hàng tồn kho) / CR 632 (COGS)
+export async function reverseDeliveryOrderCOGSJournal(
+    doId: string,
+    createdBy: string,
+    txClient?: any
+): Promise<{ success: boolean; entryId?: string; error?: string }> {
+    const client = txClient || prisma
+    try {
+        const cogsEntries = await client.journalEntry.findMany({
+            where: { docType: 'COGS', docId: doId },
+            include: { lines: true },
+        })
+
+        if (!cogsEntries || cogsEntries.length === 0) {
+            return { success: true } // No previous journal to reverse
+        }
+
+        const deliveryOrder = await client.deliveryOrder.findUnique({
+            where: { id: doId },
+            select: { doNo: true },
+        })
+
+        const now = new Date()
+        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1, client)
+
+        let lastReversalId: string | undefined
+        for (const origEntry of cogsEntries) {
+            const drLine = origEntry.lines.find((l: any) => Number(l.debit) > 0)
+            const amount = drLine ? Number(drLine.debit) : 0
+            if (amount <= 0) continue
+
+            const entryNo = await nextEntryNo('JE-COGS-REV', client)
+            const revEntry = await client.journalEntry.create({
+                data: {
+                    entryNo,
+                    docType: 'COGS',
+                    docId: doId,
+                    periodId: period.id,
+                    description: `[ĐẢO GIÁ VỐN] Hoàn tác xuất kho ${deliveryOrder?.doNo || doId}`,
+                    createdBy,
+                    lines: {
+                        create: [
+                            { account: '156 - Hàng tồn kho', debit: amount, credit: 0, description: `Hoàn nhập tồn kho DO ${deliveryOrder?.doNo || doId}` },
+                            { account: '632 - Giá vốn hàng bán', debit: 0, credit: amount, description: `Giảm giá vốn do hoàn tác DO ${deliveryOrder?.doNo || doId}` },
+                        ],
+                    },
+                },
+            })
+            lastReversalId = revEntry.id
+        }
+
+        revalidateCache('finance')
+        revalidatePath('/dashboard/finance')
+        return { success: true, entryId: lastReversalId }
+    } catch (err: any) {
+        console.error('[FINANCE] reverseDeliveryOrderCOGSJournal error:', err)
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Auto-generate: Stock Count Adjustment → DR 632 / CR 156 (Shortage) or DR 156 / CR 711 (Surplus)
+export async function generateStockAdjustmentJournal(
+    sessionId: string,
+    sessionNo: string,
+    totalShortageValue: number,
+    totalSurplusValue: number,
+    createdBy: string,
+    txClient?: any
+): Promise<{ success: boolean; entryIds?: string[]; error?: string }> {
+    const client = txClient || prisma
+    try {
+        const now = new Date()
+        const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1, client)
+        const entryIds: string[] = []
+
+        if (totalShortageValue > 0) {
+            const entryNo = await nextEntryNo('JE-ADJ-LOSS', client)
+            const entry = await client.journalEntry.create({
+                data: {
+                    entryNo,
+                    docType: 'ADJUSTMENT',
+                    docId: sessionId,
+                    periodId: period.id,
+                    description: `Hao hụt / Thiếu hàng theo biên bản kiểm kê ${sessionNo}`,
+                    createdBy,
+                    lines: {
+                        create: [
+                            { account: '632 - Giá vốn hàng bán', debit: totalShortageValue, credit: 0, description: `Hao hụt kiểm kê ${sessionNo}` },
+                            { account: '156 - Hàng tồn kho', debit: 0, credit: totalShortageValue, description: `Giảm tồn kho theo kiểm kê ${sessionNo}` },
+                        ],
+                    },
+                },
+            })
+            entryIds.push(entry.id)
+        }
+
+        if (totalSurplusValue > 0) {
+            const entryNo = await nextEntryNo('JE-ADJ-GAIN', client)
+            const entry = await client.journalEntry.create({
+                data: {
+                    entryNo,
+                    docType: 'ADJUSTMENT',
+                    docId: sessionId,
+                    periodId: period.id,
+                    description: `Thừa hàng theo biên bản kiểm kê ${sessionNo}`,
+                    createdBy,
+                    lines: {
+                        create: [
+                            { account: '156 - Hàng tồn kho', debit: totalSurplusValue, credit: 0, description: `Tăng tồn kho theo kiểm kê ${sessionNo}` },
+                            { account: '711 - Thu nhập khác', debit: 0, credit: totalSurplusValue, description: `Thu nhập khác do thừa kiểm kê ${sessionNo}` },
+                        ],
+                    },
+                },
+            })
+            entryIds.push(entry.id)
+        }
+
+        revalidateCache('finance')
+        revalidatePath('/dashboard/finance')
+        return { success: true, entryIds }
+    } catch (err: any) {
+        console.error('[FINANCE] generateStockAdjustmentJournal error:', err)
+        return { success: false, error: err.message }
+    }
+}
+
 // ── Auto-generate: Write-off → DR 811 (Chi phí khác) / CR 156 (Hàng tồn kho)
 export async function generateWriteOffJournal(
     lotId: string,
