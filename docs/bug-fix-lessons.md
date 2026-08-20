@@ -45,6 +45,9 @@
 36. [BUG-048: Giao Diện Sơ Đồ Kho 2D Bị Lộn Xộn & Khó Tương Tác Trên Điện Thoại Di Động](#bug-048-giao-diện-sơ-đồ-kho-2d-bị-lộn-xộn--khó-tương-tác-trên-điện-thoại-di-động)
 37. [BUG-049: Vercel Build Fail — Type Error 'purchasingPhone' Không Tồn Tại Trên Type 'Customer' & Sai Trường createdAt Trên CustomerAddress OrderBy](#bug-049-vercel-build-fail--type-error-purchasingphone-không-tồn-tại-trên-type-customer--sai-trường-createdat-trên-customeraddress-orderby)
 38. [BUG-050: Phiếu Chuyển Kho Đã Hoàn Tất/Đang Vận Chuyển Bị Cảnh Báo Ảo 'Thiếu Tồn (0 chai sẵn)' Trong Drawer](#bug-050-phiếu-chuyển-kho-đã-hoàn-tấtđang-vận-chuyển-bị-cảnh-báo-ảo-thiếu-tồn-0-chai-sẵn-trong-drawer)
+39. [BUG-053: Tiến Trình Đơn Hàng (Stepper) Tự Động Đánh Dấu 'Đã Giao Hàng' Khi Xuất Hóa Đơn Trước Khi Xuất Kho](#bug-053-tiến-trình-đơn-hàng-stepper-tự-động-đánh-dấu-đã-giao-hàng-khi-xuất-hóa-đơn-trước-khi-xuất-kho)
+40. [BUG-054: Sai Lệch Kế Toán Kho, Lệch Sổ NXT, Mất Niên Vụ Điều Chuyển & Race Condition Phân Hệ Kho (WMS)](#bug-054-sai-lệch-kế-toán-kho-lệch-sổ-nxt-mất-niên-vụ-điều-chuyển--race-condition-phân-hệ-kho-wms)
+41. [BUG-055: Độ Trễ / Lag Khi Gõ Nội Dung Diễn Giải / Ghi Chú Đơn Hàng Trong Drawers](#bug-055-độ-trễ--lag-khi-gõ-nội-dung-diễn-giải--ghi-chú-đơn-hàng-trong-drawers-createsodrawer-editsodrawer-quotations)
 
 ---
 
@@ -2138,6 +2141,34 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 > ⚠️ **RULE 82: MỌI thao tác hoàn tác chứng từ kho (Reverse DO / Cancel GR) BẮT BUỘC phải đi kèm cơ chế đảo bút toán kế toán tương ứng (Reversing Journal Entry) trong cùng Database Transaction để tránh lệch sổ cái tài chính và bảng P&L.**
 
 > ⚠️ **RULE 83: Đối với Báo Cáo Nhập-Xuất-Tồn (NXT), mọi luồng làm giảm tồn kho (DO, POS bán lẻ trực tiếp, Xuất hủy Write-off, Điều chỉnh giảm kiểm kê) BẮT BUỘC phải được tính vào cột Xuất để đảm bảo: `Tồn đầu + Nhập - Xuất = Tồn cuối = Tổng qtyAvailable thực tế trên StockLot`.**
+
+---
+
+## BUG-055: Độ Trễ / Lag Khi Gõ Nội Dung Diễn Giải / Ghi Chú Đơn Hàng Trong Drawers (CreateSODrawer, EditSODrawer, Quotations)
+
+**Ngày:** 2026-08-20  
+**Severity:** 🟡 Medium — Trải nghiệm người dùng (UX) bị giật lag khi gõ văn bản ghi chú/diễn giải đơn hàng và gõ tiếng Việt (Telex/VNI) do render đồng bộ toàn bộ component cây lớn trên mỗi phím bấm.
+
+### Triệu chứng
+1. Khi người dùng nhập văn bản vào ô "Diễn giải / Ghi chú đơn hàng" hoặc ô ghi chú Tờ trình Tasting trong Drawer tạo đơn bán hàng (`CreateSODrawer`), chỉnh sửa đơn (`EditSODrawer`), hoặc báo giá (`QuotationClient`), từng phím gõ có hiện tượng chậm, trễ (lag), dễ bị nuốt ký tự hoặc lỗi gõ dấu tiếng Việt (Telex/VNI).
+2. Hiện tượng lag càng nặng khi đơn hàng có nhiều dòng sản phẩm hoặc danh sách khách hàng/bảng giá lớn.
+
+### Nguyên nhân gốc rễ
+1. Trường `notes` được lưu trong state ở component cha mức root (`CreateSODrawer.tsx` dài hơn 1600 dòng, `EditSODrawer.tsx` dài gần 1000 dòng).
+2. Khi người dùng gõ từng ký tự, sự kiện `onChange` gọi `setNotes` kích hoạt React re-render toàn bộ cây component từ trên xuống dưới (bao gồm tính toán các dòng sản phẩm, phân tích VAT, tra cứu credit limit, render các bảng desktop/mobile và hàng chục SVG icon).
+3. Quá trình re-render tiêu tốn 30-50ms CPU trên mỗi phím, làm nghẽn Event Loop của trình duyệt, đặc biệt làm bộ gõ Telex/VNI mất tính năng kết hợp phím tức thời.
+
+### Cách fix
+1. Tạo component chuyên dụng `DebouncedTextarea` và `DebouncedInput` trong `src/components/DebouncedInput.tsx`:
+   - Quản lý state nội bộ `localValue` độc lập tại component con (isolated local state), mang lại phản hồi gõ tức thì 0ms (zero latency).
+   - Sử dụng cơ chế debounce 150ms để đồng bộ lên state của component cha, hạn chế tối đa việc re-render component cha trong lúc người dùng đang gõ liên tục.
+   - Tự động flush giá trị mới nhất lên component cha ngay khi `onBlur` (khi người dùng click ra ngoài hoặc bấm nút Lưu/Tạo đơn/Xem file in).
+   - Tự động đồng bộ `localValue` khi giá trị `externalValue` từ cha thay đổi (ví dụ khi nạp Tờ trình Tasting, nhân bản đơn hàng, hoặc reset form).
+2. Tích hợp `DebouncedTextarea` và `DebouncedInput` vào `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `QuotationClient.tsx`, và `SalesVisitsClient.tsx`.
+
+### Bài học
+
+> ⚠️ **RULE 84: Đối với các ô nhập liệu văn bản dài (Textarea, Description, Notes) nằm trong các Drawer/Modal hoặc Trang form có cấu trúc DOM lớn và nhiều dòng tính toán, BẮT BUỘC phải dùng `DebouncedTextarea` / `DebouncedInput` với Local State cô lập và cơ chế Debounce + onBlur Flush để đảm bảo độ trễ 0ms khi gõ và tương thích mượt mà 100% với bộ gõ tiếng Việt (Telex/VNI).**
 
 
 

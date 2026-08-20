@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit } from './actions'
 import { LiveCameraModal } from './LiveCameraModal'
+import { DebouncedTextarea } from '@/components/DebouncedInput'
 
 interface Props {
     initialVisits: any[]
@@ -458,9 +459,9 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     <label className="text-xs font-semibold text-[#8AAEBB] uppercase tracking-wider block">
                                         Ghi Chú Kết Quả Buổi Làm Việc *
                                     </label>
-                                    <textarea
+                                    <DebouncedTextarea
                                         value={checkoutNotes}
-                                        onChange={e => setCheckoutNotes(e.target.value)}
+                                        onChange={setCheckoutNotes}
                                         rows={3}
                                         placeholder="Nhập ghi chú kết quả (VD: Khách lấy 2 thùng Amarone, đề xuất giảm 5%, hẹn quay lại vào tuần sau...)"
                                         className="w-full p-3 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white focus:border-[#87CBB9] transition"

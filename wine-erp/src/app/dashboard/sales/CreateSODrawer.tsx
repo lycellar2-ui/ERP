@@ -12,6 +12,7 @@ import {
 import { formatVND, getLocalDateString } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { useQuery } from '@tanstack/react-query'
+import { DebouncedInput, DebouncedTextarea } from '@/components/DebouncedInput'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
@@ -750,11 +751,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                         {/* Field 3: Notes / Note Details */}
                                         <div className="md:col-span-12">
-                                            <input
-                                                type="text"
+                                            <DebouncedInput
                                                 placeholder="Ghi chú thêm về Đơn Tasting / Lý do cấp rượu mẫu..."
                                                 value={notes}
-                                                onChange={e => setNotes(e.target.value)}
+                                                onChange={setNotes}
                                                 className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-amber-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                                             />
                                         </div>
@@ -991,9 +991,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                             {/* Diễn giải đơn hàng */}
                             <div>
-                                <textarea
+                                <DebouncedTextarea
                                     value={notes}
-                                    onChange={e => setNotes(e.target.value)}
+                                    onChange={setNotes}
                                     placeholder="Nhập diễn giải/ghi chú đơn hàng..."
                                     rows={1}
                                     className="w-full px-3 py-1.5 text-xs outline-none rounded"

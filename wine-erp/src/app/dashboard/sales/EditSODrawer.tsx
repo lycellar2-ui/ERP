@@ -12,6 +12,7 @@ import {
 import { formatVND, getLocalDateString } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { useQuery } from '@tanstack/react-query'
+import { DebouncedTextarea } from '@/components/DebouncedInput'
 
 const CHANNELS: { value: SalesChannel; label: string }[] = [
     { value: 'HORECA', label: 'HORECA' },
@@ -750,9 +751,9 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                                     Diễn Giải / Ghi Chú Đơn Hàng
                                 </label>
-                                <textarea
+                                <DebouncedTextarea
                                     value={notes}
-                                    onChange={e => setNotes(e.target.value)}
+                                    onChange={setNotes}
                                     placeholder="Nhập diễn giải/ghi chú giao hàng hoặc hóa đơn..."
                                     rows={2}
                                     className="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-[#2A4355] bg-white dark:bg-[#16232F] text-slate-900 dark:text-white shadow-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"

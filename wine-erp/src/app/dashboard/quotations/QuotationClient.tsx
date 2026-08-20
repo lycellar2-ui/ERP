@@ -8,6 +8,7 @@ import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updat
 import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/actions'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { formatVND, formatDate } from '@/lib/utils'
+import { DebouncedTextarea } from '@/components/DebouncedInput'
 
 const STATUS_CFG: Record<QuotationStatus, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Nháp', color: '#8AAEBB', bg: 'rgba(138,174,187,0.12)' },
@@ -894,7 +895,7 @@ export function QuotationClient({ initialData }: Props) {
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Ghi Chú / Điều Khoản</label>
-                                <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                <DebouncedTextarea value={formData.notes} onChange={val => setFormData(prev => ({ ...prev, notes: val }))}
                                     rows={2} placeholder="Điều kiện giao hàng, thanh toán..."
                                     className="w-full mt-1 px-3 py-2 text-sm outline-none resize-none"
                                     style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }} />

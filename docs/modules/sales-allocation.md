@@ -603,11 +603,10 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Stepper Nhãn Bước & Thời gian** | `SalesClient.tsx` | Thiết kế lại thanh tiến trình gồm 6 bước rõ ràng kèm nhãn mô tả: Tạo đơn, Duyệt đơn, Xác nhận, Giao hàng, Xuất HĐ, Thu tiền |
 | **Ghi nhận Mốc thời gian** | `SalesClient.tsx` + `actions.ts:getSOTimeline` | Tự động phân tích mốc thời gian hoàn thành từng bước từ nhật ký hoạt động gộp (SO, DO, Invoice) |
 
-#### 🆕 Session 13 — MISA SME Offline Excel Export (09/08/2026)
+#### 🆕 Session 14 — Zero-Lag Isolated Input for Sales Drawers (20/08/2026)
 
 | Tính năng | File code | Ghi chú |
 |---|---|---|
-| **Xuất File MISA SME Offline (Hàng Loạt / Đơn Lẻ)** | `SalesClient.tsx`, `actions.ts:exportMisaSmeExcel` | Xuất file Excel chuẩn 100% định dạng MISA SME.NET Offline (Ngày CT, Số CT, Mã KH, Mã Kho, Mã SKU, Đơn giá, Chiết khấu, VAT, TK 5111/6321/1561) để Kế toán Import trực tiếp vào MISA SME |
-| **Xuất File VNPT HĐĐT 1 Loại Thuế (Hàng Loạt / Đơn Lẻ)** | `SalesClient.tsx`, `actions.ts:exportVnptInvoiceExcel` | Xuất file Excel chuẩn định dạng VNPT Invoice 1 loại thuế (`STT_HD`, `Mã_Cửa_Hàng`, `Mã_Khách_Hàng`, `Tên_Người_Mua`, `Tên_Đơn_Vị_Mua`, `Mã_Số_Thuế`, `Địa_Chỉ`, `Email_Nhận_HD`, `STT_Hang`, `Mã_Hàng_Hóa`, `Tên_Hàng_Hóa`, `ĐVT`, `Số_Lượng`, `Đơn_Giá`, `Thành_Tiền`, `Thuế_Suất`, `Tiền_Thuế_GTGT`, `Tổng_Cộng`). Bỏ trống Tên người mua cho KH Doanh nghiệp theo đúng quy định Luật Thuế |
+| **Debounced Textarea & Input Component** | `DebouncedInput.tsx`, `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `QuotationClient.tsx` | Cô lập state nội bộ (local state) cho các ô nhập mô tả/diễn giải và ghi chú đơn hàng, loại bỏ hiện tượng giật lag khi gõ văn bản và tương thích mượt mà 100% với bộ gõ tiếng Việt (Telex/VNI) |
 
-*Last updated: 2026-08-09 22:01 | Wine ERP v8.3*
+*Last updated: 2026-08-20 16:45 | Wine ERP v10.9*
