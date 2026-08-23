@@ -823,10 +823,16 @@ function SODetailDrawer({
                                             <span className="font-semibold text-right" style={{ color: '#E8F1F2' }}>{detail.customer.parent.name}</span>
                                         </div>
                                     )}
-                                    {detail.customer.taxId && (
+                                    {(detail.customer.taxId || (detail.customer as any).parent?.taxId) && (
                                         <div className="flex justify-between py-1 border-b border-[#2A4355]/20">
                                             <span style={{ color: '#4A6A7A' }}>MST:</span>
-                                            <span className="font-semibold font-mono" style={{ color: '#8AAEBB' }}>{detail.customer.taxId}</span>
+                                            <span className="font-semibold font-mono" style={{ color: '#8AAEBB' }}>
+                                                {detail.customer.taxId ? (
+                                                    detail.customer.taxId
+                                                ) : (
+                                                    <span>{(detail.customer as any).parent.taxId} <span className="text-[10px] text-amber-400 font-sans font-normal">(Cty Cha)</span></span>
+                                                )}
+                                            </span>
                                         </div>
                                     )}
                                     <div className="flex justify-between py-1 border-b border-[#2A4355]/20">

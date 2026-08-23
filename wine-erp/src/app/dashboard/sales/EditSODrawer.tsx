@@ -493,11 +493,11 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
                                 {/* Customer Selection */}
                                 <div className="md:col-span-5">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                                         Khách Hàng *
                                     </label>
                                     <div className="relative">
-                                        <div className={`relative flex items-center w-full rounded-lg border-2 transition-all bg-white dark:bg-[#16232F] ${customerDropdownOpen ? 'border-amber-500 ring-4 ring-amber-500/10' : 'border-slate-200 dark:border-[#2A4355] hover:border-slate-300 dark:hover:border-[#3B5466]'}`}>
+                                        <div className={`relative flex items-center w-full rounded-lg border-2 transition-all bg-white ${customerDropdownOpen ? 'border-amber-500 ring-4 ring-amber-500/10' : 'border-slate-200 hover:border-slate-300'}`}>
                                             <div className="pl-3 text-slate-400">
                                                 <Search size={15} />
                                             </div>
@@ -523,7 +523,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     setCustomerSearchInput(e.target.value)
                                                     setCustomerDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-2.5 pr-8 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                                className="w-full pl-2.5 pr-8 py-2 text-xs font-semibold text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
                                             />
                                             {selectedCustomer ? (
                                                 <button
@@ -548,7 +548,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
                                         {/* Dropdown Customer Results */}
                                         {customerDropdownOpen && (
-                                            <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white dark:bg-[#16232F] border border-slate-200 dark:border-[#2A4355] shadow-xl py-1 divide-y divide-slate-100 dark:divide-[#223645]">
+                                            <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white border border-slate-200 shadow-xl py-1 divide-y divide-slate-100">
                                                 {filteredCustomers.length === 0 ? (
                                                     <div className="px-4 py-3 text-xs text-slate-400 text-center">
                                                         Không tìm thấy khách hàng phù hợp
@@ -573,23 +573,23 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 }}
                                                                 className={`px-3.5 py-2.5 cursor-pointer transition-colors ${
                                                                     isDisabled 
-                                                                        ? 'bg-slate-50 opacity-60 cursor-not-allowed dark:bg-slate-900/40' 
+                                                                        ? 'bg-slate-50 opacity-60 cursor-not-allowed' 
                                                                         : isSelected 
-                                                                        ? 'bg-amber-50 dark:bg-amber-950/40 border-l-4 border-amber-500' 
-                                                                        : 'hover:bg-slate-50 dark:hover:bg-[#1C2C3A]'
+                                                                        ? 'bg-amber-50 border-l-4 border-amber-500' 
+                                                                        : 'hover:bg-slate-50'
                                                                 }`}
                                                             >
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="flex flex-col gap-1 min-w-0">
                                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500' : 'bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300'}`}>
+                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500' : 'bg-teal-100 text-teal-700'}`}>
                                                                                 {c.code}
                                                                             </span>
-                                                                            <span className={`font-semibold text-xs truncate ${isSelected ? 'text-amber-900 dark:text-amber-200' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                                            <span className={`font-semibold text-xs truncate ${isSelected ? 'text-amber-900 font-bold' : 'text-slate-800'}`}>
                                                                                 {c.name}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                                                        <div className="flex items-center gap-2 text-[10px] text-slate-500">
                                                                             {isCompany && (
                                                                                 <span className="flex items-center gap-1 text-sky-600 font-medium">
                                                                                     <Building2 size={11} /> {c.allowDirectSO ? 'Công ty' : 'Công ty Mẹ'}
@@ -604,7 +604,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                         </div>
                                                                     </div>
                                                                     {isSelected && (
-                                                                        <span className="shrink-0 text-amber-600 dark:text-amber-400">
+                                                                        <span className="shrink-0 text-amber-600">
                                                                             <CheckCircle2 size={16} />
                                                                         </span>
                                                                     )}

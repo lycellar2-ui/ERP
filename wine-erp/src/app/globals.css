@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
 
 @theme {
   /* ── LY's Cellars — Oceanic Cellar Design Tokens (Premium Light Mode) ── */
@@ -447,6 +449,13 @@ textarea,
 button {
   font-family: inherit;
 }
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+select,
+textarea {
+  color: var(--color-lys-ivory);
+}
+
 
 /* ── Smooth transition for interactive elements ── */
 button,

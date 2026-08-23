@@ -320,8 +320,8 @@ export async function getPLSummary() {
         const from = startOfMonth(now)
         const to = endOfMonth(now)
 
-        // Group journal lines by account on the DB side for performance, and get month SO total
-        const [groups, monthSalesOrders] = await Promise.all([
+        // Group journal lines by account on the DB side, and fetch month sales orders with cost
+        const [groups, monthOrders] = await Promise.all([
             prisma.journalLine.groupBy({
                 by: ['account'],
                 where: {
@@ -331,17 +331,27 @@ export async function getPLSummary() {
                 },
                 _sum: { debit: true, credit: true },
             }),
-            prisma.salesOrder.aggregate({
+            prisma.salesOrder.findMany({
                 where: {
                     status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
                     createdAt: { gte: from, lte: to },
                 },
-                _sum: { totalAmount: true },
+                include: {
+                    lines: {
+                        include: {
+                            product: {
+                                select: {
+                                    marginPrice: { select: { costPrice: true } }
+                                }
+                            }
+                        }
+                    }
+                }
             }),
         ])
 
         let revenueFromJournal = 0    // TK 511 = Revenue
-        let cogs = 0       // TK 632 = COGS
+        let cogsFromJournal = 0       // TK 632 = COGS
         let expenses = 0   // TK 641, 642, 635, 811
 
         for (const g of groups) {
@@ -352,14 +362,28 @@ export async function getPLSummary() {
             if (acc.startsWith('511')) {
                 revenueFromJournal += credit - debit // Revenue is Credit-side
             } else if (acc.startsWith('632')) {
-                cogs += debit - credit    // COGS is Debit-side
+                cogsFromJournal += debit - credit    // COGS is Debit-side
             } else if (acc.startsWith('641') || acc.startsWith('642') || acc.startsWith('635') || acc.startsWith('811')) {
                 expenses += debit - credit // Expenses are Debit-side
             }
         }
 
-        const monthSORevenue = Number(monthSalesOrders._sum.totalAmount ?? 0)
-        const revenue = revenueFromJournal > 0 ? revenueFromJournal : monthSORevenue
+        let soRevenue = 0
+        let soCOGS = 0
+        for (const so of monthOrders) {
+            for (const line of so.lines) {
+                const qty = Number(line.qtyOrdered)
+                const price = Number(line.unitPrice)
+                const discPct = Number(line.lineDiscountPct)
+                const rev = qty * price * (1 - discPct / 100)
+                const cost = line.product?.marginPrice ? Number(line.product.marginPrice.costPrice) : 0
+                soRevenue += rev
+                soCOGS += qty * cost
+            }
+        }
+
+        const revenue = revenueFromJournal > 0 ? revenueFromJournal : soRevenue
+        const cogs = cogsFromJournal >= soCOGS && soCOGS > 0 ? cogsFromJournal : (soCOGS > 0 ? soCOGS : cogsFromJournal)
 
         const grossProfit = revenue - cogs
         const netProfit = grossProfit - expenses

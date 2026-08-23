@@ -48,6 +48,7 @@
 39. [BUG-053: Tiến Trình Đơn Hàng (Stepper) Tự Động Đánh Dấu 'Đã Giao Hàng' Khi Xuất Hóa Đơn Trước Khi Xuất Kho](#bug-053-tiến-trình-đơn-hàng-stepper-tự-động-đánh-dấu-đã-giao-hàng-khi-xuất-hóa-đơn-trước-khi-xuất-kho)
 40. [BUG-054: Sai Lệch Kế Toán Kho, Lệch Sổ NXT, Mất Niên Vụ Điều Chuyển & Race Condition Phân Hệ Kho (WMS)](#bug-054-sai-lệch-kế-toán-kho-lệch-sổ-nxt-mất-niên-vụ-điều-chuyển--race-condition-phân-hệ-kho-wms)
 41. [BUG-055: Độ Trễ / Lag Khi Gõ Nội Dung Diễn Giải / Ghi Chú Đơn Hàng Trong Drawers](#bug-055-độ-trễ--lag-khi-gõ-nội-dung-diễn-giải--ghi-chú-đơn-hàng-trong-drawers-createsodrawer-editsodrawer-quotations)
+42. [BUG-056: Chữ Trắng Khi Gõ Khách Hàng (Mobile Dark Mode) & Gõ Ngược Chữ Tiếng Việt (Combobox IME Desync)](#bug-056-chữ-trắng-khi-gõ-khách-hàng-mobile-dark-mode--gõ-ngược-chữ-tiếng-việt-combobox-ime-desync)
 
 ---
 
@@ -2169,6 +2170,39 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 ### Bài học
 
 > ⚠️ **RULE 84: Đối với các ô nhập liệu văn bản dài (Textarea, Description, Notes) nằm trong các Drawer/Modal hoặc Trang form có cấu trúc DOM lớn và nhiều dòng tính toán, BẮT BUỘC phải dùng `DebouncedTextarea` / `DebouncedInput` với Local State cô lập và cơ chế Debounce + onBlur Flush để đảm bảo độ trễ 0ms khi gõ và tương thích mượt mà 100% với bộ gõ tiếng Việt (Telex/VNI).**
+
+---
+
+## BUG-056: Chữ Trắng Khi Gõ Khách Hàng (Mobile Dark Mode) & Gõ Ngược Chữ Tiếng Việt (Combobox IME Desync)
+
+**Ngày:** 2026-08-23  
+**Severity:** 🟡 Medium — Trải nghiệm người dùng (UX) trên thiết bị di động (Mobile).
+
+### Triệu chứng
+1. **Lỗi chữ trắng trên màn hình tạo/sửa đơn hàng:** Khi người dùng truy cập ERP trên điện thoại có bật Dark Mode hệ thống (iOS / Android), lúc gõ tên/mã khách hàng trong `CreateSODrawer` và `EditSODrawer`, chữ gõ vào bị biến thành màu trắng trên nền trắng, không thể nhìn thấy nội dung.
+2. **Lỗi gõ ngược chữ trên màn hình tạo tờ trình:** Trong `ProposalsClient`, khi chọn mã hàng/sản phẩm hoặc chọn khách hàng, người dùng gõ phím trên điện thoại (đặc biệt bàn phím tiếng Việt Telex/VNI) bị hiện tượng đảo ngược thứ tự chữ (ví dụ: gõ `vang` thành `gnav`), nuốt ký tự đầu hoặc con trỏ nhảy sai vị trí.
+
+### Nguyên nhân gốc rễ
+1. **Xung đột Tailwind CSS v4 Dark Variant:** Tailwind CSS v4 mặc định sử dụng `@media (prefers-color-scheme: dark)` cho tiền tố `dark:`. Do ERP chuẩn hóa theo Light Mode (`globals.css`), các class `dark:text-white` trong input kích hoạt khi điện thoại bật Dark Mode, làm màu chữ thành trắng trên nền trắng.
+2. **Lỗi State Tráo Đổi & Reset Trong Combobox (`value={open ? query : displayValue}`):**
+   - Trong `SearchableProductCombobox` và `SearchableCustomerCombobox`, giá trị input bị tráo đổi giữa `query` và `displayValue`.
+   - Khi người dùng chạm gõ phím đầu tiên, sự kiện `onChange` gọi `handleOpen()` -> chạy `setQuery('')` (xóa trắng input) ngay giữa chu kỳ gõ phím. Bộ gõ tiếng Việt (IME Composition) bị mất đồng bộ với DOM value, dẫn đến bộ đệm bàn phím chèn ký tự tiếp theo ngược vị trí hoặc nuốt ký tự.
+   - Thêm vào đó, lớp phủ toàn màn hình `fixed inset-0` và toạ độ `getBoundingClientRect()` bị co giật khi bàn phím ảo trượt lên.
+
+### Cách fix
+1. Trong `src/app/globals.css`:
+   - Thêm `@custom-variant dark (&:where(.dark, .dark *));` để Tailwind CSS v4 chỉ áp dụng dark mode khi có class `.dark` trên DOM.
+   - Bổ sung quy tắc text color mặc định `var(--color-lys-ivory)` cho toàn bộ `input, select, textarea`.
+2. Trong `CreateSODrawer.tsx` & `EditSODrawer.tsx`:
+   - Bỏ các class `dark:text-white`, chuẩn hóa text color `text-slate-900` trên nền trắng cho ô tìm kiếm và danh sách dropdown khách hàng.
+3. Trong `src/app/dashboard/proposals/ProposalsClient.tsx`:
+   - Refactor `SearchableProductCombobox` & `SearchableCustomerCombobox` sử dụng một state duy nhất `inputValue`, đồng bộ bằng `useEffect`, không bao giờ xóa trắng state giữa chừng khi gõ.
+   - Chuyển dropdown sang CSS `absolute top-full left-0 right-0 mt-1` tự nhiên, loại bỏ backdrop `fixed inset-0` và toạ độ `fixed coords`.
+
+### Bài học
+
+> ⚠️ **RULE 85: Tuyệt đối KHÔNG tráo đổi prop `value` của `<input>` giữa các biến state khác nhau (`value={open ? query : displayValue}`) hoặc gọi lệnh reset state trong `onFocus`/`onChange`. Luôn dùng một state đơn nhất có `useEffect` đồng bộ và `e.target.select()` khi focus để bảo vệ toàn vẹn bộ đệm IME tiếng Việt (Telex/VNI) trên điện thoại di động.**
+
 
 
 

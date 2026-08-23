@@ -2602,7 +2602,7 @@ export async function getVATDeclaration(year?: number, month?: number): Promise<
             status: { not: 'CANCELLED' },
         },
         include: {
-            customer: { select: { name: true, taxId: true } },
+            customer: { select: { name: true, taxId: true, parent: { select: { taxId: true } } } },
             so: { select: { soNo: true } },
         },
         orderBy: { createdAt: 'asc' },
@@ -2614,7 +2614,7 @@ export async function getVATDeclaration(year?: number, month?: number): Promise<
         return {
             invoiceNo: inv.invoiceNo,
             customerName: inv.customer.name,
-            customerTaxId: inv.customer.taxId ?? '',
+            customerTaxId: inv.customer.taxId || inv.customer.parent?.taxId || '',
             soNo: inv.so?.soNo ?? '',
             salesAmount: amount,
             vatRate: amount > 0 ? Math.round((vat / amount) * 100) : 10,

@@ -29,6 +29,7 @@ export async function getCostingProducts(): Promise<CostingProduct[]> {
                 wineType: true,
                 abvPercent: true,
                 country: true,
+                marginPrice: { select: { costPrice: true, wholesalePrice: true, retailPrice: true } },
                 stockLots: {
                     where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
                     select: { unitLandedCost: true, qtyAvailable: true },
@@ -45,8 +46,9 @@ export async function getCostingProducts(): Promise<CostingProduct[]> {
         return products.map(p => {
             const totalQty = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
             const totalCostValue = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
-            const unitLandedCost = totalQty > 0 ? totalCostValue / totalQty : 0
-            const listPrice = p.priceLines[0] ? Number(p.priceLines[0].unitPrice) : null
+            const lotLandedCost = totalQty > 0 ? totalCostValue / totalQty : 0
+            const unitLandedCost = lotLandedCost > 0 ? lotLandedCost : (p.marginPrice ? Number(p.marginPrice.costPrice) : 0)
+            const listPrice = p.priceLines[0] ? Number(p.priceLines[0].unitPrice) : (p.marginPrice ? Number(p.marginPrice.wholesalePrice) : null)
             const marginPct = listPrice && unitLandedCost > 0 ? ((listPrice - unitLandedCost) / listPrice) * 100 : null
 
             return {

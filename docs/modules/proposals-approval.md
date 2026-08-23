@@ -169,7 +169,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Sidebar navigation | ✅ Hoàn thành |
 | Seed data (12 proposals) | ✅ Hoàn thành |
 | Ma trận phân quyền (cấu hình) | ✅ Hoàn thành |
+| Áp dụng cơ chế giá đa chi nhánh | ✅ Hoàn thành (Session 14 - 20/08/2026) |
 
 ---
 
-*Last updated: 2026-03-08 | Wine ERP v5.2*
+*Last updated: 2026-08-20 17:05 | Wine ERP v10.9*

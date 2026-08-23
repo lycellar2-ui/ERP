@@ -694,7 +694,160 @@ export async function getCustomerResolvedPrices(
 export async function getCustomersForRules() {
     return prisma.customer.findMany({
         where: { status: 'ACTIVE', deletedAt: null },
-        select: { id: true, name: true, code: true, channel: true },
+        select: { id: true, name: true, code: true, channel: true, brandGroup: true, parentId: true },
         orderBy: { name: 'asc' },
     })
+}
+
+// ─── Get Sibling / Related Branches for a Customer ───
+export async function getCustomerRelatedBranches(customerId: string) {
+    const cust = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { id: true, name: true, code: true, brandGroup: true, parentId: true }
+    })
+    if (!cust) return []
+
+    const parentId = cust.parentId ?? cust.id
+    const brandGroup = cust.brandGroup
+
+    const related = await prisma.customer.findMany({
+        where: {
+            id: { not: customerId },
+            deletedAt: null,
+            status: 'ACTIVE',
+            OR: [
+                { parentId: parentId },
+                { id: parentId },
+                ...(brandGroup ? [{ brandGroup }] : [])
+            ]
+        },
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            brandGroup: true,
+            channel: true,
+            parentId: true,
+        },
+        orderBy: { code: 'asc' }
+    })
+
+    return related
+}
+
+// ─── Clone Price Rules to Other Branches / Customers ───
+export async function cloneCustomerPriceRules(input: {
+    sourceCustomerId: string
+    targetCustomerIds: string[]
+    ruleIds?: string[]
+    overrideExisting?: boolean
+}): Promise<{ success: boolean; clonedCount?: number; targetCount?: number; error?: string }> {
+    try {
+        const user = await requirePermission('SLS', 'CREATE')
+        const { sourceCustomerId, targetCustomerIds, ruleIds, overrideExisting = true } = input
+
+        if (!sourceCustomerId || !targetCustomerIds || targetCustomerIds.length === 0) {
+            return { success: false, error: 'Vui lòng chọn khách hàng nguồn và ít nhất 1 cơ sở đích' }
+        }
+
+        const sourceCustomer = await prisma.customer.findUnique({
+            where: { id: sourceCustomerId },
+            select: { name: true, code: true }
+        })
+        if (!sourceCustomer) {
+            return { success: false, error: 'Khách hàng nguồn không tồn tại' }
+        }
+
+        // Get source rules
+        const whereClause: any = {
+            customerId: sourceCustomerId,
+            status: 'APPROVED',
+        }
+        if (ruleIds && ruleIds.length > 0) {
+            whereClause.id = { in: ruleIds }
+        }
+
+        const sourceRules = await prisma.customerPriceRule.findMany({
+            where: whereClause,
+        })
+
+        if (sourceRules.length === 0) {
+            return { success: false, error: 'Khách hàng nguồn không có chính sách giá đã duyệt nào để sao chép' }
+        }
+
+        let totalCloned = 0
+
+        for (const targetId of targetCustomerIds) {
+            if (targetId === sourceCustomerId) continue
+
+            for (const r of sourceRules) {
+                const existing = await prisma.customerPriceRule.findFirst({
+                    where: {
+                        customerId: targetId,
+                        productId: r.productId,
+                    }
+                })
+
+                const noteText = `Sao chép từ cơ chế giá ${sourceCustomer.name} (${sourceCustomer.code})${r.notes ? ' | ' + r.notes : ''}`
+
+                if (existing) {
+                    if (overrideExisting) {
+                        await prisma.customerPriceRule.update({
+                            where: { id: existing.id },
+                            data: {
+                                ruleType: r.ruleType,
+                                value: r.value,
+                                startDate: r.startDate,
+                                endDate: r.endDate,
+                                status: 'APPROVED',
+                                notes: noteText,
+                                approvedBy: user.id,
+                                approvedAt: new Date(),
+                            }
+                        })
+                        totalCloned++
+                    }
+                } else {
+                    await prisma.customerPriceRule.create({
+                        data: {
+                            customerId: targetId,
+                            productId: r.productId,
+                            ruleType: r.ruleType,
+                            value: r.value,
+                            startDate: r.startDate,
+                            endDate: r.endDate,
+                            status: 'APPROVED',
+                            notes: noteText,
+                            requestedBy: user.id,
+                            approvedBy: user.id,
+                            approvedAt: new Date(),
+                        }
+                    })
+                    totalCloned++
+                }
+            }
+        }
+
+        logAudit({
+            userId: user.id,
+            userName: user.name,
+            action: 'CREATE',
+            entityType: 'CustomerPriceRule',
+            entityId: sourceCustomerId,
+            newValue: {
+                action: 'CLONE_RULES',
+                sourceCustomerId,
+                targetCustomerIds,
+                rulesCount: sourceRules.length,
+                totalCloned
+            }
+        })
+
+        revalidateCache('pricing')
+        revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/sales')
+        return { success: true, clonedCount: totalCloned, targetCount: targetCustomerIds.length }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }

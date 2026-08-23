@@ -117,7 +117,16 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [exportingExcel, setExportingExcel] = useState(false)
 
-    const [parentCandidates, setParentCandidates] = useState<{ id: string; name: string; code: string; entityType?: string }[]>([])
+    const [parentCandidates, setParentCandidates] = useState<{
+        id: string
+        name: string
+        code: string
+        entityType?: string
+        taxId?: string | null
+        vatCompanyName?: string | null
+        vatAddress?: string | null
+        vatEmail?: string | null
+    }[]>([])
 
     const isEdit = !!editingId
 
@@ -201,9 +210,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const [taxLookupLoading, setTaxLookupLoading] = useState(false)
 
     const handleLookupTax = async () => {
-        const taxToQuery = form.taxId
+        const parentCandidate = parentCandidates.find(p => p.id === form.parentId)
+        const taxToQuery = form.taxId || parentCandidate?.taxId
         if (!taxToQuery || !taxToQuery.trim()) {
-            toast.error('Vui lòng nhập Mã số thuế trước khi tra cứu')
+            toast.error('Vui lòng nhập Mã số thuế hoặc chọn Công ty Cha có Mã số thuế trước khi tra cứu')
             return
         }
         setTaxLookupLoading(true)
@@ -212,6 +222,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             if (!res.success || !res.data) {
                 toast.error(res.error || 'Không tìm thấy thông tin đăng ký thuế cho MST này')
                 return
+            }
+            if (!form.taxId && parentCandidate?.taxId) {
+                set('taxId', parentCandidate.taxId)
             }
             set('vatCompanyName', res.data.vatCompanyName)
             set('vatAddress', res.data.vatAddress)
@@ -859,15 +872,18 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                             {/* VAT INVOICE SECTION */}
                             <div className="p-3.5 rounded-xl space-y-3.5" style={{ background: 'rgba(212,168,83,0.06)', border: '1px solid rgba(212,168,83,0.25)' }}>
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between flex-wrap gap-1">
                                     <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#D4A853' }}>
                                         <FileText size={14} /> Thông Tin Xuất Hóa Đơn VAT
                                     </p>
-                                    {form.parentId && (
-                                        <span className="text-[10px] font-medium text-amber-300 bg-amber-950/70 px-2 py-0.5 rounded border border-amber-700/50">
-                                            ℹ️ Để trống sẽ tự động lấy theo Công Ty Cha
-                                        </span>
-                                    )}
+                                    {form.parentId && (() => {
+                                        const parent = parentCandidates.find(p => p.id === form.parentId)
+                                        return (
+                                            <span className="text-[10px] font-medium text-amber-300 bg-amber-950/70 px-2 py-0.5 rounded border border-amber-700/50">
+                                                ℹ️ {parent?.taxId ? `Kế thừa MST (${parent.taxId}) từ Công Ty Cha` : 'Để trống sẽ tự động lấy theo Công Ty Cha'}
+                                            </span>
+                                        )
+                                    })()}
                                 </div>
 
                                 <div>
@@ -875,7 +891,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         Tên Công Ty Xuất Hóa Đơn VAT
                                     </label>
                                     <input className={inputCls} style={inputStyle} value={form.vatCompanyName ?? ''} 
-                                        placeholder={form.parentId ? "Tự động lấy theo Tên Công ty Cha nếu để trống..." : "CÔNG TY TNHH ABC..."}
+                                        placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName ? `Tên Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName}` : "Tự động lấy theo Tên Công ty Cha nếu để trống...") : "CÔNG TY TNHH ABC..."}
                                         onChange={e => set('vatCompanyName', e.target.value || null)}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                                 </div>
@@ -898,9 +914,32 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             </button>
                                         </div>
                                         <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
-                                            placeholder={form.parentId ? "Tự động dùng MST Công ty Cha" : "0302012345"}
+                                            placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.taxId ? `Kế thừa MST Cha: ${parentCandidates.find(p => p.id === form.parentId)?.taxId}` : "Tự động dùng MST Công ty Cha") : "0302012345"}
                                             onChange={e => set('taxId', e.target.value || null)}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                                        {(() => {
+                                            const parent = parentCandidates.find(p => p.id === form.parentId)
+                                            if (parent?.taxId && !form.taxId) {
+                                                return (
+                                                    <div className="mt-1 flex items-center justify-between text-[11px] text-amber-300 bg-amber-950/50 px-2 py-1 rounded border border-amber-800/40">
+                                                        <span>🏢 MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                set('taxId', parent.taxId)
+                                                                if (parent.vatCompanyName && !form.vatCompanyName) set('vatCompanyName', parent.vatCompanyName)
+                                                                if (parent.vatAddress && !form.vatAddress) set('vatAddress', parent.vatAddress)
+                                                                if (parent.vatEmail && !form.vatEmail) set('vatEmail', parent.vatEmail)
+                                                            }}
+                                                            className="text-[10px] font-semibold text-teal-300 hover:text-teal-200 underline cursor-pointer ml-2"
+                                                        >
+                                                            Áp dụng
+                                                        </button>
+                                                    </div>
+                                                )
+                                            }
+                                            return null
+                                        })()}
                                         {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
                                             <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#E05252]">
                                                 <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
@@ -923,7 +962,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         Địa Chỉ Đăng Ký Thuế VAT
                                     </label>
                                     <input className={inputCls} style={inputStyle} value={form.vatAddress ?? ''} 
-                                        placeholder={form.parentId ? "Tự động dùng Địa chỉ Công ty Cha nếu để trống..." : "Số 123 Đường ABC, Phường X, Quận Y, TP..."}
+                                        placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatAddress ? `Địa chỉ Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatAddress}` : "Tự động dùng Địa chỉ Công ty Cha nếu để trống...") : "Số 123 Đường ABC, Phường X, Quận Y, TP..."}
                                         onChange={e => set('vatAddress', e.target.value || null)}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')} onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
                                 </div>

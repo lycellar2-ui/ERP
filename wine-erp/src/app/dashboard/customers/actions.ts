@@ -360,7 +360,16 @@ export async function getParentCandidates(currentId?: string) {
 
         return await prisma.customer.findMany({
             where,
-            select: { id: true, name: true, code: true, entityType: true },
+            select: {
+                id: true,
+                name: true,
+                code: true,
+                entityType: true,
+                taxId: true,
+                vatCompanyName: true,
+                vatAddress: true,
+                vatEmail: true,
+            },
             orderBy: { name: 'asc' },
         })
     } catch (err) {
@@ -382,6 +391,7 @@ export async function exportCustomersData() {
             contacts: { where: { isPrimary: true }, take: 1 },
             addresses: { where: { isDefault: true }, take: 1 },
             salesOrders: { select: { id: true } },
+            parent: { select: { code: true, name: true, taxId: true } },
         },
         orderBy: { name: 'asc' },
     })
@@ -392,7 +402,8 @@ export async function exportCustomersData() {
         'Tên viết tắt': c.shortName ?? '',
         'Loại': c.customerType,
         'Kênh': c.channel ?? '',
-        'MST': c.taxId ?? '',
+        'MST': c.taxId || c.parent?.taxId || '',
+        'Cty Mẹ': c.parent ? `[${c.parent.code}] ${c.parent.name}` : '',
         'Thanh Toán': c.paymentTerm,
         'Hạn Mức': Number(c.creditLimit),
         'Sales Rep': c.salesRep?.name ?? '',
@@ -1078,6 +1089,7 @@ export async function exportCustomerOnboardingForm(customerId: string): Promise<
                 salesRep: { select: { name: true } },
                 contacts: { where: { isPrimary: true }, take: 1 },
                 addresses: { where: { isDefault: true }, take: 1 },
+                parent: { select: { code: true, name: true, taxId: true } },
             }
         })
         if (!c) throw new Error('Không tìm thấy khách hàng')
@@ -1119,7 +1131,7 @@ export async function exportCustomerOnboardingForm(customerId: string): Promise<
         
         // Section II
         worksheet.getCell('E25').value = c.paymentTerm || 'NET30'
-        worksheet.getCell('N26').value = c.taxId || ''
+        worksheet.getCell('N26').value = c.taxId || c.parent?.taxId || ''
 
         // Save workbook to buffer and return as base64 string
         const buffer = await workbook.xlsx.writeBuffer()

@@ -515,13 +515,15 @@ async function getMarginPerSKU() {
         where: { status: 'ACTIVE' },
         select: {
             id: true, skuCode: true, productName: true, wineType: true, country: true,
+            marginPrice: { select: { costPrice: true, wholesalePrice: true } },
             priceLines: { select: { unitPrice: true }, take: 1, orderBy: { priceList: { effectiveDate: 'desc' } } },
         },
     })
     return result.map(p => {
         const c = costMap.get(p.id)
-        const avgCost = c && c.totalQty > 0 ? c.totalCost / c.totalQty : 0
-        const price = p.priceLines[0] ? Number(p.priceLines[0].unitPrice) : 0
+        const lotAvgCost = c && c.totalQty > 0 ? c.totalCost / c.totalQty : 0
+        const avgCost = lotAvgCost > 0 ? lotAvgCost : (p.marginPrice ? Number(p.marginPrice.costPrice) : 0)
+        const price = p.priceLines[0] ? Number(p.priceLines[0].unitPrice) : (p.marginPrice ? Number(p.marginPrice.wholesalePrice) : 0)
         const margin = price > 0 ? ((price - avgCost) / price * 100) : 0
         return {
             skuCode: p.skuCode, productName: p.productName, wineType: p.wineType,

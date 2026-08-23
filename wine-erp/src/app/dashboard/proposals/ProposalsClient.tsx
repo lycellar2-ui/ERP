@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import {
     FileText, Plus, X, Search, Send, CheckCircle2, XCircle, RotateCcw,
     Clock, AlertCircle, Loader2, MessageSquare, Paperclip, ChevronDown,
-    Filter, Eye, ArrowRight, ClipboardCheck, Printer, Trash2,
+    Filter, Eye, ArrowRight, ClipboardCheck, Printer, Trash2, Check,
 } from 'lucide-react'
 import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
@@ -1197,6 +1197,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 }
 
 // ─── Searchable Customer Combobox ───────────────────────────
+// ─── Searchable Customer Combobox ───────────────────────────
 function SearchableCustomerCombobox({
     customers,
     selectedCustomerId,
@@ -1207,48 +1208,52 @@ function SearchableCustomerCombobox({
     onSelect: (customer: any) => void
 }) {
     const [open, setOpen] = useState(false)
-    const [query, setQuery] = useState('')
     const containerRef = React.useRef<HTMLDivElement>(null)
-    const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 300 })
 
     const selectedCust = React.useMemo(() => {
         return customers.find((c: any) => c.id === selectedCustomerId)
     }, [customers, selectedCustomerId])
 
-    const handleOpen = () => {
-        if (containerRef.current) {
-            const rect = containerRef.current.getBoundingClientRect()
-            setCoords({
-                top: rect.bottom + 4,
-                left: rect.left,
-                width: rect.width
-            })
+    const [inputValue, setInputValue] = useState('')
+
+    useEffect(() => {
+        if (selectedCust) {
+            setInputValue(`[${selectedCust.code}] ${selectedCust.name}`)
+        } else if (!open) {
+            setInputValue('')
         }
-        setOpen(true)
-        setQuery('')
-    }
+    }, [selectedCust, open])
 
     const filtered = React.useMemo(() => {
-        const q = query.trim().toLowerCase()
+        const q = inputValue.trim().toLowerCase()
         if (!q) return customers.slice(0, 40)
         return customers.filter((c: any) => 
             (c.name && c.name.toLowerCase().includes(q)) || 
             (c.code && c.code.toLowerCase().includes(q))
         ).slice(0, 40)
-    }, [customers, query])
-
-    const displayValue = selectedCust ? `[${selectedCust.code}] ${selectedCust.name}` : query
+    }, [customers, inputValue])
 
     return (
         <div ref={containerRef} className="relative w-full">
             <div className="relative">
                 <input
                     type="text"
-                    value={open ? query : displayValue}
-                    onFocus={handleOpen}
+                    value={inputValue}
+                    onFocus={e => {
+                        setOpen(true)
+                        e.target.select()
+                    }}
                     onChange={e => {
-                        setQuery(e.target.value)
-                        if (!open) handleOpen()
+                        setInputValue(e.target.value)
+                        setOpen(true)
+                    }}
+                    onBlur={() => {
+                        setTimeout(() => {
+                            setOpen(false)
+                            if (selectedCust) {
+                                setInputValue(`[${selectedCust.code}] ${selectedCust.name}`)
+                            }
+                        }, 250)
                     }}
                     placeholder="Gõ mã (VD: HR10084) hoặc tên khách hàng để tìm..."
                     style={{ ...inputStyle, padding: '9px 36px 9px 32px', fontSize: '13px', background: '#142433' }}
@@ -1257,10 +1262,10 @@ function SearchableCustomerCombobox({
                 {selectedCust ? (
                     <button
                         type="button"
-                        onClick={(e) => {
-                            e.stopPropagation()
+                        onMouseDown={(e) => {
+                            e.preventDefault()
                             onSelect({ id: '', name: '', code: '' })
-                            setQuery('')
+                            setInputValue('')
                             setOpen(false)
                         }}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700/50"
@@ -1274,47 +1279,42 @@ function SearchableCustomerCombobox({
             </div>
 
             {open && (
-                <>
-                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div
-                        className="fixed z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl"
-                        style={{
-                            top: `${coords.top}px`,
-                            left: `${coords.left}px`,
-                            width: `${coords.width}px`,
-                            background: '#142433',
-                            border: '1px solid #2A4355',
-                        }}
-                    >
-                        {filtered.length === 0 ? (
-                            <div className="p-3 text-xs text-center text-gray-400">
-                                {query ? `Không tìm thấy khách hàng khớp với "${query}"` : 'Chưa có dữ liệu khách hàng'}
+                <div
+                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl divide-y divide-[#2A4355]/40"
+                    style={{
+                        background: '#142433',
+                        border: '1px solid #2A4355',
+                    }}
+                >
+                    {filtered.length === 0 ? (
+                        <div className="p-3 text-xs text-center text-gray-400">
+                            {inputValue ? `Không tìm thấy khách hàng khớp với "${inputValue}"` : 'Chưa có dữ liệu khách hàng'}
+                        </div>
+                    ) : (
+                        filtered.map((c: any) => (
+                            <div
+                                key={c.id}
+                                onMouseDown={(e) => {
+                                    e.preventDefault()
+                                    onSelect(c)
+                                    setInputValue(`[${c.code}] ${c.name}`)
+                                    setOpen(false)
+                                }}
+                                className={`w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between text-xs cursor-pointer ${c.id === selectedCustomerId ? 'bg-[#1B2E3D]' : ''}`}
+                            >
+                                <div className="min-w-0 flex-1 pr-2">
+                                    <span className="font-mono font-bold text-[#D4A853] mr-2 text-xs">[{c.code}]</span>
+                                    <span className="text-[#E8F1F2] font-medium">{c.name}</span>
+                                </div>
+                                {c.channel && (
+                                    <span className="text-[10px] text-[#8AAEBB] bg-[#1B2E3D] px-1.5 py-0.5 rounded whitespace-nowrap border border-[#2A4355]">
+                                        {c.channel}
+                                    </span>
+                                )}
                             </div>
-                        ) : (
-                            filtered.map((c: any) => (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => {
-                                        onSelect(c)
-                                        setOpen(false)
-                                    }}
-                                    className={`w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs ${c.id === selectedCustomerId ? 'bg-[#1B2E3D]' : ''}`}
-                                >
-                                    <div className="min-w-0 flex-1 pr-2">
-                                        <span className="font-mono font-bold text-[#D4A853] mr-2 text-xs">[{c.code}]</span>
-                                        <span className="text-[#E8F1F2] font-medium">{c.name}</span>
-                                    </div>
-                                    {c.channel && (
-                                        <span className="text-[10px] text-[#8AAEBB] bg-[#1B2E3D] px-1.5 py-0.5 rounded whitespace-nowrap border border-[#2A4355]">
-                                            {c.channel}
-                                        </span>
-                                    )}
-                                </button>
-                            ))
-                        )}
-                    </div>
-                </>
+                        ))
+                    )}
+                </div>
             )}
         </div>
     )
@@ -1331,35 +1331,30 @@ function SearchableProductCombobox({
     onSelect: (product: any) => void
 }) {
     const [open, setOpen] = useState(false)
-    const [query, setQuery] = useState('')
     const containerRef = React.useRef<HTMLDivElement>(null)
-    const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 380 })
 
-    const selectedProd = products.find(p => p.id === selectedProductId)
+    const selectedProd = React.useMemo(() => {
+        return products.find(p => p.id === selectedProductId)
+    }, [products, selectedProductId])
 
-    const handleOpen = () => {
-        if (containerRef.current) {
-            const rect = containerRef.current.getBoundingClientRect()
-            setCoords({
-                top: rect.bottom + 4,
-                left: rect.left,
-                width: Math.max(rect.width, 360)
-            })
+    const [inputValue, setInputValue] = useState('')
+
+    useEffect(() => {
+        if (selectedProd) {
+            setInputValue(`[${selectedProd.skuCode}] ${selectedProd.productName}`)
+        } else if (!open) {
+            setInputValue('')
         }
-        setOpen(true)
-        setQuery('')
-    }
+    }, [selectedProd, open])
 
     const filtered = React.useMemo(() => {
-        const q = query.trim().toLowerCase()
+        const q = inputValue.trim().toLowerCase()
         if (!q) return products.slice(0, 30)
         return products.filter(p => 
-            p.productName.toLowerCase().includes(q) || 
-            p.skuCode.toLowerCase().includes(q)
+            (p.productName && p.productName.toLowerCase().includes(q)) || 
+            (p.skuCode && p.skuCode.toLowerCase().includes(q))
         ).slice(0, 30)
-    }, [products, query])
-
-    const displayValue = selectedProd ? `[${selectedProd.skuCode}] ${selectedProd.productName}` : query
+    }, [products, inputValue])
 
     return (
         <div ref={containerRef} className="relative flex-1 min-w-0">
@@ -1367,11 +1362,22 @@ function SearchableProductCombobox({
             <div className="relative">
                 <input
                     type="text"
-                    value={open ? query : displayValue}
-                    onFocus={handleOpen}
+                    value={inputValue}
+                    onFocus={e => {
+                        setOpen(true)
+                        e.target.select()
+                    }}
                     onChange={e => {
-                        setQuery(e.target.value)
-                        if (!open) handleOpen()
+                        setInputValue(e.target.value)
+                        setOpen(true)
+                    }}
+                    onBlur={() => {
+                        setTimeout(() => {
+                            setOpen(false)
+                            if (selectedProd) {
+                                setInputValue(`[${selectedProd.skuCode}] ${selectedProd.productName}`)
+                            }
+                        }, 250)
                     }}
                     placeholder="Gõ mã SKU hoặc tên sản phẩm..."
                     style={{ ...inputStyle, padding: '7px 32px 7px 10px', fontSize: '13px', background: '#1B2E3D' }}
@@ -1380,43 +1386,39 @@ function SearchableProductCombobox({
             </div>
 
             {open && (
-                <>
-                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div
-                        className="fixed z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl"
-                        style={{
-                            top: `${coords.top}px`,
-                            left: `${coords.left}px`,
-                            width: `${coords.width}px`,
-                            background: '#142433',
-                            border: '1px solid #2A4355',
-                        }}
-                    >
-                        {filtered.length === 0 ? (
-                            <div className="p-3 text-xs text-center text-gray-500">Không tìm thấy sản phẩm khớp "{query}"</div>
-                        ) : (
-                            filtered.map(p => (
-                                <button
-                                    key={p.id}
-                                    type="button"
-                                    onClick={() => {
-                                        onSelect(p)
-                                        setOpen(false)
-                                    }}
-                                    className="w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between border-b border-[#2A4355]/40 text-xs"
-                                >
-                                    <div className="min-w-0 flex-1 pr-3">
-                                        <span className="font-mono font-bold text-[#87CBB9] mr-2 text-xs">{p.skuCode}</span>
-                                        <span className="text-[#E8F1F2] font-medium">{p.productName}</span>
-                                    </div>
-                                    <span className="font-mono text-xs text-gray-400 font-medium whitespace-nowrap bg-[#1B2E3D] px-2 py-1 rounded">
-                                        {formatVND(p.wholesalePrice)}
-                                    </span>
-                                </button>
-                            ))
-                        )}
-                    </div>
-                </>
+                <div
+                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl divide-y divide-[#2A4355]/40"
+                    style={{
+                        background: '#142433',
+                        border: '1px solid #2A4355',
+                        minWidth: '280px',
+                    }}
+                >
+                    {filtered.length === 0 ? (
+                        <div className="p-3 text-xs text-center text-gray-400">Không tìm thấy sản phẩm khớp "{inputValue}"</div>
+                    ) : (
+                        filtered.map(p => (
+                            <div
+                                key={p.id}
+                                onMouseDown={(e) => {
+                                    e.preventDefault()
+                                    onSelect(p)
+                                    setInputValue(`[${p.skuCode}] ${p.productName}`)
+                                    setOpen(false)
+                                }}
+                                className="w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between text-xs cursor-pointer"
+                            >
+                                <div className="min-w-0 flex-1 pr-3">
+                                    <span className="font-mono font-bold text-[#87CBB9] mr-2 text-xs">[{p.skuCode}]</span>
+                                    <span className="text-[#E8F1F2] font-medium">{p.productName}</span>
+                                </div>
+                                <span className="font-mono text-xs text-gray-400 font-medium whitespace-nowrap bg-[#1B2E3D] px-2 py-1 rounded">
+                                    {formatVND(p.wholesalePrice)}
+                                </span>
+                            </div>
+                        ))
+                    )}
+                </div>
             )}
         </div>
     )
@@ -1631,9 +1633,26 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         scope: 'ENTIRE_PORTFOLIO',
         discountPct: '',
     })
+    const [additionalBranches, setAdditionalBranches] = useState<string[]>([])
     const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number; quantity: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [batchPickerOpen, setBatchPickerOpen] = useState(false)
+
+    const selectedCustForProposal = useMemo(() => {
+        return customers.find((c: any) => c.id === form.customerId)
+    }, [customers, form.customerId])
+
+    const relatedBranchesForProposal = useMemo(() => {
+        if (!selectedCustForProposal) return []
+        const parentId = (selectedCustForProposal as any).parentId ?? selectedCustForProposal.id
+        const brandGroup = (selectedCustForProposal as any).brandGroup
+        return customers.filter((c: any) => {
+            if (c.id === selectedCustForProposal.id) return false
+            const sameParent = c.parentId === parentId || c.id === parentId
+            const sameBrand = brandGroup && c.brandGroup && c.brandGroup.toLowerCase() === brandGroup.toLowerCase()
+            return sameParent || sameBrand
+        })
+    }, [customers, selectedCustForProposal])
 
     const handleSave = async () => {
         if (!form.title || !form.content) return alert('Vui lòng nhập tiêu đề và nội dung')
@@ -1659,8 +1678,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
             }
         }
         setSaving(true)
+        const finalScope = (form.category === 'PRICE_ADJUSTMENT' && additionalBranches.length > 0)
+            ? `${form.scope} | BRANCHES:${additionalBranches.join(',')}`
+            : form.scope
+
         const result = await createProposal({
             ...form,
+            scope: finalScope,
             estimatedAmount: form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined,
             discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
             startDate: form.startDate || undefined,
@@ -1821,7 +1845,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                     {form.category === 'PRICE_ADJUSTMENT' && (
                         <div className="space-y-4 p-4 rounded-md border border-[#2A4355] bg-[#1B2E3D]">
                             <div>
-                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Khách hàng áp dụng *</label>
+                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#8AAEBB' }}>Khách hàng chính áp dụng *</label>
                                 <SearchableCustomerCombobox
                                     customers={customers}
                                     selectedCustomerId={form.customerId}
@@ -1831,9 +1855,61 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             customerId: cust.id,
                                             title: !f.title && cust.name ? `Đề xuất cơ chế giá & giá đặc biệt cho khách hàng ${cust.name}` : f.title
                                         }))
+                                        setAdditionalBranches([])
                                     }}
                                 />
                             </div>
+
+                            {/* Additional branches selection */}
+                            {form.customerId && (
+                                <div className="p-3 rounded-lg border border-[#2A4355] bg-[#142433] space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-[#87CBB9] flex items-center gap-1.5">
+                                            🏢 Áp dụng đồng thời cho các cơ sở khác ({additionalBranches.length} cơ sở đã chọn)
+                                        </label>
+                                    </div>
+
+                                    {relatedBranchesForProposal.length > 0 && (
+                                        <div className="p-2.5 rounded bg-[#D4A853]/10 border border-[#D4A853]/30 space-y-1.5">
+                                            <div className="flex items-center justify-between text-[11px]">
+                                                <span className="text-[#D4A853] font-semibold">Gợi ý cùng chuỗi / thương hiệu ({relatedBranchesForProposal.length} cơ sở):</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const allRelIds = relatedBranchesForProposal.map((b: any) => b.id)
+                                                        setAdditionalBranches(prev => Array.from(new Set([...prev, ...allRelIds])))
+                                                    }}
+                                                    className="text-[#D4A853] hover:underline font-bold"
+                                                >
+                                                    + Chọn tất cả
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {relatedBranchesForProposal.map((rb: any) => {
+                                                    const isSelected = additionalBranches.includes(rb.id)
+                                                    return (
+                                                        <button
+                                                            key={rb.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setAdditionalBranches(prev =>
+                                                                    prev.includes(rb.id) ? prev.filter(x => x !== rb.id) : [...prev, rb.id]
+                                                                )
+                                                            }}
+                                                            className={`px-2 py-1 rounded text-[11px] font-medium flex items-center gap-1 transition ${
+                                                                isSelected ? 'bg-[#87CBB9] text-[#0A1926] font-bold' : 'bg-[#1B2E3D] text-[#E8F1F2] border border-[#2A4355] hover:border-[#87CBB9]'
+                                                            }`}
+                                                        >
+                                                            {isSelected ? <Check size={11} /> : <Plus size={11} />}
+                                                            [{rb.code}] {rb.name}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Effective Validity Period (Start & End Date) */}
                             <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-[#2A4355] bg-[#142433]">

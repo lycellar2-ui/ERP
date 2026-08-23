@@ -778,7 +778,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         )}
                                     </div>
                                     <div className="relative">
-                                        <div className={`relative flex items-center w-full rounded-md border-2 transition-all ${customerDropdownOpen ? 'border-teal-500 ring-4 ring-teal-500/10 dark:border-[#87CBB9] dark:ring-[#87CBB9]/10' : 'border-slate-200 hover:border-slate-300 dark:border-[#2A4355] dark:hover:border-[#3B5466]'} bg-white dark:bg-[#142433]`}>
+                                        <div className={`relative flex items-center w-full rounded-md border-2 transition-all ${customerDropdownOpen ? 'border-teal-500 ring-4 ring-teal-500/10' : 'border-slate-200 hover:border-slate-300'} bg-white`}>
                                             <div className="pl-3 text-slate-400">
                                                 <Search size={16} />
                                             </div>
@@ -804,7 +804,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     setCustomerSearchInput(e.target.value)
                                                     setCustomerDropdownOpen(true)
                                                 }}
-                                                className="w-full pl-3 pr-10 py-2 text-sm font-semibold text-slate-900 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-[#6A8A9A]"
+                                                className="w-full pl-3 pr-10 py-2 text-sm font-semibold text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
                                             />
                                             {selectedCustomer ? (
                                                 <button
@@ -815,7 +815,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         setCustomerSearchInput('')
                                                         setCustomerDropdownOpen(true)
                                                     }}
-                                                    className="absolute right-2 p-1.5 text-slate-400 hover:text-white hover:bg-rose-500 dark:bg-[#1F3547] rounded-md transition-colors"
+                                                    className="absolute right-2 p-1.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-md transition-colors"
                                                     title="Xóa khách hàng đã chọn"
                                                 >
                                                     <X size={14} />
@@ -829,7 +829,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                         {/* Dropdown Results List */}
                                         {customerDropdownOpen && (
-                                            <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] shadow-xl py-1 divide-y divide-slate-100 dark:divide-[#1F3547]">
+                                            <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg bg-white border border-slate-200 shadow-xl py-1 divide-y divide-slate-100">
                                                 {filteredCustomers.length === 0 ? (
                                                     <div className="px-4 py-3 text-xs text-slate-400 text-center">
                                                         Không tìm thấy khách hàng phù hợp
@@ -853,40 +853,45 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                     setCustomerSearchInput(`[${c.code}] ${c.name}`)
                                                                     setCustomerDropdownOpen(false)
                                                                 }}
-                                                                className={`px-3.5 py-2.5 cursor-pointer transition-colors ${isDisabled ? 'bg-slate-50 opacity-60 cursor-not-allowed dark:bg-[#0E1A24]' : isSelected ? 'bg-teal-50 dark:bg-[#1A3040]' : 'hover:bg-slate-50 dark:hover:bg-[#1F3547]'}`}
+                                                                className={`px-3.5 py-2.5 cursor-pointer transition-colors ${isDisabled ? 'bg-slate-50 opacity-60 cursor-not-allowed' : isSelected ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
                                                             >
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="flex flex-col gap-1">
                                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-500' : 'bg-teal-100 text-teal-700 dark:bg-[#1C3344] dark:text-[#87CBB9]'}`}>
+                                                                            <span className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded ${isDisabled ? 'bg-slate-200 text-slate-500' : 'bg-teal-100 text-teal-700'}`}>
                                                                                 {c.code}
                                                                             </span>
-                                                                            <span className={`font-semibold text-sm ${isDisabled ? 'text-slate-400 dark:text-slate-500' : isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                                            <span className={`font-semibold text-sm ${isDisabled ? 'text-slate-400' : isSelected ? 'text-slate-900 font-bold' : 'text-slate-700'}`}>
                                                                                 {c.name}
                                                                             </span>
                                                                         </div>
                                                                         <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
                                                                             {isCompany && (
-                                                                                <span className={`flex items-center gap-1 font-medium ${isDisabled ? 'text-slate-400 dark:text-slate-500' : 'text-sky-600 dark:text-sky-400'}`}>
+                                                                                <span className={`flex items-center gap-1 font-medium ${isDisabled ? 'text-slate-400' : 'text-sky-600'}`}>
                                                                                     <Building2 size={12} />
                                                                                     {c.allowDirectSO ? 'Công ty' : 'Công ty Cha (Chỉ tính công nợ)'}
                                                                                 </span>
                                                                             )}
                                                                             {c.brandGroup && (
-                                                                                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-200/90 font-medium">
+                                                                                <span className="flex items-center gap-1 text-amber-600 font-medium">
                                                                                     <Star size={12} className="fill-amber-400/50" />
                                                                                     {c.brandGroup}
                                                                                 </span>
                                                                             )}
                                                                             {c.channel && (
-                                                                                <span className="text-slate-500 dark:text-[#8AAEBB] font-medium border-l border-slate-200 dark:border-[#2A4355] pl-2 ml-1">
+                                                                                <span className="text-slate-500 font-medium border-l border-slate-200 pl-2 ml-1">
                                                                                     {c.channel}
+                                                                                </span>
+                                                                            )}
+                                                                            {(c.taxId || (c as any).parent?.taxId) && (
+                                                                                <span className="text-slate-500 font-mono text-[11px] border-l border-slate-200 pl-2 ml-1">
+                                                                                    MST: {c.taxId || `${(c as any).parent?.taxId} (Cty Cha)`}
                                                                                 </span>
                                                                             )}
                                                                         </div>
                                                                     </div>
                                                                     {isSelected && (
-                                                                        <div className="shrink-0 text-teal-500 dark:text-[#87CBB9] mt-1">
+                                                                        <div className="shrink-0 text-teal-600 mt-1">
                                                                             <CheckCircle2 size={18} />
                                                                         </div>
                                                                     )}

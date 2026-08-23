@@ -603,10 +603,12 @@ CreditNote { cn_no, return_id, customer_id, amount, status }
 | **Stepper Nhãn Bước & Thời gian** | `SalesClient.tsx` | Thiết kế lại thanh tiến trình gồm 6 bước rõ ràng kèm nhãn mô tả: Tạo đơn, Duyệt đơn, Xác nhận, Giao hàng, Xuất HĐ, Thu tiền |
 | **Ghi nhận Mốc thời gian** | `SalesClient.tsx` + `actions.ts:getSOTimeline` | Tự động phân tích mốc thời gian hoàn thành từng bước từ nhật ký hoạt động gộp (SO, DO, Invoice) |
 
-#### 🆕 Session 14 — Zero-Lag Isolated Input for Sales Drawers (20/08/2026)
+#### 🆕 Session 14 — Zero-Lag Isolated Input & Multi-Branch Price Cloning (20/08/2026)
 
 | Tính năng | File code | Ghi chú |
 |---|---|---|
 | **Debounced Textarea & Input Component** | `DebouncedInput.tsx`, `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `QuotationClient.tsx` | Cô lập state nội bộ (local state) cho các ô nhập mô tả/diễn giải và ghi chú đơn hàng, loại bỏ hiện tượng giật lag khi gõ văn bản và tương thích mượt mà 100% với bộ gõ tiếng Việt (Telex/VNI) |
+| **Sao Chép / Áp Dụng Giá Cho Các Cơ Sở Khác** | `CustomerRulesTab.tsx`, `customer-rules-actions.ts:cloneCustomerPriceRules`, `customer-rules-actions.ts:getCustomerRelatedBranches` | Hỗ trợ nhân bản / sao chép chính sách giá đặc biệt từ một khách hàng nguồn sang nhiều chi nhánh / cơ sở khác cùng chuỗi thương hiệu hoặc công ty mẹ với 1 cú click |
+| **Áp Dụng Cơ Chế Giá Đa Chi Nhánh Trong Tờ Trình** | `ProposalsClient.tsx`, `proposals/actions.ts:syncProposalToCustomerPriceRules` | Cho phép tích chọn áp dụng đồng thời cơ chế giá đề xuất cho các cơ sở con / cơ sở liên kết, tự động đồng bộ giá sang toàn bộ các cơ sở khi tờ trình được duyệt |
 
-*Last updated: 2026-08-20 16:45 | Wine ERP v10.9*
+*Last updated: 2026-08-20 17:05 | Wine ERP v10.9*

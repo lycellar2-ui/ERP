@@ -390,19 +390,29 @@ export async function getSalesOrderDetailWithMargin(id: string): Promise<{
     }
 
     // Single batch query for ALL product costs (eliminates N+1)
+    // Single batch query for ALL product costs & margin price fallback (eliminates N+1)
     const productIds = [...new Set(detail.lines.map(l => l.productId))]
-    const allLots = await prisma.stockLot.findMany({
-        where: { productId: { in: productIds }, qtyAvailable: { gt: 0 } },
-        select: { productId: true, qtyAvailable: true, unitLandedCost: true },
-    })
+    const [allLots, marginPrices] = await Promise.all([
+        prisma.stockLot.findMany({
+            where: { productId: { in: productIds }, qtyAvailable: { gt: 0 } },
+            select: { productId: true, qtyAvailable: true, unitLandedCost: true },
+        }),
+        prisma.productMarginPrice.findMany({
+            where: { productId: { in: productIds } },
+            select: { productId: true, costPrice: true },
+        }),
+    ])
 
-    // Build cost map from batch result
+    const marginCostMap = Object.fromEntries(marginPrices.map(m => [m.productId, Number(m.costPrice)]))
+
+    // Build cost map from batch result (StockLot weighted avg -> fallback to ProductMarginPrice)
     const costMap: Record<string, number> = {}
     for (const pid of productIds) {
         const lots = allLots.filter(l => l.productId === pid)
         const totalQty = lots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
         const totalValue = lots.reduce((s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0)
-        costMap[pid] = totalQty > 0 ? totalValue / totalQty : 0
+        const lotAvgCost = totalQty > 0 ? totalValue / totalQty : 0
+        costMap[pid] = lotAvgCost > 0 ? lotAvgCost : (marginCostMap[pid] ?? 0)
     }
 
     let totalRevenue = 0
@@ -1728,21 +1738,28 @@ export async function getSOMarginData(soId: string): Promise<SOMarginData | null
 
     const productIds = [...new Set(so.lines.map(l => l.productId))]
 
-    // Get weighted average cost per product from available stock lots
-    const costData = await Promise.all(
-        productIds.map(async pid => {
-            const lots = await prisma.stockLot.findMany({
-                where: { productId: pid, qtyAvailable: { gt: 0 } },
-                select: { qtyAvailable: true, unitLandedCost: true },
+    // Get weighted average cost per product from available stock lots + ProductMarginPrice fallback
+    const [costData, marginPrices] = await Promise.all([
+        Promise.all(
+            productIds.map(async pid => {
+                const lots = await prisma.stockLot.findMany({
+                    where: { productId: pid, qtyAvailable: { gt: 0 } },
+                    select: { qtyAvailable: true, unitLandedCost: true },
+                })
+                const totalQty = lots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
+                const totalValue = lots.reduce(
+                    (s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0
+                )
+                return { productId: pid, avgCost: totalQty > 0 ? totalValue / totalQty : 0 }
             })
-            const totalQty = lots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
-            const totalValue = lots.reduce(
-                (s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0
-            )
-            return { productId: pid, avgCost: totalQty > 0 ? totalValue / totalQty : 0 }
-        })
-    )
-    const costMap = Object.fromEntries(costData.map(c => [c.productId, c.avgCost]))
+        ),
+        prisma.productMarginPrice.findMany({
+            where: { productId: { in: productIds } },
+            select: { productId: true, costPrice: true },
+        }),
+    ])
+    const marginCostMap = Object.fromEntries(marginPrices.map(m => [m.productId, Number(m.costPrice)]))
+    const costMap = Object.fromEntries(costData.map(c => [c.productId, c.avgCost > 0 ? c.avgCost : (marginCostMap[c.productId] ?? 0)]))
 
     let totalRevenue = 0
     let totalCOGS = 0
@@ -2474,7 +2491,7 @@ export async function exportSalesOrdersExcel(filters: {
             'Ngày Tạo': o.createdAt.toISOString().split('T')[0],
             'Khách Hàng': o.customer.name,
             'Mã Khách Hàng': o.customer.code,
-            'Mã Số Thuế': o.customer.taxId || '',
+            'Mã Số Thuế': o.customer.taxId || o.customer.parent?.taxId || '',
             'Kênh Bán Hàng': o.channel,
             'Doanh Số (VND)': Number(o.totalAmount),
             'Chiết Khấu (%)': Number(o.orderDiscount),
