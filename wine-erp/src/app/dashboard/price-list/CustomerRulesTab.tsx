@@ -330,23 +330,23 @@ export function CustomerRulesTab({ currentUser }: Props) {
     return (
         <div className="w-full space-y-4">
             {/* Filter and Action Header */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-md" style={{ background: '#1B2E3D', border: '1px solid #2A4355' }}>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-md bg-white border border-slate-200 shadow-2xs">
                 <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
                     <div className="relative flex-1 md:w-64">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Tìm khách hàng hoặc sản phẩm..."
-                            className="w-full pl-9 pr-3 py-2 text-xs outline-none"
-                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
+                            className="w-full pl-9 pr-3 py-2 text-xs outline-none bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 rounded-md"
+                            style={{ color: '#0F172A' }}
                         />
                     </div>
                     <select
                         value={filterCustomer}
                         onChange={e => setFilterCustomer(e.target.value)}
-                        className="px-3 py-2 text-xs outline-none cursor-pointer max-w-[180px] truncate"
-                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
+                        className="px-3 py-2 text-xs outline-none cursor-pointer max-w-[180px] truncate bg-white border border-slate-300 text-slate-900 rounded-md"
+                        style={{ color: '#0F172A' }}
                     >
                         <option value="ALL">Tất cả Khách Hàng ({customers.length})</option>
                         {customers.map(c => (
@@ -356,8 +356,8 @@ export function CustomerRulesTab({ currentUser }: Props) {
                     <select
                         value={filterStatus}
                         onChange={e => setFilterStatus(e.target.value)}
-                        className="px-3 py-2 text-xs outline-none cursor-pointer"
-                        style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}
+                        className="px-3 py-2 text-xs outline-none cursor-pointer bg-white border border-slate-300 text-slate-900 rounded-md"
+                        style={{ color: '#0F172A' }}
                     >
                         <option value="ALL">Tất cả Trạng Thái</option>
                         <option value="DRAFT">Nháp</option>

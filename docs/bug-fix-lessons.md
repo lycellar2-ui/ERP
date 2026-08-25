@@ -49,6 +49,7 @@
 40. [BUG-054: Sai Lệch Kế Toán Kho, Lệch Sổ NXT, Mất Niên Vụ Điều Chuyển & Race Condition Phân Hệ Kho (WMS)](#bug-054-sai-lệch-kế-toán-kho-lệch-sổ-nxt-mất-niên-vụ-điều-chuyển--race-condition-phân-hệ-kho-wms)
 41. [BUG-055: Độ Trễ / Lag Khi Gõ Nội Dung Diễn Giải / Ghi Chú Đơn Hàng Trong Drawers](#bug-055-độ-trễ--lag-khi-gõ-nội-dung-diễn-giải--ghi-chú-đơn-hàng-trong-drawers-createsodrawer-editsodrawer-quotations)
 42. [BUG-056: Chữ Trắng Khi Gõ Khách Hàng (Mobile Dark Mode) & Gõ Ngược Chữ Tiếng Việt (Combobox IME Desync)](#bug-056-chữ-trắng-khi-gõ-khách-hàng-mobile-dark-mode--gõ-ngược-chữ-tiếng-việt-combobox-ime-desync)
+43. [BUG-057: Lỗi Chữ Trắng Khi Gõ Tên Khách Hàng Trên Màn Hình Đơn Hàng & Ô Tìm Kiếm (Inline Style Specificity vs Light Mode)](#bug-057-lỗi-chữ-trắng-khi-gõ-tên-khách-hàng-trên-màn-hình-đơn-hàng--ô-tìm-kiếm-inline-style-specificity-vs-light-mode)
 
 ---
 
@@ -2202,6 +2203,49 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 ### Bài học
 
 > ⚠️ **RULE 85: Tuyệt đối KHÔNG tráo đổi prop `value` của `<input>` giữa các biến state khác nhau (`value={open ? query : displayValue}`) hoặc gọi lệnh reset state trong `onFocus`/`onChange`. Luôn dùng một state đơn nhất có `useEffect` đồng bộ và `e.target.select()` khi focus để bảo vệ toàn vẹn bộ đệm IME tiếng Việt (Telex/VNI) trên điện thoại di động.**
+
+---
+
+## BUG-057: Lỗi Chữ Trắng Khi Gõ Tên Khách Hàng Trên Màn Hình Đơn Hàng & Ô Tìm Kiếm (Inline Style Specificity vs Light Mode)
+
+**Ngày:** 2026-08-25  
+**Severity:** 🟡 Medium — Trải nghiệm người dùng (UX) khi thao tác tìm kiếm & nhập liệu đơn hàng.
+
+### Triệu chứng
+1. Khi người dùng gõ tìm kiếm khách hàng hoặc số SO trên thanh tìm kiếm của màn hình Sales (`SalesClient.tsx`), chữ gõ vào bị biến thành màu trắng `#E8F1F2` trên nền thẻ trắng `#FFFFFF`, khiến chữ bị tàng hình.
+2. Trên các Drawer tạo đơn `CreateSODrawer`, chỉnh sửa đơn `EditSODrawer`, tìm kiếm viếng thăm `SalesVisitsClient`, tạo báo giá `QuotationClient`, và tờ trình `ProposalsClient`, một số ô input/combobox tên khách hàng hiển thị chữ trắng hoặc giữ màu chữ sáng của giao diện Dark cũ.
+
+### Nguyên nhân gốc rễ
+1. **Độ ưu tiên của Inline Style trong React (Inline Specificity 1-0-0-0):**
+   - Khi hệ thống chuẩn hóa giao diện sang Light Mode, `globals.css` đã ghi đè nền `#1B2E3D` / `#142433` thành `#FFFFFF`.
+   - Tuy nhiên, các phần tử `<input>` có inline style `style={{ color: '#E8F1F2' }}` hoặc `inputStyle` mang màu chữ trắng sáng không bị selector CSS thông thường ghi đè được nếu thiếu `!important` hoặc nếu inline style chưa được cập nhật trong mã nguồn component.
+2. **Biến CSS `--color-lys-ivory` chưa gán đầy đủ trên `:root`:**
+   - Trong `globals.css`, các biến CSS cốt lõi nằm trong `@theme` nhưng chưa được khai báo trực tiếp ở `:root`, khiến một số trình duyệt không nhận được giá trị fallback `#0F172A` cho rule `input { color: var(--color-lys-ivory) }`.
+
+### Cách fix
+1. Trong `src/app/globals.css`:
+   - Khai báo toàn bộ bộ biến CSS màu sắc (`--color-lys-bg`, `--color-lys-ivory: #0F172A`, `--color-lys-dim: #64748B`,...) trực tiếp trong `:root`.
+   - Thêm `!important` vào quy tắc reset:
+     ```css
+     input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+     select,
+     textarea {
+       color: var(--color-lys-ivory) !important;
+     }
+     input::placeholder,
+     textarea::placeholder {
+       color: var(--color-lys-dim) !important;
+     }
+     ```
+2. Trong `SalesClient.tsx`, `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `ProposalsClient.tsx`, `SalesVisitsClient.tsx`, `QuotationClient.tsx`, `CustomerRulesTab.tsx`:
+   - Loại bỏ toàn bộ các inline style mang mã màu Dark cũ (`#1B2E3D`, `#142433`, `#E8F1F2`).
+   - Chuẩn hóa `inputStyle` sang nền trắng `#FFFFFF`, viền `#CBD5E1`, chữ tối màu `#0F172A` (`text-slate-900`) và placeholder `#94A3B8`.
+   - Đặt `style={{ color: '#0F172A' }}` trực tiếp trên các ô tìm kiếm khách hàng để chống ghi đè dưới mọi tình huống.
+
+### Bài học
+
+> ⚠️ **RULE 86: Khi thiết kế hoặc chuyển đổi giao diện sang Light Mode, tuyệt đối KHÔNG hardcode màu chữ sáng (`#E8F1F2`, `#FFFFFF`, `text-white`) trong `inputStyle` hoặc inline style của thẻ `<input>`, `<select>`, `<textarea>`. Luôn sử dụng màu chữ tối (`#0F172A` / `text-slate-900`) và kích hoạt `color: var(--color-lys-ivory) !important` trên toàn cục để đảm bảo khả năng đọc 100% trong mọi tình huống.**
+
 
 
 

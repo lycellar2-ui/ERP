@@ -812,8 +812,8 @@ export function QuotationClient({ initialData }: Props) {
                                 </div>
                                 {!isNewCustomer ? (
                                     <select value={formData.customerId} onChange={e => handleCustomerChangeInQuotation(e.target.value)}
-                                        className="w-full mt-1.5 px-3 py-2.5 text-sm outline-none"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}>
+                                        className="w-full mt-1.5 px-3 py-2.5 text-sm outline-none bg-white border border-slate-300 rounded-md text-slate-900"
+                                        style={{ color: '#0F172A' }}>
                                         <option value="">Chọn khách hàng...</option>
                                         {customers.length === 0 ? (
                                             <option disabled>⏳ Đang tải danh sách khách hàng...</option>
@@ -822,50 +822,50 @@ export function QuotationClient({ initialData }: Props) {
                                         )}
                                     </select>
                                 ) : (
-                                    <div className="mt-2.5 p-3 rounded-md space-y-3" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                                    <div className="mt-2.5 p-3 rounded-md space-y-3 bg-slate-50 border border-slate-200">
                                         <div>
-                                            <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Tên Doanh Nghiệp / Đơn Vị</label>
+                                            <label className="text-[11px] font-semibold mb-1 block text-slate-600">Tên Doanh Nghiệp / Đơn Vị</label>
                                             <input 
                                                 type="text" 
                                                 placeholder="VD: Nhà hàng Vườn Bia Hà Nội"
                                                 value={formData.companyName} 
                                                 onChange={e => setFormData({ ...formData, companyName: e.target.value })}
-                                                className="w-full px-3 py-2 text-xs outline-none rounded-md"
-                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
+                                                style={{ color: '#0F172A' }}
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Người Đại Diện / Liên Hệ</label>
+                                            <label className="text-[11px] font-semibold mb-1 block text-slate-600">Người Đại Diện / Liên Hệ</label>
                                             <input 
                                                 type="text" 
                                                 placeholder="VD: Anh Huy"
                                                 value={formData.contactPerson} 
                                                 onChange={e => setFormData({ ...formData, contactPerson: e.target.value })}
-                                                className="w-full px-3 py-2 text-xs outline-none rounded-md"
-                                                style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
+                                                style={{ color: '#0F172A' }}
                                             />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
-                                                <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Email</label>
+                                                <label className="text-[11px] font-semibold mb-1 block text-slate-600">Email</label>
                                                 <input 
                                                     type="email" 
                                                     placeholder="VD: huy@example.com"
                                                     value={formData.customerEmail} 
                                                     onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
-                                                    className="w-full px-3 py-2 text-xs outline-none rounded-md"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
+                                                    style={{ color: '#0F172A' }}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#8AAEBB' }}>Số điện thoại</label>
+                                                <label className="text-[11px] font-semibold mb-1 block text-slate-600">Số điện thoại</label>
                                                 <input 
                                                     type="text" 
                                                     placeholder="VD: 0912345678"
                                                     value={formData.customerPhone} 
                                                     onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
-                                                    className="w-full px-3 py-2 text-xs outline-none rounded-md"
-                                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2' }}
+                                                    className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
+                                                    style={{ color: '#0F172A' }}
                                                 />
                                             </div>
                                         </div>
@@ -876,8 +876,8 @@ export function QuotationClient({ initialData }: Props) {
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Sales Rep</label>
                                     <select value={formData.salesRepId} onChange={e => setFormData({ ...formData, salesRepId: e.target.value })}
-                                        className="w-full mt-1 px-3 py-2.5 text-sm outline-none"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }}>
+                                        className="w-full mt-1 px-3 py-2.5 text-sm outline-none bg-white border border-slate-300 rounded-md text-slate-900"
+                                        style={{ color: '#0F172A' }}>
                                         <option value="">Chọn...</option>
                                         {reps.length === 0 ? (
                                             <option disabled>⏳ Đang tải...</option>
@@ -889,16 +889,16 @@ export function QuotationClient({ initialData }: Props) {
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Hạn Báo Giá</label>
                                     <input type="date" value={formData.validUntil} onChange={e => setFormData({ ...formData, validUntil: e.target.value })}
-                                        className="w-full mt-1 px-3 py-2.5 text-sm outline-none"
-                                        style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }} />
+                                        className="w-full mt-1 px-3 py-2.5 text-sm outline-none bg-white border border-slate-300 rounded-md text-slate-900"
+                                        style={{ color: '#0F172A' }} />
                                 </div>
                             </div>
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>Ghi Chú / Điều Khoản</label>
                                 <DebouncedTextarea value={formData.notes} onChange={val => setFormData(prev => ({ ...prev, notes: val }))}
                                     rows={2} placeholder="Điều kiện giao hàng, thanh toán..."
-                                    className="w-full mt-1 px-3 py-2 text-sm outline-none resize-none"
-                                    style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '6px' }} />
+                                    className="w-full mt-1 px-3 py-2 text-sm outline-none resize-none bg-white border border-slate-300 rounded-md text-slate-900 placeholder:text-slate-400"
+                                    style={{ color: '#0F172A' }} />
                             </div>
 
                             <div className="flex items-center gap-2 py-1 select-none">

@@ -317,6 +317,18 @@ button[style*="#1b2e3d"]:hover {
 
 
 :root {
+  --color-lys-bg: #F8FAFC;
+  --color-lys-surface: #FFFFFF;
+  --color-lys-card: #FFFFFF;
+  --color-lys-border: #E2E8F0;
+  --color-lys-teal: #0891B2;
+  --color-lys-teal-light: #06B6D4;
+  --color-lys-navy: #1E3A8A;
+  --color-lys-wine: #B91C1C;
+  --color-lys-amber: #D97706;
+  --color-lys-ivory: #0F172A;
+  --color-lys-muted: #475569;
+  --color-lys-dim: #64748B;
   --font-ui: var(--font-sans);
   --font-brand: var(--font-display);
   --font-code: var(--font-sans);
@@ -453,7 +465,13 @@ button {
 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
 select,
 textarea {
-  color: var(--color-lys-ivory);
+  color: var(--color-lys-ivory) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-lys-dim) !important;
+  opacity: 0.8;
 }
 
 

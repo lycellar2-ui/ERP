@@ -2067,7 +2067,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Search input */}
                     <div className="relative w-full sm:w-48 xl:w-64">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4A6A7A' }} />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input type="text" placeholder="Tìm số SO, khách hàng..."
                             value={searchInput}
                             onChange={e => {
@@ -2080,29 +2080,27 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     reload({ search: val, page: 1 }, true)
                                 }, 300)
                             }}
-                            className="w-full pl-9 pr-3 py-1.5 text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#E8F1F2', borderRadius: '4px' }}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#87CBB9')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#2A4355')} />
+                            className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white text-slate-900 placeholder:text-slate-400 border border-slate-300 rounded focus:border-cyan-600 shadow-2xs"
+                            style={{ color: '#0F172A' }} />
                     </div>
 
                     {/* MISA-style Date Period Preset Dropdown */}
-                    <div className="flex items-center gap-1.5 bg-[#1B2E3D] px-2.5 py-1 border border-[#2A4355] rounded-[4px]">
-                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#4A6A7A' }} />
+                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 border border-slate-300 rounded-[4px] shadow-2xs">
+                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#0891B2' : '#64748B' }} />
                         <select
                             value={datePreset}
                             onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
-                            className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1"
-                            style={{ color: datePreset !== 'ALL' ? '#87CBB9' : '#E8F1F2' }}
+                            className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1 text-slate-800"
+                            style={{ color: datePreset !== 'ALL' ? '#0891B2' : '#0F172A' }}
                         >
                             {DATE_PRESET_OPTIONS.map(opt => (
-                                <option key={opt.key} value={opt.key} className="bg-[#0D1E2B] text-[#E8F1F2]">
+                                <option key={opt.key} value={opt.key} className="bg-white text-slate-900">
                                     {opt.label}
                                 </option>
                             ))}
                         </select>
 
-                        <div className="flex items-center gap-1 border-l border-[#2A4355] pl-1.5 ml-0.5">
+                        <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-0.5">
                             <input type="date" value={dateFrom}
                                 onChange={e => {
                                     setDatePreset('CUSTOM')
@@ -2110,8 +2108,9 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     setPage(1)
                                     reload({ dateFrom: e.target.value, dateTo, page: 1 }, true)
                                 }}
-                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
-                            <span className="text-[10px]" style={{ color: '#4A6A7A' }}>→</span>
+                                className="bg-transparent border-none text-[11px] text-slate-700 outline-none w-[95px] p-0"
+                                style={{ color: '#0F172A' }} />
+                            <span className="text-[10px] text-slate-400">→</span>
                             <input type="date" value={dateTo}
                                 onChange={e => {
                                     setDatePreset('CUSTOM')
@@ -2119,7 +2118,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     setPage(1)
                                     reload({ dateFrom, dateTo: e.target.value, page: 1 }, true)
                                 }}
-                                className="bg-transparent border-none text-[11px] text-[#8AAEBB] outline-none w-[95px] p-0" />
+                                className="bg-transparent border-none text-[11px] text-slate-700 outline-none w-[95px] p-0"
+                                style={{ color: '#0F172A' }} />
                         </div>
                     </div>
 
@@ -2128,17 +2128,17 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                         const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL'));
                         return (
                             <button onClick={() => setShowFilters(!showFilters)}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all shadow-2xs"
                                 style={{
-                                    background: (showFilters || hasAdvancedFilters) ? 'rgba(135,203,185,0.15)' : '#1B2E3D',
-                                    color: (showFilters || hasAdvancedFilters) ? '#87CBB9' : '#8AAEBB',
-                                    border: `1px solid ${(showFilters || hasAdvancedFilters) ? 'rgba(135,203,185,0.3)' : '#2A4355'}`,
+                                    background: (showFilters || hasAdvancedFilters) ? 'rgba(8,145,178,0.1)' : '#FFFFFF',
+                                    color: (showFilters || hasAdvancedFilters) ? '#0891B2' : '#475569',
+                                    border: `1px solid ${(showFilters || hasAdvancedFilters) ? 'rgba(8,145,178,0.3)' : '#CBD5E1'}`,
                                 }}
                             >
                                 <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
                                 Bộ lọc
                                 {hasAdvancedFilters && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#87CBB9]" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#0891B2]" />
                                 )}
                             </button>
                         );
@@ -2148,13 +2148,13 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
             {/* Collapsible Advanced Filters */}
             {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150" style={{ background: '#142433', border: '1px solid #2A4355' }}>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150 bg-slate-50 border border-slate-200">
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Loại Đơn Hàng</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Loại Đơn Hàng</label>
                         <select value={orderTypeFilter} 
                             onChange={e => { setOrderTypeFilter(e.target.value); setPage(1); reload({ orderType: e.target.value as any, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: orderTypeFilter === 'TASTING' ? '#F59E0B' : '#8AAEBB', borderRadius: '4px' }}>
+                            className="w-full px-2 py-1.5 text-xs outline-none font-semibold bg-white border border-slate-300 rounded text-slate-800"
+                            style={{ color: orderTypeFilter === 'TASTING' ? '#D97706' : '#0F172A' }}>
                             <option value="ALL">Tất cả loại đơn</option>
                             <option value="STANDARD">📦 Thương Mại</option>
                             <option value="TASTING">🍷 Tasting (Nếm thử)</option>
@@ -2163,11 +2163,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Nhân viên Sales</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Nhân viên Sales</label>
                         <select value={salesRepFilter} 
                             onChange={e => { setSalesRepFilter(e.target.value); setPage(1); reload({ salesRepId: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
+                            style={{ color: '#0F172A' }}>
                             <option value="">Tất cả Sales</option>
                             {salesReps.map((u: any) => (
                                 <option key={u.id} value={u.id}>{u.name}</option>
@@ -2176,11 +2176,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </div>
                     
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kênh</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Kênh</label>
                         <select value={channelFilter} 
                             onChange={e => { setChannelFilter(e.target.value); setPage(1); reload({ channel: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
+                            style={{ color: '#0F172A' }}>
                             <option value="">Tất cả kênh</option>
                             <option value="HORECA">HORECA</option>
                             <option value="WHOLESALE_DISTRIBUTOR">Đại Lý</option>
@@ -2192,11 +2192,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Pháp nhân</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Pháp nhân</label>
                         <select value={legalEntityFilter} 
                             onChange={e => { setLegalEntityFilter(e.target.value); setPage(1); reload({ legalEntityId: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
+                            style={{ color: '#0F172A' }}>
                             <option value="">Tất cả pháp nhân</option>
                             {pageLegalEntities.map((le: any) => (
                                 <option key={le.id} value={le.id}>{le.name}</option>
@@ -2205,11 +2205,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Kho xuất</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Kho xuất</label>
                         <select value={warehouseFilter} 
                             onChange={e => { setWarehouseFilter(e.target.value); setPage(1); reload({ warehouseId: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
+                            style={{ color: '#0F172A' }}>
                             <option value="">Tất cả kho</option>
                             {pageWarehouses.map((wh: any) => (
                                 <option key={wh.id} value={wh.id}>{wh.name}</option>
@@ -2218,11 +2218,11 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#4A6A7A' }}>Điều khoản</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1 text-slate-600">Điều khoản</label>
                         <select value={paymentTermFilter} 
                             onChange={e => { setPaymentTermFilter(e.target.value); setPage(1); reload({ paymentTerm: e.target.value, page: 1 }, true) }}
-                            className="w-full px-2 py-1.5 text-xs outline-none"
-                            style={{ background: '#1B2E3D', border: '1px solid #2A4355', color: '#8AAEBB', borderRadius: '4px' }}>
+                            className="w-full px-2 py-1.5 text-xs outline-none bg-white border border-slate-300 rounded text-slate-800"
+                            style={{ color: '#0F172A' }}>
                             <option value="">Tất cả</option>
                             {paymentTerms.map((pt: string) => (
                                 <option key={pt} value={pt}>{pt}</option>
@@ -2231,7 +2231,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     </div>
 
                     <div className="flex flex-col justify-end">
-                        <label className="flex items-center gap-1.5 cursor-pointer py-1.5 text-xs font-semibold" style={{ color: '#8AAEBB' }}>
+                        <label className="flex items-center gap-1.5 cursor-pointer py-1.5 text-xs font-semibold text-slate-600">
                             <input type="checkbox" checked={pendingActionFilter} 
                                 onChange={e => { setPendingActionFilter(e.target.checked); setPage(1); reload({ pendingAction: e.target.checked, page: 1 }, true) }}
                                 className="rounded border-[#2A4355] text-[#87CBB9] focus:ring-0 focus:ring-offset-0 bg-[#1B2E3D] w-4 h-4" />

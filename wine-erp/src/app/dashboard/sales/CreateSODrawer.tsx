@@ -102,9 +102,9 @@ interface ProductItem { id: string; skuCode: string; productName: string; wineTy
 interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number }
 
 const inputStyle = {
-    background: '#142433',
-    border: '1px solid #2A4355',
-    color: '#E8F1F2',
+    background: '#FFFFFF',
+    border: '1px solid #CBD5E1',
+    color: '#0F172A',
     borderRadius: '4px',
     outline: 'none',
 }
@@ -805,6 +805,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     setCustomerDropdownOpen(true)
                                                 }}
                                                 className="w-full pl-3 pr-10 py-2 text-sm font-semibold text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
+                                                style={{ color: '#0F172A' }}
                                             />
                                             {selectedCustomer ? (
                                                 <button
@@ -970,12 +971,12 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             </button>
                                         )}
                                     </div>
-                                    <div className="h-px w-full bg-[#2A4355]/50" />
+                                    <div className="h-px w-full bg-slate-200" />
                                     {!overrideMode ? (
-                                        <div className="flex items-center gap-4 text-[11px]">
-                                            <span style={{ color: '#4A6A7A' }}>Kênh: <strong style={{ color: '#E8F1F2' }}>{CHANNELS.find(c => c.value === channel)?.label ?? channel}</strong></span>
-                                            <span style={{ color: '#4A6A7A' }}>Thanh toán: <strong style={{ color: '#E8F1F2' }}>{paymentTerm}</strong></span>
-                                            <span style={{ color: '#4A6A7A' }}>Pháp nhân: <strong style={{ color: '#E8F1F2' }} title={entities.find(e => e.id === legalEntityId)?.name}>{entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}</strong></span>
+                                        <div className="flex items-center gap-4 text-[11px] text-slate-600">
+                                            <span>Kênh: <strong className="text-slate-900">{CHANNELS.find(c => c.value === channel)?.label ?? channel}</strong></span>
+                                            <span>Thanh toán: <strong className="text-slate-900">{paymentTerm}</strong></span>
+                                            <span>Pháp nhân: <strong className="text-slate-900" title={entities.find(e => e.id === legalEntityId)?.name}>{entities.find(e => e.id === legalEntityId)?.code ?? 'Mặc định'}</strong></span>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-3 gap-2">

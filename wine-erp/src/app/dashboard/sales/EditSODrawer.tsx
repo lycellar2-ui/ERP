@@ -524,6 +524,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     setCustomerDropdownOpen(true)
                                                 }}
                                                 className="w-full pl-2.5 pr-8 py-2 text-xs font-semibold text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
+                                                style={{ color: '#0F172A' }}
                                             />
                                             {selectedCustomer ? (
                                                 <button

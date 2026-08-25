@@ -84,7 +84,8 @@ function SearchableCustomerCombobox({
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 placeholder="Gõ tên hoặc mã khách hàng..."
-                                className="w-full pl-8 pr-3 py-2 text-xs outline-none rounded-lg bg-[#1B2E3D] border border-[#2A4355] text-white focus:border-[#87CBB9] placeholder:text-[#8AAEBB]"
+                                className="w-full pl-8 pr-3 py-2 text-xs outline-none rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-cyan-600 placeholder:text-slate-400"
+                                style={{ color: '#0F172A' }}
                             />
                             <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8AAEBB]" />
                         </div>
@@ -640,33 +641,35 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {activeTab === 'HISTORY' && (
                 <div className="space-y-4">
                     {/* Filters bar */}
-                    <div className="p-4 rounded-2xl bg-[#1B2E3D] border border-[#2A4355] flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                             <div className="relative flex-1 md:w-64">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
                                     value={filterSearch}
                                     onChange={e => setFilterSearch(e.target.value)}
                                     placeholder="Tìm khách hàng hoặc Salesman..."
-                                    className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-xl bg-[#142433] border border-[#2A4355] text-white"
+                                    className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-xl bg-white border border-slate-300 text-slate-900"
+                                    style={{ color: '#0F172A' }}
                                 />
                             </div>
                             <input
                                 type="date"
                                 value={filterDate}
                                 onChange={e => setFilterDate(e.target.value)}
-                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white"
+                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-white border border-slate-300 text-slate-900"
+                                style={{ color: '#0F172A' }}
                             />
                             <select
                                 value={filterStatus}
                                 onChange={e => setFilterStatus(e.target.value)}
-                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-[#142433] border border-[#2A4355] text-white"
-                                style={{ backgroundColor: '#142433', color: '#FFFFFF' }}
+                                className="px-3 py-2 text-xs outline-none cursor-pointer rounded-xl bg-white border border-slate-300 text-slate-900"
+                                style={{ color: '#0F172A' }}
                             >
-                                <option value="ALL" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Tất cả Trạng Thái</option>
-                                <option value="IN_PROGRESS" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Đang Viếng Thăm</option>
-                                <option value="COMPLETED" className="bg-[#142433] text-white" style={{ backgroundColor: '#142433', color: '#E8F1F2' }}>Đã Kết Thúc</option>
+                                <option value="ALL">Tất cả Trạng Thái</option>
+                                <option value="IN_PROGRESS">Đang Viếng Thăm</option>
+                                <option value="COMPLETED">Đã Kết Thúc</option>
                             </select>
                         </div>
                     </div>

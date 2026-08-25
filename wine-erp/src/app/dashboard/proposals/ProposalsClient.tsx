@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
     FileText, Plus, X, Search, Send, CheckCircle2, XCircle, RotateCcw,
     Clock, AlertCircle, Loader2, MessageSquare, Paperclip, ChevronDown,
@@ -30,7 +30,7 @@ type ProposalDetail = NonNullable<Awaited<ReturnType<typeof import('./actions').
 
 const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: '6px',
-    border: '1px solid #2A4355', background: '#142433', color: '#E8F1F2',
+    border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A',
     fontSize: '14px', outline: 'none',
 }
 
@@ -1256,9 +1256,9 @@ function SearchableCustomerCombobox({
                         }, 250)
                     }}
                     placeholder="Gõ mã (VD: HR10084) hoặc tên khách hàng để tìm..."
-                    style={{ ...inputStyle, padding: '9px 36px 9px 32px', fontSize: '13px', background: '#142433' }}
+                    style={{ ...inputStyle, padding: '9px 36px 9px 32px', fontSize: '13px', background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' }}
                 />
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 {selectedCust ? (
                     <button
                         type="button"
@@ -1268,26 +1268,22 @@ function SearchableCustomerCombobox({
                             setInputValue('')
                             setOpen(false)
                         }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700/50"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100"
                         title="Xóa lựa chọn"
                     >
                         <X size={13} />
                     </button>
                 ) : (
-                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 )}
             </div>
 
             {open && (
                 <div
-                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl divide-y divide-[#2A4355]/40"
-                    style={{
-                        background: '#142433',
-                        border: '1px solid #2A4355',
-                    }}
+                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200"
                 >
                     {filtered.length === 0 ? (
-                        <div className="p-3 text-xs text-center text-gray-400">
+                        <div className="p-3 text-xs text-center text-slate-400">
                             {inputValue ? `Không tìm thấy khách hàng khớp với "${inputValue}"` : 'Chưa có dữ liệu khách hàng'}
                         </div>
                     ) : (
@@ -1300,14 +1296,14 @@ function SearchableCustomerCombobox({
                                     setInputValue(`[${c.code}] ${c.name}`)
                                     setOpen(false)
                                 }}
-                                className={`w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between text-xs cursor-pointer ${c.id === selectedCustomerId ? 'bg-[#1B2E3D]' : ''}`}
+                                className={`w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between text-xs cursor-pointer ${c.id === selectedCustomerId ? 'bg-amber-50' : ''}`}
                             >
                                 <div className="min-w-0 flex-1 pr-2">
-                                    <span className="font-mono font-bold text-[#D4A853] mr-2 text-xs">[{c.code}]</span>
-                                    <span className="text-[#E8F1F2] font-medium">{c.name}</span>
+                                    <span className="font-mono font-bold text-amber-700 mr-2 text-xs">[{c.code}]</span>
+                                    <span className="text-slate-900 font-medium">{c.name}</span>
                                 </div>
                                 {c.channel && (
-                                    <span className="text-[10px] text-[#8AAEBB] bg-[#1B2E3D] px-1.5 py-0.5 rounded whitespace-nowrap border border-[#2A4355]">
+                                    <span className="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap border border-slate-200">
                                         {c.channel}
                                     </span>
                                 )}
@@ -1380,22 +1376,18 @@ function SearchableProductCombobox({
                         }, 250)
                     }}
                     placeholder="Gõ mã SKU hoặc tên sản phẩm..."
-                    style={{ ...inputStyle, padding: '7px 32px 7px 10px', fontSize: '13px', background: '#1B2E3D' }}
+                    style={{ ...inputStyle, padding: '7px 32px 7px 10px', fontSize: '13px', background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' }}
                 />
-                <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
             {open && (
                 <div
-                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl divide-y divide-[#2A4355]/40"
-                    style={{
-                        background: '#142433',
-                        border: '1px solid #2A4355',
-                        minWidth: '280px',
-                    }}
+                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200"
+                    style={{ minWidth: '280px' }}
                 >
                     {filtered.length === 0 ? (
-                        <div className="p-3 text-xs text-center text-gray-400">Không tìm thấy sản phẩm khớp "{inputValue}"</div>
+                        <div className="p-3 text-xs text-center text-slate-400">Không tìm thấy sản phẩm khớp "{inputValue}"</div>
                     ) : (
                         filtered.map(p => (
                             <div
@@ -1406,13 +1398,13 @@ function SearchableProductCombobox({
                                     setInputValue(`[${p.skuCode}] ${p.productName}`)
                                     setOpen(false)
                                 }}
-                                className="w-full text-left p-2.5 hover:bg-[#1B2E3D] transition flex items-center justify-between text-xs cursor-pointer"
+                                className="w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between text-xs cursor-pointer"
                             >
                                 <div className="min-w-0 flex-1 pr-3">
-                                    <span className="font-mono font-bold text-[#87CBB9] mr-2 text-xs">[{p.skuCode}]</span>
-                                    <span className="text-[#E8F1F2] font-medium">{p.productName}</span>
+                                    <span className="font-mono font-bold text-teal-700 mr-2 text-xs">[{p.skuCode}]</span>
+                                    <span className="text-slate-900 font-medium">{p.productName}</span>
                                 </div>
-                                <span className="font-mono text-xs text-gray-400 font-medium whitespace-nowrap bg-[#1B2E3D] px-2 py-1 rounded">
+                                <span className="font-mono text-xs text-slate-600 font-medium whitespace-nowrap bg-slate-100 px-2 py-1 rounded border border-slate-200">
                                     {formatVND(p.wholesalePrice)}
                                 </span>
                             </div>
