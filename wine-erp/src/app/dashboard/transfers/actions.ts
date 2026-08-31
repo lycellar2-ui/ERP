@@ -146,22 +146,27 @@ export async function createTransferOrder(input: {
         if (!input.lines || input.lines.length === 0)
             return { success: false, error: 'Vui lòng chọn ít nhất 1 sản phẩm để chuyển kho' }
 
-        // Real-time stock check at source warehouse
+        // Validate stock availability
         for (const line of input.lines) {
+            const whereClause: any = {
+                productId: line.productId,
+                status: 'AVAILABLE',
+                location: { warehouseId: input.fromWarehouseId },
+            }
+            if (line.vintage) {
+                whereClause.vintage = Number(line.vintage)
+            }
             const stockSum = await prisma.stockLot.aggregate({
-                where: {
-                    productId: line.productId,
-                    status: 'AVAILABLE',
-                    location: { warehouseId: input.fromWarehouseId },
-                },
+                where: whereClause,
                 _sum: { qtyAvailable: true },
             })
             const available = Number(stockSum._sum.qtyAvailable || 0)
             if (line.qtyTransferred > available) {
                 const product = await prisma.product.findUnique({ where: { id: line.productId }, select: { skuCode: true, productName: true } })
+                const vText = line.vintage ? ` (Niên vụ ${line.vintage})` : ''
                 return {
                     success: false,
-                    error: `Sản phẩm ${product?.skuCode || line.productId} (${product?.productName}) chỉ còn ${available} chai ở Kho xuất (Yêu cầu chuyển ${line.qtyTransferred} chai).`
+                    error: `Sản phẩm ${product?.skuCode || line.productId} - ${product?.productName}${vText} chỉ còn ${available} chai ở Kho xuất (Yêu cầu chuyển ${line.qtyTransferred} chai).`
                 }
             }
         }
@@ -479,26 +484,63 @@ export async function getTransferOptions() {
             }),
             prisma.stockLot.findMany({
                 where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-                select: { productId: true, vintage: true },
+                select: {
+                    productId: true,
+                    vintage: true,
+                    qtyAvailable: true,
+                    location: {
+                        select: { warehouseId: true }
+                    }
+                },
             }),
         ])
 
-        const vintageMap: Record<string, number[]> = {}
+        const stockMap: Record<string, Record<string, { totalAvailable: number; vintages: Map<number | null, number> }>> = {}
+        const allVintagesMap: Record<string, Set<number>> = {}
+
         for (const lot of stockLots) {
-            if (lot.vintage) {
-                if (!vintageMap[lot.productId]) vintageMap[lot.productId] = []
-                if (!vintageMap[lot.productId].includes(lot.vintage)) {
-                    vintageMap[lot.productId].push(lot.vintage)
+            const pId = lot.productId
+            const whId = lot.location?.warehouseId
+            const v = lot.vintage
+            const qty = Number(lot.qtyAvailable || 0)
+
+            if (v) {
+                if (!allVintagesMap[pId]) allVintagesMap[pId] = new Set()
+                allVintagesMap[pId].add(v)
+            }
+
+            if (whId) {
+                if (!stockMap[pId]) stockMap[pId] = {}
+                if (!stockMap[pId][whId]) {
+                    stockMap[pId][whId] = { totalAvailable: 0, vintages: new Map() }
                 }
+                stockMap[pId][whId].totalAvailable += qty
+                const curVQty = stockMap[pId][whId].vintages.get(v) || 0
+                stockMap[pId][whId].vintages.set(v, curVQty + qty)
             }
         }
 
-        const productsWithVintages = products.map(p => ({
-            ...p,
-            vintages: (vintageMap[p.id] || []).sort((a, b) => b - a),
-        }))
+        const productsWithStock = products.map(p => {
+            const whStocks: Record<string, { totalAvailable: number; vintages: { vintage: number | null; qtyAvailable: number }[] }> = {}
+            const pStocks = stockMap[p.id] || {}
+            for (const [whId, data] of Object.entries(pStocks)) {
+                whStocks[whId] = {
+                    totalAvailable: data.totalAvailable,
+                    vintages: Array.from(data.vintages.entries()).map(([vintage, qtyAvailable]) => ({
+                        vintage,
+                        qtyAvailable
+                    })).sort((a, b) => (b.vintage || 0) - (a.vintage || 0))
+                }
+            }
 
-        return { warehouses, products: productsWithVintages }
+            return {
+                ...p,
+                vintages: Array.from(allVintagesMap[p.id] || []).sort((a, b) => b - a),
+                stocksByWH: whStocks,
+            }
+        })
+
+        return { warehouses, products: productsWithStock }
     })
 }
 

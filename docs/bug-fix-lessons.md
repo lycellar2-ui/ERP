@@ -2293,6 +2293,29 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 88: Đối với các tổ hợp khách hàng có nhiều chi nhánh / nhà hàng cùng chung 1 Mã Số Thuế (như The Republic thuộc Nam Tây Hồ), luôn hợp nhất dữ liệu đơn hàng và công nợ về Mã Nhà Hàng Chính Thức (`HR10021-01 - The Republic`), tuyệt đối không tạo các mã khách hàng phụ rác hoặc trùng tên với Công Ty Mẹ (`entityType = COMPANY`).**
 
+---
+
+## BUG-089: Menu chọn rượu bị cắt ngang và thiếu cảnh báo tồn kho theo Vintage trong Phiếu Điều Chuyển Kho (CreateTransferDrawer)
+
+### Triệu chứng
+1. Khi mở Drawer "Lập Phiếu Chuyển Kho Nội Bộ", menu dropdown chọn rượu vang (`ProductCombobox`) bị cắt ngang (clipped) bởi khung bảng chỉ cao ~70-80px.
+2. Khi chọn sản phẩm, danh sách Niên Vụ (Vintage) chỉ hiển thị danh sách chung mà không biết niên vụ đó có còn hàng tại Kho Xuất đã chọn hay không, dẫn đến việc người dùng chọn niên vụ đã hết hàng (tồn = 0) gây lỗi khi thực hiện chuyển kho.
+
+### Nguyên nhân gốc rễ
+1. Khung chứa bảng có `overflow-x-auto` mà không có `minHeight` khi có ít dòng, làm cho dropdown `absolute` bị trình duyệt tự động cắt ngang theo cạnh dưới của container.
+2. `getTransferOptions` chỉ lấy danh sách vintage chung của sản phẩm mà không tổng hợp theo `location.warehouseId` và `qtyAvailable` theo từng kho xuất.
+
+### Cách fix
+1. Thêm `minHeight: '360px'` cho container bảng và `pb-28` cho khu vực danh mục rượu, nâng cấp Searchable Combobox cho phép gõ tìm SKU/tên rượu nhanh chóng.
+2. Cập nhật `getTransferOptions` truy vấn `stock_lots` kèm `warehouseId` và `qtyAvailable` để cung cấp `stocksByWH` cho từng sản phẩm.
+3. Trong giao diện chọn Niên Vụ và ô tìm kiếm: Hiển thị chi tiết số lượng tồn theo từng Vintage tại Kho Xuất, tự động chọn niên vụ còn tồn khi chọn rượu, hiển thị cảnh báo đỏ `⚠️ Tồn = 0 chai` nếu chọn niên vụ hết hàng, cảnh báo cam `⚠️ Vượt tồn` nếu số lượng chuyển lớn hơn tồn kho.
+4. Bổ sung kiểm tra và validate 2 lớp (Client & Server Action `createTransferOrder`).
+
+### Bài học
+
+> ⚠️ **RULE 89: Trong các form điều chuyển kho nội bộ (CreateTransferDrawer) hoặc xuất kho, luôn tính toán và hiển thị tồn kho thực tế theo từng Niên Vụ (Vintage) tại Kho Xuất cụ thể, đồng thời thiết lập min-height và xử lý overflow container phù hợp để dropdown không bị cắt.**
+
+
 
 
 

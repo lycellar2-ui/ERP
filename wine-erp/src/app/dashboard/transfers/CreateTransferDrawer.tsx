@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { X, Save, Send, Plus, Trash2, ArrowRightLeft, AlertCircle, Building2, Calendar, FileText, Check, ChevronDown } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { X, Save, Send, Plus, Trash2, ArrowRightLeft, AlertCircle, Building2, Calendar, FileText, Check, ChevronDown, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { createTransferOrder, getTransferOptions } from './actions'
 
@@ -25,7 +25,21 @@ interface CreateTransferDrawerProps {
 }
 
 type WarehouseOpt = { id: string; code: string; name: string }
-type ProductOpt = { id: string; skuCode: string; productName: string; country?: string | null; vintage?: number | null; vintages?: number[] }
+type ProductOpt = {
+    id: string
+    skuCode: string
+    productName: string
+    country?: string | null
+    vintage?: number | null
+    vintages?: number[]
+    stocksByWH?: Record<string, {
+        totalAvailable: number
+        vintages: {
+            vintage: number | null
+            qtyAvailable: number
+        }[]
+    }>
+}
 
 interface TransferLineItem {
     productId: string
@@ -61,96 +75,146 @@ const focusHandler = {
 function ProductCombobox({
     products,
     selectedProductId,
+    fromWarehouseId,
     onChange,
 }: {
     products: ProductOpt[]
     selectedProductId: string
+    fromWarehouseId?: string
     onChange: (productId: string) => void
 }) {
-    const [query, setQuery] = useState('')
     const [open, setOpen] = useState(false)
+    const [query, setQuery] = useState('')
     const containerRef = useRef<HTMLDivElement>(null)
 
     const selectedProduct = products.find(p => p.id === selectedProductId)
 
     useEffect(() => {
+        if (selectedProduct && !open) {
+            setQuery(`[${selectedProduct.skuCode}] ${selectedProduct.productName}`)
+        } else if (!selectedProduct && !open) {
+            setQuery('')
+        }
+    }, [selectedProduct, open])
+
+    useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
                 setOpen(false)
+                if (selectedProduct) {
+                    setQuery(`[${selectedProduct.skuCode}] ${selectedProduct.productName}`)
+                } else {
+                    setQuery('')
+                }
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
+    }, [selectedProduct])
 
-    const filtered = query.trim() === ''
-        ? products.slice(0, 40)
-        : products.filter(p =>
-            p.skuCode.toLowerCase().includes(query.toLowerCase()) ||
-            p.productName.toLowerCase().includes(query.toLowerCase())
-        ).slice(0, 40)
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase()
+        let list = products
+        if (q && (!selectedProduct || query !== `[${selectedProduct.skuCode}] ${selectedProduct.productName}`)) {
+            list = products.filter(p =>
+                p.skuCode.toLowerCase().includes(q) ||
+                p.productName.toLowerCase().includes(q)
+            )
+        }
+        if (fromWarehouseId) {
+            return [...list].sort((a, b) => {
+                const stockA = a.stocksByWH?.[fromWarehouseId]?.totalAvailable || 0
+                const stockB = b.stocksByWH?.[fromWarehouseId]?.totalAvailable || 0
+                if (stockA > 0 && stockB === 0) return -1
+                if (stockA === 0 && stockB > 0) return 1
+                return 0
+            }).slice(0, 50)
+        }
+        return list.slice(0, 50)
+    }, [products, query, selectedProduct, fromWarehouseId])
 
     return (
-        <div className="relative flex-1 min-w-[200px]" ref={containerRef}>
-            <div
-                onClick={() => setOpen(prev => !prev)}
-                className="w-full px-2.5 py-1.5 text-xs rounded cursor-pointer flex items-center justify-between transition-colors"
-                style={{ ...inputStyle, border: open ? '1px solid #87CBB9' : '1px solid #2A4355' }}
-            >
-                <span className="truncate">
-                    {selectedProduct ? (
-                        <>
-                            <strong className="font-mono text-[#D4A853] mr-1">[{selectedProduct.skuCode}]</strong>
-                            <span className="font-medium text-[#E8F1F2]">{selectedProduct.productName}</span>
-                        </>
-                    ) : (
-                        <span className="text-[#8AAEBB]">-- Chọn rượu vang --</span>
-                    )}
-                </span>
-                <ChevronDown size={14} className="ml-1 shrink-0 text-[#8AAEBB]" />
+        <div className="relative flex-1 min-w-[280px]" ref={containerRef}>
+            <div className="relative">
+                <input
+                    type="text"
+                    value={query}
+                    placeholder="-- Gõ SKU hoặc tên rượu vang để chọn --"
+                    onFocus={e => {
+                        setOpen(true)
+                        e.target.select()
+                    }}
+                    onChange={e => {
+                        setQuery(e.target.value)
+                        setOpen(true)
+                    }}
+                    className="w-full px-2.5 py-1.5 pr-8 text-xs rounded outline-none font-medium transition-colors"
+                    style={{
+                        ...inputStyle,
+                        borderColor: open ? '#87CBB9' : '#2A4355',
+                    }}
+                />
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8AAEBB] pointer-events-none" />
             </div>
 
             {open && (
                 <div
-                    className="absolute left-0 top-full mt-1 w-full max-h-60 overflow-y-auto rounded shadow-2xl z-[9999] border divide-y divide-[#2A4355]/40"
+                    className="absolute left-0 top-full mt-1 w-full min-w-[420px] max-h-72 overflow-y-auto rounded shadow-2xl z-[9999] border divide-y divide-[#2A4355]/40"
                     style={{ background: '#1B2E3D', borderColor: '#87CBB9' }}
                 >
-                    <div className="p-1.5 sticky top-0 bg-[#1B2E3D] z-10 border-b border-[#2A4355]">
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={e => setQuery(e.target.value)}
-                            placeholder="Nhập mã SKU (e.g. L40006) hoặc tên rượu..."
-                            className="w-full px-2.5 py-1 text-xs outline-none rounded font-medium"
-                            style={{ background: '#142433', border: '1px solid #2A4355', color: '#E8F1F2' }}
-                            autoFocus
-                        />
-                    </div>
-
                     {filtered.length === 0 ? (
                         <div className="p-3 text-center text-xs text-[#8AAEBB]">Không tìm thấy rượu phù hợp</div>
                     ) : (
                         filtered.map(p => {
                             const isSelected = p.id === selectedProductId
+                            const whStock = fromWarehouseId && p.stocksByWH ? p.stocksByWH[fromWarehouseId] : null
+                            const whTotal = whStock ? whStock.totalAvailable : 0
                             return (
                                 <div
                                     key={p.id}
-                                    onClick={() => {
+                                    onMouseDown={(e) => {
+                                        e.preventDefault()
                                         onChange(p.id)
                                         setOpen(false)
-                                        setQuery('')
+                                        setQuery(`[${p.skuCode}] ${p.productName}`)
                                     }}
-                                    className={`p-2 text-xs cursor-pointer transition-colors flex items-center justify-between ${isSelected ? 'bg-[#87CBB9]/20 text-[#87CBB9]' : 'hover:bg-[#142433] text-[#E8F1F2]'}`}
+                                    className={`p-2.5 text-xs cursor-pointer transition-colors flex items-center justify-between gap-3 ${isSelected ? 'bg-[#87CBB9]/20 text-[#87CBB9]' : 'hover:bg-[#142433] text-[#E8F1F2]'}`}
                                 >
-                                    <div>
-                                        <span className="font-mono font-bold text-[#D4A853] mr-1 text-[11px]">[{p.skuCode}]</span>
-                                        <span className="font-semibold">{p.productName}</span>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate font-medium">
+                                            <span className="font-mono font-bold text-[#D4A853] mr-1 text-[11px]">[{p.skuCode}]</span>
+                                            <span>{p.productName}</span>
+                                        </div>
+                                        {fromWarehouseId && whStock && whStock.vintages.length > 0 ? (
+                                            <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px]">
+                                                {whStock.vintages.map(v => (
+                                                    <span
+                                                        key={String(v.vintage)}
+                                                        className={`px-1.5 py-0.5 rounded font-mono font-bold ${v.qtyAvailable > 0 ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/50' : 'bg-slate-800 text-slate-500'}`}
+                                                    >
+                                                        {v.vintage ? `NV ${v.vintage}` : 'NV (K.Năm)'}: {v.qtyAvailable} chai
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            p.vintages && p.vintages.length > 0 && (
+                                                <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400">
+                                                    <span>Niên vụ: {p.vintages.join(', ')}</span>
+                                                </div>
+                                            )
+                                        )}
                                     </div>
-                                    {p.vintages && p.vintages.length > 0 && (
-                                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#142433] text-[#87CBB9]">
-                                            {p.vintages.join(', ')}
-                                        </span>
-                                    )}
+                                    <div className="shrink-0 text-right">
+                                        {fromWarehouseId ? (
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-block ${whTotal > 0 ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/40' : 'bg-red-950/40 text-red-400 border-red-900/40'}`}>
+                                                Tồn kho xuất: {whTotal}c
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] text-slate-400">
+                                                {p.country || ''}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             )
                         })
@@ -230,8 +294,24 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
 
     const handleLineProductChange = (idx: number, productId: string) => {
         const prod = products.find(p => p.id === productId)
-        const defaultVintage = prod?.vintages?.[0] ?? prod?.vintage ?? null
-        setLines(prev => prev.map((l, i) => i === idx ? { ...l, productId, vintage: defaultVintage } : l))
+        let bestVintage: number | null = null
+        if (fromWarehouseId && prod?.stocksByWH?.[fromWarehouseId]?.vintages?.length) {
+            const withStock = prod.stocksByWH[fromWarehouseId].vintages.filter(v => v.qtyAvailable > 0 && v.vintage !== null)
+            if (withStock.length > 0) {
+                bestVintage = withStock[0].vintage
+            } else {
+                const nonV = prod.stocksByWH[fromWarehouseId].vintages.find(v => v.vintage === null && v.qtyAvailable > 0)
+                if (nonV) {
+                    bestVintage = null
+                } else if (prod.stocksByWH[fromWarehouseId].vintages[0]?.vintage !== undefined) {
+                    bestVintage = prod.stocksByWH[fromWarehouseId].vintages[0].vintage
+                }
+            }
+        }
+        if (bestVintage === null && prod?.vintages && prod.vintages.length > 0) {
+            bestVintage = prod.vintages[0]
+        }
+        setLines(prev => prev.map((l, i) => i === idx ? { ...l, productId, vintage: bestVintage } : l))
     }
 
     const handleLineVintageChange = (idx: number, vintage: number | null) => {
@@ -255,6 +335,40 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
         const validLines = lines.filter(l => l.productId && l.qtyTransferred > 0)
         if (validLines.length === 0) {
             toast.error('Vui lòng chọn ít nhất 1 sản phẩm với số lượng > 0')
+            return
+        }
+
+        // Validate stock by vintage client-side
+        const zeroStockLine = validLines.find(l => {
+            const p = products.find(prod => prod.id === l.productId)
+            const whStock = fromWarehouseId && p?.stocksByWH ? p.stocksByWH[fromWarehouseId] : null
+            if (!whStock) return true
+            const match = whStock.vintages.find(v => v.vintage === l.vintage)
+            return !match || match.qtyAvailable <= 0
+        })
+        if (zeroStockLine) {
+            const prod = products.find(p => p.id === zeroStockLine.productId)
+            const vText = zeroStockLine.vintage ? ` (Niên vụ ${zeroStockLine.vintage})` : ''
+            toast.error(`Sản phẩm [${prod?.skuCode}] ${prod?.productName}${vText} có tồn kho = 0 chai tại Kho xuất! Vui lòng chọn niên vụ có tồn hoặc điều chỉnh lại.`)
+            return
+        }
+
+        const overStockLine = validLines.find(l => {
+            const p = products.find(prod => prod.id === l.productId)
+            const whStock = fromWarehouseId && p?.stocksByWH ? p.stocksByWH[fromWarehouseId] : null
+            if (!whStock) return false
+            const match = whStock.vintages.find(v => v.vintage === l.vintage)
+            const avail = match ? match.qtyAvailable : 0
+            return l.qtyTransferred > avail
+        })
+        if (overStockLine) {
+            const prod = products.find(p => p.id === overStockLine.productId)
+            const vText = overStockLine.vintage ? ` (Niên vụ ${overStockLine.vintage})` : ''
+            const p = products.find(prod => prod.id === overStockLine.productId)
+            const whStock = fromWarehouseId && p?.stocksByWH ? p.stocksByWH[fromWarehouseId] : null
+            const match = whStock?.vintages.find(v => v.vintage === overStockLine.vintage)
+            const avail = match ? match.qtyAvailable : 0
+            toast.error(`Sản phẩm [${prod?.skuCode}] ${prod?.productName}${vText} chỉ còn ${avail} chai tại Kho xuất (Yêu cầu chuyển ${overStockLine.qtyTransferred} chai).`)
             return
         }
 
@@ -416,7 +530,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     </div>
 
                     {/* Line Items Section */}
-                    <div className="space-y-3 pt-2 overflow-visible">
+                    <div className="space-y-3 pt-2 pb-28">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#4A6A7A' }}>
                                 🍷 Danh Mục Rượu Chuyển ({lines.length} dòng)
@@ -438,8 +552,11 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                         ) : (
                             <>
                                 {/* 💻 DESKTOP VIEW (>= sm) - Matching SODrawer Table */}
-                                <div className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full overflow-visible">
-                                    <table className="w-full text-xs text-left border-collapse overflow-visible">
+                                <div
+                                    className="hidden sm:block overflow-x-auto border border-[#2A4355] rounded-md bg-[#142433] max-w-full"
+                                    style={{ minHeight: lines.length > 0 ? '360px' : 'auto' }}
+                                >
+                                    <table className="w-full text-xs text-left border-collapse">
                                         <thead>
                                             <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
                                                 <th className="px-3 py-2.5 w-12 text-center">STT</th>
@@ -452,50 +569,108 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                         <tbody className="divide-y divide-[#2A4355]/40 overflow-visible">
                                             {lines.map((line, idx) => {
                                                 const p = products.find(prod => prod.id === line.productId)
-                                                const availableVintages = p?.vintages || []
+                                                const whStock = fromWarehouseId && p?.stocksByWH ? p.stocksByWH[fromWarehouseId] : null
+                                                const whVintages = whStock?.vintages || []
+                                                const totalWhAvail = whStock?.totalAvailable ?? 0
+
+                                                let selectedVintageQty = 0
+                                                if (whStock) {
+                                                    const match = whVintages.find(v => v.vintage === line.vintage)
+                                                    selectedVintageQty = match ? match.qtyAvailable : 0
+                                                }
+
+                                                const allProductVintages = p?.vintages || []
+                                                const isZeroStock = Boolean(fromWarehouseId && line.productId && selectedVintageQty === 0)
+                                                const isOverStock = Boolean(fromWarehouseId && line.productId && line.qtyTransferred > selectedVintageQty && selectedVintageQty > 0)
+
                                                 return (
-                                                    <tr key={idx} className="hover:bg-[#1B2E3D]/30 transition-colors overflow-visible">
-                                                        <td className="px-3 py-2 text-center font-bold" style={{ color: '#8AAEBB' }}>{idx + 1}</td>
-                                                        <td className="px-3 py-2 overflow-visible">
+                                                    <tr key={idx} className={`hover:bg-[#1B2E3D]/30 transition-colors ${isZeroStock ? 'bg-red-950/20' : ''}`}>
+                                                        <td className="px-3 py-2.5 text-center font-bold align-top" style={{ color: '#8AAEBB' }}>{idx + 1}</td>
+                                                        <td className="px-3 py-2.5 align-top">
                                                             <ProductCombobox
                                                                 products={products}
                                                                 selectedProductId={line.productId}
+                                                                fromWarehouseId={fromWarehouseId}
                                                                 onChange={id => handleLineProductChange(idx, id)}
                                                             />
+                                                            {fromWarehouseId && line.productId && (
+                                                                <div className="mt-1 flex items-center gap-2 text-[11px]">
+                                                                    <span className="text-slate-400">Tồn kho xuất:</span>
+                                                                    <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[10px] ${totalWhAvail > 0 ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-800/40' : 'text-red-400 bg-red-950/40 border border-red-900/40'}`}>
+                                                                        {totalWhAvail} chai
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </td>
-                                                        <td className="px-3 py-2 text-center">
+                                                        <td className="px-3 py-2.5 text-center align-top">
                                                             <select
                                                                 value={line.vintage ?? ''}
                                                                 onChange={e => handleLineVintageChange(idx, e.target.value ? parseInt(e.target.value) : null)}
                                                                 {...focusHandler}
-                                                                className="w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none cursor-pointer"
-                                                                style={{ ...inputStyle }}
+                                                                className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none cursor-pointer ${isZeroStock ? 'text-red-400' : ''}`}
+                                                                style={{ ...inputStyle, borderColor: isZeroStock ? '#F87171' : '#2A4355' }}
                                                             >
-                                                                <option value="">NV (K.Năm)</option>
-                                                                {availableVintages.map(v => (
-                                                                    <option key={v} value={v}>{v}</option>
+                                                                <option value="">
+                                                                    NV (K.Năm) {whStock ? `(Tồn: ${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0}c)` : ''}
+                                                                </option>
+                                                                {whVintages.filter(v => v.vintage !== null).map(v => (
+                                                                    <option key={v.vintage!} value={v.vintage!}>
+                                                                        {v.vintage} (Tồn: {v.qtyAvailable}c)
+                                                                    </option>
                                                                 ))}
-                                                                {line.vintage && !availableVintages.includes(line.vintage) && (
-                                                                    <option value={line.vintage}>{line.vintage}</option>
+                                                                {allProductVintages.filter(v => !whVintages.some(wv => wv.vintage === v)).map(v => (
+                                                                    <option key={v} value={v}>
+                                                                        {v} (Tồn: 0c - Hết)
+                                                                    </option>
+                                                                ))}
+                                                                {line.vintage && !allProductVintages.includes(line.vintage) && !whVintages.some(wv => wv.vintage === line.vintage) && (
+                                                                    <option value={line.vintage}>{line.vintage} (Tồn: 0c)</option>
                                                                 )}
                                                             </select>
+
+                                                            {fromWarehouseId && line.productId && (
+                                                                <div className="mt-1 flex items-center justify-center">
+                                                                    {isZeroStock ? (
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-950/60 px-1.5 py-0.5 rounded border border-red-800/50">
+                                                                            <AlertCircle size={11} className="text-red-400" /> Tồn = 0 chai
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-[10px] font-semibold text-emerald-400">
+                                                                            Tồn: <strong className="font-mono font-bold">{selectedVintageQty}</strong> chai
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </td>
-                                                        <td className="px-3 py-2 text-center">
+                                                        <td className="px-3 py-2.5 text-center align-top">
                                                             <input
                                                                 type="number"
                                                                 min={1}
                                                                 value={line.qtyTransferred}
                                                                 onChange={e => handleLineQtyChange(idx, parseInt(e.target.value) || 1)}
                                                                 {...focusHandler}
-                                                                className="w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none"
-                                                                style={{ ...inputStyle }}
+                                                                className={`w-full px-2 py-1.5 rounded text-center font-mono font-bold text-xs outline-none ${isOverStock ? 'text-amber-300' : ''}`}
+                                                                style={{ ...inputStyle, borderColor: isOverStock ? '#F59E0B' : '#2A4355' }}
                                                             />
+                                                            {fromWarehouseId && line.productId && (
+                                                                <div className="mt-1 flex items-center justify-center">
+                                                                    {isOverStock ? (
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/50">
+                                                                            ⚠️ Vượt tồn ({selectedVintageQty}c)
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-[10px] text-slate-400">
+                                                                            Chai
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </td>
-                                                        <td className="px-3 py-2 text-center">
+                                                        <td className="px-3 py-2.5 text-center align-top">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleRemoveLine(idx)}
-                                                                className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors cursor-pointer"
+                                                                className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded transition-colors cursor-pointer mt-1"
                                                             >
                                                                 <Trash2 size={15} />
                                                             </button>

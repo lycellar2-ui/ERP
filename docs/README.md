@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-29 | Wine ERP v10.11 — Reassign Parent Orders to Child Branches & Fix Self-Referencing parentId*
+*Last updated: 2026-08-31 | Wine ERP v10.12 — Vintage Stock Real-time Warning in Transfer Drawer & Dropdown Clip Fix*
 
