@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Ban } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRightLeft, Plus, Eye, RefreshCw, Search, Ban, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { type TransferOrderRow, getTransferOrders, cancelTransferOrder, accountingApproveTransfer } from './actions'
 import { CreateTransferDrawer } from './CreateTransferDrawer'
@@ -104,6 +105,13 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <Link
+                        href="/dashboard/warehouse"
+                        className="px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-xs transition-colors flex items-center gap-1.5 border border-indigo-200"
+                    >
+                        <Zap size={15} /> Gợi Ý Điều Chuyển
+                    </Link>
+
                     <button
                         onClick={reload}
                         className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"

@@ -570,7 +570,15 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | Tính năng | File | Chi tiết |
 |---|---|---|
 | **Vị Trí Kho Dropdown theo Kho Nhận** | `GoodsReceiptTab.tsx`, `actions.ts`, `actions-gr.ts` | Khi chọn kho nhận, hệ thống tự động tải danh sách vị trí kho khả dụng (`Location` / Zone - Kệ - Ô) và hiển thị dạng dropdown chọn nhanh thay vì nhập tay text tự do |
-| **Hỗ trợ Niên Vụ (Vintage) khi Nhập Kho** | `validations.ts`, `actions.ts`, `actions-gr.ts`, `GoodsReceiptTab.tsx` | Bổ sung trường Niên Vụ (`vintage`, VD: `2020`, `2021`, `NV`) cho từng dòng sản phẩm khi tạo phiếu Goods Receipt, lưu trực tiếp vào bản ghi `StockLot` tương ứng và hiển thị trên bảng chi tiết GR |
+#### Phase 10: Phân Hệ Gợi Ý Điều Chuyển Kho & Cân Bằng Tồn (Stock Replenishment & Rebalance) (31/08/2026)
+
+| Tính năng | File | Chi tiết |
+|---|---|---|
+| **Module Gợi Ý Điều Chuyển Kho** | `ReplenishmentTab.tsx`, `actions.ts`, `WarehouseClient.tsx` | Tự động phát hiện tình trạng lệch tồn giữa các kho: cảnh báo khi kho bán lẻ/showroom sắp hết hàng nhưng kho tổng/kho cùng pháp nhân còn nhiều tồn kho khả dụng |
+| **Hai Luồng Cảnh Báo Điều Chuyển Cốt Lõi** | `actions.ts` | 1. **Nội bộ Thắng Ân**: Kho Tầng 2 GVM còn $\le \text{Ngưỡng Kho Đích}$ trong khi Kho Thường Tín $\ge \text{Ngưỡng Kho Nguồn}$<br/>2. **Cấp hàng Showroom**: Kho Showroom Lys còn $\le 3$ hoặc $\le 6$ chai trong khi các kho Thắng Ân còn tồn |
+| **Bộ Lọc Ngưỡng Tùy Chọn Linh Hoạt** | `ReplenishmentTab.tsx` | Cho phép tùy chọn ngưỡng kho đích ($\le 3, 6, 12, 24$ chai), ngưỡng kho nguồn ($\ge 6, 12, 24$ chai), lọc theo phân loại và loại rượu |
+| **Tạo Phiếu Chuyển Kho 1-Click** | `CreateTransferDrawer.tsx`, `ReplenishmentTab.tsx` | Nút `[⚡ Tạo Lệnh Chuyển]` tự động điền sẵn Kho đi, Kho đến, SKU và số lượng đề xuất chẵn thùng (6 hoặc 12 chai/thùng) vào drawer chuyển kho |
+| **Liên kết nhanh từ Chuyển Kho Nội Bộ** | `TransfersClient.tsx` | Nút `[⚡ Gợi Ý Điều Chuyển]` trên toolbar trang Chuyển Kho điều hướng tức thì về phân hệ Gợi ý |
 
 ### Chi tiết GR Variance Report
 
@@ -582,6 +590,6 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 → hasIssues flag cho quick filter
 ```
 
-*Last updated: 2026-08-18 | Wine ERP v10.3 — Goods Receipt Location Dropdown & Vintage Lot Support*
+*Last updated: 2026-08-31 | Wine ERP v10.4 — Stock Replenishment & Rebalance Suggestions*
 
 

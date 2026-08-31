@@ -30,6 +30,7 @@ import { WarehouseMapTab } from './WarehouseMapTab'
 import { TransfersTab } from './TransfersTab'
 import { StockCountTab } from './StockCountTab'
 import { SampleInventoryTab } from './SampleInventoryTab'
+import { ReplenishmentTab } from './ReplenishmentTab'
 
 const COUNTRY_FLAGS: Record<string, string> = {
     FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
@@ -445,7 +446,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
 }
 
 // ── Main WMS Client Component ───────────────────────
-type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map' | 'transfer' | 'stock-count' | 'sample'
+type WMSTab = 'inventory' | 'gr' | 'do' | 'locations' | 'quarantine' | 'nxt' | 'map' | 'transfer' | 'stock-count' | 'sample' | 'replenishment'
 
 interface Props {
     initialWarehouses?: WarehouseRow[]
@@ -629,6 +630,16 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             bg: 'rgba(212,168,83,0.15)',
             description: 'Tự động chọn lô FIFO, tạo phiếu xuất kho DO, xác nhận giao hàng & in phiếu DO',
             actionLabel: 'Nhặt Hàng Xuất Kho'
+        },
+        {
+            key: 'replenishment',
+            title: '🔄 Gợi Ý Điều Chuyển Kho',
+            subtitle: 'Stock Replenishment & Rebalance',
+            icon: ArrowRightLeft,
+            color: '#6366F1',
+            bg: 'rgba(99,102,241,0.1)',
+            description: 'Tự động phát hiện lệch tồn, cảnh báo kho sắp hết và gợi ý điều chuyển từ kho còn hàng',
+            actionLabel: 'Xem Gợi Ý Điều Chuyển'
         },
         {
             key: 'transfer',
@@ -1099,6 +1110,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
 
                     {/* Stock Count Tab — Gộp mới */}
                     {activeTab === 'stock-count' && <StockCountTab />}
+
+                    {/* Replenishment — Gợi Ý Điều Chuyển Kho */}
+                    {activeTab === 'replenishment' && <ReplenishmentTab />}
 
                     {/* Sample Wine Inventory Tab — Mới */}
                     {activeTab === 'sample' && <SampleInventoryTab />}

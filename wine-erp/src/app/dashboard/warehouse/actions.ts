@@ -2611,3 +2611,205 @@ export async function exportGoodsReceiptsExcel(filters: {
     const filename = `GoodsReceipts_Export_${new Date().toISOString().split('T')[0]}.xlsx`
     return { base64: buffer.toString('base64'), filename }
 }
+
+// ═══════════════════════════════════════════════════
+// STOCK REPLENISHMENT & REBALANCE ALERTS
+// ═══════════════════════════════════════════════════
+
+export type ReplenishmentCategory = 'ALL' | 'INTRA_TA' | 'TO_SHOWROOM'
+
+export type ReplenishmentSuggestionRow = {
+    id: string
+    productId: string
+    skuCode: string
+    productName: string
+    country: string | null
+    wineType: string | null
+    vintage: number | null
+    // Target warehouse (cần bổ sung)
+    targetWarehouseId: string
+    targetWarehouseName: string
+    targetWarehouseCode: string
+    targetStockAvailable: number
+    // Source warehouse (kho nguồn đang có hàng)
+    sourceWarehouseId: string
+    sourceWarehouseName: string
+    sourceWarehouseCode: string
+    sourceStockAvailable: number
+    // Calculation
+    suggestedQty: number
+    suggestedCases: number
+    category: 'INTRA_TA' | 'TO_SHOWROOM'
+    categoryLabel: string
+    reason: string
+}
+
+export async function getReplenishmentSuggestions(params: {
+    targetThreshold?: number
+    sourceMinStock?: number
+    category?: ReplenishmentCategory
+    search?: string
+    wineType?: string
+} = {}): Promise<{
+    suggestions: ReplenishmentSuggestionRow[]
+    stats: {
+        totalAlerts: number
+        intraTaCount: number
+        toShowroomCount: number
+    }
+}> {
+    const targetThreshold = params.targetThreshold ?? 6
+    const sourceMinStock = params.sourceMinStock ?? 12
+    const categoryFilter = params.category ?? 'ALL'
+
+    const [warehouses, lots] = await Promise.all([
+        prisma.warehouse.findMany({
+            select: { id: true, code: true, name: true, legalEntityId: true, legalEntity: { select: { code: true } } }
+        }),
+        prisma.stockLot.findMany({
+            where: {
+                status: { in: ['AVAILABLE', 'RESERVED'] },
+            },
+            include: {
+                product: {
+                    select: {
+                        id: true,
+                        skuCode: true,
+                        productName: true,
+                        country: true,
+                        wineType: true,
+                    }
+                },
+                location: {
+                    select: { warehouseId: true }
+                }
+            }
+        })
+    ])
+
+    const taGvmWh = warehouses.find(w => w.code === 'WH-TA-GVM' || w.name?.includes('tầng 2'))
+    const taTtWh = warehouses.find(w => w.code === 'WH-TA-TT' || w.name?.includes('Thường Tín'))
+    const lysSrWh = warehouses.find(w => w.code === 'WH-LYS-SR' || w.name?.includes('Showroom'))
+
+    if (!taGvmWh || !taTtWh || !lysSrWh) {
+        return { suggestions: [], stats: { totalAlerts: 0, intraTaCount: 0, toShowroomCount: 0 } }
+    }
+
+    // Aggregate stock by warehouse & product
+    const stockMap = new Map<string, number>()
+    const prodMap = new Map<string, {
+        id: string
+        skuCode: string
+        productName: string
+        country: string | null
+        wineType: string | null
+        vintage: number | null
+    }>()
+
+    for (const l of lots) {
+        const key = `${l.location.warehouseId}_${l.productId}`
+        stockMap.set(key, (stockMap.get(key) || 0) + Number(l.qtyAvailable))
+        if (!prodMap.has(l.productId)) {
+            prodMap.set(l.productId, {
+                id: l.product.id,
+                skuCode: l.product.skuCode,
+                productName: l.product.productName,
+                country: l.product.country,
+                wineType: l.product.wineType,
+                vintage: l.vintage,
+            })
+        }
+    }
+
+    const suggestions: ReplenishmentSuggestionRow[] = []
+
+    for (const [prodId, prod] of prodMap.entries()) {
+        if (params.wineType && prod.wineType !== params.wineType) continue
+        if (params.search) {
+            const q = params.search.toLowerCase()
+            if (!prod.skuCode.toLowerCase().includes(q) && !prod.productName.toLowerCase().includes(q)) {
+                continue
+            }
+        }
+
+        const stockGvm = stockMap.get(`${taGvmWh.id}_${prodId}`) || 0
+        const stockTt = stockMap.get(`${taTtWh.id}_${prodId}`) || 0
+        const stockSr = stockMap.get(`${lysSrWh.id}_${prodId}`) || 0
+
+        // 1. Luồng 1: Nội bộ Thắng Ân (Thường Tín ➔ GVM Tầng 2)
+        if (stockGvm <= targetThreshold && stockTt >= sourceMinStock) {
+            const needed = Math.max(12, Math.ceil((24 - stockGvm) / 6) * 6)
+            const transferQty = Math.min(needed, Math.floor(stockTt / 6) * 6 || stockTt)
+
+            if (categoryFilter === 'ALL' || categoryFilter === 'INTRA_TA') {
+                suggestions.push({
+                    id: `${taGvmWh.id}_${taTtWh.id}_${prodId}`,
+                    productId: prod.id,
+                    skuCode: prod.skuCode,
+                    productName: prod.productName,
+                    country: prod.country,
+                    wineType: prod.wineType,
+                    vintage: prod.vintage,
+                    targetWarehouseId: taGvmWh.id,
+                    targetWarehouseName: taGvmWh.name,
+                    targetWarehouseCode: taGvmWh.code,
+                    targetStockAvailable: stockGvm,
+                    sourceWarehouseId: taTtWh.id,
+                    sourceWarehouseName: taTtWh.name,
+                    sourceWarehouseCode: taTtWh.code,
+                    sourceStockAvailable: stockTt,
+                    suggestedQty: transferQty,
+                    suggestedCases: Math.round(transferQty / 6) || 1,
+                    category: 'INTRA_TA',
+                    categoryLabel: 'Thường Tín ➔ GVM Tầng 2',
+                    reason: `Kho GVM còn ${stockGvm}c (≤ ${targetThreshold}c), Kho Thường Tín có sẵn ${stockTt}c`
+                })
+            }
+        }
+
+        // 2. Luồng 2: Cấp hàng Showroom (Thắng Ân ➔ Showroom Lys)
+        const showroomThreshold = Math.min(targetThreshold, 6)
+        if (stockSr <= showroomThreshold && (stockGvm > 6 || stockTt > 6)) {
+            const sourceWh = stockGvm >= stockTt ? taGvmWh : taTtWh
+            const sourceStock = stockGvm >= stockTt ? stockGvm : stockTt
+            const transferQty = Math.min(6, sourceStock)
+
+            if (categoryFilter === 'ALL' || categoryFilter === 'TO_SHOWROOM') {
+                suggestions.push({
+                    id: `${lysSrWh.id}_${sourceWh.id}_${prodId}`,
+                    productId: prod.id,
+                    skuCode: prod.skuCode,
+                    productName: prod.productName,
+                    country: prod.country,
+                    wineType: prod.wineType,
+                    vintage: prod.vintage,
+                    targetWarehouseId: lysSrWh.id,
+                    targetWarehouseName: lysSrWh.name,
+                    targetWarehouseCode: lysSrWh.code,
+                    targetStockAvailable: stockSr,
+                    sourceWarehouseId: sourceWh.id,
+                    sourceWarehouseName: sourceWh.name,
+                    sourceWarehouseCode: sourceWh.code,
+                    sourceStockAvailable: sourceStock,
+                    suggestedQty: transferQty,
+                    suggestedCases: 1,
+                    category: 'TO_SHOWROOM',
+                    categoryLabel: `${sourceWh.code?.includes('TT') ? 'Thường Tín' : 'GVM'} ➔ Showroom`,
+                    reason: `Showroom còn ${stockSr}c (≤ ${showroomThreshold}c), ${sourceWh.name} có sẵn ${sourceStock}c`
+                })
+            }
+        }
+    }
+
+    const intraTaCount = suggestions.filter(s => s.category === 'INTRA_TA').length
+    const toShowroomCount = suggestions.filter(s => s.category === 'TO_SHOWROOM').length
+
+    return {
+        suggestions,
+        stats: {
+            totalAlerts: suggestions.length,
+            intraTaCount,
+            toShowroomCount,
+        }
+    }
+}

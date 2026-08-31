@@ -5,10 +5,23 @@ import { X, Save, Send, Plus, Trash2, ArrowRightLeft, AlertCircle, Building2, Ca
 import { toast } from 'sonner'
 import { createTransferOrder, getTransferOptions } from './actions'
 
+export interface TransferInitialData {
+    fromWarehouseId?: string
+    toWarehouseId?: string
+    reason?: string
+    lines?: {
+        productId: string
+        qtyTransferred: number
+        vintage?: number | null
+        qtyAvailable?: number
+    }[]
+}
+
 interface CreateTransferDrawerProps {
     open: boolean
     onClose: () => void
     onSuccess: () => void
+    initialData?: TransferInitialData | null
 }
 
 type WarehouseOpt = { id: string; code: string; name: string }
@@ -78,20 +91,21 @@ function ProductCombobox({
         ).slice(0, 40)
 
     return (
-        <div ref={containerRef} className="relative w-full overflow-visible">
+        <div className="relative flex-1 min-w-[200px]" ref={containerRef}>
             <div
                 onClick={() => setOpen(prev => !prev)}
-                className="w-full px-2.5 py-1.5 rounded flex items-center justify-between text-xs cursor-pointer border transition-colors"
-                style={{
-                    background: '#142433',
-                    borderColor: open ? '#87CBB9' : '#2A4355',
-                    color: selectedProduct ? '#E8F1F2' : '#8AAEBB',
-                }}
+                className="w-full px-2.5 py-1.5 text-xs rounded cursor-pointer flex items-center justify-between transition-colors"
+                style={{ ...inputStyle, border: open ? '1px solid #87CBB9' : '1px solid #2A4355' }}
             >
-                <span className="truncate font-semibold">
-                    {selectedProduct
-                        ? `[${selectedProduct.skuCode}] ${selectedProduct.productName}`
-                        : '— Gõ tìm SKU / Tên Rượu Vang —'}
+                <span className="truncate">
+                    {selectedProduct ? (
+                        <>
+                            <strong className="font-mono text-[#D4A853] mr-1">[{selectedProduct.skuCode}]</strong>
+                            <span className="font-medium text-[#E8F1F2]">{selectedProduct.productName}</span>
+                        </>
+                    ) : (
+                        <span className="text-[#8AAEBB]">-- Chọn rượu vang --</span>
+                    )}
                 </span>
                 <ChevronDown size={14} className="ml-1 shrink-0 text-[#8AAEBB]" />
             </div>
@@ -147,7 +161,7 @@ function ProductCombobox({
     )
 }
 
-export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransferDrawerProps) {
+export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: CreateTransferDrawerProps) {
     const [loadingOpts, setLoadingOpts] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [warehouses, setWarehouses] = useState<WarehouseOpt[]>([])
@@ -168,9 +182,32 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
                 const res = await getTransferOptions()
                 setWarehouses(res.warehouses)
                 setProducts(res.products)
-                if (res.warehouses.length >= 2) {
+
+                if (initialData?.fromWarehouseId) {
+                    setFromWarehouseId(initialData.fromWarehouseId)
+                } else if (res.warehouses.length >= 2) {
                     setFromWarehouseId(res.warehouses[0].id)
+                }
+
+                if (initialData?.toWarehouseId) {
+                    setToWarehouseId(initialData.toWarehouseId)
+                } else if (res.warehouses.length >= 2) {
                     setToWarehouseId(res.warehouses[1].id)
+                }
+
+                if (initialData?.reason) {
+                    setReasonSelect(initialData.reason)
+                }
+
+                if (initialData?.lines && initialData.lines.length > 0) {
+                    setLines(initialData.lines.map(l => ({
+                        productId: l.productId,
+                        vintage: l.vintage ?? null,
+                        qtyTransferred: l.qtyTransferred,
+                        qtyAvailable: l.qtyAvailable ?? 0,
+                    })))
+                } else {
+                    setLines([{ productId: '', vintage: null, qtyTransferred: 1, qtyAvailable: 0 }])
                 }
             } catch (err: any) {
                 toast.error('Lỗi tải danh mục kho & sản phẩm: ' + err.message)
@@ -179,7 +216,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess }: CreateTransfe
             }
         }
         load()
-    }, [open])
+    }, [open, initialData])
 
     if (!open) return null
 
