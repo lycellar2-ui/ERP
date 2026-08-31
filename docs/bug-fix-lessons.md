@@ -2315,6 +2315,35 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 89: Trong các form điều chuyển kho nội bộ (CreateTransferDrawer) hoặc xuất kho, luôn tính toán và hiển thị tồn kho thực tế theo từng Niên Vụ (Vintage) tại Kho Xuất cụ thể, đồng thời thiết lập min-height và xử lý overflow container phù hợp để dropdown không bị cắt.**
 
+---
+
+## BUG-090: Đơn Hàng Bán Lẻ (Retail) Bị Cộng Thêm 10% Thuế VAT Trên Giá Niêm Yết Đã Gồm Thuế
+
+**Severity:** 🟡 High / Financial & Pricing Policy Compliance
+**Date:** 2026-08-31
+**Affected Modules:** `SLS` (Sales Orders — `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `actions.ts`), `Print Template` (`print/page.tsx`)
+
+### Triệu chứng
+1. Khi tạo đơn hàng Bán lẻ (khách cá nhân, kênh `RETAIL` / `DIRECT_INDIVIDUAL`), hệ thống lấy `retailPrice` (ví dụ 670.000đ Sandy Cove) rồi tự động cộng thêm 10% thuế VAT vào tổng thanh toán, làm đội giá phải trả của khách lẻ lên 5.159.000đ sau chiết khấu 30% thay vì đúng 4.690.000đ.
+2. Form tạo đơn không hiển thị bóc tách rõ ràng giữa tiền trước thuế và tiền thuế VAT đối với giá bán lẻ đã gồm VAT.
+
+### Nguyên nhân gốc rễ
+1. Toàn bộ logic tính toán đơn hàng trước đây được thiết kế theo quy chuẩn B2B thuần túy: Coi mọi `unitPrice` là giá trước thuế (Net) và luôn tính `Total = Subtotal * (1 - Discount) + VAT`.
+2. Trong ngành bán lẻ rượu vang, Giá Bán Lẻ Niêm Yết (`retailPrice`) theo quy định là **Giá ĐÃ BAO GỒM THUẾ VAT** (Gross Price). Việc áp dụng công thức B2B khiến đơn hàng bán lẻ bị tính trùng thuế VAT.
+
+### Cách fix
+1. Phân loại cơ chế tính thuế theo Kênh Bán Hàng:
+   - **Kênh Bán Lẻ (`RETAIL`, `DIRECT_INDIVIDUAL`, `POS`)**: Giá niêm yết là Giá ĐÃ GỒM VAT. Hệ thống tính tổng tiền thanh toán theo giá niêm yết sau chiết khấu, sau đó bóc tách tự động: `Tiền trước thuế = Tổng / (1 + VAT%)` và `Thuế VAT = Tổng - Tiền trước thuế`.
+   - **Kênh B2B (`HORECA`, `WHOLESALE_DISTRIBUTOR`, `CORPORATE`, `CONSIGNMENT`, ...)**: Giữ nguyên cơ chế Giá CHƯA GỒM VAT (cộng thêm VAT vào tổng thanh toán).
+2. Cập nhật đồng bộ tại:
+   - `CreateSODrawer.tsx` & `EditSODrawer.tsx`: Hiển thị huy hiệu `🏷️ Kênh RETAIL: Giá bán lẻ niêm yết ĐÃ BAO GỒM VAT`, hiển thị bóc tách `Giá trị trước thuế (bóc tách)` và `Thuế VAT bóc tách`.
+   - `actions.ts` (`createSalesOrder`, `updateSalesOrder`): Lưu đúng `totalAmount` (Doanh thu thuần trước thuế phục vụ hạch toán kế toán) và `vatAmount` (Thuế GTGT đầu ra) sao cho `totalAmount + vatAmount` đúng bằng số tiền thanh toán thực tế của khách.
+   - `print/page.tsx`: Cập nhật mẫu in phiếu bán hàng bóc tách rõ ràng tiền trước thuế và thuế GTGT bóc tách cho đơn hàng bán lẻ.
+
+### Bài học
+
+> ⚠️ **RULE 90: Đối với các kênh Bán lẻ (`RETAIL`, `DIRECT_INDIVIDUAL`, `POS`), đơn giá niêm yết (`retailPrice`) được quy ước là ĐÃ BAO GỒM VAT; hệ thống PHẢI tự động bóc tách doanh thu trước thuế (`Total / (1 + VAT%)`) và tiền thuế VAT đầu ra. Đối với kênh B2B (`HORECA`, `WHOLESALE`, ...), đơn giá là giá CHƯA GỒM VAT và hệ thống tính cộng thêm VAT vào tổng thanh toán.**
+
 
 
 

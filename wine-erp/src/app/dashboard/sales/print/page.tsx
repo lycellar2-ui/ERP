@@ -109,6 +109,8 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
     }
 
     // Calculations with robust support for old/new, Multi-VAT, and Tasting orders
+    const isRetail = order.channel === 'RETAIL' || order.channel === 'DIRECT_INDIVIDUAL' || (order.channel as string) === 'POS'
+
     const subtotal = order.lines.reduce((s: number, l) => {
         const qty = Number(l.qtyOrdered)
         const price = Number(l.unitPrice)
@@ -121,24 +123,39 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
     // Multi-VAT Rate Breakdown
     const vatRateMap: Record<number, number> = {}
+    let calculatedNet = 0
+    let calculatedVat = 0
+
     for (const l of order.lines) {
         const rate = (l as any).vatRate !== undefined && (l as any).vatRate !== null ? Number((l as any).vatRate) : 10
         const lineVal = Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100) * discountMultiplier
-        vatRateMap[rate] = (vatRateMap[rate] || 0) + lineVal * (rate / 100)
+
+        if (isRetail) {
+            const lineNet = lineVal / (1 + rate / 100)
+            const lineVat = lineVal - lineNet
+            calculatedNet += lineNet
+            calculatedVat += lineVat
+            vatRateMap[rate] = (vatRateMap[rate] || 0) + lineVat
+        } else {
+            const lineNet = lineVal
+            const lineVat = lineNet * (rate / 100)
+            calculatedNet += lineNet
+            calculatedVat += lineVat
+            vatRateMap[rate] = (vatRateMap[rate] || 0) + lineVat
+        }
     }
 
     const vatBreakdown = Object.entries(vatRateMap)
         .map(([rateStr, amt]) => ({ rate: Number(rateStr), amount: Math.round(amt) }))
         .sort((a, b) => a.rate - b.rate)
 
-    const calculatedVat = vatBreakdown.reduce((sum, item) => sum + item.amount, 0)
     const vatAmount = (order as any).vatAmount !== undefined && (order as any).vatAmount !== null && Number((order as any).vatAmount) > 0
         ? Number((order as any).vatAmount)
-        : calculatedVat
+        : Math.round(calculatedVat)
 
     const grandTotal = (order as any).orderType === 'TASTING'
         ? 0
-        : afterDiscount + vatAmount
+        : (isRetail ? afterDiscount : afterDiscount + vatAmount)
 
     // Address combination with fallback to customer default address
     const defaultAddr = order.customer.addresses?.[0]
@@ -374,7 +391,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                 <td className="py-1 text-right font-mono font-bold text-slate-900 tabular-nums">{totalQty} chai</td>
                             </tr>
                             <tr className="border-b border-slate-200">
-                                <td className="py-1 text-slate-600">Cộng tiền hàng (chưa VAT):</td>
+                                <td className="py-1 text-slate-600">{isRetail ? 'Cộng tiền hàng (Đã gồm VAT):' : 'Cộng tiền hàng (chưa VAT):'}</td>
                                 <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(subtotal)}</td>
                             </tr>
                             {discountAmount > 0 && (
@@ -383,22 +400,28 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                     <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(discountAmount)}</td>
                                 </tr>
                             )}
+                            {isRetail && (
+                                <tr className="border-b border-slate-200">
+                                    <td className="py-1 text-slate-600">Giá trị trước thuế (bóc tách):</td>
+                                    <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(calculatedNet))}</td>
+                                </tr>
+                            )}
                             {vatBreakdown.length > 1 ? (
                                 <>
                                     {vatBreakdown.map(item => (
                                         <tr key={item.rate} className="border-b border-slate-200">
-                                            <td className="py-1 text-slate-600">Thuế GTGT ({item.rate}%):</td>
+                                            <td className="py-1 text-slate-600">Thuế GTGT ({item.rate}%){isRetail ? ' (bóc tách)' : ''}:</td>
                                             <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(item.amount)}</td>
                                         </tr>
                                     ))}
                                     <tr className="border-b border-slate-200 font-semibold">
-                                        <td className="py-1 text-slate-700">Tổng tiền thuế VAT:</td>
+                                        <td className="py-1 text-slate-700">Tổng tiền thuế VAT{isRetail ? ' (bóc tách)' : ''}:</td>
                                         <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
                                     </tr>
                                 </>
                             ) : (
                                 <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-600">Thuế VAT ({vatBreakdown[0]?.rate ?? (order as any).vatRate ?? 10}%):</td>
+                                    <td className="py-1 text-slate-600">Thuế VAT ({vatBreakdown[0]?.rate ?? (order as any).vatRate ?? 10}%){isRetail ? ' (bóc tách)' : ''}:</td>
                                     <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
                                 </tr>
                             )}

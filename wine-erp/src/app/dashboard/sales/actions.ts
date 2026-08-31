@@ -850,28 +850,33 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             }
         }
 
-        // --- 3. Compute dynamic VAT amount across all lines ---
+        // --- 3. Compute dynamic Net and VAT amount across all lines ---
+        const isVatInclusive = input.channel === 'RETAIL' || input.channel === 'DIRECT_INDIVIDUAL' || (input.channel as string) === 'POS'
         const orderDiscountMultiplier = 1 - (input.orderDiscount ?? 0) / 100
-        let vatAmount = 0
+        let netAmountTotal = 0
+        let vatAmountTotal = 0
         const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
 
         for (const l of input.lines) {
-            const lineAmount = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
-            const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
-            const rate = l.vatRate ?? 10
-            vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
+            const lineGrossOrNet = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
+            const lineValAfterOrderDiscount = lineGrossOrNet * orderDiscountMultiplier
+            const rate = Number(l.vatRate ?? 10)
+
+            if (isVatInclusive) {
+                const lineNet = lineValAfterOrderDiscount / (1 + rate / 100)
+                const lineVat = lineValAfterOrderDiscount - lineNet
+                netAmountTotal += lineNet
+                vatAmountTotal += lineVat
+            } else {
+                const lineNet = lineValAfterOrderDiscount
+                const lineVat = lineNet * (rate / 100)
+                netAmountTotal += lineNet
+                vatAmountTotal += lineVat
+            }
         }
 
         // --- 4. Create the SO ---
         const soNo = await generateUniqueSoNo()
-
-        const totalAmount = input.lines.reduce((sum, l) => {
-            const lineTotal = l.qtyOrdered * l.unitPrice
-            const discount = lineTotal * ((l.lineDiscountPct ?? 0) / 100)
-            return sum + lineTotal - discount
-        }, 0)
-
-        const finalAmount = totalAmount * (1 - (input.orderDiscount ?? 0) / 100)
 
         const orderDateObj = parseDateWithCurrentTime(input.orderDate)
 
@@ -899,9 +904,9 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 paymentTerm: input.paymentTerm,
                 shippingAddressId: input.shippingAddressId ?? null,
                 orderDiscount: input.orderDiscount ?? 0,
-                totalAmount: finalAmount,
+                totalAmount: Math.round(netAmountTotal),
                 vatRate: distinctVatRates.length === 1 ? distinctVatRates[0] : 10,
-                vatAmount: Math.round(vatAmount),
+                vatAmount: Math.round(vatAmountTotal),
                 status: 'DRAFT',
                 legalEntityId: input.legalEntityId,
                 warehouseId: warehouseId ?? null,
@@ -934,7 +939,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
 
         // --- 5. Audit log ---
         try {
-            await logAudit({ userId: salesRepId, action: 'CREATE', entityType: 'SalesOrder', entityId: so.id, newValue: { soNo, channel: input.channel, totalAmount: finalAmount } })
+            await logAudit({ userId: salesRepId, action: 'CREATE', entityType: 'SalesOrder', entityId: so.id, newValue: { soNo, channel: input.channel, totalAmount: Math.round(netAmountTotal) } })
         } catch { /* silent */ }
 
         revalidatePath('/dashboard/sales')
@@ -1017,16 +1022,29 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             }
         }
 
-        // Calculate dynamic VAT amount across all lines
+        // Calculate dynamic Net and VAT amount across all lines
+        const isVatInclusive = input.channel === 'RETAIL' || input.channel === 'DIRECT_INDIVIDUAL' || (input.channel as string) === 'POS'
         const orderDiscountMultiplier = 1 - (input.orderDiscount ?? 0) / 100
-        let vatAmount = 0
+        let netAmountTotal = 0
+        let vatAmountTotal = 0
         const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
 
         for (const l of input.lines) {
-            const lineAmount = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
-            const lineAmountAfterOrderDiscount = lineAmount * orderDiscountMultiplier
-            const rate = l.vatRate ?? 10
-            vatAmount += lineAmountAfterOrderDiscount * (rate / 100)
+            const lineGrossOrNet = l.qtyOrdered * l.unitPrice * (1 - (l.lineDiscountPct ?? 0) / 100)
+            const lineValAfterOrderDiscount = lineGrossOrNet * orderDiscountMultiplier
+            const rate = Number(l.vatRate ?? 10)
+
+            if (isVatInclusive) {
+                const lineNet = lineValAfterOrderDiscount / (1 + rate / 100)
+                const lineVat = lineValAfterOrderDiscount - lineNet
+                netAmountTotal += lineNet
+                vatAmountTotal += lineVat
+            } else {
+                const lineNet = lineValAfterOrderDiscount
+                const lineVat = lineNet * (rate / 100)
+                netAmountTotal += lineNet
+                vatAmountTotal += lineVat
+            }
         }
 
         await prisma.$transaction([
@@ -1041,9 +1059,9 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     channel: input.channel,
                     paymentTerm: input.paymentTerm,
                     orderDiscount: input.orderDiscount ?? 0,
-                    totalAmount: finalAmount,
+                    totalAmount: Math.round(netAmountTotal),
                     vatRate: distinctVatRates.length === 1 ? distinctVatRates[0] : 10,
-                    vatAmount: Math.round(vatAmount),
+                    vatAmount: Math.round(vatAmountTotal),
                     legalEntityId: input.legalEntityId,
                     shippingAddressId: input.shippingAddressId ?? null,
                     notes: input.notes ?? null,

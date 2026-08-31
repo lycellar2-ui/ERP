@@ -372,29 +372,52 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
     const removeLine = (idx: number) => setLines(prev => prev.filter((_, i) => i !== idx))
 
+    const isVatInclusive = channel === 'RETAIL' || channel === 'DIRECT_INDIVIDUAL' || (channel as string) === 'POS'
+
     const subtotal = lines.reduce((sum, l) => {
         const line = l.qtyOrdered * l.unitPrice
         return sum + line - line * (l.lineDiscountPct / 100)
     }, 0)
-    const vatAmount = lines.reduce((sum, l) => {
-        const line = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100)
-        const lineAfterOrderDiscount = line * (1 - orderDiscount / 100)
-        return sum + lineAfterOrderDiscount * ((l.vatRate ?? 10) / 100)
-    }, 0)
-    const finalTotal = subtotal * (1 - orderDiscount / 100) + vatAmount
 
-    const vatBreakdown = useMemo(() => {
-        const map: Record<number, { amount: number; rate: number }> = {}
+    const { netSubtotal, vatAmount, finalTotal, vatBreakdown } = useMemo(() => {
         const discountMultiplier = 1 - orderDiscount / 100
+        const map: Record<number, { amount: number; rate: number }> = {}
+        let net = 0
+        let vat = 0
+
         for (const l of lines) {
             if (!l.productId) continue
             const rate = l.vatRate ?? 10
-            const lineAmt = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100) * discountMultiplier
-            if (!map[rate]) map[rate] = { amount: 0, rate }
-            map[rate].amount += lineAmt * (rate / 100)
+            const lineVal = l.qtyOrdered * l.unitPrice * (1 - l.lineDiscountPct / 100) * discountMultiplier
+
+            if (isVatInclusive) {
+                const lineNet = lineVal / (1 + rate / 100)
+                const lineVat = lineVal - lineNet
+                net += lineNet
+                vat += lineVat
+                if (!map[rate]) map[rate] = { amount: 0, rate }
+                map[rate].amount += lineVat
+            } else {
+                const lineNet = lineVal
+                const lineVat = lineNet * (rate / 100)
+                net += lineNet
+                vat += lineVat
+                if (!map[rate]) map[rate] = { amount: 0, rate }
+                map[rate].amount += lineVat
+            }
         }
-        return Object.values(map).sort((a, b) => a.rate - b.rate)
-    }, [lines, orderDiscount])
+
+        const payable = isVatInclusive
+            ? subtotal * discountMultiplier
+            : net + vat
+
+        return {
+            netSubtotal: Math.round(net),
+            vatAmount: Math.round(vat),
+            finalTotal: Math.round(payable),
+            vatBreakdown: Object.values(map).sort((a, b) => a.rate - b.rate)
+        }
+    }, [lines, orderDiscount, isVatInclusive, subtotal])
 
     const effectiveCreditLimit = selectedCustomer
         ? (selectedCustomer.parentId && Number(selectedCustomer.creditLimit) === 0 && selectedCustomer.parent)
@@ -947,15 +970,20 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                 </div>
 
                                 <div className="text-right space-y-1">
+                                    {isVatInclusive && (
+                                        <div className="mb-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                            🏷️ Kênh {channel}: Giá bán lẻ niêm yết <strong>ĐÃ BAO GỒM VAT</strong>
+                                        </div>
+                                    )}
                                     <div className="flex justify-end gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                                        <span>Trước thuế: <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(subtotal * (1 - orderDiscount / 100))}</strong></span>
+                                        <span>{isVatInclusive ? 'Tiền trước thuế (bóc tách):' : 'Trước thuế:'} <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(netSubtotal)}</strong></span>
                                         <span>•</span>
                                         {vatBreakdown.length > 1 ? (
                                             <span>
-                                                VAT: {vatBreakdown.map(v => `${v.rate}%: ${formatVND(Math.round(v.amount))}`).join(' | ')} (Tổng: {formatVND(Math.round(vatAmount))})
+                                                VAT {isVatInclusive ? '(bóc tách):' : ':'} {vatBreakdown.map(v => `${v.rate}%: ${formatVND(Math.round(v.amount))}`).join(' | ')} (Tổng: {formatVND(vatAmount)})
                                             </span>
                                         ) : (
-                                            <span>VAT ({vatBreakdown[0]?.rate ?? 10}%): <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(Math.round(vatAmount))}</strong></span>
+                                            <span>VAT ({vatBreakdown[0]?.rate ?? 10}%){isVatInclusive ? ' (bóc tách)' : ''}: <strong className="font-mono text-slate-700 dark:text-slate-200">{formatVND(vatAmount)}</strong></span>
                                         )}
                                     </div>
                                     <div className="flex justify-end items-baseline gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
