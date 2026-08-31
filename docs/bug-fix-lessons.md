@@ -2246,6 +2246,31 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 86: Khi thiết kế hoặc chuyển đổi giao diện sang Light Mode, tuyệt đối KHÔNG hardcode màu chữ sáng (`#E8F1F2`, `#FFFFFF`, `text-white`) trong `inputStyle` hoặc inline style của thẻ `<input>`, `<select>`, `<textarea>`. Luôn sử dụng màu chữ tối (`#0F172A` / `text-slate-900`) và kích hoạt `color: var(--color-lys-ivory) !important` trên toàn cục để đảm bảo khả năng đọc 100% trong mọi tình huống.**
 
+---
+
+## BUG-058: Đơn Hàng Bán (Sales Orders) & Hóa Đơn (AR Invoices) Bị Gán Vào Mã Khách Hàng Cha (Công Ty Mẹ) & Lỗi Tự Tham Chiếu `parentId = id`
+
+**Ngày:** 2026-08-29  
+**Severity:** 🟡 High — Toàn vẹn dữ liệu đơn hàng và công nợ chi nhánh (`Master Data Hierarchy` & `Sales Order Assignment`).
+
+### Triệu chứng
+1. 19 đơn hàng bán (`Sales Orders`) và 19 hóa đơn công nợ (`ARInvoice`) phát sinh từ hóa đơn điện tử tự động (01-05/08/2026) bị gắn trực tiếp vào Mã Khách Hàng Cha (`entityType = COMPANY`, `allowDirectSO = false`) thay vì các cơ sở/nhà hàng con (`RESTAURANT`).
+2. Có 43 bản ghi khách hàng bị lỗi tự trỏ `parentId = id` (chính mình là cha của mình), dẫn đến việc query phát hiện mã cha bị tính sai số lượng mã con.
+
+### Nguyên nhân gốc rễ
+1. Khi đồng bộ tự động từ cổng Hóa Đơn Điện Tử, hệ thống tìm theo Tên Pháp Nhân / Mã Số Thuế trên HĐĐT nên match trúng bản ghi Công Ty Mẹ thay vì tra cứu cơ sở con tương ứng theo bảng quy tắc giá (`CustomerPriceRule`).
+2. Script seed/migration trước đây khi import danh sách khách hàng từ Excel đã gán nhầm `parentId` bằng chính `id` của bản ghi cho các khách hàng đơn lẻ.
+
+### Cách fix
+1. Phân tích giá bán từng dòng sản phẩm đối chiếu với `CustomerPriceRule` và sơ đồ chi nhánh con để xác định chính xác 100% chi nhánh đích cho 19 đơn hàng.
+2. Chạy migration cập nhật toàn bộ 19 đơn hàng `sales_orders.customerId` và 19 hóa đơn `ar_invoices.customerId` về đúng mã nhà hàng con (`RESTAURANT`).
+3. Chuẩn hóa 43 bản ghi khách hàng có `parentId = id` về `parentId = NULL`.
+
+### Bài học
+
+> ⚠️ **RULE 87: Khi import tự động đơn hàng từ Hóa Đơn Điện Tử (HĐĐT) hoặc dữ liệu thuế, nếu MST/Tên pháp nhân thuộc Mã Khách Hàng Cha (`entityType = COMPANY` & `allowDirectSO = false`), BẮT BỤC phải áp dụng giải thuật đối chiếu giá sản phẩm (`CustomerPriceRule`) hoặc địa chỉ giao hàng để phân bổ về đúng Mã Nhà Hàng Con (`RESTAURANT`), tuyệt đối không tạo đơn SO trên Mã Cha. Bản ghi khách hàng đơn lẻ không có công ty mẹ BẮT BỤC phải có `parentId = NULL` (không được gán `parentId = id`).**
+
+
 
 
 

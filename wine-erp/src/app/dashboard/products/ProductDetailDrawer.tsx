@@ -222,18 +222,54 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#2A4355]/20 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t border-[#2A4355]/20 text-xs">
                                 <div>
                                     <span style={{ color: '#4A6A7A' }}>Nhà sản xuất: </span>
                                     <span className="font-semibold block" style={{ color: '#8AAEBB' }}>{activeProduct.producerName}</span>
                                 </div>
                                 <div>
-                                    <span style={{ color: '#4A6A7A' }}>Tổng tồn kho: </span>
+                                    <span style={{ color: '#4A6A7A' }}>Khả dụng bán: </span>
                                     <span className="font-bold text-sm block font-sans" style={{ color: totalStockQty > 0 ? '#5BA88A' : '#E05252' }}>
                                         {totalStockQty.toLocaleString()} chai
                                     </span>
                                 </div>
                             </div>
+
+                            {data && data.stockLots.length > 0 && (() => {
+                                const totalBookQty = data.stockLots.reduce((sum, l) => sum + (l.qtyBook ?? l.qtyReceived ?? 0), 0)
+                                const totalOnHandQty = data.stockLots.reduce((sum, l) => sum + (l.qtyOnHand ?? l.qtyAvailable ?? 0), 0)
+                                const totalAvailQty = data.stockLots.reduce((sum, l) => sum + (l.qtyAvailable ?? 0), 0)
+                                const totalResQty = data.stockLots.reduce((sum, l) => sum + (l.qtyReserved ?? 0), 0)
+                                const totalVarQty = totalOnHandQty - totalBookQty
+
+                                return (
+                                    <div className="pt-2 space-y-1.5">
+                                        <div className="grid grid-cols-3 gap-1.5 text-center">
+                                            <div className="p-1.5 rounded-lg bg-[#142433] border border-[#2A4355]/60">
+                                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Tồn Sổ</span>
+                                                <span className="text-xs font-bold font-mono text-slate-200">{totalBookQty.toLocaleString()}</span>
+                                            </div>
+                                            <div className="p-1.5 rounded-lg bg-[#142433] border border-[#2A4355]/60">
+                                                <span className="text-[10px] uppercase font-bold text-[#87CBB9] block">On-hand</span>
+                                                <span className="text-xs font-bold font-mono text-[#87CBB9]">{totalOnHandQty.toLocaleString()}</span>
+                                            </div>
+                                            <div className="p-1.5 rounded-lg bg-[#142433] border border-[#2A4355]/60">
+                                                <span className="text-[10px] uppercase font-bold text-[#D4A853] block">Khả Dụng</span>
+                                                <span className="text-xs font-bold font-mono text-[#D4A853]">{totalAvailQty.toLocaleString()}</span>
+                                                {totalResQty > 0 && <span className="text-[9px] text-sky-400 block">(Đặt: {totalResQty})</span>}
+                                            </div>
+                                        </div>
+                                        {totalVarQty !== 0 && (
+                                            <div className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border flex items-center justify-between ${
+                                                totalVarQty < 0 ? 'text-rose-400 bg-rose-950/40 border-rose-800/60' : 'text-amber-400 bg-amber-950/40 border-amber-800/60'
+                                            }`}>
+                                                <span>⚠️ Lệch Sổ sách & On-hand:</span>
+                                                <span className="font-mono">{totalVarQty > 0 ? `+${totalVarQty}` : totalVarQty} chai</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })()}
                         </div>
                     </div>
 
@@ -474,31 +510,51 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                     </div>
                                 ) : (
                                     <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #2A4355', background: '#0D1E2B' }}>
-                                        <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                                        <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
                                             <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                                 <thead>
                                                     <tr style={{ background: '#142433', borderBottom: '1px solid #2A4355', position: 'sticky', top: 0, zIndex: 10 }}>
-                                                        {['Kho', 'Vị Trí', 'Mã Lô', 'Vintage', 'Trạng Thái', 'Tồn Kho'].map((h, idx) => (
-                                                            <th key={idx} className="px-3 py-2 uppercase font-semibold text-[10px]" style={{ color: '#4A6A7A' }}>{h}</th>
+                                                        {['Kho', 'Vị Trí', 'Mã Lô', 'VTG', 'Tồn Sổ', 'On-hand', 'Khả Dụng', 'Trạng Thái'].map((h, idx) => (
+                                                            <th key={idx} className={`px-2.5 py-2 uppercase font-semibold text-[10px] ${idx >= 4 && idx <= 6 ? 'text-center' : ''}`} style={{ color: '#4A6A7A' }}>{h}</th>
                                                         ))}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {data.stockLots.map(lot => {
                                                         const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#8AAEBB', bg: 'rgba(168,152,128,0.1)' }
+                                                        const bookQty = lot.qtyBook ?? lot.qtyReceived ?? 0
+                                                        const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable ?? 0
+                                                        const variance = lot.variance ?? (onHandQty - bookQty)
+
                                                         return (
-                                                            <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }}>
-                                                                <td className="px-3 py-2 font-medium" style={{ color: '#E8F1F2' }}>{lot.warehouseName}</td>
-                                                                <td className="px-3 py-2 font-sans font-semibold" style={{ color: '#8AAEBB' }}>{lot.locationCode}</td>
-                                                                <td className="px-3 py-2 font-sans" style={{ color: '#4A6A7A' }}>{lot.lotNo}</td>
-                                                                <td className="px-3 py-2 font-sans font-semibold font-mono" style={{ color: lot.vintage ? '#87CBB9' : '#2A4355' }}>{lot.vintage ?? 'NV'}</td>
-                                                                <td className="px-3 py-2">
+                                                            <tr key={lot.id} style={{ borderBottom: '1px solid rgba(42,67,85,0.3)' }} className="hover:bg-[#142433]/50">
+                                                                <td className="px-2.5 py-2 font-medium" style={{ color: '#E8F1F2' }}>{lot.warehouseName}</td>
+                                                                <td className="px-2.5 py-2 font-sans font-semibold" style={{ color: '#8AAEBB' }}>{lot.locationCode}</td>
+                                                                <td className="px-2.5 py-2 font-sans font-mono text-[11px]" style={{ color: '#4A6A7A' }}>{lot.lotNo}</td>
+                                                                <td className="px-2.5 py-2 font-sans font-semibold font-mono text-center" style={{ color: lot.vintage ? '#87CBB9' : '#4A6A7A' }}>{lot.vintage ?? 'NV'}</td>
+                                                                <td className="px-2.5 py-2 text-center font-mono font-bold" style={{ color: '#8AAEBB' }}>
+                                                                    {bookQty.toLocaleString()}
+                                                                </td>
+                                                                <td className="px-2.5 py-2 text-center font-mono font-bold">
+                                                                    <span style={{ color: '#87CBB9' }}>{onHandQty.toLocaleString()}</span>
+                                                                    {variance !== 0 && (
+                                                                        <span className={`block text-[9px] font-semibold ${variance < 0 ? 'text-rose-400' : 'text-amber-400'}`}>
+                                                                            ({variance > 0 ? `+${variance}` : variance})
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-2.5 py-2 text-center font-sans font-bold tabular-nums" style={{ color: '#D4A853' }}>
+                                                                    {lot.qtyAvailable.toLocaleString()}
+                                                                    {lot.qtyReserved > 0 && (
+                                                                        <span className="block text-[9px] text-sky-400 font-semibold font-mono">
+                                                                            (Đặt: {lot.qtyReserved})
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-2.5 py-2">
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold inline-block" style={{ color: statusCfg.color, background: statusCfg.bg }}>
                                                                         {statusCfg.label}
                                                                     </span>
-                                                                </td>
-                                                                <td className="px-3 py-2 text-right font-sans font-bold tabular-nums" style={{ color: '#87CBB9' }}>
-                                                                    {lot.qtyAvailable.toLocaleString()}
                                                                 </td>
                                                             </tr>
                                                         )

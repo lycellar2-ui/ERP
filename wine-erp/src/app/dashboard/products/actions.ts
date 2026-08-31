@@ -1288,7 +1288,12 @@ export async function getProductImage(
 export type ProductStockLotViewRow = {
     id: string
     lotNo: string
+    qtyReceived: number
+    qtyBook: number
+    qtyOnHand: number
     qtyAvailable: number
+    qtyReserved: number
+    variance: number
     receivedDate: Date
     status: string
     vintage: number | null
@@ -1359,7 +1364,14 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                         include: {
                             warehouse: true
                         }
-                    }
+                    },
+                    doLines: {
+                        select: {
+                            qtyPicked: true,
+                            qtyShipped: true,
+                            do: { select: { status: true } },
+                        },
+                    },
                 },
                 orderBy: { receivedDate: 'desc' }
             })
@@ -1422,16 +1434,41 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                 vintage: a.vintage,
                 awardedYear: a.awardedYear
             })),
-            stockLots: stockRes.map(l => ({
-                id: l.id,
-                lotNo: l.lotNo,
-                qtyAvailable: Number(l.qtyAvailable),
-                receivedDate: l.receivedDate,
-                status: l.status,
-                vintage: l.vintage ?? null,
-                locationCode: l.location.locationCode,
-                warehouseName: l.location.warehouse.name
-            }))
+            stockLots: stockRes.map(l => {
+                const shippedQty = l.doLines
+                    ? l.doLines
+                        .filter(d => ['DELIVERED', 'SHIPPED'].includes(d.do.status))
+                        .reduce((sum, d) => sum + Number(d.qtyShipped || d.qtyPicked || 0), 0)
+                    : 0
+
+                const reservedQty = l.doLines
+                    ? l.doLines
+                        .filter(d => ['DRAFT', 'PICKING', 'PACKED'].includes(d.do.status))
+                        .reduce((sum, d) => sum + Number(d.qtyPicked || 0), 0)
+                    : 0
+
+                const qtyAvailable = Number(l.qtyAvailable)
+                const qtyOnHand = qtyAvailable + reservedQty
+                const qtyReceived = Number(l.qtyReceived)
+                const qtyBook = Math.max(0, qtyReceived - shippedQty)
+                const variance = qtyOnHand - qtyBook
+
+                return {
+                    id: l.id,
+                    lotNo: l.lotNo,
+                    qtyReceived,
+                    qtyBook,
+                    qtyOnHand,
+                    qtyAvailable,
+                    qtyReserved: reservedQty,
+                    variance,
+                    receivedDate: l.receivedDate,
+                    status: l.status,
+                    vintage: l.vintage ?? null,
+                    locationCode: l.location.locationCode,
+                    warehouseName: l.location.warehouse.name
+                }
+            })
         }
     }, 30_000)
 }

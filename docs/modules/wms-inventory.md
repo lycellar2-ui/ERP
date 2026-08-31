@@ -53,7 +53,11 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 - Khi xuất kho, hệ thống tự động chọn Lot cũ nhất (Ngày nhập sớm nhất) của SKU đó
 - Người xuất kho không được bỏ qua FIFO trừ khi có lý do đặc biệt (Có log + Duyệt)
 
-> **Bảng Danh Mục Tồn Kho (Stock Lots Table)**: Đã tối ưu hóa bố cục dạng Compact Table với chiều cao dòng tối thiểu để hiển thị được nhiều hàng nhất trên 1 màn hình. Cột **Mã SKU** được tách riêng lên Cột 1 (`font-mono font-bold`), Cột **Mã Lô (Lot)** được chuyển về phía sau (`Col 4`), giúp tra cứu rượu vang và phân bổ kho nhanh chóng.
+> **Bảng Danh Mục Tồn Kho (Stock Lots Table) & Đối Soát Song Song Tồn Sổ Sách vs Tồn On-hand**: Đã tối ưu hóa bố cục dạng Compact Table với chiều cao dòng tối thiểu. Tách biệt rõ ràng 3 chỉ số:
+> 1. **Tồn Sổ Sách (`qtyBook`)**: Số lượng theo chứng từ gốc (Nhập GR trừ các phiếu xuất DO đã hoàn thành/DELIVERED).
+> 2. **Tồn On-hand (`qtyOnHand`)**: Số lượng vật lý thực tế hiện diện trên sàn kho (`qtyAvailable + qtyReserved`). Tự động hiển thị huy hiệu cảnh báo chênh lệch (`⚠️ Lệch X chai`) khi On-hand khác Sổ sách.
+> 3. **Khả Dụng (`qtyAvailable`)**: Số lượng sẵn sàng xuất bán ngay (kèm chỉ số đang giữ chỗ `qtyReserved` cho các đơn hàng đang xử lý).
+> Đồng thời nâng cấp thanh KPI thống kê và chức năng **Export CSV** đối soát chi tiết phục vụ Kế toán và Thủ kho.
 
 ---
 

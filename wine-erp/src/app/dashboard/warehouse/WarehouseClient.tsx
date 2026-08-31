@@ -155,7 +155,9 @@ function StockTable({ lots, sortConfig, onSort }: {
         { key: 'lotNo', label: 'Lô Hàng (Lot)', align: 'left' as const },
         { key: 'locationCode', label: 'Vị Trí', align: 'left' as const },
         { key: 'receivedDate', label: 'Nhập Kho', align: 'left' as const },
-        { key: 'qtyAvailable', label: 'Tồn', align: 'center' as const },
+        { key: 'qtyBook', label: 'Tồn Sổ Sách', align: 'center' as const },
+        { key: 'qtyOnHand', label: 'Tồn On-hand', align: 'center' as const },
+        { key: 'qtyAvailable', label: 'Khả Dụng', align: 'center' as const },
         { key: 'value', label: 'Giá Trị Lô', align: 'right' as const },
         { key: 'status', label: 'TT', align: 'center' as const },
     ]
@@ -186,8 +188,13 @@ function StockTable({ lots, sortConfig, onSort }: {
                             const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
                             const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
                             const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
-                            const pctRemaining = lot.qtyReceived > 0 ? (lot.qtyAvailable / lot.qtyReceived) * 100 : 0
+                            const baseQty = lot.qtyOnHand > 0 ? lot.qtyOnHand : (lot.qtyReceived > 0 ? lot.qtyReceived : 1)
+                            const pctRemaining = Math.min(100, Math.max(0, (lot.qtyAvailable / baseQty) * 100))
                             const lotValue = lot.qtyAvailable * lot.unitLandedCost
+                            const bookQty = lot.qtyBook ?? lot.qtyReceived
+                            const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
+                            const variance = lot.variance ?? (onHandQty - bookQty)
+
                             return (
                                 <tr key={lot.id} className="group transition-colors hover:bg-amber-50/40">
                                     <td className="px-3 py-1.5 font-mono font-extrabold text-slate-800 whitespace-nowrap">
@@ -197,7 +204,7 @@ function StockTable({ lots, sortConfig, onSort }: {
                                         <div className="flex items-center gap-1.5">
                                             <span className="shrink-0">{flag}</span>
                                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: wineColor }} />
-                                            <p className="font-bold text-slate-900 truncate max-w-[260px] text-xs">{lot.productName}</p>
+                                            <p className="font-bold text-slate-900 truncate max-w-[240px] text-xs">{lot.productName}</p>
                                         </div>
                                     </td>
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
@@ -223,12 +230,41 @@ function StockTable({ lots, sortConfig, onSort }: {
                                             <DaysInStockBadge receivedDate={lot.receivedDate} />
                                         </div>
                                     </td>
+                                    {/* Cột 1: Tồn Sổ Sách */}
+                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                                        <span className="text-xs font-bold font-mono text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md inline-block">
+                                            {bookQty.toLocaleString()}
+                                        </span>
+                                    </td>
+                                    {/* Cột 2: Tồn On-hand & Cảnh báo lệch */}
+                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-xs font-black font-mono text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md inline-block">
+                                                {onHandQty.toLocaleString()}
+                                            </span>
+                                            {variance !== 0 && (
+                                                <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded mt-0.5 border ${
+                                                    variance < 0 ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-amber-700 bg-amber-50 border-amber-200'
+                                                }`} title={`Lệch ${variance > 0 ? `+${variance}` : variance} chai giữa On-hand (${onHandQty}) và Sổ sách (${bookQty})`}>
+                                                    ⚠️ {variance > 0 ? `+${variance}` : variance} lệch
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    {/* Cột 3: Tồn Khả Dụng & Đã giữ chỗ */}
                                     <td className="px-3 py-1.5 text-center whitespace-nowrap">
                                         <div className="flex items-center gap-1.5 justify-center">
-                                            <span className="text-xs font-bold font-mono" style={{ color: pctRemaining < 20 ? '#DC2626' : pctRemaining < 50 ? '#B47816' : '#16A34A' }}>
-                                                {lot.qtyAvailable.toLocaleString()}
-                                            </span>
-                                            <div className="w-8 h-1.5 rounded-full overflow-hidden shrink-0" style={{ background: '#E2E8F0' }}>
+                                            <div className="text-center min-w-[45px]">
+                                                <span className="text-xs font-bold font-mono" style={{ color: pctRemaining < 20 ? '#DC2626' : pctRemaining < 50 ? '#B47816' : '#16A34A' }}>
+                                                    {lot.qtyAvailable.toLocaleString()}
+                                                </span>
+                                                {lot.qtyReserved > 0 && (
+                                                    <span className="block text-[9px] text-blue-600 font-bold whitespace-nowrap">
+                                                        (Đặt: {lot.qtyReserved})
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="w-7 h-1.5 rounded-full overflow-hidden shrink-0" style={{ background: '#E2E8F0' }}>
                                                 <div className="h-full rounded-full" style={{
                                                     width: `${pctRemaining}%`,
                                                     background: pctRemaining < 20 ? '#DC2626' : pctRemaining < 50 ? '#B47816' : '#16A34A',
@@ -264,6 +300,10 @@ function StockTable({ lots, sortConfig, onSort }: {
                     const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
                     const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
                     const statusCfg = LOT_STATUS[lot.status] ?? { label: lot.status, color: '#64748B' }
+                    const bookQty = lot.qtyBook ?? lot.qtyReceived
+                    const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
+                    const variance = lot.variance ?? (onHandQty - bookQty)
+
                     return (
                         <div key={lot.id} className="p-4 rounded-2xl space-y-2.5 shadow-2xs bg-white border border-slate-200 text-slate-900">
                             <div className="flex items-center justify-between">
@@ -275,25 +315,48 @@ function StockTable({ lots, sortConfig, onSort }: {
                                 </span>
                             </div>
                             <div>
-                                <h4 className="text-xs font-black text-white leading-tight">{lot.productName}</h4>
-                                <p className="text-[11px] mt-1 flex items-center gap-1.5 text-slate-400 font-medium">
+                                <h4 className="text-xs font-black text-slate-900 leading-tight">{lot.productName}</h4>
+                                <p className="text-[11px] mt-1 flex items-center gap-1.5 text-slate-500 font-medium">
                                     {flag} <span className="w-2 h-2 rounded-full" style={{ background: wineColor }} />
-                                    SKU: <strong className="text-slate-200 font-mono">{lot.skuCode}</strong> {lot.vintage ? `· Vintage: ${lot.vintage}` : ''}
+                                    SKU: <strong className="text-slate-800 font-mono">{lot.skuCode}</strong> {lot.vintage ? `· Vintage: ${lot.vintage}` : ''}
                                 </p>
                             </div>
-                            <div className="flex items-center justify-between pt-2.5 border-t border-slate-800 text-xs">
-                                <div>
-                                    <span className="text-slate-400 text-[10px] uppercase font-bold block">Khả Dụng:</span>
-                                    <span className="font-black font-mono text-sm text-emerald-400">
-                                        {lot.qtyAvailable.toLocaleString()} chai
+                            <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-100 text-xs">
+                                <div className="text-center bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Tồn Sổ:</span>
+                                    <span className="font-bold font-mono text-xs text-slate-800">
+                                        {bookQty.toLocaleString()}
                                     </span>
                                 </div>
-                                <div>
-                                    <span className="font-bold px-2.5 py-1 rounded-full text-[10px] uppercase border whitespace-nowrap inline-flex items-center shrink-0"
-                                        style={{ color: statusCfg.color, background: `${statusCfg.color}20`, borderColor: `${statusCfg.color}40` }}>
-                                        {statusCfg.label}
+                                <div className="text-center bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
+                                    <span className="text-emerald-700 text-[10px] uppercase font-bold block">On-hand:</span>
+                                    <span className="font-extrabold font-mono text-xs text-emerald-800">
+                                        {onHandQty.toLocaleString()}
                                     </span>
+                                    {variance !== 0 && (
+                                        <span className={`text-[9px] font-bold block ${variance < 0 ? 'text-rose-600' : 'text-amber-700'}`}>
+                                            ({variance > 0 ? `+${variance}` : variance})
+                                        </span>
+                                    )}
                                 </div>
+                                <div className="text-center bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+                                    <span className="text-amber-700 text-[10px] uppercase font-bold block">Khả Dụng:</span>
+                                    <span className="font-extrabold font-mono text-xs text-amber-900">
+                                        {lot.qtyAvailable.toLocaleString()}
+                                    </span>
+                                    {lot.qtyReserved > 0 && (
+                                        <span className="text-[9px] text-blue-600 block font-semibold">
+                                            (Đặt: {lot.qtyReserved})
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                                <span className="text-slate-500 font-mono">{formatDate(lot.receivedDate)}</span>
+                                <span className="font-bold px-2 py-0.5 rounded-full text-[10px] uppercase border"
+                                    style={{ color: statusCfg.color, background: `${statusCfg.color}15`, borderColor: `${statusCfg.color}30` }}>
+                                    {statusCfg.label}
+                                </span>
                             </div>
                         </div>
                     )
@@ -686,6 +749,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
             const dir = sortConfig.dir === 'asc' ? 1 : -1
             const key = sortConfig.key
             if (key === 'vintage') return ((a.vintage ?? 0) - (b.vintage ?? 0)) * dir
+            if (key === 'qtyBook') return ((a.qtyBook ?? a.qtyReceived) - (b.qtyBook ?? b.qtyReceived)) * dir
+            if (key === 'qtyOnHand') return ((a.qtyOnHand ?? a.qtyAvailable) - (b.qtyOnHand ?? b.qtyAvailable)) * dir
             if (key === 'qtyAvailable') return (a.qtyAvailable - b.qtyAvailable) * dir
             if (key === 'value') return ((a.qtyAvailable * a.unitLandedCost) - (b.qtyAvailable * b.unitLandedCost)) * dir
             if (key === 'receivedDate') return (new Date(a.receivedDate).getTime() - new Date(b.receivedDate).getTime()) * dir
@@ -1078,34 +1143,64 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin }: Pr
                                         ? `Tồn Kho — ${warehouses.find(w => w.id === selectedWH)?.name ?? ''}`
                                         : 'Tồn Kho — Tất cả kho'}
                                 </p>
-                                {selectedWH && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold" style={{ color: '#B47816', background: 'rgba(212,168,83,0.15)' }}>
-                                            {filteredLots.length} lô
-                                        </span>
-                                        <button onClick={() => {
-                                            if (filteredLots.length === 0) return
-                                            const headers = ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Kho', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái']
-                                            const rows = filteredLots.map(l => [
-                                                l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
-                                                l.qtyAvailable, l.unitLandedCost, l.qtyAvailable * l.unitLandedCost,
-                                                new Date(l.receivedDate).toLocaleDateString('vi-VN'), l.status,
-                                            ])
-                                            const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
-                                            const BOM = '\uFEFF'
-                                            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
-                                            const url = URL.createObjectURL(blob)
-                                            const a = document.createElement('a')
-                                            a.href = url
-                                            a.download = `ton-kho-${new Date().toISOString().slice(0, 10)}.csv`
-                                            a.click()
-                                            URL.revokeObjectURL(url)
-                                        }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all font-bold shadow-xs"
-                                            style={{ color: '#0F172A', background: '#F1F5F9', border: '1px solid #CBD5E1' }}>
-                                            <Download size={13} /> Export CSV
-                                        </button>
-                                    </div>
-                                )}
+                                {selectedWH && (() => {
+                                    const totalBookQty = filteredLots.reduce((sum, l) => sum + (l.qtyBook ?? l.qtyReceived ?? 0), 0)
+                                    const totalOnHandQty = filteredLots.reduce((sum, l) => sum + (l.qtyOnHand ?? l.qtyAvailable ?? 0), 0)
+                                    const totalAvailableQty = filteredLots.reduce((sum, l) => sum + (l.qtyAvailable ?? 0), 0)
+                                    const totalReservedQty = filteredLots.reduce((sum, l) => sum + (l.qtyReserved ?? 0), 0)
+                                    const totalVarianceQty = totalOnHandQty - totalBookQty
+
+                                    return (
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold" style={{ color: '#B47816', background: 'rgba(212,168,83,0.15)' }}>
+                                                {filteredLots.length} lô
+                                            </span>
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200">
+                                                Sổ: <strong>{totalBookQty.toLocaleString()}</strong>c
+                                            </span>
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200">
+                                                On-hand: <strong>{totalOnHandQty.toLocaleString()}</strong>c
+                                            </span>
+                                            <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200">
+                                                Khả dụng: <strong>{totalAvailableQty.toLocaleString()}</strong>c
+                                            </span>
+                                            {totalReservedQty > 0 && (
+                                                <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200">
+                                                    Đã đặt: <strong>{totalReservedQty.toLocaleString()}</strong>c
+                                                </span>
+                                            )}
+                                            {totalVarianceQty !== 0 && (
+                                                <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border ${
+                                                    totalVarianceQty < 0 ? 'text-rose-700 bg-rose-50 border-rose-300' : 'text-amber-700 bg-amber-50 border-amber-300'
+                                                }`}>
+                                                    ⚠️ Lệch: {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}c
+                                                </span>
+                                            )}
+                                            <button onClick={() => {
+                                                if (filteredLots.length === 0) return
+                                                const headers = ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái']
+                                                const rows = filteredLots.map(l => [
+                                                    l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
+                                                    l.qtyBook ?? l.qtyReceived, l.qtyOnHand ?? l.qtyAvailable, l.qtyAvailable, l.qtyReserved ?? 0, l.variance ?? 0,
+                                                    l.unitLandedCost, l.qtyAvailable * l.unitLandedCost,
+                                                    new Date(l.receivedDate).toLocaleDateString('vi-VN'), l.status,
+                                                ])
+                                                const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
+                                                const BOM = '\uFEFF'
+                                                const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+                                                const url = URL.createObjectURL(blob)
+                                                const a = document.createElement('a')
+                                                a.href = url
+                                                a.download = `ton-kho-so-sach-vs-onhand-${new Date().toISOString().slice(0, 10)}.csv`
+                                                a.click()
+                                                URL.revokeObjectURL(url)
+                                            }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all font-bold shadow-xs cursor-pointer"
+                                                style={{ color: '#0F172A', background: '#F1F5F9', border: '1px solid #CBD5E1' }}>
+                                                <Download size={13} /> Export CSV
+                                            </button>
+                                        </div>
+                                    )
+                                })()}
                             </div>
 
                             {selectedWH && (

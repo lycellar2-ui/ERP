@@ -40,7 +40,11 @@ export type StockLotRow = {
     warehouseId: string
     warehouseName: string
     qtyReceived: number
+    qtyBook: number
+    qtyOnHand: number
     qtyAvailable: number
+    qtyReserved: number
+    variance: number
     unitLandedCost: number
     receivedDate: Date
     status: string
@@ -167,29 +171,60 @@ export async function getStockInventory(filters: {
                     warehouse: { select: { id: true, name: true } },
                 },
             },
+            doLines: {
+                select: {
+                    qtyPicked: true,
+                    qtyShipped: true,
+                    do: { select: { status: true } },
+                },
+            },
         },
         orderBy: [{ status: 'asc' }, { receivedDate: 'desc' }],
-        take: 200,
+        take: 300,
     })
 
-    return lots.map(l => ({
-        id: l.id,
-        lotNo: l.lotNo,
-        productId: l.productId,
-        productName: l.product.productName,
-        skuCode: l.product.skuCode,
-        country: l.product.country,
-        vintage: l.vintage,
-        wineType: l.product.wineType,
-        locationCode: l.location.locationCode,
-        warehouseId: l.location.warehouse.id,
-        warehouseName: l.location.warehouse.name,
-        qtyReceived: Number(l.qtyReceived),
-        qtyAvailable: Number(l.qtyAvailable),
-        unitLandedCost: Number(l.unitLandedCost),
-        receivedDate: l.receivedDate,
-        status: l.status,
-    }))
+    return lots.map(l => {
+        const shippedQty = l.doLines
+            ? l.doLines
+                .filter(d => ['DELIVERED', 'SHIPPED'].includes(d.do.status))
+                .reduce((sum, d) => sum + Number(d.qtyShipped || d.qtyPicked || 0), 0)
+            : 0
+
+        const reservedQty = l.doLines
+            ? l.doLines
+                .filter(d => ['DRAFT', 'PICKING', 'PACKED'].includes(d.do.status))
+                .reduce((sum, d) => sum + Number(d.qtyPicked || 0), 0)
+            : 0
+
+        const qtyAvailable = Number(l.qtyAvailable)
+        const qtyOnHand = qtyAvailable + reservedQty
+        const qtyReceived = Number(l.qtyReceived)
+        const qtyBook = Math.max(0, qtyReceived - shippedQty)
+        const variance = qtyOnHand - qtyBook
+
+        return {
+            id: l.id,
+            lotNo: l.lotNo,
+            productId: l.productId,
+            productName: l.product.productName,
+            skuCode: l.product.skuCode,
+            country: l.product.country,
+            vintage: l.vintage,
+            wineType: l.product.wineType,
+            locationCode: l.location.locationCode,
+            warehouseId: l.location.warehouse.id,
+            warehouseName: l.location.warehouse.name,
+            qtyReceived,
+            qtyBook,
+            qtyOnHand,
+            qtyAvailable,
+            qtyReserved: reservedQty,
+            variance,
+            unitLandedCost: Number(l.unitLandedCost),
+            receivedDate: l.receivedDate,
+            status: l.status,
+        }
+    })
 }
 
 // ─── Locations in a warehouse ─────────────────────

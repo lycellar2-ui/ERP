@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 86 Rules rút ra từ 57 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 87 Rules rút ra từ 58 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-08-25 | Wine ERP v10.10 — Customer Name Search White Text & Inline Style Specificity Fix*
+*Last updated: 2026-08-29 | Wine ERP v10.11 — Reassign Parent Orders to Child Branches & Fix Self-Referencing parentId*
 
