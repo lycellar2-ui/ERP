@@ -168,7 +168,7 @@ export async function getStockInventory(filters: {
             product: { select: { productName: true, skuCode: true, country: true, wineType: true } },
             location: {
                 include: {
-                    warehouse: { select: { id: true, name: true } },
+                    warehouse: { select: { id: true, name: true, code: true } },
                 },
             },
             doLines: {
@@ -183,6 +183,74 @@ export async function getStockInventory(filters: {
         take: 300,
     })
 
+    const productIds = Array.from(new Set(lots.map(l => l.productId)))
+
+    // Query active unfulfilled SO lines for these products to accurately allocate reservation by default warehouse
+    const [warehouses, unfulfilledSoLines] = await Promise.all([
+        prisma.warehouse.findMany({
+            select: { id: true, code: true, name: true, legalEntityId: true, legalEntity: { select: { code: true } } }
+        }),
+        productIds.length > 0 ? prisma.salesOrderLine.findMany({
+            where: {
+                productId: { in: productIds },
+                so: {
+                    status: { in: ['CONFIRMED', 'PENDING_ACCOUNTING', 'PARTIALLY_DELIVERED'] }
+                }
+            },
+            select: {
+                productId: true,
+                qtyOrdered: true,
+                so: {
+                    select: {
+                        id: true,
+                        warehouseId: true,
+                        legalEntityId: true,
+                        legalEntity: { select: { code: true } },
+                        deliveryOrders: {
+                            where: { status: { not: 'CANCELLED' } },
+                            select: {
+                                lines: {
+                                    select: { productId: true, qtyPicked: true, qtyShipped: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }) : []
+    ])
+
+    const taGvmWh = warehouses.find(w => w.code === 'WH-TA-GVM' || w.name?.includes('tầng 2'))
+    const lysSrWh = warehouses.find(w => w.code === 'WH-LYS-SR' || w.name?.includes('Showroom'))
+
+    // Map unfulfilled SO quantity per target warehouse & product
+    const unfulfilledMap = new Map<string, number>()
+    for (const sol of unfulfilledSoLines) {
+        let targetWhId: string | null | undefined = sol.so.warehouseId
+        if (!targetWhId) {
+            const leCode = sol.so.legalEntity?.code
+            if (leCode === 'TA' || sol.so.legalEntityId === 'le-thang-an') {
+                targetWhId = taGvmWh?.id
+            } else if (leCode === 'LC' || sol.so.legalEntityId === 'le-lys-cellar') {
+                targetWhId = lysSrWh?.id
+            }
+        }
+        if (!targetWhId) continue
+
+        const doProgress = sol.so.deliveryOrders.reduce((sum, d) => {
+            const pLines = d.lines.filter(dl => dl.productId === sol.productId)
+            return sum + pLines.reduce((s, dl) => s + Number(dl.qtyShipped || dl.qtyPicked || 0), 0)
+        }, 0)
+
+        const remaining = Math.max(0, Number(sol.qtyOrdered) - doProgress)
+        if (remaining > 0) {
+            const key = `${targetWhId}_${sol.productId}`
+            unfulfilledMap.set(key, (unfulfilledMap.get(key) || 0) + remaining)
+        }
+    }
+
+    const trackingUnfulfilled = new Map(unfulfilledMap)
+
     return lots.map(l => {
         const shippedQty = l.doLines
             ? l.doLines
@@ -190,16 +258,23 @@ export async function getStockInventory(filters: {
                 .reduce((sum, d) => sum + Number(d.qtyShipped || d.qtyPicked || 0), 0)
             : 0
 
-        const reservedQty = l.doLines
+        const draftDoQty = l.doLines
             ? l.doLines
                 .filter(d => ['DRAFT', 'PICKING', 'PACKED'].includes(d.do.status))
                 .reduce((sum, d) => sum + Number(d.qtyPicked || 0), 0)
             : 0
 
-        const qtyAvailable = Number(l.qtyAvailable)
-        const qtyOnHand = qtyAvailable + reservedQty
+        const whKey = `${l.location.warehouse.id}_${l.productId}`
+        const remSO = trackingUnfulfilled.get(whKey) || 0
+        const dbAvail = Number(l.qtyAvailable)
+        const soReserved = Math.min(dbAvail, remSO)
+        trackingUnfulfilled.set(whKey, remSO - soReserved)
+
+        const totalReserved = draftDoQty + soReserved
+        const qtyOnHand = dbAvail + draftDoQty
         const qtyReceived = Number(l.qtyReceived)
         const qtyBook = Math.max(0, qtyReceived - shippedQty)
+        const qtyAvailable = Math.max(0, qtyOnHand - totalReserved)
         const variance = qtyOnHand - qtyBook
 
         return {
@@ -218,7 +293,7 @@ export async function getStockInventory(filters: {
             qtyBook,
             qtyOnHand,
             qtyAvailable,
-            qtyReserved: reservedQty,
+            qtyReserved: totalReserved,
             variance,
             unitLandedCost: Number(l.unitLandedCost),
             receivedDate: l.receivedDate,
@@ -368,6 +443,7 @@ export async function getWMSStats() {
             quarantinedCount, slowMovingCount,
             lowStockProducts, grCount,
             availableLots,
+            unfulfilledSoLines,
         ] = await Promise.all([
             prisma.warehouse.count(),
             prisma.stockLot.count({ where: { status: 'AVAILABLE' } }),
@@ -386,7 +462,38 @@ export async function getWMSStats() {
                 where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
                 select: { qtyAvailable: true, unitLandedCost: true },
             }),
+            prisma.salesOrderLine.findMany({
+                where: {
+                    so: { status: { in: ['CONFIRMED', 'PENDING_ACCOUNTING', 'PARTIALLY_DELIVERED'] } }
+                },
+                select: {
+                    productId: true,
+                    qtyOrdered: true,
+                    so: {
+                        select: {
+                            deliveryOrders: {
+                                where: { status: { not: 'CANCELLED' } },
+                                select: {
+                                    lines: { select: { productId: true, qtyPicked: true, qtyShipped: true } }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
         ])
+
+        const totalUnfulfilledSoQty = unfulfilledSoLines.reduce((sum, sol) => {
+            const doProgress = sol.so.deliveryOrders.reduce((s, d) => {
+                const pLines = d.lines.filter(dl => dl.productId === sol.productId)
+                return s + pLines.reduce((s2, dl) => s2 + Number(dl.qtyShipped || dl.qtyPicked || 0), 0)
+            }, 0)
+            return sum + Math.max(0, Number(sol.qtyOrdered) - doProgress)
+        }, 0)
+
+        const totalStockQty = Number(availableAgg._sum.qtyAvailable ?? 0)
+        const totalReservedBottles = Number(reservedAgg._sum.qtyAvailable ?? 0) + totalUnfulfilledSoQty
+        const netAvailableBottles = Math.max(0, totalStockQty - totalUnfulfilledSoQty)
 
         const inventoryValue = availableLots.reduce(
             (s, l) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0
@@ -395,8 +502,8 @@ export async function getWMSStats() {
         return {
             warehouses: warehouseCount,
             totalLots,
-            availableBottles: Number(availableAgg._sum.qtyAvailable ?? 0),
-            reservedBottles: Number(reservedAgg._sum.qtyAvailable ?? 0),
+            availableBottles: netAvailableBottles,
+            reservedBottles: totalReservedBottles,
             inventoryValue,
             quarantinedCount,
             lowStockCount: lowStockProducts.length,

@@ -1343,7 +1343,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
     await requirePermission('MDM', 'READ')
     const cacheKey = `products:details:${id}`
     return cached(cacheKey, async () => {
-        const [p, mediaRes, awardsRes, stockRes] = await Promise.all([
+        const [p, mediaRes, awardsRes, stockRes, warehouses, unfulfilledSoLines] = await Promise.all([
             prisma.productDetailView.findUnique({
                 where: { id },
             }),
@@ -1374,10 +1374,71 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                     },
                 },
                 orderBy: { receivedDate: 'desc' }
+            }),
+            prisma.warehouse.findMany({
+                select: { id: true, code: true, name: true, legalEntityId: true, legalEntity: { select: { code: true } } }
+            }),
+            prisma.salesOrderLine.findMany({
+                where: {
+                    productId: id,
+                    so: {
+                        status: { in: ['CONFIRMED', 'PENDING_ACCOUNTING', 'PARTIALLY_DELIVERED'] }
+                    }
+                },
+                select: {
+                    productId: true,
+                    qtyOrdered: true,
+                    so: {
+                        select: {
+                            id: true,
+                            warehouseId: true,
+                            legalEntityId: true,
+                            legalEntity: { select: { code: true } },
+                            deliveryOrders: {
+                                where: { status: { not: 'CANCELLED' } },
+                                select: {
+                                    lines: {
+                                        select: { productId: true, qtyPicked: true, qtyShipped: true }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             })
         ])
 
         if (!p || p.deletedAt) return null
+
+        const taGvmWh = warehouses.find(w => w.code === 'WH-TA-GVM' || w.name?.includes('tầng 2'))
+        const lysSrWh = warehouses.find(w => w.code === 'WH-LYS-SR' || w.name?.includes('Showroom'))
+
+        const unfulfilledMap = new Map<string, number>()
+        for (const sol of unfulfilledSoLines) {
+            let targetWhId: string | null | undefined = sol.so.warehouseId
+            if (!targetWhId) {
+                const leCode = sol.so.legalEntity?.code
+                if (leCode === 'TA' || sol.so.legalEntityId === 'le-thang-an') {
+                    targetWhId = taGvmWh?.id
+                } else if (leCode === 'LC' || sol.so.legalEntityId === 'le-lys-cellar') {
+                    targetWhId = lysSrWh?.id
+                }
+            }
+            if (!targetWhId) continue
+
+            const doProgress = sol.so.deliveryOrders.reduce((sum, d) => {
+                const pLines = d.lines.filter(dl => dl.productId === sol.productId)
+                return sum + pLines.reduce((s, dl) => s + Number(dl.qtyShipped || dl.qtyPicked || 0), 0)
+            }, 0)
+
+            const remaining = Math.max(0, Number(sol.qtyOrdered) - doProgress)
+            if (remaining > 0) {
+                const key = `${targetWhId}_${sol.productId}`
+                unfulfilledMap.set(key, (unfulfilledMap.get(key) || 0) + remaining)
+            }
+        }
+
+        const trackingUnfulfilled = new Map(unfulfilledMap)
 
         const MEDAL_LABEL: Record<string, string> = {
             GOLD: 'Huy chương Vàng',
@@ -1441,16 +1502,23 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                         .reduce((sum, d) => sum + Number(d.qtyShipped || d.qtyPicked || 0), 0)
                     : 0
 
-                const reservedQty = l.doLines
+                const draftDoQty = l.doLines
                     ? l.doLines
                         .filter(d => ['DRAFT', 'PICKING', 'PACKED'].includes(d.do.status))
                         .reduce((sum, d) => sum + Number(d.qtyPicked || 0), 0)
                     : 0
 
-                const qtyAvailable = Number(l.qtyAvailable)
-                const qtyOnHand = qtyAvailable + reservedQty
+                const whKey = `${l.location.warehouse.id}_${l.productId}`
+                const remSO = trackingUnfulfilled.get(whKey) || 0
+                const dbAvail = Number(l.qtyAvailable)
+                const soReserved = Math.min(dbAvail, remSO)
+                trackingUnfulfilled.set(whKey, remSO - soReserved)
+
+                const totalReserved = draftDoQty + soReserved
+                const qtyOnHand = dbAvail + draftDoQty
                 const qtyReceived = Number(l.qtyReceived)
                 const qtyBook = Math.max(0, qtyReceived - shippedQty)
+                const qtyAvailable = Math.max(0, qtyOnHand - totalReserved)
                 const variance = qtyOnHand - qtyBook
 
                 return {
@@ -1460,7 +1528,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
                     qtyBook,
                     qtyOnHand,
                     qtyAvailable,
-                    qtyReserved: reservedQty,
+                    qtyReserved: totalReserved,
                     variance,
                     receivedDate: l.receivedDate,
                     status: l.status,

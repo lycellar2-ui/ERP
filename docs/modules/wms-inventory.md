@@ -56,8 +56,13 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 > **Bảng Danh Mục Tồn Kho (Stock Lots Table) & Đối Soát Song Song Tồn Sổ Sách vs Tồn On-hand**: Đã tối ưu hóa bố cục dạng Compact Table với chiều cao dòng tối thiểu. Tách biệt rõ ràng 3 chỉ số:
 > 1. **Tồn Sổ Sách (`qtyBook`)**: Số lượng theo chứng từ gốc (Nhập GR trừ các phiếu xuất DO đã hoàn thành/DELIVERED).
 > 2. **Tồn On-hand (`qtyOnHand`)**: Số lượng vật lý thực tế hiện diện trên sàn kho (`qtyAvailable + qtyReserved`). Tự động hiển thị huy hiệu cảnh báo chênh lệch (`⚠️ Lệch X chai`) khi On-hand khác Sổ sách.
-> 3. **Khả Dụng (`qtyAvailable`)**: Số lượng sẵn sàng xuất bán ngay (kèm chỉ số đang giữ chỗ `qtyReserved` cho các đơn hàng đang xử lý).
-> Đồng thời nâng cấp thanh KPI thống kê và chức năng **Export CSV** đối soát chi tiết phục vụ Kế toán và Thủ kho.
+> 3. **Khả Dụng (`qtyAvailable`)**: Số lượng sẵn sàng xuất bán ngay = `Tồn On-hand - Đơn Đặt (Reserved)`.
+> 
+> **Quy tắc phân bổ Đơn Đặt (Reserved) theo Pháp Nhân & Kho mặc định**:
+> - **Đơn hàng từ Thắng Ân (`TA` / `CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN`)**: Mặc định giữ chỗ và trừ tồn khả dụng tại **Kho Thắng Ân (Giang Văn Minh tầng 2)** (`WH-TA-GVM`).
+> - **Đơn hàng từ Ly's Cellar (`LC` / `CÔNG TY TNHH HẦM RƯỢU LY'S`)**: Mặc định giữ chỗ và trừ tồn khả dụng tại **Kho Showroom (Lys)** (`WH-LYS-SR`).
+> - Nếu đơn hàng chỉ định rõ `warehouseId` (ví dụ Kho Thường Tín `WH-TA-TT`), hệ thống sẽ trừ giữ chỗ theo đúng kho chỉ định.
+> - Đơn đặt bao gồm các đơn hàng bán (`Sales Orders`) ở trạng thái `CONFIRMED`, `PENDING_ACCOUNTING`, `PARTIALLY_DELIVERED` và các phiếu xuất kho `DeliveryOrder` đang soạn hàng (`DRAFT`, `PICKING`, `PACKED`) chưa xuất xong.
 
 ---
 

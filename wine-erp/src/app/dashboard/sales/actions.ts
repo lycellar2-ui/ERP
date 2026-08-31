@@ -875,6 +875,18 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
 
         const orderDateObj = parseDateWithCurrentTime(input.orderDate)
 
+        let warehouseId = (input as any).warehouseId
+        if (!warehouseId && input.legalEntityId) {
+            const wh = await prisma.warehouse.findFirst({
+                where: { legalEntityId: input.legalEntityId, allowSales: true },
+                orderBy: { isDefault: 'desc' },
+                select: { id: true }
+            })
+            if (wh) {
+                warehouseId = wh.id
+            }
+        }
+
         const so = await prisma.salesOrder.create({
             data: {
                 soNo,
@@ -892,6 +904,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                 vatAmount: Math.round(vatAmount),
                 status: 'DRAFT',
                 legalEntityId: input.legalEntityId,
+                warehouseId: warehouseId ?? null,
                 notes: input.notes ?? null,
                 lines: {
                     create: input.lines.map((l, idx) => {
