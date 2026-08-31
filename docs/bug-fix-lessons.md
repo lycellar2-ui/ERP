@@ -2270,6 +2270,29 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 87: Khi import tự động đơn hàng từ Hóa Đơn Điện Tử (HĐĐT) hoặc dữ liệu thuế, nếu MST/Tên pháp nhân thuộc Mã Khách Hàng Cha (`entityType = COMPANY` & `allowDirectSO = false`), BẮT BỤC phải áp dụng giải thuật đối chiếu giá sản phẩm (`CustomerPriceRule`) hoặc địa chỉ giao hàng để phân bổ về đúng Mã Nhà Hàng Con (`RESTAURANT`), tuyệt đối không tạo đơn SO trên Mã Cha. Bản ghi khách hàng đơn lẻ không có công ty mẹ BẮT BỤC phải có `parentId = NULL` (không được gán `parentId = id`).**
 
+---
+
+## BUG-059: Các Đơn Hàng Đầu Tháng 8 Của Cơ Sở "The Republic" (Mã Thuế 0106602903) Bị Gán Vào Mã Nhánh Trùng Lặp `HR-DAUTU-TH`
+
+**Ngày:** 2026-08-31  
+**Severity:** 🟡 High — Toàn vẹn dữ liệu đơn hàng và công nợ chi nhánh (`Sales Orders & AR Invoices Consolidation`).
+
+### Triệu chứng
+1. 3 đơn hàng bán đầu tháng 8 (`SO-2608-0002`, `SO-2608-0106`, `SO-2608-0107`) và 3 hóa đơn công nợ (`00001126`, `00001148`, `00001149`) thuộc mã số thuế `0106602903` bị gắn vào bản ghi phụ trùng lặp `HR-DAUTU-TH` (có tên trùng với tên công ty mẹ Nam Tây Hồ) thay vì gán vào mã nhà hàng chính thức `HR10021-01` (`The Republic`).
+2. Giao diện Drawer khách hàng hiển thị thông tin cha con bị trùng tên ("Khách hàng: CÔNG TY CỔ PHẦN ĐẦU TƯ VÀ THƯƠNG MẠI NAM TÂY HỒ / Khách hàng cha: CÔNG TY CỔ PHẦN ĐẦU TƯ VÀ THƯƠNG MẠI NAM TÂY HỒ").
+
+### Nguyên nhân gốc rễ
+1. Khi seed/đồng bộ HĐĐT từ giai đoạn đầu tháng 8, hệ thống tạo bản ghi chi nhánh trùng lặp với code `HR-DAUTU-TH` thay vì map vào nhà hàng con sẵn có `HR10021-01` (`The Republic`).
+
+### Cách fix
+1. Chuyển toàn bộ 3 Sales Orders và 3 AR Invoices sang đúng mã khách hàng `HR10021-01` (`The Republic`).
+2. Xóa các bảng giá trùng lặp và xóa 2 bản ghi khách hàng rác/trùng lặp `HR-DAUTU-TH` và `HR-THEREPUB`.
+3. Toàn bộ 6 đơn hàng trong tháng 8 của The Republic hiện đã tập trung đầy đủ dưới mã `HR10021-01` thuộc công ty mẹ `HR10021`.
+
+### Bài học
+
+> ⚠️ **RULE 88: Đối với các tổ hợp khách hàng có nhiều chi nhánh / nhà hàng cùng chung 1 Mã Số Thuế (như The Republic thuộc Nam Tây Hồ), luôn hợp nhất dữ liệu đơn hàng và công nợ về Mã Nhà Hàng Chính Thức (`HR10021-01 - The Republic`), tuyệt đối không tạo các mã khách hàng phụ rác hoặc trùng tên với Công Ty Mẹ (`entityType = COMPANY`).**
+
 
 
 
