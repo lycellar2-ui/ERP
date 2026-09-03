@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Printer, CheckCircle2, ArrowRightLeft, Clock, Building2, Calendar, FileText, Check, ShieldAlert, Truck, PackageCheck, AlertCircle, Loader2, MapPin, Layers, Boxes, ListChecks } from 'lucide-react'
+import { X, Printer, CheckCircle2, ArrowRightLeft, Clock, Building2, Calendar, FileText, Check, ShieldAlert, Truck, PackageCheck, AlertCircle, Loader2, MapPin, Layers, Boxes, ListChecks, RotateCw, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type TransferOrderDetail,
@@ -13,6 +13,8 @@ import {
     dispatchTransferOrder,
     receiveTransferOrder,
     submitTransferForAccounting,
+    updateTransferLineVintage,
+    autoFixTransferVintages,
 } from './actions'
 import { formatDate, formatVND } from '@/lib/utils'
 
@@ -154,7 +156,66 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
         }
     }
 
+    // Vintage editing states
+    const [editingVintageLineId, setEditingVintageLineId] = useState<string | null>(null)
+    const [selectedNewVintage, setSelectedNewVintage] = useState<string>('')
+    const [vintageUpdating, setVintageUpdating] = useState(false)
+    const [autoFixing, setAutoFixing] = useState(false)
+
+    const handleUpdateVintage = async (lineId: string, vintageVal: string) => {
+        if (!transferId) return
+        setVintageUpdating(true)
+        try {
+            const vNum = vintageVal === 'NV' || vintageVal === '' ? null : parseInt(vintageVal, 10)
+            const res = await updateTransferLineVintage({
+                transferOrderId: transferId,
+                lineId,
+                newVintage: vNum,
+            })
+            if (res.success) {
+                toast.success('✅ Đã đổi niên vụ thành công!')
+                setEditingVintageLineId(null)
+                await loadData(transferId)
+                onRefresh()
+            } else {
+                toast.error(res.error || 'Lỗi đổi niên vụ')
+            }
+        } catch (e: any) {
+            toast.error('Lỗi: ' + e.message)
+        } finally {
+            setVintageUpdating(false)
+        }
+    }
+
+    const handleAutoFixVintages = async () => {
+        if (!transferId) return
+        setAutoFixing(true)
+        try {
+            const res = await autoFixTransferVintages(transferId)
+            if (res.success) {
+                if (res.updatedCount && res.updatedCount > 0) {
+                    toast.success(`🎉 Đã tự động khớp ${res.updatedCount} dòng sang niên vụ có sẵn tồn kho!`)
+                    await loadData(transferId)
+                    onRefresh()
+                } else {
+                    toast.info('Tất cả các dòng đã có đủ tồn kho niên vụ hoặc không tìm thấy niên vụ thay thế.')
+                }
+            } else {
+                toast.error(res.error || 'Lỗi tự động khớp niên vụ')
+            }
+        } catch (e: any) {
+            toast.error('Lỗi: ' + e.message)
+        } finally {
+            setAutoFixing(false)
+        }
+    }
+
     const st = detail ? (STATUS_MAP[detail.status] ?? STATUS_MAP.DRAFT) : STATUS_MAP.DRAFT
+    const hasVintageMismatch = Boolean(
+        detail &&
+        ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(detail.status) &&
+        detail.lines.some(l => (l.vintageAvailableStock ?? 0) < l.qtyTransferred)
+    )
 
     return (
         <>
@@ -545,6 +606,32 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     )
                                 })()}
 
+                                {/* Vintage Mismatch Warning Banner */}
+                                {hasVintageMismatch && (
+                                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                                        <div className="flex items-start gap-2.5 text-amber-900">
+                                            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="text-xs font-bold text-amber-950">
+                                                    Phát hiện Niên Vụ (Vintage) không khớp với tồn kho thực tế tại kho xuất!
+                                                </p>
+                                                <p className="text-[11px] text-amber-800 mt-0.5">
+                                                    Có sản phẩm đang yêu cầu niên vụ mà kho xuất đã hết hàng. Bạn có thể bấm "Tự Động Khớp" để hệ thống tự chuyển sang niên vụ có sẵn hàng, hoặc đổi thủ công từng dòng ở bảng bên dưới.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            disabled={autoFixing}
+                                            onClick={handleAutoFixVintages}
+                                            className="px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                                        >
+                                            {autoFixing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                                            ⚡ Tự Động Khớp Niên Vụ Còn Hàng
+                                        </button>
+                                    </div>
+                                )}
+
                                 {/* Line Items Table */}
                                 <div className="rounded-xl overflow-hidden shadow-2xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="overflow-x-auto">
@@ -561,17 +648,90 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y" style={{ borderColor: '#F1F5F9' }}>
-                                                {detail.lines.map((l, idx) => (
-                                                    <tr key={l.id} className="hover:bg-slate-50">
-                                                        <td className="p-3 text-center font-bold" style={{ color: '#64748B' }}>{idx + 1}</td>
-                                                        <td className="p-3 font-mono font-bold" style={{ color: '#B47816' }}>{l.skuCode}</td>
-                                                        <td className="p-3 font-bold" style={{ color: '#0F172A' }}>{l.productName}</td>
-                                                        <td className="p-3 text-center font-mono" style={{ color: '#475569' }}>{l.vintage || 'NV'}</td>
-                                                        <td className="p-3 text-center font-mono font-bold" style={{ color: '#B47816' }}>{l.qtyTransferred} chai</td>
-                                                        <td className="p-3 text-right font-mono" style={{ color: '#64748B' }}>{formatVND(l.unitCost)}</td>
-                                                        <td className="p-3 text-right font-mono font-bold" style={{ color: '#0F172A' }}>{formatVND(l.totalValue)}</td>
-                                                    </tr>
-                                                ))}
+                                                {detail.lines.map((l, idx) => {
+                                                    const isEditable = ['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(detail.status)
+                                                    const isLowOrZeroStock = (l.vintageAvailableStock ?? 0) < l.qtyTransferred
+
+                                                    return (
+                                                        <tr key={l.id} className={`hover:bg-slate-50 ${isEditable && isLowOrZeroStock ? 'bg-amber-50/40' : ''}`}>
+                                                            <td className="p-3 text-center font-bold" style={{ color: '#64748B' }}>{idx + 1}</td>
+                                                            <td className="p-3 font-mono font-bold" style={{ color: '#B47816' }}>{l.skuCode}</td>
+                                                            <td className="p-3 font-bold" style={{ color: '#0F172A' }}>{l.productName}</td>
+                                                            <td className="p-3 text-center font-mono">
+                                                                {editingVintageLineId === l.id ? (
+                                                                    <div className="flex items-center gap-1 justify-center">
+                                                                        <select
+                                                                            value={selectedNewVintage}
+                                                                            onChange={e => setSelectedNewVintage(e.target.value)}
+                                                                            className="px-1.5 py-1 text-xs rounded border border-slate-300 bg-white text-slate-900 font-mono shadow-2xs outline-none focus:border-amber-500"
+                                                                        >
+                                                                            {l.availableVintages && l.availableVintages.length > 0 ? (
+                                                                                l.availableVintages.map(v => (
+                                                                                    <option key={v.vintage ?? 'NV'} value={v.vintage !== null && v.vintage !== undefined ? String(v.vintage) : 'NV'}>
+                                                                                        {v.vintage ? `VTG ${v.vintage}` : 'NV'} (Tồn: {v.qtyAvailable}c)
+                                                                                    </option>
+                                                                                ))
+                                                                            ) : (
+                                                                                <option value="NV">Kho hết hàng</option>
+                                                                            )}
+                                                                        </select>
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={vintageUpdating}
+                                                                            onClick={() => handleUpdateVintage(l.id, selectedNewVintage)}
+                                                                            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded cursor-pointer"
+                                                                            title="Lưu thay đổi niên vụ"
+                                                                        >
+                                                                            {vintageUpdating ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setEditingVintageLineId(null)}
+                                                                            className="p-1 text-slate-400 hover:bg-slate-100 rounded cursor-pointer"
+                                                                            title="Hủy"
+                                                                        >
+                                                                            <X size={13} />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex flex-col items-center gap-0.5">
+                                                                        <div className="flex items-center gap-1.5 font-bold">
+                                                                            <span style={{ color: isEditable && isLowOrZeroStock ? '#DC2626' : '#475569' }}>
+                                                                                {l.vintage || 'NV'}
+                                                                            </span>
+                                                                            {isEditable && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        setEditingVintageLineId(l.id)
+                                                                                        const candidate = l.availableVintages?.find(v => v.qtyAvailable >= l.qtyTransferred)?.vintage
+                                                                                        setSelectedNewVintage(
+                                                                                            candidate !== undefined
+                                                                                                ? (candidate !== null ? String(candidate) : 'NV')
+                                                                                                : (l.vintage !== null && l.vintage !== undefined ? String(l.vintage) : 'NV')
+                                                                                        )
+                                                                                    }}
+                                                                                    className="px-1.5 py-0.5 text-[10px] font-sans font-semibold rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors flex items-center gap-1 cursor-pointer"
+                                                                                    title="Đổi niên vụ (Vintage) cho sản phẩm này"
+                                                                                >
+                                                                                    <RotateCw size={10} /> Đổi
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                        {isEditable && isLowOrZeroStock && (
+                                                                            <span className="text-[10px] text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-semibold whitespace-nowrap border border-rose-100">
+                                                                                ⚠️ Tồn: {l.vintageAvailableStock ?? 0}c
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-3 text-center font-mono font-bold" style={{ color: '#B47816' }}>{l.qtyTransferred} chai</td>
+                                                            <td className="p-3 text-right font-mono" style={{ color: '#64748B' }}>{formatVND(l.unitCost)}</td>
+                                                            <td className="p-3 text-right font-mono font-bold" style={{ color: '#0F172A' }}>{formatVND(l.totalValue)}</td>
+                                                        </tr>
+                                                    )
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>

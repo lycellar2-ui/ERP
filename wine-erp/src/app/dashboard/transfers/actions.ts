@@ -56,6 +56,8 @@ export type TransferOrderDetail = {
         qtyTransferred: number
         qtyReceived: number
         qtyAvailableFromWH: number
+        availableVintages?: { vintage: number | null; qtyAvailable: number }[]
+        vintageAvailableStock?: number
         unitCost: number
         totalValue: number
     }[]
@@ -608,16 +610,34 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
 
     // Get stock lots at source warehouse & cost info
     const lineDetails = await Promise.all((to.lines || []).map(async (l: any) => {
-        const stockSum = await prisma.stockLot.aggregate({
+        const sourceLots = await prisma.stockLot.findMany({
             where: {
                 productId: l.productId,
                 status: 'AVAILABLE',
+                qtyAvailable: { gt: 0 },
                 location: { warehouseId: to.fromWarehouseId },
             },
-            _sum: { qtyAvailable: true },
+            select: { vintage: true, qtyAvailable: true, unitLandedCost: true },
         })
 
-        const firstLot = await prisma.stockLot.findFirst({
+        const vintageStockMap: Record<string, number> = {}
+        let totalWHStock = 0
+        for (const lot of sourceLots) {
+            const vKey = lot.vintage !== null && lot.vintage !== undefined ? String(lot.vintage) : 'NV'
+            const qty = Number(lot.qtyAvailable)
+            vintageStockMap[vKey] = (vintageStockMap[vKey] || 0) + qty
+            totalWHStock += qty
+        }
+
+        const availableVintages = Object.entries(vintageStockMap).map(([vStr, qty]) => ({
+            vintage: vStr === 'NV' ? null : parseInt(vStr, 10),
+            qtyAvailable: qty,
+        })).sort((a, b) => (b.vintage ?? 0) - (a.vintage ?? 0))
+
+        const currentVintageKey = l.vintage !== null && l.vintage !== undefined ? String(l.vintage) : 'NV'
+        const vintageAvailableStock = vintageStockMap[currentVintageKey] || 0
+
+        const firstLot = sourceLots[0] || await prisma.stockLot.findFirst({
             where: { productId: l.productId },
             select: { unitLandedCost: true, vintage: true },
             orderBy: { receivedDate: 'desc' },
@@ -634,7 +654,9 @@ export async function getTransferDetail(id: string): Promise<TransferOrderDetail
             country: l.product.country,
             qtyTransferred: qtyTrans,
             qtyReceived: Number(l.qtyReceived || 0),
-            qtyAvailableFromWH: Number(stockSum._sum.qtyAvailable || 0),
+            qtyAvailableFromWH: totalWHStock,
+            availableVintages,
+            vintageAvailableStock,
             unitCost,
             totalValue: qtyTrans * unitCost,
         }
@@ -783,5 +805,165 @@ export async function getTransferPickingLocations(transferOrderId: string): Prom
     }
 
     return result
+}
+
+// ── Cập Nhật Niên Vụ (Vintage) Cho Dòng Phiếu Chuyển Kho ──
+export async function updateTransferLineVintage(input: {
+    transferOrderId: string
+    lineId: string
+    newVintage: number | null
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requireAuth()
+        const to = await prisma.transferOrder.findUnique({
+            where: { id: input.transferOrderId },
+            include: { lines: { include: { product: { select: { skuCode: true, productName: true } } } } }
+        })
+        if (!to) return { success: false, error: 'Không tìm thấy phiếu chuyển kho' }
+        if (!['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(to.status)) {
+            return { success: false, error: 'Chỉ có thể đổi niên vụ khi phiếu chưa xuất kho (Nháp, Chờ duyệt, hoặc Đã duyệt)' }
+        }
+
+        const line = to.lines.find(l => l.id === input.lineId)
+        if (!line) return { success: false, error: 'Không tìm thấy dòng sản phẩm' }
+
+        // Validate stock of newVintage in fromWarehouseId
+        const whereClause: any = {
+            productId: line.productId,
+            status: 'AVAILABLE',
+            location: { warehouseId: to.fromWarehouseId },
+        }
+        if (input.newVintage !== null && input.newVintage !== undefined) {
+            whereClause.vintage = Number(input.newVintage)
+        } else {
+            whereClause.vintage = null
+        }
+
+        const stockSum = await prisma.stockLot.aggregate({
+            where: whereClause,
+            _sum: { qtyAvailable: true }
+        })
+        const available = Number(stockSum._sum.qtyAvailable || 0)
+        if (available < Number(line.qtyTransferred)) {
+            const vText = input.newVintage ? `Niên vụ ${input.newVintage}` : 'Không niên vụ (NV)'
+            return {
+                success: false,
+                error: `${line.product.skuCode} (${vText}) chỉ còn ${available} chai ở Kho xuất (Yêu cầu chuyển ${line.qtyTransferred} chai).`
+            }
+        }
+
+        await prisma.transferOrderLine.update({
+            where: { id: input.lineId },
+            data: { vintage: input.newVintage !== null && input.newVintage !== undefined ? Number(input.newVintage) : null }
+        })
+
+        revalidateCache('transfers')
+        revalidatePath('/dashboard/transfers')
+        revalidatePath('/dashboard/warehouse')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ── Tự Động Khớp Niên Vụ Còn Hàng Cho Tất Cả Các Dòng Bị Kẹt ──
+export async function autoFixTransferVintages(transferOrderId: string): Promise<{
+    success: boolean
+    error?: string
+    updatedCount?: number
+    details?: string[]
+}> {
+    try {
+        await requireAuth()
+        const to = await prisma.transferOrder.findUnique({
+            where: { id: transferOrderId },
+            include: {
+                lines: {
+                    include: {
+                        product: { select: { skuCode: true, productName: true } }
+                    }
+                }
+            }
+        })
+        if (!to) return { success: false, error: 'Không tìm thấy phiếu chuyển kho' }
+        if (!['DRAFT', 'PENDING_ACCOUNTING', 'CONFIRMED'].includes(to.status)) {
+            return { success: false, error: 'Chỉ có thể tự động đổi niên vụ khi phiếu chưa xuất kho' }
+        }
+
+        const details: string[] = []
+        let updatedCount = 0
+
+        for (const line of to.lines) {
+            const qtyReq = Number(line.qtyTransferred)
+
+            // Check current vintage stock
+            const whereCurr: any = {
+                productId: line.productId,
+                status: 'AVAILABLE',
+                location: { warehouseId: to.fromWarehouseId }
+            }
+            if (line.vintage !== null && line.vintage !== undefined) {
+                whereCurr.vintage = line.vintage
+            } else {
+                whereCurr.vintage = null
+            }
+            const currSum = await prisma.stockLot.aggregate({
+                where: whereCurr,
+                _sum: { qtyAvailable: true }
+            })
+            const currAvailable = Number(currSum._sum.qtyAvailable || 0)
+
+            if (currAvailable >= qtyReq) {
+                continue
+            }
+
+            // Find all available vintages in fromWarehouse
+            const allLots = await prisma.stockLot.findMany({
+                where: {
+                    productId: line.productId,
+                    status: 'AVAILABLE',
+                    qtyAvailable: { gt: 0 },
+                    location: { warehouseId: to.fromWarehouseId }
+                },
+                select: { vintage: true, qtyAvailable: true }
+            })
+
+            const vintageGroup: Record<string, number> = {}
+            for (const lot of allLots) {
+                const k = lot.vintage !== null && lot.vintage !== undefined ? String(lot.vintage) : 'NV'
+                vintageGroup[k] = (vintageGroup[k] || 0) + Number(lot.qtyAvailable)
+            }
+
+            // Find best matching vintage that has >= qtyReq
+            const candidates = Object.entries(vintageGroup)
+                .map(([vStr, stock]) => ({ vintage: vStr === 'NV' ? null : parseInt(vStr, 10), stock }))
+                .filter(c => c.stock >= qtyReq)
+                .sort((a, b) => b.stock - a.stock)
+
+            if (candidates.length > 0) {
+                const chosen = candidates[0]
+                await prisma.transferOrderLine.update({
+                    where: { id: line.id },
+                    data: { vintage: chosen.vintage }
+                })
+                const oldText = line.vintage ? `VTG ${line.vintage}` : 'NV'
+                const newText = chosen.vintage ? `VTG ${chosen.vintage}` : 'NV'
+                details.push(`[${line.product.skuCode}] ${line.product.productName}: ${oldText} ➔ ${newText} (Kho có ${chosen.stock} chai)`)
+                updatedCount++
+            }
+        }
+
+        revalidateCache('transfers')
+        revalidatePath('/dashboard/transfers')
+        revalidatePath('/dashboard/warehouse')
+
+        return {
+            success: true,
+            updatedCount,
+            details
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }
 

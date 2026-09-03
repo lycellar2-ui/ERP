@@ -2344,6 +2344,35 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 90: Đối với các kênh Bán lẻ (`RETAIL`, `DIRECT_INDIVIDUAL`, `POS`), đơn giá niêm yết (`retailPrice`) được quy ước là ĐÃ BAO GỒM VAT; hệ thống PHẢI tự động bóc tách doanh thu trước thuế (`Total / (1 + VAT%)`) và tiền thuế VAT đầu ra. Đối với kênh B2B (`HORECA`, `WHOLESALE`, ...), đơn giá là giá CHƯA GỒM VAT và hệ thống tính cộng thêm VAT vào tổng thanh toán.**
 
+---
+
+## BUG-091: Phiếu Chuyển Kho Bị Treo Khi Xuất Kho Do Không Khớp Niên Vụ (Vintage) Với Tồn Kho Thực Tế
+
+**Severity:** 🟡 High / Inventory & WMS Operations
+**Date:** 2026-09-03
+**Affected Modules:** `WMS` (Transfers — `TransferDetailDrawer.tsx`, `transfers/actions.ts`)
+
+### Triệu chứng
+1. Các phiếu chuyển kho ở trạng thái `CONFIRMED` (Kế toán đã duyệt) hoặc `PENDING_ACCOUNTING` bị kẹt, khi Thủ kho bấm "Xuất Kho & Vận Chuyển" thì hệ thống báo lỗi: `Kho xuất không đủ tồn kho cho SKU ... (niên vụ ...) (thiếu ... chai)`.
+2. Phiếu chuyển kho khi lập có thể đã chọn một niên vụ không còn tồn (tồn = 0 chai) tại Kho Xuất (ví dụ chọn 2023 nhưng kho chỉ còn 2022, hoặc chọn 2021 nhưng kho chỉ còn NV), dẫn đến toàn bộ phiếu chuyển kho bị treo, không có cách nào sửa đổi niên vụ trên giao diện nếu không hủy phiếu lập lại.
+
+### Nguyên nhân gốc rễ
+1. Thiếu Server Action và UI cho phép cập nhật / đổi Niên vụ (Vintage) cho các dòng sản phẩm của phiếu chuyển kho khi phiếu chưa xuất kho (`DRAFT`, `PENDING_ACCOUNTING`, `CONFIRMED`).
+2. Giao diện chi tiết phiếu chuyển kho (`TransferDetailDrawer.tsx`) trước đây không hiển thị tồn kho thực tế theo từng Niên Vụ và không cung cấp tính năng chọn Niên Vụ thay thế.
+
+### Cách fix
+1. **Server Actions (`transfers/actions.ts`)**:
+   - Thêm `updateTransferLineVintage`: Cho phép đổi Niên vụ cho dòng sản phẩm khi phiếu ở trạng thái chưa xuất kho, tự động kiểm tra tồn kho của Niên vụ mới tại Kho Xuất.
+   - Thêm `autoFixTransferVintages`: Tự động rà soát toàn bộ các dòng bị thiếu tồn kho theo niên vụ và đổi sang niên vụ có sẵn tồn kho tại Kho Xuất.
+   - Cập nhật `getTransferDetail`: Tính toán và trả về danh sách `availableVintages` kèm số lượng tồn kho khả dụng `vintageAvailableStock` cho từng dòng.
+2. **Giao diện (`TransferDetailDrawer.tsx`)**:
+   - Hiển thị Banner cảnh báo màu vàng cam khi phát hiện phiếu có dòng sản phẩm bị lệch Niên Vụ so với tồn kho thực tế kèm nút bấm **`⚡ Tự Động Khớp Niên Vụ Còn Hàng`**.
+   - Tại cột VTG của bảng sản phẩm: Hiển thị cảnh báo đỏ `⚠️ Tồn: X chai` nếu không đủ tồn, cung cấp nút **`[🔄 Đổi]`** cho phép Thủ kho/Kế toán chọn nhanh Niên vụ khả dụng từ dropdown và lưu lại tức thì.
+
+### Bài học
+
+> ⚠️ **RULE 91: Đối với các giao dịch điều chuyển kho nội bộ, luôn cung cấp cơ chế linh hoạt cho phép Thủ kho / Kế toán kiểm tra tồn theo Niên Vụ và đổi Niên Vụ (hoặc tự động khớp Niên Vụ còn hàng) trước khi xuất kho để tránh tình trạng phiếu bị treo do sai lệch niên vụ nhập liệu.**
+
 
 
 
