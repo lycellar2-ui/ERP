@@ -7,7 +7,7 @@ import {
     getCustomersForSO, getProductsWithStock, getCustomerARBalance,
     updateSalesOrder, SOUpdateInput, SalesChannel,
     getProductPricesForChannel, getSalesOrderDetailWithMargin,
-    getLegalEntities, LegalEntityRow,
+    getLegalEntities, LegalEntityRow, getCustomerProductCodes,
 } from './actions'
 import { formatVND, getLocalDateString } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
@@ -86,7 +86,7 @@ interface Customer {
     } | null
 }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number }
-interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number }
+interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number; customerItemCode?: string | null }
 
 interface EditSODrawerProps {
     open: boolean
@@ -175,6 +175,8 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
     
     const [addProductSearchQuery, setAddProductSearchQuery] = useState('')
     const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false)
+    const [customerCodesMap, setCustomerCodesMap] = useState<Record<string, string>>({})
+    const hasCustomerCodes = useMemo(() => Object.keys(customerCodesMap).length > 0 || lines.some(l => Boolean(l.customerItemCode)), [customerCodesMap, lines])
 
     // Autocomplete customer selection filter
     const filteredCustomers = useMemo(() => {
@@ -198,11 +200,13 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         const q = query.trim().toLowerCase()
         const available = products.filter(p => !activeProductIds.has(p.id))
         if (!q) return available.slice(0, 100)
-        return available.filter(p =>
-            p.productName.toLowerCase().includes(q) ||
-            p.skuCode.toLowerCase().includes(q)
-        )
-    }, [products, activeProductIds])
+        return available.filter(p => {
+            const custCode = customerCodesMap[p.id]
+            return p.productName.toLowerCase().includes(q) ||
+                p.skuCode.toLowerCase().includes(q) ||
+                (custCode && custCode.toLowerCase().includes(q))
+        })
+    }, [products, activeProductIds, customerCodesMap])
 
     // Load SO data
     const loadSOData = useCallback(async () => {
@@ -227,6 +231,13 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         setLegalEntityId(detail.legalEntityId ?? '')
         setShippingAddressId(detail.shippingAddressId ?? '')
 
+        // Fetch customer product codes
+        if (detail.customerId) {
+            getCustomerProductCodes(detail.customerId).then(res => {
+                setCustomerCodesMap(res.map || {})
+            }).catch(() => {})
+        }
+
         // Set lines from detail
         setLines(detail.lines.map((l: any) => ({
             productId: l.productId,
@@ -238,6 +249,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
             stock: 0, // will be populated from products list
             priceSource: l.priceSource ?? null,
             vatRate: l.vatRate ? Number(l.vatRate) : 10,
+            customerItemCode: l.customerItemCode || null,
         })))
 
         setLoadingSO(false)
@@ -328,7 +340,11 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
             if (c.paymentTerm) setPaymentTerm(c.paymentTerm)
             setArBalance(await getCustomerARBalance(cId))
             loadPrices(cId, nextChannel, true)
+            getCustomerProductCodes(cId).then(res => {
+                setCustomerCodesMap(res.map || {})
+            }).catch(() => {})
         } else {
+            setCustomerCodesMap({})
             loadPrices(null, channel, true)
         }
     }
@@ -345,11 +361,12 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         const price = priceMap[productId]?.price ?? 0
         const source = priceMap[productId]?.source ?? null
         const prodVat = p.vatRate !== undefined ? Number(p.vatRate) : 10
+        const custCode = customerCodesMap[productId] || null
 
         setLines(prev => [...prev, {
             productId: p.id, productName: p.productName, skuCode: p.skuCode,
             qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: p.totalStock,
-            priceSource: source, vatRate: prodVat,
+            priceSource: source, vatRate: prodVat, customerItemCode: custCode,
         }])
     }
 
@@ -451,6 +468,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                 lineDiscountPct: l.lineDiscountPct,
                 vatRate: l.vatRate ?? 10,
                 priceSource: l.priceSource || undefined,
+                customerItemCode: l.customerItemCode || customerCodesMap[l.productId] || undefined,
             })),
         } as SOUpdateInput).then(res => {
             if (!res.success) throw new Error(res.error ?? 'Có lỗi xảy ra')
@@ -838,6 +856,11 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                             className="px-3 py-2 text-xs cursor-pointer hover:bg-amber-50/70 dark:hover:bg-[#1C2C3A] transition-colors flex items-center justify-between gap-2"
                                                         >
                                                             <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                {customerCodesMap[p.id] && (
+                                                                    <span className="font-bold font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700/50 text-[10px] shrink-0">
+                                                                        [{customerCodesMap[p.id]}]
+                                                                    </span>
+                                                                )}
                                                                 <span className="font-bold font-mono text-teal-700 dark:text-teal-400 shrink-0">[{p.skuCode}]</span>
                                                                 <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{p.productName}</span>
                                                             </div>
@@ -864,6 +887,9 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                             <thead>
                                                 <tr className="bg-slate-100/90 dark:bg-[#162531] text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-[#223645] font-bold">
                                                     <th className="px-3.5 py-3">Sản Phẩm</th>
+                                                    {hasCustomerCodes && (
+                                                        <th className="px-3 py-3 w-24 text-center text-amber-600 dark:text-amber-400 font-bold">Mã Khách</th>
+                                                    )}
                                                     <th className="px-3 py-3 w-20 text-center">Tồn Kho</th>
                                                     <th className="px-3 py-3 w-20 text-center">SL</th>
                                                     <th className="px-3 py-3 w-28 text-right">Đơn Giá</th>
@@ -893,6 +919,13 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                     </div>
                                                                 )}
                                                             </td>
+                                                            {hasCustomerCodes && (
+                                                                <td className="px-3 py-2.5 text-center">
+                                                                    <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/40">
+                                                                        {l.customerItemCode || customerCodesMap[l.productId] || '—'}
+                                                                    </span>
+                                                                </td>
+                                                            )}
                                                             <td className="px-3 py-2.5 text-center">
                                                                 <span className={`font-mono font-bold ${lowStock ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
                                                                     {l.stock}

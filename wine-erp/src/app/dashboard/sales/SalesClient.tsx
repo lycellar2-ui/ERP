@@ -972,10 +972,20 @@ function SODetailDrawer({
                                                 revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
                                                 avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
                                                 priceSource: (l as any).priceSource ?? null,
-                                            }))).map(ml => (
+                                                customerItemCode: (l as any).customerItemCode ?? null,
+                                            }))).map(ml => {
+                                                const custCode = (ml as any).customerItemCode || detail.lines.find(l => l.id === ml.lineId)?.customerItemCode
+                                                return (
                                                 <tr key={ml.lineId} style={{ borderTop: '1px solid #2A4355', background: ml.isNegative ? 'rgba(220,38,38,0.06)' : 'transparent' }}>
                                                     <td className="px-2.5 py-2">
-                                                        <div className="font-semibold text-[#87CBB9] font-mono">{ml.skuCode}</div>
+                                                        <div className="font-semibold text-[#87CBB9] font-mono flex items-center gap-1.5">
+                                                            {custCode && (
+                                                                <span className="text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
+                                                                    [{custCode}]
+                                                                </span>
+                                                            )}
+                                                            {ml.skuCode}
+                                                        </div>
                                                         <div className="text-[10px] text-[#8AAEBB] mt-0.5 max-w-[200px] truncate" title={ml.productName}>{ml.productName}</div>
                                                     </td>
                                                     <td className="px-2.5 py-2 text-right" style={{ color: '#E8F1F2' }}>{ml.qty}</td>
@@ -1015,7 +1025,8 @@ function SODetailDrawer({
                                                         </td>
                                                     )}
                                                 </tr>
-                                            ))}
+                                                )
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1029,12 +1040,22 @@ function SODetailDrawer({
                                     revenue: Number(l.qtyOrdered) * Number(l.unitPrice) * (1 - Number(l.lineDiscountPct) / 100),
                                     avgCost: 0, cogs: 0, margin: 0, marginPct: 0, isNegative: false, productId: l.productId,
                                     priceSource: (l as any).priceSource ?? null,
-                                }))).map(ml => (
+                                    customerItemCode: (l as any).customerItemCode ?? null,
+                                }))).map(ml => {
+                                    const custCode = (ml as any).customerItemCode || detail.lines.find(l => l.id === ml.lineId)?.customerItemCode
+                                    return (
                                     <div key={ml.lineId} className="p-3 rounded-md space-y-1.5" 
                                         style={{ background: '#1B2E3D', border: `1px solid ${ml.isNegative ? 'rgba(220,38,38,0.35)' : '#2A4355'}` }}>
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0">
-                                                <p className="text-xs font-semibold text-[#87CBB9] font-mono">{ml.skuCode}</p>
+                                                <p className="text-xs font-semibold text-[#87CBB9] font-mono flex items-center gap-1.5">
+                                                    {custCode && (
+                                                        <span className="text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold">
+                                                            [{custCode}]
+                                                        </span>
+                                                    )}
+                                                    {ml.skuCode}
+                                                </p>
                                                 <p className="text-[11px] text-[#E8F1F2] truncate mt-0.5" title={ml.productName}>{ml.productName}</p>
                                             </div>
                                             {ml.priceSource && (
@@ -1081,7 +1102,8 @@ function SODetailDrawer({
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         </div>
 

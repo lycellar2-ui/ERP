@@ -289,6 +289,7 @@ model Product {
   sampleProducts       SampleProduct[]
   regulatedDocs        RegulatedDocument[]
   priceRules           CustomerPriceRule[]
+  customerCodes        CustomerProductCode[]
   marginPrice          ProductMarginPrice?
   profile              ProductProfile?
   stockCountLines      StockCountLine[]
@@ -418,6 +419,22 @@ model CustomerPriceRule {
   @@map("customer_price_rules")
 }
 
+model CustomerProductCode {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerCode String   // Mã sản phẩm do khách hàng tự đặt (e.g. "LC1", "LC2")
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([customerId, productId])
+  @@index([customerId, customerCode])
+  @@map("customer_product_codes")
+}
+
 model Supplier {
   id              String             @id @default(cuid())
   code            String             @unique
@@ -541,6 +558,7 @@ model Customer {
   tastingGuests  TastingEventGuest[]   @relation("TastingGuests")
   loyaltyTransactions LoyaltyTransaction[]
   priceRules    CustomerPriceRule[]
+  customerProductCodes CustomerProductCode[]
   visitSchedules SalesVisitSchedule[]
   salesVisits    SalesVisit[]           @relation("CustomerSalesVisits")
   createdAt     DateTime               @default(now())
@@ -1606,6 +1624,7 @@ model SalesQuotationLine {
   unitPrice       Decimal
   lineDiscountPct Decimal         @default(0)
   vatRate         Decimal         @default(10)
+  customerItemCode String?        // Mã sản phẩm của khách hàng (e.g. "LC1")
 
   @@map("sales_quotation_lines")
 }
@@ -1670,6 +1689,7 @@ model SalesOrderLine {
   lineDiscountPct      Decimal             @default(0)
   vatRate              Decimal             @default(10)
   vintage              Int?                // Selected vintage year for this order line
+  customerItemCode     String?             // Mã sản phẩm của khách hàng (e.g. "LC1")
   allocationCampaignId String?
   allocationCampaign   AllocationCampaign? @relation(fields: [allocationCampaignId], references: [id])
   allocationLogs       AllocationLog[]

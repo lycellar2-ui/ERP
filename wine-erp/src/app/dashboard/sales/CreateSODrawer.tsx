@@ -8,6 +8,7 @@ import {
     createSalesOrder, SOCreateInput, SalesChannel, SOType,
     getProductPricesForChannel, getActiveAllocationsForProducts,
     getLegalEntities, LegalEntityRow, getApprovedProposalsForSO, getProposalWithItemsForSO,
+    getCustomerProductCodes,
 } from './actions'
 import { formatVND, getLocalDateString } from '@/lib/utils'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
@@ -99,7 +100,7 @@ interface Customer {
     } | null
 }
 interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number; wholesalePrice?: number; retailPrice?: number }
-interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number }
+interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number; customerItemCode?: string | null }
 
 const inputStyle = {
     background: '#FFFFFF',
@@ -218,6 +219,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
     const [searchQueries, setSearchQueries] = useState<Record<number, string>>({})
     const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null)
+    const [customerCodesMap, setCustomerCodesMap] = useState<Record<string, string>>({})
+    const hasCustomerCodes = useMemo(() => Object.keys(customerCodesMap).length > 0 || lines.some(l => Boolean(l.customerItemCode)), [customerCodesMap, lines])
 
     const getFilteredProducts = useCallback((query: string) => {
         let q = query.trim().toLowerCase()
@@ -239,13 +242,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         // High-performance filter with early exit to resolve typing lag
         const results = []
         for (const p of products) {
-            if (p.productName.toLowerCase().includes(q) || p.skuCode.toLowerCase().includes(q)) {
+            const custCode = customerCodesMap[p.id]
+            if (
+                p.productName.toLowerCase().includes(q) || 
+                p.skuCode.toLowerCase().includes(q) ||
+                (custCode && custCode.toLowerCase().includes(q))
+            ) {
                 results.push(p)
-                if (results.length >= 15) break
+                if (results.length >= 20) break
             }
         }
         return results
-    }, [products])
+    }, [products, customerCodesMap])
 
     // Autocomplete customer selection filter
     const filteredCustomers = useMemo(() => {
@@ -423,26 +431,30 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             setLegalEntityId(c.defaultLegalEntityId || fallbackLE)
             setLoadingAR(true)
             
-            // Parallelize balance and customer prices fetch to eliminate waterfalls
-            const [bal, resolvedPrices] = await Promise.all([
+            // Parallelize balance, customer prices, and customer product codes fetch
+            const [bal, resolvedPrices, codesRes] = await Promise.all([
                 getCustomerARBalance(id),
-                getCustomerResolvedPrices(id)
+                getCustomerResolvedPrices(id),
+                getCustomerProductCodes(id).catch(() => ({ map: {}, reverseMap: {}, list: [] }))
             ])
             
             setArBalance(bal)
             setLoadingAR(false)
             setPriceMap(resolvedPrices)
+            setCustomerCodesMap(codesRes.map || {})
             
-            // Auto-update existing lines to resolved prices and source
+            // Auto-update existing lines to resolved prices and customer item codes
             setLines(prev => prev.map(l => {
                 if (!l.productId) return l
                 const resolved = resolvedPrices[l.productId]
+                const custCode = (codesRes.map as Record<string, string>)?.[l.productId] || l.customerItemCode
                 if (resolved && resolved.price > 0) {
-                    return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source }
+                    return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source, customerItemCode: custCode }
                 }
-                return l
+                return { ...l, customerItemCode: custCode }
             }))
         } else {
+            setCustomerCodesMap({})
             loadPrices(null, channel)
         }
     }
@@ -471,14 +483,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     const unitPrice = resolvedPrice > 0 ? resolvedPrice : fallbackUnitPrice
                     const priceSource = (mapEntry && resolvedPrice > 0) ? mapEntry.source : (isWholesaleChan ? 'WHOLESALE_BASE' : 'RETAIL_BASE')
                     
+                    const custCode = customerCodesMap[value] || null
                     // Update search query display
                     setSearchQueries(prevQueries => ({
                         ...prevQueries,
-                        [i]: `[${p.skuCode}] ${p.productName}`
+                        [i]: custCode ? `[${custCode} | ${p.skuCode}] ${p.productName}` : `[${p.skuCode}] ${p.productName}`
                     }))
 
                     const prodVat = p?.vatRate !== undefined ? Number(p.vatRate) : 10
-                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, lineDiscountPct: 0, priceSource, vatRate: prodVat }
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, lineDiscountPct: 0, priceSource, vatRate: prodVat, customerItemCode: custCode }
                 }
                 return { ...l, [field]: value }
             })
@@ -566,7 +579,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                 unitPrice: orderType === 'TASTING' ? 0 : l.unitPrice,
                 lineDiscountPct: l.lineDiscountPct,
                 vatRate: l.vatRate ?? 10,
-                priceSource: orderType === 'TASTING' ? 'TASTING_FREE' : (l.priceSource || undefined)
+                priceSource: orderType === 'TASTING' ? 'TASTING_FREE' : (l.priceSource || undefined),
+                customerItemCode: l.customerItemCode || customerCodesMap[l.productId] || undefined,
             })),
             legalEntityId,
             shippingAddressId: shippingAddressId || undefined,
@@ -596,6 +610,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         setShippingAddressId('')
         setCustomerSearchInput('')
         setCustomerDropdownOpen(false)
+        setCustomerCodesMap({})
     }
 
     if (!open) return null
@@ -1054,7 +1069,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-[#1B2E3D] text-[#4A6A7A] border-b border-[#2A4355] font-semibold">
-                                                        <th className="px-3 py-2.5" style={{ minWidth: '320px' }}>Sản Phẩm *</th>
+                                                        <th className="px-3 py-2.5" style={{ minWidth: '300px' }}>Sản Phẩm *</th>
+                                                        {hasCustomerCodes && (
+                                                            <th className="px-3 py-2.5 w-24 text-center text-amber-500 font-bold">Mã Khách</th>
+                                                        )}
                                                         <th className="px-3 py-2.5 w-20 text-center">Tồn Kho</th>
                                                         <th className="px-3 py-2.5 w-20 text-center">SL</th>
                                                         <th className="px-3 py-2.5 w-28 text-right">Đơn Giá</th>
@@ -1122,6 +1140,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                             className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0"
                                                                                         >
                                                                                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                                                                                {customerCodesMap[p.id] && (
+                                                                                                    <span className="font-bold font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700/50 text-[10px] shrink-0">
+                                                                                                        [{customerCodesMap[p.id]}]
+                                                                                                    </span>
+                                                                                                )}
                                                                                                 <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
                                                                                                 <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
                                                                                             </div>
@@ -1148,6 +1171,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         )}
                                                                     </div>
                                                                 </td>
+                                                                {hasCustomerCodes && (
+                                                                    <td className="px-3 py-2 text-center">
+                                                                        <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/40">
+                                                                            {line.customerItemCode || customerCodesMap[line.productId] || '—'}
+                                                                        </span>
+                                                                    </td>
+                                                                )}
                                                                 <td className="px-3 py-2 text-center">
                                                                     <span className={`font-semibold ${lowStock ? 'text-red-500' : 'text-[#8AAEBB]'}`}>
                                                                         {line.productId ? line.stock : '—'}
@@ -1254,6 +1284,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                     className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1B2E3D] transition-colors text-left flex items-center justify-between gap-2 border-b border-slate-100 dark:border-[#2A4355]/30 last:border-b-0"
                                                                                 >
                                                                                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                                                                        {customerCodesMap[p.id] && (
+                                                                                            <span className="font-bold font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700/50 text-[10px] shrink-0">
+                                                                                                [{customerCodesMap[p.id]}]
+                                                                                            </span>
+                                                                                        )}
                                                                                         <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
                                                                                         <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
                                                                                     </div>

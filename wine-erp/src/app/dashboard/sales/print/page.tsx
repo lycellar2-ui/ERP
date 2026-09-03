@@ -166,6 +166,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
     const totalQty = order.lines.reduce((sum, l) => sum + Number(l.qtyOrdered), 0)
     const hasMixedVat = vatBreakdown.length > 1
+    const hasCustomerItemCodes = order.lines.some((l: any) => Boolean(l.customerItemCode))
 
     return (
         <div className="min-h-screen bg-[#0A1926] text-slate-100 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
@@ -342,31 +343,39 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                     <thead>
                         <tr className="bg-white text-black font-bold border-b-2 border-slate-800">
                             <td className="px-2 py-1.5 text-center w-8 border-r border-slate-300">STT</td>
-                            <td className="px-2 py-1.5 w-24 border-r border-slate-300">Mã AX</td>
-                            <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm</td>
-                            <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">SL</td>
-                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">Đơn giá</td>
-                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">CK %</td>
-                            {hasMixedVat && <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">VAT %</td>}
-                            <td className="px-2 py-1.5 text-right w-28">Thành tiền</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {order.lines.map((line, idx) => {
-                            const lineTotal = Number(line.qtyOrdered) * Number(line.unitPrice) * (1 - Number(line.lineDiscountPct) / 100)
-                            const product = line.product
-                            const lineVat = (line as any).vatRate !== undefined && (line as any).vatRate !== null ? Number((line as any).vatRate) : 10
+                            {hasCustomerItemCodes && (
+                                <td className="px-2 py-1.5 w-20 text-center font-bold text-amber-900 border-r border-slate-300">Mã Khách</td>
+                            )}
+                                    <td className="px-2 py-1.5 w-24 border-r border-slate-300">Mã AX</td>
+                                    <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm</td>
+                                    <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">SL</td>
+                                    <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">Đơn giá</td>
+                                    <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">CK %</td>
+                                    {hasMixedVat && <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">VAT %</td>}
+                                    <td className="px-2 py-1.5 text-right w-28">Thành tiền</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {order.lines.map((line, idx) => {
+                                    const lineTotal = Number(line.qtyOrdered) * Number(line.unitPrice) * (1 - Number(line.lineDiscountPct) / 100)
+                                    const product = line.product
+                                    const lineVat = (line as any).vatRate !== undefined && (line as any).vatRate !== null ? Number((line as any).vatRate) : 10
 
-                            return (
-                                <tr key={line.id} className="border-b border-slate-200 align-middle">
-                                    <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
-                                    <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{product.skuCode}</td>
-                                    <td className="px-2 py-1.5 border-r border-slate-200">
-                                        <div className="font-semibold text-slate-900 leading-tight">
-                                            {product.productName}
-                                            {(line as any).vintage ? ` (${(line as any).vintage})` : ''}
-                                        </div>
-                                    </td>
+                                    return (
+                                        <tr key={line.id} className="border-b border-slate-200 align-middle">
+                                            <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
+                                            {hasCustomerItemCodes && (
+                                                <td className="px-2 py-1.5 text-center font-mono font-bold text-[10px] text-amber-900 border-r border-slate-200">
+                                                    {(line as any).customerItemCode || '—'}
+                                                </td>
+                                            )}
+                                            <td className="px-2 py-1.5 font-mono font-semibold text-[10px] text-slate-900 border-r border-slate-200">{product.skuCode}</td>
+                                            <td className="px-2 py-1.5 border-r border-slate-200">
+                                                <div className="font-semibold text-slate-900 leading-tight">
+                                                    {product.productName}
+                                                    {(line as any).vintage ? ` (${(line as any).vintage})` : ''}
+                                                </div>
+                                            </td>
                                     <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{Number(line.qtyOrdered)}</td>
                                     <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(Number(line.unitPrice))}</td>
                                     <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{Number(line.lineDiscountPct) > 0 ? `${line.lineDiscountPct}%` : '—'}</td>

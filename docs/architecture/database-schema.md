@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
 **Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-08-07
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 29 module (123 models, 78 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 29 module (124 models, 78 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -39,15 +39,6 @@ graph TB
     MDM -->|"Wine Catalog"| PRC
     MDM -->|"Wine Catalog"| WMS
     MDM -->|"Wine Catalog"| SLS
-    MDM -->|"Customer Base"| CRM
-    MDM -->|"Customer Base"| SLS
-    MDM -->|"Supplier Base"| PRC
-    MDM -->|"Supplier Base"| CNT
-
-    CNT -->|"HĐ Mua Hàng"| PRC
-    CNT -->|"HĐ Bán Hàng"| SLS
-    CNT -->|"HĐ Ký Gửi"| CSG
-
     TAX -->|"Tax Rates"| PRC
     TAX -->|"Market Price"| SLS
 
@@ -212,6 +203,13 @@ erDiagram
         address     string
         is_billing  boolean
         is_default  boolean
+    }
+    CustomerProductCode {
+        id            string PK
+        customer_id   uuid FK
+        product_id    uuid FK
+        customer_code string
+        notes         text
     }
 
     %% ── CRM DOMAIN ──────────────────────────────────────────

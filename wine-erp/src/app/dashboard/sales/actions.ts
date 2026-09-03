@@ -51,6 +51,7 @@ export interface SOLineCreate {
     lineDiscountPct?: number
     priceSource?: string
     vatRate?: number
+    customerItemCode?: string | null
 }
 
 export interface SOCreateInput {
@@ -322,8 +323,21 @@ export async function getSalesOrderDetail(id: string) {
         select: { currentStep: true }
     })
 
+    // Auto-resolve customer product codes for lines if missing
+    const custIds = [raw.customerId, (raw.customer as any)?.parentId].filter(Boolean) as string[]
+    const custCodes = await prisma.customerProductCode.findMany({
+        where: { customerId: { in: custIds } }
+    })
+    const custCodeMap = new Map(custCodes.map(c => [c.productId, c.customerCode]))
+
+    const linesWithCodes = raw.lines.map(l => ({
+        ...l,
+        customerItemCode: l.customerItemCode || custCodeMap.get(l.productId) || null
+    }))
+
     return serialize({
         ...raw,
+        lines: linesWithCodes,
         approvalStep: approvalReq?.currentStep ?? null
     })
 }
@@ -469,6 +483,45 @@ export async function getSalesOrderDetailWithMarginAndTimeline(id: string): Prom
     }
 }
 
+// ── Customer Product Codes Mapping (Code riêng của khách, ví dụ La Fiorentina LC1..LC53) ──
+export async function getCustomerProductCodes(customerId: string): Promise<{
+    map: Record<string, string>;
+    reverseMap: Record<string, string>;
+    list: { productId: string; customerCode: string; skuCode: string; productName: string }[];
+}> {
+    if (!customerId) return { map: {}, reverseMap: {}, list: [] }
+
+    const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { id: true, parentId: true }
+    })
+
+    const custIds = [customerId]
+    if (customer?.parentId) custIds.push(customer.parentId)
+
+    const codes = await prisma.customerProductCode.findMany({
+        where: { customerId: { in: custIds } },
+        include: {
+            product: { select: { skuCode: true, productName: true } }
+        },
+        orderBy: { customerCode: 'asc' }
+    })
+
+    const map: Record<string, string> = {}
+    const reverseMap: Record<string, string> = {}
+    const list = codes.map(c => {
+        map[c.productId] = c.customerCode
+        reverseMap[c.customerCode.trim().toUpperCase()] = c.productId
+        return {
+            productId: c.productId,
+            customerCode: c.customerCode,
+            skuCode: c.product.skuCode,
+            productName: c.product.productName
+        }
+    })
+
+    return { map, reverseMap, list }
+}
 
 // ── Customers for dropdown ───────────────────────
 export async function getCustomersForSO() {
@@ -892,6 +945,12 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             }
         }
 
+        // Fetch customer product code mappings for auto-populating line customerItemCode
+        const custCodes = await prisma.customerProductCode.findMany({
+            where: { customerId: { in: [input.customerId, customer.parentId].filter(Boolean) as string[] } }
+        })
+        const custCodeMap = new Map(custCodes.map(c => [c.productId, c.customerCode]))
+
         const so = await prisma.salesOrder.create({
             data: {
                 soNo,
@@ -921,6 +980,7 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
                             lineDiscountPct: l.lineDiscountPct ?? 0,
                             priceSource: l.priceSource ?? null,
                             vatRate: l.vatRate ?? 10,
+                            customerItemCode: l.customerItemCode ?? custCodeMap.get(l.productId) ?? null,
                             ...(qc ? { allocationCampaignId: qc.campaignId } : {}),
                         }
                     }),
@@ -1047,6 +1107,12 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             }
         }
 
+        // Fetch customer product code mappings for auto-populating line customerItemCode
+        const custCodes = await prisma.customerProductCode.findMany({
+            where: { customerId: { in: [input.customerId, customer.parentId].filter(Boolean) as string[] } }
+        })
+        const custCodeMap = new Map(custCodes.map(c => [c.productId, c.customerCode]))
+
         await prisma.$transaction([
             // Delete old lines
             prisma.salesOrderLine.deleteMany({ where: { soId: input.soId } }),
@@ -1077,6 +1143,7 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     lineDiscountPct: l.lineDiscountPct ?? 0,
                     priceSource: l.priceSource ?? null,
                     vatRate: l.vatRate ?? 10,
+                    customerItemCode: l.customerItemCode ?? custCodeMap.get(l.productId) ?? null,
                 },
             })),
         ])
