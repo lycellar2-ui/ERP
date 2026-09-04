@@ -140,7 +140,7 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 
 | Action | Mô tả |
 |--------|-------|
-| `getProposals(filters)` | Danh sách tờ trình (lọc status/category/creator) |
+| `getProposals(filters)` | Danh sách tờ trình (sắp xếp createdAt giảm dần; lọc status/category/priority/creator) |
 | `getProposalDetail(id)` | Chi tiết + attachments + comments + approval logs |
 | `createProposal(input)` | Tạo mới (status = DRAFT) |
 | `updateProposal(id, input)` | Sửa (chỉ DRAFT/RETURNED) |
@@ -170,7 +170,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Seed data (12 proposals) | ✅ Hoàn thành |
 | Ma trận phân quyền (cấu hình) | ✅ Hoàn thành |
 | Áp dụng cơ chế giá đa chi nhánh | ✅ Hoàn thành (Session 14 - 20/08/2026) |
+| Sắp xếp theo thời gian & lọc theo mức độ ưu tiên | ✅ Hoàn thành (04/09/2026) |
 
 ---
 
-*Last updated: 2026-08-20 17:05 | Wine ERP v10.9*
+*Last updated: 2026-09-04 15:41 | Wine ERP v10.9*

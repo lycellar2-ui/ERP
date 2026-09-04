@@ -64,13 +64,15 @@ async function generateProposalNo(): Promise<string> {
 export async function getProposals(filters?: {
     status?: string
     category?: string
+    priority?: string
     createdBy?: string
 }) {
-    const cacheKey = `proposals:list:${filters?.status ?? ''}:${filters?.category ?? ''}:${filters?.createdBy ?? ''}`
+    const cacheKey = `proposals:list:${filters?.status ?? ''}:${filters?.category ?? ''}:${filters?.priority ?? ''}:${filters?.createdBy ?? ''}`
     return cached(cacheKey, async () => {
         const where: any = {}
         if (filters?.status) where.status = filters.status
         if (filters?.category) where.category = filters.category
+        if (filters?.priority) where.priority = filters.priority
         if (filters?.createdBy) where.createdBy = filters.createdBy
 
         const proposals = await prisma.proposal.findMany({
@@ -81,10 +83,7 @@ export async function getProposals(filters?: {
                 customer: { select: { name: true } },
                 _count: { select: { attachments: true, comments: true } },
             },
-            orderBy: [
-                { priority: 'desc' },
-                { createdAt: 'desc' },
-            ],
+            orderBy: { createdAt: 'desc' },
         })
 
         return proposals.map(p => ({

@@ -66,6 +66,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     const [proposals, setProposals] = useState(initialProposals)
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'DRAFT' | 'APPROVED' | 'REJECTED'>('ALL')
     const [categoryFilter, setCategoryFilter] = useState<string>('ALL')
+    const [priorityFilter, setPriorityFilter] = useState<string>('ALL')
     const [search, setSearch] = useState('')
     const [showCreate, setShowCreate] = useState(false)
     const [detailId, setDetailId] = useState<string | null>(null)
@@ -135,6 +136,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             }
         }
 
+        if (priorityFilter !== 'ALL' && p.priority !== priorityFilter) return false
+
         if (search) {
             const s = search.toLowerCase()
             return p.proposalNo.toLowerCase().includes(s) ||
@@ -160,24 +163,61 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
     const handleSubmitProposal = useCallback(async (proposalId: string) => {
         setActionLoading(proposalId)
+        const prevProposals = proposals
+        const prevDetail = detail
+
+        // Optimistic UI update immediately
+        setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'SUBMITTED' } : p))
+        if (detail && detail.id === proposalId) {
+            setDetail(prev => prev ? { ...prev, status: 'SUBMITTED' } : null)
+        }
+
         try {
             const res = await submitProposal(proposalId, userId)
             if (res.success) {
                 toast.success('Đã trình tờ trình phê duyệt thành công!')
-                await refreshList()
-                if (detailId === proposalId) await openDetail(proposalId)
+                Promise.all([
+                    refreshList(),
+                    detailId === proposalId ? openDetail(proposalId) : Promise.resolve(),
+                ]).catch(() => {})
             } else {
+                setProposals(prevProposals)
+                setDetail(prevDetail)
                 toast.error(res.error || 'Không thể trình tờ trình')
             }
         } catch (err: any) {
+            setProposals(prevProposals)
+            setDetail(prevDetail)
             toast.error(err.message || 'Lỗi hệ thống khi trình tờ trình')
         } finally {
             setActionLoading(null)
         }
-    }, [userId, refreshList, detailId, openDetail])
+    }, [userId, proposals, detail, detailId, refreshList, openDetail])
 
     const handleApproval = useCallback(async (proposalId: string, action: 'APPROVE' | 'REJECT' | 'RETURN', comment?: string) => {
         setActionLoading(proposalId)
+        const prevProposals = proposals
+        const prevDetail = detail
+
+        // Determine optimistic target status
+        const targetProposal = proposals.find(p => p.id === proposalId)
+        let optimisticStatus = 'APPROVED'
+        if (action === 'REJECT') optimisticStatus = 'REJECTED'
+        else if (action === 'RETURN') optimisticStatus = 'RETURNED'
+        else {
+            if (isCEO || (targetProposal && targetProposal.currentLevel >= 3)) {
+                optimisticStatus = 'APPROVED'
+            } else if (targetProposal) {
+                optimisticStatus = `APPROVED_L${targetProposal.currentLevel}`
+            }
+        }
+
+        // 1. Optimistically update UI immediately (0ms delay)
+        setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: optimisticStatus } : p))
+        if (detail && detail.id === proposalId) {
+            setDetail(prev => prev ? { ...prev, status: optimisticStatus } : null)
+        }
+
         try {
             const result = await processProposalApproval({
                 proposalId,
@@ -190,17 +230,34 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     action === 'APPROVE' ? 'Đã duyệt tờ trình thành công!' :
                     action === 'RETURN' ? 'Đã trả lại tờ trình' : 'Đã từ chối tờ trình'
                 )
-                await refreshList()
-                if (detailId === proposalId) await openDetail(proposalId)
+
+                if (result.newStatus) {
+                    setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: result.newStatus! } : p))
+                    if (detailId === proposalId) {
+                        setDetail(prev => prev ? { ...prev, status: result.newStatus! } : null)
+                    }
+                }
+
+                // Sync data in background without blocking UI
+                Promise.all([
+                    refreshList(),
+                    detailId === proposalId ? openDetail(proposalId) : Promise.resolve(),
+                ]).catch(() => {})
             } else {
+                // Rollback on error
+                setProposals(prevProposals)
+                setDetail(prevDetail)
                 toast.error(result.error || 'Lỗi khi xử lý phê duyệt')
             }
         } catch (err: any) {
+            // Rollback on error
+            setProposals(prevProposals)
+            setDetail(prevDetail)
             toast.error(err.message || 'Lỗi hệ thống')
         } finally {
             setActionLoading(null)
         }
-    }, [userId, refreshList, detailId, openDetail])
+    }, [userId, isCEO, proposals, detail, detailId, refreshList, openDetail])
 
     const handlePrint = useCallback(() => {
         if (!detail) return
@@ -866,6 +923,26 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         <option value="PAYMENT_SCHEDULE">📅 Lịch Thanh Toán</option>
                         <option value="PROMOTION_CAMPAIGN">🎁 Chương Trình KM</option>
                         <option value="OTHER"> Khác</option>
+                    </select>
+                </div>
+
+                {/* Priority Dropdown Filter */}
+                <div className="flex-shrink-0">
+                    <select
+                        value={priorityFilter}
+                        onChange={e => setPriorityFilter(e.target.value)}
+                        className="px-3 py-2 text-xs font-semibold rounded-md outline-none cursor-pointer"
+                        style={{
+                            background: priorityFilter === 'ALL' ? '#1B2E3D' : 'rgba(212,168,83,0.15)',
+                            border: '1px solid #2A4355',
+                            color: priorityFilter === 'ALL' ? '#8AAEBB' : '#D4A853',
+                        }}
+                    >
+                        <option value="ALL">Mức độ ưu tiên (Tất cả)</option>
+                        <option value="URGENT">🔥 Khẩn cấp (Urgent)</option>
+                        <option value="HIGH">⚡ Cao (High)</option>
+                        <option value="NORMAL">🔹 Bình thường (Normal)</option>
+                        <option value="LOW">◽ Thấp (Low)</option>
                     </select>
                 </div>
 
