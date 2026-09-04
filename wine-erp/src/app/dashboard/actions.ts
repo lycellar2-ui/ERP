@@ -7,20 +7,168 @@ import { revalidatePath } from 'next/cache'
 
 export type DateRange = 'month' | 'quarter' | 'year'
 
-// ─── Dashboard aggregate data ─────────────────────────────
-export async function getDashboardStats(range: DateRange = 'month') {
-    return cached(`dashboard:stats:${range}`, async () => {
-        const now = new Date()
+export interface DashboardFilterOptions {
+    from?: Date
+    to?: Date
+    legalEntityId?: string
+}
 
-        const { from, to } = range === 'month'
+export interface DailyRevenueItem {
+    date: string       // YYYY-MM-DD
+    label: string      // "01/09"
+    dayOfWeek: string  // "Thứ 2"
+    revenue: number
+    orderCount: number
+    isWeekend: boolean
+}
+
+export interface DailyRevenueSummary {
+    items: DailyRevenueItem[]
+    totalRevenue: number
+    totalOrders: number
+    avgOrderValue: number
+    peakDay: { date: string; label: string; revenue: number } | null
+    startDate: string
+    endDate: string
+}
+
+// ─── Legal Entities for Dashboard filter ──────────────────
+export async function getLegalEntitiesForDashboard() {
+    return cached('dashboard:legal-entities', async () => {
+        return prisma.legalEntity.findMany({
+            select: { id: true, code: true, name: true },
+            orderBy: { code: 'asc' },
+        })
+    }, 60_000)
+}
+
+// ─── Daily Revenue Chart ──────────────────────────────────
+export async function getDailyRevenueChart(options?: DashboardFilterOptions): Promise<DailyRevenueSummary> {
+    const now = new Date()
+    const from = options?.from ?? startOfMonth(now)
+    const to = options?.to ?? endOfMonth(now)
+    const entityFilter = options?.legalEntityId ? { legalEntityId: options.legalEntityId } : {}
+
+    const cacheKey = `dashboard:daily-revenue:${from.getTime()}-${to.getTime()}-${options?.legalEntityId ?? 'all'}`
+
+    return cached(cacheKey, async () => {
+        const orders = await prisma.salesOrder.findMany({
+            where: {
+                status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
+                createdAt: { gte: from, lte: to },
+                ...entityFilter,
+            },
+            select: {
+                id: true,
+                totalAmount: true,
+                createdAt: true,
+            },
+            orderBy: { createdAt: 'asc' },
+        })
+
+        const formatVN = (d: Date) => {
+            const parts = new Intl.DateTimeFormat('vi-VN', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            }).formatToParts(d)
+            const y = parts.find(p => p.type === 'year')?.value
+            const m = parts.find(p => p.type === 'month')?.value
+            const day = parts.find(p => p.type === 'day')?.value
+            return `${y}-${m}-${day}`
+        }
+
+        const dateMap = new Map<string, { revenue: number; orders: number }>()
+        for (const o of orders) {
+            const key = formatVN(o.createdAt)
+            const curr = dateMap.get(key) ?? { revenue: 0, orders: 0 }
+            curr.revenue += Number(o.totalAmount)
+            curr.orders += 1
+            dateMap.set(key, curr)
+        }
+
+        const items: DailyRevenueItem[] = []
+        const cur = new Date(from)
+        const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+
+        while (cur <= to) {
+            const key = formatVN(cur)
+            const dayVal = dateMap.get(key) ?? { revenue: 0, orders: 0 }
+            const dayIdx = cur.getDay()
+            const parts = key.split('-')
+            const displayLabel = `${parts[2]}/${parts[1]}`
+
+            items.push({
+                date: key,
+                label: displayLabel,
+                dayOfWeek: dayNames[dayIdx],
+                revenue: dayVal.revenue,
+                orderCount: dayVal.orders,
+                isWeekend: dayIdx === 0 || dayIdx === 6,
+            })
+
+            cur.setDate(cur.getDate() + 1)
+        }
+
+        const totalRevenue = items.reduce((s, it) => s + it.revenue, 0)
+        const totalOrders = items.reduce((s, it) => s + it.orderCount, 0)
+        const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0
+
+        let peakDay: { date: string; label: string; revenue: number } | null = null
+        for (const it of items) {
+            if (!peakDay || it.revenue > peakDay.revenue) {
+                if (it.revenue > 0) {
+                    peakDay = { date: it.date, label: `${it.dayOfWeek} ${it.label}`, revenue: it.revenue }
+                }
+            }
+        }
+
+        return {
+            items,
+            totalRevenue,
+            totalOrders,
+            avgOrderValue,
+            peakDay,
+            startDate: formatVN(from),
+            endDate: formatVN(to),
+        }
+    }, 5_000)
+}
+
+// ─── Dashboard aggregate data ─────────────────────────────
+export async function getDashboardStats(range: DateRange = 'month', options?: DashboardFilterOptions) {
+    const now = new Date()
+
+    let from: Date
+    let to: Date
+    let prevStart: Date
+    let prevEnd: Date
+
+    if (options?.from && options?.to) {
+        from = options.from
+        to = options.to
+        const duration = to.getTime() - from.getTime()
+        prevEnd = new Date(from.getTime() - 1)
+        prevStart = new Date(prevEnd.getTime() - duration)
+    } else {
+        const span = range === 'month'
             ? { from: startOfMonth(now), to: endOfMonth(now) }
             : range === 'quarter'
                 ? { from: startOfQuarter(now), to: endOfQuarter(now) }
                 : { from: startOfYear(now), to: endOfYear(now) }
+        from = span.from
+        to = span.to
+        prevStart = subMonths(from, 1)
+        prevEnd = subMonths(from, 0)
+    }
 
-        const prevStart = subMonths(from, 1)
-        const prevEnd = subMonths(from, 0)
+    const cacheKey = options?.from && options?.to
+        ? `dashboard:stats:${options.from.getTime()}-${options.to.getTime()}-${options.legalEntityId ?? 'all'}`
+        : `dashboard:stats:${range}:${options?.legalEntityId ?? 'all'}`
 
+    return cached(cacheKey, async () => {
+        const entityFilter = options?.legalEntityId ? { legalEntityId: options.legalEntityId } : {}
         const [
             currentRevenue,
             prevRevenue,
@@ -34,6 +182,7 @@ export async function getDashboardStats(range: DateRange = 'month') {
                 where: {
                     status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
                     createdAt: { gte: from, lte: to },
+                    ...entityFilter,
                 },
                 _sum: { totalAmount: true },
             }),
@@ -41,6 +190,7 @@ export async function getDashboardStats(range: DateRange = 'month') {
                 where: {
                     status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
                     createdAt: { gte: prevStart, lte: prevEnd },
+                    ...entityFilter,
                 },
                 _sum: { totalAmount: true },
             }),
@@ -314,12 +464,15 @@ export async function getSlowMovingStock() {
 }
 
 // ─── P&L Summary for Dashboard ───────────────────────────
-export async function getPLSummary() {
-    return cached('dashboard:pl-summary', async () => {
-        const now = new Date()
-        const from = startOfMonth(now)
-        const to = endOfMonth(now)
+export async function getPLSummary(options?: DashboardFilterOptions) {
+    const now = new Date()
+    const from = options?.from ?? startOfMonth(now)
+    const to = options?.to ?? endOfMonth(now)
+    const entityFilter = options?.legalEntityId ? { legalEntityId: options.legalEntityId } : {}
 
+    const cacheKey = `dashboard:pl-summary:${from.getTime()}-${to.getTime()}-${options?.legalEntityId ?? 'all'}`
+
+    return cached(cacheKey, async () => {
         // Group journal lines by account on the DB side, and fetch month sales orders with cost
         const [groups, monthOrders] = await Promise.all([
             prisma.journalLine.groupBy({
@@ -335,6 +488,7 @@ export async function getPLSummary() {
                 where: {
                     status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
                     createdAt: { gte: from, lte: to },
+                    ...entityFilter,
                 },
                 include: {
                     lines: {
@@ -354,17 +508,20 @@ export async function getPLSummary() {
         let cogsFromJournal = 0       // TK 632 = COGS
         let expenses = 0   // TK 641, 642, 635, 811
 
-        for (const g of groups) {
-            const acc = g.account.split(' - ')[0]?.trim() ?? g.account
-            const debit = Number(g._sum.debit ?? 0)
-            const credit = Number(g._sum.credit ?? 0)
+        // If filtering by specific legal entity, skip generic journal accounts which don't isolate entity
+        if (!options?.legalEntityId) {
+            for (const g of groups) {
+                const acc = g.account.split(' - ')[0]?.trim() ?? g.account
+                const debit = Number(g._sum.debit ?? 0)
+                const credit = Number(g._sum.credit ?? 0)
 
-            if (acc.startsWith('511')) {
-                revenueFromJournal += credit - debit // Revenue is Credit-side
-            } else if (acc.startsWith('632')) {
-                cogsFromJournal += debit - credit    // COGS is Debit-side
-            } else if (acc.startsWith('641') || acc.startsWith('642') || acc.startsWith('635') || acc.startsWith('811')) {
-                expenses += debit - credit // Expenses are Debit-side
+                if (acc.startsWith('511')) {
+                    revenueFromJournal += credit - debit
+                } else if (acc.startsWith('632')) {
+                    cogsFromJournal += debit - credit
+                } else if (acc.startsWith('641') || acc.startsWith('642') || acc.startsWith('635') || acc.startsWith('811')) {
+                    expenses += debit - credit
+                }
             }
         }
 
@@ -390,7 +547,7 @@ export async function getPLSummary() {
         const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0
 
         return { revenue, cogs, grossProfit, netProfit, expenses, grossMargin }
-    }, 5_000) // 5s
+    }, 5_000)
 }
 
 // ─── Cash Position for Dashboard ─────────────────────────
@@ -911,16 +1068,19 @@ export async function getRealtimeChannels(roles: string[]): Promise<RealtimeChan
 // TOP CUSTOMERS & PRODUCTS & CHANNEL BREAKDOWN
 // ═══════════════════════════════════════════════════
 
-export async function getTopCustomers(limit = 5) {
-    return cached('dashboard:top-customers', async () => {
-        const now = new Date()
-        const from = startOfMonth(now)
-        const to = endOfMonth(now)
+export async function getTopCustomers(limit = 5, options?: DashboardFilterOptions) {
+    const now = new Date()
+    const from = options?.from ?? startOfMonth(now)
+    const to = options?.to ?? endOfMonth(now)
+    const entityFilter = options?.legalEntityId ? { legalEntityId: options.legalEntityId } : {}
+    const cacheKey = `dashboard:top-customers:${from.getTime()}-${to.getTime()}-${options?.legalEntityId ?? 'all'}:${limit}`
 
+    return cached(cacheKey, async () => {
         const orders = await prisma.salesOrder.findMany({
             where: {
                 status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
                 createdAt: { gte: from, lte: to },
+                ...entityFilter,
             },
             select: {
                 totalAmount: true,
@@ -951,17 +1111,20 @@ export async function getTopCustomers(limit = 5) {
     }, 60_000)
 }
 
-export async function getTopProducts(limit = 5) {
-    return cached('dashboard:top-products', async () => {
-        const now = new Date()
-        const from = startOfMonth(now)
-        const to = endOfMonth(now)
+export async function getTopProducts(limit = 5, options?: DashboardFilterOptions) {
+    const now = new Date()
+    const from = options?.from ?? startOfMonth(now)
+    const to = options?.to ?? endOfMonth(now)
+    const entityFilter = options?.legalEntityId ? { legalEntityId: options.legalEntityId } : {}
+    const cacheKey = `dashboard:top-products:${from.getTime()}-${to.getTime()}-${options?.legalEntityId ?? 'all'}:${limit}`
 
+    return cached(cacheKey, async () => {
         const lines = await prisma.salesOrderLine.findMany({
             where: {
                 so: {
                     status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
                     createdAt: { gte: from, lte: to },
+                    ...entityFilter,
                 },
             },
             select: {
@@ -995,16 +1158,19 @@ export async function getTopProducts(limit = 5) {
     }, 60_000)
 }
 
-export async function getRevenueByChannel() {
-    return cached('dashboard:revenue-channel', async () => {
-        const now = new Date()
-        const from = startOfMonth(now)
-        const to = endOfMonth(now)
+export async function getRevenueByChannel(options?: DashboardFilterOptions) {
+    const now = new Date()
+    const from = options?.from ?? startOfMonth(now)
+    const to = options?.to ?? endOfMonth(now)
+    const entityFilter = options?.legalEntityId ? { legalEntityId: options.legalEntityId } : {}
+    const cacheKey = `dashboard:revenue-channel:${from.getTime()}-${to.getTime()}-${options?.legalEntityId ?? 'all'}`
 
+    return cached(cacheKey, async () => {
         const orders = await prisma.salesOrder.findMany({
             where: {
                 status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] },
                 createdAt: { gte: from, lte: to },
+                ...entityFilter,
             },
             select: { channel: true, totalAmount: true },
         })

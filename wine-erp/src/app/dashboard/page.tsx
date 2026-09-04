@@ -6,7 +6,12 @@ import {
     exportDashboardExcel, getCostWaterfall, WaterfallBar, getRevenueYoY,
     getDashboardConfig, type DashboardSection, getMySales, getWarehouseDashboard,
     getRealtimeChannels, getTopCustomers, getTopProducts, getRevenueByChannel,
+    getDailyRevenueChart, getLegalEntitiesForDashboard, type DashboardFilterOptions,
 } from './actions'
+import { DashboardFilterBar, type PresetKey } from './DashboardFilterBar'
+import { DailyRevenueChart } from './DailyRevenueChart'
+import { startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { formatDate } from '@/lib/utils'
 import { getComplianceWarnings } from './contracts/reg-doc-actions'
 import { REG_DOC_TYPE_LABELS } from './contracts/reg-doc-constants'
 import { getKpiSummary } from './kpi/actions'
@@ -83,8 +88,74 @@ function SectionHead({ icon, title, badge, children }: { icon: React.ReactNode; 
     )
 }
 
+interface PageProps {
+    searchParams?: Promise<{
+        preset?: string
+        entity?: string
+        from?: string
+        to?: string
+    }>
+}
+
 /* ═══════════════════════════════════════════════════ */
-export default async function DashboardPage() {
+export default async function DashboardPage(props: PageProps) {
+    const resolvedParams = props.searchParams ? await props.searchParams : {}
+    const preset = (resolvedParams.preset as PresetKey) ?? 'THIS_MONTH'
+    const entity = resolvedParams.entity ?? 'ALL'
+
+    const now = new Date()
+    let from: Date
+    let to: Date
+    let displayRangeText = ''
+
+    if (preset === 'TODAY') {
+        const start = new Date(now)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(now)
+        end.setHours(23, 59, 59, 999)
+        from = start
+        to = end
+        displayRangeText = `Hôm nay (${formatDate(now)})`
+    } else if (preset === 'YESTERDAY') {
+        const yesterday = new Date(now)
+        yesterday.setDate(yesterday.getDate() - 1)
+        const start = new Date(yesterday)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(yesterday)
+        end.setHours(23, 59, 59, 999)
+        from = start
+        to = end
+        displayRangeText = `Hôm qua (${formatDate(yesterday)})`
+    } else if (preset === '7DAYS') {
+        const start = new Date(now)
+        start.setDate(start.getDate() - 6)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(now)
+        end.setHours(23, 59, 59, 999)
+        from = start
+        to = end
+        displayRangeText = `7 ngày qua (${formatDate(start)} – ${formatDate(end)})`
+    } else if (preset === 'LAST_MONTH') {
+        const lastMonth = subMonths(now, 1)
+        from = startOfMonth(lastMonth)
+        to = endOfMonth(lastMonth)
+        displayRangeText = `Tháng trước (Tháng ${lastMonth.getMonth() + 1}/${lastMonth.getFullYear()})`
+    } else if (preset === 'CUSTOM' && resolvedParams.from && resolvedParams.to) {
+        from = new Date(`${resolvedParams.from}T00:00:00.000`)
+        to = new Date(`${resolvedParams.to}T23:59:59.999`)
+        displayRangeText = `${formatDate(from)} – ${formatDate(to)}`
+    } else {
+        from = startOfMonth(now)
+        to = endOfMonth(now)
+        displayRangeText = `Tháng này (Tháng ${now.getMonth() + 1}/${now.getFullYear()})`
+    }
+
+    const filterOptions: DashboardFilterOptions = {
+        from,
+        to,
+        legalEntityId: entity !== 'ALL' ? entity : undefined,
+    }
+
     const user = await getCurrentUser()
     const roles = user?.roles ?? ['CEO']
     const dashConfig = await getDashboardConfig(roles)
@@ -92,6 +163,8 @@ export default async function DashboardPage() {
 
     // Fetch all dashboard sections in parallel for optimal cold-start performance
     const [
+        legalEntities,
+        dailyRevenueData,
         stats,
         plSummary,
         cashPosition,
@@ -108,17 +181,19 @@ export default async function DashboardPage() {
         complianceWarnings,
         pendingProposals,
     ] = await Promise.all([
-        getDashboardStats('month'),
-        has('pl_summary') ? getPLSummary() : null,
+        getLegalEntitiesForDashboard(),
+        getDailyRevenueChart(filterOptions),
+        getDashboardStats('month', filterOptions),
+        has('pl_summary') ? getPLSummary(filterOptions) : null,
         has('cash_position') ? getCashPosition() : null,
         has('kpi_targets') ? getKpiSummary() : null,
         has('ar_aging') ? getARAgingChart() : null,
         has('pending_approvals') ? getPendingApprovalDetails() : [],
         has('cost_waterfall') ? getCostWaterfall() : [],
         has('revenue_yoy') ? getRevenueYoY() : null,
-        has('pl_summary') ? getTopCustomers() : [],
-        has('pl_summary') ? getTopProducts() : [],
-        has('revenue_chart') ? getRevenueByChannel() : null,
+        has('pl_summary') ? getTopCustomers(5, filterOptions) : [],
+        has('pl_summary') ? getTopProducts(5, filterOptions) : [],
+        has('revenue_chart') ? getRevenueByChannel(filterOptions) : null,
         has('my_sales') && user ? getMySales(user.id) : null,
         has('warehouse_summary') ? getWarehouseDashboard() : null,
         has('legal_compliance') ? getComplianceWarnings() : [],
@@ -142,6 +217,16 @@ export default async function DashboardPage() {
     const arOverdue = ar.buckets.filter(b => b.label !== 'Chưa đến hạn').reduce((s, b) => s + b.amount, 0)
     const totalPending = pendingProposals.length + stats.pendingSOs.length + (Array.isArray(pendingApprovalReqs) ? pendingApprovalReqs.length : 0)
 
+    const revenueKpiLabel = preset === 'THIS_MONTH'
+        ? 'DOANH THU THÁNG'
+        : preset === 'TODAY'
+        ? 'DOANH THU HÔM NAY'
+        : preset === 'YESTERDAY'
+        ? 'DOANH THU HÔM QUA'
+        : preset === '7DAYS'
+        ? 'DOANH THU 7 NGÀY'
+        : 'DOANH THU KỲ LỌC'
+
     return (
         <div className="space-y-5 max-w-7xl mx-auto">
 
@@ -163,11 +248,21 @@ export default async function DashboardPage() {
                 </form>
             </div>
 
+            {/* ═══ FILTER BAR (NEW) ═══ */}
+            <DashboardFilterBar
+                currentPreset={preset}
+                currentEntity={entity}
+                currentFrom={resolvedParams.from}
+                currentTo={resolvedParams.to}
+                legalEntities={legalEntities}
+                displayRangeText={displayRangeText}
+            />
+
             {/* ═══ LAYER 1 — 6 KPI CARDS ═══ */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <KpiCard label="DOANH THU THÁNG" value={formatFriendlyVND(primaryRevenue)}
+                <KpiCard label={revenueKpiLabel} value={formatFriendlyVND(primaryRevenue)}
                     sub={revenueSource}
-                    trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% vs T.trước` : undefined}
+                    trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% vs Kỳ trước` : undefined}
                     trendUp={stats.revenueGrowth >= 0} accentColor="#87CBB9" />
                 <KpiCard label="LÃI GỘP" value={formatFriendlyVND(pl.grossProfit)}
                     sub={`Biên: ${pl.grossMargin.toFixed(1)}%`}
@@ -184,6 +279,9 @@ export default async function DashboardPage() {
                     sub={`${pendingProposals.length} tờ trình · ${stats.pendingSOs.length} SO`}
                     accentColor="#8B1A2E" />
             </div>
+
+            {/* ═══ DAILY REVENUE TREND CHART (NEW) ═══ */}
+            <DailyRevenueChart data={dailyRevenueData} />
 
             {/* ═══ AI CEO BRIEFING (Temporarily hidden) ═══ */}
             {/* {roles.includes('CEO') && <AICeoSummary />} */}

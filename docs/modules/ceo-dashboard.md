@@ -345,3 +345,41 @@ Dashboard được redesign từ 11 sections dọc → **5 layers logic**, giả
 - **Kênh Bán Hàng**: Breakdown doanh thu HORECA/Wholesale/VIP Retail
 - **Quick Links**: Di chuyển xuống cuối trang (không gây gián đoạn flow)
 - **Deep Analysis**: Gom YoY, Cost Waterfall, KPI, Legal vào 1 section
+
+---
+
+## Tính Năng v3 — "Dynamic Filtering & Daily Sales Trend" (04/09/2026)
+
+Bổ sung tính năng phân tích đa chiều theo thời gian thực cho CEO:
+
+### 1. Thanh Bộ Lọc Tham Số (`DashboardFilterBar.tsx`)
+- **Mốc thời gian nhanh (Date Presets)**:
+  - `Hôm nay` (`TODAY`)
+  - `Hôm qua` (`YESTERDAY`)
+  - `7 ngày qua` (`7DAYS`)
+  - `Tháng này` (`THIS_MONTH` - mặc định)
+  - `Tháng trước` (`LAST_MONTH`)
+  - `Tùy chọn...` (`CUSTOM`): Nhập trực tiếp khoảng ngày `[Từ ngày ... Đến ngày ...]`.
+- **Lọc theo Pháp nhân (Legal Entity)**:
+  - `Tất cả pháp nhân`: Doanh số hợp nhất toàn công ty.
+  - `[TA] CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN`.
+  - `[LC] CÔNG TY TNHH HẦM RƯỢU LY'S`.
+- **Đồng bộ trạng thái**: Tích hợp `useTransition` và URL searchParams (`?preset=...&entity=...&from=...&to=...`) giúp chuyển đổi mượt mà không load lại trang.
+
+### 2. Biểu Đồ Doanh Số Từng Ngày (`DailyRevenueChart.tsx`)
+- **Biểu đồ cột trực quan**: Thể hiện doanh thu và số đơn hàng cho từng ngày trong kỳ lọc.
+- **Tự động nhận diện ngày cao điểm (Peak Day)**: Đánh dấu vàng kim và hiệu ứng ánh sáng cho ngày đạt doanh thu kỷ lục.
+- **Phân biệt ngày cuối tuần (T7, CN)**.
+- **Rê chuột xem chi tiết (Interactive Tooltip)**: Hiển thị thứ, ngày, doanh thu chính xác (VND) và số đơn phát sinh.
+- **Chế độ xem 1 ngày (Hôm nay / Hôm qua)**: Hiển thị thẻ tóm tắt doanh số và số đơn trong ngày.
+- **4 chỉ số tóm tắt nhanh**:
+  - Tổng Doanh Số Kỳ
+  - Tổng Số Đơn Hàng
+  - Giá Trị Đơn Trung Bình (AOV)
+  - Ngày Đạt Đỉnh Doanh Thu
+
+### 3. Cập nhật Backend Actions (`src/app/dashboard/actions.ts`)
+- `DashboardFilterOptions { from?: Date; to?: Date; legalEntityId?: string }`
+- `getDailyRevenueChart(options)`: Tổng hợp doanh số từng ngày và ngày đỉnh.
+- `getDashboardStats`, `getPLSummary`, `getTopCustomers`, `getTopProducts`, `getRevenueByChannel`: Nhận tham số lọc linh hoạt theo kỳ và theo pháp nhân.
+
