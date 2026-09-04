@@ -99,7 +99,7 @@ interface Customer {
         creditHold: boolean
     } | null
 }
-interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number; wholesalePrice?: number; retailPrice?: number }
+interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; salesStockByEntity?: Record<string, number>; totalStockByEntity?: Record<string, number>; vatRate?: number; wholesalePrice?: number; retailPrice?: number }
 interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number; customerItemCode?: string | null }
 
 const inputStyle = {
@@ -350,6 +350,42 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         }
     }, [entities, legalEntityId])
 
+    const selectedEntityCode = useMemo(() => {
+        const ent = entities.find(e => e.id === legalEntityId || e.code === legalEntityId)
+        return ent?.code || ''
+    }, [entities, legalEntityId])
+
+    const getProductStock = useCallback((p: ProductItem | undefined, entityId: string) => {
+        if (!p) return 0
+        if (entityId && p.salesStockByEntity) {
+            if (p.salesStockByEntity[entityId] !== undefined) {
+                return p.salesStockByEntity[entityId]
+            }
+            const entity = entities.find(e => e.id === entityId || e.code === entityId)
+            if (entity && p.salesStockByEntity[entity.id] !== undefined) {
+                return p.salesStockByEntity[entity.id]
+            }
+            if (entity && p.salesStockByEntity[entity.code] !== undefined) {
+                return p.salesStockByEntity[entity.code]
+            }
+            return 0
+        }
+        return p.totalStock ?? 0
+    }, [entities])
+
+    // Synchronize lines stock whenever legalEntityId changes or products load
+    useEffect(() => {
+        if (products.length > 0 && lines.length > 0) {
+            setLines(prev => prev.map(l => {
+                if (!l.productId) return l
+                const p = products.find(prod => prod.id === l.productId)
+                const effectiveStock = getProductStock(p, legalEntityId)
+                if (l.stock === effectiveStock) return l
+                return { ...l, stock: effectiveStock }
+            }))
+        }
+    }, [legalEntityId, products, getProductStock])
+
     useEffect(() => {
         const queries: Record<number, string> = {}
         lines.forEach((l, idx) => {
@@ -491,7 +527,8 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     }))
 
                     const prodVat = p?.vatRate !== undefined ? Number(p.vatRate) : 10
-                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice, lineDiscountPct: 0, priceSource, vatRate: prodVat, customerItemCode: custCode }
+                    const prodStock = getProductStock(p, legalEntityId)
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: prodStock, unitPrice, lineDiscountPct: 0, priceSource, vatRate: prodVat, customerItemCode: custCode }
                 }
                 return { ...l, [field]: value }
             })
@@ -1073,7 +1110,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         {hasCustomerCodes && (
                                                             <th className="px-3 py-2.5 w-24 text-center text-amber-500 font-bold">Mã Khách</th>
                                                         )}
-                                                        <th className="px-3 py-2.5 w-20 text-center">Tồn Kho</th>
+                                                        <th className="px-3 py-2.5 w-20 text-center">Tồn Kho {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
                                                         <th className="px-3 py-2.5 w-20 text-center">SL</th>
                                                         <th className="px-3 py-2.5 w-28 text-right">Đơn Giá</th>
                                                         <th className="px-3 py-2.5 w-20 text-center">CK %</th>
@@ -1148,7 +1185,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                                 <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
                                                                                                 <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
                                                                                             </div>
-                                                                                            <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {p.totalStock})</span>
+                                                                                            <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {getProductStock(p, legalEntityId)})</span>
                                                                                         </div>
                                                                                     ))
                                                                                 )}
@@ -1292,7 +1329,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                                         <span className="font-bold text-teal-600 dark:text-[#87CBB9] shrink-0">[{p.skuCode}]</span>
                                                                                         <span className="font-medium text-slate-800 dark:text-[#E8F1F2] truncate">{p.productName}</span>
                                                                                     </div>
-                                                                                    <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {p.totalStock})</span>
+                                                                                    <span className="text-slate-500 dark:text-gray-400 text-[10px] whitespace-nowrap shrink-0">(Tồn: {getProductStock(p, legalEntityId)})</span>
                                                                                 </div>
                                                                             ))
                                                                         )}

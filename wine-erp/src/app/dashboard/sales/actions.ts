@@ -605,13 +605,56 @@ export async function getProductsWithStock() {
                 media: {
                     select: { url: true, isPrimary: true }
                 },
-                stockLots: { where: { status: 'AVAILABLE' }, select: { qtyAvailable: true } },
+                stockLots: {
+                    where: { status: 'AVAILABLE' },
+                    select: {
+                        qtyAvailable: true,
+                        ownerEntityId: true,
+                        ownerEntity: { select: { id: true, code: true } },
+                        location: {
+                            select: {
+                                warehouse: {
+                                    select: {
+                                        id: true,
+                                        legalEntityId: true,
+                                        allowSales: true,
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 marginPrice: { select: { costPrice: true, retailPrice: true, wholesalePrice: true } },
             },
             orderBy: { productName: 'asc' },
         })
 
         return products.map((p) => {
+            const salesStockByEntity: Record<string, number> = {}
+            const totalStockByEntity: Record<string, number> = {}
+
+            for (const lot of p.stockLots) {
+                const qty = Number(lot.qtyAvailable)
+                if (qty <= 0) continue
+
+                const entityId = lot.ownerEntityId || lot.location?.warehouse?.legalEntityId
+                const entityCode = lot.ownerEntity?.code
+                const isSalesWh = lot.location?.warehouse?.allowSales !== false
+
+                if (entityId) {
+                    totalStockByEntity[entityId] = (totalStockByEntity[entityId] || 0) + qty
+                    if (isSalesWh) {
+                        salesStockByEntity[entityId] = (salesStockByEntity[entityId] || 0) + qty
+                    }
+                }
+                if (entityCode) {
+                    totalStockByEntity[entityCode] = (totalStockByEntity[entityCode] || 0) + qty
+                    if (isSalesWh) {
+                        salesStockByEntity[entityCode] = (salesStockByEntity[entityCode] || 0) + qty
+                    }
+                }
+            }
+
             return {
                 id: p.id,
                 skuCode: p.skuCode,
@@ -621,6 +664,8 @@ export async function getProductsWithStock() {
                 vatRate: p.vatRate ? Number(p.vatRate) : 10,
                 listPrice: 0,
                 totalStock: p.stockLots.reduce((sum: number, l: any) => sum + Number(l.qtyAvailable), 0),
+                salesStockByEntity,
+                totalStockByEntity,
                 costPrice: p.marginPrice ? Number(p.marginPrice.costPrice) : 0,
                 retailPrice: p.marginPrice ? Number(p.marginPrice.retailPrice) : 0,
                 wholesalePrice: p.marginPrice ? Number(p.marginPrice.wholesalePrice) : 0,

@@ -173,6 +173,7 @@ PAID / CLOSED
 | `currency` | VND (mặc định) |
 | `sales_rep` | Nhân viên Sales tạo đơn |
 | `channel` | HORECA / WHOLESALE / VIP_RETAIL |
+| `legal_entity` | Pháp nhân xuất tuyến (Thắng Ân `TA` hoặc Lys Cellar `LC`). Hệ thống tự động kiểm tra và hiển thị tồn kho bán hàng (`salesStockByEntity` tại các kho `allowSales: true`) của đúng pháp nhân đã chọn thay vì tính gộp hoặc lấy tồn của Thắng Ân |
 | `notes` | Ghi chú đặc biệt (Giao vào buổi sáng, cần xe lạnh...) |
 
 ### B. Dòng Sản Phẩm (SO Lines)

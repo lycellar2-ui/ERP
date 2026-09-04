@@ -85,7 +85,7 @@ interface Customer {
         creditHold: boolean
     } | null
 }
-interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; vatRate?: number }
+interface ProductItem { id: string; skuCode: string; productName: string; wineType: string; country: string; totalStock: number; salesStockByEntity?: Record<string, number>; totalStockByEntity?: Record<string, number>; vatRate?: number }
 interface SOLine { productId: string; productName: string; skuCode: string; qtyOrdered: number; unitPrice: number; lineDiscountPct: number; stock: number; priceSource?: string | null; vatRate?: number; customerItemCode?: string | null }
 
 interface EditSODrawerProps {
@@ -272,15 +272,35 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
         }
     }, [customerId, customers])
 
-    // Update stock info in lines
+    const getProductStock = useCallback((p: ProductItem | undefined, entityId: string) => {
+        if (!p) return 0
+        if (entityId && p.salesStockByEntity) {
+            if (p.salesStockByEntity[entityId] !== undefined) {
+                return p.salesStockByEntity[entityId]
+            }
+            const entity = entities.find(e => e.id === entityId || e.code === entityId)
+            if (entity && p.salesStockByEntity[entity.id] !== undefined) {
+                return p.salesStockByEntity[entity.id]
+            }
+            if (entity && p.salesStockByEntity[entity.code] !== undefined) {
+                return p.salesStockByEntity[entity.code]
+            }
+            return 0
+        }
+        return p.totalStock ?? 0
+    }, [entities])
+
+    // Update stock info in lines whenever products or legalEntityId change
     useEffect(() => {
         if (products.length > 0 && lines.length > 0) {
             setLines(prev => prev.map(l => {
                 const p = products.find(p => p.id === l.productId)
-                return { ...l, stock: p?.totalStock ?? 0 }
+                const currentStock = getProductStock(p, legalEntityId)
+                if (l.stock === currentStock) return l
+                return { ...l, stock: currentStock }
             }))
         }
-    }, [products]) // eslint-disable-line
+    }, [products, legalEntityId, getProductStock])
 
     // Load customer-resolved prices or fallback channel prices
     const loadPrices = useCallback(async (custId: string | null, ch: SalesChannel, updateLines: boolean = false) => {
@@ -365,7 +385,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
 
         setLines(prev => [...prev, {
             productId: p.id, productName: p.productName, skuCode: p.skuCode,
-            qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: p.totalStock,
+            qtyOrdered: 1, unitPrice: price, lineDiscountPct: 0, stock: getProductStock(p, legalEntityId),
             priceSource: source, vatRate: prodVat, customerItemCode: custCode,
         }])
     }
@@ -380,7 +400,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                     const source = priceMap[value]?.source ?? null
                     const prodVat = p?.vatRate !== undefined ? Number(p.vatRate) : 10
 
-                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: p.totalStock, unitPrice: price, lineDiscountPct: 0, priceSource: source, vatRate: prodVat }
+                    return { ...l, productId: value, productName: p.productName, skuCode: p.skuCode, stock: getProductStock(p, legalEntityId), unitPrice: price, lineDiscountPct: 0, priceSource: source, vatRate: prodVat }
                 }
                 return { ...l, [field]: value }
             })
@@ -865,7 +885,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                                 <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{p.productName}</span>
                                                             </div>
                                                             <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0 font-medium">
-                                                                (Tồn: {p.totalStock})
+                                                                (Tồn: {getProductStock(p, legalEntityId)})
                                                             </span>
                                                         </div>
                                                     ))
@@ -890,7 +910,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     {hasCustomerCodes && (
                                                         <th className="px-3 py-3 w-24 text-center text-amber-600 dark:text-amber-400 font-bold">Mã Khách</th>
                                                     )}
-                                                    <th className="px-3 py-3 w-20 text-center">Tồn Kho</th>
+                                                    <th className="px-3.5 py-3 w-20 text-center">Tồn Kho {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
                                                     <th className="px-3 py-3 w-20 text-center">SL</th>
                                                     <th className="px-3 py-3 w-28 text-right">Đơn Giá</th>
                                                     <th className="px-3 py-3 w-20 text-center">CK %</th>
