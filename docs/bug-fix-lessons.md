@@ -2373,6 +2373,33 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 91: Đối với các giao dịch điều chuyển kho nội bộ, luôn cung cấp cơ chế linh hoạt cho phép Thủ kho / Kế toán kiểm tra tồn theo Niên Vụ và đổi Niên Vụ (hoặc tự động khớp Niên Vụ còn hàng) trước khi xuất kho để tránh tình trạng phiếu bị treo do sai lệch niên vụ nhập liệu.**
 
+---
+
+## BUG-092: Đơn Hàng Tự Động Gắn Với Hóa Đơn Điện Tử Bị Thay Thế (0đ) & Lọc Hóa Đơn Điều Chỉnh / Thay Thế
+
+**Severity:** 🟡 High / Data Integrity & Sales Accounting  
+**Date:** 2026-09-04  
+**Affected Modules:** `SLS` (Sales Orders), `FIN` (AR Invoices)
+
+### Triệu chứng
+1. Đơn hàng `SO-2608-0107` của cơ sở The Republic (`HR10021-01`) có tổng tiền 0đ, số lượng 0 chai, ở trạng thái `INVOICED` kết nối với hóa đơn `ar_invoices` số `00001149` (trạng thái `UNPAID`), gây hiểu nhầm và làm nhiễu dữ liệu bán hàng.
+2. Về bản chất, hóa đơn `00001149` trên file thuế điện tử có ghi chú rõ *"Hóa đơn bị thay thế"* (được thay thế bằng hóa đơn `00001188` ngày 14/08/2026 xuất 6 chai `L60005` cho Bazomie).
+
+### Nguyên nhân gốc rễ
+1. Khi chạy script import / đồng bộ tự động dữ liệu hóa đơn điện tử đầu tháng 8/2026, logic import chỉ lọc theo dãy số hóa đơn mà không kiểm tra cột `Ghi chú` (`"Hóa đơn bị thay thế"`, `"Hóa đơn hủy"`) hoặc điều kiện `qty = 0` / `totalAmount = 0`, dẫn đến việc tự động sinh Sales Order và AR Invoice rác vào DB.
+
+### Cách fix
+1. Cập nhật trạng thái của `SO-2608-0107` sang `CANCELLED` kèm ghi chú: `"Đơn hàng hủy do gắn với Hóa đơn điện tử 00001149 bị thay thế"`.
+2. Cập nhật trạng thái hóa đơn `ar_invoices` số `00001149` sang `CANCELLED` kèm ghi chú: `"Hóa đơn bị thay thế trên hệ thống thuế (không phát sinh công nợ)"`.
+3. Rà soát toàn bộ 105 hóa đơn phát hành trong tháng 8/2026:
+   - Xác định 2 hóa đơn điều chỉnh giảm sai sót (`00001155` cho Paolo & Chi, `00001156` cho Valhalla) và 1 hóa đơn thay thế (`00001188` cho Bazomie).
+   - Xác nhận trong cơ sở dữ liệu hiện tại không còn bất kỳ đơn hàng chuẩn hoặc hóa đơn nào khác bị số tiền 0đ hoặc âm.
+
+### Bài học
+
+> ⚠️ **RULE 92: Khi đồng bộ hoặc sinh đơn hàng từ file dữ liệu Hóa Đơn Điện Tử (HĐĐT), BẮT BỤC phải kiểm tra và loại trừ các hóa đơn có ghi chú `"Hóa đơn bị thay thế"`, `"Hóa đơn xóa bỏ / hủy"`, hoặc có số lượng / tổng tiền bằng 0. Đối với hóa đơn điều chỉnh giảm sai sót (tiền âm / số lượng âm), cần xử lý riêng theo luồng Hóa đơn điều chỉnh / Bút toán giảm trừ, không được tạo đơn Sales Order thông thường.**
+
+
 
 
 

@@ -6,7 +6,7 @@
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 91 rules from 62 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 92 rules from 61 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
 
 ## Tech Stack (Verified)
