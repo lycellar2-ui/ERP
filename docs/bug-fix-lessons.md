@@ -2393,6 +2393,7 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 2. Cập nhật trạng thái hóa đơn `ar_invoices` số `00001149` sang `CANCELLED` kèm ghi chú: `"Hóa đơn bị thay thế trên hệ thống thuế (không phát sinh công nợ)"`.
 3. Rà soát toàn bộ 105 hóa đơn phát hành trong tháng 8/2026:
    - Xác định 2 hóa đơn điều chỉnh giảm sai sót (`00001155` cho Paolo & Chi, `00001156` cho Valhalla) và 1 hóa đơn thay thế (`00001188` cho Bazomie).
+   - Đã tạo bổ sung đơn hàng `SO-2608-0154` và hóa đơn `ar_invoices` số `00001188` (ngày 14/08/2026, 6 chai `L60005` @ 510.000đ, thành tiền 3.060.000đ + VAT = 3.366.000đ) cho khách hàng **Quinza Restaurant (`HR10044-01`)** để ghi nhận doanh thu và công nợ thực tế thay thế cho hóa đơn 1149.
    - Xác nhận trong cơ sở dữ liệu hiện tại không còn bất kỳ đơn hàng chuẩn hoặc hóa đơn nào khác bị số tiền 0đ hoặc âm.
 
 ### Bài học
