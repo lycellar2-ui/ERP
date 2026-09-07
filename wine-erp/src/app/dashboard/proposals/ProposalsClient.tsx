@@ -201,7 +201,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
         // Determine optimistic target status
         const targetProposal = proposals.find(p => p.id === proposalId)
-        let optimisticStatus = 'APPROVED'
+        let optimisticStatus: any = 'APPROVED'
         if (action === 'REJECT') optimisticStatus = 'REJECTED'
         else if (action === 'RETURN') optimisticStatus = 'RETURNED'
         else {
@@ -213,9 +213,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         }
 
         // 1. Optimistically update UI immediately (0ms delay)
-        setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: optimisticStatus } : p))
+        setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: optimisticStatus as Proposal['status'] } : p))
         if (detail && detail.id === proposalId) {
-            setDetail(prev => prev ? { ...prev, status: optimisticStatus } : null)
+            setDetail(prev => prev ? { ...prev, status: optimisticStatus as ProposalDetail['status'] } : null)
         }
 
         try {
@@ -232,9 +232,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 )
 
                 if (result.newStatus) {
-                    setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: result.newStatus! } : p))
+                    setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: result.newStatus as Proposal['status'] } : p))
                     if (detailId === proposalId) {
-                        setDetail(prev => prev ? { ...prev, status: result.newStatus! } : null)
+                        setDetail(prev => prev ? { ...prev, status: result.newStatus as ProposalDetail['status'] } : null)
                     }
                 }
 

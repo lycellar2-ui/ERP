@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
-**Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-08-07
+**Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-07
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 29 module (124 models, 78 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 29 module (124 models, 79 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -332,10 +332,12 @@ erDiagram
 
     %% ── WMS DOMAIN ──────────────────────────────────────────
     Warehouse {
-        id      uuid PK
-        code    string
-        name    string
-        address string
+        id          uuid PK
+        code        string
+        name        string
+        address     string
+        type        enum "INTERNAL | CONSIGNMENT"
+        customer_id uuid FK "Customer receiving consignment"
     }
     Location {
         id              uuid PK

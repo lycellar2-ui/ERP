@@ -53,7 +53,7 @@
 | Metric | Giá trị |
 |---|---|
 | **Prisma models** | 124 |
-| **Prisma enums** | 78 |
+| **Prisma enums** | 79 |
 | **Dashboard routes** | 35 folders |
 | **Server Action files** | 42 files |
 | **Module spec files** | 27 files |
@@ -136,7 +136,7 @@
 
 | Chủ đề | Quyết định |
 |---|---|
-| **Database** | Supabase PostgreSQL — 124 models, 78 enums |
+| **Database** | Supabase PostgreSQL — 124 models, 79 enums |
 | **Auth** | Supabase Auth — JWT, `@supabase/ssr` cho App Router |
 | **File Storage** | **ImgBB** (ảnh sản phẩm, public) + **Supabase Storage** (hợp đồng/chứng từ, private) |
 | **Deployment** | Vercel — Auto-deploy khi merge `main`, Preview URLs per PR |
@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-03 | Wine ERP v10.16 — Customer Product Code Mapping (La Fiorentina Custom Codes)*
+*Last updated: 2026-09-07 | Wine ERP v10.17 — Consignment Warehouses & Printable Stocktaking (WarehouseType enum)*
 

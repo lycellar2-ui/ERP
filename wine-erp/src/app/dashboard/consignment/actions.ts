@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // CSG — Consignment Management
@@ -685,3 +686,711 @@ export async function getPeriodicReconciliation(periodStart?: string, periodEnd?
         return { success: false, error: err.message }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// KHO KÝ GỬI THEO KHÁCH HÀNG (CUSTOMER CONSIGNMENT WAREHOUSES)
+// ═══════════════════════════════════════════════════
+
+export type ConsignmentWarehouseRow = {
+    id: string
+    code: string
+    name: string
+    address: string | null
+    customerId: string | null
+    customerCode: string
+    customerName: string
+    customerPhone: string | null
+    customerAddress: string | null
+    customerTaxId: string | null
+    totalBottles: number
+    skuCount: number
+    totalStockValue: number
+    createdAt: Date
+}
+
+// ─── Get all Consignment Warehouses with Real Stock ─────
+export async function getConsignmentWarehouses(): Promise<ConsignmentWarehouseRow[]> {
+    try {
+        const warehouses = await prisma.warehouse.findMany({
+            where: { type: 'CONSIGNMENT' },
+            include: {
+                customer: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true,
+                        purchasingPhone: true,
+                        receiverPhone: true,
+                        vatAddress: true,
+                        vatCompanyName: true,
+                        taxId: true,
+                        addresses: { select: { address: true, isDefault: true } },
+                    },
+                },
+                locations: {
+                    include: {
+                        stockLots: {
+                            where: { qtyAvailable: { gt: 0 } },
+                            select: {
+                                productId: true,
+                                qtyAvailable: true,
+                                unitLandedCost: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { name: 'asc' },
+        })
+
+        return warehouses.map((wh: any) => {
+            const allLots = wh.locations.flatMap((l: any) => l.stockLots)
+            const totalBottles = allLots.reduce((sum: number, lot: any) => sum + Number(lot.qtyAvailable), 0)
+            const uniqueSKUs = new Set(allLots.map((lot: any) => lot.productId)).size
+            const totalStockValue = allLots.reduce((sum: number, lot: any) => sum + (Number(lot.qtyAvailable) * Number(lot.unitLandedCost || 0)), 0)
+            const defaultAddress = wh.customer?.addresses.find((a: any) => a.isDefault)?.address || wh.customer?.addresses[0]?.address || wh.customer?.vatAddress || null
+            const phone = wh.customer?.receiverPhone || wh.customer?.purchasingPhone || null
+
+            return {
+                id: wh.id,
+                code: wh.code,
+                name: wh.name,
+                address: wh.address || defaultAddress,
+                customerId: wh.customerId,
+                customerCode: wh.customer?.code || '',
+                customerName: wh.customer?.name || wh.name,
+                customerPhone: phone,
+                customerAddress: defaultAddress,
+                customerTaxId: wh.customer?.taxId || null,
+                totalBottles,
+                skuCount: uniqueSKUs,
+                totalStockValue,
+                createdAt: wh.createdAt,
+            }
+        })
+    } catch (err: any) {
+        console.error('getConsignmentWarehouses error:', err)
+        return []
+    }
+}
+
+// ─── Create Consignment Warehouse for Customer ──────────
+export async function createConsignmentWarehouse(input: {
+    customerId: string
+    name?: string
+    address?: string
+}): Promise<{ success: boolean; warehouseId?: string; error?: string }> {
+    try {
+        await requireAuth()
+        const customer = await prisma.customer.findUnique({
+            where: { id: input.customerId },
+            include: { addresses: true },
+        })
+        if (!customer) return { success: false, error: 'Không tìm thấy khách hàng' }
+
+        const existing = await prisma.warehouse.findFirst({
+            where: { customerId: customer.id, type: 'CONSIGNMENT' },
+        })
+        if (existing) {
+            return { success: false, error: `Khách hàng này đã có kho ký gửi: ${existing.name} (${existing.code})` }
+        }
+
+        const code = `WH-CSG-${customer.code}`
+        const name = input.name?.trim() || `Kho Ký Gửi - ${customer.name}`
+        const address = input.address?.trim() || customer.addresses.find((a: any) => a.isDefault)?.address || customer.vatAddress || null
+
+        const defaultWH = await prisma.warehouse.findFirst({ where: { isDefault: true }, select: { legalEntityId: true } })
+        const legalEntityId = defaultWH?.legalEntityId || (await prisma.legalEntity.findFirst({ select: { id: true } }))?.id || null
+
+        const warehouse = await prisma.warehouse.create({
+            data: {
+                code,
+                name,
+                address,
+                type: 'CONSIGNMENT',
+                customerId: customer.id,
+                legalEntityId,
+                allowSales: true,
+                allowTransfer: true,
+                isDefault: false,
+                locations: {
+                    create: {
+                        zone: 'CSG',
+                        locationCode: 'CSG-DEFAULT',
+                        type: 'STORAGE',
+                    },
+                },
+            },
+        })
+
+        revalidateCache('wms')
+        revalidateCache('consignment')
+        revalidatePath('/dashboard/consignment')
+        revalidatePath('/dashboard/warehouse')
+        return { success: true, warehouseId: warehouse.id }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── Get Internal Warehouses for Consignment Dispatch ───
+export async function getInternalWarehouses(): Promise<{ id: string; code: string; name: string }[]> {
+    try {
+        return await prisma.warehouse.findMany({
+            where: { type: 'INTERNAL' },
+            select: { id: true, code: true, name: true },
+            orderBy: { code: 'asc' },
+        })
+    } catch (err: any) {
+        return []
+    }
+}
+
+// ─── Get Available Products in a Warehouse ──────────────
+export async function getWarehouseStockForTransfer(warehouseId: string): Promise<{
+    productId: string
+    skuCode: string
+    productName: string
+    vintage: number | null
+    qtyAvailable: number
+}[]> {
+    try {
+        const lots = await prisma.stockLot.findMany({
+            where: {
+                location: { warehouseId },
+                status: 'AVAILABLE',
+                qtyAvailable: { gt: 0 },
+            },
+            include: {
+                product: { select: { skuCode: true, productName: true } },
+            },
+            orderBy: [{ product: { skuCode: 'asc' } }, { vintage: 'asc' }],
+        })
+
+        const map = new Map<string, { productId: string; skuCode: string; productName: string; vintage: number | null; qtyAvailable: number }>()
+        for (const lot of lots) {
+            const key = `${lot.productId}_${lot.vintage || 'NV'}`
+            const existing = map.get(key)
+            if (existing) {
+                existing.qtyAvailable += Number(lot.qtyAvailable)
+            } else {
+                map.set(key, {
+                    productId: lot.productId,
+                    skuCode: lot.product.skuCode,
+                    productName: lot.product.productName,
+                    vintage: lot.vintage,
+                    qtyAvailable: Number(lot.qtyAvailable),
+                })
+            }
+        }
+        return Array.from(map.values())
+    } catch (err: any) {
+        return []
+    }
+}
+
+// ─── Dispatch Consignment Stock (Transfer without invoice) ─
+export async function createConsignmentTransfer(input: {
+    fromWarehouseId: string
+    toWarehouseId: string
+    notes?: string
+    transferDate?: string
+    instantReceive?: boolean
+    lines: { productId: string; qtyTransferred: number; vintage?: number | null }[]
+}): Promise<{ success: boolean; transferNo?: string; error?: string }> {
+    try {
+        const user = await requireAuth()
+
+        if (!input.fromWarehouseId || !input.toWarehouseId) {
+            return { success: false, error: 'Vui lòng chọn Kho xuất và Kho nhận ký gửi' }
+        }
+        if (input.fromWarehouseId === input.toWarehouseId) {
+            return { success: false, error: 'Kho xuất và Kho nhận ký gửi phải khác nhau' }
+        }
+        if (!input.lines || input.lines.length === 0) {
+            return { success: false, error: 'Vui lòng chọn ít nhất 1 sản phẩm để xuất kho ký gửi' }
+        }
+
+        const now = new Date()
+        const prefix = `TO-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}-`
+        const lastTO = await prisma.transferOrder.findFirst({
+            where: { transferNo: { startsWith: prefix } },
+            orderBy: { transferNo: 'desc' },
+            select: { transferNo: true },
+        })
+        const nextSeq = lastTO ? parseInt(lastTO.transferNo.slice(-4), 10) + 1 : 1
+        const transferNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
+
+        let destLoc = await prisma.location.findFirst({
+            where: { warehouseId: input.toWarehouseId },
+            orderBy: { locationCode: 'asc' },
+        })
+        if (!destLoc) {
+            destLoc = await prisma.location.create({
+                data: {
+                    warehouseId: input.toWarehouseId,
+                    zone: 'CSG',
+                    locationCode: 'CSG-DEFAULT',
+                    type: 'STORAGE',
+                },
+            })
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.transferOrder.create({
+                data: {
+                    transferNo,
+                    fromWarehouseId: input.fromWarehouseId,
+                    toWarehouseId: input.toWarehouseId,
+                    requesterId: user.id,
+                    transferDate: input.transferDate ? new Date(input.transferDate) : now,
+                    status: input.instantReceive !== false ? 'RECEIVED' : 'IN_TRANSIT',
+                    notes: input.notes || 'Xuất hàng gửi bán đại lý / ký gửi (chuyển kho không xuất hóa đơn)',
+                    confirmedAt: now,
+                    receivedAt: input.instantReceive !== false ? now : null,
+                    lines: {
+                        create: input.lines.map(l => ({
+                            productId: l.productId,
+                            qtyTransferred: l.qtyTransferred,
+                            vintage: l.vintage ?? null,
+                            qtyReceived: input.instantReceive !== false ? l.qtyTransferred : 0,
+                        })),
+                    },
+                },
+            })
+
+            for (const line of input.lines) {
+                let remaining = Number(line.qtyTransferred)
+                const whereLot: any = {
+                    productId: line.productId,
+                    status: 'AVAILABLE',
+                    qtyAvailable: { gt: 0 },
+                    location: { warehouseId: input.fromWarehouseId },
+                }
+                if (line.vintage) {
+                    whereLot.vintage = line.vintage
+                }
+
+                const lots = await tx.stockLot.findMany({
+                    where: whereLot,
+                    orderBy: { receivedDate: 'asc' },
+                })
+
+                let totalAvail = lots.reduce((sum, l) => sum + Number(l.qtyAvailable), 0)
+                if (totalAvail < remaining) {
+                    const prod = await tx.product.findUnique({ where: { id: line.productId }, select: { skuCode: true } })
+                    throw new Error(`Kho xuất không đủ tồn kho cho SKU ${prod?.skuCode || line.productId} (còn ${totalAvail} chai, yêu cầu ${remaining} chai)`)
+                }
+
+                let totalCostAmount = 0
+                let transferredLotCost = 0
+
+                for (const lot of lots) {
+                    if (remaining <= 0) break
+                    const take = Math.min(Number(lot.qtyAvailable), remaining)
+                    await tx.stockLot.update({
+                        where: { id: lot.id },
+                        data: { qtyAvailable: { decrement: take } },
+                    })
+                    totalCostAmount += take * Number(lot.unitLandedCost || 0)
+                    transferredLotCost = Number(lot.unitLandedCost || 0)
+                    remaining -= take
+                }
+                const avgCost = Number(line.qtyTransferred) > 0 ? totalCostAmount / Number(line.qtyTransferred) : transferredLotCost
+
+                if (input.instantReceive !== false) {
+                    const lastTrf = await tx.stockLot.findFirst({
+                        where: { lotNo: { startsWith: 'TRF-' } },
+                        orderBy: { lotNo: 'desc' },
+                        select: { lotNo: true },
+                    })
+                    let nextTrfSeq = 1
+                    if (lastTrf) {
+                        const parts = lastTrf.lotNo.split('-')
+                        const parsed = parseInt(parts[parts.length - 1], 10)
+                        if (!isNaN(parsed)) nextTrfSeq = parsed + 1
+                    }
+                    const lotNo = `TRF-${String(nextTrfSeq).padStart(6, '0')}`
+
+                    const firstLE = await tx.legalEntity.findFirst({ select: { id: true } })
+
+                    await tx.stockLot.create({
+                        data: {
+                            lotNo,
+                            ownerEntityId: firstLE?.id || 'default',
+                            productId: line.productId,
+                            locationId: destLoc!.id,
+                            qtyReceived: line.qtyTransferred,
+                            qtyAvailable: line.qtyTransferred,
+                            unitLandedCost: avgCost,
+                            receivedDate: now,
+                            vintage: line.vintage ?? null,
+                            status: 'AVAILABLE',
+                        },
+                    })
+                }
+            }
+        })
+
+        revalidateCache('transfers')
+        revalidateCache('wms')
+        revalidateCache('consignment')
+        revalidatePath('/dashboard/consignment')
+        revalidatePath('/dashboard/transfers')
+        revalidatePath('/dashboard/warehouse')
+        return { success: true, transferNo }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── Get Consignment Inventory for Count Sheet (A4) ─────
+export async function getConsignmentInventoryForCount(warehouseId: string) {
+    try {
+        const wh: any = await prisma.warehouse.findUnique({
+            where: { id: warehouseId },
+            include: {
+                customer: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true,
+                        vatAddress: true,
+                        taxId: true,
+                        receiverPhone: true,
+                        purchasingPhone: true,
+                        addresses: { select: { address: true, isDefault: true } },
+                    },
+                },
+                legalEntity: {
+                    select: { name: true, address: true, taxId: true },
+                },
+                locations: {
+                    include: {
+                        stockLots: {
+                            where: { qtyAvailable: { gt: 0 }, status: 'AVAILABLE' },
+                            include: {
+                                product: { select: { skuCode: true, productName: true } },
+                            },
+                        },
+                    },
+                },
+            },
+        })
+        if (!wh) return { success: false, error: 'Không tìm thấy kho' }
+
+        const map = new Map<string, {
+            productId: string
+            skuCode: string
+            productName: string
+            vintage: number | null
+            unit: string
+            qtySystem: number
+        }>()
+
+        for (const loc of wh.locations) {
+            for (const lot of loc.stockLots) {
+                const key = `${lot.productId}_${lot.vintage || 'NV'}`
+                const existing = map.get(key)
+                if (existing) {
+                    existing.qtySystem += Number(lot.qtyAvailable)
+                } else {
+                    map.set(key, {
+                        productId: lot.productId,
+                        skuCode: lot.product.skuCode,
+                        productName: lot.product.productName,
+                        vintage: lot.vintage,
+                        unit: 'Chai',
+                        qtySystem: Number(lot.qtyAvailable),
+                    })
+                }
+            }
+        }
+
+        const items = Array.from(map.values()).sort((a, b) => a.skuCode.localeCompare(b.skuCode))
+        const defaultCustAddr = wh.customer?.addresses?.find((a: any) => a.isDefault)?.address || wh.customer?.addresses?.[0]?.address || wh.customer?.vatAddress || null
+
+        return {
+            success: true,
+            data: {
+                warehouseId: wh.id,
+                warehouseCode: wh.code,
+                warehouseName: wh.name,
+                warehouseAddress: wh.address,
+                customerId: wh.customer?.id || '',
+                customerCode: wh.customer?.code || '',
+                customerName: wh.customer?.name || wh.name,
+                customerAddress: defaultCustAddr,
+                customerPhone: wh.customer?.receiverPhone || wh.customer?.purchasingPhone || null,
+                customerTaxId: wh.customer?.taxId || null,
+                countedAt: new Date().toISOString(),
+                legalEntityName: wh.legalEntity?.name || 'CÔNG TY TNHH LY CELLARS',
+                legalEntityAddress: wh.legalEntity?.address || undefined,
+                legalEntityTaxId: wh.legalEntity?.taxId || undefined,
+                items,
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── Get Consignment Transfer Print Data ────────────────
+export async function getConsignmentTransferPrintData(transferNoOrId: string) {
+    try {
+        const to: any = await prisma.transferOrder.findFirst({
+            where: {
+                OR: [{ id: transferNoOrId }, { transferNo: transferNoOrId }],
+            },
+            include: {
+                fromWarehouse: { select: { code: true, name: true, address: true } },
+                toWarehouse: {
+                    select: {
+                        code: true,
+                        name: true,
+                        address: true,
+                        customer: {
+                            select: {
+                                code: true,
+                                name: true,
+                                taxId: true,
+                                receiverPhone: true,
+                                addresses: { select: { address: true, isDefault: true } },
+                            },
+                        },
+                    },
+                },
+                lines: {
+                    include: {
+                        product: { select: { skuCode: true, productName: true } },
+                    },
+                },
+            },
+        })
+        if (!to) return { success: false, error: 'Không tìm thấy phiếu chuyển kho' }
+
+        const customer = to.toWarehouse?.customer
+        const defaultCustAddr = customer?.addresses?.find((a: any) => a.isDefault)?.address || customer?.addresses?.[0]?.address || null
+
+        return {
+            success: true,
+            data: {
+                transferNo: to.transferNo,
+                transferDate: to.transferDate.toISOString(),
+                fromWarehouseName: to.fromWarehouse?.name || '',
+                fromWarehouseCode: to.fromWarehouse?.code || '',
+                fromWarehouseAddress: to.fromWarehouse?.address || null,
+                toWarehouseName: to.toWarehouse?.name || '',
+                toWarehouseCode: to.toWarehouse?.code || '',
+                toWarehouseAddress: to.toWarehouse?.address || null,
+                customerName: customer?.name || to.toWarehouse?.name || '',
+                customerCode: customer?.code || '',
+                customerAddress: defaultCustAddr,
+                customerPhone: customer?.receiverPhone || null,
+                customerTaxId: customer?.taxId || null,
+                notes: to.notes,
+                legalEntityName: 'CÔNG TY TNHH LY CELLARS',
+                lines: to.lines.map((l: any) => ({
+                    productId: l.productId,
+                    skuCode: l.product.skuCode,
+                    productName: l.product.productName,
+                    vintage: l.vintage,
+                    unit: 'Chai',
+                    qtyTransferred: Number(l.qtyTransferred),
+                    notes: null,
+                })),
+            },
+        }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+// ─── Get Consignment Transfers History ──────────────────
+export async function getConsignmentTransfers() {
+    try {
+        const transfers = await prisma.transferOrder.findMany({
+            where: {
+                OR: [
+                    { fromWarehouse: { type: 'CONSIGNMENT' } },
+                    { toWarehouse: { type: 'CONSIGNMENT' } },
+                ],
+            },
+            include: {
+                fromWarehouse: { select: { code: true, name: true, type: true } },
+                toWarehouse: { select: { code: true, name: true, type: true, customer: { select: { name: true, code: true } } } },
+                lines: {
+                    include: {
+                        product: { select: { skuCode: true, productName: true } },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+        })
+
+        return transfers.map(t => {
+            const isOut = t.toWarehouse.type === 'CONSIGNMENT'
+            const totalQty = t.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)
+            return {
+                id: t.id,
+                transferNo: t.transferNo,
+                type: isOut ? 'XUẤT_KÝ_GỬI' : 'THU_HỒI_KÝ_GỬI',
+                fromWarehouseName: t.fromWarehouse.name,
+                toWarehouseName: t.toWarehouse.name,
+                customerName: t.toWarehouse.customer?.name || t.fromWarehouse.name,
+                totalQty,
+                itemCount: t.lines.length,
+                status: t.status,
+                transferDate: t.transferDate,
+                notes: t.notes,
+            }
+        })
+    } catch (err: any) {
+        return []
+    }
+}
+
+// ─── Sell from Consignment Warehouse (Generates SO, DO & AR Invoice) ──
+export async function sellFromConsignmentWarehouse(input: {
+    warehouseId: string
+    notes?: string
+    items: { productId: string; qty: number; vintage?: number | null; unitPrice?: number }[]
+}): Promise<{ success: boolean; soNo?: string; invoiceNo?: string; error?: string }> {
+    try {
+        const user = await requireAuth()
+
+        const wh = await prisma.warehouse.findUnique({
+            where: { id: input.warehouseId },
+            include: {
+                customer: { select: { id: true, name: true, parentId: true } },
+            },
+        })
+        if (!wh) return { success: false, error: 'Kho ký gửi không tồn tại' }
+        if (!wh.customerId) return { success: false, error: 'Kho này chưa được gắn với Khách hàng ký gửi nào' }
+        if (!input.items || input.items.length === 0) return { success: false, error: 'Vui lòng chọn ít nhất 1 sản phẩm đã bán' }
+
+        const now = new Date()
+        const prefix = `SO-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}-`
+        const lastSO = await prisma.salesOrder.findFirst({
+            where: { soNo: { startsWith: prefix } },
+            orderBy: { soNo: 'desc' },
+            select: { soNo: true },
+        })
+        const nextSeq = lastSO ? parseInt(lastSO.soNo.slice(-4), 10) + 1 : 1
+        const soNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
+
+        let totalAmount = 0
+        const lineData: any[] = []
+
+        for (const item of input.items) {
+            let unitPrice = item.unitPrice
+            if (!unitPrice || unitPrice <= 0) {
+                const pl = await prisma.priceListLine.findFirst({
+                    where: { productId: item.productId },
+                    orderBy: { priceList: { effectiveDate: 'desc' } },
+                    select: { unitPrice: true },
+                })
+                unitPrice = pl ? Number(pl.unitPrice) : 500000
+            }
+            const lineTotal = item.qty * unitPrice
+            totalAmount += lineTotal
+            lineData.push({
+                productId: item.productId,
+                qtyOrdered: item.qty,
+                qtyAllocated: item.qty,
+                unitPrice,
+                lineTotal,
+                vintage: item.vintage ?? null,
+            })
+        }
+
+        const legalEntity = await prisma.legalEntity.findFirst({ select: { id: true } })
+
+        const result = await prisma.$transaction(async (tx) => {
+            for (const item of input.items) {
+                let remaining = item.qty
+                const whereLot: any = {
+                    productId: item.productId,
+                    status: 'AVAILABLE',
+                    qtyAvailable: { gt: 0 },
+                    location: { warehouseId: input.warehouseId },
+                }
+                if (item.vintage) {
+                    whereLot.vintage = item.vintage
+                }
+
+                const lots = await tx.stockLot.findMany({
+                    where: whereLot,
+                    orderBy: { receivedDate: 'asc' },
+                })
+
+                const totalAvail = lots.reduce((sum, l) => sum + Number(l.qtyAvailable), 0)
+                if (totalAvail < remaining) {
+                    const prod = await tx.product.findUnique({ where: { id: item.productId }, select: { skuCode: true } })
+                    throw new Error(`Kho ký gửi không đủ tồn kho cho SKU ${prod?.skuCode || item.productId} (còn ${totalAvail} chai, bán ${remaining} chai)`)
+                }
+
+                for (const lot of lots) {
+                    if (remaining <= 0) break
+                    const take = Math.min(Number(lot.qtyAvailable), remaining)
+                    await tx.stockLot.update({
+                        where: { id: lot.id },
+                        data: { qtyAvailable: { decrement: take } },
+                    })
+                    remaining -= take
+                }
+            }
+
+            const so = await tx.salesOrder.create({
+                data: {
+                    soNo,
+                    customerId: wh.customerId!,
+                    warehouseId: wh.id,
+                    channel: 'HORECA',
+                    legalEntityId: wh.legalEntityId || legalEntity?.id || 'default',
+                    salesRepId: user.id,
+                    status: 'DELIVERED',
+                    paymentTerm: 'NET30',
+                    totalAmount,
+                    notes: input.notes || 'Xuất bán từ kho ký gửi khách hàng',
+                    lines: {
+                        create: lineData,
+                    },
+                },
+            })
+
+            const invCount = await tx.aRInvoice.count()
+            const invoiceNo = `CSG-INV-${String(invCount + 1).padStart(6, '0')}`
+            const vatAmount = totalAmount * 0.1
+            const grandTotal = totalAmount + vatAmount
+
+            await tx.aRInvoice.create({
+                data: {
+                    invoiceNo,
+                    soId: so.id,
+                    customerId: wh.customer?.parentId || wh.customerId!,
+                    amount: totalAmount,
+                    vatAmount,
+                    totalAmount: grandTotal,
+                    dueDate: new Date(Date.now() + 30 * 86400000),
+                    status: 'UNPAID',
+                    legalEntityId: wh.legalEntityId || legalEntity?.id || 'default',
+                },
+            })
+
+            return { soNo, invoiceNo }
+        })
+
+        revalidateCache('sales')
+        revalidateCache('wms')
+        revalidateCache('consignment')
+        revalidatePath('/dashboard/consignment')
+        revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/warehouse')
+        return { success: true, ...result }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+

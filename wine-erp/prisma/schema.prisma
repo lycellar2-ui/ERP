@@ -548,6 +548,7 @@ model Customer {
   salesOrders   SalesOrder[]
   quotations    SalesQuotation[]
   consignments  ConsignmentAgreement[]
+  warehouses    Warehouse[]
   arInvoices    ARInvoice[]
   contracts     Contract[]
   proposals     Proposal[]
@@ -1306,6 +1307,9 @@ model Warehouse {
   allowSales     Boolean         @default(true) // Có thể xuất bán hàng
   allowTransfer  Boolean         @default(true) // Có thể xuất/nhận điều chuyển
   isDefault      Boolean         @default(false) // Kho mặc định của Pháp nhân
+  type           WarehouseType   @default(INTERNAL) // INTERNAL | CONSIGNMENT
+  customerId     String?
+  customer       Customer?       @relation(fields: [customerId], references: [id])
   createdAt      DateTime        @default(now())
   layoutConfig   Json?           // Floor plan: walls, doors, labels, annotations
 
@@ -2476,6 +2480,11 @@ enum AgencyDocType {
   LOGISTICS_INVOICE
   INSPECTION_CERT
   OTHER
+}
+
+enum WarehouseType {
+  INTERNAL
+  CONSIGNMENT
 }
 
 enum LocationType {

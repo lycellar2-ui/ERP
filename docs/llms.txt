@@ -1,17 +1,17 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-03 13:40
-> Status: Production — 29 modules, 124 DB models, 78 enums, 35 dashboard routes, Customer Product Code Mapping (La Fiorentina)
-
+> Last updated: 2026-09-07 12:00
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, Consignment Warehouses & Printable Stocktaking
+ 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
 - docs/bug-fix-lessons.md — 92 rules from 61 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
-
+ 
 ## Tech Stack (Verified)
 - Next.js 16.1.6 (App Router) + React 19.2.3 + TypeScript
-- Prisma 7.4.2 + Supabase PostgreSQL (124 models, 78 enums)
+- Prisma 7.4.2 + Supabase PostgreSQL (124 models, 79 enums)
 - TailwindCSS v4 + Shadcn UI (Radix)
 - Supabase Auth (@supabase/ssr) — NOT NextAuth
 - ImgBB (product images) + Supabase Storage (private docs)
