@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-07 12:00
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, Consignment Warehouses & Printable Stocktaking
+> Last updated: 2026-09-08 09:10
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, BUG-093 Fix React Error #310
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 92 rules from 61 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 93 rules from 62 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
  
 ## Tech Stack (Verified)

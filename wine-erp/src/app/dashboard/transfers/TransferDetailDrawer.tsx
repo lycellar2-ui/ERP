@@ -44,6 +44,12 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
     const [printModalOpen, setPrintModalOpen] = useState(false)
     const [printDocType, setPrintDocType] = useState<'VOUCHER' | 'PICK_LIST'>('VOUCHER')
 
+    // Vintage editing states
+    const [editingVintageLineId, setEditingVintageLineId] = useState<string | null>(null)
+    const [selectedNewVintage, setSelectedNewVintage] = useState<string>('')
+    const [vintageUpdating, setVintageUpdating] = useState(false)
+    const [autoFixing, setAutoFixing] = useState(false)
+
     const loadData = async (id: string) => {
         setLoading(true)
         try {
@@ -156,11 +162,6 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
         }
     }
 
-    // Vintage editing states
-    const [editingVintageLineId, setEditingVintageLineId] = useState<string | null>(null)
-    const [selectedNewVintage, setSelectedNewVintage] = useState<string>('')
-    const [vintageUpdating, setVintageUpdating] = useState(false)
-    const [autoFixing, setAutoFixing] = useState(false)
 
     const handleUpdateVintage = async (lineId: string, vintageVal: string) => {
         if (!transferId) return

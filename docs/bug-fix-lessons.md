@@ -2400,6 +2400,44 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 92: Khi đồng bộ hoặc sinh đơn hàng từ file dữ liệu Hóa Đơn Điện Tử (HĐĐT), BẮT BỤC phải kiểm tra và loại trừ các hóa đơn có ghi chú `"Hóa đơn bị thay thế"`, `"Hóa đơn xóa bỏ / hủy"`, hoặc có số lượng / tổng tiền bằng 0. Đối với hóa đơn điều chỉnh giảm sai sót (tiền âm / số lượng âm), cần xử lý riêng theo luồng Hóa đơn điều chỉnh / Bút toán giảm trừ, không được tạo đơn Sales Order thông thường.**
 
+---
+
+## BUG-093: Minified React Error #310 — Rendered More Hooks Than Previous Render in TransferDetailDrawer
+
+**Severity:** 🔴 Critical / App Crash — Dashboard Error Boundary Triggered  
+**Date:** 2026-09-08  
+**Affected Modules:** `WMS` (Transfers, Warehouse — `TransferDetailDrawer.tsx`)
+
+### Triệu chứng
+1. Khi người dùng thao tác trên hệ thống (mở trang Kho hàng, Chuyển kho hoặc Ký gửi), màn hình bị crash và rơi vào Error Boundary (`src/app/dashboard/error.tsx`).
+2. Màn hình hiển thị: *"Không thể tải Dashboard - Có thể do mất kết nối database hoặc lỗi server"* kèm dòng lỗi đỏ:
+   ```
+   Minified React error #310; visit https://react.dev/errors/310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+   ```
+
+### Nguyên nhân gốc rễ
+1. React Error #310 là: *"Rendered more hooks than during the previous render"*.
+2. Trong component `TransferDetailDrawer.tsx`, tại dòng 67 có lệnh return sớm:
+   ```tsx
+   if (!transferId) return null
+   ```
+3. Tuy nhiên, 4 hooks `useState` xử lý chức năng chỉnh sửa niên vụ (vintage) lại được khai báo ở dòng 160–163 (sau dòng `if (!transferId) return null`):
+   ```tsx
+   const [editingVintageLineId, setEditingVintageLineId] = useState<string | null>(null)
+   const [selectedNewVintage, setSelectedNewVintage] = useState<string>('')
+   const [vintageUpdating, setVintageUpdating] = useState(false)
+   const [autoFixing, setAutoFixing] = useState(false)
+   ```
+4. Khi component được mount ban đầu với `transferId = null`, React chỉ ghi nhận các hook phía trước dòng return sớm. Khi người dùng bấm vào một phiếu chuyển bất kỳ (`transferId != null`), component re-render và chạy tiếp qua dòng 67 đến dòng 160, gọi thêm 4 hook `useState`. Sự thay đổi số lượng hook giữa các lần render vi phạm **Rules of Hooks** của React, dẫn đến việc ứng dụng crash ngay lập tức.
+
+### Cách fix
+1. Chuyển toàn bộ 4 hook `useState` lên đầu component `TransferDetailDrawer` (ngay sau các state khác, trước bất kỳ câu lệnh điều kiện hay `return` nào).
+2. Viết script kiểm tra AST tĩnh toàn bộ 309 component trong dự án để đảm bảo không còn bất kỳ vi phạm Rules of Hooks nào khác.
+
+### Bài học
+
+> ⚠️ **RULE 93: TUYỆT ĐỐI KHÔNG ĐƯỢC khai báo React Hooks (useState, useEffect, useMemo, useCallback, useRef...) sau bất kỳ câu lệnh điều kiện hoặc early return (`if (...) return ...`). TẤT CẢ các hooks BẮT BUỘC phải được đặt ở đầu hàm component.**
+
 
 
 
