@@ -1080,6 +1080,14 @@ export async function createDeliveryOrder(input: {
             }
         }
 
+        // Hard constraint: Kho Thường Tín là kho tổng dự trữ, CHỈ ĐƯỢC XUẤT ĐIỀU CHUYỂN (TO), CẤM tạo DO xuất bán hàng
+        if (wh.code === 'WH-TA-TT' || wh.name?.toLowerCase().includes('thường tín')) {
+            return {
+                success: false,
+                error: `Kho [${wh.name}] là kho tổng dự trữ, chỉ được phép xuất qua Phiếu Điều Chuyển Kho (Transfer Order), không được phép tạo Phiếu xuất bán hàng (DO)! Mọi đơn bán hàng phải xuất từ Kho Giang Văn Minh.`
+            }
+        }
+
         // Generate DO number (atomic — collision-safe)
         const now = new Date()
         const yy = String(now.getFullYear()).slice(-2)
@@ -1105,15 +1113,29 @@ export async function createDeliveryOrder(input: {
             })
 
             for (const line of lines) {
+                const pickedLot = await tx.stockLot.findUnique({
+                    where: { id: line.lotId },
+                    select: {
+                        ownerEntityId: true,
+                        lotNo: true,
+                        location: { select: { warehouseId: true, warehouse: { select: { name: true } } } },
+                    },
+                })
+                if (!pickedLot) {
+                    throw new Error(`Lô hàng không tồn tại (lotId: ${line.lotId})`)
+                }
+
                 // Verify lot legal entity ownership if SO has legal entity
-                if (so.legalEntityId) {
-                    const pickedLot = await tx.stockLot.findUnique({
-                        where: { id: line.lotId },
-                        select: { ownerEntityId: true, lotNo: true },
-                    })
-                    if (pickedLot && pickedLot.ownerEntityId !== so.legalEntityId) {
-                        throw new Error(`Lô hàng ${pickedLot.lotNo} không thuộc sở hữu của Pháp Nhân đơn hàng. Vui lòng chọn đúng lô cùng Pháp Nhân!`)
-                    }
+                if (so.legalEntityId && pickedLot.ownerEntityId !== so.legalEntityId) {
+                    throw new Error(`Lô hàng ${pickedLot.lotNo} không thuộc sở hữu của Pháp Nhân đơn hàng. Vui lòng chọn đúng lô cùng Pháp Nhân!`)
+                }
+
+                // Verify lot belongs to DO warehouse
+                if (pickedLot.location && pickedLot.location.warehouseId !== warehouseId) {
+                    throw new Error(
+                        `Lô hàng ${pickedLot.lotNo} thuộc kho [${pickedLot.location.warehouse?.name}], không nằm trong Kho xuất hàng của phiếu DO! ` +
+                        `Vui lòng chỉ chọn lô hàng nằm trong chính kho xuất hàng.`
+                    )
                 }
 
                 // Create DO line

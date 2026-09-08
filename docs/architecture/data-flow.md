@@ -26,6 +26,7 @@ Tài liệu này là "Luật" khi lập trình các thao tác liên quan đến 
 **Quy Tắc Ràng Buộc Cứng (Cấm Vi Phạm):**
 - ❌ **KHÔNG ĐƯỢC HỦY/SỬA GIAO DỊCH SO/SO_LINE** một khi SO đã chuyển trạng thái `DELIVERED` hoặc `INVOICED`.
 - ❌ **TỪ CHỐI TẠO SO** nếu Khách có trạng thái `CREDIT_HOLD` hoặc giá bán thấp hơn Giá Xuất Xưởng tối thiểu (`calculateMinSellPrice()`).
+- ❌ **CẤM XUẤT BÁN HÀNG (DO) TỪ KHO THƯỜNG TÍN (`WH-TA-TT`):** Kho Thường Tín là kho tổng dự trữ, CHỈ ĐƯỢC XUẤT ĐIỀU CHUYỂN (Transfer Order) về Giang Văn Minh hoặc Showroom. Mọi đơn bán hàng (DO) bắt buộc xuất từ Kho Giang Văn Minh (`WH-TA-GVM`). Cấm chọn lô chéo kho (`lot.location.warehouseId === deliveryOrder.warehouseId`).
 
 ## 3. Master Data Constraints (MDM)
 Mọi dữ liệu cốt lõi thuộc Product, Customer, Supplier đều áp dụng chiến lược **Soft Delete**.

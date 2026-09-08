@@ -2438,6 +2438,34 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 93: TUYỆT ĐỐI KHÔNG ĐƯỢC khai báo React Hooks (useState, useEffect, useMemo, useCallback, useRef...) sau bất kỳ câu lệnh điều kiện hoặc early return (`if (...) return ...`). TẤT CẢ các hooks BẮT BUỘC phải được đặt ở đầu hàm component.**
 
+---
+
+## BUG-094: Phiếu Xuất Bán Hàng (DO) Cấn Trừ Nhầm Vào Kho Dự Trữ Thường Tín & Thiếu Ràng Buộc Kho Trong WMS
+
+**Severity:** 🔴 Critical / Data Integrity — Inventory Misallocation  
+**Date:** 2026-09-08  
+**Affected Modules:** `WMS` (Warehouse, Delivery Orders, Inventory Lots — `actions-do.ts`, `actions.ts`)
+
+### Triệu chứng
+1. Kiểm tra tồn kho tại Kho Thường Tín (`WH-TA-TT`), mã sản phẩm `L10023` (*La Jara Prosecco Millesimato Dry*) chỉ hiển thị còn **20 chai**, trong khi kiểm kê thực tế ngày 01/08/2026 và báo cáo tồn kho đều ghi nhận **60 chai** (Pallet 2: 5 thùng x 12 chai).
+2. Mở rộng kiểm tra toàn bộ 76 mã tại Kho Thường Tín, phát hiện tổng cộng **266 chai** thuộc **17 mã sản phẩm** đã bị cấn trừ qua **95 dòng DO bán hàng**.
+
+### Nguyên nhân gốc rễ
+1. **Nguyên tắc vận hành doanh nghiệp**: Kho Thường Tín là kho tổng dự trữ (Bulk/Reserve Warehouse), **CHỈ XUẤT ĐIỀU CHUYỂN KHO (Transfer Order)** về Giang Văn Minh hoặc Showroom, tuyệt đối không xuất bán hàng trực tiếp. Mọi đơn bán hàng (SO -> DO) phải xuất từ Kho Giang Văn Minh (`WH-TA-GVM`).
+2. **Lỗi logic phân bổ lô (Fulfillment)**: Khi hệ thống chạy xuất kho tự động cho các đơn hàng tháng 8, thuật toán FIFO duyệt tìm lô có ngày nhập sớm nhất nhưng không lọc giới hạn kho theo `warehouseId = WH-TA-GVM`. Do cả lô Kho Thường Tín và Kho GVM đều có ngày nhập `01/08/2026`, PostgreSQL đã trả về các lô ở Thường Tín trước, dẫn đến việc trừ 266 chai vào Kho Thường Tín dù trên tiêu đề DO chỉ định kho xuất là GVM.
+3. **Thiếu Hard Constraint trong code**: Hàm `createDeliveryOrder` trong `actions-do.ts` và `actions.ts` chưa có kiểm tra chặn tạo DO từ `WH-TA-TT` và chưa kiểm tra ràng buộc `lot.location.warehouseId === warehouseId`.
+
+### Cách fix
+1. **Khôi phục dữ liệu**: Chạy transaction nguyên tử chuyển toàn bộ 95 dòng DO trỏ về đúng lô ở Kho Giang Văn Minh, hoàn trả đủ **266 chai** về Kho Thường Tín (mã `L10023` trở về đúng **60 chai**; tất cả 17 mã đều khớp 100% kiểm kê).
+2. **Khóa chặt Hard Constraints trong WMS (`actions-do.ts` & `actions.ts`)**:
+   - Chặn tuyệt đối: `if (wh.code === 'WH-TA-TT') throw new Error('Kho Thường Tín chỉ xuất điều chuyển (TO), không được tạo DO bán hàng!')`.
+   - Chặn chọn lô chéo kho: `if (lot.location.warehouseId !== warehouseId) throw new Error('Lô hàng không nằm trong Kho xuất hàng của phiếu DO!')`.
+
+### Bài học
+
+> ⚠️ **RULE 94: Kho tổng dự trữ Thường Tín (`WH-TA-TT`) CHỈ ĐƯỢC PHÉP XUẤT QUA PHIẾU ĐIỀU CHUYỂN KHO (Transfer Order), TUYỆT ĐỐI KHÔNG ĐƯỢC TẠO PHIẾU XUẤT BÁN HÀNG (DO). Khi tạo DO xuất kho, BẮT BUỘC phải xác thực chặt chẽ `lot.location.warehouseId === deliveryOrder.warehouseId`, cấm chọn lô chéo kho.**
+
+
 
 
 

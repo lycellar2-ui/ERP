@@ -141,6 +141,14 @@ export async function createDeliveryOrder(input: {
             }
         }
 
+        // Hard constraint: Kho Thường Tín là kho tổng dự trữ, CHỈ ĐƯỢC XUẤT ĐIỀU CHUYỂN (Transfer Order), CẤM xuất bán hàng trực tiếp (DO)
+        if (wh.code === 'WH-TA-TT' || wh.name?.toLowerCase().includes('thường tín')) {
+            return {
+                success: false,
+                error: `Kho [${wh.name}] là kho tổng dự trữ, chỉ được phép xuất qua Phiếu Điều Chuyển Kho (Transfer Order), không được phép tạo Phiếu xuất bán hàng (DO)! Mọi đơn bán hàng phải xuất từ Kho Giang Văn Minh.`
+            }
+        }
+
         // Generate DO number (atomic — collision-safe)
         const now = new Date()
         const yy = String(now.getFullYear()).slice(-2)
@@ -164,7 +172,8 @@ export async function createDeliveryOrder(input: {
                 const lot = await tx.stockLot.findUnique({
                     where: { id: line.lotId },
                     include: {
-                        product: { select: { abvPercent: true, productName: true } }
+                        product: { select: { abvPercent: true, productName: true } },
+                        location: { select: { warehouseId: true, warehouse: { select: { name: true } } } },
                     }
                 })
 
@@ -178,6 +187,14 @@ export async function createDeliveryOrder(input: {
                         `Không được xuất lô hàng thuộc sở hữu của pháp nhân khác! ` +
                         `Lô hàng ${lot.lotNo} thuộc sở hữu của pháp nhân (ID: ${lot.ownerEntityId}), ` +
                         `trong khi đơn hàng SO thuộc pháp nhân (ID: ${so.legalEntityId}).`
+                    )
+                }
+
+                // 2. Check lot warehouse matching DO warehouse
+                if (lot.location && lot.location.warehouseId !== warehouseId) {
+                    throw new Error(
+                        `Lô hàng ${lot.lotNo} thuộc kho [${lot.location.warehouse?.name}], không nằm trong Kho xuất hàng của phiếu DO! ` +
+                        `Vui lòng chỉ chọn lô hàng nằm trong chính kho xuất hàng.`
                     )
                 }
 
