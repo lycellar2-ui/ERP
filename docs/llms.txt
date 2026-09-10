@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-09-08 16:05
-> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, BUG-094 Fix Thuong Tin Warehouse Allocation
+> Last updated: 2026-09-10 16:45
+> Status: Production — 29 modules, 124 DB models, 79 enums, 35 dashboard routes, BUG-096 Fix TRF Lot Sequence Collision on Transfer Order Receipt
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 94 rules from 63 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 96 rules from 65 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
  
 ## Tech Stack (Verified)

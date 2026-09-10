@@ -386,6 +386,24 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
             })
             if (!destLocation) throw new Error('Kho nhận chưa có vị trí kệ (Location) nào')
 
+            // Lấy danh sách mã lô TRF hiện tại để tính max sequence theo số (tránh lỗi sắp xếp chuỗi khi độ dài khác nhau)
+            const existingTrfLots = await tx.stockLot.findMany({
+                where: { lotNo: { startsWith: 'TRF-' } },
+                select: { lotNo: true },
+            })
+            const existingLotNos = new Set(existingTrfLots.map((l) => l.lotNo))
+            let maxTrfSeq = 0
+            for (const l of existingTrfLots) {
+                const match = l.lotNo.match(/TRF-(\d+)/)
+                if (match) {
+                    const parsed = parseInt(match[1], 10)
+                    if (!isNaN(parsed) && parsed > maxTrfSeq) {
+                        maxTrfSeq = parsed
+                    }
+                }
+            }
+            let currentTrfSeq = maxTrfSeq
+
             for (const line of to.lines) {
                 // Ước tính giá vốn từ kho xuất
                 const whereSource: any = {
@@ -408,18 +426,12 @@ export async function receiveTransferOrder(id: string): Promise<{ success: boole
                     ownerEntityId = firstLE.id
                 }
 
-                const lastTrf = await tx.stockLot.findFirst({
-                    where: { lotNo: { startsWith: 'TRF-' } },
-                    orderBy: { lotNo: 'desc' },
-                    select: { lotNo: true },
-                })
-                let nextTrfSeq = 1
-                if (lastTrf) {
-                    const parts = lastTrf.lotNo.split('-')
-                    const parsed = parseInt(parts[parts.length - 1], 10)
-                    if (!isNaN(parsed)) nextTrfSeq = parsed + 1
-                }
-                const lotNo = `TRF-${String(nextTrfSeq).padStart(6, '0')}`
+                let lotNo = ''
+                do {
+                    currentTrfSeq++
+                    lotNo = `TRF-${String(currentTrfSeq).padStart(6, '0')}`
+                } while (existingLotNos.has(lotNo))
+                existingLotNos.add(lotNo)
 
                 await tx.stockLot.create({
                     data: {

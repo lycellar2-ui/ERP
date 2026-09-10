@@ -2465,6 +2465,64 @@ Component `TransferDetailDrawer.tsx` gọi hàm `getTransferPickingLocations()` 
 
 > ⚠️ **RULE 94: Kho tổng dự trữ Thường Tín (`WH-TA-TT`) CHỈ ĐƯỢC PHÉP XUẤT QUA PHIẾU ĐIỀU CHUYỂN KHO (Transfer Order), TUYỆT ĐỐI KHÔNG ĐƯỢC TẠO PHIẾU XUẤT BÁN HÀNG (DO). Khi tạo DO xuất kho, BẮT BUỘC phải xác thực chặt chẽ `lot.location.warehouseId === deliveryOrder.warehouseId`, cấm chọn lô chéo kho.**
 
+---
+
+## BUG-095: Cấn Trừ Nhầm Lô Kho Showroom (WH-LYS-SR) Cho Các Đơn Bán Hàng Thắng Ân Xuất Từ Kho Giang Văn Minh
+
+**Severity:** 🔴 Critical / Data Integrity — Inventory Cross-Warehouse Misallocation  
+**Date:** 2026-09-08  
+**Affected Modules:** `WMS` (Warehouse, Delivery Orders, Inventory Lots — `actions-do.ts`, `actions.ts`)
+
+### Triệu chứng
+1. Kiểm tra tồn kho tại Kho Showroom (`WH-LYS-SR`), hai mã rượu Sandy Cove (*Sandy Cove Sauvignon Blanc* `L60001` và *Sandy Cove Pinot Noir* `L60002`) đều hiển thị tồn **0 chai**, dù Showroom không hề bán hết.
+2. Kiểm tra chi tiết phát hiện toàn bộ các đơn hàng của khách hàng Thắng Ân như LABRI, Hummingbird, Ambrys... xuất từ Kho Giang Văn Minh (`WH-TA-GVM`) lại bị cấn trừ vào các lô hàng thuộc Kho Showroom (`WH-LYS-SR`) do pháp nhân Ly's Cellar (`LC`) sở hữu.
+3. Mở rộng rà soát toàn bộ hệ thống phát hiện có **134 dòng DO** (thuộc 53 mã sản phẩm, tổng cộng **273 chai**) bị trừ nhầm vào Kho Showroom theo cùng cơ chế.
+
+### Nguyên nhân gốc rễ
+1. **Lỗi thuật toán FIFO không ràng buộc Kho và Pháp nhân**: Khi phân bổ lô tự động cho các đơn hàng tháng 8, thuật toán duyệt lô hàng theo ngày nhập sớm nhất (`receivedDate ASC`). Lô tại Kho Showroom có ngày nhập là `11/07/2026`, trong khi lô tại Kho Giang Văn Minh có ngày nhập là `01/08/2026`. Do `11/07 < 01/08`, hệ thống đã ưu tiên vét sạch các lô ở Kho Showroom trước.
+2. **Thiếu kiểm tra đối chiếu**: Hàm tạo DO trước đây thiếu điều kiện kiểm tra `lot.location.warehouseId === do.warehouseId` và `lot.ownerEntityId === so.legalEntityId`.
+
+### Cách fix
+1. **Khôi phục dữ liệu**: Chạy transaction nguyên tử chuyển toàn bộ 134 dòng DO trỏ về đúng lô ở Kho Giang Văn Minh (`WH-TA-GVM`), hoàn trả đủ **273 chai** về Kho Showroom (`WH-LYS-SR`).
+2. **Kết quả kiểm chứng sau phục hồi**:
+   - Kho Showroom (`WH-LYS-SR`): Khôi phục nguyên vẹn 10 chai Sandy Cove Sauvignon Blanc (`L60001`) và 7 chai Sandy Cove Pinot Noir (`L60002`).
+   - Kho Giang Văn Minh (`WH-TA-GVM`): Các đơn của LABRI, Hummingbird, Ambrys... trỏ đúng về lô tại GVM, số lượng DO sai lệch về 0.
+   - Toàn bộ 134 dòng DO của Kho GVM giờ đây đều trỏ 100% về các lô thuộc Kho GVM.
+3. **Bảo vệ hệ thống**: Khóa chặt kiểm tra kép trong WMS (`actions-do.ts` & `actions.ts`) theo RULE 94, chặn tuyệt đối việc xuất hàng chéo kho hoặc sai pháp nhân sở hữu.
+
+### Bài học
+
+> ⚠️ **RULE 95: Khi chạy thuật toán phân bổ tồn kho (Fulfillment / Allocation) hoặc tạo DO tự động, BẮT BUỘC phải lọc chính xác `warehouseId` của kho xuất hàng và `legalEntityId` của pháp nhân đơn hàng TRƯỚC KHI sắp xếp theo FIFO/FEFO (`receivedDate`). Tuyệt đối không được tìm kiếm lô khả dụng trên phạm vi toàn công ty mà không cô lập theo kho xuất.**
+
+---
+
+## BUG-096: Lỗi Trùng Lặp Khóa Duy Nhất `lotNo` Khi Nhận Hàng Chuyển Kho (Transfer Order) Nhiều Dòng
+
+**Severity:** 🔴 High / Operational Blocker  
+**Date:** 2026-09-10  
+**Affected Modules:** `WMS` (Transfer Orders, Inventory Stock Lots — `transfers/actions.ts`, `warehouse/actions.ts`, `consignment/actions.ts`)
+
+### Triệu chứng
+Khi người dùng bấm "Xác Nhận Đã Nhận Hàng" trên phiếu chuyển kho (ví dụ: `TO-2608-0005` gồm 13 dòng sản phẩm), giao diện báo lỗi đỏ:
+`Lỗi nhận kho: Invalid prisma.stockLot.create() invocation: Unique constraint failed on the fields: ('lotNo')`.
+
+### Nguyên nhân gốc rễ
+1. **Lỗi sắp xếp chuỗi (Alphabetical Sort Collision)**: Mã lô chuyển kho cũ trong DB có format 5 chữ số (`TRF-00577`), trong khi thuật toán tạo mã mới dùng `padStart(6, '0')` (`TRF-000578`). Do sắp xếp dạng chuỗi trong PostgreSQL, `'TRF-00577' > 'TRF-000578'`, dẫn tới câu lệnh `findFirst({ where: { lotNo: { startsWith: 'TRF-' } }, orderBy: { lotNo: 'desc' } })` luôn trả về mã cũ `TRF-00577`.
+2. **Sinh trùng mã trong vòng lặp**: Câu lệnh `findFirst` nằm bên trong vòng lặp `for (const line of to.lines)`. Khi sang dòng sản phẩm thứ 2, hệ thống tiếp tục lấy `577 + 1 = 578` và cố gắng insert một lô nữa có cùng mã `TRF-000578`, vi phạm ràng buộc duy nhất `@unique` của trường `lotNo`.
+
+### Cách fix
+1. Trong `src/app/dashboard/transfers/actions.ts` (`receiveTransferOrder`):
+   - Đưa việc xác định số thứ tự lớn nhất ra bên ngoài vòng lặp.
+   - Quét danh sách các lô `TRF-` và parse số tự nhiên bằng regex/parseInt để tìm giá trị cực đại thực tế, không phụ thuộc vào thứ tự sắp xếp chuỗi (alphabetical order).
+   - Trong vòng lặp từng dòng sản phẩm, tăng biến đếm số thứ tự liên tục `currentTrfSeq++` và kiểm tra tập `Set(existingLotNos)` để tránh tuyệt đối mọi va chạm mã lô.
+2. Áp dụng chuẩn hóa tương tự cho `src/app/dashboard/consignment/actions.ts` và `src/app/dashboard/warehouse/actions.ts`.
+
+### Bài học
+
+> ⚠️ **RULE 96: Khi sinh mã số tự tăng (như `StockLot.lotNo`, `TransferOrder.transferNo`...) trong các tác vụ xử lý nhiều dòng (batch/loop), BẮT BUỘC phải xác định số thứ tự lớn nhất bằng phép so sánh số học (numeric parsing) bên ngoài vòng lặp, và tuần tự tăng biến đếm trong bộ nhớ (in-memory counter). TUYỆT ĐỐI KHÔNG gọi `findFirst({ orderBy: 'desc' })` dạng chuỗi bên trong vòng lặp vì sẽ gây lỗi va chạm chuỗi khác độ dài và trùng lặp mã duy nhất.**
+
+
+
 
 
 

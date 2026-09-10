@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-08 | Wine ERP v10.18 — BUG-093 Fix React Error #310 in TransferDetailDrawer*
+*Last updated: 2026-09-10 | Wine ERP v10.20 — BUG-096 Fix TRF Lot Sequence Collision on Transfer Order Receipt*
 

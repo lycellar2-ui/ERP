@@ -959,6 +959,25 @@ export async function createConsignmentTransfer(input: {
                 },
             })
 
+            let currentTrfSeq = 0
+            const existingLotNos = new Set<string>()
+            if (input.instantReceive !== false) {
+                const existingTrfLots = await tx.stockLot.findMany({
+                    where: { lotNo: { startsWith: 'TRF-' } },
+                    select: { lotNo: true },
+                })
+                existingTrfLots.forEach((l) => existingLotNos.add(l.lotNo))
+                for (const l of existingTrfLots) {
+                    const match = l.lotNo.match(/TRF-(\d+)/)
+                    if (match) {
+                        const parsed = parseInt(match[1], 10)
+                        if (!isNaN(parsed) && parsed > currentTrfSeq) {
+                            currentTrfSeq = parsed
+                        }
+                    }
+                }
+            }
+
             for (const line of input.lines) {
                 let remaining = Number(line.qtyTransferred)
                 const whereLot: any = {
@@ -999,18 +1018,12 @@ export async function createConsignmentTransfer(input: {
                 const avgCost = Number(line.qtyTransferred) > 0 ? totalCostAmount / Number(line.qtyTransferred) : transferredLotCost
 
                 if (input.instantReceive !== false) {
-                    const lastTrf = await tx.stockLot.findFirst({
-                        where: { lotNo: { startsWith: 'TRF-' } },
-                        orderBy: { lotNo: 'desc' },
-                        select: { lotNo: true },
-                    })
-                    let nextTrfSeq = 1
-                    if (lastTrf) {
-                        const parts = lastTrf.lotNo.split('-')
-                        const parsed = parseInt(parts[parts.length - 1], 10)
-                        if (!isNaN(parsed)) nextTrfSeq = parsed + 1
-                    }
-                    const lotNo = `TRF-${String(nextTrfSeq).padStart(6, '0')}`
+                    let lotNo = ''
+                    do {
+                        currentTrfSeq++
+                        lotNo = `TRF-${String(currentTrfSeq).padStart(6, '0')}`
+                    } while (existingLotNos.has(lotNo))
+                    existingLotNos.add(lotNo)
 
                     const firstLE = await tx.legalEntity.findFirst({ select: { id: true } })
 

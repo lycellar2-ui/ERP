@@ -1475,18 +1475,27 @@ export async function transferStock(input: {
                     },
                 })
             } else {
-                const lastTrfLot = await tx.stockLot.findFirst({
+                const existingTrfLots = await tx.stockLot.findMany({
                     where: { lotNo: { startsWith: 'TRF-' } },
-                    orderBy: { lotNo: 'desc' },
                     select: { lotNo: true },
                 })
-                let nextTrfSeq = 1
-                if (lastTrfLot) {
-                    const parts = lastTrfLot.lotNo.split('-')
-                    const parsed = parseInt(parts[parts.length - 1], 10)
-                    if (!isNaN(parsed)) nextTrfSeq = parsed + 1
+                const existingLotNos = new Set(existingTrfLots.map((l) => l.lotNo))
+                let maxTrfSeq = 0
+                for (const l of existingTrfLots) {
+                    const match = l.lotNo.match(/TRF-(\d+)/)
+                    if (match) {
+                        const parsed = parseInt(match[1], 10)
+                        if (!isNaN(parsed) && parsed > maxTrfSeq) {
+                            maxTrfSeq = parsed
+                        }
+                    }
                 }
-                const lotNo = `TRF-${String(nextTrfSeq).padStart(6, '0')}`
+                let currentTrfSeq = maxTrfSeq
+                let lotNo = ''
+                do {
+                    currentTrfSeq++
+                    lotNo = `TRF-${String(currentTrfSeq).padStart(6, '0')}`
+                } while (existingLotNos.has(lotNo))
 
                 await tx.stockLot.create({
                     data: {
