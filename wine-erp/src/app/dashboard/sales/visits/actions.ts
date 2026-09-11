@@ -40,7 +40,7 @@ export interface CheckOutPayload {
  * a JSON bundle: { thumb: string, full: string }.
  * Keeps list queries lightweight while allowing on-demand full resolution viewing.
  */
-export function parseVisitPhoto(rawPhoto: string | null | undefined): { thumb: string; full: string; hasFull: boolean } {
+function parseVisitPhoto(rawPhoto: string | null | undefined): { thumb: string; full: string; hasFull: boolean } {
     if (!rawPhoto) return { thumb: '', full: '', hasFull: false }
     if (rawPhoto.startsWith('{') && rawPhoto.includes('"thumb"')) {
         try {
