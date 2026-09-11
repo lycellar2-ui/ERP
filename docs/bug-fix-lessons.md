@@ -2521,6 +2521,35 @@ Khi người dùng bấm "Xác Nhận Đã Nhận Hàng" trên phiếu chuyển 
 
 > ⚠️ **RULE 96: Khi sinh mã số tự tăng (như `StockLot.lotNo`, `TransferOrder.transferNo`...) trong các tác vụ xử lý nhiều dòng (batch/loop), BẮT BUỘC phải xác định số thứ tự lớn nhất bằng phép so sánh số học (numeric parsing) bên ngoài vòng lặp, và tuần tự tăng biến đếm trong bộ nhớ (in-memory counter). TUYỆT ĐỐI KHÔNG gọi `findFirst({ orderBy: 'desc' })` dạng chuỗi bên trong vòng lặp vì sẽ gây lỗi va chạm chuỗi khác độ dài và trùng lặp mã duy nhất.**
 
+---
+
+## BUG-097: Không Xem Được Lịch Sử & Ảnh Check-in Trong Ngày (Timezone Desync, Thiếu Feed Tab Hôm Nay & Lỗi Lọc Ngày Client)
+
+**Severity:** 🟡 Medium / UX & Visibility  
+**Date:** 2026-09-11  
+**Affected Modules:** `Sales Field Visits` (`/dashboard/sales/visits`, `SalesVisitsClient.tsx`, `actions.ts`, `page.tsx`)
+
+### Triệu chứng
+1. Nhân viên thị trường check-in hoặc check-out tại điểm bán thành công (có chụp ảnh camera thực tế), nhưng trên tab "Check-in Hôm Nay" chỉ hiển thị các điểm lên lịch mà không hề thấy hình ảnh check-in vừa chụp hay nhật ký công việc đã xong trong ngày.
+2. Tại tab "Lịch Sử & Hình Ảnh", bảng danh sách báo trống hoặc không lọc được chính xác ảnh chụp trong ngày, bộ lọc ngày bị khóa cứng theo UTC và quản lý không xem được ảnh của tất cả nhân viên.
+
+### Nguyên nhân gốc rễ
+1. **Lệch múi giờ UTC vs Local (Timezone Desync)**: Hàm `getSalesVisits` trong `actions.ts` dùng `${filters.date}T00:00:00.000Z` (UTC 00:00 = 07:00 sáng tại Việt Nam). Các ca check-in sáng sớm hoặc lệch ngày UTC bị bỏ lọt khỏi câu query.
+2. **Tab 1 ("Check-in Hôm Nay") chỉ render `todayPlanVisits`**: Tab này chỉ hiển thị danh sách các điểm đã lên lịch trước (`PLANNED`). Khi ca check-in hoàn tất hoặc nhân viên đi khách đột xuất (`UNPLANNED`), dữ liệu check-in thực tế kèm ảnh chụp không có container hiển thị trên Tab 1.
+3. **`initialVisits` trong `page.tsx` bị ép lọc chỉ ngày hôm nay**: `getSalesVisits({ date: todayStr })` khiến initial state chỉ lấy ngày hôm nay, nếu đầu ngày chưa ai check-in thì tab Lịch sử bị rỗng hoàn toàn.
+4. **Lỗi map trên client**: Tab 4 lọc `historyVisits.filter` nhưng vòng lặp render bên dưới lại gọi `historyVisits.map` thay vì mảng đã lọc, và không có nút xóa nhanh lọc ngày.
+
+### Cách fix
+1. **Chuẩn hóa Timezone**: Trong `actions.ts` và `SalesVisitsClient.tsx`, chuyển toàn bộ logic so khớp ngày sang múi giờ Việt Nam (`+07:00` và `Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })`).
+2. **Bổ sung Feed ảnh & nhật ký thực tế trên Tab 1**: Thêm section **"Ảnh & Lượt Check-in Thực Tế Hôm Nay"** ngay dưới danh sách lịch hẹn: hiển thị trực quan ảnh check-in, ảnh check-out, thời gian vào/ra, toạ độ Google Maps, và ghi chú kết quả. Bấm ảnh phóng to xem chi tiết kèm watermark và nút tải ảnh.
+3. **Cải tiến Tab 4 (Lịch Sử)**: Thêm các chip chọn nhanh `[Tất Cả]`, `[Hôm Nay]`, nút clear ngày, bộ chọn Sale hỗ trợ `Tất cả nhân viên`, và map chính xác `filteredHistoryVisits`.
+4. **`page.tsx` nạp toàn bộ lượt viếng thăm gần nhất**: `getSalesVisits()` không ép cứng date filter lúc tải trang để đảm bảo dữ liệu luôn sẵn sàng.
+
+### Bài học
+
+> ⚠️ **RULE 97: Đối với các module thực địa có ảnh chụp và toạ độ GPS (như Field Visit / Check-in), BẮT BUỘC phải chuẩn hóa định dạng ngày theo múi giờ địa phương (`Asia/Ho_Chi_Minh` / `+07:00`) khi truy vấn DB; đồng thời giao diện Check-in trong ngày (Daily Tab) PHẢI CÓ container hiển thị ảnh chụp camera thực tế & nhật ký hoàn thành ngay sau khi thao tác, không bắt người dùng phải tự tìm sang tab Lịch sử.**
+
+
 
 
 
