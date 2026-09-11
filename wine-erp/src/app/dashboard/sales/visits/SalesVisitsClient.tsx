@@ -10,7 +10,8 @@ import {
 import {
     checkInSalesVisit, checkOutSalesVisit, getSalesVisits, getActiveVisit,
     reverseGeocodeAction, quickCreateProspectCustomer, getWeeklyPlanWithVisits,
-    saveWeeklyPlanAction, submitWeeklyReportAction, saveManagerFeedbackAction
+    saveWeeklyPlanAction, submitWeeklyReportAction, saveManagerFeedbackAction,
+    getTeamWeeklySalesOverview
 } from './actions'
 import { LiveCameraModal } from './LiveCameraModal'
 import { toast } from 'sonner'
@@ -194,11 +195,20 @@ function SearchableCustomerCombobox({
 }
 
 export function SalesVisitsClient({ initialVisits, customers, users, currentUserId, currentUserName, isManager }: Props) {
-    const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY'>('CHECKIN')
+    const [activeTab, setActiveTab] = useState<'PLANNING' | 'CHECKIN' | 'REVIEW' | 'HISTORY' | 'MANAGEMENT'>('CHECKIN')
     const [localCustomers, setLocalCustomers] = useState(customers)
     const [selectedSalespersonId, setSelectedSalespersonId] = useState(currentUserId)
     const [activeVisit, setActiveVisit] = useState<any | null>(null)
     const [loadingActive, setLoadingActive] = useState(true)
+
+    // Team Overview State (Exclusively for Manager / CEO)
+    const [teamData, setTeamData] = useState<any | null>(null)
+    const [loadingTeam, setLoadingTeam] = useState(false)
+    const [inspectingSale, setInspectingSale] = useState<any | null>(null)
+    const [teamFilterSearch, setTeamFilterSearch] = useState('')
+    const [inspectSubTab, setInspectSubTab] = useState<'PHOTOS' | 'PLAN' | 'APPROVAL'>('PHOTOS')
+    const [inspectFeedbackText, setInspectFeedbackText] = useState('')
+    const [savingInspectFeedback, setSavingInspectFeedback] = useState(false)
 
     // Current Week state
     const today = useMemo(() => new Date(), [])
@@ -423,6 +433,76 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
     useEffect(() => {
         fetchHistoryVisits()
     }, [fetchHistoryVisits])
+
+    // Load Team Overview (Manager / CEO only)
+    const loadTeamData = useCallback(async () => {
+        if (!isManager) return
+        setLoadingTeam(true)
+        const res = await getTeamWeeklySalesOverview(currentWeek.week, currentWeek.year)
+        if (res.success) {
+            setTeamData(res)
+        } else {
+            toast.error(res.error || 'Lỗi tải tổng quan đội sale')
+        }
+        setLoadingTeam(false)
+    }, [isManager, currentWeek])
+
+    useEffect(() => {
+        if (isManager) {
+            loadTeamData()
+        }
+    }, [isManager, currentWeek, loadTeamData])
+
+    const teamMetrics = useMemo(() => {
+        if (!teamData || !teamData.items) return null
+        const items = teamData.items as any[]
+        const totalSales = items.length
+        const totalPlanned = items.reduce((acc, i) => acc + (i.plannedCount || 0), 0)
+        const totalCompleted = items.reduce((acc, i) => acc + (i.completedCount || 0), 0)
+        const overallRate = totalPlanned > 0 ? Math.min(100, Math.round((totalCompleted / totalPlanned) * 100)) : 0
+        const pendingReview = items.filter(i => i.planStatus === 'SUBMITTED').length
+        return { totalSales, totalPlanned, totalCompleted, overallRate, pendingReview }
+    }, [teamData])
+
+    const filteredTeamItems = useMemo(() => {
+        if (!teamData || !teamData.items) return []
+        const q = teamFilterSearch.trim().toLowerCase()
+        if (!q) return teamData.items
+        return teamData.items.filter((i: any) =>
+            i.salespersonName?.toLowerCase().includes(q) ||
+            i.salespersonEmail?.toLowerCase().includes(q)
+        )
+    }, [teamData, teamFilterSearch])
+
+    const handleSaveInspectFeedback = async () => {
+        if (!inspectingSale?.planId) {
+            toast.error('Nhân viên này chưa có bản ghi kế hoạch tuần để duyệt')
+            return
+        }
+        if (!inspectFeedbackText.trim()) {
+            toast.error('Vui lòng nhập nội dung nhận xét hoặc chỉ đạo của Quản lý / CEO')
+            return
+        }
+        setSavingInspectFeedback(true)
+        const res = await saveManagerFeedbackAction({
+            planId: inspectingSale.planId,
+            managerFeedback: inspectFeedbackText.trim(),
+            managerId: currentUserId,
+        })
+        if (res.success) {
+            toast.success(`Đã phê duyệt và lưu nhận xét cho ${inspectingSale.salespersonName}!`)
+            await loadTeamData()
+            setInspectingSale((prev: any) => prev ? {
+                ...prev,
+                planStatus: 'APPROVED',
+                managerFeedback: inspectFeedbackText.trim(),
+                reviewedAt: new Date().toISOString()
+            } : null)
+        } else {
+            toast.error(res.error || 'Lỗi khi lưu nhận xét')
+        }
+        setSavingInspectFeedback(false)
+    }
 
     // Compute dates for current selected week (Monday to Sunday)
     const weekDates = useMemo(() => {
@@ -848,6 +928,24 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                     <FileText size={15} className={activeTab === 'HISTORY' ? 'text-teal-600 dark:text-[#87CBB9]' : ''} />
                     <span>Lịch Sử & Hình Ảnh</span>
                 </button>
+
+                {isManager && (
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('MANAGEMENT')}
+                        className={`flex-1 min-w-[170px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                            activeTab === 'MANAGEMENT'
+                                ? 'bg-amber-500 text-white shadow-sm font-black'
+                                : 'text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300'
+                        }`}
+                    >
+                        <Award size={15} />
+                        <span>👑 Giám Sát Thị Trường (CEO)</span>
+                        {teamData && teamData.items?.filter((i: any) => i.planStatus === 'SUBMITTED').length > 0 && (
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" title="Có báo cáo tuần chờ duyệt" />
+                        )}
+                    </button>
+                )}
             </div>
 
             {/* ============================================================== */}
@@ -1805,6 +1903,491 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* TAB 5: GIÁM SÁT THỊ TRƯỜNG DÀNH RIÊNG CHO QUẢN LÝ / CEO */}
+            {/* ============================================================== */}
+            {activeTab === 'MANAGEMENT' && isManager && (
+                <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* Header Controls for Management View */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111C24] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-[#223645]">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#142433] p-1 rounded-xl border border-slate-200 dark:border-[#2A4355]">
+                                <button type="button" onClick={handlePrevWeek} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <button type="button" onClick={handleCurrentWeek} className="px-3 py-1 rounded-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
+                                    Tuần Này
+                                </button>
+                                <button type="button" onClick={handleNextWeek} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1F3342] cursor-pointer">
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500/20 text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                        Executive Board
+                                    </span>
+                                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                        Bảng Giám Sát Kế Hoạch & Ảnh Thị Trường Tuần {currentWeek.week} / {currentWeek.year}
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-[#8AAEBB] mt-0.5">
+                                    {teamData?.weekRange ? `Từ ${teamData.weekRange.startStr} đến ${teamData.weekRange.endStr}` : 'Toàn bộ đội ngũ Sales'} • Đối soát Kế hoạch vs Thực tế & Soi ảnh thực địa
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={loadTeamData}
+                                disabled={loadingTeam}
+                                className="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-slate-700 dark:text-[#8AAEBB] flex items-center gap-1.5 transition cursor-pointer"
+                            >
+                                <RefreshCw size={13} className={loadingTeam ? "animate-spin" : ""} />
+                                Làm mới dữ liệu
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* KPI Summary Cards */}
+                    {teamMetrics && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                            <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Đội ngũ Sales</span>
+                                <div className="text-2xl font-black text-slate-900 dark:text-white font-mono">
+                                    {teamMetrics.totalSales}
+                                </div>
+                                <span className="text-[10px] text-slate-400">Nhân sự hoạt động</span>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Tổng Kế Hoạch Tuần</span>
+                                <div className="text-2xl font-black text-slate-900 dark:text-white font-mono">
+                                    {teamMetrics.totalPlanned}
+                                </div>
+                                <span className="text-[10px] text-slate-400">Điểm đã lên lịch</span>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Đã Check-in Thực Tế</span>
+                                <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                                    {teamMetrics.totalCompleted}
+                                </div>
+                                <span className="text-[10px] text-slate-400">Điểm có ảnh & GPS</span>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                                <span className="text-[11px] font-semibold text-teal-600 dark:text-[#87CBB9]">Tỷ Lệ Hoàn Thành</span>
+                                <div className="text-2xl font-black text-teal-600 dark:text-[#87CBB9] font-mono">
+                                    {teamMetrics.overallRate}%
+                                </div>
+                                <span className="text-[10px] text-slate-400">Tiến độ toàn đội</span>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#223645] space-y-1">
+                                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">Báo Cáo Chờ Duyệt</span>
+                                <div className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
+                                    {teamMetrics.pendingReview}
+                                </div>
+                                <span className="text-[10px] text-slate-400">Chờ Quản lý/CEO duyệt</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Team Matrix Table */}
+                    <div className="rounded-2xl border border-slate-200 dark:border-[#223645] bg-white dark:bg-[#111C24] shadow-xs overflow-hidden">
+                        <div className="p-4 bg-slate-50/50 dark:bg-[#142433]/50 border-b border-slate-200 dark:border-[#223645] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                                    Bảng Ma Trận Kế Hoạch vs Thực Tế Từng Nhân Viên
+                                </h4>
+                                <p className="text-[11px] text-slate-500 dark:text-[#8AAEBB]">
+                                    Bấm "Kiểm Tra Kế Hoạch & Soi Ảnh" để xem lịch chi tiết và duyệt ảnh thực địa của từng bạn
+                                </p>
+                            </div>
+
+                            <div className="relative w-full sm:w-64">
+                                <input
+                                    type="text"
+                                    value={teamFilterSearch}
+                                    onChange={e => setTeamFilterSearch(e.target.value)}
+                                    placeholder="Tìm tên hoặc email sale..."
+                                    className="w-full pl-8 pr-3 py-1.5 text-xs outline-none rounded-xl bg-white dark:bg-[#111C24] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white focus:border-teal-500"
+                                />
+                                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                            </div>
+                        </div>
+
+                        {loadingTeam ? (
+                            <div className="py-16 text-center text-xs text-slate-400">
+                                <RefreshCw size={24} className="mx-auto animate-spin text-teal-600 mb-2" />
+                                Đang tổng hợp dữ liệu toàn đội sale...
+                            </div>
+                        ) : filteredTeamItems.length === 0 ? (
+                            <div className="py-16 text-center text-xs text-slate-400">
+                                Không tìm thấy nhân viên nào khớp với tìm kiếm.
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs text-left">
+                                    <thead>
+                                        <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
+                                            <th className="p-3.5 font-bold">Nhân Viên Sale</th>
+                                            <th className="p-3.5 font-bold text-center">Kế Hoạch (Lên Lịch)</th>
+                                            <th className="p-3.5 font-bold text-center">Thực Tế (Đã Check-in)</th>
+                                            <th className="p-3.5 font-bold text-center">Đột Xuất</th>
+                                            <th className="p-3.5 font-bold">Tiến Độ Hoàn Thành</th>
+                                            <th className="p-3.5 font-bold text-center">Trạng Thái Báo Cáo</th>
+                                            <th className="p-3.5 font-bold text-right">Thao Tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
+                                        {filteredTeamItems.map((item: any) => (
+                                            <tr key={item.salespersonId} className="hover:bg-slate-50/80 dark:hover:bg-[#16232F] transition">
+                                                <td className="p-3.5">
+                                                    <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                        <User size={13} className="text-teal-600 dark:text-[#87CBB9]" />
+                                                        {item.salespersonName}
+                                                        {item.salespersonId === currentUserId && (
+                                                            <span className="text-[10px] text-slate-400 font-normal">(Tôi)</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                                        {item.salespersonEmail}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3.5 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                    {item.plannedCount} điểm
+                                                </td>
+                                                <td className="p-3.5 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                                    {item.completedCount} điểm
+                                                </td>
+                                                <td className="p-3.5 text-center font-mono text-amber-600 dark:text-amber-400 font-bold">
+                                                    {item.unplannedCount > 0 ? `+${item.unplannedCount}` : '—'}
+                                                </td>
+                                                <td className="p-3.5 min-w-[140px]">
+                                                    <div className="flex items-center justify-between text-[11px] mb-1 font-mono">
+                                                        <span className="font-bold text-teal-600 dark:text-[#87CBB9]">{item.completionRate}%</span>
+                                                        <span className="text-slate-400">{item.completedCount}/{item.plannedCount}</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full transition-all duration-300 ${
+                                                                item.completionRate >= 100 ? 'bg-emerald-500' :
+                                                                item.completionRate >= 70 ? 'bg-teal-500' :
+                                                                item.completionRate >= 40 ? 'bg-amber-500' : 'bg-red-500'
+                                                            }`}
+                                                            style={{ width: `${Math.min(100, item.completionRate)}%` }}
+                                                        />
+                                                    </div>
+                                                </td>
+                                                <td className="p-3.5 text-center whitespace-nowrap">
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                                        item.planStatus === 'APPROVED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                                                        item.planStatus === 'SUBMITTED' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse' :
+                                                        item.planStatus === 'DRAFT' ? 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300' :
+                                                        'bg-slate-100 dark:bg-slate-800/60 text-slate-400'
+                                                    }`}>
+                                                        {item.planStatus === 'APPROVED' ? '✓ Đã Duyệt' :
+                                                         item.planStatus === 'SUBMITTED' ? '⏳ Chờ Duyệt' :
+                                                         item.planStatus === 'DRAFT' ? 'Bản Nháp' : 'Chưa Lên Lịch'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3.5 text-right whitespace-nowrap">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setInspectingSale(item)
+                                                            setInspectSubTab('PHOTOS')
+                                                            setInspectFeedbackText(item.managerFeedback || '')
+                                                        }}
+                                                        className="px-3 py-1.5 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white dark:bg-[#87CBB9] dark:text-[#0A1926] inline-flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                                                    >
+                                                        <Eye size={13} />
+                                                        Kiểm Tra Kế Hoạch & Soi Ảnh
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* MODAL: INSPECT SALE'S PLAN, ACTUAL PHOTOS & APPROVAL */}
+            {/* ============================================================== */}
+            {inspectingSale && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs" onClick={() => setInspectingSale(null)}>
+                    <div
+                        className="w-full max-w-4xl max-h-[92vh] bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl flex flex-col space-y-4 animate-in zoom-in-95"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-[#223645] pb-4">
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-teal-500/20 text-teal-600 dark:text-[#87CBB9] uppercase">
+                                        Chi Tiết Đi Thực Địa
+                                    </span>
+                                    <span className="text-xs text-slate-400 font-mono">
+                                        Tuần {currentWeek.week} / {currentWeek.year}
+                                    </span>
+                                </div>
+                                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1 flex items-center gap-2">
+                                    <User size={18} className="text-teal-600 dark:text-[#87CBB9]" />
+                                    {inspectingSale.salespersonName}
+                                    <span className="text-xs font-normal font-mono text-slate-400">({inspectingSale.salespersonEmail})</span>
+                                </h3>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="text-right text-xs">
+                                    <div className="font-bold text-teal-600 dark:text-[#87CBB9]">
+                                        {inspectingSale.completedCount}/{inspectingSale.plannedCount} Điểm ({inspectingSale.completionRate}%)
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-mono">
+                                        {inspectingSale.unplannedCount > 0 ? `+${inspectingSale.unplannedCount} đột xuất` : '0 đột xuất'}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setInspectingSale(null)}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Sub-Tabs */}
+                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-[#223645] pb-2 text-xs font-bold">
+                            <button
+                                type="button"
+                                onClick={() => setInspectSubTab('PHOTOS')}
+                                className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition cursor-pointer ${
+                                    inspectSubTab === 'PHOTOS'
+                                        ? 'bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926]'
+                                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                                }`}
+                            >
+                                <Camera size={14} />
+                                <span>Soi Ảnh Check-in Thực Tế ({inspectingSale.actualVisits?.length || 0})</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setInspectSubTab('PLAN')}
+                                className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition cursor-pointer ${
+                                    inspectSubTab === 'PLAN'
+                                        ? 'bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926]'
+                                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                                }`}
+                            >
+                                <Calendar size={14} />
+                                <span>Kế Hoạch Cả Tuần ({inspectingSale.plannedVisits?.length || 0})</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setInspectSubTab('APPROVAL')}
+                                className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition cursor-pointer ${
+                                    inspectSubTab === 'APPROVAL'
+                                        ? 'bg-teal-600 text-white dark:bg-[#87CBB9] dark:text-[#0A1926]'
+                                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                                }`}
+                            >
+                                <CheckCircle2 size={14} />
+                                <span>Tự Đánh Giá & Phê Duyệt</span>
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                            {/* SUB-TAB 1: PHOTOS */}
+                            {inspectSubTab === 'PHOTOS' && (
+                                <div className="space-y-4">
+                                    {(!inspectingSale.actualVisits || inspectingSale.actualVisits.length === 0) ? (
+                                        <div className="py-16 text-center text-xs text-slate-400 space-y-2">
+                                            <Camera size={32} className="mx-auto text-slate-300 dark:text-slate-600" />
+                                            <p className="font-semibold text-slate-600 dark:text-slate-300">Nhân viên này chưa có ảnh check-in nào trong tuần này.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {inspectingSale.actualVisits.map((v: any) => (
+                                                <div
+                                                    key={v.id}
+                                                    className="p-3.5 rounded-xl border border-slate-200 dark:border-[#223645] bg-slate-50/50 dark:bg-[#16232F]/50 space-y-3"
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="font-mono text-xs font-bold text-teal-600 dark:text-[#87CBB9]">
+                                                                    {v.visitNo}
+                                                                </span>
+                                                                {v.isUnplanned && (
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                                                                        Đột xuất
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mt-1">
+                                                                {v.customerName}
+                                                            </h5>
+                                                            <p className="text-[10px] text-slate-400 font-mono">
+                                                                [{v.customerCode}] • {v.customerChannel}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="text-right font-mono text-xs font-bold text-teal-600 dark:text-[#87CBB9]">
+                                                            {new Date(v.checkInTime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} {' '}
+                                                            {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Photo Thumbnail */}
+                                                    {v.checkInPhoto ? (
+                                                        <div
+                                                            className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-[#2A4355] bg-black/40 group cursor-pointer shadow-xs"
+                                                            onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName} (Sale: ${inspectingSale.salespersonName})`, url: v.checkInPhoto })}
+                                                        >
+                                                            <img
+                                                                src={v.checkInPhoto}
+                                                                alt="Check-in Photo"
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1.5 backdrop-blur-xs">
+                                                                <Eye size={16} /> Bấm xem ảnh lớn & watermark
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="aspect-video rounded-xl bg-slate-100 dark:bg-[#1B2E3D] flex items-center justify-center text-[10px] text-slate-400">
+                                                            Chưa có ảnh
+                                                        </div>
+                                                    )}
+
+                                                    {/* GPS & Address */}
+                                                    {v.checkInAddress && (
+                                                        <div className="text-[11px] text-slate-600 dark:text-[#8AAEBB] flex items-center gap-1.5">
+                                                            <MapPin size={12} className="text-teal-600 shrink-0" />
+                                                            <span className="truncate" title={v.checkInAddress}>{v.checkInAddress}</span>
+                                                            {v.checkInLat && v.checkInLng && (
+                                                                <a
+                                                                    href={`https://www.google.com/maps?q=${v.checkInLat},${v.checkInLng}`}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="text-teal-600 dark:text-[#87CBB9] hover:underline font-mono text-[10px] shrink-0 font-bold ml-1"
+                                                                >
+                                                                    [Maps]
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Notes */}
+                                                    {v.notes && (
+                                                        <div className="p-2 rounded-lg bg-white dark:bg-[#1B2E3D] text-[11px] text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-[#2A4355]">
+                                                            <strong>Ghi chú:</strong> {v.notes}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* SUB-TAB 2: PLAN */}
+                            {inspectSubTab === 'PLAN' && (
+                                <div className="space-y-3">
+                                    {(!inspectingSale.plannedVisits || inspectingSale.plannedVisits.length === 0) ? (
+                                        <div className="py-16 text-center text-xs text-slate-400">
+                                            Nhân viên chưa lên lịch khách nào trong kế hoạch tuần này.
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-slate-100 dark:divide-[#223645] border border-slate-200 dark:border-[#223645] rounded-xl overflow-hidden bg-white dark:bg-[#111C24]">
+                                            {inspectingSale.plannedVisits.map((pv: any, pvIdx: number) => (
+                                                <div key={pv.id || pvIdx} className="p-3 text-xs flex items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-[#16232F]">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-mono text-teal-600 dark:text-[#87CBB9] font-bold">
+                                                                {pv.visitDate} ({getVietnameseDayName(pv.visitDate)})
+                                                            </span>
+                                                            <span className="font-bold text-slate-900 dark:text-white">
+                                                                [{pv.customerCode}] {pv.customerName}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                            Mục tiêu: {pv.purpose}
+                                                        </p>
+                                                    </div>
+
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                                        pv.status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-[#1B2E3D] text-slate-500'
+                                                    }`}>
+                                                        {pv.status === 'COMPLETED' ? '✓ Đã viếng thăm' : 'Chưa đi'}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* SUB-TAB 3: APPROVAL & FEEDBACK */}
+                            {inspectSubTab === 'APPROVAL' && (
+                                <div className="space-y-4 text-xs">
+                                    {/* Self Review Box */}
+                                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#16232F] border border-slate-200 dark:border-[#223645] space-y-1.5">
+                                        <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                                            <span>Nội dung nhân viên tự đánh giá tuần:</span>
+                                            <span className="text-[10px] font-mono text-slate-400">
+                                                {inspectingSale.submittedAt ? `Nộp lúc: ${new Date(inspectingSale.submittedAt).toLocaleDateString('vi-VN')} ${new Date(inspectingSale.submittedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Chưa nộp'}
+                                            </span>
+                                        </div>
+                                        <p className="text-slate-800 dark:text-slate-100 italic bg-white dark:bg-[#111C24] p-3 rounded-lg border border-slate-200/70 dark:border-[#223645]">
+                                            {inspectingSale.selfReview || 'Nhân viên chưa viết tự đánh giá tuần này.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Manager Feedback Form */}
+                                    <div className="space-y-2">
+                                        <label className="block font-bold text-slate-700 dark:text-slate-200">
+                                            Nhận xét & Chỉ đạo của Quản lý / CEO:
+                                        </label>
+                                        <textarea
+                                            rows={4}
+                                            value={inspectFeedbackText}
+                                            onChange={e => setInspectFeedbackText(e.target.value)}
+                                            placeholder="Ghi nhận xét đánh giá hiệu suất, khen thưởng hoặc nhắc nhở điểm bán cần lưu ý tuần tới..."
+                                            className="w-full p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-200 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-teal-500 text-xs"
+                                        />
+                                        <div className="flex items-center justify-between pt-2">
+                                            <span className="text-[11px] text-slate-400">
+                                                {inspectingSale.reviewedAt && `Đã duyệt lần cuối: ${new Date(inspectingSale.reviewedAt).toLocaleDateString('vi-VN')}`}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveInspectFeedback}
+                                                disabled={savingInspectFeedback || !inspectingSale.planId}
+                                                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer disabled:opacity-50"
+                                            >
+                                                <CheckCircle2 size={15} />
+                                                {savingInspectFeedback ? 'Đang lưu...' : '✓ Phê Duyệt Kế Hoạch Tuần & Lưu Đánh Giá'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

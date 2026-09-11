@@ -624,3 +624,128 @@ export async function saveManagerFeedbackAction(input: {
         return { success: false, error: err.message || 'Không thể lưu nhận xét của quản lý' }
     }
 }
+
+// -------------------------------------------------------------
+// MANAGER / CEO OVERVIEW ACTION
+// -------------------------------------------------------------
+export async function getTeamWeeklySalesOverview(weekNumber: number, year: number) {
+    try {
+        // Compute Monday - Sunday dates for the week
+        const simple = new Date(year, 0, 1 + (weekNumber - 1) * 7)
+        const dow = simple.getDay()
+        const ISOweekStart = new Date(simple)
+        if (dow <= 4) {
+            ISOweekStart.setDate(simple.getDate() - (simple.getDay() || 7) + 1)
+        } else {
+            ISOweekStart.setDate(simple.getDate() + 8 - (simple.getDay() || 7))
+        }
+        
+        const start = new Date(ISOweekStart.getFullYear(), ISOweekStart.getMonth(), ISOweekStart.getDate(), 0, 0, 0)
+        const end = new Date(start)
+        end.setDate(start.getDate() + 6)
+        end.setHours(23, 59, 59, 999)
+
+        // 1. Get all active users
+        const users = await prisma.user.findMany({
+            where: { status: 'ACTIVE' },
+            select: { id: true, name: true, email: true },
+            orderBy: { name: 'asc' }
+        })
+
+        // 2. Fetch all weekly plans for this week
+        const plans = await prisma.weeklyVisitPlan.findMany({
+            where: { weekNumber, year },
+            include: {
+                visits: {
+                    include: {
+                        customer: { select: { id: true, code: true, name: true, channel: true } }
+                    },
+                    orderBy: { visitDate: 'asc' }
+                }
+            }
+        })
+
+        // 3. Fetch all actual sales visits in this week
+        const actualVisits = await prisma.salesVisit.findMany({
+            where: {
+                checkInTime: { gte: start, lte: end }
+            },
+            include: {
+                customer: { select: { id: true, code: true, name: true, channel: true } },
+                salesperson: { select: { id: true, name: true, email: true } },
+            },
+            orderBy: { checkInTime: 'desc' }
+        })
+
+        // 4. Aggregate by user
+        const items = users.map(u => {
+            const plan = plans.find(p => p.salesRepId === u.id)
+            const uVisits = actualVisits.filter(v => v.salespersonId === u.id)
+            const plannedVisits = plan?.visits || []
+            const plannedCount = plannedVisits.length
+            const completedCount = uVisits.filter(v => v.status === 'COMPLETED').length
+            const unplannedCount = uVisits.filter(v => v.isUnplanned).length
+            const completionRate = plannedCount > 0 ? Math.min(100, Math.round((completedCount / plannedCount) * 100)) : 0
+
+            return {
+                salespersonId: u.id,
+                salespersonName: u.name,
+                salespersonEmail: u.email,
+                planId: plan?.id || null,
+                planStatus: plan?.status || 'NOT_CREATED', // NOT_CREATED, DRAFT, SUBMITTED, APPROVED
+                plannedCount,
+                completedCount,
+                unplannedCount,
+                completionRate,
+                planNote: plan?.note || '',
+                selfReview: plan?.selfReview || '',
+                managerFeedback: plan?.managerFeedback || '',
+                submittedAt: plan?.submittedAt?.toISOString() || null,
+                reviewedAt: plan?.reviewedAt?.toISOString() || null,
+                plannedVisits: plannedVisits.map(pv => ({
+                    id: pv.id,
+                    visitDate: pv.visitDate.toISOString().split('T')[0],
+                    customerId: pv.customerId,
+                    customerName: pv.customer?.name || 'Khách hàng',
+                    customerCode: pv.customer?.code || '',
+                    customerChannel: pv.customer?.channel || '',
+                    purpose: pv.purpose,
+                    status: pv.status,
+                    resultNotes: pv.resultNotes,
+                })),
+                actualVisits: uVisits.map(av => ({
+                    id: av.id,
+                    visitNo: av.visitNo,
+                    customerId: av.customerId,
+                    customerName: av.customer?.name || 'Khách hàng',
+                    customerCode: av.customer?.code || '',
+                    customerChannel: av.customer?.channel || '',
+                    checkInTime: av.checkInTime.toISOString(),
+                    checkInAddress: av.checkInAddress,
+                    checkInLat: av.checkInLat,
+                    checkInLng: av.checkInLng,
+                    checkInPhoto: av.checkInPhoto,
+                    status: av.status,
+                    isUnplanned: av.isUnplanned,
+                    purpose: av.purpose,
+                    notes: av.notes,
+                }))
+            }
+        })
+
+        return {
+            success: true,
+            weekNumber,
+            year,
+            weekRange: {
+                startStr: start.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
+                endStr: end.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+            },
+            items,
+        }
+    } catch (err: any) {
+        console.error('getTeamWeeklySalesOverview error:', err)
+        return { success: false, error: err.message || 'Lỗi khi tải tổng quan đội sale' }
+    }
+}
+

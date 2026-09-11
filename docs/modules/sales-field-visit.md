@@ -45,18 +45,37 @@ Module Hành trình thị trường (Sales Field Operations) quản lý toàn b�
 - **Nhận xét của Quản lý:** Trưởng phòng/Admin xem báo cáo tuần của từng nhân viên và lưu nhận xét chỉ đạo (`saveManagerFeedbackAction`, trạng thái `APPROVED`).
 
 ### 4. Lịch Sử & Tra Cứu Hình Ảnh
-- Bảng lịch sử đa cột: Mã Visit, Khách hàng, Ảnh check-in/check-out, Giờ đến/về, Thời lượng, Toạ độ Google Maps, Ghi chú kết quả.
+- Bảng lịch sử đa cột: Mã Visit, Khách hàng, Ảnh check-in, Giờ đến, Toạ độ Google Maps, Ghi chú kết quả.
 - Modal phóng to ảnh gốc, hỗ trợ tải ảnh về máy.
+
+### 5. 👑 Giám Sát Thị Trường Dành Cho Quản Lý & CEO (Executive Field Operations Board)
+- **Phân quyền bảo mật (Role-gated):** Tab thứ 5 (`MANAGEMENT`) chỉ hiển thị độc quyền cho các tài khoản Quản lý / Ban Giám Đốc (`isManager === true`: `Admin`, `Sales Manager`, `CEO`, `Manager`, `Ban Giám Đốc`). Sale thông thường hoàn toàn không nhìn thấy tab này, tránh rác và lộ dữ liệu toàn đội.
+- **Top KPI Đội ngũ:**
+  - Quy mô đội ngũ Sales
+  - Tổng kế hoạch điểm bán toàn đội trong tuần
+  - Tổng số điểm đã check-in thực tế thành công kèm ảnh chụp
+  - Tỷ lệ hoàn thành trung bình toàn công ty (%)
+  - Số lượng báo cáo tuần đang chờ CEO/Quản lý phê duyệt
+- **Ma trận Theo dõi Toàn Đội Ngũ (Team Matrix Table):**
+  - Danh sách từng Sale với avatar, chức vụ, email.
+  - Thống kê đối soát trực diện: Điểm Lên Lịch vs Thực Tế Check-in vs Đột Xuất.
+  - Thanh tiến độ trực quan với màu sắc theo tỷ lệ % (Emerald khi đạt cao, Amber/Rose khi chậm).
+  - Trạng thái báo cáo tuần: Đã nộp (Chờ duyệt) / Đã duyệt / Chưa nộp.
+  - Nút bấm `Kiểm Tra Kế Hoạch & Soi Ảnh` mở cửa sổ thẩm định chi tiết.
+- **Cửa Sổ Soi Xét Toàn Diện (Field Inspection Drill-down Modal):**
+  - **Sub-tab 1: 📸 Soi Ảnh & Định Vị GPS:** Hiển thị lưới hình ảnh chụp thực địa của nhân viên, nhấp phóng to xem chi tiết watermark (tên điểm bán, ngày giờ, toạ độ GPS nét to), có link `Mở Google Maps` kiểm tra vị trí thực tế tại điểm bán.
+  - **Sub-tab 2: 📅 Lịch Trình Tuần:** Bảng kê 7 ngày chi tiết của nhân sự, trạng thái từng điểm hẹn, mục đích đi khách.
+  - **Sub-tab 3: ✍️ Phê Duyệt & Đánh Giá:** Đọc bản tự đánh giá của Sale, Quản lý/CEO nhập nhận xét chỉ đạo trực tiếp và ấn nút `Phê Duyệt Kế Hoạch Tuần & Lưu Đánh Giá`.
 
 ## Files
 
 | File | Vai trò |
 |---|---|
 | `next.config.ts` | Cấu hình `Permissions-Policy: camera=(self), geolocation=(self)` cho phép trình duyệt sử dụng Camera và GPS |
-| `actions.ts` | `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `checkOutSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()` |
-| `SalesVisitsClient.tsx` | Client component 4-tab hoàn chỉnh: Check-in hôm nay, Kế hoạch tuần, Tổng kết & Review tuần, Lịch sử |
+| `actions.ts` | `reverseGeocodeAction()`, `quickCreateProspectCustomer()`, `checkInSalesVisit()`, `checkOutSalesVisit()`, `getWeeklyPlanWithVisits()`, `saveWeeklyPlanAction()`, `submitWeeklyReportAction()`, `saveManagerFeedbackAction()`, `getTeamWeeklySalesOverview()` |
+| `SalesVisitsClient.tsx` | Client component 5-tab: Check-in hôm nay, Kế hoạch tuần, Tổng kết tuần, Lịch sử ảnh, và Tab 5 Giám Sát Thị Trường (CEO / Manager) |
 | `LiveCameraModal.tsx` | Modal camera trực tiếp: nén ảnh tự động, watermark chân thực, hỗ trợ native camera fallback |
-| `page.tsx` | Server component nạp dữ liệu session và danh bạ |
+| `page.tsx` | Server component nạp dữ liệu session, phân quyền `isManager` và danh bạ |
 
 ## Prisma Models
 

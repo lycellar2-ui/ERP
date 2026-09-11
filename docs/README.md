@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-11 15:45 | Wine ERP v10.22 — Chuẩn hóa hiển thị Thứ 6, Check-in 1 bước chụp ảnh (bỏ check-out rườm rà), Phóng to chữ Watermark GPS & Thời Gian*
+*Last updated: 2026-09-11 15:55 | Wine ERP v10.23 — Bảng Giám Sát Thị Trường Dành Cho Quản Lý & CEO (Executive Field Operations Board, Ma trận Kế hoạch vs Thực tế, Soi ảnh GPS & Phê duyệt tuần)*
 
