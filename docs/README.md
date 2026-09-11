@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 97 Rules rút ra từ 66 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 98 Rules rút ra từ 67 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -236,5 +236,5 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-09-11 | Wine ERP v10.21 — Nâng cấp toàn diện phân hệ Sales Field Visit (SFV): Kế hoạch tuần, Check-in di động, Báo cáo & Review tuần, Sửa lỗi Permissions-Policy Camera & GPS*
+*Last updated: 2026-09-11 15:45 | Wine ERP v10.22 — Chuẩn hóa hiển thị Thứ 6, Check-in 1 bước chụp ảnh (bỏ check-out rườm rà), Phóng to chữ Watermark GPS & Thời Gian*
 

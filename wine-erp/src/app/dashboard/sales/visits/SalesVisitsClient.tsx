@@ -35,7 +35,19 @@ export const ACTIVITY_PRESETS = [
     { value: 'OTHER', label: 'Mục đích khác', icon: '📌', color: '#90A4AE' },
 ]
 
-const DAY_NAMES = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật']
+export function getVietnameseDayName(date: Date | string): string {
+    const d = typeof date === 'string' ? new Date(`${date.slice(0, 10)}T12:00:00+07:00`) : new Date(date)
+    const day = d.getDay() // 0 = Chủ Nhật, 1 = Thứ Hai, 2 = Thứ Ba, 3 = Thứ Tư, 4 = Thứ Năm, 5 = Thứ Sáu, 6 = Thứ Bảy
+    const names = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
+    return names[day]
+}
+
+export function formatLocalDateStr(d: Date): string {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
 
 function getWeekNumber(d: Date): { week: number; year: number } {
     const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -46,7 +58,7 @@ function getWeekNumber(d: Date): { week: number; year: number } {
 }
 
 function getDayOfWeek(dateStr: string): number {
-    const d = new Date(dateStr)
+    const d = new Date(`${dateStr.slice(0, 10)}T12:00:00+07:00`)
     const day = d.getDay() // 0 = Sun, 1 = Mon ...
     return day === 0 ? 6 : day - 1 // 0 = Mon, 6 = Sun
 }
@@ -267,7 +279,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
     // Camera Modal
     const [cameraTarget, setCameraTarget] = useState<{
-        mode: 'CHECKIN' | 'CHECKOUT'
+        mode?: 'CHECKIN'
         customerId?: string
         customerName?: string
         purpose?: string
@@ -277,9 +289,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         notes?: string
     } | null>(null)
 
-    // Checkout Flow Modal (enter result notes first)
-    const [showCheckoutModal, setShowCheckoutModal] = useState(false)
-    const [checkoutResultNotes, setCheckoutResultNotes] = useState('')
     const [submittingAction, setSubmittingAction] = useState(false)
 
     // Quick Add Visit to Plan Modal
@@ -417,23 +426,26 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
     // Compute dates for current selected week (Monday to Sunday)
     const weekDates = useMemo(() => {
-        const simple = new Date(currentWeek.year, 0, 1 + (currentWeek.week - 1) * 7)
-        const dow = simple.getDay()
-        const ISOweekStart = new Date(simple)
-        if (dow <= 4) {
-            ISOweekStart.setDate(simple.getDate() - (simple.getDay() || 7) + 1)
-        } else {
-            ISOweekStart.setDate(simple.getDate() + 8 - (simple.getDay() || 7))
-        }
+        // Standard ISO 8601 week calculation: Jan 4 is always in week 1
+        const jan4 = new Date(currentWeek.year, 0, 4)
+        const dayOfWeek = jan4.getDay() || 7 // 1 = Mon ... 7 = Sun
+        // Find Monday of Week 1
+        const week1Monday = new Date(jan4)
+        week1Monday.setDate(jan4.getDate() - dayOfWeek + 1)
+        
+        // Find Monday of currentWeek
+        const currentMonday = new Date(week1Monday)
+        currentMonday.setDate(week1Monday.getDate() + (currentWeek.week - 1) * 7)
+        currentMonday.setHours(12, 0, 0, 0) // Midday avoids any DST/UTC shifts
         
         const dates: { dateStr: string; dayName: string; dayIndex: number; isToday: boolean }[] = []
         for (let i = 0; i < 7; i++) {
-            const d = new Date(ISOweekStart)
-            d.setDate(ISOweekStart.getDate() + i)
-            const dateStr = d.toISOString().split('T')[0]
+            const d = new Date(currentMonday)
+            d.setDate(currentMonday.getDate() + i)
+            const dateStr = formatLocalDateStr(d)
             dates.push({
                 dateStr,
-                dayName: DAY_NAMES[i],
+                dayName: getVietnameseDayName(d),
                 dayIndex: i,
                 isToday: dateStr === todayStr,
             })
@@ -635,56 +647,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         setSubmittingAction(false)
     }
 
-    // -----------------------------------------------------------------
-    // CHECK-OUT ACTIONS
-    // -----------------------------------------------------------------
-    const handleOpenCheckoutModal = () => {
-        if (!activeVisit) return
-        setCheckoutResultNotes('')
-        setShowCheckoutModal(true)
-    }
 
-    const handleProceedToCheckoutCamera = () => {
-        if (!checkoutResultNotes.trim() || checkoutResultNotes.trim().length < 5) {
-            toast.error('Vui lòng ghi chú chi tiết kết quả làm việc với khách (tối thiểu 5 ký tự)')
-            return
-        }
-        setShowCheckoutModal(false)
-        setCameraTarget({
-            mode: 'CHECKOUT',
-            customerName: activeVisit.customer?.name,
-            notes: checkoutResultNotes.trim(),
-        })
-    }
-
-    const handleConfirmCheckOutPhoto = async (photoBase64: string) => {
-        if (!activeVisit || !cameraTarget) return
-        setCameraTarget(null)
-        setSubmittingAction(true)
-
-        const loc = await requestGPS()
-
-        const res = await checkOutSalesVisit({
-            visitId: activeVisit.id,
-            salespersonId: selectedSalespersonId,
-            notes: cameraTarget.notes || checkoutResultNotes,
-            lat: loc.lat || coords.lat,
-            lng: loc.lng || coords.lng,
-            address: loc.address || coords.address,
-            photoBase64,
-        })
-
-        if (res.success) {
-            toast.success('Check-out thành công! Đã ghi nhận kết quả viếng thăm.')
-            setActiveVisit(null)
-            await fetchActive()
-            await loadWeeklyData()
-            await fetchHistoryVisits()
-        } else {
-            toast.error('Lỗi Check-out: ' + res.error)
-        }
-        setSubmittingAction(false)
-    }
 
     // -----------------------------------------------------------------
     // WEEKLY REPORT SUBMISSION & MANAGER FEEDBACK
@@ -887,62 +850,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                 </button>
             </div>
 
-            {/* 3. ACTIVE VISIT BANNER (If ongoing) */}
-            {activeVisit && (
-                <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border-2 border-emerald-500/40 shadow-lg animate-in fade-in duration-300">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-start gap-3.5">
-                            <div className="p-2.5 rounded-xl bg-emerald-500 text-white shadow-md">
-                                <Building2 size={24} />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white uppercase tracking-wider animate-pulse">
-                                        ĐANG Ở ĐIỂM BÁN
-                                    </span>
-                                    <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                                        {activeVisit.visitNo}
-                                    </span>
-                                    {activeVisit.isUnplanned && (
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                                            Đột xuất
-                                        </span>
-                                    )}
-                                </div>
-                                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
-                                    {activeVisit.customer?.name}
-                                </h3>
-                                <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-300 mt-1 flex-wrap">
-                                    <span className="flex items-center gap-1 font-mono">
-                                        <Clock size={13} className="text-emerald-600 dark:text-emerald-400" />
-                                        Bắt đầu: {new Date(activeVisit.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                    <span className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-300">
-                                        ⏱️ Đã ở điểm: {elapsedMinutes} phút
-                                    </span>
-                                    {activeVisit.purpose && (
-                                        <span className="text-slate-500 dark:text-slate-400">
-                                            Mục tiêu: {activeVisit.purpose}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2.5 shrink-0">
-                            <button
-                                type="button"
-                                onClick={handleOpenCheckoutModal}
-                                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-500/20 transition-all cursor-pointer"
-                            >
-                                <CheckCircle2 size={18} />
-                                Check-out & Báo Cáo Kết Quả
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* ============================================================== */}
             {/* TAB 1: CHECK-IN HÔM NAY (DAILY FIELD WORK) */}
             {/* ============================================================== */}
@@ -953,7 +860,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
                                 <span className="text-[11px] uppercase tracking-wider text-teal-600 dark:text-[#87CBB9] font-black font-mono">
-                                    HÔM NAY: {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                    HÔM NAY: {getVietnameseDayName(today).toUpperCase()}, {today.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                 </span>
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
                                     Danh Sách Điểm Viếng Thăm Trong Ngày
@@ -1034,17 +941,14 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {todayPlanVisits.map((item, idx) => {
                                 const cust = item.customer || localCustomers.find(c => c.id === item.customerId)
-                                const isItemActive = activeVisit && activeVisit.customerId === item.customerId && activeVisit.status === 'IN_PROGRESS'
                                 const isItemCompleted = item.status === 'COMPLETED' || weekActualVisits.some(v => v.customerId === item.customerId && v.status === 'COMPLETED')
 
                                 return (
                                     <div
                                         key={item.id || idx}
                                         className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 bg-white dark:bg-[#111C24] ${
-                                            isItemActive
-                                                ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md'
-                                                : isItemCompleted
-                                                ? 'border-slate-200 dark:border-[#223645] opacity-80'
+                                            isItemCompleted
+                                                ? 'border-emerald-500/40 bg-emerald-500/5 shadow-xs'
                                                 : 'border-slate-200 dark:border-[#223645] hover:border-teal-500/50 shadow-xs'
                                         }`}
                                     >
@@ -1053,7 +957,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         <span className="font-mono text-[11px] font-bold text-teal-600 dark:text-[#87CBB9]">
-                                                            [{cust?.code || 'KH'}]
+                                                             [{cust?.code || 'KH'}]
                                                         </span>
                                                         {cust?.channel && (
                                                             <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1B2E3D] text-slate-500 dark:text-[#8AAEBB] font-mono">
@@ -1066,14 +970,12 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                     </h4>
                                                 </div>
 
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
                                                     isItemCompleted
                                                         ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                                                        : isItemActive
-                                                        ? 'bg-emerald-500 text-white animate-pulse'
                                                         : 'bg-slate-100 dark:bg-[#1B2E3D] text-slate-500 dark:text-slate-400'
                                                 }`}>
-                                                    {isItemCompleted ? '✓ Đã xong' : isItemActive ? 'Đang ở điểm' : 'Chưa đi'}
+                                                    {isItemCompleted ? '✓ Đã hoàn thành' : 'Chưa đi'}
                                                 </span>
                                             </div>
 
@@ -1098,26 +1000,18 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
                                         {/* Action Button */}
                                         <div>
-                                            {isItemActive ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleOpenCheckoutModal}
-                                                    className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-700 shadow transition cursor-pointer"
-                                                >
-                                                    <CheckCircle2 size={15} /> Check-out Điểm Này
-                                                </button>
-                                            ) : isItemCompleted ? (
-                                                <div className="py-2 text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
-                                                    <CheckCircle2 size={14} /> Hoàn thành viếng thăm
+                                            {isItemCompleted ? (
+                                                <div className="py-2.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                                                    <CheckCircle2 size={15} /> ✓ Đã Hoàn Thành Viếng Thăm
                                                 </div>
                                             ) : (
                                                 <button
                                                     type="button"
-                                                    disabled={!!activeVisit || submittingAction}
+                                                    disabled={submittingAction}
                                                     onClick={() => startCheckInPlanned(item)}
-                                                    className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                                    className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-[#87CBB9] dark:text-[#0A1926] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs disabled:opacity-40 cursor-pointer"
                                                 >
-                                                    <Camera size={15} /> Check-in Điểm Này
+                                                    <Camera size={15} /> Check-in & Chụp 1 Ảnh
                                                 </button>
                                             )}
                                         </div>
@@ -1181,10 +1075,8 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                                 Đột xuất
                                                             </span>
                                                         )}
-                                                        <span className={`px-2 py-0.2 rounded-full text-[9px] font-bold ${
-                                                            v.status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600 animate-pulse'
-                                                        }`}>
-                                                            {v.status === 'COMPLETED' ? '✓ Đã Check-out' : 'Đang ở điểm bán'}
+                                                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                                                            ✓ Đã Check-in
                                                         </span>
                                                     </div>
                                                     <h5 className="text-sm font-bold text-slate-900 dark:text-white mt-1">
@@ -1198,65 +1090,35 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                 <div className="text-right text-xs">
                                                     <div className="font-mono font-bold text-teal-600 dark:text-[#87CBB9]">
                                                         {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                                        {v.checkOutTime && ` ➔ ${new Date(v.checkOutTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`}
                                                     </div>
-                                                    {v.durationMinutes > 0 && (
-                                                        <span className="text-[10px] text-slate-500">⏱️ {v.durationMinutes} phút tại điểm</span>
-                                                    )}
+                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">✓ Hoàn thành</span>
                                                 </div>
                                             </div>
 
-                                            {/* Photo Thumbnails: Check-in & Check-out */}
-                                            <div className="grid grid-cols-2 gap-2.5 pt-1">
-                                                <div className="space-y-1">
-                                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                                        📸 Ảnh Check-in:
-                                                    </span>
-                                                    {v.checkInPhoto ? (
-                                                        <div
-                                                            className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-[#2A4355] bg-black/40 group cursor-pointer shadow-xs"
-                                                            onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: v.checkInPhoto })}
-                                                        >
-                                                            <img
-                                                                src={v.checkInPhoto}
-                                                                alt="Check-in Photo"
-                                                                className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
-                                                            />
-                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1 backdrop-blur-xs">
-                                                                <Eye size={14} /> Xem ảnh lớn
-                                                            </div>
+                                            {/* Single Photo Display: Ảnh Thực Tế Check-in */}
+                                            <div className="space-y-1.5 pt-1">
+                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                                    📸 Ảnh chụp thực địa tại điểm bán (GPS, Địa chỉ & Giờ):
+                                                </span>
+                                                {v.checkInPhoto || v.checkOutPhoto ? (
+                                                    <div
+                                                        className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-[#2A4355] bg-black/40 group cursor-pointer shadow-xs"
+                                                        onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)! })}
+                                                    >
+                                                        <img
+                                                            src={v.checkInPhoto || v.checkOutPhoto}
+                                                            alt="Check-in Photo"
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1.5 backdrop-blur-xs">
+                                                            <Eye size={16} /> Bấm để phóng to ảnh
                                                         </div>
-                                                    ) : (
-                                                        <div className="aspect-video rounded-xl bg-slate-100 dark:bg-[#1B2E3D] flex items-center justify-center text-[10px] text-slate-400">
-                                                            Chưa có ảnh
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="space-y-1">
-                                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                                        🏁 Ảnh Check-out:
-                                                    </span>
-                                                    {v.checkOutPhoto ? (
-                                                        <div
-                                                            className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-[#2A4355] bg-black/40 group cursor-pointer shadow-xs"
-                                                            onClick={() => setViewPhoto({ title: `Ảnh Check-out: ${v.customerName}`, url: v.checkOutPhoto })}
-                                                        >
-                                                            <img
-                                                                src={v.checkOutPhoto}
-                                                                alt="Check-out Photo"
-                                                                className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
-                                                            />
-                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-[11px] font-bold gap-1 backdrop-blur-xs">
-                                                                <Eye size={14} /> Xem ảnh lớn
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="aspect-video rounded-xl bg-slate-100 dark:bg-[#1B2E3D] flex items-center justify-center text-[10px] text-slate-400 italic">
-                                                            {v.status === 'IN_PROGRESS' ? 'Đang ở điểm...' : 'Chưa có ảnh'}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="aspect-video rounded-xl bg-slate-100 dark:bg-[#1B2E3D] flex items-center justify-center text-[10px] text-slate-400">
+                                                        Chưa có ảnh
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* GPS Address & Map link */}
@@ -1854,19 +1716,17 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                     <tr className="bg-slate-50 dark:bg-[#142433] text-slate-500 dark:text-[#8AAEBB] border-b border-slate-200 dark:border-[#223645]">
                                         <th className="p-3.5 font-bold">Mã Visit</th>
                                         <th className="p-3.5 font-bold">Khách Hàng & Sale</th>
-                                        <th className="p-3.5 font-bold text-center">Ảnh Check-in</th>
-                                        <th className="p-3.5 font-bold text-center">Ảnh Check-out</th>
-                                        <th className="p-3.5 font-bold text-center">Đến Lúc</th>
-                                        <th className="p-3.5 font-bold text-center">Về Lúc</th>
-                                        <th className="p-3.5 font-bold text-center">Thời Lượng</th>
+                                        <th className="p-3.5 font-bold text-center">Ảnh Thực Tế (GPS)</th>
+                                        <th className="p-3.5 font-bold text-center">Giờ Check-in</th>
                                         <th className="p-3.5 font-bold">Toạ Độ & Vị Trí</th>
-                                        <th className="p-3.5 font-bold">Kết Quả Công Việc</th>
+                                        <th className="p-3.5 font-bold">Hoạt Động & Ghi Chú</th>
+                                        <th className="p-3.5 font-bold text-center">Trạng Thái</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-[#223645]">
                                     {filteredHistoryVisits.length === 0 ? (
                                         <tr>
-                                            <td colSpan={9} className="text-center py-12 text-slate-400 space-y-2">
+                                            <td colSpan={7} className="text-center py-12 text-slate-400 space-y-2">
                                                 <p>Không có lượt viếng thăm nào khớp với bộ lọc hiện tại.</p>
                                                 {(filterDate || filterSearch || filterStatus !== 'ALL') && (
                                                     <button
@@ -1900,37 +1760,17 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                 </div>
                                             </td>
                                             <td className="p-3.5 text-center">
-                                                {v.checkInPhoto ? (
+                                                {v.checkInPhoto || v.checkOutPhoto ? (
                                                     <img
-                                                        src={v.checkInPhoto}
+                                                        src={v.checkInPhoto || v.checkOutPhoto}
                                                         alt="Check-in"
-                                                        className="w-12 h-12 object-cover rounded-lg border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:opacity-80 transition"
-                                                        onClick={() => setViewPhoto({ title: `Check-in: ${v.customerName}`, url: v.checkInPhoto })}
+                                                        className="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:scale-105 transition shadow-xs"
+                                                        onClick={() => setViewPhoto({ title: `Ảnh Check-in: ${v.customerName}`, url: (v.checkInPhoto || v.checkOutPhoto)! })}
                                                     />
-                                                ) : <span className="text-slate-400">N/A</span>}
+                                                ) : <span className="text-slate-400 italic">Chưa có</span>}
                                             </td>
-                                            <td className="p-3.5 text-center">
-                                                {v.checkOutPhoto ? (
-                                                    <img
-                                                        src={v.checkOutPhoto}
-                                                        alt="Check-out"
-                                                        className="w-12 h-12 object-cover rounded-lg border border-slate-200 dark:border-[#2A4355] cursor-pointer mx-auto hover:opacity-80 transition"
-                                                        onClick={() => setViewPhoto({ title: `Check-out: ${v.customerName}`, url: v.checkOutPhoto })}
-                                                    />
-                                                ) : <span className="text-slate-400">—</span>}
-                                            </td>
-                                            <td className="p-3.5 text-center font-bold text-teal-600 dark:text-[#87CBB9] whitespace-nowrap">
+                                            <td className="p-3.5 text-center font-bold font-mono text-teal-600 dark:text-[#87CBB9] whitespace-nowrap">
                                                 {new Date(v.checkInTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                            <td className="p-3.5 text-center whitespace-nowrap text-slate-700 dark:text-slate-200">
-                                                {v.checkOutTime ? new Date(v.checkOutTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—'}
-                                            </td>
-                                            <td className="p-3.5 text-center whitespace-nowrap">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                    v.status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-amber-500/15 text-amber-600'
-                                                }`}>
-                                                    {v.status === 'COMPLETED' ? `${v.durationMinutes}p` : 'Đang ở điểm'}
-                                                </span>
                                             </td>
                                             <td className="p-3.5 max-w-xs">
                                                 {v.checkInLat && v.checkInLng ? (
@@ -1951,94 +1791,20 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                     </div>
                                                 ) : <span className="text-slate-400">Không có GPS</span>}
                                             </td>
-                                            <td className="p-3.5 max-w-xs truncate text-slate-700 dark:text-slate-200 text-xs" title={v.notes}>
-                                                {v.notes || <span className="text-slate-400 italic">Chưa có</span>}
+                                            <td className="p-3.5 max-w-xs text-slate-700 dark:text-slate-200 text-xs">
+                                                <div className="line-clamp-2" title={v.notes || v.purpose}>
+                                                    {v.notes || v.purpose || <span className="text-slate-400 italic">Chưa có</span>}
+                                                </div>
+                                            </td>
+                                            <td className="p-3.5 text-center whitespace-nowrap">
+                                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                                                    ✓ Hoàn thành
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ============================================================== */}
-            {/* MODAL: CHECK-OUT RESULT NOTES */}
-            {/* ============================================================== */}
-            {showCheckoutModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs">
-                    <div className="w-full max-w-md bg-white dark:bg-[#111C24] p-5 rounded-2xl border border-slate-200 dark:border-[#223645] shadow-2xl space-y-4 animate-in zoom-in-95">
-                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#223645] pb-3">
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <CheckCircle2 size={18} className="text-emerald-500" />
-                                Báo Cáo Kết Quả Làm Việc
-                            </h3>
-                            <button onClick={() => setShowCheckoutModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-3 text-xs">
-                            <div>
-                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Điểm viếng thăm:
-                                </label>
-                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#142433] text-slate-800 dark:text-white font-semibold">
-                                    {activeVisit?.customer?.name} ({elapsedMinutes} phút tại điểm)
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Ghi chú kết quả thực tế (Bắt buộc):
-                                </label>
-                                <textarea
-                                    rows={4}
-                                    value={checkoutResultNotes}
-                                    onChange={e => setCheckoutResultNotes(e.target.value)}
-                                    placeholder="Nội dung đã làm việc: Khách phản hồi gì? Mẫu rượu thử thế nào? Tồn kho còn bao nhiêu? Dự kiến chốt đơn ngày nào?..."
-                                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-[#142433] border border-slate-300 dark:border-[#2A4355] text-slate-900 dark:text-white outline-none focus:border-emerald-500"
-                                />
-                            </div>
-
-                            {/* Quick suggestion chips */}
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[10px] text-slate-400">Gợi ý nhanh:</span>
-                                {[
-                                    'Khách hài lòng mẫu vang mới',
-                                    'Hẹn quay lại chốt đơn tuần tới',
-                                    'Đã đối soát & thu công nợ',
-                                    'Kiểm tra trưng bày menu đạt',
-                                    'Khách đề xuất giảm giá thêm',
-                                ].map(chip => (
-                                    <button
-                                        key={chip}
-                                        type="button"
-                                        onClick={() => setCheckoutResultNotes(prev => prev ? `${prev}. ${chip}` : chip)}
-                                        className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1B2E3D] hover:bg-slate-200 dark:hover:bg-[#2A4355] text-[10px] text-slate-600 dark:text-slate-300 transition cursor-pointer"
-                                    >
-                                        + {chip}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#223645]">
-                            <button
-                                type="button"
-                                onClick={() => setShowCheckoutModal(false)}
-                                className="px-4 py-2 text-xs font-medium rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1B2E3D] cursor-pointer"
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleProceedToCheckoutCamera}
-                                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow cursor-pointer"
-                            >
-                                <Camera size={15} /> Chụp Ảnh Check-out
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -2321,15 +2087,12 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             {/* ============================================================== */}
             {cameraTarget && (
                 <LiveCameraModal
-                    title={cameraTarget.mode === 'CHECKIN' ? 'Check-in Viếng Thăm Điểm Bán' : 'Check-out Xác Nhận Hoàn Thành'}
-                    subtitle={cameraTarget.mode === 'CHECKIN' ? 'Chụp ảnh thực tế mặt tiền hoặc quầy trưng bày rượu' : 'Chụp ảnh thực tế xác nhận kết thúc buổi viếng thăm'}
+                    title="Chụp Ảnh Check-in & Toạ Độ GPS"
+                    subtitle="Chụp ảnh thực tế mặt tiền hoặc quầy trưng bày rượu tại khách hàng"
                     customerName={cameraTarget.customerName}
                     salespersonName={currentUserName}
                     locationInfo={coords.address}
-                    onCapture={photo => {
-                        if (cameraTarget.mode === 'CHECKIN') handleConfirmCheckInPhoto(photo)
-                        else handleConfirmCheckOutPhoto(photo)
-                    }}
+                    onCapture={handleConfirmCheckInPhoto}
                     onClose={() => setCameraTarget(null)}
                 />
             )}

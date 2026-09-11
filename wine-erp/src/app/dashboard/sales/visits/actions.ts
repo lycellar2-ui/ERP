@@ -10,6 +10,7 @@ export interface CheckInPayload {
     activityType?: string
     scheduleId?: string
     isUnplanned?: boolean
+    notes?: string
     lat?: number
     lng?: number
     address?: string
@@ -44,8 +45,8 @@ export async function reverseGeocodeAction(lat: number, lng: number): Promise<{ 
                 return { address: data.display_name }
             }
         }
-    } catch (err) {
-        console.warn('reverseGeocodeAction server warning:', err)
+    } catch (e) {
+        console.warn('reverseGeocodeAction failed, fallback to raw coords', e)
     }
     return { address: `Toạ độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}` }
 }
@@ -157,14 +158,6 @@ export async function checkInSalesVisit(data: CheckInPayload) {
         if (!data.customerId) return { success: false, error: 'Vui lòng chọn khách hàng viếng thăm' }
         if (!data.photoBase64) return { success: false, error: 'Bắt buộc phải chụp ảnh camera điểm bán khi Check-in' }
 
-        // Check if user already has an active visit
-        const active = await prisma.salesVisit.findFirst({
-            where: { salespersonId: data.salespersonId, status: 'IN_PROGRESS' }
-        })
-        if (active) {
-            return { success: false, error: 'Bạn đang có 1 điểm viếng thăm chưa Check-out. Vui lòng Check-out điểm trước đó!' }
-        }
-
         // Generate visitNo e.g. VIS-202607-0001
         const now = new Date()
         const ym = now.toISOString().slice(0, 7).replace('-', '')
@@ -176,14 +169,16 @@ export async function checkInSalesVisit(data: CheckInPayload) {
             }
         })
         const visitNo = `VIS-${ym}-${String(count + 1).padStart(4, '0')}`
+        const visitNotes = (data.notes || data.purpose || 'Đã viếng thăm và chăm sóc điểm bán').trim()
 
         const visit = await prisma.$transaction(async (tx) => {
+            // 1-step check-in: immediately marks COMPLETED with photo and GPS
             const newVisit = await tx.salesVisit.create({
                 data: {
                     visitNo,
                     customerId: data.customerId,
                     salespersonId: data.salespersonId,
-                    status: 'IN_PROGRESS',
+                    status: 'COMPLETED',
                     purpose: data.purpose || 'Chăm sóc khách hàng định kỳ',
                     activityType: data.activityType || 'PERIODIC_CARE',
                     scheduleId: data.scheduleId || null,
@@ -193,15 +188,22 @@ export async function checkInSalesVisit(data: CheckInPayload) {
                     checkInLng: data.lng,
                     checkInAddress: data.address,
                     checkInPhoto: data.photoBase64,
+                    checkOutTime: now,
+                    checkOutLat: data.lat,
+                    checkOutLng: data.lng,
+                    checkOutAddress: data.address,
+                    durationMinutes: 1,
+                    notes: visitNotes,
                 }
             })
 
-            // If checked in from a planned schedule, link and mark IN_PROGRESS
+            // If checked in from a planned schedule, mark it COMPLETED immediately
             if (data.scheduleId) {
                 await tx.salesVisitSchedule.update({
                     where: { id: data.scheduleId },
                     data: {
-                        status: 'IN_PROGRESS',
+                        status: 'COMPLETED',
+                        resultNotes: visitNotes,
                         salesVisitId: newVisit.id,
                     }
                 }).catch(() => {})

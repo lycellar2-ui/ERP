@@ -90,29 +90,57 @@ export function LiveCameraModal({ title, subtitle, customerName, salespersonName
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        const nowStr = new Date().toLocaleString('vi-VN')
-        const bannerHeight = 46
-        
-        // Semi-transparent bottom banner
-        ctx.fillStyle = 'rgba(10, 25, 38, 0.82)'
+        // Proportional scale factor based on image width for razor sharp readability
+        const scale = Math.max(1.15, Math.min(2.8, canvas.width / 580))
+        const bannerHeight = Math.round(108 * scale)
+        const padX = Math.round(18 * scale)
+
+        // Semi-transparent dark overlay
+        ctx.fillStyle = 'rgba(10, 25, 38, 0.92)'
         ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight)
 
-        // Line 1: Brand & Customer & Time
+        // Teal accent line on top of banner
         ctx.fillStyle = '#87CBB9'
-        ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        const line1 = `LYS CELLARS ERP | ${customerName ? customerName + ' | ' : ''}${nowStr}`
-        ctx.fillText(line1, 14, canvas.height - 25)
+        ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, Math.max(3, Math.round(3.5 * scale)))
 
-        // Line 2: Sale name & Location/GPS
-        ctx.fillStyle = '#E2E8F0'
-        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        const parts = []
-        if (salespersonName) parts.push(`Sale: ${salespersonName}`)
-        if (locationInfo) parts.push(locationInfo)
-        const line2 = parts.join(' • ') || 'Ảnh chụp thực địa thị trường'
-        ctx.fillText(line2, 14, canvas.height - 10)
+        // Format Vietnamese date & time
+        const now = new Date()
+        const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
+        const dayName = dayNames[now.getDay()]
+        const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+        const fullTimeStr = `⏱️ ${timeStr} - ${dayName}, ${dateStr}`
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+        // LINE 1: THỜI GIAN (LÀM TO & RÕ RÀNG - MÀU VÀNG NỔI BẬT)
+        const fontTimeSize = Math.round(19 * scale)
+        ctx.font = `bold ${fontTimeSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+        ctx.fillStyle = '#FFD166'
+        ctx.fillText(fullTimeStr, padX, canvas.height - bannerHeight + Math.round(32 * scale))
+
+        // LINE 2: ĐỊA CHỈ & TOẠ ĐỘ GPS (LÀM TO & RÕ RÀNG - MÀU TRẮNG SÁNG)
+        const fontLocSize = Math.round(17 * scale)
+        ctx.font = `bold ${fontLocSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+        ctx.fillStyle = '#FFFFFF'
+        const locText = locationInfo ? `📍 ${locationInfo}` : '📍 Đang dò tìm toạ độ GPS thực địa...'
+        
+        // Auto-truncate if location text exceeds canvas width
+        let displayLoc = locText
+        const maxTextWidth = canvas.width - (padX * 2)
+        while (ctx.measureText(displayLoc).width > maxTextWidth && displayLoc.length > 20) {
+            displayLoc = displayLoc.slice(0, -4) + '...'
+        }
+        ctx.fillText(displayLoc, padX, canvas.height - bannerHeight + Math.round(65 * scale))
+
+        // LINE 3: KHÁCH HÀNG & SALE & BRAND
+        const fontMetaSize = Math.round(13 * scale)
+        ctx.font = `bold ${fontMetaSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+        ctx.fillStyle = '#87CBB9'
+        const metaParts = ['LYS CELLARS ERP']
+        if (customerName) metaParts.push(`Khách: ${customerName}`)
+        if (salespersonName) metaParts.push(`Sale: ${salespersonName}`)
+        ctx.fillText(metaParts.join(' • '), padX, canvas.height - bannerHeight + Math.round(94 * scale))
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
         setCapturedImage(dataUrl)
     }
 

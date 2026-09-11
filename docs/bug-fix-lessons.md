@@ -50,6 +50,8 @@
 41. [BUG-055: Độ Trễ / Lag Khi Gõ Nội Dung Diễn Giải / Ghi Chú Đơn Hàng Trong Drawers](#bug-055-độ-trễ--lag-khi-gõ-nội-dung-diễn-giải--ghi-chú-đơn-hàng-trong-drawers-createsodrawer-editsodrawer-quotations)
 42. [BUG-056: Chữ Trắng Khi Gõ Khách Hàng (Mobile Dark Mode) & Gõ Ngược Chữ Tiếng Việt (Combobox IME Desync)](#bug-056-chữ-trắng-khi-gõ-khách-hàng-mobile-dark-mode--gõ-ngược-chữ-tiếng-việt-combobox-ime-desync)
 43. [BUG-057: Lỗi Chữ Trắng Khi Gõ Tên Khách Hàng Trên Màn Hình Đơn Hàng & Ô Tìm Kiếm (Inline Style Specificity vs Light Mode)](#bug-057-lỗi-chữ-trắng-khi-gõ-tên-khách-hàng-trên-màn-hình-đơn-hàng--ô-tìm-kiếm-inline-style-specificity-vs-light-mode)
+44. [BUG-097: Không Xem Được Lịch Sử & Ảnh Check-in Trong Ngày (Timezone Desync)](#bug-097-không-xem-được-lịch-sử--ảnh-check-in-trong-ngày-timezone-desync-thiếu-feed-tab-hôm-nay--lỗi-lọc-ngày-client)
+45. [BUG-098: Lệch Thứ Trong Tuần, Quy Trình Check-in 2 Bước Rườm Rà & Chữ Watermark GPS Bị Nhỏ](#bug-098-lệch-thứ-trong-tuần-thứ-6-hiển-thị-thứ-7-do-utc-shift-quy-trình-check-in-2-bước-rườm-rà--chữ-watermark-gps-thời-gian-bị-nhỏ)
 
 ---
 
@@ -2548,6 +2550,43 @@ Khi người dùng bấm "Xác Nhận Đã Nhận Hàng" trên phiếu chuyển 
 ### Bài học
 
 > ⚠️ **RULE 97: Đối với các module thực địa có ảnh chụp và toạ độ GPS (như Field Visit / Check-in), BẮT BUỘC phải chuẩn hóa định dạng ngày theo múi giờ địa phương (`Asia/Ho_Chi_Minh` / `+07:00`) khi truy vấn DB; đồng thời giao diện Check-in trong ngày (Daily Tab) PHẢI CÓ container hiển thị ảnh chụp camera thực tế & nhật ký hoàn thành ngay sau khi thao tác, không bắt người dùng phải tự tìm sang tab Lịch sử.**
+
+---
+
+## BUG-098: Lệch Thứ Trong Tuần (Thứ 6 Hiển Thị Thứ 7 Do UTC Shift), Quy Trình Check-in 2 Bước Rườm Rà & Chữ Watermark GPS/Thời Gian Bị Nhỏ
+
+**Severity:** 🟡 Medium / UX & Field Efficiency  
+**Date:** 2026-09-11  
+**Affected Modules:** `Sales Field Visits` (`/dashboard/sales/visits`, `SalesVisitsClient.tsx`, `LiveCameraModal.tsx`, `actions.ts`)
+
+### Triệu chứng
+1. Hôm nay là Thứ Sáu (2026-09-11), nhưng tiêu đề hiển thị thành "Thứ Bảy" và ô hôm nay trên lưới tuần bị nhảy sang cột Thứ 7.
+2. Quy trình viếng thăm thực địa bắt buộc 2 bước (Check-in chụp ảnh + Check-out nhập ghi chú kết quả và chụp thêm ảnh lần 2), có banner ghim chiếm chỗ "ĐANG Ở ĐIỂM BÁN" gây bất tiện và thao tác rườm rà cho sale chạy thị trường.
+3. Chữ watermark thông tin địa chỉ, toạ độ GPS và thời gian trên ảnh chụp thực tế quá nhỏ, khó đọc khi xem trên điện thoại hoặc khi thu nhỏ ảnh.
+
+### Nguyên nhân gốc rễ
+1. **Lệch ngày do UTC ISO Date String**: Logic tạo mảng `weekDates` dùng `d.toISOString().split('T')[0]` trên đối tượng `Date` tại mốc nửa đêm GMT+7 (00:00:00). Tại GMT+7, 00:00 tương ứng 17:00 ngày hôm trước theo chuẩn UTC, làm toàn bộ 7 ngày bị lùi 1 ngày trong chuỗi ngày UTC. Do đó, `dateStr === todayStr` khớp nhầm vào index 5 (Thứ Bảy) thay vì index 4 (Thứ Sáu).
+2. **Workflow Check-out thừa thãi**: Bắt buộc 2 lần chụp ảnh (đến và về) và chặn nhân viên không được check-in khách khác khi chưa check-out, không phù hợp thực tế đi thị trường nơi sale chỉ cần chụp 1 ảnh xác nhận mặt tiền/quầy rượu tại điểm bán là hoàn tất.
+3. **Watermark không co giãn theo độ phân giải ảnh**: Cỡ chữ watermark được cố định 11-13px bên trong dải banner cao 46px, khi chụp bằng camera độ phân giải cao (1280x720 hoặc full HD) chữ trở nên rất nhỏ so với toàn bộ bức ảnh.
+
+### Cách fix
+1. **Sửa tính toán ngày & thứ tuần**:
+   - Thêm helper `getVietnameseDayName` dựa trực tiếp vào `d.getDay()` (0 = Chủ Nhật, 1 = Thứ Hai, ... 5 = Thứ Sáu).
+   - Dùng `formatLocalDateStr` và đặt giờ `setHours(12, 0, 0, 0)` khi tính các ngày trong tuần để tránh tuyệt đối mọi sai lệch do múi giờ/DST.
+   - Tiêu đề dùng trực tiếp `getVietnameseDayName(today)`.
+2. **Rút gọn quy trình Check-in 1 bước (Single-step Check-in)**:
+   - Khi sale chụp 1 ảnh check-in, Server Action `checkInSalesVisit` ghi nhận trạng thái `COMPLETED` ngay lập tức, tự động đánh dấu hoàn thành điểm trong kế hoạch ngày.
+   - Loại bỏ hoàn toàn modal Check-out, banner "Đang ở điểm bán" và điều kiện chặn check-in điểm tiếp theo.
+3. **Phóng to và làm nổi bật Watermark GPS & Thời Gian**:
+   - Tự động scale cỡ chữ theo độ phân giải canvas (`scale = Math.max(1.15, Math.min(2.8, canvas.width / 580))`).
+   - Tăng chiều cao banner lên `108 * scale` px.
+   - Thời gian: font size `19 * scale` px, in đậm màu Vàng Gold (`#FFD166`).
+   - Địa chỉ & Toạ độ GPS: font size `17 * scale` px, in đậm màu Trắng Sáng (`#FFFFFF`), tự động cắt gọn vừa vặn chiều ngang ảnh.
+   - Tên khách hàng & Sale: font size `13 * scale` px, in đậm màu Teal (`#87CBB9`).
+
+### Bài học
+
+> ⚠️ **RULE 98: Khi xây dựng tính năng chụp ảnh thực địa (Field Operations / Proof of Visit), watermark GPS và thời gian BẮT BUỘC phải tự động scale tỷ lệ thuận với độ phân giải ảnh để luôn rõ ràng sắc nét khi xem trên mọi màn hình; đồng thời luồng check-in phải tối giản 1 thao tác (1 ảnh hoàn thành ngay), không áp đặt workflow 2 bước (check-in/check-out) gây cản trở và lãng phí thời gian của nhân viên thị trường.**
 
 
 
