@@ -1225,10 +1225,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
         
         // Count new leads
         const newLeads = weekActualVisits.filter(v => v.customer?.code?.startsWith('LEAD-')).length
-        
-        // Avg duration
-        const totalDuration = completedActual.reduce((acc, v) => acc + (v.durationMinutes || 0), 0)
-        const avgDuration = completedCount > 0 ? Math.round(totalDuration / completedCount) : 0
 
         return {
             plannedCount,
@@ -1236,7 +1232,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
             unplannedCount,
             rate,
             newLeads,
-            avgDuration,
         }
     }, [planVisits, weekActualVisits])
 
@@ -2622,7 +2617,7 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
 
                     {/* 2. Compact KPI Metrics Ribbon (Thanh chỉ số KPI liền mạch) */}
                     <div className="bg-white dark:bg-[#111C24] rounded-xl border border-slate-200 dark:border-[#223645] shadow-xs p-2 sm:p-2.5">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-[#1E3040]">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-[#1E3040]">
                             {/* 1. Kế hoạch */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
                                 <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Kế hoạch</span>
@@ -2667,15 +2662,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                 <div className="flex items-baseline gap-1 mt-0.5">
                                     <span className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">{reviewStats.newLeads}</span>
                                     <span className="text-[10px] text-slate-400">leads</span>
-                                </div>
-                            </div>
-
-                            {/* 6. Thời gian TB */}
-                            <div className="px-3 py-1.5 flex flex-col justify-center">
-                                <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">Thời gian TB</span>
-                                <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="text-lg sm:text-xl font-black text-cyan-600 dark:text-cyan-400 font-mono">{reviewStats.avgDuration}</span>
-                                    <span className="text-[10px] text-slate-400">phút/điểm</span>
                                 </div>
                             </div>
                         </div>
@@ -2890,13 +2876,8 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                                     <div className="space-y-1 flex-1 min-w-0">
                                                                         <div className="flex items-center gap-2 flex-wrap">
                                                                             <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                                                                                Giờ vào: {visitTime}
+                                                                                Giờ check-in: {visitTime}
                                                                             </span>
-                                                                            {item.actualVisit.durationMinutes > 0 && (
-                                                                                <span className="text-slate-500 dark:text-slate-400 font-mono">
-                                                                                    • {item.actualVisit.durationMinutes} phút
-                                                                                </span>
-                                                                            )}
                                                                             {item.actualVisit.checkInPhoto && (
                                                                                 <button
                                                                                     type="button"
@@ -3289,12 +3270,6 @@ export function SalesVisitsClient({ initialVisits, customers, users, currentUser
                                                             </span>
                                                         )}
                                                     </div>
-
-                                                    {v.durationMinutes > 0 && (
-                                                        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded shrink-0">
-                                                            {v.durationMinutes}p
-                                                        </span>
-                                                    )}
                                                 </div>
 
                                                 {/* Notes or Purpose */}
